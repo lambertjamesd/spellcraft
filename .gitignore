@@ -1,0 +1,7 @@
+
+.vscode/
+build/
+libdragon/
+.libdragon/
+
+*.z64
