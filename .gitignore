@@ -4,4 +4,6 @@ build/
 libdragon/
 .libdragon/
 
+filesystem/
+
 *.z64
