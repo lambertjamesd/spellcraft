@@ -3,10 +3,22 @@
 
 #include <GL/gl.h>
 
-struct Mesh {
-    GLuint list;
+enum MeshAttributes {
+    MeshAttributesPosition = (1 << 0),
+    MeshAttributesUV = (1 << 1),
+    MeshAttributesColor = (1 << 2),
+    MeshAttributesNormal = (1 << 3),
+
+    MeshAttributesAll = MeshAttributesPosition | MeshAttributesUV | MeshAttributesColor | MeshAttributesNormal,
 };
 
-void meshInit(struct Mesh* mesh);
+struct Mesh {
+    GLuint list;
+    uint16_t submeshCount;
+};
+
+void meshInit(struct Mesh* mesh, int submeshCount);
+
+int meshAttributeSize(int attributes);
 
 #endif
