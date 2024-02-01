@@ -27,7 +27,11 @@ filesystem/%.sprite: assets/%.RGBA16.png
 
 BLENDER_4 := /home/james/Blender/blender-4.0.2-linux-x64/blender
 
-filesystem/%.mesh: assets/%.blend
+MESH_SOURCES := $(shell find assets/ -type f -name '*.blend' | sort)
+
+MESHES := $(MESH_SOURCES:assets/%.blend=filesystem/%.mesh)
+
+filesystem/%.mesh: assets/%.blend tools/mesh-export/__init__.py
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%.mesh=build/assets/%.mesh))
 	$(BLENDER_4) $< --background --python tools/mesh-export/__init__.py -- $(@:filesystem/%.mesh=build/assets/%.mesh)
@@ -41,7 +45,7 @@ SOURCES := $(shell find src/ -type f -name '*.c' | sort)
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
 
-$(BUILD_DIR)/spellcraft.dfs: $(SPRITES)
+$(BUILD_DIR)/spellcraft.dfs: $(SPRITES) $(MESHES)
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"

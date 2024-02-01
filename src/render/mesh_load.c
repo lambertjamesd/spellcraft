@@ -47,9 +47,9 @@ bool mesh_load(struct Mesh* into, const char* path) {
 
         if (attributes & MeshAttributesPosition) {
             glEnableClientState(GL_VERTEX_ARRAY);
-            glVertexPointer(3, GL_FLOAT, size, (void*)offset);
+            glVertexPointer(3, GL_HALF_FIXED_N64, size, (void*)offset);
 
-            offset += sizeof(struct Vector3);
+            offset += sizeof(short) * 3;
         }
 
         if (attributes & MeshAttributesUV) {
@@ -66,11 +66,11 @@ bool mesh_load(struct Mesh* into, const char* path) {
             offset += sizeof(struct Coloru8);
         }
 
-        if (attributes & MeshAttributesColor) {
+        if (attributes & MeshAttributesNormal) {
             glEnableClientState(GL_NORMAL_ARRAY);
-            glNormalPointer(GL_FLOAT, size, (void*)offset);
+            glNormalPointer(GL_BYTE, size, (void*)offset);
 
-            offset += sizeof(struct Vector3);
+            offset += sizeof(char) * 3;
         }
 
         uint16_t vertexCount;

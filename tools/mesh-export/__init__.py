@@ -7,6 +7,7 @@ import struct
 class mesh_data():
     def __init__(self) -> None:
         self.vertices = []
+        self.normals = []
         self.indices = []
 
     def append_mesh(self, mesh: bpy.types.Mesh, material_index: int):
@@ -33,6 +34,7 @@ class mesh_data():
                 continue
 
             self.vertices.append(mesh.vertices[input_idx].co)
+            self.normals.append(mesh.vertices[input_idx].normal)
 
             index_mapping[input_idx] = next_output
             next_output += 1
@@ -53,13 +55,27 @@ def write_meshes(filename, mesh_list):
             file.write(material_name)
 
             # indicate which attributes are present
-            # hard code a 1 to indicate position
+            # hard code a 9 to indicate position and normal data
             # data
-            file.write((1).to_bytes(2, 'big'))
+            file.write((1 | 8).to_bytes(2, 'big'))
 
             file.write(len(mesh[1].vertices).to_bytes(2, 'big'))
-            for vertex in mesh[1].vertices:
-                file.write(struct.pack(">fff", vertex[0], vertex[1], vertex[2]))
+            for idx, vertex in enumerate(mesh[1].vertices):
+                file.write(struct.pack(
+                    ">hhh", 
+                    int(vertex[0] * 32), 
+                    int(vertex[1] * 32), 
+                    int(vertex[2] * 32)
+                ))
+
+                normal = mesh[1].normals[idx]
+
+                file.write(struct.pack(
+                    ">bbb", 
+                    int(normal[0] * 127), 
+                    int(normal[1] * 127), 
+                    int(normal[2] * 127)
+                ))
 
             index_size = 1
 
@@ -74,6 +90,8 @@ def write_meshes(filename, mesh_list):
 
 
 def process_scene():
+    bpy.ops.object.mode_set(mode="OBJECT")
+
     for mesh in bpy.data.meshes:
         bm = bmesh.new()
         bm.from_mesh(mesh)

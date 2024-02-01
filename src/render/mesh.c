@@ -12,7 +12,7 @@ int meshAttributeSize(int attributes) {
     int result = 0;
 
     if (attributes & MeshAttributesPosition) {
-        result += sizeof(struct Vector3);
+        result += sizeof(short) * 3;
     }
 
     if (attributes & MeshAttributesUV) {
@@ -24,7 +24,7 @@ int meshAttributeSize(int attributes) {
     }
 
     if (attributes & MeshAttributesNormal) {
-        result += sizeof(struct Vector3);
+        result += sizeof(char) * 3;
     }
 
     return result;
