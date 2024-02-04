@@ -16,7 +16,7 @@ int meshAttributeSize(int attributes) {
     }
 
     if (attributes & MeshAttributesUV) {
-        result += sizeof(struct Vector2);
+        result += sizeof(short) * 2;
     }
 
     if (attributes & MeshAttributesColor) {

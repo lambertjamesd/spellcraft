@@ -6,4 +6,6 @@ libdragon/
 
 filesystem/
 
+**/__pycache__/**
+
 *.z64

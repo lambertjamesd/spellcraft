@@ -1,0 +1,8 @@
+{
+    "combineMode": {
+        "color": ["SHADE", "0", "TEX0", "0"],
+        "alpha": ["0", "0", "0", "1"]
+    },
+    "envColor": [255, 255, 0, 255],
+    "lighting": false
+}

@@ -38,6 +38,22 @@ filesystem/%.mesh: assets/%.blend tools/mesh-export/__init__.py
 	mkasset -o $(dir $@) -w 256 $(@:filesystem/%.mesh=build/assets/%.mesh)
 
 ###
+# materials
+###
+
+MATERIAL_SOURCES := $(shell find assets/ -type f -name '*.mat.json' | sort)
+
+MATERIAL_SCRIPTS := $(shell find tools/material-writer -type f -name '*.py')
+
+MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat)
+
+filesystem/%.mat: assets/%.mat.json $(MATERIAL_SCRIPTS)
+	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $(@:filesystem/%.mesh=build/assets/%.mat))
+	python tools/material-writer --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
+	mkasset -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
+
+###
 # source code
 ###
 
@@ -45,7 +61,7 @@ SOURCES := $(shell find src/ -type f -name '*.c' | sort)
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
 
-$(BUILD_DIR)/spellcraft.dfs: $(SPRITES) $(MESHES)
+$(BUILD_DIR)/spellcraft.dfs: $(SPRITES) $(MESHES) $(MATERIALS)
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"

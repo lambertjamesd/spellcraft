@@ -6,13 +6,19 @@
 #include <GL/gl_integration.h>
 
 #include "render/mesh_load.h"
+#include "render/material_load.h"
 
 #include <libdragon.h>
 
 struct Mesh mesh_test;
+struct Material material_test;
+sprite_t* sprite_test;
+rdpq_texparms_t tex_params_test;
 
 void setup() {
     mesh_load(&mesh_test, "rom:/meshes/test.mesh");
+    material_load(&material_test, "rom:/materials/test.mat");
+    sprite_test = sprite_load("rom:/test.RGBA16.sprite");
 }
 
 float angle = 0.0f;
@@ -68,13 +74,11 @@ void render() {
     angle += 1.0f;
 
     glEnable(GL_RDPQ_MATERIAL_N64);
-
     rdpq_set_mode_standard();
-    rdpq_set_env_color((color_t){255, 255, 255, 255});
-    rdpq_mode_combiner(RDPQ_COMBINER1(
-        (1, 0, ENV, SHADE), (0, 0, 0, 1)
-    ));
 
+    rdpq_sprite_upload(TILE0, sprite_test, &tex_params_test);
+
+    glCallList(material_test.list);
     glCallList(mesh_test.list);
 
     glDisable(GL_RDPQ_MATERIAL_N64);
@@ -86,11 +90,26 @@ int main(void)
     rdpq_init();
     gl_init();
     dfs_init(DFS_DEFAULT_LOCATION);
+    controller_init();
 
     surface_t zbuffer = surface_alloc(FMT_RGBA16, 320, 240);
 
     debug_init_usblog();
     console_set_debug(true);
+    
+    // struct controller_data ctrData;
+    // bool wasStart = false;
+
+    // for (;;) {
+    //     controller_read(&ctrData);
+    //     bool isStart = ctrData.c[0].start != 0;
+
+    //     if (isStart && !wasStart) {
+    //         break;
+    //     }
+
+    //     wasStart = isStart;
+    // }
 
     setup();
 

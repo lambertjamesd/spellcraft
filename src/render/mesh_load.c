@@ -54,9 +54,9 @@ bool mesh_load(struct Mesh* into, const char* path) {
 
         if (attributes & MeshAttributesUV) {
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glTexCoordPointer(2, GL_FLOAT, size, (void*)offset);
+            glTexCoordPointer(2, GL_HALF_FIXED_N64, size, (void*)offset);
 
-            offset += sizeof(struct Vector2);
+            offset += sizeof(short) * 2;
         }
 
         if (attributes & MeshAttributesColor) {
@@ -105,7 +105,11 @@ bool mesh_load(struct Mesh* into, const char* path) {
         glBindVertexArray(0);
         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
         glEndList();
+
+        // TODO clenaup vertex buffers
     }
+
+    fclose(meshFile);
 
     glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
     glBindVertexArray(0);

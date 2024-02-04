@@ -3,40 +3,53 @@ import mathutils
 import bmesh
 import sys
 import struct
+import math
 
 class mesh_data():
     def __init__(self) -> None:
         self.vertices = []
         self.normals = []
         self.indices = []
+        self.uv = []
 
-    def append_mesh(self, mesh: bpy.types.Mesh, material_index: int):
+    def append_mesh(self, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix):
         triangles = []
         max_index = -1
         used_indices = set()
+
+        normal_transform = final_transform.to_3x3()
+        normal_transform.invert()
+        normal_transform.transpose()
 
         for polygon in mesh.polygons:
             if polygon.material_index != material_index:
                 continue
             
             for loop_index in polygon.loop_indices:
-                idx = mesh.loops[loop_index].vertex_index
-
-                max_index = max(max_index, idx)
-                used_indices.add(idx)
-                triangles.append(idx)
+                max_index = max(max_index, loop_index)
+                used_indices.add(loop_index)
+                triangles.append(loop_index)
 
         next_output = len(self.indices)
         index_mapping = dict()
 
-        for input_idx in range(max_index + 1):
-            if not input_idx in used_indices:
+        uv_layer = None if len(mesh.uv_layers) == 0 else mesh.uv_layers[0]
+
+        for loop_index in range(max_index + 1):
+            if not loop_index in used_indices:
                 continue
 
-            self.vertices.append(mesh.vertices[input_idx].co)
-            self.normals.append(mesh.vertices[input_idx].normal)
+            vtx_index = mesh.loops[loop_index].vertex_index
 
-            index_mapping[input_idx] = next_output
+            self.vertices.append(final_transform @ mesh.vertices[vtx_index].co)
+            self.normals.append(normal_transform @ mesh.vertices[vtx_index].normal)
+
+            if uv_layer:
+                self.uv.append(mesh.uv_layers[0].uv[loop_index].vector)
+            else:
+                self.uv.append([0, 0])
+
+            index_mapping[loop_index] = next_output
             next_output += 1
         
         for idx in triangles:
@@ -55,9 +68,9 @@ def write_meshes(filename, mesh_list):
             file.write(material_name)
 
             # indicate which attributes are present
-            # hard code a 9 to indicate position and normal data
+            # hard code a 11 to indicate position, uv, and normal data
             # data
-            file.write((1 | 8).to_bytes(2, 'big'))
+            file.write((1 | 2 | 8).to_bytes(2, 'big'))
 
             file.write(len(mesh[1].vertices).to_bytes(2, 'big'))
             for idx, vertex in enumerate(mesh[1].vertices):
@@ -66,6 +79,14 @@ def write_meshes(filename, mesh_list):
                     int(vertex[0] * 32), 
                     int(vertex[1] * 32), 
                     int(vertex[2] * 32)
+                ))
+
+                uv = mesh[1].uv[idx]
+
+                file.write(struct.pack(
+                    ">hh",
+                    int(uv[0] * 256),
+                    int(uv[1] * 256)
                 ))
 
                 normal = mesh[1].normals[idx]
@@ -99,9 +120,13 @@ def process_scene():
         bm.to_mesh(mesh)
         bm.free()
 
+    base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
+
     for obj in bpy.data.objects:
         if obj.type != "MESH":
             continue
+
+        final_transform = base_transform @ obj.matrix_world
 
         for material_index in range(max(len(obj.data.materials), 1)):
             if material_index < len(obj.data.materials):
@@ -114,7 +139,7 @@ def process_scene():
 
             mesh = mesh_by_material[name]
 
-            mesh.append_mesh(obj.data, material_index)
+            mesh.append_mesh(obj.data, material_index, final_transform)
 
     all_meshes = list(mesh_by_material.items())
 
