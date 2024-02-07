@@ -6,21 +6,21 @@
 #include <GL/gl_integration.h>
 
 #include "render/mesh_load.h"
-#include "render/material_load.h"
 
+#include "resource/material_cache.h"
 #include "resource/sprite_cache.h"
 
 #include <libdragon.h>
 
 struct Mesh mesh_test;
-struct Material material_test;
+struct material* material_test;
 sprite_t* sprite_test;
 GLuint texture_test;
 rdpq_texparms_t tex_params_test;
 
 void setup() {
     mesh_load(&mesh_test, "rom:/meshes/cube.mesh");
-    material_load(&material_test, "rom:/materials/test.mat");
+    material_test = material_cache_load("rom:/materials/test.mat");
     sprite_test = sprite_cache_load("rom:/test.RGBA16.sprite");
 
     tex_params_test.s.repeats = REPEAT_INFINITE;
@@ -96,7 +96,7 @@ void render() {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texture_test);
 
-    glCallList(material_test.list);
+    glCallList(material_test->list);
     glCallList(mesh_test.list);
 
     glDisable(GL_RDPQ_MATERIAL_N64);

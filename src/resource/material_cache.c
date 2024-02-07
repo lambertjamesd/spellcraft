@@ -1,6 +1,8 @@
-#include "material_load.h"
+#include "material_cache.h"
 
 #include <libdragon.h>
+#include <malloc.h>
+#include "resource_cache.h"
 
 // MATR
 #define EXPECTED_HEADER 0x4D415452
@@ -10,7 +12,7 @@
 #define COMMAND_ENV         0x02
 #define COMMAND_LIGHTING    0x03
 
-void material_load(struct Material* into, const char* path) {
+void material_load(struct material* into, const char* path) {
     FILE* materialFile = asset_fopen(path, NULL);
 
     int header;
@@ -19,7 +21,7 @@ void material_load(struct Material* into, const char* path) {
 
     bool hasMore = true;
 
-    materialInit(into);
+    material_init(into);
 
     glNewList(into->list, GL_COMPILE);
 
@@ -62,4 +64,28 @@ void material_load(struct Material* into, const char* path) {
     glEndList();
 
     fclose(materialFile);
+}
+
+struct resource_cache material_resource_cache;
+
+struct material* material_cache_load(const char* filename) {
+    struct resource_cache_entry* entry = resource_cache_use(&material_resource_cache, filename);
+
+    if (!entry->resource) {
+        struct material* result = malloc(sizeof(struct material));
+        
+        material_init(result);
+        material_load(result, filename);
+
+        entry->resource = result;
+    }
+
+    return entry->resource;
+}
+
+void material_cache_release(struct material* material) {
+    if (resource_cache_free(&material_resource_cache, material)) {
+        material_free(material);
+        free(material);
+    }
 }

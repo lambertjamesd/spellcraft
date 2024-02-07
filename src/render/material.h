@@ -3,10 +3,11 @@
 
 #include <GL/gl.h>
 
-struct Material {
+struct material {
     GLuint list;
 };
 
-void materialInit(struct Material* material);
+void material_init(struct material* material);
+void material_free(struct material* material);
 
 #endif
