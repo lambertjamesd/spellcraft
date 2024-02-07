@@ -2,6 +2,7 @@
 
 #include <malloc.h>
 #include <string.h>
+#include <assert.h>
 
 // a 32 bit prime number
 #define MAGIC_PRIME 2748002342
@@ -14,6 +15,53 @@ uint32_t string_hash(const void* key) {
         hash = 31 * hash + *p;
     }
     return hash;
+}
+
+
+void resource_cache_reset(struct resource_cache* cache) {
+    free(cache->entries);
+    free(cache->filename_index);
+    free(cache->resource_index);
+
+    cache->entry_capacity = MIN_TABLE_SIZE;
+    cache->next_entry_index = 0;
+    cache->entry_count = 0;
+
+    cache->entries = malloc(sizeof(struct resource_cache_entry) * MIN_TABLE_SIZE);
+    cache->filename_index = malloc(sizeof(short) * MIN_TABLE_SIZE);
+    cache->resource_index = malloc(sizeof(short) * MIN_TABLE_SIZE);
+
+    for (int i = 0; i < MIN_TABLE_SIZE; ++i) {
+        cache->filename_index[i] = NO_ENTRY;
+        cache->resource_index[i] = NO_ENTRY;
+    }
+
+    for (int i = 0; i < cache->entry_capacity; ++i) {
+        struct resource_cache_entry* target_entry = &cache->entries[i];
+
+        target_entry->filename = NULL;
+        target_entry->resource = NULL;
+        target_entry->filename_hash = 0;
+        target_entry->filename_index = 0;
+        target_entry->reference_count = 0;
+    }
+}
+
+struct resource_cache_entry* resource_cache_next(struct resource_cache* cache, struct resource_cache_entry* entry) {
+    int next_index = entry ? (entry - cache->entries) + 1 : 0;
+    int mask = cache->entry_capacity - 1;
+
+    while (next_index < cache->entry_capacity) {
+        struct resource_cache_entry* next_entry = &cache->entries[next_index];
+
+        if (next_entry->filename) {
+            return next_entry;
+        }
+
+        next_index = (next_index + 1) & mask;
+    }
+
+    return NULL;
 }
 
 void resource_cache_resize(struct resource_cache* cache) {
@@ -68,6 +116,16 @@ void resource_cache_resize(struct resource_cache* cache) {
         cache->next_entry_index += 1;
     }
 
+    for (int i = cache->next_entry_index; i < cache->entry_capacity; ++i) {
+        struct resource_cache_entry* target_entry = &new_entries[i];
+
+        target_entry->filename = NULL;
+        target_entry->resource = NULL;
+        target_entry->filename_hash = 0;
+        target_entry->filename_index = 0;
+        target_entry->reference_count = 0;
+    }
+
     free(cache->entries);
     free(cache->filename_index);
     free(cache->resource_index);
@@ -109,12 +167,28 @@ struct resource_cache_entry* resource_cache_insert(struct resource_cache* cache,
     entry->filename_index = filename_index;
     entry->filename_hash = filename_hash;
 
+    cache->filename_index[filename_index] = entry_index;
+    
+    // insert resource index
+    uint32_t index_check = ((uint32_t)entry->resource * MAGIC_PRIME) & mask;
+
+    while (cache->resource_index[index_check] != NO_ENTRY) {
+        index_check = (index_check + 1) & mask;
+    }
+
+    cache->resource_index[index_check] = entry_index;
+
     cache->entry_count += 1;
 
     return entry;
 }
 
 struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, const char* filename) {
+    // initialize on demand
+    if (!cache->entries) {
+        resource_cache_reset(cache);
+    }
+
     uint32_t filename_hash = string_hash(filename);
 
     uint32_t mask = cache->entry_capacity - 1;
@@ -124,7 +198,7 @@ struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, co
         int index = cache->filename_index[index_check];
 
         if (index == NO_ENTRY) {
-            return resource_cache_insert(cache, index, filename_hash, filename);
+            return resource_cache_insert(cache, index_check, filename_hash, filename);
         }
 
         struct resource_cache_entry* entry = &cache->entries[index];
@@ -153,6 +227,8 @@ void resource_cache_remove(struct resource_cache* cache, struct resource_cache_e
 }
 
 bool resource_cache_free(struct resource_cache* cache, void* resource) {
+    assert(cache->entries);
+
     uint32_t mask = cache->entry_capacity - 1;
     uint32_t index_check = ((uint32_t)resource * MAGIC_PRIME) & mask;
 

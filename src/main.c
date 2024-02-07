@@ -8,6 +8,8 @@
 #include "render/mesh_load.h"
 #include "render/material_load.h"
 
+#include "resource/sprite_cache.h"
+
 #include <libdragon.h>
 
 struct Mesh mesh_test;
@@ -19,7 +21,7 @@ rdpq_texparms_t tex_params_test;
 void setup() {
     mesh_load(&mesh_test, "rom:/meshes/cube.mesh");
     material_load(&material_test, "rom:/materials/test.mat");
-    sprite_test = sprite_load("rom:/test.RGBA16.sprite");
+    sprite_test = sprite_cache_load("rom:/test.RGBA16.sprite");
 
     tex_params_test.s.repeats = REPEAT_INFINITE;
     tex_params_test.t.repeats = REPEAT_INFINITE;
@@ -113,19 +115,19 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
     
-    // struct controller_data ctrData;
-    // bool wasStart = false;
+    struct controller_data ctrData;
+    bool wasStart = false;
 
-    // for (;;) {
-    //     controller_read(&ctrData);
-    //     bool isStart = ctrData.c[0].start != 0;
+    for (;;) {
+        controller_read(&ctrData);
+        bool isStart = ctrData.c[0].start != 0;
 
-    //     if (isStart && !wasStart) {
-    //         break;
-    //     }
+        if (isStart && !wasStart) {
+            break;
+        }
 
-    //     wasStart = isStart;
-    // }
+        wasStart = isStart;
+    }
 
     setup();
 

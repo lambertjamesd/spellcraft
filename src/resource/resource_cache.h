@@ -22,6 +22,8 @@ struct resource_cache {
     short* resource_index;
 };
 
+void resource_cache_reset(struct resource_cache* cache);
+struct resource_cache_entry* resource_cache_next(struct resource_cache* cache, struct resource_cache_entry* entry);
 struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, const char* filename);
 bool resource_cache_free(struct resource_cache* cache, void* resource);
 
