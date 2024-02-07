@@ -115,19 +115,19 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
     
-    struct controller_data ctrData;
-    bool wasStart = false;
+    // struct controller_data ctrData;
+    // bool wasStart = false;
 
-    for (;;) {
-        controller_read(&ctrData);
-        bool isStart = ctrData.c[0].start != 0;
+    // for (;;) {
+    //     controller_read(&ctrData);
+    //     bool isStart = ctrData.c[0].start != 0;
 
-        if (isStart && !wasStart) {
-            break;
-        }
+    //     if (isStart && !wasStart) {
+    //         break;
+    //     }
 
-        wasStart = isStart;
-    }
+    //     wasStart = isStart;
+    // }
 
     setup();
 
