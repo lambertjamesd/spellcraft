@@ -24,18 +24,6 @@ void setup() {
 
     camera_init(&camera, 70.0f, 0.5f, 10.0f);
     camera.transform.position.z = 5.0f;
-    // sprite_test = sprite_cache_load("rom:/test.RGBA16.sprite");
-
-    // glGenTextures(1, &texture_test);
-
-    // glBindTexture(GL_TEXTURE_2D, texture_test);
-
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    // glSpriteTextureN64(GL_TEXTURE_2D, sprite_test, &(rdpq_texparms_t){.s.repeats = REPEAT_INFINITE, .t.repeats = REPEAT_INFINITE});
-
-    // glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 float angle = 0.0f;
@@ -84,9 +72,6 @@ void render() {
 
     glEnable(GL_RDPQ_MATERIAL_N64);
     rdpq_set_mode_standard();
-
-    // glEnable(GL_TEXTURE_2D);
-    // glBindTexture(GL_TEXTURE_2D, texture_test);
 
     glCallList(material_test->list);
     glCallList(mesh_test.list);
