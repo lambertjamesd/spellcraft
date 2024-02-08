@@ -14,6 +14,76 @@
 #define COMMAND_LIGHTING    0x03
 #define COMMAND_TEX0        0x04
 
+struct text_axis {
+    float translate;
+    int scale_log;
+    float repeats;
+    bool mirror;
+};
+
+void material_load_tex_axis(struct text_axis* axis, FILE* file) {
+    int16_t translate;
+    fread(&translate, 2, 1, file);
+    axis->translate = translate * (1.0f / 32.0f);
+
+    int8_t scale_log;
+    fread(&scale_log, 1, 1, file);
+    axis->scale_log = scale_log;
+
+    uint16_t repeats;
+    fread(&repeats, 2, 1, file);
+    axis->repeats = repeats & 0x7FFF;
+
+    axis->mirror = (repeats & 0x8000) != 0;
+}
+
+static GLenum material_filter_modes[] = {
+    GL_NEAREST,
+    GL_LINEAR,
+};
+
+void material_load_tex(struct material_tex* tex, FILE* file) {
+    uint8_t filename_len;
+    fread(&filename_len, 1, 1, file);
+
+    if (filename_len == 0) {
+        return;
+    }
+
+    char filename[filename_len + 1];
+    fread(filename, 1, filename_len, file);
+    filename[filename_len] = '\0';
+
+    rdpq_texparms_t texparams;
+
+    uint16_t tmem_addr;
+    fread(&tmem_addr, 2, 1, file);
+    texparams.tmem_addr = tmem_addr;
+    uint8_t palette;
+    fread(&palette, 1, 1, file);
+    texparams.palette = palette;
+
+    material_load_tex_axis((struct text_axis*)&texparams.s, file);
+    material_load_tex_axis((struct text_axis*)&texparams.t, file);
+
+    tex->sprite = sprite_cache_load(filename);
+
+    glGenTextures(1, &tex->gl_texture);
+
+    glBindTexture(GL_TEXTURE_2D, tex->gl_texture);
+
+    uint8_t mag_filter;
+    fread(&mag_filter, 1, 1, file);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, material_filter_modes[mag_filter]);
+
+    fread(&mag_filter, 1, 1, file);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, material_filter_modes[mag_filter]);
+
+    glSpriteTextureN64(GL_TEXTURE_2D, tex->sprite, &texparams);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void material_load(struct material* into, const char* path) {
     FILE* material_file = asset_fopen(path, NULL);
 
@@ -24,6 +94,8 @@ void material_load(struct material* into, const char* path) {
     bool has_more = true;
 
     material_init(into);
+
+    material_load_tex(&into->tex0, material_file);
 
     glNewList(into->list, GL_COMPILE);
 
@@ -60,18 +132,12 @@ void material_load(struct material* into, const char* path) {
                     }
                 }
                 break;
-            case COMMAND_TEX0:
-                {
-                    uint8_t filename_len;
-                    fread(&filename_len, 1, 1, material_file);
-                    char filename[filename_len + 1];
-                    fread(filename, 1, filename_len, material_file);
-                    filename[filename_len] = '\0';
-
-                    into->tex0_sprite = sprite_cache_load(filename);
-                }
-                break;
         }
+    }
+
+    if (into->tex0.gl_texture) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, into->tex0.gl_texture);
     }
 
     glEndList();
@@ -98,8 +164,12 @@ struct material* material_cache_load(const char* filename) {
 
 void material_cache_release(struct material* material) {
     if (resource_cache_free(&material_resource_cache, material)) {
-        if (material->tex0_sprite) {
-            sprite_cache_release(material->tex0_sprite);
+        if (material->tex0.gl_texture) {
+            glDeleteTextures(1, &material->tex0.gl_texture);
+        }
+
+        if (material->tex0.sprite) {
+            sprite_cache_release(material->tex0.sprite);
         }
 
         material_free(material);

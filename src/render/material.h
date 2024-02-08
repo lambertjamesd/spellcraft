@@ -4,9 +4,14 @@
 #include <GL/gl.h>
 #include <libdragon.h>
 
+struct material_tex {
+    sprite_t* sprite;
+    GLuint gl_texture;
+};
+
 struct material {
     GLuint list;
-    sprite_t* tex0_sprite;
+    struct material_tex tex0;
 };
 
 void material_init(struct material* material);

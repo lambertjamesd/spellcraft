@@ -136,21 +136,49 @@ def _serialize_combine(file, combine: material.CombineMode):
         (aa1 << 21) | (ab1 << 3) | (ac1 << 18) | (ad1 << 0) \
     ))
 
+def _serialze_string(file, text):
+    encoded_text = text.encode()
+    file.write(len(encoded_text).to_bytes(1, 'big'))
+    file.write(encoded_text)
 
-def serialize_material(filename, material: material.Material):
+def _serialize_tex_axis(file, axis):
+    file.write(int(axis.translate * 32).to_bytes(2, 'big'))
+    file.write(int(axis.scale_log).to_bytes(1, 'big'))
+
+    repeats = int(axis.repeats)
+
+    if axis.mirror:
+        repeats |= (1 << 15)
+
+    file.write(repeats.to_bytes(2, 'big'))
+
+def _serialize_tex(file, tex):
+    if tex:
+        _serialze_string(file, tex.filename)
+        file.write(tex.tmem_addr.to_bytes(2, 'big'))
+        file.write(tex.palette.to_bytes(1, 'big'))
+        _serialize_tex_axis(file, tex.s)
+        _serialize_tex_axis(file, tex.t)
+    else:
+        file.write((0).to_bytes(1, 'big'))
+
+
+def serialize_material(filename, mat: material.Material):
     with open(filename, 'wb') as output:
         output.write('MATR'.encode())
-        
-        if material.combine_mode:
-            output.write(COMMAND_COMBINE.to_bytes(1, 'big'))
-            _serialize_combine(output, material.combine_mode)
-        
-        if material.env_color:
-            output.write(COMMAND_ENV.to_bytes(1, 'big'))
-            _serialize_color(output, material.env_color)
 
-        if not material.lighting is None:
+        _serialize_tex(output, mat.tex0)
+        
+        if mat.combine_mode:
+            output.write(COMMAND_COMBINE.to_bytes(1, 'big'))
+            _serialize_combine(output, mat.combine_mode)
+        
+        if mat.env_color:
+            output.write(COMMAND_ENV.to_bytes(1, 'big'))
+            _serialize_color(output, mat.env_color)
+
+        if not mat.lighting is None:
             output.write(COMMAND_LIGHTING.to_bytes(1, 'big'))
-            output.write((1 if material.lighting else 0).to_bytes(1, 'big'))
+            output.write((1 if mat.lighting else 0).to_bytes(1, 'big'))
 
         output.write(COMMAND_EOF.to_bytes(1, 'big'))
