@@ -2,6 +2,11 @@
 #define __SCENE_CAMERA_H__
 
 #include "../math/transform.h"
+#include "../math/plane.h"
+
+struct ClippingPlanes {
+    struct Plane planes[5];
+};
 
 struct Camera {
     struct Transform transform;
@@ -10,9 +15,8 @@ struct Camera {
     float far;
 };
 
+void camera_init(struct Camera* camera, float fov, float near, float far);
 
-void cameraInit(struct Camera* camera, float fov, float near, float far);
-
-void cameraApply(struct Camera* camera);
+void camera_apply(struct Camera* camera, float aspect_ratio, struct ClippingPlanes* clipping_planes);
 
 #endif

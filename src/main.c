@@ -9,15 +9,21 @@
 
 #include "resource/material_cache.h"
 #include "resource/sprite_cache.h"
+#include "scene/camera.h"
 
 #include <libdragon.h>
 
 struct Mesh mesh_test;
 struct material* material_test;
 
+struct Camera camera;
+
 void setup() {
     mesh_load(&mesh_test, "rom:/meshes/cube.mesh");
     material_test = material_cache_load("rom:/materials/test.mat");
+
+    camera_init(&camera, 70.0f, 0.5f, 10.0f);
+    camera.transform.position.z = 5.0f;
     // sprite_test = sprite_cache_load("rom:/test.RGBA16.sprite");
 
     // glGenTextures(1, &texture_test);
@@ -44,13 +50,7 @@ void render() {
     float near_plane = 1.0f;
     float far_plane = 50.0f;
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    glFrustum(-near_plane*aspect_ratio, near_plane*aspect_ratio, -near_plane, near_plane, near_plane, far_plane);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    camera_apply(&camera, aspect_ratio, NULL);
 
     static const float gold[13] = { 0.24725, 0.1995, 0.0745, 1.0,      /* ambient */
                    0.75164, 0.60648, 0.22648, 1.0,    /* diffuse */
@@ -77,8 +77,6 @@ void render() {
     glLightfv( GL_LIGHT0, GL_SPECULAR, blue2 );
     glLightfv( GL_LIGHT0, GL_AMBIENT, blue3 );
     glLightfv( GL_LIGHT0, GL_POSITION, pos);
-
-    glTranslatef(0.0f, 0.0f, -5.0f);
 
     glRotatef(angle, 0, 1, 0);
 

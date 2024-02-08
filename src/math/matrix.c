@@ -1,27 +1,25 @@
 #include "matrix.h"
 
-void matrixPerspective(float matrix[4][4], unsigned short* perspNorm, float l, float r, float t, float b, float near, float far) {
-	// guMtxIdentF(matrix);
-
+void matrixPerspective(float matrix[4][4], float l, float r, float t, float b, float near, float far) {
     matrix[0][0] = 2.0f * near / (r - l);
+    matrix[0][1] = 0.0f;
+    matrix[0][2] = 0.0f;
+    matrix[0][3] = 0.0f;
+
+    matrix[1][0] = 0.0f;
     matrix[1][1] = 2.0f * near / (t - b);
+    matrix[1][2] = 0.0f;
+    matrix[1][3] = 0.0f;
+
     matrix[2][0] = (r + l) / (r - l);
     matrix[2][1] = (t + b) / (t - b);
     matrix[2][2] = -(far + near) / (far - near);
     matrix[2][3] = -1;
+
+    matrix[3][0] = 0.0f;
+    matrix[3][1] = 0.0f;
     matrix[3][2] = -2.0f * far * near / (far - near);
     matrix[3][3] = 0.0f;
-
-	if (perspNorm != (unsigned short *) 0) {
-	    if (near+far<=2.0) {
-		    *perspNorm = (unsigned short) 0xFFFF;
-	    } else  {
-		    *perspNorm = (unsigned short) ((2.0*65536.0)/(near+far));
-            if (*perspNorm<=0) {
-                *perspNorm = (unsigned short) 0x0001;
-            }
-	    }
-	}
 }
 
 float matrixNormalizedZValue(float depth, float near, float far) {
@@ -63,4 +61,15 @@ void matrixFromBasis(float matrix[4][4], struct Vector3* origin, struct Vector3*
     matrix[3][1] = origin->y;
     matrix[3][2] = origin->z;
     matrix[3][3] = 1.0f;
+}
+
+void matrixMul(float a[4][4], float b[4][4], float output[4][4]) {
+    for (int x = 0; x < 4; ++x) {
+        for (int y = 0; y < 4; ++y) {
+            output[x][y] = 0.0f;
+            for (int j = 0; j < 4; ++y) {
+                output[x][y] += a[j][y] * b[x][j];
+            }
+        }
+    }
 }
