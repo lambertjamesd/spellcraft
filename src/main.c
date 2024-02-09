@@ -5,21 +5,20 @@
 #include <GL/glu.h>
 #include <GL/gl_integration.h>
 
-#include "render/mesh_load.h"
-
+#include "resource/mesh_cache.h"
 #include "resource/material_cache.h"
 #include "resource/sprite_cache.h"
 #include "scene/camera.h"
 
 #include <libdragon.h>
 
-struct Mesh mesh_test;
+struct mesh* mesh_test;
 struct material* material_test;
 
 struct Camera camera;
 
 void setup() {
-    mesh_load(&mesh_test, "rom:/meshes/cube.mesh");
+    mesh_test = mesh_cache_load("rom:/meshes/cube.mesh");
     material_test = material_cache_load("rom:/materials/test.mat");
 
     camera_init(&camera, 70.0f, 0.5f, 10.0f);
@@ -74,7 +73,7 @@ void render() {
     rdpq_set_mode_standard();
 
     glCallList(material_test->list);
-    glCallList(mesh_test.list);
+    glCallList(mesh_test->list);
 
     glDisable(GL_RDPQ_MATERIAL_N64);
 }
@@ -92,19 +91,19 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
     
-    // struct controller_data ctrData;
-    // bool wasStart = false;
+    struct controller_data ctrData;
+    bool wasStart = false;
 
-    // for (;;) {
-    //     controller_read(&ctrData);
-    //     bool isStart = ctrData.c[0].start != 0;
+    for (;;) {
+        controller_read(&ctrData);
+        bool isStart = ctrData.c[0].start != 0;
 
-    //     if (isStart && !wasStart) {
-    //         break;
-    //     }
+        if (isStart && !wasStart) {
+            break;
+        }
 
-    //     wasStart = isStart;
-    // }
+        wasStart = isStart;
+    }
 
     setup();
 

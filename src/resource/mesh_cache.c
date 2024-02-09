@@ -1,37 +1,44 @@
-#include "mesh_load.h"
+#include "mesh_cache.h"
 
 #include <libdragon.h>
 #include <GL/gl.h>
 
+#include "resource_cache.h"
 #include "../math/vector3.h"
 #include "../math/vector2.h"
-#include "./coloru8.h"
+#include "../render/coloru8.h"
+#include "material_cache.h"
+
 
 // MESH
 #define EXPECTED_HEADER 0x4D455348
 
-bool mesh_load(struct Mesh* into, const char* path) {
+bool mesh_load(struct mesh* into, const char* path) {
     FILE* meshFile = asset_fopen(path, NULL);
 
     int header;
     fread(&header, 1, 4, meshFile);
     assert(header == EXPECTED_HEADER);
 
-    uint16_t submeshCount;
-    fread(&submeshCount, 2, 1, meshFile);
-    meshInit(into, submeshCount);
+    uint8_t submesh_count;
+    fread(&submesh_count, 1, 1, meshFile);
+    mesh_init(into, submesh_count);
 
-    for (uint16_t i = 0; i < submeshCount; ++i) {
+    for (uint16_t i = 0; i < submesh_count; ++i) {
 
-        uint16_t strLength;
-        fread(&strLength, 2, 1, meshFile);
-        char materialName[strLength];
-        fread(materialName, 1, strLength, meshFile);
-        
-        // TODO load material
+        uint8_t strLength;
 
-        uint16_t attributes;
-        fread(&attributes, 2, 1, meshFile);
+        fread(&strLength, 1, 1, meshFile);
+
+        if (strLength) {
+            char materialName[strLength + 1];
+            fread(materialName, 1, strLength, meshFile);
+            materialName[strLength] = '\0';
+            into->materials[i] = material_cache_load(materialName);
+        }
+
+        uint8_t attributes;
+        fread(&attributes, 1, 1, meshFile);
 
         assert(attributes <= MeshAttributesAll);
 
@@ -115,4 +122,32 @@ bool mesh_load(struct Mesh* into, const char* path) {
     glBindVertexArray(0);
 
     return true;
+}
+
+struct resource_cache mesh_resource_cache;
+
+struct mesh* mesh_cache_load(const char* filename) {
+    struct resource_cache_entry* entry = resource_cache_use(&mesh_resource_cache, filename);
+
+    if (!entry->resource) {
+        struct mesh* result = malloc(sizeof(struct mesh));
+        
+        mesh_load(result, filename);
+
+        entry->resource = result;
+    }
+
+    return entry->resource;
+}
+
+void mesh_cache_release(struct mesh* mesh) {
+    if (resource_cache_free(&mesh_resource_cache, mesh)) {
+        for (int i = 0; i < mesh->submesh_count; ++i) {
+            material_cache_release(mesh->materials[i]);
+        }
+
+        mesh_destroy(mesh);
+
+        free(mesh);
+    }
 }

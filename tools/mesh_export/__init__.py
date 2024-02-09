@@ -4,6 +4,11 @@ import bmesh
 import sys
 import struct
 import math
+import os.path
+
+sys.path.append(os.path.dirname(__file__))
+
+import material_writer.material
 
 class mesh_data():
     def __init__(self) -> None:
@@ -57,23 +62,50 @@ class mesh_data():
 
 mesh_by_material = dict()
 
+ATTR_POS = 1 << 0
+ATTR_UV = 1 << 1
+ATTR_COLOR = 1 << 2
+ATTR_NORMAL = 1 << 3
+
 def write_meshes(filename, mesh_list):
     with open(filename, "wb") as file:
         file.write('MESH'.encode())
-        file.write(len(mesh_list).to_bytes(2, 'big'))
+        file.write(len(mesh_list).to_bytes(1, 'big'))
 
-        for mesh in mesh_list:
-            material_name = mesh[0].encode()
-            file.write(len(material_name).to_bytes(2, 'big'))
-            file.write(material_name)
+        for mesh_pair in mesh_list:
+            material_name = mesh_pair[0]
 
-            # indicate which attributes are present
-            # hard code a 11 to indicate position, uv, and normal data
-            # data
-            file.write((1 | 2 | 8).to_bytes(2, 'big'))
+            material_filename = f"assets/materials/{material_name}.mat.json"
 
-            file.write(len(mesh[1].vertices).to_bytes(2, 'big'))
-            for idx, vertex in enumerate(mesh[1].vertices):
+            if not os.path.exists(material_filename):
+                raise Exception(f"{material_filename} does not exist")
+            
+            material_object = material_writer.material.parse_material(material_filename)
+
+            material_romname = f"rom:/materials/{material_name}.mat".encode()
+            file.write(len(material_romname).to_bytes(1, 'big'))
+            file.write(material_romname)
+
+            needs_uv = bool(material_object.tex0)
+            needs_normal = bool(material_object.lighting)
+
+            mesh = mesh_pair[1]
+
+            attribute_mask = ATTR_POS
+
+            if needs_uv:
+                attribute_mask |= ATTR_UV
+
+            if needs_normal:
+                attribute_mask |= ATTR_NORMAL
+
+            file.write((attribute_mask).to_bytes(1, 'big'))
+
+            # TODO deduplicate vertices
+            # TODO optimize triangle order
+
+            file.write(len(mesh.vertices).to_bytes(2, 'big'))
+            for idx, vertex in enumerate(mesh.vertices):
                 file.write(struct.pack(
                     ">hhh", 
                     int(vertex[0] * 32), 
@@ -81,31 +113,33 @@ def write_meshes(filename, mesh_list):
                     int(vertex[2] * 32)
                 ))
 
-                uv = mesh[1].uv[idx]
+                if needs_uv:
+                    uv = mesh.uv[idx]
 
-                file.write(struct.pack(
-                    ">hh",
-                    int(uv[0] * 256),
-                    int(uv[1] * 256)
-                ))
+                    file.write(struct.pack(
+                        ">hh",
+                        int(uv[0] * 256),
+                        int(uv[1] * 256)
+                    ))
 
-                normal = mesh[1].normals[idx]
+                if needs_normal:
+                    normal = mesh.normals[idx]
 
-                file.write(struct.pack(
-                    ">bbb", 
-                    int(normal[0] * 127), 
-                    int(normal[1] * 127), 
-                    int(normal[2] * 127)
-                ))
+                    file.write(struct.pack(
+                        ">bbb", 
+                        int(normal[0] * 127), 
+                        int(normal[1] * 127), 
+                        int(normal[2] * 127)
+                    ))
 
             index_size = 1
 
-            if len(mesh[1].vertices) > 256:
+            if len(mesh.vertices) > 256:
                 index_size = 2
 
-            file.write(len(mesh[1].indices).to_bytes(2, 'big'))
+            file.write(len(mesh.indices).to_bytes(2, 'big'))
 
-            for index in mesh[1].indices:
+            for index in mesh.indices:
                 file.write(index.to_bytes(index_size, 'big'))
 
 

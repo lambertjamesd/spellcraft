@@ -2,6 +2,7 @@
 #define __RENDER_MESH_H__
 
 #include <GL/gl.h>
+#include "material.h"
 
 enum MeshAttributes {
     MeshAttributesPosition = (1 << 0),
@@ -12,12 +13,14 @@ enum MeshAttributes {
     MeshAttributesAll = MeshAttributesPosition | MeshAttributesUV | MeshAttributesColor | MeshAttributesNormal,
 };
 
-struct Mesh {
+struct mesh {
     GLuint list;
-    uint16_t submeshCount;
+    uint16_t submesh_count;
+    struct material** materials;
 };
 
-void meshInit(struct Mesh* mesh, int submeshCount);
+void mesh_init(struct mesh* mesh, int submesh_count);
+void mesh_destroy(struct mesh* mesh);
 
 int meshAttributeSize(int attributes);
 

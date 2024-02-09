@@ -31,10 +31,10 @@ MESH_SOURCES := $(shell find assets/ -type f -name '*.blend' | sort)
 
 MESHES := $(MESH_SOURCES:assets/%.blend=filesystem/%.mesh)
 
-filesystem/%.mesh: assets/%.blend tools/mesh-export/__init__.py
+filesystem/%.mesh: assets/%.blend tools/mesh_export/__init__.py
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%.mesh=build/assets/%.mesh))
-	$(BLENDER_4) $< --background --python tools/mesh-export/__init__.py -- $(@:filesystem/%.mesh=build/assets/%.mesh)
+	$(BLENDER_4) $< --background --python tools/mesh_export/__init__.py -- $(@:filesystem/%.mesh=build/assets/%.mesh)
 	mkasset -o $(dir $@) -w 256 $(@:filesystem/%.mesh=build/assets/%.mesh)
 
 ###
@@ -43,14 +43,14 @@ filesystem/%.mesh: assets/%.blend tools/mesh-export/__init__.py
 
 MATERIAL_SOURCES := $(shell find assets/ -type f -name '*.mat.json' | sort)
 
-MATERIAL_SCRIPTS := $(shell find tools/material-writer -type f -name '*.py')
+MATERIAL_SCRIPTS := $(shell find tools/mesh_export/material_writer -type f -name '*.py')
 
 MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat)
 
 filesystem/%.mat: assets/%.mat.json $(MATERIAL_SCRIPTS)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%.mesh=build/assets/%.mat))
-	python tools/material-writer --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
+	python tools/mesh_export/material_writer --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
 	mkasset -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
 
 ###

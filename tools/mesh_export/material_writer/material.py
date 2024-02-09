@@ -358,7 +358,7 @@ def _parse_tex(json_data, key_path, relative_to):
     return result
 
 
-def parse_material(filename):
+def parse_material(filename: str):
     if not os.path.exists(filename):
         raise Exception(f"The file {filename} does not exist")
 

@@ -169,6 +169,7 @@ struct resource_cache_entry* resource_cache_insert(struct resource_cache* cache,
 
     cache->filename_index[filename_index] = entry_index;
     
+    // TODO insert after resource is initialized
     // insert resource index
     uint32_t index_check = ((uint32_t)entry->resource * MAGIC_PRIME) & mask;
 
@@ -227,6 +228,10 @@ void resource_cache_remove(struct resource_cache* cache, struct resource_cache_e
 }
 
 bool resource_cache_free(struct resource_cache* cache, void* resource) {
+    if (!resource) {
+        return false;
+    }
+
     assert(cache->entries);
 
     uint32_t mask = cache->entry_capacity - 1;
