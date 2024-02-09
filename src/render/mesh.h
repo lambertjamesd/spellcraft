@@ -22,6 +22,6 @@ struct mesh {
 void mesh_init(struct mesh* mesh, int submesh_count);
 void mesh_destroy(struct mesh* mesh);
 
-int meshAttributeSize(int attributes);
+int mesh_attribute_size(int attributes);
 
 #endif

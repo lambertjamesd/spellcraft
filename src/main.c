@@ -9,17 +9,18 @@
 #include "resource/material_cache.h"
 #include "resource/sprite_cache.h"
 #include "scene/camera.h"
+#include "math/transform.h"
+
+#include "render/render_batch.h"
 
 #include <libdragon.h>
 
 struct mesh* mesh_test;
-struct material* material_test;
 
 struct Camera camera;
 
 void setup() {
     mesh_test = mesh_cache_load("rom:/meshes/cube.mesh");
-    material_test = material_cache_load("rom:/materials/test.mat");
 
     camera_init(&camera, 70.0f, 0.5f, 10.0f);
     camera.transform.position.z = 5.0f;
@@ -65,17 +66,23 @@ void render() {
     glLightfv( GL_LIGHT0, GL_AMBIENT, blue3 );
     glLightfv( GL_LIGHT0, GL_POSITION, pos);
 
-    glRotatef(angle, 0, 1, 0);
+    struct render_batch batch;
+    render_batch_init(&batch);
 
-    angle += 1.0f;
+    struct render_batch_element* element = render_batch_add(&batch);
 
-    glEnable(GL_RDPQ_MATERIAL_N64);
-    rdpq_set_mode_standard();
+    element->list = mesh_test->list;
+    element->material = mesh_test->materials[0];
 
-    glCallList(material_test->list);
-    glCallList(mesh_test->list);
+    struct Transform transform;
+    transformInitIdentity(&transform);
+    quatAxisAngle(&gUp, angle, &transform.rotation);
 
-    glDisable(GL_RDPQ_MATERIAL_N64);
+    transformToMatrix(&transform, element->transform);
+
+    angle += 0.05f;
+
+    render_batch_finish(&batch);
 }
 
 int main(void)
@@ -91,19 +98,19 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
     
-    struct controller_data ctrData;
-    bool wasStart = false;
+    // struct controller_data ctrData;
+    // bool wasStart = false;
 
-    for (;;) {
-        controller_read(&ctrData);
-        bool isStart = ctrData.c[0].start != 0;
+    // for (;;) {
+    //     controller_read(&ctrData);
+    //     bool isStart = ctrData.c[0].start != 0;
 
-        if (isStart && !wasStart) {
-            break;
-        }
+    //     if (isStart && !wasStart) {
+    //         break;
+    //     }
 
-        wasStart = isStart;
-    }
+    //     wasStart = isStart;
+    // }
 
     setup();
 

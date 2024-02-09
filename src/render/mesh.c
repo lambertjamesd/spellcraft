@@ -22,7 +22,7 @@ void mesh_destroy(struct mesh* mesh) {
     free(mesh->materials);
 }
 
-int meshAttributeSize(int attributes) {
+int mesh_attribute_size(int attributes) {
     int result = 0;
 
     if (attributes & MeshAttributesPosition) {

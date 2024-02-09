@@ -9,7 +9,6 @@
 #include "../render/coloru8.h"
 #include "material_cache.h"
 
-
 // MESH
 #define EXPECTED_HEADER 0x4D455348
 
@@ -50,7 +49,7 @@ bool mesh_load(struct mesh* into, const char* path) {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
 
         int offset = 0;
-        int size = meshAttributeSize(attributes);
+        int size = mesh_attribute_size(attributes);
 
         if (attributes & MeshAttributesPosition) {
             glEnableClientState(GL_VERTEX_ARRAY);
