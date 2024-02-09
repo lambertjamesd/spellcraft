@@ -49,7 +49,7 @@ MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat)
 
 filesystem/%.mat: assets/%.mat.json $(MATERIAL_SCRIPTS)
 	@mkdir -p $(dir $@)
-	@mkdir -p $(dir $(@:filesystem/%.mesh=build/assets/%.mat))
+	@mkdir -p $(dir $(@:filesystem/%.mat=build/assets/%.mat))
 	python tools/mesh_export/material_writer --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
 	mkasset -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
 
@@ -68,7 +68,11 @@ spellcraft.z64: N64_ROM_TITLE="SpellCraft"
 spellcraft.z64: $(BUILD_DIR)/spellcraft.dfs
 
 clean:
-	rm -f $(BUILD_DIR)/* filesystem/ *.z64
+	rm -rf $(BUILD_DIR)/* filesystem/ *.z64
 .PHONY: clean
+
+clean:
+	rm -rf filesystem/ 
+.PHONY: clean-resource
 
 -include $(wildcard $(BUILD_DIR)/*.d)

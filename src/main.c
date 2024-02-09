@@ -35,8 +35,6 @@ void render() {
     glEnable(GL_DEPTH_TEST);
 
     float aspect_ratio = (float)display_get_width() / (float)display_get_height();
-    float near_plane = 1.0f;
-    float far_plane = 50.0f;
 
     camera_apply(&camera, aspect_ratio, NULL);
 
@@ -91,7 +89,7 @@ int main(void)
     rdpq_init();
     gl_init();
     dfs_init(DFS_DEFAULT_LOCATION);
-    controller_init();
+    joypad_init();
 
     surface_t zbuffer = surface_alloc(FMT_RGBA16, 320, 240);
 

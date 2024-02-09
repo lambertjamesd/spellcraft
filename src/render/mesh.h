@@ -13,10 +13,16 @@ enum MeshAttributes {
     MeshAttributesAll = MeshAttributesPosition | MeshAttributesUV | MeshAttributesColor | MeshAttributesNormal,
 };
 
+enum mesh_material_flags {
+    // the memory from this material is managed by mesh loader
+    MESH_MATERIAL_FLAGS_EMBEDDED = (1 << 0),
+};
+
 struct mesh {
     GLuint list;
     uint16_t submesh_count;
     struct material** materials;
+    uint8_t* material_flags;
 };
 
 void mesh_init(struct mesh* mesh, int submesh_count);

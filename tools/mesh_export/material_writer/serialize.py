@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
+
 import material
 import struct
 
@@ -162,23 +166,26 @@ def _serialize_tex(file, tex):
     else:
         file.write((0).to_bytes(1, 'big'))
 
+def serialize_material_file(output, mat: material.Material):
+    output.write('MATR'.encode())
+
+    _serialize_tex(output, mat.tex0)
+    
+    if mat.combine_mode:
+        output.write(COMMAND_COMBINE.to_bytes(1, 'big'))
+        _serialize_combine(output, mat.combine_mode)
+    
+    if mat.env_color:
+        output.write(COMMAND_ENV.to_bytes(1, 'big'))
+        _serialize_color(output, mat.env_color)
+
+    if not mat.lighting is None:
+        output.write(COMMAND_LIGHTING.to_bytes(1, 'big'))
+        output.write((1 if mat.lighting else 0).to_bytes(1, 'big'))
+
+    output.write(COMMAND_EOF.to_bytes(1, 'big'))
+
 
 def serialize_material(filename, mat: material.Material):
     with open(filename, 'wb') as output:
-        output.write('MATR'.encode())
-
-        _serialize_tex(output, mat.tex0)
-        
-        if mat.combine_mode:
-            output.write(COMMAND_COMBINE.to_bytes(1, 'big'))
-            _serialize_combine(output, mat.combine_mode)
-        
-        if mat.env_color:
-            output.write(COMMAND_ENV.to_bytes(1, 'big'))
-            _serialize_color(output, mat.env_color)
-
-        if not mat.lighting is None:
-            output.write(COMMAND_LIGHTING.to_bytes(1, 'big'))
-            output.write((1 if mat.lighting else 0).to_bytes(1, 'big'))
-
-        output.write(COMMAND_EOF.to_bytes(1, 'big'))
+        serialize_material_file(output, mat)

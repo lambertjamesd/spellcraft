@@ -84,9 +84,7 @@ void material_load_tex(struct material_tex* tex, FILE* file) {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void material_load(struct material* into, const char* path) {
-    FILE* material_file = asset_fopen(path, NULL);
-
+void material_load(struct material* into, FILE* material_file) {
     int header;
     fread(&header, 1, 4, material_file);
     assert(header == EXPECTED_HEADER);
@@ -141,8 +139,18 @@ void material_load(struct material* into, const char* path) {
     }
 
     glEndList();
+}
 
-    fclose(material_file);
+void material_release(struct material* material) {
+    if (material->tex0.gl_texture) {
+        glDeleteTextures(1, &material->tex0.gl_texture);
+    }
+
+    if (material->tex0.sprite) {
+        sprite_cache_release(material->tex0.sprite);
+    }
+
+    material_free(material);
 }
 
 struct resource_cache material_resource_cache;
@@ -153,8 +161,9 @@ struct material* material_cache_load(const char* filename) {
     if (!entry->resource) {
         struct material* result = malloc(sizeof(struct material));
         
-        material_init(result);
-        material_load(result, filename);
+        FILE* material_file = asset_fopen(filename, NULL);
+        material_load(result, material_file);
+        fclose(material_file);
 
         entry->resource = result;
     }
@@ -164,15 +173,7 @@ struct material* material_cache_load(const char* filename) {
 
 void material_cache_release(struct material* material) {
     if (resource_cache_free(&material_resource_cache, material)) {
-        if (material->tex0.gl_texture) {
-            glDeleteTextures(1, &material->tex0.gl_texture);
-        }
-
-        if (material->tex0.sprite) {
-            sprite_cache_release(material->tex0.sprite);
-        }
-
-        material_free(material);
+        material_release(material);
         free(material);
     }
 }

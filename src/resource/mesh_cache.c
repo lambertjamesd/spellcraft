@@ -12,9 +12,7 @@
 // MESH
 #define EXPECTED_HEADER 0x4D455348
 
-bool mesh_load(struct mesh* into, const char* path) {
-    FILE* meshFile = asset_fopen(path, NULL);
-
+void mesh_load(struct mesh* into, FILE* meshFile) {
     int header;
     fread(&header, 1, 4, meshFile);
     assert(header == EXPECTED_HEADER);
@@ -34,6 +32,12 @@ bool mesh_load(struct mesh* into, const char* path) {
             fread(materialName, 1, strLength, meshFile);
             materialName[strLength] = '\0';
             into->materials[i] = material_cache_load(materialName);
+        } else {
+            // the material is embedded
+            struct material* material = malloc(sizeof(struct material));
+            material_load(material, meshFile);
+            into->materials[i] = material;
+            into->material_flags[i] |= MESH_MATERIAL_FLAGS_EMBEDDED;
         }
 
         uint8_t attributes;
@@ -115,12 +119,21 @@ bool mesh_load(struct mesh* into, const char* path) {
         // TODO clenaup vertex buffers
     }
 
-    fclose(meshFile);
-
     glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
     glBindVertexArray(0);
+}
 
-    return true;
+void mesh_release(struct mesh* mesh) {
+    for (int i = 0; i < mesh->submesh_count; ++i) {
+        if (mesh->material_flags[i] & MESH_MATERIAL_FLAGS_EMBEDDED) {
+            material_release(mesh->materials[i]);
+            free(mesh->materials[i]);
+        } else {
+            material_cache_release(mesh->materials[i]);
+        }
+    }
+
+    mesh_destroy(mesh);
 }
 
 struct resource_cache mesh_resource_cache;
@@ -131,7 +144,9 @@ struct mesh* mesh_cache_load(const char* filename) {
     if (!entry->resource) {
         struct mesh* result = malloc(sizeof(struct mesh));
         
-        mesh_load(result, filename);
+        FILE* meshFile = asset_fopen(filename, NULL);
+        mesh_load(result, meshFile);
+        fclose(meshFile);
 
         entry->resource = result;
     }
@@ -141,12 +156,7 @@ struct mesh* mesh_cache_load(const char* filename) {
 
 void mesh_cache_release(struct mesh* mesh) {
     if (resource_cache_free(&mesh_resource_cache, mesh)) {
-        for (int i = 0; i < mesh->submesh_count; ++i) {
-            material_cache_release(mesh->materials[i]);
-        }
-
-        mesh_destroy(mesh);
-
+        mesh_release(mesh);
         free(mesh);
     }
 }

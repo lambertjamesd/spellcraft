@@ -10,16 +10,18 @@ void mesh_init(struct mesh* mesh, int submesh_count) {
     mesh->list = glGenLists(submesh_count);
 
     mesh->materials = malloc(sizeof(struct material) * submesh_count);
+    mesh->material_flags = malloc(sizeof(*mesh->material_flags) * submesh_count);
 
     for (int i = 0; i < submesh_count; ++i) {
         mesh->materials[i] = NULL;
+        mesh->material_flags[i] = 0;
     }
 }
-
 
 void mesh_destroy(struct mesh* mesh) {
     glDeleteLists(mesh->list, mesh->submesh_count);
     free(mesh->materials);
+    free(mesh->material_flags);
 }
 
 int mesh_attribute_size(int attributes) {

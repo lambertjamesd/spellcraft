@@ -9,6 +9,7 @@ import os.path
 sys.path.append(os.path.dirname(__file__))
 
 import material_writer.material
+import material_writer.serialize
 
 class mesh_data():
     def __init__(self) -> None:
@@ -75,17 +76,31 @@ def write_meshes(filename, mesh_list):
         for mesh_pair in mesh_list:
             material_name = mesh_pair[0]
 
-            material_filename = f"assets/materials/{material_name}.mat.json"
+            material_filename = f"assets/{material_name}.mat.json"
 
-            if not os.path.exists(material_filename):
+            if not material_filename.startswith('materials/'):
+                # embedded material
+                print(f"embedding material {material_name}")
+                material_object = material_writer.material.Material()
+
+                # TODO interpret material and attempt to construct
+                # output material
+
+                # signal an embedded material
+                file.write((0).to_bytes(1, 'big'))
+
+                material_writer.serialize.serialize_material_file(file, material_object)
+
+            elif os.path.exists(material_filename):
+                print(f"using existing material {material_filename}")
+                material_object = material_writer.material.parse_material(material_filename)
+
+                material_romname = f"rom:/{material_name}.mat".encode()
+                file.write(len(material_romname).to_bytes(1, 'big'))
+                file.write(material_romname)
+            else:
                 raise Exception(f"{material_filename} does not exist")
-            
-            material_object = material_writer.material.parse_material(material_filename)
-
-            material_romname = f"rom:/materials/{material_name}.mat".encode()
-            file.write(len(material_romname).to_bytes(1, 'big'))
-            file.write(material_romname)
-
+        
             needs_uv = bool(material_object.tex0)
             needs_normal = bool(material_object.lighting)
 
