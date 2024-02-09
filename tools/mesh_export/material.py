@@ -1,8 +1,6 @@
-import sys
 import argparse
-import material
-import serialize
-import os.path
+import material_writer.material
+import material_writer.serialize
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -19,9 +17,9 @@ if __name__ == "__main__":
     default_material = None
 
     if args.default != args.input and args.default:
-        default_material = material.parse_material(args.default)
+        default_material = material_writer.material.parse_material(args.default)
 
     print(f'Writing material to {args.output}')
-    result = material.parse_material(args.input)
+    result = material_writer.material.parse_material(args.input)
     print(result)
-    serialize.serialize_material(args.output, result)
+    material_writer.serialize.serialize_material(args.output, result)
