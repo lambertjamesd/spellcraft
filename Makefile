@@ -25,17 +25,18 @@ filesystem/%.sprite: assets/%.RGBA16.png
 # meshes
 ###
 
+EXPORT_SOURCE := $(shell find tools/mesh_export/ -type f -name '*.py' | sort)
 BLENDER_4 := /home/james/Blender/blender-4.0.2-linux-x64/blender
 
-MESH_SOURCES := $(shell find assets/ -type f -name '*.blend' | sort)
+MESH_SOURCES := $(shell find assets/meshes -type f -name '*.blend' | sort)
 
-MESHES := $(MESH_SOURCES:assets/%.blend=filesystem/%.mesh)
+MESHES := $(MESH_SOURCES:assets/meshes/%.blend=filesystem/meshes/%.mesh)
 
-filesystem/%.mesh: assets/%.blend tools/mesh_export/mesh.py
+filesystem/meshes/%.mesh: assets/meshes/%.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
-	@mkdir -p $(dir $(@:filesystem/%.mesh=build/assets/%.mesh))
-	$(BLENDER_4) $< --background --python tools/mesh_export/mesh.py -- $(@:filesystem/%.mesh=build/assets/%.mesh)
-	mkasset -o $(dir $@) -w 256 $(@:filesystem/%.mesh=build/assets/%.mesh)
+	@mkdir -p $(dir $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh))
+	$(BLENDER_4) $< --background --python tools/mesh_export/mesh.py -- $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
+	mkasset -o $(dir $@) -w 256 $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
 
 ###
 # materials
@@ -43,15 +44,27 @@ filesystem/%.mesh: assets/%.blend tools/mesh_export/mesh.py
 
 MATERIAL_SOURCES := $(shell find assets/ -type f -name '*.mat.json' | sort)
 
-MATERIAL_SCRIPTS := tools/mesh_export/material.py $(shell find tools/mesh_export -type f -name '*.py')
-
 MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat)
 
-filesystem/%.mat: assets/%.mat.json $(MATERIAL_SCRIPTS)
+filesystem/%.mat: assets/%.mat.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%.mat=build/assets/%.mat))
 	python tools/mesh_export/material.py --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
 	mkasset -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
+
+###
+# worlds
+###
+
+WORLD_SOURCES := $(shell find assets/worlds -type f -name '*.blend' | sort)
+
+WORLDS := $(MESH_SOURCES:assets/worlds/%.blend=filesystem/worlds/%.world)
+
+filesystem/worlds/%.world: assets/worlds/%.blend $(EXPORT_SOURCE)
+	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $(@:filesystem/worlds/%.world=build/assets/worlds/%.world))
+	$(BLENDER_4) $< --background --python tools/mesh_export/world.py -- $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
+	mkasset -o $(dir $@) -w 256 $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
 
 ###
 # source code

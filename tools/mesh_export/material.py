@@ -1,6 +1,6 @@
 import argparse
-import material_writer.material
-import material_writer.serialize
+import entities.material
+import entities.serialize
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -17,9 +17,9 @@ if __name__ == "__main__":
     default_material = None
 
     if args.default != args.input and args.default:
-        default_material = material_writer.material.parse_material(args.default)
+        default_material = entities.material.parse_material(args.default)
 
     print(f'Writing material to {args.output}')
-    result = material_writer.material.parse_material(args.input)
+    result = entities.material.parse_material(args.input)
     print(result)
-    material_writer.serialize.serialize_material(args.output, result)
+    entities.serialize.serialize_material(args.output, result)
