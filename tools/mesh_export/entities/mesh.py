@@ -5,6 +5,7 @@ from . import serialize
 import os
 import struct
 import bmesh
+import sys
 
 class mesh_data():
     def __init__(self, mat: bpy.types.Material) -> None:
@@ -57,16 +58,22 @@ class mesh_data():
         for idx in triangles:
             self.indices.append(index_mapping[idx])
 
-def search_node_linkage(from_node: bpy.types.Node, input_name: str):
+def search_node_input(from_node: bpy.types.Node, input_name: str):
     for input in from_node.inputs:
-        if input.name != input_name:
-            continue
+        if input.name == input_name:
+            return input
+        
+    return None
 
-        if not input.is_linked:
-            continue
 
-        for link in input.links:
-            return link.from_node
+def search_node_linkage(from_node: bpy.types.Node, input_name: str):
+    input = search_node_input(from_node, input_name)
+
+    if not input.is_linked:
+        return None
+
+    for link in input.links:
+        return link.from_node
         
     return None
 
@@ -76,6 +83,115 @@ def find_node_of_type(tree_nodes: bpy.types.Nodes, type_name: str):
             return node
         
     return None
+
+def color_float_to_int(value):
+    result = int(value * 255)
+
+    if result > 255:
+        result = 255
+    elif result < 0:
+        result = 0
+
+    return result
+
+def color_array_to_color(array):
+    return material.Color(
+        color_float_to_int(array[0]),
+        color_float_to_int(array[1]),
+        color_float_to_int(array[2]),
+        color_float_to_int(array[3])
+    )
+
+def determine_material_from_nodes(mat: bpy.types.Material, result: material.Material):
+    output_node = find_node_of_type(mat.node_tree.nodes, 'OUTPUT_MATERIAL')
+
+    if not output_node:
+        print('Could not find output node for material')
+        return
+
+    material_type = search_node_linkage(output_node, 'Surface')
+
+    if not material_type:
+        print('No input was specified for output material')
+        return
+
+    color_link: bpy.types.NodeSocket | None = None
+
+    if material_type.type == 'BSDF_PRINCIPLED':
+        color_link = search_node_input(material_type, 'Base Color')
+        result.lighting = True
+    elif material_type.type == 'BSDF_DIFFUSE':
+        color_link = search_node_input(material_type, 'Color')
+        result.lighting = True
+    elif material_type.type == 'EMISSION':
+        color_link = search_node_input(material_type, 'Color')
+        result.lighting = False
+    else:
+        print(f"The node type {material_type.type} is not supported")
+        return
+
+    if not color_link:
+        print('couldnt find color link')
+        return
+    
+    # TODO determine alpha
+
+    color_name = 'PRIM'
+    
+    # solid color
+    if not color_link.is_linked:
+        color = color_link.default_value
+        result.prim_color = color_array_to_color(color)
+        color_name = 'PRIM'
+    elif color_link.links[0].from_node.type == 'TEX_IMAGE':
+        color_node: bpy.types.ShaderNodeTexImage = color_link.links[0].from_node
+        color_name = 'TEX0'
+
+        input_filename = sys.argv[1]
+        image_path = os.path.normpath(os.path.join(os.path.dirname(input_filename), color_node.image.filepath[2:]))
+
+        result.tex0 = material.Tex()
+        result.tex0.filename = f"rom:{image_path[len('assets'):-len('.png')]}.sprite"
+
+        if color_node.interpolation == 'Nearest':
+            result.tex0.min_filter = 'nearest'
+            result.tex0.mag_filter = 'nearest'
+        else:
+            result.tex0.min_filter = 'linear'
+            result.tex0.mag_filter = 'linear'
+
+        if color_node.extension == 'REPEAT':
+            result.tex0.s.repeats = 2048
+            result.tex0.s.mirror = False
+            result.tex0.t.repeats = 2048
+            result.tex0.t.mirror = False
+        elif color_node.extension == 'MIRROR':
+            result.tex0.s.repeats = 2048
+            result.tex0.s.mirror = True
+            result.tex0.t.repeats = 2048
+            result.tex0.t.mirror = True
+        else:
+            result.tex0.s.repeats = 1
+            result.tex0.s.mirror = False
+            result.tex0.t.repeats = 1
+            result.tex0.t.mirror = False
+
+    if result.lighting:
+        result.combine_mode = material.CombineMode(
+            material.CombineModeCycle(
+                color_name, '0', 'SHADE', '0',
+                color_name, '0', 'SHADE', '0'
+            ),
+            None
+        )
+    else:
+        result.combine_mode = material.CombineMode(
+            material.CombineModeCycle(
+                '0', '0', '0', color_name,
+                '0', '0', '0', color_name
+            ),
+            None
+        )
 
 
 ATTR_POS = 1 << 0
@@ -95,21 +211,14 @@ def write_meshes(file, mesh_list):
 
         if not material_name.startswith('materials/'):
             # embedded material
-            print(f"embedding material {material_name}")
             material_object = material.Material()
 
             if mesh.mat.use_nodes:
-                output_node = find_node_of_type(mesh.mat.node_tree.nodes, 'OUTPUT_MATERIAL')
-                material_type = search_node_linkage(output_node, 'Surface')
+                determine_material_from_nodes(mesh.mat, material_object)
 
-                for input in material_type.inputs:
-                    if input.name == 'Base Color':
-                        print(input.name)
-                        print(input.is_linked)
-                        print(input.type)
-                        print(input.default_value)
-                print(material_type.type)
-
+            print(f"embedding material {material_name}")
+            print(material_object)
+            
             # TODO interpret material and attempt to construct
             # output material
 

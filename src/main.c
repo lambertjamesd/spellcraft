@@ -61,7 +61,7 @@ void render() {
     float blue1[4] = { 0.4, 0.4, 0.6, 1 };
     float blue2[4] = { 0.0, 0, 0.8, 1 };
     float blue3[4] = { 0.0, 0, 0.15, 1 };
-    float pos[4] = {2, 0, 0, 1};
+    float pos[4] = {1, 0, 0, 0};
     glEnable( GL_LIGHT0 );
     glLightfv( GL_LIGHT0, GL_DIFFUSE, blue1 );
     glLightfv( GL_LIGHT0, GL_SPECULAR, blue2 );
@@ -103,19 +103,19 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
     
-    // struct controller_data ctrData;
-    // bool wasStart = false;
+    struct controller_data ctrData;
+    bool wasStart = false;
 
-    // for (;;) {
-    //     controller_read(&ctrData);
-    //     bool isStart = ctrData.c[0].start != 0;
+    for (;;) {
+        controller_read(&ctrData);
+        bool isStart = ctrData.c[0].start != 0;
 
-    //     if (isStart && !wasStart) {
-    //         break;
-    //     }
+        if (isStart && !wasStart) {
+            break;
+        }
 
-    //     wasStart = isStart;
-    // }
+        wasStart = isStart;
+    }
 
     setup();
 

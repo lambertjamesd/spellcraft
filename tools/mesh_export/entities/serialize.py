@@ -7,7 +7,8 @@ import struct
 COMMAND_EOF = 0
 COMMAND_COMBINE = 1
 COMMAND_ENV = 2
-COMMAND_LIGHTING = 3
+COMMAND_PRIM = 3
+COMMAND_LIGHTING = 4
 
 def _serialize_color(file, color: material.Color):
     file.write(struct.pack('>BBBB', color.r, color.g, color.b, color.a))
@@ -162,6 +163,16 @@ def _serialize_tex(file, tex):
         file.write(tex.palette.to_bytes(1, 'big'))
         _serialize_tex_axis(file, tex.s)
         _serialize_tex_axis(file, tex.t)
+
+        if tex.mag_filter == 'nearest':
+            file.write((0).to_bytes(1, 'big'))
+        else:
+            file.write((1).to_bytes(1, 'big'))
+
+        if tex.min_filter == 'nearest':
+            file.write((0).to_bytes(1, 'big'))
+        else:
+            file.write((1).to_bytes(1, 'big'))
     else:
         file.write((0).to_bytes(1, 'big'))
 
@@ -177,6 +188,10 @@ def serialize_material_file(output, mat: material.Material):
     if mat.env_color:
         output.write(COMMAND_ENV.to_bytes(1, 'big'))
         _serialize_color(output, mat.env_color)
+
+    if mat.prim_color:
+        output.write(COMMAND_PRIM.to_bytes(1, 'big'))
+        _serialize_color(output, mat.prim_color)
 
     if not mat.lighting is None:
         output.write(COMMAND_LIGHTING.to_bytes(1, 'big'))

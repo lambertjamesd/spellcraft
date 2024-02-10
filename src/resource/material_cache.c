@@ -11,8 +11,8 @@
 #define COMMAND_EOF         0x00
 #define COMMAND_COMBINE     0x01
 #define COMMAND_ENV         0x02
-#define COMMAND_LIGHTING    0x03
-#define COMMAND_TEX0        0x04
+#define COMMAND_PRIM        0x03
+#define COMMAND_LIGHTING    0x04
 
 struct text_axis {
     float translate;
@@ -97,6 +97,12 @@ void material_load(struct material* into, FILE* material_file) {
 
     glNewList(into->list, GL_COMPILE);
 
+    if (into->tex0.gl_texture) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, into->tex0.gl_texture);
+        glEnable(GL_RDPQ_MATERIAL_N64);
+    }
+
     while (has_more) {
         uint8_t nextCommand;
         fread(&nextCommand, 1, 1, material_file);
@@ -119,6 +125,13 @@ void material_load(struct material* into, FILE* material_file) {
                     rdpq_set_env_color(color);
                 }
                 break;
+            case COMMAND_PRIM:
+                {
+                    color_t color;
+                    fread(&color, sizeof(color_t), 1, material_file);
+                    rdpq_set_prim_color(color);
+                }
+                break;
             case COMMAND_LIGHTING:
                 {
                     uint8_t enabled;
@@ -131,11 +144,6 @@ void material_load(struct material* into, FILE* material_file) {
                 }
                 break;
         }
-    }
-
-    if (into->tex0.gl_texture) {
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, into->tex0.gl_texture);
     }
 
     glEndList();

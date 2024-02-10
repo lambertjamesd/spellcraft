@@ -51,15 +51,19 @@ class Tex():
         self.tmem_addr = 0
         self.palette = 0
         self.min_filter = "nearest"
-        self.max_filter = "nearest"
+        self.mag_filter = "nearest"
         self.s = TexAxis()
         self.t = TexAxis()
+
+    def __str__(self):
+        return self.filename
 
 class Material():
     def __init__(self):
         self.combine_mode = None
         self.blend_mode = None
         self.env_color = None
+        self.prim_color = None
         self.prim_color = None
         self.lighting = None
         self.tex0 = None
@@ -69,6 +73,9 @@ class Material():
     combine_mode = {self.combine_mode}
     blend_mode = {self.blend_mode}
     env_color = {self.env_color}
+    prim_color = {self.prim_color}
+    lighting = {self.lighting}
+    tex0 = {self.tex0}
 """
 
 def _check_is_enum(value, key_path, enum_list):
@@ -323,17 +330,17 @@ def _parse_tex(json_data, key_path, relative_to):
         _check_is_string(json_data['filename'], f"{key_path}.filename")
         result.filename = json_data['filename']
 
-        if 'tmem_addr' in json_data:
-            _check_is_int(json_data['tmem_addr'], f"{key_path}.tmem_addr", 0, 512)
-            result.tmem_addr = json_data['tmem_addr']
+        if 'tmemAddr' in json_data:
+            _check_is_int(json_data['tmemAddr'], f"{key_path}.tmemAddr", 0, 512)
+            result.tmem_addr = json_data['tmemAddr']
 
-        if 'min_filter' in json_data:
-            _check_is_enum(json_data['min_filter'], f"{key_path}.min_filter", ['nearest', 'linear'])
-            result.tmem_addr = json_data['min_filter']
+        if 'minFilter' in json_data:
+            _check_is_enum(json_data['minFilter'], f"{key_path}.minFilter", ['nearest', 'linear'])
+            result.tmem_addr = json_data['minFilter']
 
-        if 'max_filter' in json_data:
-            _check_is_enum(json_data['max_filter'], f"{key_path}.max_filter", ['nearest', 'linear'])
-            result.tmem_addr = json_data['max_filter']
+        if 'magFilter' in json_data:
+            _check_is_enum(json_data['magFilter'], f"{key_path}.magFilter", ['nearest', 'linear'])
+            result.tmem_addr = json_data['magFilter']
 
         if 's' in json_data:
             _parse_tex_axis(json_data['s'], result.s, f"{key_path}.s")
@@ -371,6 +378,7 @@ def parse_material(filename: str):
 
     _parse_combine_mode(result, json_data)
     result.env_color = _parse_color(json_data['envColor'], 'envColor') if 'envColor' in json_data else None
+    result.prim_color = _parse_color(json_data['primColor'], 'primColor') if 'primColor' in json_data else None
 
     result.lighting = json_data['lighting'] if 'lighting' in json_data else None
 
