@@ -12,15 +12,19 @@
 #include "math/transform.h"
 
 #include "render/render_batch.h"
+#include "scene/world_loader.h"
 
 #include <libdragon.h>
 
 struct mesh* mesh_test;
+struct world* current_world;
 
 struct Camera camera;
 
 void setup() {
     mesh_test = mesh_cache_load("rom:/meshes/cube.mesh");
+
+    current_world = world_load("rom:/worlds/test.world");
 
     camera_init(&camera, 70.0f, 0.5f, 10.0f);
     camera.transform.position.z = 5.0f;
@@ -71,16 +75,19 @@ void render() {
 
     element->list = mesh_test->list;
     element->material = mesh_test->materials[0];
+    element->transform = render_batch_get_transform(&batch);
 
     struct Transform transform;
     transformInitIdentity(&transform);
     quatAxisAngle(&gUp, angle, &transform.rotation);
 
-    transformToMatrix(&transform, element->transform);
+    transformToMatrix(&transform, *element->transform);
 
     angle += 0.05f;
 
     render_batch_finish(&batch);
+
+    world_render(current_world);
 }
 
 int main(void)

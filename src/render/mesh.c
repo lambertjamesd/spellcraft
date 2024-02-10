@@ -8,6 +8,7 @@
 
 void mesh_init(struct mesh* mesh, int submesh_count) {
     mesh->list = glGenLists(submesh_count);
+    mesh->submesh_count = submesh_count;
 
     mesh->materials = malloc(sizeof(struct material) * submesh_count);
     mesh->material_flags = malloc(sizeof(*mesh->material_flags) * submesh_count);

@@ -1,0 +1,6 @@
+#ifndef __SCENE_WORLD_DEFINITION_H__
+#define __SCENE_WORLD_DEFINITION_H__
+
+
+
+#endif

@@ -14,7 +14,32 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
 
     result->material = NULL;
     result->list = 0;
+    result->transform = NULL;
 
+    return result;
+}
+
+void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4* transform) {
+    for (int i = 0; i < mesh->submesh_count; ++i) {
+        struct render_batch_element* element = render_batch_add(batch);
+
+        if (!element) {
+            return;
+        }
+
+        element->list = mesh->list + i;
+        element->material = mesh->materials[i];
+        element->transform = transform;
+    }
+}
+
+mat4x4* render_batch_get_transform(struct render_batch* batch) {
+    if (batch->transform_count >= RENDER_BATCH_TRANSFORM_COUNT) {
+        return NULL;
+    }
+
+    mat4x4* result = &batch->transform[batch->transform_count];
+    ++batch->transform_count;
     return result;
 }
 
@@ -84,10 +109,16 @@ void render_batch_finish(struct render_batch* batch) {
             current_mat = element->material;
         }
 
-        glPushMatrix();
-        glMultMatrixf((GLfloat*)element->transform);
+        if (element->transform) {
+            glPushMatrix();
+            glMultMatrixf((GLfloat*)element->transform);
+        }
+
         glCallList(element->list);
-        glPopMatrix();
+
+        if (element->transform) {
+            glPopMatrix();
+        }
     }
 
     glDisable(GL_RDPQ_MATERIAL_N64);

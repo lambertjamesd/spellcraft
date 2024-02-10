@@ -74,7 +74,7 @@ SOURCES := $(shell find src/ -type f -name '*.c' | sort)
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
 
-$(BUILD_DIR)/spellcraft.dfs: $(SPRITES) $(MESHES) $(MATERIALS)
+$(BUILD_DIR)/spellcraft.dfs: $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS)
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"
