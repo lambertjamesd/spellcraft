@@ -57,7 +57,6 @@ def process_scene():
 
             mesh_list = entities.mesh.mesh_list()
             mesh_list.append(entry.mesh, entry.transform)
-
             mesh_list.write_mesh(file)
 
 process_scene()

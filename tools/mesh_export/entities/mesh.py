@@ -7,7 +7,8 @@ import struct
 import bmesh
 
 class mesh_data():
-    def __init__(self) -> None:
+    def __init__(self, mat: bpy.types.Material) -> None:
+        self.mat: bpy.types.Material = mat
         self.vertices = []
         self.normals = []
         self.indices = []
@@ -56,6 +57,26 @@ class mesh_data():
         for idx in triangles:
             self.indices.append(index_mapping[idx])
 
+def search_node_linkage(from_node: bpy.types.Node, input_name: str):
+    for input in from_node.inputs:
+        if input.name != input_name:
+            continue
+
+        if not input.is_linked:
+            continue
+
+        for link in input.links:
+            return link.from_node
+        
+    return None
+
+def find_node_of_type(tree_nodes: bpy.types.Nodes, type_name: str):
+    for node in tree_nodes:
+        if node.type == type_name:
+            return node
+        
+    return None
+
 
 ATTR_POS = 1 << 0
 ATTR_UV = 1 << 1
@@ -68,13 +89,26 @@ def write_meshes(file, mesh_list):
 
     for mesh_pair in mesh_list:
         material_name = mesh_pair[0]
+        mesh: mesh_data = mesh_pair[1]
 
         material_filename = f"assets/{material_name}.mat.json"
 
-        if not material_filename.startswith('materials/'):
+        if not material_name.startswith('materials/'):
             # embedded material
             print(f"embedding material {material_name}")
             material_object = material.Material()
+
+            if mesh.mat.use_nodes:
+                output_node = find_node_of_type(mesh.mat.node_tree.nodes, 'OUTPUT_MATERIAL')
+                material_type = search_node_linkage(output_node, 'Surface')
+
+                for input in material_type.inputs:
+                    if input.name == 'Base Color':
+                        print(input.name)
+                        print(input.is_linked)
+                        print(input.type)
+                        print(input.default_value)
+                print(material_type.type)
 
             # TODO interpret material and attempt to construct
             # output material
@@ -96,8 +130,6 @@ def write_meshes(file, mesh_list):
     
         needs_uv = bool(material_object.tex0)
         needs_normal = bool(material_object.lighting)
-
-        mesh = mesh_pair[1]
 
         attribute_mask = ATTR_POS
 
@@ -159,9 +191,9 @@ class mesh_list():
         bm.from_mesh(mesh)
         bmesh.ops.triangulate(bm, faces=bm.faces[:])
         result_mesh = bpy.data.meshes.new(f"{mesh.name}_triangulated")
-        bm.to_mesh(result_mesh)
+        bm.to_mesh(mesh)
         bm.free()
-        self.meshes.append([result_mesh, transform])
+        self.meshes.append([mesh, transform])
 
     def write_mesh(self, write_to):
         mesh_by_material = dict()
@@ -172,12 +204,14 @@ class mesh_list():
 
             for material_index in range(max(len(mesh.materials), 1)):
                 if material_index < len(mesh.materials):
-                    name = mesh.materials[material_index].name
+                    mat = mesh.materials[material_index]
+                    name = mat.name
                 else:
+                    mat = None
                     name = ""
 
                 if not name in mesh_by_material:
-                    mesh_by_material[name] = mesh_data()
+                    mesh_by_material[name] = mesh_data(mat)
 
                 mesh_data_instance = mesh_by_material[name]
 
