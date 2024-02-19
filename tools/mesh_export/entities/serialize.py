@@ -6,9 +6,13 @@ import struct
 
 COMMAND_EOF = 0
 COMMAND_COMBINE = 1
-COMMAND_ENV = 2
-COMMAND_PRIM = 3
-COMMAND_LIGHTING = 4
+COMMAND_BLEND = 2
+COMMAND_ENV = 3
+COMMAND_PRIM = 4
+COMMAND_BLEND_COLOR = 5
+COMMAND_LIGHTING = 6
+COMMAND_CULLING = 7
+COMMAND_Z_BUFFER = 8
 
 def _serialize_color(file, color: material.Color):
     file.write(struct.pack('>BBBB', color.r, color.g, color.b, color.a))
@@ -101,7 +105,46 @@ ACOMB_MUL = {
     "0": 7,
 }
 
-def _serialize_combine(file, combine: material.CombineMode):
+BLEND_A = {
+    "IN": 0,
+    "MEMORY": 1,
+    "BLEND": 2,
+    "FOG": 3,
+}
+
+BLEND_B1 = {
+    "IN_A": 0,
+    "FOG_A": 1,
+    "SHADE_A": 2,
+    "ZERO": 3,
+    "0": 3,
+}
+
+BLEND_B2 = {
+    "INV_MUX_A": 0,
+    "MEMORY_CVG": 1,
+    "ONE": 2,
+    "1": 2,
+    "ZERO": 3,
+    "0": 3,
+}
+
+ZMODE = {
+    "OPAQUE": 0 << 10,
+    "INTER": 1 << 10,
+    "TRANSPARENT": 2 << 10,
+    "DECAL": 3 << 10,
+}
+
+ALPHACOMPARE = {
+    "NONE": 0,
+    "THRESHOLD": 1,
+    "NOISE": 2,
+}
+
+RDPQ_COMBINER_2PASS = 1 << 63
+
+def _serialize_combine(file, combine: material.CombineMode, force_cyc2: bool):
     a0 = COMB_A[combine.cyc1.a]
     b0 = COMB_B[combine.cyc1.b]
     c0 = COMB_C[combine.cyc1.c]
@@ -122,6 +165,8 @@ def _serialize_combine(file, combine: material.CombineMode):
     ac1 = ac0
     ad1 = ad0
 
+    flags = 0
+
     if combine.cyc2:
         a1 = COMB_A[combine.cyc2.a]
         b1 = COMB_B[combine.cyc2.b]
@@ -130,15 +175,78 @@ def _serialize_combine(file, combine: material.CombineMode):
 
         aa1 = ACOMB_A[combine.cyc2.aa]
         ab1 = ACOMB_A[combine.cyc2.ab]
-        ac1 = ACOMB_A[combine.cyc2.ac]
+        ac1 = ACOMB_MUL[combine.cyc2.ac]
         ad1 = ACOMB_A[combine.cyc2.ad]
+
+        flags |= RDPQ_COMBINER_2PASS
+    elif force_cyc2:
+        a1 = COMB_A['0']
+        b1 = COMB_B['0']
+        c1 = COMB_C['0']
+        d1 = COMB_D['COMBINED']
+
+        aa1 = ACOMB_A['0']
+        ab1 = ACOMB_A['0']
+        ac1 = ACOMB_MUL['0']
+        ad1 = ACOMB_A['COMBINED']
+
+        flags |= RDPQ_COMBINER_2PASS
+
 
     file.write(struct.pack('>Q', \
         (a0 << 52) | (b0 << 28) | (c0 << 47) | (d0 << 15) | \
         (aa0 << 44) | (ab0 << 12) | (ac0 << 41) | (ad0 << 9) | \
         (a1 << 37) | (b1 << 24) | (c1 << 32) | (d1 << 6) |     \
-        (aa1 << 21) | (ab1 << 3) | (ac1 << 18) | (ad1 << 0) \
+        (aa1 << 21) | (ab1 << 3) | (ac1 << 18) | (ad1 << 0) | \
+        flags \
     ))
+
+SOM_Z_COMPARE = 1 << 4
+SOM_Z_WRITE = 1 << 5
+SOM_READ_ENABLE = 1 << 6
+
+def _serialize_blend(file, blend: material.BlendMode, force_cyc2: bool):
+    a1 = BLEND_A[blend.cyc1.a1]
+    b1 = BLEND_B1[blend.cyc1.b1]
+    a2 = BLEND_A[blend.cyc1.a2]
+    b2 = BLEND_B2[blend.cyc1.b2]
+
+    a1_2 = a1
+    b1_2 = b1
+    a2_2 = a2
+    b2_2 = b2
+
+    other_flags = ZMODE[blend.z_mode] | ALPHACOMPARE[blend.alpha_compare]
+
+    if blend.cyc1.needs_read():
+        other_flags |= SOM_READ_ENABLE
+
+    if blend.z_compare:
+        other_flags |= SOM_Z_COMPARE
+
+    if blend.z_write:
+        other_flags |= SOM_Z_WRITE
+
+    if blend.cyc2:
+        a1_2 = BLEND_A[blend.cyc2.a1]
+        b1_2 = BLEND_B1[blend.cyc2.b1]
+        a2_2 = BLEND_A[blend.cyc2.a2]
+        b2_2 = BLEND_B2[blend.cyc2.b2]
+
+        if blend.cyc2.needs_read():
+            other_flags |= SOM_READ_ENABLE
+    elif force_cyc2:
+        a1_2 = BLEND_A['IN']
+        b1_2 = BLEND_B1['0']
+        a2_2 = BLEND_A['IN']
+        b2_2 = BLEND_B2['1']
+
+    file.write(struct.pack('>L',
+        (a1 << 30) | (b1 << 26) | (a2 << 22) | (b2 << 18) |
+        (a1_2 << 28) | (b1_2 << 24) | (a2_2 << 20) | (b2_2 << 16) |
+        other_flags    
+    ))
+
 
 def _serialze_string(file, text):
     encoded_text = text.encode()
@@ -158,7 +266,7 @@ def _serialize_tex_axis(file, axis):
 
 def _serialize_tex(file, tex):
     if tex:
-        _serialze_string(file, tex.filename)
+        _serialze_string(file, tex.rom_filename())
         file.write(tex.tmem_addr.to_bytes(2, 'big'))
         file.write(tex.palette.to_bytes(1, 'big'))
         _serialize_tex_axis(file, tex.s)
@@ -180,10 +288,25 @@ def serialize_material_file(output, mat: material.Material):
     output.write('MATR'.encode())
 
     _serialize_tex(output, mat.tex0)
+    _serialize_tex(output, mat.tex1)
+
+    force_cyc2 = False
+
+    if mat.combine_mode and mat.combine_mode.cyc2:
+        force_cyc2 = True
+
+    if mat.blend_mode and mat.blend_mode.cyc2:
+        force_cyc2 = True
     
     if mat.combine_mode:
         output.write(COMMAND_COMBINE.to_bytes(1, 'big'))
-        _serialize_combine(output, mat.combine_mode)
+        _serialize_combine(output, mat.combine_mode, force_cyc2)
+
+    if mat.blend_mode:
+        # TODO check if combine is two cycle and 
+        # modify the blend mode if it is
+        output.write(COMMAND_BLEND.to_bytes(1, 'big'))
+        _serialize_blend(output, mat.blend_mode, force_cyc2)
     
     if mat.env_color:
         output.write(COMMAND_ENV.to_bytes(1, 'big'))
@@ -193,9 +316,21 @@ def serialize_material_file(output, mat: material.Material):
         output.write(COMMAND_PRIM.to_bytes(1, 'big'))
         _serialize_color(output, mat.prim_color)
 
+    if mat.blend_color:
+        output.write(COMMAND_BLEND_COLOR.to_bytes(1, 'big'))
+        _serialize_color(output, mat.blend_color)
+
     if not mat.lighting is None:
         output.write(COMMAND_LIGHTING.to_bytes(1, 'big'))
         output.write((1 if mat.lighting else 0).to_bytes(1, 'big'))
+
+    if not mat.culling is None:
+        output.write(COMMAND_CULLING.to_bytes(1, 'big'))
+        output.write((1 if mat.culling else 0).to_bytes(1, 'big'))
+
+    if not mat.z_buffer is None:
+        output.write(COMMAND_Z_BUFFER.to_bytes(1, 'big'))
+        output.write((1 if mat.z_buffer else 0).to_bytes(1, 'big'))
 
     output.write(COMMAND_EOF.to_bytes(1, 'big'))
 

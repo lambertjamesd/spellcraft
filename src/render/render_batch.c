@@ -44,6 +44,14 @@ mat4x4* render_batch_get_transform(struct render_batch* batch) {
 }
 
 int render_batch_compare_element(struct render_batch_element* a, struct render_batch_element* b) {
+    if (a == b) {
+        return 0;
+    }
+
+    if (a->material->sortPriority != b->material->sortPriority) {
+        return a->material->sortPriority - b->material->sortPriority;
+    }
+
     return (int)a->material - (int)b->material;
 }
 
@@ -94,6 +102,7 @@ void render_batch_finish(struct render_batch* batch) {
     struct material* current_mat = 0;
 
     glEnable(GL_RDPQ_MATERIAL_N64);
+    // glEnable(GL_RDPQ_TEXTURING_N64);
     rdpq_set_mode_standard();
 
     for (int i = 0; i < batch->element_count; ++i) {
@@ -122,4 +131,5 @@ void render_batch_finish(struct render_batch* batch) {
     }
 
     glDisable(GL_RDPQ_MATERIAL_N64);
+    glDisable(GL_RDPQ_TEXTURING_N64);
 }

@@ -29,8 +29,36 @@ class CombineModeCycle():
 
 class CombineMode():
     def __init__(self, cyc1: CombineModeCycle, cyc2: CombineModeCycle):
-        self.cyc1 = cyc1
-        self.cyc2 = cyc2
+        self.cyc1: CombineModeCycle = cyc1
+        self.cyc2: CombineModeCycle = cyc2
+
+    def __str__(self):
+        if self.cyc2:
+            return f"2 cycle {self.cyc1} {self.cyc2}"
+        
+        return f"1 cycle {self.cyc1}"
+    
+class BlendModeCycle():
+    def __init__(self, a1, b1, a2, b2):
+        self.a1 = a1
+        self.b1 = b1
+        self.a2 = a2
+        self.b2 = b2
+
+    def needs_read(self):
+        return self.a1 == 'MEMORY' or self.a2 == 'MEMORY' or self.b1 == 'MEMORY_CVG' or self.b2 == 'MEMORY_CVG'
+    
+    def __str__(self):
+        return f"({self.a1} {self.b1} {self.a2} {self.b2})"
+
+class BlendMode():
+    def __init__(self, cyc1: BlendModeCycle, cyc2: BlendModeCycle):
+        self.cyc1: BlendModeCycle = cyc1
+        self.cyc2: BlendModeCycle = cyc2
+        self.alpha_compare = 'NONE'
+        self.z_mode = 'OPAQUE'
+        self.z_write = True
+        self.z_compare = True
 
     def __str__(self):
         if self.cyc2:
@@ -55,18 +83,24 @@ class Tex():
         self.s = TexAxis()
         self.t = TexAxis()
 
+    def rom_filename(self) -> str:
+        return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
+
     def __str__(self):
         return self.filename
 
 class Material():
     def __init__(self):
-        self.combine_mode = None
-        self.blend_mode = None
-        self.env_color = None
-        self.prim_color = None
-        self.prim_color = None
-        self.lighting = None
-        self.tex0 = None
+        self.combine_mode: CombineMode = None
+        self.blend_mode: BlendMode = None
+        self.env_color: Color = None
+        self.prim_color: Color | None = None
+        self.blend_color: Color | None = None
+        self.lighting: bool | None = None
+        self.tex0: Tex | None = None
+        self.tex1: Tex | None = None
+        self.culling: bool | None = None
+        self.z_buffer: bool | None = None
 
     def __str__(self):
         return f"""Material:
@@ -74,8 +108,10 @@ class Material():
     blend_mode = {self.blend_mode}
     env_color = {self.env_color}
     prim_color = {self.prim_color}
+    blend_color = {self.blend_color}
     lighting = {self.lighting}
     tex0 = {self.tex0}
+    tex1 = {self.tex1}
 """
 
 def _check_is_enum(value, key_path, enum_list):
@@ -274,7 +310,6 @@ def _parse_combine_mode_cycle(json_data, key_path):
         alpha[3],
     )
 
-
 def _parse_combine_mode(result: Material, json_data):
     if not 'combineMode' in json_data:
         return
@@ -295,6 +330,85 @@ def _parse_combine_mode(result: Material, json_data):
             None
         )
 
+def _parse_blend_mode_cycle(json_data, key_path):
+    if not isinstance(json_data, list) or len(json_data) != 4:
+        raise Exception(f"{key_path} must be an array of length 4")
+
+    _check_is_enum(
+        json_data[0],
+        f"{key_path}[0]",
+        ["IN", "MEMORY", "BLEND", "FOG"]
+    )
+
+    _check_is_enum(
+        json_data[1],
+        f"{key_path}[1]",
+        ["IN_A", "FOG_A", "SHADE_A", "0", "ZERO"]
+    )
+
+    _check_is_enum(
+        json_data[2],
+        f"{key_path}[2]",
+        ["IN", "MEMORY", "BLEND", "FOG"]
+    )
+
+    _check_is_enum(
+        json_data[3],
+        f"{key_path}[3]",
+        ["INV_MUX_A", "MEMORY_CVG", "ONE", "1", "ZERO", "0"]
+    )
+
+    return BlendModeCycle(json_data[0], json_data[1], json_data[2], json_data[3])
+
+def _parse_blend_mode(result: Material, json_data):
+    if not 'blendMode' in json_data:
+        return
+    
+    blend_mode = json_data['blendMode']
+
+    if blend_mode == 'OPAQUE':
+        result.blend_mode = BlendMode(BlendModeCycle("IN", "0", "IN", "1"), None)
+        return
+
+    if blend_mode == 'TRANSPARENT':
+        result.blend_mode = BlendMode(BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
+        result.blend_mode.z_write = False
+        result.blend_mode.z_mode = 'TRANSPARENT'
+        return
+    
+    if blend_mode == 'ALPHA_CLIP':
+        result.blend_mode = BlendMode(BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.blend_mode.alpha_compare = 'THRESHOLD'
+        result.blend_color = Color(0, 0, 0, 128)
+        return
+
+    if not 'cyc1' in blend_mode:
+        raise Exception(f"blendMode must have at least 1 cycle")
+    
+    cyc1 = _parse_blend_mode_cycle(blend_mode['cyc1'], 'blendMode.cyc1')
+    cyc2 = None
+
+    if 'cyc2' in blend_mode:
+        cyc2 = _parse_blend_mode_cycle(blend_mode['cyc2'], 'blendMode.cyc2')
+
+    result.blend_mode = BlendMode(cyc1, cyc2)
+
+    if 'zMode' in blend_mode:
+        _check_is_enum(blend_mode['zMode'], 'blendMode.zMode', ['OPAQUE', 'INTER', 'TRANSPARENT', 'DECAL'])
+        result.blend_mode.z_mode = blend_mode['zMode']
+
+    if 'zWrite' in blend_mode:
+        _check_is_boolean(blend_mode['zWrite'], 'blendMode.zWrite')
+        result.blend_mode.z_write = blend_mode['zWrite']
+
+    if 'zCompare' in blend_mode:
+        _check_is_boolean(blend_mode['zCompare'], 'blendMode.zCompare')
+        result.blend_mode.z_compare = blend_mode['zCompare']
+
+    if 'alphaCompare' in blend_mode:
+        _check_is_enum(blend_mode['alphaCompare'], 'blendMode.alphaCompare', ['NONE', 'THRESHOLD', 'NOISE'])
+
+
 def _parse_color(json_data, key_path):
     if not json_data:
         return None
@@ -310,10 +424,10 @@ def _parse_color(json_data, key_path):
     return Color(json_data[0], json_data[1], json_data[2], json_data[3])
 
 def _parse_tex_axis(json_data, into: TexAxis, key_path):
-    into.translate = _optional_number(json_data, 'translate', into.translate)
-    into.scale_log = _optional_number(json_data, 'scale_log', into.scale_log)
-    into.repeats = _optional_number(json_data, 'repeats', into.repeats)
-    into.mirror = _optional_boolean(json_data, 'mirror', False)
+    into.translate = _optional_number(json_data, 'translate', key_path, into.translate)
+    into.scale_log = _optional_number(json_data, 'scale_log', key_path, into.scale_log)
+    into.repeats = _optional_number(json_data, 'repeats', key_path, into.repeats)
+    into.mirror = _optional_boolean(json_data, 'mirror', key_path, False)
 
 def _parse_tex(json_data, key_path, relative_to):
     if not json_data:
@@ -331,7 +445,7 @@ def _parse_tex(json_data, key_path, relative_to):
         result.filename = json_data['filename']
 
         if 'tmemAddr' in json_data:
-            _check_is_int(json_data['tmemAddr'], f"{key_path}.tmemAddr", 0, 512)
+            _check_is_int(json_data['tmemAddr'], f"{key_path}.tmemAddr", 0, 4096)
             result.tmem_addr = json_data['tmemAddr']
 
         if 'minFilter' in json_data:
@@ -360,7 +474,7 @@ def _parse_tex(json_data, key_path, relative_to):
     if not combined_path.endswith('.png'):
         raise Exception(f"The image {combined_path} must be a png file")
     
-    result.filename = f"rom:{combined_path[len('assets'):-len('.png')]}.sprite"
+    result.filename = combined_path
 
     return result
 
@@ -375,11 +489,17 @@ def parse_material(filename: str):
     result = Material()
 
     result.tex0 = _parse_tex(json_data['tex0'], 'tex0', filename) if 'tex0' in json_data else None
+    result.tex1 = _parse_tex(json_data['tex1'], 'tex1', filename) if 'tex1' in json_data else None
 
     _parse_combine_mode(result, json_data)
+    _parse_blend_mode(result, json_data)
     result.env_color = _parse_color(json_data['envColor'], 'envColor') if 'envColor' in json_data else None
     result.prim_color = _parse_color(json_data['primColor'], 'primColor') if 'primColor' in json_data else None
+    result.blend_color = _parse_color(json_data['blendColor'], 'blendColor') if 'blendColor' in json_data else None
 
     result.lighting = json_data['lighting'] if 'lighting' in json_data else None
+
+    result.culling = _optional_boolean(json_data, 'culling', 'culling', None)
+    result.z_buffer = _optional_boolean(json_data, 'zBuffer', 'zBuffer', None)
 
     return result

@@ -1,0 +1,20 @@
+{
+    "tex0": {
+        "filename": "../../images/desert/doorarch.png",
+        "s": {
+            "mirror": false,
+            "repeats": 1
+        },
+        "t": {
+            "mirror": false,
+            "repeats": 1
+        }
+    },
+    "combineMode": [{
+        "color": ["TEX0", "0", "SHADE", "0"],
+        "alpha": ["0", "0", "0", "1"]
+    }],
+    "blendMode": "OPAQUE",
+    "lighting": false,
+    "zBuffer": true
+}

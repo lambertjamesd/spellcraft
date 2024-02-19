@@ -22,9 +22,7 @@ struct world* current_world;
 struct Camera camera;
 
 void setup() {
-    mesh_test = mesh_cache_load("rom:/meshes/cube.mesh");
-
-    current_world = world_load("rom:/worlds/test.world");
+    current_world = world_load("rom:/worlds/desert.world");
 
     camera_init(&camera, 70.0f, 0.5f, 10.0f);
     camera.transform.position.z = 5.0f;
@@ -68,26 +66,13 @@ void render() {
     glLightfv( GL_LIGHT0, GL_AMBIENT, blue3 );
     glLightfv( GL_LIGHT0, GL_POSITION, pos);
 
-    struct render_batch batch;
-    render_batch_init(&batch);
-
-    struct render_batch_element* element = render_batch_add(&batch);
-
-    element->list = mesh_test->list;
-    element->material = mesh_test->materials[0];
-    element->transform = render_batch_get_transform(&batch);
-
-    struct Transform transform;
-    transformInitIdentity(&transform);
-    quatAxisAngle(&gUp, angle, &transform.rotation);
-
-    transformToMatrix(&transform, *element->transform);
-
-    angle += 0.05f;
-
-    render_batch_finish(&batch);
-
     world_render(current_world);
+}
+
+volatile static int frame_happened = 0;
+
+void on_vi_interrupt() {
+    frame_happened = 1;
 }
 
 int main(void)
@@ -103,23 +88,29 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
     
-    struct controller_data ctrData;
-    bool wasStart = false;
+    // struct controller_data ctrData;
+    // bool wasStart = false;
 
-    for (;;) {
-        controller_read(&ctrData);
-        bool isStart = ctrData.c[0].start != 0;
+    // for (;;) {
+    //     controller_read(&ctrData);
+    //     bool isStart = ctrData.c[0].start != 0;
 
-        if (isStart && !wasStart) {
-            break;
-        }
+    //     if (isStart && !wasStart) {
+    //         break;
+    //     }
 
-        wasStart = isStart;
-    }
+    //     wasStart = isStart;
+    // }
 
     setup();
 
+    register_VI_handler(on_vi_interrupt);
+
     while(1) {
+        while (!frame_happened) {
+            // TODO process low priority tasks
+        }
+        
         surface_t* fb = display_get();
 
         if (fb) {

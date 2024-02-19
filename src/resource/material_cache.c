@@ -10,9 +10,13 @@
 
 #define COMMAND_EOF         0x00
 #define COMMAND_COMBINE     0x01
-#define COMMAND_ENV         0x02
-#define COMMAND_PRIM        0x03
-#define COMMAND_LIGHTING    0x04
+#define COMMAND_BLEND       0x02
+#define COMMAND_ENV         0x03
+#define COMMAND_PRIM        0x04
+#define COMMAND_BLEND_COLOR 0x05
+#define COMMAND_LIGHTING    0x06
+#define COMMAND_CULLING     0x07
+#define COMMAND_Z_BUFFER    0x08
 
 struct text_axis {
     float translate;
@@ -42,7 +46,7 @@ static GLenum material_filter_modes[] = {
     GL_LINEAR,
 };
 
-void material_load_tex(struct material_tex* tex, FILE* file) {
+void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture) {
     uint8_t filename_len;
     fread(&filename_len, 1, 1, file);
 
@@ -54,32 +58,36 @@ void material_load_tex(struct material_tex* tex, FILE* file) {
     fread(filename, 1, filename_len, file);
     filename[filename_len] = '\0';
 
-    rdpq_texparms_t texparams;
-
     uint16_t tmem_addr;
     fread(&tmem_addr, 2, 1, file);
-    texparams.tmem_addr = tmem_addr;
+    tex->params.tmem_addr = tmem_addr;
     uint8_t palette;
     fread(&palette, 1, 1, file);
-    texparams.palette = palette;
+    tex->params.palette = palette;
 
-    material_load_tex_axis((struct text_axis*)&texparams.s, file);
-    material_load_tex_axis((struct text_axis*)&texparams.t, file);
+    material_load_tex_axis((struct text_axis*)&tex->params.s, file);
+    material_load_tex_axis((struct text_axis*)&tex->params.t, file);
 
     tex->sprite = sprite_cache_load(filename);
+
+    uint8_t mag_filter;
+    fread(&mag_filter, 1, 1, file);
+    uint8_t min_filter;
+    fread(&min_filter, 1, 1, file);
+
+    if (!create_texture) {
+        return;
+    }
 
     glGenTextures(1, &tex->gl_texture);
 
     glBindTexture(GL_TEXTURE_2D, tex->gl_texture);
 
-    uint8_t mag_filter;
-    fread(&mag_filter, 1, 1, file);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, material_filter_modes[mag_filter]);
 
-    fread(&mag_filter, 1, 1, file);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, material_filter_modes[mag_filter]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, material_filter_modes[min_filter]);
 
-    glSpriteTextureN64(GL_TEXTURE_2D, tex->sprite, &texparams);
+    glSpriteTextureN64(GL_TEXTURE_2D, tex->sprite, &tex->params);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -93,14 +101,35 @@ void material_load(struct material* into, FILE* material_file) {
 
     material_init(into);
 
-    material_load_tex(&into->tex0, material_file);
+    material_load_tex(&into->tex0, material_file, true);
+    material_load_tex(&into->tex1, material_file, true);
 
     glNewList(into->list, GL_COMPILE);
 
+    bool autoLayoutTMem = into->tex1.gl_texture != 0 && into->tex1.params.tmem_addr == 0;
+
+    if (autoLayoutTMem) {
+        rdpq_tex_multi_begin();
+    }
+
     if (into->tex0.gl_texture) {
+        glDisable(GL_RDPQ_TEXTURING_N64);
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, into->tex0.gl_texture);
-        glEnable(GL_RDPQ_MATERIAL_N64);
+        rdpq_mode_mipmap(MIPMAP_NONE, 0);
+        rdpq_mode_persp(true);
+        surface_t surface = sprite_get_pixels(into->tex0.sprite);
+        rdpq_tex_upload(TILE0, &surface, &into->tex0.params);
+    }
+
+    if (into->tex1.gl_texture) {
+        glEnable(GL_RDPQ_TEXTURING_N64);
+        surface_t surface = sprite_get_pixels(into->tex1.sprite);
+        rdpq_tex_upload(TILE1, &surface, &into->tex1.params);
+    }
+
+    if (autoLayoutTMem) {
+        rdpq_tex_multi_end();
     }
 
     while (has_more) {
@@ -118,6 +147,38 @@ void material_load(struct material* into, FILE* material_file) {
                     rdpq_mode_combiner(combineMode);
                 }
                 break;
+            case COMMAND_BLEND:
+                {
+                    rdpq_blender_t blendMode;
+                    fread(&blendMode, sizeof(rdpq_blender_t), 1, material_file);
+                    rdpq_mode_blender(blendMode);
+                    // rdpq_change_other_modes_raw(SOM_ZMODE_MASK | SOM_Z_COMPARE | SOM_Z_WRITE | SOM_ALPHACOMPARE_MASK, blendMode);
+                    
+                    if ((SOM_Z_COMPARE & blendMode) == 0) {
+                        glDepthFunc(GL_ALWAYS);
+                    } else if ((SOM_ZMODE_MASK & blendMode) == SOM_ZMODE_DECAL) {
+                        glDepthFunc(GL_EQUAL);
+                    } else {
+                        glDepthFunc(GL_LESS);
+                    }
+
+                    if ((blendMode & SOM_ALPHACOMPARE_MASK) == 0) {
+                        glDisable(GL_ALPHA_TEST);
+                        glAlphaFunc(GL_ALWAYS, 0.5f);
+                    } else {
+                        glEnable(GL_ALPHA_TEST);
+                        glAlphaFunc(GL_GREATER, 0.5f);
+                        into->sortPriority = SORT_PRIORITY_DECAL;
+                    }
+
+                    if (blendMode & SOM_Z_WRITE) {
+                        glDepthMask(GL_TRUE);
+                    } else {
+                        glDepthMask(GL_FALSE);
+                        into->sortPriority = SORT_PRIORITY_TRANSPARENT;
+                    }
+                }
+                break;
             case COMMAND_ENV:
                 {
                     color_t color;
@@ -132,6 +193,13 @@ void material_load(struct material* into, FILE* material_file) {
                     rdpq_set_prim_color(color);
                 }
                 break;
+            case COMMAND_BLEND_COLOR:
+                {
+                    color_t color;
+                    fread(&color, sizeof(color_t), 1, material_file);
+                    rdpq_set_blend_color(color);
+                }
+                break;
             case COMMAND_LIGHTING:
                 {
                     uint8_t enabled;
@@ -140,6 +208,29 @@ void material_load(struct material* into, FILE* material_file) {
                         glEnable(GL_LIGHTING);
                     } else {
                         glDisable(GL_LIGHTING);
+                    }
+                }
+                break;
+            case COMMAND_CULLING:
+                {
+                    uint8_t enabled;
+                    fread(&enabled, 1, 1, material_file);
+                    if (enabled) {
+                        glEnable(GL_CULL_FACE);
+                    } else {
+                        glDisable(GL_CULL_FACE);
+                    }
+                }
+                break;
+            case COMMAND_Z_BUFFER:
+                {
+                    uint8_t enabled;
+                    fread(&enabled, 1, 1, material_file);
+                    if (enabled) {
+                        glEnable(GL_DEPTH_TEST);
+                    } else {
+                        glDisable(GL_DEPTH_TEST);
+                        into->sortPriority = SORT_PRIORITY_NO_DEPTH_TEST;
                     }
                 }
                 break;

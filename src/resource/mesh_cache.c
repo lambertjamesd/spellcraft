@@ -71,7 +71,7 @@ void mesh_load(struct mesh* into, FILE* meshFile) {
 
         if (attributes & MeshAttributesColor) {
             glEnableClientState(GL_COLOR_ARRAY);
-            glColorPointer(4, GL_BYTE, size, (void*)offset);
+            glColorPointer(4, GL_UNSIGNED_BYTE, size, (void*)offset);
 
             offset += sizeof(struct Coloru8);
         }
@@ -102,7 +102,7 @@ void mesh_load(struct mesh* into, FILE* meshFile) {
         
         glBufferDataARB(GL_ARRAY_BUFFER_ARB, indexCount * indexSize, NULL, GL_STATIC_DRAW_ARB);
         void* indices = glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
-        fread(indices, indexSize, indexBuffer, meshFile);
+        fread(indices, indexSize, indexCount, meshFile);
         glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
 
         glBindVertexArray(0);

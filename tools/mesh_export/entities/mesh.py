@@ -12,8 +12,9 @@ class mesh_data():
         self.mat: bpy.types.Material = mat
         self.vertices = []
         self.normals = []
-        self.indices = []
+        self.color = []
         self.uv = []
+        self.indices = []
 
     def append_mesh(self, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix):
         triangles = []
@@ -31,12 +32,21 @@ class mesh_data():
             for loop_index in polygon.loop_indices:
                 max_index = max(max_index, loop_index)
                 used_indices.add(loop_index)
-                triangles.append(loop_index)
+                
+            triangles.append(polygon.loop_indices[0])
+            triangles.append(polygon.loop_indices[1])
+            triangles.append(polygon.loop_indices[2])
 
         next_output = len(self.indices)
         index_mapping = dict()
 
         uv_layer = None if len(mesh.uv_layers) == 0 else mesh.uv_layers[0]
+
+        color = None
+
+        for attr in mesh.attributes:
+            if attr.data_type == 'BYTE_COLOR' or attr.data_type == 'FLOAT_COLOR':
+                color = attr
 
         for loop_index in range(max_index + 1):
             if not loop_index in used_indices:
@@ -44,13 +54,20 @@ class mesh_data():
 
             vtx_index = mesh.loops[loop_index].vertex_index
 
-            self.vertices.append(final_transform @ mesh.vertices[vtx_index].co)
+            pos = final_transform @ mesh.vertices[vtx_index].co
+            pos[0] = -pos[0]
+            self.vertices.append(pos)
             self.normals.append(normal_transform @ mesh.vertices[vtx_index].normal)
 
             if uv_layer:
                 self.uv.append(mesh.uv_layers[0].uv[loop_index].vector)
             else:
                 self.uv.append([0, 0])
+
+            if color and color.domain == 'CORNER':
+                self.color.append(color.data[loop_index].color)
+            elif color and color.domain == 'POINT':
+                self.color.append(color.data[vtx_index].color)
 
             index_mapping[loop_index] = next_output
             next_output += 1
@@ -119,12 +136,21 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
 
     if material_type.type == 'BSDF_PRINCIPLED':
         color_link = search_node_input(material_type, 'Base Color')
+        emmission_link = search_node_input(material_type, 'Emission Color')
         result.lighting = True
+
+        if not color_link.is_linked and emmission_link.is_linked:
+            color_link = emmission_link
+            result.lighting = False
+
     elif material_type.type == 'BSDF_DIFFUSE':
         color_link = search_node_input(material_type, 'Color')
         result.lighting = True
     elif material_type.type == 'EMISSION':
         color_link = search_node_input(material_type, 'Color')
+        result.lighting = False
+    elif material_type.type == 'MIX':
+        color_link = search_node_input(output_node, 'Surface')
         result.lighting = False
     else:
         print(f"The node type {material_type.type} is not supported")
@@ -151,7 +177,7 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
         image_path = os.path.normpath(os.path.join(os.path.dirname(input_filename), color_node.image.filepath[2:]))
 
         result.tex0 = material.Tex()
-        result.tex0.filename = f"rom:{image_path[len('assets'):-len('.png')]}.sprite"
+        result.tex0.filename = image_path
 
         if color_node.interpolation == 'Nearest':
             result.tex0.min_filter = 'nearest'
@@ -193,6 +219,28 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
             None
         )
 
+    if mat.use_backface_culling:
+        result.culling = True
+    else:
+        result.culling = False
+
+    if mat.blend_method == 'CLIP':
+        result.blend_mode = material.BlendMode(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
+        result.blend_mode.alpha_compare = 'THRESHOLD'
+        result.blend_color = material.Color(0, 0, 0, 128)
+    elif mat.blend_method == 'BLEND':
+        result.blend_mode = material.BlendMode(material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'), None)
+        result.blend_mode.z_write = False
+    elif mat.blend_method == 'HASHED':
+        result.blend_mode = material.BlendMode(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
+        result.blend_mode.alpha_compare = 'NOISE'
+    else:
+        result.blend_mode = material.BlendMode(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
+
+    if 'decal' in mat and mat['decal']:
+        result.blend_mode.z_mode = 'DECAL'
+        result.blend_mode.z_write = False
+
 
 ATTR_POS = 1 << 0
 ATTR_UV = 1 << 1
@@ -217,10 +265,6 @@ def write_meshes(file, mesh_list):
                 determine_material_from_nodes(mesh.mat, material_object)
 
             print(f"embedding material {material_name}")
-            print(material_object)
-            
-            # TODO interpret material and attempt to construct
-            # output material
 
             # signal an embedded material
             file.write((0).to_bytes(1, 'big'))
@@ -239,11 +283,15 @@ def write_meshes(file, mesh_list):
     
         needs_uv = bool(material_object.tex0)
         needs_normal = bool(material_object.lighting)
+        needs_color = len(mesh.color) > 0
 
         attribute_mask = ATTR_POS
 
         if needs_uv:
             attribute_mask |= ATTR_UV
+
+        if needs_color:
+            attribute_mask |= ATTR_COLOR
 
         if needs_normal:
             attribute_mask |= ATTR_NORMAL
@@ -268,11 +316,22 @@ def write_meshes(file, mesh_list):
                 file.write(struct.pack(
                     ">hh",
                     int(uv[0] * 256),
-                    int(uv[1] * 256)
+                    int((1 - uv[1]) * 256)
+                ))
+
+            if needs_color:
+                color = mesh.color[idx]
+
+                file.write(struct.pack(
+                    ">BBBB", 
+                    int(color[0] * 255), 
+                    int(color[1] * 255), 
+                    int(color[2] * 255), 
+                    int(color[3] * 255)
                 ))
 
             if needs_normal:
-                normal = mesh.normals[idx]
+                normal = mesh.normals[idx].normalized()
 
                 file.write(struct.pack(
                     ">bbb", 

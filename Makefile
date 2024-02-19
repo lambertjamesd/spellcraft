@@ -10,16 +10,16 @@ all: spellcraft.z64
 # images
 ###
 
-PNG_RGBA16 := $(shell find assets/ -type f -name '*.RGBA16.png' | sort)
+PNG_RGBA16 := $(shell find assets/ -type f -name '*.png' | sort)
 
 MKSPRITE_FLAGS ?=
 
-SPRITES := $(PNG_RGBA16:assets/%.RGBA16.png=filesystem/%.sprite)
+SPRITES := $(PNG_RGBA16:assets/%.png=filesystem/%.sprite)
 
-filesystem/%.sprite: assets/%.RGBA16.png
+filesystem/%.sprite: assets/%.png
 	@mkdir -p $(dir $@)
 	@echo "    [SPRITE] $@"
-	@$(N64_MKSPRITE) -f RGBA16 --compress -o "$(dir $@)" "$<"
+	@$(N64_MKSPRITE) -f AUTO --compress -o "$(dir $@)" "$<"
 
 ###
 # meshes
@@ -35,7 +35,7 @@ MESHES := $(MESH_SOURCES:assets/meshes/%.blend=filesystem/meshes/%.mesh)
 filesystem/meshes/%.mesh: assets/meshes/%.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh))
-	$(BLENDER_4) $< --background --python tools/mesh_export/mesh.py -- $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
+	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/mesh.py -- $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
 	mkasset -o $(dir $@) -w 256 $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
 
 ###
@@ -53,17 +53,24 @@ filesystem/%.mat: assets/%.mat.json $(EXPORT_SOURCE)
 	mkasset -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
 
 ###
+# material_builder
+###
+
+assets/materials/materials.blend: tools/mesh_export/material_generator.py $(MATERIAL_SOURCES)
+	$(BLENDER_4) --background --python-exit-code 1 --python tools/mesh_export/material_generator.py -- $@ $(MATERIAL_SOURCES)
+
+###
 # worlds
 ###
 
 WORLD_SOURCES := $(shell find assets/worlds -type f -name '*.blend' | sort)
 
-WORLDS := $(MESH_SOURCES:assets/worlds/%.blend=filesystem/worlds/%.world)
+WORLDS := $(WORLD_SOURCES:assets/worlds/%.blend=filesystem/worlds/%.world)
 
 filesystem/worlds/%.world: assets/worlds/%.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/worlds/%.world=build/assets/worlds/%.world))
-	$(BLENDER_4) $< --background --python tools/mesh_export/world.py -- $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
+	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/world.py -- $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
 	mkasset -o $(dir $@) -w 256 $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
 
 ###
@@ -74,7 +81,9 @@ SOURCES := $(shell find src/ -type f -name '*.c' | sort)
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
 
-$(BUILD_DIR)/spellcraft.dfs: $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS)
+filesystem/: $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS)
+
+$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS)
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"
@@ -84,8 +93,8 @@ clean:
 	rm -rf $(BUILD_DIR)/* filesystem/ *.z64
 .PHONY: clean
 
-clean-filesystem:
-	rm -rf filesystem/ 
+clean-fs:
+	rm -rf filesystem/ $(BUILD_DIR)/spellcraft.dfs
 .PHONY: clean-resource
 
 -include $(wildcard $(BUILD_DIR)/*.d)

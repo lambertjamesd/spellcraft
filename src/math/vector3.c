@@ -1,6 +1,7 @@
 
 #include "vector3.h"
 #include "mathf.h"
+#include <math.h>
 
 struct Vector3 gRight = {1.0f, 0.0f, 0.0f};
 struct Vector3 gUp = {0.0f, 1.0f, 0.0f};
@@ -134,17 +135,17 @@ void vector3TripleProduct(struct Vector3* a, struct Vector3* b, struct Vector3* 
     vector3AddScaled(output, a, -vector3Dot(b, c), output);
 }
 
-// void vector3Max(struct Vector3* a, struct Vector3* b, struct Vector3* out) {
-//     out->x = MAX(a->x, b->x);
-//     out->y = MAX(a->y, b->y);
-//     out->z = MAX(a->z, b->z);
-// }
+void vector3Max(struct Vector3* a, struct Vector3* b, struct Vector3* out) {
+    out->x = fmaxf(a->x, b->x);
+    out->y = fmaxf(a->y, b->y);
+    out->z = fmaxf(a->z, b->z);
+}
 
-// void vector3Min(struct Vector3* a, struct Vector3* b, struct Vector3* out) {
-//     out->x = MIN(a->x, b->x);
-//     out->y = MIN(a->y, b->y);
-//     out->z = MIN(a->z, b->z);
-// }
+void vector3Min(struct Vector3* a, struct Vector3* b, struct Vector3* out) {
+    out->x = fminf(a->x, b->x);
+    out->y = fminf(a->y, b->y);
+    out->z = fminf(a->z, b->z);
+}
 
 int vector3IsZero(struct Vector3* vector) {
     return vector->x == 0.0f && vector->y == 0.0f && vector->z == 0.0f;
