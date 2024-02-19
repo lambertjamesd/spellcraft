@@ -6,6 +6,7 @@ import os
 import struct
 import bmesh
 import sys
+import math
 
 class mesh_data():
     def __init__(self, mat: bpy.types.Material) -> None:
@@ -241,6 +242,16 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
         result.blend_mode.z_mode = 'DECAL'
         result.blend_mode.z_write = False
 
+    
+def convert_vertex_channel(input, gamma):
+    result = int(255 * math.pow(input, gamma))
+
+    if result > 255:
+        return 255
+    elif result < 0:
+        return 0
+    
+    return result
 
 ATTR_POS = 1 << 0
 ATTR_UV = 1 << 1
@@ -324,10 +335,10 @@ def write_meshes(file, mesh_list):
 
                 file.write(struct.pack(
                     ">BBBB", 
-                    int(color[0] * 255), 
-                    int(color[1] * 255), 
-                    int(color[2] * 255), 
-                    int(color[3] * 255)
+                    convert_vertex_channel(color[0], material_object.vertex_gamma), 
+                    convert_vertex_channel(color[1], material_object.vertex_gamma), 
+                    convert_vertex_channel(color[2], material_object.vertex_gamma), 
+                    convert_vertex_channel(color[3], 1)
                 ))
 
             if needs_normal:

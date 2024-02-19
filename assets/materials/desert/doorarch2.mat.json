@@ -16,5 +16,6 @@
     }],
     "blendMode": "OPAQUE",
     "lighting": false,
-    "zBuffer": true
+    "zBuffer": true,
+    "vertexGamma": 0.454545
 }

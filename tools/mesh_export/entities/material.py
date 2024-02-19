@@ -101,6 +101,7 @@ class Material():
         self.tex1: Tex | None = None
         self.culling: bool | None = None
         self.z_buffer: bool | None = None
+        self.vertex_gamma: float = 1
 
     def __str__(self):
         return f"""Material:
@@ -501,5 +502,7 @@ def parse_material(filename: str):
 
     result.culling = _optional_boolean(json_data, 'culling', 'culling', None)
     result.z_buffer = _optional_boolean(json_data, 'zBuffer', 'zBuffer', None)
+
+    result.vertex_gamma = _optional_number(json_data, 'vertexGamma', 'vertexGamma', 1)
 
     return result

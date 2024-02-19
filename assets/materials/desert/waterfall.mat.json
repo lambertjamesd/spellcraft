@@ -1,10 +1,11 @@
 {
     "tex0": "../../images/desert/waterfall.png",
     "combineMode": [{
-        "color": ["1", "0", "SHADE", "TEX0"],
+        "color": ["1", "TEX0", "SHADE", "TEX0"],
         "alpha": ["0", "0", "0", "SHADE"]
     }],
     "blendMode": "TRANSPARENT",
     "lighting": false,
-    "zBuffer": true
+    "zBuffer": true,
+    "vertexGamma": 0.454545
 }

@@ -1,10 +1,11 @@
 {
     "tex0": "../../images/desert/sky.png",
     "combineMode": [{
-        "color": ["1", "0", "TEX0", "SHADE"],
+        "color": ["1", "TEX0", "SHADE", "TEX0"],
         "alpha": ["0", "0", "0", "1"]
     }],
     "blendMode": "OPAQUE",
     "lighting": false,
-    "zBuffer": false
+    "zBuffer": false,
+    "vertexGamma": 0.454545
 }
