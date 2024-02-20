@@ -31,13 +31,13 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
         return;
     }
 
-    transformToMatrix(&renderable->transform, *mtx);
+    transformToMatrix(renderable->transform, *mtx);
 
     render_batch_add_mesh(batch, renderable->mesh, mtx);
 }
 
 render_id render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius) {
-    return render_scene_add(scene, &renderable->transform.position, radius, render_scene_render_renderable, renderable);
+    return render_scene_add(scene, &renderable->transform->position, radius, render_scene_render_renderable, renderable);
 }
 
 void render_scene_remove(struct render_scene* scene, render_id id) {

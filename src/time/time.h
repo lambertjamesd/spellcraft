@@ -5,12 +5,14 @@ typedef void (*update_callback)(void* data);
 
 typedef int update_id;
 
+#define UPDATE_LAYER_WORLD  (1 << 0)
+
 void update_reset();
 update_id update_add(void* data, update_callback callback, int priority, int mask);
 void update_remove(update_id id);
 
 void update_dispatch(int mask);
 
-float fixed_time_step;
+extern float fixed_time_step;
 
 #endif

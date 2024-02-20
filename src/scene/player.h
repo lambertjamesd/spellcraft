@@ -7,8 +7,10 @@
 #include "../render/renderable.h"
 
 struct player {
+    struct Transform transform;
     struct renderable renderable;
     int render_id;
+    int update_id;
 };
 
 void player_init(struct player* player);

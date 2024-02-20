@@ -19,6 +19,7 @@ struct update_state {
 #define MIN_UPDATE_COUNT    64
 
 static struct update_state g_update_state;
+float fixed_time_step;
 
 int update_compare_elements(void* a, void* b) {
     struct update_element* a_el = (struct update_element*)a;
@@ -28,6 +29,7 @@ int update_compare_elements(void* a, void* b) {
 
 void update_reset() {
     callback_list_reset(&g_update_state.callbacks, sizeof(struct update_element), MIN_UPDATE_COUNT, update_compare_elements);
+    fixed_time_step = 1.0f / 60.0f;
 }
 
 update_id update_add(void* data, update_callback callback, int priority, int mask) {
@@ -45,5 +47,15 @@ void update_remove(update_id id) {
 }
 
 void update_dispatch(int mask) {
+    struct callback_element* current = callback_list_get(&g_update_state.callbacks, 0);
 
+    for (int i = 0; i < g_update_state.callbacks.count; ++i) {
+        struct update_element* element = callback_element_get_data(current);
+
+        if (element->mask & mask) {
+            ((update_callback)current->callback)(element->data);
+        }
+        
+        current = callback_list_next(&g_update_state.callbacks, current);
+    }
 }

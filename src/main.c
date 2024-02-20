@@ -14,6 +14,7 @@
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
+#include "time/time.h"
 
 #include <libdragon.h>
 
@@ -24,6 +25,7 @@ struct Camera camera;
 
 void setup() {
     render_scene_reset(&r_scene_3d);
+    update_reset();
     current_world = world_load("rom:/worlds/desert.world");
 
     camera_init(&camera, 70.0f, 0.5f, 10.0f);
@@ -123,6 +125,8 @@ int main(void)
             gl_context_end();
 
             rdpq_detach_show();
-        }  
+        } 
+
+        update_dispatch(UPDATE_LAYER_WORLD);
     }
 }

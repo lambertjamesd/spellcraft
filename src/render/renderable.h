@@ -5,11 +5,11 @@
 #include "mesh.h"
 
 struct renderable {
-    struct Transform transform;
+    struct Transform* transform;
     struct mesh* mesh;
 };
 
-void renderable_init(struct renderable* renderable, const char* mesh_filename);
+void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename);
 void renderable_destroy(struct renderable* renderable);
 
 #endif
