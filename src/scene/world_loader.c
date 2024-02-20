@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include <libdragon.h>
 #include "../resource/mesh_cache.h"
+#include "../render/render_scene.h"
 
 // WRLD
 #define EXPECTED_HEADER 0x57524C44
@@ -15,6 +16,8 @@ struct world* world_load(const char* filename) {
     assert(header == EXPECTED_HEADER);
 
     struct world* world = malloc(sizeof(struct world));
+
+    player_init(&world->player);
 
     uint16_t static_count;
     fread(&static_count, 2, 1, file);
@@ -45,6 +48,8 @@ struct world* world_load(const char* filename) {
 
     fclose(file);
 
+    world->static_render_id = render_scene_add(&r_scene_3d, NULL, 0.0f, world_render, world);
+
     return world;
 }
 
@@ -58,6 +63,8 @@ void world_release(struct world* world) {
             mesh_cache_release(entity->mesh);
         }
     }
+
+    render_scene_remove(&r_scene_3d, world->static_render_id);
 
     free(world);
 }

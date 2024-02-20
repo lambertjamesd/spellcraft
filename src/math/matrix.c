@@ -67,7 +67,7 @@ void matrixMul(float a[4][4], float b[4][4], float output[4][4]) {
     for (int x = 0; x < 4; ++x) {
         for (int y = 0; y < 4; ++y) {
             output[x][y] = 0.0f;
-            for (int j = 0; j < 4; ++y) {
+            for (int j = 0; j < 4; ++j) {
                 output[x][y] += a[j][y] * b[x][j];
             }
         }

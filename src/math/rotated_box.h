@@ -2,8 +2,8 @@
 #define __MATH_ROTATED_BOX_H__
 
 #include "vector3.h"
-#include "./boxs16.h"
-#include "./transform.h"
+#include "boxs16.h"
+#include "transform.h"
 
 struct RotatedBox {
     struct Vector3 origin;

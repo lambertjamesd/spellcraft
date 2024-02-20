@@ -4,7 +4,7 @@
 
 #include "../math/vector3.h"
 #include "../math/vector2.h"
-#include "./coloru8.h"
+#include "coloru8.h"
 
 void mesh_init(struct mesh* mesh, int submesh_count) {
     mesh->list = glGenLists(submesh_count);

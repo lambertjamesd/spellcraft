@@ -1,5 +1,5 @@
-#ifndef __SCENE_CAMERA_H__
-#define __SCENE_CAMERA_H__
+#ifndef __RENDER_CAMERA_H__
+#define __RENDER_CAMERA_H__
 
 #include "../math/transform.h"
 #include "../math/plane.h"

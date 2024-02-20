@@ -4,10 +4,11 @@
 #include "../math/transform.h"
 #include "../render/mesh.h"
 #include "../render/render_batch.h"
+#include "../render/renderable.h"
 
 struct player {
-    struct Transform transform; 
-    struct mesh* mesh;
+    struct renderable renderable;
+    int render_id;
 };
 
 void player_init(struct player* player);

@@ -8,8 +8,9 @@
 #include "resource/mesh_cache.h"
 #include "resource/material_cache.h"
 #include "resource/sprite_cache.h"
-#include "scene/camera.h"
+#include "render/camera.h"
 #include "math/transform.h"
+#include "render/render_scene.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -22,6 +23,7 @@ struct world* current_world;
 struct Camera camera;
 
 void setup() {
+    render_scene_reset(&r_scene_3d);
     current_world = world_load("rom:/worlds/desert.world");
 
     camera_init(&camera, 70.0f, 0.5f, 10.0f);
@@ -37,8 +39,6 @@ void render() {
     glEnable(GL_DEPTH_TEST);
 
     float aspect_ratio = (float)display_get_width() / (float)display_get_height();
-
-    camera_apply(&camera, aspect_ratio, NULL);
 
     static const float gold[13] = { 0.24725, 0.1995, 0.0745, 1.0,      /* ambient */
                    0.75164, 0.60648, 0.22648, 1.0,    /* diffuse */
@@ -66,7 +66,7 @@ void render() {
     glLightfv( GL_LIGHT0, GL_AMBIENT, blue3 );
     glLightfv( GL_LIGHT0, GL_POSITION, pos);
 
-    world_render(current_world);
+    render_scene_render(&r_scene_3d, &camera, aspect_ratio);
 }
 
 volatile static int frame_happened = 0;
@@ -88,19 +88,19 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
     
-    // struct controller_data ctrData;
-    // bool wasStart = false;
+    struct controller_data ctrData;
+    bool wasStart = false;
 
-    // for (;;) {
-    //     controller_read(&ctrData);
-    //     bool isStart = ctrData.c[0].start != 0;
+    for (;;) {
+        controller_read(&ctrData);
+        bool isStart = ctrData.c[0].start != 0;
 
-    //     if (isStart && !wasStart) {
-    //         break;
-    //     }
+        if (isStart && !wasStart) {
+            break;
+        }
 
-    //     wasStart = isStart;
-    // }
+        wasStart = isStart;
+    }
 
     setup();
 

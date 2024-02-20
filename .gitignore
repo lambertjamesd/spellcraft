@@ -8,4 +8,6 @@ filesystem/
 
 **/__pycache__/**
 
+*.blend1
+
 *.z64

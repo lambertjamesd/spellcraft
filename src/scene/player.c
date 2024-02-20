@@ -2,21 +2,16 @@
 
 #include "../resource/mesh_cache.h"
 
-void player_init(struct player* player) {
-    transformInitIdentity(&player->transform);
-    player->mesh = mesh_cache_load("rom:/meshes/player/player.mesh");
-}
+#include "../render/render_scene.h"
 
-void player_render(struct player* player, struct render_batch* batch) {
-    mat4x4* mtx = render_batch_get_transform(batch);
-    if (!mtx) {
-        return;
-    }
-    transformToMatrix(&player->transform, *mtx);
-    render_batch_add_mesh(batch, player->mesh, mtx);
+void player_init(struct player* player) {
+    renderable_init(&player->renderable, "rom:/meshes/player/player.mesh");
+
+    player->render_id = render_scene_add_renderable(&r_scene_3d, &player->renderable, 2.0f);
 }
 
 void player_destroy(struct player* player) {
-    mesh_cache_release(player->mesh);
-    player->mesh = NULL;
+    renderable_destroy(&player->renderable);
+
+    render_scene_remove(&r_scene_3d, player->render_id);
 }

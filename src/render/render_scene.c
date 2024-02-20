@@ -1,15 +1,25 @@
 #include "render_scene.h"
 
+#include "../util/blist.h"
+#include <malloc.h>
+#include <stdbool.h>
+
 #define MIN_RENDER_SCENE_SIZE   64
 
-void render_scene_init(struct render_scene* scene) {
-    scene->next_id = 1;
+struct render_scene r_scene_3d;
+
+void render_scene_reset(struct render_scene* scene) {
+    callback_list_reset(&scene->callbacks, sizeof(struct render_scene_element), MIN_RENDER_SCENE_SIZE, NULL);
 }
 
 render_id render_scene_add(struct render_scene* scene, struct Vector3* center, float radius, render_scene_callback callback, void* data) {
-    render_id result = scene->next_id;
-    scene->next_id += 1;
-    return result;
+    struct render_scene_element element;
+
+    element.data = data;
+    element.center = center;
+    element.radius = radius;
+
+    return callback_list_insert(&scene->callbacks, callback, &element);
 }
 
 void render_scene_render_renderable(void* data, struct render_batch* batch) {
@@ -30,6 +40,26 @@ render_id render_scene_add_renderable(struct render_scene* scene, struct rendera
     return render_scene_add(scene, &renderable->transform.position, radius, render_scene_render_renderable, renderable);
 }
 
-void render_scene_remove(render_id id) {
+void render_scene_remove(struct render_scene* scene, render_id id) {
+    callback_list_remove(&scene->callbacks, id);
+}
 
+void render_scene_render(struct render_scene* scene, struct Camera* camera, float aspect_ratio) {
+    struct render_batch batch;
+
+    struct ClippingPlanes clipping_planes;
+
+    camera_apply(camera, aspect_ratio, &clipping_planes);
+
+    render_batch_init(&batch);
+
+    struct callback_element* current = callback_list_get(&scene->callbacks, 0);
+
+    for (int i = 0; i < scene->callbacks.count; ++i) {
+        struct render_scene_element* el = callback_element_get_data(current);
+        ((render_scene_callback)current->callback)(el->data, &batch);
+
+        current = callback_list_next(&scene->callbacks, current);
+    }
+    render_batch_finish(&batch);
 }
