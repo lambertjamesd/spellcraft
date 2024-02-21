@@ -7,6 +7,9 @@ typedef int update_id;
 
 #define UPDATE_LAYER_WORLD  (1 << 0)
 
+#define UPDATE_PRIORITY_PLAYER  0
+#define UPDATE_PRIORITY_CAMERA  1
+
 void update_reset();
 update_id update_add(void* data, update_callback callback, int priority, int mask);
 void update_remove(update_id id);

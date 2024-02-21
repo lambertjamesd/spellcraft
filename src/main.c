@@ -18,18 +18,12 @@
 
 #include <libdragon.h>
 
-struct mesh* mesh_test;
 struct world* current_world;
-
-struct Camera camera;
 
 void setup() {
     render_scene_reset(&r_scene_3d);
     update_reset();
     current_world = world_load("rom:/worlds/desert.world");
-
-    camera_init(&camera, 70.0f, 0.5f, 10.0f);
-    camera.transform.position.z = 5.0f;
 }
 
 float angle = 0.0f;
@@ -68,7 +62,7 @@ void render() {
     glLightfv( GL_LIGHT0, GL_AMBIENT, blue3 );
     glLightfv( GL_LIGHT0, GL_POSITION, pos);
 
-    render_scene_render(&r_scene_3d, &camera, aspect_ratio);
+    render_scene_render(&r_scene_3d, &current_world->camera, aspect_ratio);
 }
 
 volatile static int frame_happened = 0;
@@ -90,19 +84,19 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
     
-    struct controller_data ctrData;
-    bool wasStart = false;
+    // struct controller_data ctrData;
+    // bool wasStart = false;
 
-    for (;;) {
-        controller_read(&ctrData);
-        bool isStart = ctrData.c[0].start != 0;
+    // for (;;) {
+    //     controller_read(&ctrData);
+    //     bool isStart = ctrData.c[0].start != 0;
 
-        if (isStart && !wasStart) {
-            break;
-        }
+    //     if (isStart && !wasStart) {
+    //         break;
+    //     }
 
-        wasStart = isStart;
-    }
+    //     wasStart = isStart;
+    // }
 
     setup();
 
@@ -127,6 +121,7 @@ int main(void)
             rdpq_detach_show();
         } 
 
+        joypad_poll();
         update_dispatch(UPDATE_LAYER_WORLD);
     }
 }

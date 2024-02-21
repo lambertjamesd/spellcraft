@@ -3,8 +3,10 @@
 
 #include "../render/mesh.h"
 #include "../render/render_batch.h"
+#include "../render/camera.h"
 
 #include "player.h"
+#include "camera_controller.h"
 
 enum STATIC_ENTITY_FLAGS {
     STATIC_ENTITY_FLAGS_EMBEDDED_MESH = (1 << 0),
@@ -22,6 +24,8 @@ struct world {
     int static_render_id;
 
     struct player player;
+    struct Camera camera;
+    struct camera_controller camera_controller;
 };
 
 void world_render(void* data, struct render_batch* batch);

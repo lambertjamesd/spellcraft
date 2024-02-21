@@ -101,6 +101,7 @@ void render_batch_finish(struct render_batch* batch) {
 
     struct material* current_mat = 0;
 
+    glEnable(GL_CULL_FACE);
     glEnable(GL_RDPQ_MATERIAL_N64);
     // glEnable(GL_RDPQ_TEXTURING_N64);
     rdpq_set_mode_standard();

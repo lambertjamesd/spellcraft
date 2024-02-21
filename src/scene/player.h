@@ -9,11 +9,12 @@
 struct player {
     struct Transform transform;
     struct renderable renderable;
+    struct Transform* camera_transform;
     int render_id;
     int update_id;
 };
 
-void player_init(struct player* player);
+void player_init(struct player* player, struct Transform* camera_transform);
 
 void player_render(struct player* player, struct render_batch* batch);
 

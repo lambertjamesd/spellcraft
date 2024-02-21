@@ -29,7 +29,7 @@ int update_compare_elements(void* a, void* b) {
 
 void update_reset() {
     callback_list_reset(&g_update_state.callbacks, sizeof(struct update_element), MIN_UPDATE_COUNT, update_compare_elements);
-    fixed_time_step = 1.0f / 60.0f;
+    fixed_time_step = 1.0f / 30.0f;
 }
 
 update_id update_add(void* data, update_callback callback, int priority, int mask) {

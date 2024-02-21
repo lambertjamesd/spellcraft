@@ -110,6 +110,7 @@ class Material():
     env_color = {self.env_color}
     prim_color = {self.prim_color}
     blend_color = {self.blend_color}
+    culling = {self.culling}
     lighting = {self.lighting}
     tex0 = {self.tex0}
     tex1 = {self.tex1}

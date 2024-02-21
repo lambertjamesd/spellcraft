@@ -35,8 +35,8 @@ class mesh_data():
                 used_indices.add(loop_index)
                 
             triangles.append(polygon.loop_indices[0])
-            triangles.append(polygon.loop_indices[1])
             triangles.append(polygon.loop_indices[2])
+            triangles.append(polygon.loop_indices[1])
 
         next_output = len(self.indices)
         index_mapping = dict()

@@ -1,8 +1,6 @@
 {
     "tex0": "../../images/desert/ground.png",
-    "tex1": {
-        "filename": "../../images/desert/sand.png"
-    },
+    "tex1": "../../images/desert/sand.png",
     "combineMode": [{
         "color": ["TEX1", "TEX0", "SHADE_ALPHA", "TEX0"],
         "alpha": ["0", "0", "0", "1"]
@@ -10,6 +8,7 @@
         "color": ["COMBINED", "0", "SHADE", "0"],
         "alpha": ["0", "0", "0", "1"]
     }],
+    "culling": true,
     "blendMode": "OPAQUE",
     "lighting": false,
     "zBuffer": true,
