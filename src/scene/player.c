@@ -9,6 +9,8 @@
 
 #define PLAYER_MAX_SPEED    3.0f
 
+static struct Vector2 player_max_rotation;
+
 void player_get_move_basis(struct Transform* transform, struct Vector3* forward, struct Vector3* right) {
     quatMultVector(&transform->rotation, &gForward, forward);
     quatMultVector(&transform->rotation, &gRight, right);
@@ -48,7 +50,19 @@ void player_update(struct player* player) {
     vector3AddScaled(&player->transform.position, &right, direction.x * PLAYER_MAX_SPEED * fixed_time_step, &player->transform.position);
     vector3AddScaled(&player->transform.position, &forward, direction.y * PLAYER_MAX_SPEED * fixed_time_step, &player->transform.position);
 
-    player->transform.position.x += 0.001f;
+    if (magSqrd > 0.01f) {
+        struct Vector2 directionUnit;
+
+        vector2Normalize(&direction, &directionUnit);
+
+        float tmp = directionUnit.x;
+        directionUnit.x = directionUnit.y;
+        directionUnit.y = tmp;
+
+        vector2RotateTowards(&player->look_direction, &directionUnit, &player_max_rotation, &player->look_direction);
+    }
+
+    quatAxisComplex(&gUp, &player->look_direction, &player->transform.rotation);
 }
 
 void player_init(struct player* player, struct Transform* camera_transform) {
@@ -59,6 +73,10 @@ void player_init(struct player* player, struct Transform* camera_transform) {
 
     player->render_id = render_scene_add_renderable(&r_scene_3d, &player->renderable, 2.0f);
     player->update_id = update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD);
+
+    player->look_direction = gRight2;
+
+    vector2ComplexFromAngle(fixed_time_step * 3.14f, &player_max_rotation);
 }
 
 void player_destroy(struct player* player) {
@@ -66,4 +84,5 @@ void player_destroy(struct player* player) {
 
     render_scene_remove(&r_scene_3d, player->render_id);
     update_remove(player->update_id);
+    
 }
