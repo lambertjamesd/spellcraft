@@ -11,6 +11,7 @@
 #include "render/camera.h"
 #include "math/transform.h"
 #include "render/render_scene.h"
+#include "spell/assets.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -21,6 +22,7 @@
 struct world* current_world;
 
 void setup() {
+    spell_assets_init();
     render_scene_reset(&r_scene_3d);
     update_reset();
     current_world = world_load("rom:/worlds/desert.world");
