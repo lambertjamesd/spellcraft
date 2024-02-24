@@ -1,0 +1,12 @@
+{
+    "tex0": "../../images/test/checker.png",
+    "combineMode": [{
+        "color": ["ENV", "PRIM", "TEX0", "PRIM"],
+        "alpha": ["0", "0", "0", "1"]
+    }],
+    "blendMode": "OPAQUE",
+    "envColor": [128, 255, 128, 255],
+    "primColor": [32, 64, 32, 255],
+    "lighting": false,
+    "zBuffer": true
+}

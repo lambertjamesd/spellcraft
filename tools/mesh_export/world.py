@@ -43,8 +43,11 @@ def process_scene():
             # TODO add decor object
             mesh_source = os.path.normpath(os.path.join(os.path.dirname(input_filename), mesh.library.filepath[2:]))
             print(mesh_source)
-        else:
+        elif len(mesh.materials) > 0:
             world.static.append(StaticEntry(mesh, final_transform))
+
+        if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH':
+            print(obj.rigid_body.collision_shape)
 
     with open(output_filename, 'wb') as file:
         file.write('WRLD'.encode())
