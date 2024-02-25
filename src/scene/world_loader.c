@@ -3,7 +3,10 @@
 #include <malloc.h>
 #include <libdragon.h>
 #include "../resource/mesh_cache.h"
+#include "../resource/mesh_collider.h"
 #include "../render/render_scene.h"
+
+#include "../collision/collision_scene.h"
 
 // WRLD
 #define EXPECTED_HEADER 0x57524C44
@@ -48,6 +51,9 @@ struct world* world_load(const char* filename) {
         }
     }
 
+    mesh_collider_load(&world->mesh_collider, file);
+    collision_scene_use_static_collision(&world->mesh_collider);
+
     fclose(file);
 
     world->static_render_id = render_scene_add(&r_scene_3d, NULL, 0.0f, world_render, world);
@@ -70,6 +76,9 @@ void world_release(struct world* world) {
 
     player_destroy(&world->player);
     camera_controller_destroy(&world->camera_controller);
+
+    collision_scene_remove_static_collision(&world->mesh_collider);
+    mesh_collider_release(&world->mesh_collider);
 
     free(world);
 }

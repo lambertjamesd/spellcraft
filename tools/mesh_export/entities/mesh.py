@@ -369,7 +369,6 @@ class mesh_list():
         bm = bmesh.new()
         bm.from_mesh(mesh)
         bmesh.ops.triangulate(bm, faces=bm.faces[:])
-        result_mesh = bpy.data.meshes.new(f"{mesh.name}_triangulated")
         bm.to_mesh(mesh)
         bm.free()
         self.meshes.append([mesh, transform])

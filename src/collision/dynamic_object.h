@@ -15,14 +15,17 @@ enum dynamic_object_flags {
 
 typedef void (*bounding_box_calculator)(void* data, struct Vector2* rotation, struct Box3D* box);
 
+
+union dynamic_object_type_data
+{
+    struct { float radius; } sphere;
+    struct { struct Vector3 half_size; } box;
+};
+
 struct dynamic_object_type {
     MinkowsiSum minkowsi_sum;
     bounding_box_calculator bounding_box;
-    union
-    {
-        struct { float radius; } sphere;
-        struct { struct Vector3 half_size; } box;
-    } data;
+    union dynamic_object_type_data data;
 };
 
 struct dynamic_object {
@@ -35,8 +38,18 @@ struct dynamic_object {
     uint16_t flags;
 };
 
+
+void dynamic_object_init(
+    struct dynamic_object* object, 
+    struct dynamic_object_type* type,
+    struct Vector3* position, 
+    struct Vector2* rotation
+);
+
 void dynamic_object_update(struct dynamic_object* object);
 
 void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
+
+void dynamic_object_box_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 
 #endif

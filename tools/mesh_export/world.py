@@ -7,6 +7,7 @@ import math
 sys.path.append(os.path.dirname(__file__))
 
 import entities.mesh
+import entities.mesh_collider
 
 class StaticEntry():
     def __init__(self, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
@@ -16,6 +17,7 @@ class StaticEntry():
 class World():
     def __init__(self):
         self.static = []
+        self.world_mesh_collider = entities.mesh_collider.MeshCollider()
 
 def process_scene():
     input_filename = sys.argv[1]
@@ -47,7 +49,7 @@ def process_scene():
             world.static.append(StaticEntry(mesh, final_transform))
 
         if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH':
-            print(obj.rigid_body.collision_shape)
+            world.world_mesh_collider.append(mesh, final_transform)
 
     with open(output_filename, 'wb') as file:
         file.write('WRLD'.encode())
@@ -61,5 +63,7 @@ def process_scene():
             mesh_list = entities.mesh.mesh_list()
             mesh_list.append(entry.mesh, entry.transform)
             mesh_list.write_mesh(file)
+
+        world.world_mesh_collider.write_out(file)
 
 process_scene()

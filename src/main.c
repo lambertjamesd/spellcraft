@@ -12,6 +12,7 @@
 #include "math/transform.h"
 #include "render/render_scene.h"
 #include "spell/assets.h"
+#include "collision/collision_scene.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -124,6 +125,7 @@ int main(void)
         } 
 
         joypad_poll();
+        collision_scene_collide();
         update_dispatch(UPDATE_LAYER_WORLD);
     }
 }

@@ -5,11 +5,22 @@
 #include "../math/vector2.h"
 
 #include "../render/render_scene.h"
+#include "../collision/collision_scene.h"
 #include "../time/time.h"
 
 #define PLAYER_MAX_SPEED    3.0f
 
 static struct Vector2 player_max_rotation;
+
+static struct dynamic_object_type player_collision = {
+    .minkowsi_sum = dynamic_object_box_minkowski_sum,
+    .bounding_box = 0,
+    .data = {
+        .box = {
+            .half_size = {0.5f, 0.5f, 0.5f},
+        }
+    }
+};
 
 void player_get_move_basis(struct Transform* transform, struct Vector3* forward, struct Vector3* right) {
     quatMultVector(&transform->rotation, &gForward, forward);
@@ -71,12 +82,23 @@ void player_init(struct player* player, struct Transform* camera_transform) {
 
     player->camera_transform = camera_transform;
 
+    player->transform.position.y = 1.0f;
+
     player->render_id = render_scene_add_renderable(&r_scene_3d, &player->renderable, 2.0f);
     player->update_id = update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD);
 
     player->look_direction = gRight2;
 
     vector2ComplexFromAngle(fixed_time_step * 3.14f, &player_max_rotation);
+
+    dynamic_object_init(
+        &player->collision,
+        &player_collision,
+        &player->transform.position,
+        &player->look_direction
+    );
+
+    collision_scene_add(&player->collision);
 }
 
 void player_destroy(struct player* player) {
@@ -84,5 +106,5 @@ void player_destroy(struct player* player) {
 
     render_scene_remove(&r_scene_3d, player->render_id);
     update_remove(player->update_id);
-    
+    collision_scene_remove(&player->collision);
 }

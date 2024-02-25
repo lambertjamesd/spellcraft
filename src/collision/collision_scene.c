@@ -61,6 +61,16 @@ void collision_scene_remove(struct dynamic_object* object) {
     }
 }
 
+void collision_scene_use_static_collision(struct mesh_collider* collider) {
+    g_scene.mesh_collider = collider;
+}
+
+void collision_scene_remove_static_collision(struct mesh_collider* collider) {
+    if (collider == g_scene.mesh_collider) {
+        g_scene.mesh_collider = NULL;
+    }
+}
+
 void collision_scene_collide() {
     struct Vector3 prev_pos[g_scene.count];
 

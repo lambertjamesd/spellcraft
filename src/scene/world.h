@@ -4,6 +4,7 @@
 #include "../render/mesh.h"
 #include "../render/render_batch.h"
 #include "../render/camera.h"
+#include "../collision/mesh_collider.h"
 
 #include "player.h"
 #include "camera_controller.h"
@@ -20,6 +21,8 @@ struct static_entity {
 struct world {
     struct static_entity* static_entities;
     uint16_t static_entity_count;
+
+    struct mesh_collider mesh_collider;
 
     int static_render_id;
 

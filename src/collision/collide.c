@@ -19,6 +19,12 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
 
         epaSolve(&simplex, &triangle, mesh_triangle_minkowski_sum, object, dynamic_object_minkowski_sum, &result);
 
-        vector3AddScaled(object->position, &result.normal, result.penetration, object->position);
+        vector3AddScaled(object->position, &result.normal, -result.penetration, object->position);
+
+        float velocityDot = vector3Dot(&object->velocity, &result.normal);
+
+        if (velocityDot < 0.0f) {
+            vector3AddScaled(&object->velocity, &result.normal, -velocityDot, &object->velocity);
+        }
     }
 }

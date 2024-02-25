@@ -2,12 +2,16 @@
 #define __COLLISION_COLLISION_SCENE_H__
 
 #include "dynamic_object.h"
+#include "../collision/mesh_collider.h"
 
 typedef int collision_id;
 
 void collision_scene_reset();
 void collision_scene_add(struct dynamic_object* object);
 void collision_scene_remove(struct dynamic_object* object);
+
+void collision_scene_use_static_collision(struct mesh_collider* collider);
+void collision_scene_remove_static_collision(struct mesh_collider* collider);
 
 void collision_scene_collide();
 

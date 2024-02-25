@@ -6,6 +6,7 @@
 #include "../render/mesh.h"
 #include "../render/render_batch.h"
 #include "../render/renderable.h"
+#include "../collision/dynamic_object.h"
 
 struct player {
     struct Transform transform;
@@ -14,6 +15,7 @@ struct player {
     int render_id;
     int update_id;
     struct Vector2 look_direction;
+    struct dynamic_object collision;
 };
 
 void player_init(struct player* player, struct Transform* camera_transform);
