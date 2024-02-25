@@ -10,6 +10,7 @@ void mesh_triangle_minkowski_sum(void* data, struct Vector3* direction, struct V
 
     if (check > distance) {
         idx = 1;
+        distance = check;
     }
 
     check = vector3Dot(&triangle->vertices[triangle->triangle.indices[2]], direction);
