@@ -4,6 +4,7 @@
 #include "../math/vector3.h"
 #include "../math/box3d.h"
 #include "../math/box2d.h"
+#include "contact.h"
 #include "gjk.h"
 #include <stdint.h>
 
@@ -36,6 +37,7 @@ struct dynamic_object {
     struct Box3D bounding_box;
     float time_scalar;
     uint16_t flags;
+    struct contact* active_contacts;
 };
 
 

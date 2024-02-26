@@ -10,12 +10,23 @@ struct callback_element {
     void* callback;
 };
 
+enum callback_list_flags {
+    CALLBACK_LIST_ENUMERATING = (1 << 0),
+    CALLBACK_LIST_HAS_DELETIONS = (1 << 1),
+};
+
 struct callback_list {
     callback_id next_id;
     void* elements;
     short count;
     short capacity;
     short element_size;
+
+    short flags;
+
+    void* pending_elements;
+    short pending_element_count;
+    short pending_element_capacity;
 
     data_compare data_compare_callback;
 };
@@ -28,5 +39,8 @@ void callback_list_reset(struct callback_list* list, int data_size, int min_capc
 
 callback_id callback_list_insert(struct callback_list* list, void* callback, void* data);
 void callback_list_remove(struct callback_list* list, callback_id id);
+
+void callback_list_begin(struct callback_list* list);
+void callback_list_end(struct callback_list* list);
 
 #endif

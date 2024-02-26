@@ -47,6 +47,8 @@ void update_remove(update_id id) {
 }
 
 void update_dispatch(int mask) {
+    callback_list_begin(&g_update_state.callbacks);
+
     struct callback_element* current = callback_list_get(&g_update_state.callbacks, 0);
 
     for (int i = 0; i < g_update_state.callbacks.count; ++i) {
@@ -58,4 +60,6 @@ void update_dispatch(int mask) {
         
         current = callback_list_next(&g_update_state.callbacks, current);
     }
+
+    callback_list_end(&g_update_state.callbacks);
 }

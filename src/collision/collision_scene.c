@@ -5,8 +5,10 @@
 
 #include "mesh_collider.h"
 #include "collide.h"
+#include "contact.h"
 
 #define MIN_DYNAMIC_OBJECTS 64
+#define MAX_ACTIVE_CONTACTS 128
 
 struct collision_scene_element {
     struct dynamic_object* object;
@@ -14,6 +16,8 @@ struct collision_scene_element {
 
 struct collision_scene {
     struct collision_scene_element* elements;
+    struct contact* next_free_contact;
+    struct contact* all_contacts;
     uint16_t count;
     uint16_t capacity;
 
@@ -28,6 +32,14 @@ void collision_scene_reset() {
     g_scene.elements = malloc(sizeof(struct collision_scene_element) * MIN_DYNAMIC_OBJECTS);
     g_scene.capacity = MIN_DYNAMIC_OBJECTS;
     g_scene.count = 0;
+    g_scene.all_contacts = malloc(sizeof(struct contact) * MAX_ACTIVE_CONTACTS);
+    g_scene.next_free_contact = &g_scene.all_contacts[0];
+
+    for (int i = 0; i + 1 < MAX_ACTIVE_CONTACTS; ++i) {
+        g_scene.all_contacts[i].next = &g_scene.all_contacts[i + 1];
+    }
+
+    g_scene.all_contacts[MAX_ACTIVE_CONTACTS - 1].next = NULL;
 }
 
 void collision_scene_add(struct dynamic_object* object) {
@@ -75,12 +87,35 @@ void collision_scene_collide() {
     struct Vector3 prev_pos[g_scene.count];
 
     for (int i = 0; i < g_scene.count; ++i) {
-        prev_pos[i] = *g_scene.elements[i].object->position;
+        struct collision_scene_element* element = &g_scene.elements[i];
+        prev_pos[i] = *element->object->position;
 
-        dynamic_object_update(g_scene.elements[i].object);
+        struct contact* last_contact = element->object->active_contacts;
+
+        while (last_contact && last_contact->next) {
+            last_contact = last_contact->next;
+        }
+
+        if (last_contact) {
+            last_contact->next = g_scene.next_free_contact;
+            g_scene.next_free_contact = element->object->active_contacts;
+            element->object->active_contacts = NULL;
+        }
+
+        dynamic_object_update(element->object);
 
         if (g_scene.mesh_collider) {
-            collide_object_to_mesh(g_scene.elements[i].object, g_scene.mesh_collider);
+            collide_object_to_mesh(element->object, g_scene.mesh_collider);
         }
     }
+}
+
+struct contact* collision_scene_new_contact() {
+    if (!g_scene.next_free_contact) {
+        return NULL;
+    }
+
+    struct contact* result = g_scene.next_free_contact;
+    g_scene.next_free_contact = result->next;
+    return result;
 }

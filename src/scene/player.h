@@ -8,6 +8,8 @@
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
 
+#include "../spell/projectile.h"
+
 struct player {
     struct Transform transform;
     struct renderable renderable;
@@ -16,6 +18,8 @@ struct player {
     int update_id;
     struct Vector2 look_direction;
     struct dynamic_object collision;
+
+    struct projectile projectile;
 };
 
 void player_init(struct player* player, struct Transform* camera_transform);

@@ -58,8 +58,10 @@ void player_update(struct player* player) {
         vector2Scale(&direction, 1.0f / sqrtf(magSqrd), &direction);
     }
 
+    float prev_y = player->collision.velocity.y;
     vector3Scale(&right, &player->collision.velocity, direction.x * PLAYER_MAX_SPEED);
     vector3AddScaled(&player->collision.velocity, &forward, direction.y * PLAYER_MAX_SPEED, &player->collision.velocity);
+    player->collision.velocity.y = prev_y;
 
     if (magSqrd > 0.01f) {
         struct Vector2 directionUnit;

@@ -14,6 +14,7 @@ void dynamic_object_init(
     object->velocity = gZeroVec;
     object->time_scalar = 1.0f;
     object->flags = DYNAMIC_OBJECT_GRAVITY;
+    object->active_contacts = 0;
 }
 
 void dynamic_object_update(struct dynamic_object* object) {

@@ -2,6 +2,8 @@
 
 #include "epa.h"
 
+#include "collision_scene.h"
+
 void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider* mesh) {
     struct mesh_triangle triangle;
 
@@ -26,5 +28,18 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
         if (velocityDot < 0.0f) {
             vector3AddScaled(&object->velocity, &result.normal, -velocityDot, &object->velocity);
         }
+
+        struct contact* contact = collision_scene_new_contact();
+
+        if (!contact) {
+            continue;
+        }
+
+        contact->normal = result.normal;
+        contact->point = result.contactA;
+        contact->other_object = 0;
+
+        contact->next = object->active_contacts;
+        object->active_contacts = contact;
     }
 }
