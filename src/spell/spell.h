@@ -7,10 +7,10 @@
 #define SPELL_MAX_ROWS    4
 
 enum spell_symbol_type {
-    spell_symbol_type_blank,
-    spell_symbol_type_fire,
-    spell_symbol_type_ball,
-    spell_symbol_type_push,
+    SPELL_SYMBOL_BLANK,
+    SPELL_SYMBOL_FIRE,
+    SPELL_SYMBOL_PROJECTILE,
+    SPELL_SYMBOL_PUSH,
 };
 
 struct spell_symbol {

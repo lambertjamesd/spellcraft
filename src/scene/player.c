@@ -82,8 +82,11 @@ void player_update(struct player* player) {
     player->player_spell_source.position = player->transform.position;
     player->player_spell_source.position.y += 1.0f;
 
+    struct spell_event_listener event_lisener;
+    spell_event_listener_init(&event_lisener);
+
     if (player->projectile.render_id) {
-        projectile_update(&player->projectile);
+        projectile_update(&player->projectile, &event_lisener);
     }
 
     if (pressed.a) {

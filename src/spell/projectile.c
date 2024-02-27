@@ -43,11 +43,15 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     projectile->data_output = data_output;
 
     projectile->pos = data_source->position;
+    projectile->has_hit = 0;
+    projectile->has_secondary = 0;
 
     data_source->reference_count += 1;
-    data_output->reference_count += 1;
 
-    *data_output = *data_source;
+    if (data_output) {
+        data_output->reference_count += 1;
+        *data_output = *data_source;
+    }
 
     dynamic_object_init(&projectile->dynamic_object, &projectile_collision, &projectile->pos, NULL);
     collision_scene_add(&projectile->dynamic_object);
@@ -59,12 +63,27 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     }
 }
 
-void projectile_update(struct projectile* projectile) {
-    projectile->data_output->position = projectile->pos;
-    projectile->data_output->direction = projectile->data_source->direction;
+void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener) {
+    if (projectile->data_output) {
+        projectile->data_output->position = projectile->pos;
+        projectile->data_output->direction = projectile->data_source->direction;
+    }
 
     if (projectile->dynamic_object.active_contacts) {
-        // TODO trigger collision
+        projectile->data_output->position = projectile->dynamic_object.active_contacts->point;
+        projectile->data_output->direction = projectile->dynamic_object.active_contacts->normal;
+
+        spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY);
+        projectile->has_hit = 1;
+    }
+
+    if (!projectile->has_secondary) {
+        spell_event_listener_add(event_listener, SPELL_EVENT_SECONDARY);
+        projectile->has_secondary = 1;
+    }
+
+    if (projectile->has_hit && (!projectile->data_output || projectile->data_output->reference_count == 1)) {
+        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY);
     }
 }
 
@@ -72,6 +91,8 @@ void projectile_destroy(struct projectile* projectile) {
     render_scene_remove(&r_scene_3d, projectile->render_id);
     projectile->render_id = 0;
     projectile->data_source->reference_count -= 1;
-    projectile->data_output->reference_count -= 1;
+    if (projectile->data_output) {
+        projectile->data_output->reference_count -= 1;
+    }
     collision_scene_remove(&projectile->dynamic_object);
 }
