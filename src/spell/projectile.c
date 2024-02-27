@@ -6,14 +6,18 @@
 
 #include "assets.h"
 
-static struct dynamic_object_type player_collision = {
+#define PROJECTILE_SPEED    10.0f
+
+static struct dynamic_object_type projectile_collision = {
     .minkowsi_sum = dynamic_object_box_minkowski_sum,
     .bounding_box = 0,
     .data = {
         .box = {
             .half_size = {0.25f, 0.25f, 0.25f},
         }
-    }
+    },
+    .bounce = 0.4f,
+    .friction = 0.25f,
 };
 
 void projectile_render(struct projectile* projectile, struct render_batch* batch) {
@@ -22,6 +26,12 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     if (!mtx) {
         return;
     }
+
+    struct Transform transform;
+    transform.position = projectile->pos;
+    quatIdent(&transform.rotation);
+    transform.scale = gOneVec;
+    transformToMatrix(&transform, *mtx);
 
     render_batch_add_mesh(batch, spell_assets_get()->projectile_mesh, mtx);
 }
@@ -39,10 +49,14 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 
     *data_output = *data_source;
 
-    dynamic_object_init(&projectile->dynamic_object, &player_collision, &projectile->pos, NULL);
+    dynamic_object_init(&projectile->dynamic_object, &projectile_collision, &projectile->pos, NULL);
     collision_scene_add(&projectile->dynamic_object);
 
-    projectile->dynamic_object.velocity = data_source->direction;
+    vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
+
+    if (!data_source->flags.controlled) {
+        projectile->dynamic_object.velocity.y += PROJECTILE_SPEED * 0.5f;
+    }
 }
 
 void projectile_update(struct projectile* projectile) {

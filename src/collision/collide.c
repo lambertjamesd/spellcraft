@@ -25,8 +25,14 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
 
         float velocityDot = vector3Dot(&object->velocity, &result.normal);
 
-        if (velocityDot < 0.0f) {
-            vector3AddScaled(&object->velocity, &result.normal, -velocityDot, &object->velocity);
+        struct Vector3 tangentVelocity;
+
+        vector3AddScaled(&object->velocity, &result.normal, -velocityDot, &tangentVelocity);
+        vector3Scale(&tangentVelocity, &tangentVelocity, 1.0f - object->type->friction);
+
+        if (velocityDot < 0) {
+            float bounce = -object->type->bounce;
+            vector3AddScaled(&tangentVelocity, &result.normal, velocityDot * bounce, &object->velocity);
         }
 
         struct contact* contact = collision_scene_new_contact();

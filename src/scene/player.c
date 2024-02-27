@@ -46,6 +46,7 @@ void player_update(struct player* player) {
     player_get_move_basis(player->camera_transform, &forward, &right);
 
     joypad_inputs_t input = joypad_get_inputs(0);
+    joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
     struct Vector2 direction;
 
@@ -76,6 +77,22 @@ void player_update(struct player* player) {
     }
 
     quatAxisComplex(&gUp, &player->look_direction, &player->transform.rotation);
+
+    quatMultVector(&player->transform.rotation, &gForward, &player->player_spell_source.direction);
+    player->player_spell_source.position = player->transform.position;
+    player->player_spell_source.position.y += 1.0f;
+
+    if (player->projectile.render_id) {
+        projectile_update(&player->projectile);
+    }
+
+    if (pressed.a) {
+        if (player->projectile.render_id) {
+            projectile_destroy(&player->projectile);
+        }
+
+        projectile_init(&player->projectile, &player->player_spell_source, &player->projectile_spell_source);
+    }
 }
 
 void player_init(struct player* player, struct Transform* camera_transform) {
@@ -101,6 +118,11 @@ void player_init(struct player* player, struct Transform* camera_transform) {
     );
 
     collision_scene_add(&player->collision);
+
+    player->projectile.render_id = 0;
+
+    player->player_spell_source.flags.all = 0;
+    player->player_spell_source.reference_count = 1;
 }
 
 void player_destroy(struct player* player) {

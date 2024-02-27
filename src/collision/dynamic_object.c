@@ -19,7 +19,10 @@ void dynamic_object_init(
 
 void dynamic_object_update(struct dynamic_object* object) {
     vector3AddScaled(object->position, &object->velocity, fixed_time_step * object->time_scalar, object->position);
-    object->velocity.y += fixed_time_step * object->time_scalar * GRAVITY_CONSTANT;
+
+    if (object->flags & DYNAMIC_OBJECT_GRAVITY) {
+        object->velocity.y += fixed_time_step * object->time_scalar * GRAVITY_CONSTANT;
+    }
 }
 
 void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {

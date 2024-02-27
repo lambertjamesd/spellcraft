@@ -5,17 +5,20 @@
 
 #include <stdint.h>
 
-enum spell_source_flags {
-    SPELL_SOURCE_FLAMING = (1 << 0),
-    SPELL_SOURCE_CONTROLLED = (1 << 1),
-    SPELL_SOURCE_ACTIVE = (1 << 2),
+union spell_source_flags {
+    struct {
+        uint16_t flaming: 1;
+        uint16_t controlled: 1;
+        uint16_t active: 1;
+    };
+    uint16_t all;
 };
 
 struct spell_data_source {
     struct Vector3 position;
     struct Vector3 direction;
 
-    uint16_t flags;
+    union spell_source_flags flags;
     uint8_t reference_count;
 };
 

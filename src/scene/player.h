@@ -19,6 +19,8 @@ struct player {
     struct Vector2 look_direction;
     struct dynamic_object collision;
 
+    struct spell_data_source player_spell_source;
+    struct spell_data_source projectile_spell_source;
     struct projectile projectile;
 };
 

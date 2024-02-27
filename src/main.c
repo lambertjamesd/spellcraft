@@ -87,20 +87,14 @@ int main(void)
 
     debug_init_usblog();
     console_set_debug(true);
-    
-    struct controller_data ctrData;
-    bool wasStart = false;
 
-    for (;;) {
-        controller_read(&ctrData);
-        bool isStart = ctrData.c[0].start != 0;
+    // for (;;) {
+    //     joypad_poll();
 
-        if (isStart && !wasStart) {
-            break;
-        }
-
-        wasStart = isStart;
-    }
+    //     if (joypad_get_buttons_pressed(0).start) {
+    //         break;
+    //     }
+    // }
 
     setup();
 

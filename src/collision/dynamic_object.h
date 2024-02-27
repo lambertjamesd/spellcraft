@@ -27,6 +27,8 @@ struct dynamic_object_type {
     MinkowsiSum minkowsi_sum;
     bounding_box_calculator bounding_box;
     union dynamic_object_type_data data;
+    float bounce;
+    float friction;
 };
 
 struct dynamic_object {
