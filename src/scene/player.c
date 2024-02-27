@@ -86,7 +86,7 @@ void player_update(struct player* player) {
     spell_event_listener_init(&event_lisener);
 
     if (player->projectile.render_id) {
-        projectile_update(&player->projectile, &event_lisener);
+        projectile_update(&player->projectile, &event_lisener, &player->pool);
     }
 
     if (pressed.a) {
@@ -94,7 +94,7 @@ void player_update(struct player* player) {
             projectile_destroy(&player->projectile);
         }
 
-        projectile_init(&player->projectile, &player->player_spell_source, &player->projectile_spell_source);
+        projectile_init(&player->projectile, &player->player_spell_source);
     }
 }
 
@@ -123,6 +123,7 @@ void player_init(struct player* player, struct Transform* camera_transform) {
     collision_scene_add(&player->collision);
 
     player->projectile.render_id = 0;
+    spell_data_source_pool_init(&player->pool);
 
     player->player_spell_source.flags.all = 0;
     player->player_spell_source.reference_count = 1;

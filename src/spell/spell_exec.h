@@ -2,7 +2,6 @@
 #define __SPELL_SPELL_EXEC_H__
 
 #define MAX_SPELL_EXECUTORS 16
-#define MAX_SPELL_DATA_SOURCES  (MAX_SPELL_EXECUTORS * 2)
 
 #include "spell.h"
 
@@ -28,9 +27,8 @@ struct spell_exec_slot {
 
 struct spell_exec {
     struct spell_exec_slot slots[MAX_SPELL_EXECUTORS];
-    struct spell_data_source data_sources[MAX_SPELL_DATA_SOURCES];
+    struct spell_data_source_pool data_sources;
     uint8_t next_slot;
-    uint8_t next_data_source;
     spell_slot_id next_id;
 };
 

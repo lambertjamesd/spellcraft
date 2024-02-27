@@ -7,7 +7,6 @@ void spell_slot_init(
     struct spell_exec_slot* slot, 
     spell_slot_id id,
     struct spell_data_source* input,
-    struct spell_data_source* output,
     struct spell* for_spell,
     uint8_t curr_col,
     uint8_t curr_row
@@ -16,7 +15,7 @@ void spell_slot_init(
 
     switch ((enum spell_symbol_type)symbol.type) {
         case SPELL_SYMBOL_PROJECTILE:
-            projectile_init(&slot->data.projectile, input, output);
+            projectile_init(&slot->data.projectile, input);
             break;
         default:
             break;
@@ -69,26 +68,6 @@ struct spell_exec_slot* spell_exec_find_slot(struct spell_exec* exec) {
     return result;
 }
 
-struct spell_data_source* spell_exec_find_source(struct spell_exec* exec) {
-    for (int i = 0; i < MAX_SPELL_DATA_SOURCES; ++i) {
-        struct spell_data_source* current = &exec->data_sources[exec->next_data_source];
-
-        exec->next_data_source += 1;
-
-        if (exec->next_data_source == MAX_SPELL_DATA_SOURCES) {
-            exec->next_data_source = 0;
-        }
-
-        if (current->reference_count == 0) {
-            return current;
-        }
-    }
-
-    assert(false);
-
-    return 0;
-}
-
 void spell_exec_start(struct spell_exec* exec, int slot_index, struct spell* spell, struct spell_data_source* data_source) {
     struct spell_exec_slot* slot = spell_exec_find_slot(exec);
 
@@ -99,7 +78,6 @@ void spell_exec_start(struct spell_exec* exec, int slot_index, struct spell* spe
         slot,
         id,
         data_source,
-        spell_exec_find_source(exec),
         spell,
         0,
         0

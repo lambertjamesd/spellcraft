@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+#define MAX_SPELL_DATA_SOURCES  32
+
 union spell_source_flags {
     struct {
         uint16_t flaming: 1;
@@ -21,5 +23,13 @@ struct spell_data_source {
     union spell_source_flags flags;
     uint8_t reference_count;
 };
+
+struct spell_data_source_pool {
+    struct spell_data_source data_sources[MAX_SPELL_DATA_SOURCES];
+    uint16_t next_data_source;
+};
+
+void spell_data_source_pool_init(struct spell_data_source_pool* pool);
+struct spell_data_source* spell_data_source_pool_get(struct spell_data_source_pool* pool);
 
 #endif

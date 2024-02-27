@@ -20,7 +20,9 @@ struct player {
     struct dynamic_object collision;
 
     struct spell_data_source player_spell_source;
-    struct spell_data_source projectile_spell_source;
+
+    // TODO replace with a spell exec
+    struct spell_data_source_pool pool;
     struct projectile projectile;
 };
 
