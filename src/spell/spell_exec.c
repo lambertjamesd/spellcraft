@@ -37,7 +37,8 @@ void spell_slot_init(
     slot->curr_row = curr_row;
 }
 
-void spell_slot_destroy(struct spell_exec_slot* slot) {
+void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
+    struct spell_exec_slot* slot = &exec->slots[slot_index];
     switch (slot->type) {
         case SPELL_SYMBOL_PROJECTILE:
             projectile_destroy(&slot->data.projectile);
@@ -46,7 +47,7 @@ void spell_slot_destroy(struct spell_exec_slot* slot) {
             break;
     }
 
-    slot->type = SPELL_SYMBOL_BLANK;
+    exec->ids[slot_index] = 0;
 }
 
 void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
@@ -66,7 +67,7 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
     // handle destroy event first 
     for (int i = 0; i < event_listener.event_count; ++i) {
         if (event_listener.events[i].type == SPELL_EVENT_DESTROY) {
-            spell_slot_destroy(slot);
+            spell_slot_destroy(exec, spell_slot_index);
             exec->ids[spell_slot_index] = 0;
             break;
         }
@@ -122,8 +123,7 @@ int spell_exec_find_slot(struct spell_exec* exec) {
     }
 
     // reuse the oldest active slot
-    spell_slot_destroy(&exec->slots[result]);
-    exec->ids[result] = 0;
+    spell_slot_destroy(exec, result);
 
     return result;
 }
