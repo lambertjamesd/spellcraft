@@ -9,6 +9,7 @@
 #include "../collision/dynamic_object.h"
 
 #include "../spell/projectile.h"
+#include "../spell/spell_exec.h"
 
 struct player {
     struct Transform transform;
@@ -20,10 +21,8 @@ struct player {
     struct dynamic_object collision;
 
     struct spell_data_source player_spell_source;
-
-    // TODO replace with a spell exec
-    struct spell_data_source_pool pool;
-    struct projectile projectile;
+    
+    struct spell_exec spell_exec;
 };
 
 void player_init(struct player* player, struct Transform* camera_transform);

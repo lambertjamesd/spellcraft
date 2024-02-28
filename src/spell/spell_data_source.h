@@ -24,6 +24,11 @@ struct spell_data_source {
     uint8_t reference_count;
 };
 
+struct spell_event_options {
+    uint32_t has_primary_event: 1;
+    uint32_t has_secondary_event: 1;
+};
+
 struct spell_data_source_pool {
     struct spell_data_source data_sources[MAX_SPELL_DATA_SOURCES];
     uint16_t next_data_source;

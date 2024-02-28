@@ -5,6 +5,7 @@
 
 struct spell_assets {
     struct mesh* projectile_mesh;
+    struct material* fire_particle_mesh;
 };
 
 void spell_assets_init();

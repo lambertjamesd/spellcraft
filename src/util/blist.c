@@ -12,7 +12,7 @@ int blist_insertion_index(void* array, int array_length, array_element_comparer 
         return 0;
     }
 
-    for (int i = 0; i < array_length || i < 2; ++i) {
+    for (int i = 0; i < array_length || i < 4; ++i) {
         int compare_result = comparer(array, mid, array_length);
 
         if (compare_result <= 0) {

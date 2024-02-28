@@ -48,8 +48,9 @@ void render_scene_render(struct render_scene* scene, struct Camera* camera, floa
     struct render_batch batch;
 
     struct ClippingPlanes clipping_planes;
+    mat4x4 view_proj_matrix;
 
-    camera_apply(camera, aspect_ratio, &clipping_planes);
+    camera_apply(camera, aspect_ratio, &clipping_planes, view_proj_matrix);
 
     render_batch_init(&batch);
 
@@ -61,5 +62,5 @@ void render_scene_render(struct render_scene* scene, struct Camera* camera, floa
 
         current = callback_list_next(&scene->callbacks, current);
     }
-    render_batch_finish(&batch);
+    render_batch_finish(&batch, view_proj_matrix);
 }

@@ -22,6 +22,17 @@ static struct dynamic_object_type player_collision = {
     }
 };
 
+struct spell_symbol projectile_spell_sybols[] = {
+    {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
+    {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
+};
+
+struct spell projectile_spell = {
+    .symbols = projectile_spell_sybols,
+    .cols = 2,
+    .rows = 1,
+};
+
 void player_get_move_basis(struct Transform* transform, struct Vector3* forward, struct Vector3* right) {
     quatMultVector(&transform->rotation, &gForward, forward);
     quatMultVector(&transform->rotation, &gRight, right);
@@ -82,21 +93,8 @@ void player_update(struct player* player) {
     player->player_spell_source.position = player->transform.position;
     player->player_spell_source.position.y += 1.0f;
 
-    struct spell_event_listener event_lisener;
-    spell_event_listener_init(&event_lisener);
-
-    if (player->projectile.render_id) {
-        projectile_update(&player->projectile, &event_lisener, &player->pool);
-    }
-
-    spell_event_listener_destroy(&event_lisener);
-
     if (pressed.a) {
-        if (player->projectile.render_id) {
-            projectile_destroy(&player->projectile);
-        }
-
-        projectile_init(&player->projectile, &player->player_spell_source);
+        spell_exec_start(&player->spell_exec, 0, &projectile_spell, &player->player_spell_source);
     }
 }
 
@@ -124,8 +122,7 @@ void player_init(struct player* player, struct Transform* camera_transform) {
 
     collision_scene_add(&player->collision);
 
-    player->projectile.render_id = 0;
-    spell_data_source_pool_init(&player->pool);
+    spell_exec_init(&player->spell_exec);
 
     player->player_spell_source.flags.all = 0;
     player->player_spell_source.reference_count = 1;
@@ -133,6 +130,7 @@ void player_init(struct player* player, struct Transform* camera_transform) {
 
 void player_destroy(struct player* player) {
     renderable_destroy(&player->renderable);
+    spell_exec_destroy(&player->spell_exec);
 
     render_scene_remove(&r_scene_3d, player->render_id);
     update_remove(player->update_id);

@@ -2,6 +2,7 @@
 #define __SPELL_SPELL_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define SPELL_MAX_COLS    10
 #define SPELL_MAX_ROWS    4
@@ -27,5 +28,7 @@ struct spell {
 };
 
 struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row);
+bool spell_has_primary_event(struct spell* spell, int col, int row);
+bool spell_has_secondary_event(struct spell* spell, int col, int row);
 
 #endif

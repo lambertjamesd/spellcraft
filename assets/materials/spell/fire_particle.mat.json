@@ -1,0 +1,9 @@
+{
+    "tex0": "../../images/desert/ground.png",
+    "combineMode": [{
+        "color": ["0", "0", "0", "TEX0"],
+        "alpha": ["0", "0", "0", "PRIM"]
+    }],
+    "primColor": [255, 0, 255, 64],
+    "blendMode": "OPAQUE"
+}

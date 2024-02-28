@@ -27,7 +27,7 @@ void camera_extract_clipping_plane(float viewPersp[4][4], struct Plane* output, 
 }
 
 
-void camera_apply(struct Camera* camera, float aspect_ratio, struct ClippingPlanes* clipping_planes) {
+void camera_apply(struct Camera* camera, float aspect_ratio, struct ClippingPlanes* clipping_planes, mat4x4 view_proj_matrix) {
     glMatrixMode(GL_PROJECTION);
 
     float tan_fov = tanf(camera->fov * (0.5f * 3.14159f / 180.0f));
@@ -53,12 +53,15 @@ void camera_apply(struct Camera* camera, float aspect_ratio, struct ClippingPlan
     transformToMatrix(&inverse, view_matrix);
     glLoadMatrixf((GLfloat*)view_matrix);
 
-    if (!clipping_planes) {
+    if (!view_proj_matrix) {
         return;
     }
 
-    mat4x4 view_proj_matrix;
     matrixMul(proj_matrix, view_matrix, view_proj_matrix);
+
+    if (!clipping_planes) {
+        return;
+    }
 
     camera_extract_clipping_plane(view_proj_matrix, &clipping_planes->planes[0], 0, 1.0f);
     camera_extract_clipping_plane(view_proj_matrix, &clipping_planes->planes[1], 0, -1.0f);

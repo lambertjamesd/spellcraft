@@ -55,11 +55,26 @@ void collision_scene_add(struct dynamic_object* object) {
     g_scene.count += 1;
 }
 
+void collision_scene_return_contacts(struct dynamic_object* object) {
+    struct contact* last_contact = object->active_contacts;
+
+    while (last_contact && last_contact->next) {
+        last_contact = last_contact->next;
+    }
+
+    if (last_contact) {
+        last_contact->next = g_scene.next_free_contact;
+        g_scene.next_free_contact = object->active_contacts;
+        object->active_contacts = NULL;
+    }
+}
+
 void collision_scene_remove(struct dynamic_object* object) {
     bool has_found = false;
 
     for (int i = 0; i < g_scene.count; ++i) {
         if (object == g_scene.elements[i].object) {
+            collision_scene_return_contacts(object);
             has_found = true;
         }
 
@@ -90,17 +105,7 @@ void collision_scene_collide() {
         struct collision_scene_element* element = &g_scene.elements[i];
         prev_pos[i] = *element->object->position;
 
-        struct contact* last_contact = element->object->active_contacts;
-
-        while (last_contact && last_contact->next) {
-            last_contact = last_contact->next;
-        }
-
-        if (last_contact) {
-            last_contact->next = g_scene.next_free_contact;
-            g_scene.next_free_contact = element->object->active_contacts;
-            element->object->active_contacts = NULL;
-        }
+        collision_scene_return_contacts(element->object);
 
         dynamic_object_update(element->object);
 

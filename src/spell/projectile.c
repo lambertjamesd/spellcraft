@@ -1,5 +1,7 @@
 #include "projectile.h"
 
+#include <stdbool.h>
+
 #include "../render/render_scene.h"
 #include "../time/time.h"
 #include "../collision/collision_scene.h"
@@ -34,9 +36,19 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     transformToMatrix(&transform, *mtx);
 
     render_batch_add_mesh(batch, spell_assets_get()->projectile_mesh, mtx);
+
+    struct render_batch_element* billboard_test = render_batch_add(batch);
+    
+    billboard_test->type = RENDER_BATCH_BILLBOARD;
+
+    billboard_test->billboard = render_batch_get_sprites(batch, 1);
+
+    billboard_test->material = spell_assets_get()->fire_particle_mesh;
+    billboard_test->billboard.sprites->position = projectile->pos;
+    billboard_test->billboard.sprites->size = 1.0f;
 }
 
-void projectile_init(struct projectile* projectile, struct spell_data_source* data_source) {
+void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options) {
     projectile->render_id = render_scene_add(&r_scene_3d, &projectile->pos, 0.2f, (render_scene_callback)projectile_render, projectile);
 
     projectile->data_source = data_source;
@@ -44,8 +56,8 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 
     projectile->pos = data_source->position;
     projectile->has_hit = 0;
-    // TODO determine this somehow
-    projectile->has_primary_event = 0;
+    projectile->has_primary_event = event_options.has_primary_event;
+    projectile->has_secondary_event = event_options.has_secondary_event;
 
     spell_data_source_retain(data_source);
 
@@ -59,37 +71,53 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     }
 }
 
-void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
+bool projectile_is_active(struct projectile* projectile) {
+    if (projectile->has_primary_event || !projectile->has_secondary_event) {
+        return !projectile->has_hit;
+    }
+
     if (!projectile->data_output) {
-        projectile->data_output = spell_data_source_pool_get(pool);
+        return false;
+    }
 
-        if (projectile->data_output) {
-            spell_data_source_retain(projectile->data_output);
-            *projectile->data_output = *projectile->data_source;
+    return projectile->data_output->reference_count > 1;
+}
 
-            spell_event_listener_add(event_listener, SPELL_EVENT_SECONDARY, projectile->data_output);
+void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
+    if (projectile->has_secondary_event) {
+        if (!projectile->data_output) {
+            projectile->data_output = spell_data_source_pool_get(pool);
+
+            if (projectile->data_output) {
+                spell_data_source_retain(projectile->data_output);
+                *projectile->data_output = *projectile->data_source;
+
+                spell_event_listener_add(event_listener, SPELL_EVENT_SECONDARY, projectile->data_output);
+            }
+        } else {
+            projectile->data_output->position = projectile->pos;
+            projectile->data_output->direction = projectile->data_source->direction;
         }
-    } else {
-        projectile->data_output->position = projectile->pos;
-        projectile->data_output->direction = projectile->data_source->direction;
     }
 
     if (projectile->dynamic_object.active_contacts && !projectile->has_hit) {
-        struct contact* first_contact = projectile->dynamic_object.active_contacts;
+        if (projectile->has_primary_event) {
+            struct contact* first_contact = projectile->dynamic_object.active_contacts;
 
-        struct spell_data_source* hit_source = spell_data_source_pool_get(pool);
+            struct spell_data_source* hit_source = spell_data_source_pool_get(pool);
 
-        if (hit_source) {
-            hit_source->direction = first_contact->normal;
-            hit_source->position = first_contact->point;
-            hit_source->flags = projectile->data_source->flags;
-            spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source);
+            if (hit_source) {
+                hit_source->direction = first_contact->normal;
+                hit_source->position = first_contact->point;
+                hit_source->flags = projectile->data_source->flags;
+                spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source);
+            }
         }
 
         projectile->has_hit = 1;
     }
 
-    if (projectile->has_hit) {
+    if (!projectile_is_active(projectile)) {
         spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL);
     }
 }

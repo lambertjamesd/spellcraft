@@ -2,20 +2,15 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <memory.h>
 #include "../util/sort.h"
+#include "../time/time.h"
 
 void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source);
 
-enum spell_symbol_type spell_slot_relative_type(struct spell_exec_slot* slot, int x, int y) {
-    if (!slot->for_spell) {
-        return SPELL_SYMBOL_BLANK;
-    }
-
-    return spell_get_symbol(slot->for_spell, slot->curr_col + x, slot->curr_row + y).type;
-}
-
 void spell_slot_init(
     struct spell_exec_slot* slot, 
+    int button_index,
     struct spell_data_source* input,
     struct spell* for_spell,
     uint8_t curr_col,
@@ -23,15 +18,22 @@ void spell_slot_init(
 ) {
     struct spell_symbol symbol = spell_get_symbol(for_spell, curr_col, curr_row);
 
+    struct spell_event_options event_options;
+
+    event_options.has_primary_event = spell_has_primary_event(for_spell, curr_col, curr_row);
+    event_options.has_secondary_event = spell_has_secondary_event(for_spell, curr_col, curr_row);
+
     switch ((enum spell_symbol_type)symbol.type) {
         case SPELL_SYMBOL_PROJECTILE:
-            projectile_init(&slot->data.projectile, input);
+            projectile_init(&slot->data.projectile, input, event_options);
             break;
         default:
+            assert(false);
             break;
     }
 
     slot->type = symbol.type;
+    slot->button_index = button_index;
     slot->for_spell = for_spell;
     slot->curr_col = curr_col;
     slot->curr_row = curr_row;
@@ -77,18 +79,13 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
     for (int i = 0; i < event_listener.event_count; ++i) {
         switch (event_listener.events[i].type) {
         case SPELL_EVENT_PRIMARY:
-            if (spell_slot_relative_type(slot, 1, 0) != SPELL_SYMBOL_BLANK) {
-                spell_exec_step(exec, 0, slot->for_spell, slot->curr_col, slot->curr_row + 1, event_listener.events[i].data_source);
+            if (spell_has_primary_event(slot->for_spell, slot->curr_col, slot->curr_row) != SPELL_SYMBOL_BLANK) {
+                spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row, event_listener.events[i].data_source);
             }
             break;
         case SPELL_EVENT_SECONDARY:
-            {
-                enum spell_symbol_type sibling_symbol = spell_slot_relative_type(slot, 0, 1);
-
-                if (spell_slot_relative_type(slot, 1, 1) != SPELL_SYMBOL_BLANK && 
-                    (sibling_symbol == SPELL_SYMBOL_BLANK || sibling_symbol == SPELL_SYBMOL_PASS_DOWN))  {
-                    spell_exec_step(exec, 0, slot->for_spell, slot->curr_col + 1, slot->curr_row + 1, event_listener.events[i].data_source);
-                }
+            if (spell_has_secondary_event(slot->for_spell, slot->curr_col, slot->curr_row))  {
+                spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row + 1, event_listener.events[i].data_source);
             }
             break;
         }
@@ -99,7 +96,7 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
 
 int spell_exec_find_slot(struct spell_exec* exec) {
     int result = 0;
-    int result_id = 0;
+    int result_id = exec->ids[0];
 
     for (int i = 0; i < MAX_SPELL_EXECUTORS; ++i) {
         int id = exec->ids[exec->next_slot];
@@ -129,15 +126,20 @@ int spell_exec_find_slot(struct spell_exec* exec) {
 }
 
 void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source) {
+    if (!data_source) {
+        return;
+    }
+
     int slot_index = spell_exec_find_slot(exec);
 
-    exec->next_id += 1;
     spell_slot_id id = exec->next_id;
+    exec->next_id += 1;
 
     exec->ids[slot_index] = id;
 
     spell_slot_init(
         &exec->slots[slot_index],
+        button_index,
         data_source,
         spell,
         col,
@@ -145,8 +147,25 @@ void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* sp
     );
 }
 
+void spell_exec_init(struct spell_exec* exec) {
+    exec->next_id = 1;
+    exec->next_slot = 0;
+    spell_data_source_pool_init(&exec->data_sources);
+    memset(&exec->ids, 0, sizeof(exec->ids));
+    exec->update_id = update_add(exec, (update_callback)spell_exec_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
+}
+
+void spell_exec_destroy(struct spell_exec* exec) {
+    for (int i = 0; i < MAX_SPELL_EXECUTORS; ++i) {
+        if (exec->ids[i]) {
+            spell_slot_destroy(exec, i);
+        }
+    }
+    update_remove(exec->update_id);
+}
+
 void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* spell, struct spell_data_source* data_source) {
-    spell_exec_step(exec,  button_index, spell, 0, 0, data_source);
+    spell_exec_step(exec, button_index, spell, 0, 0, data_source);
 }
 
 int spell_slot_compare(spell_slot_id* ids, uint16_t a, uint16_t b) {
