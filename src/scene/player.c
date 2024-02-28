@@ -89,6 +89,8 @@ void player_update(struct player* player) {
         projectile_update(&player->projectile, &event_lisener, &player->pool);
     }
 
+    spell_event_listener_destroy(&event_lisener);
+
     if (pressed.a) {
         if (player->projectile.render_id) {
             projectile_destroy(&player->projectile);

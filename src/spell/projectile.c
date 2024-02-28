@@ -47,7 +47,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     // TODO determine this somehow
     projectile->has_primary_event = 0;
 
-    data_source->reference_count += 1;
+    spell_data_source_retain(data_source);
 
     dynamic_object_init(&projectile->dynamic_object, &projectile_collision, &projectile->pos, NULL);
     collision_scene_add(&projectile->dynamic_object);
@@ -64,7 +64,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
         projectile->data_output = spell_data_source_pool_get(pool);
 
         if (projectile->data_output) {
-            projectile->data_output->reference_count += 1;
+            spell_data_source_retain(projectile->data_output);
             *projectile->data_output = *projectile->data_source;
 
             spell_event_listener_add(event_listener, SPELL_EVENT_SECONDARY, projectile->data_output);
@@ -80,7 +80,6 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
         struct spell_data_source* hit_source = spell_data_source_pool_get(pool);
 
         if (hit_source) {
-            hit_source->reference_count = 0;
             hit_source->direction = first_contact->normal;
             hit_source->position = first_contact->point;
             hit_source->flags = projectile->data_source->flags;
@@ -98,9 +97,9 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
 void projectile_destroy(struct projectile* projectile) {
     render_scene_remove(&r_scene_3d, projectile->render_id);
     projectile->render_id = 0;
-    projectile->data_source->reference_count -= 1;
+    spell_data_source_release(projectile->data_source);
     if (projectile->data_output) {
-        projectile->data_output->reference_count -= 1;
+        spell_data_source_release(projectile->data_output);
     }
     collision_scene_remove(&projectile->dynamic_object);
 }

@@ -1,5 +1,7 @@
 #include "render_batch.h"
 
+#include "../util/sort.h"
+
 void render_batch_init(struct render_batch* batch) {
     batch->element_count = 0;
 }
@@ -43,7 +45,10 @@ mat4x4* render_batch_get_transform(struct render_batch* batch) {
     return result;
 }
 
-int render_batch_compare_element(struct render_batch_element* a, struct render_batch_element* b) {
+int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, uint16_t b_index) {
+    struct render_batch_element* a = &batch->elements[a_index];
+    struct render_batch_element* b = &batch->elements[b_index];
+
     if (a == b) {
         return 0;
     }
@@ -55,40 +60,6 @@ int render_batch_compare_element(struct render_batch_element* a, struct render_b
     return (int)a->material - (int)b->material;
 }
 
-void render_batch_sort(struct render_batch* batch, uint16_t* order, uint16_t* order_tmp, int start, int end) {
-    if (start + 1 >= end) {
-        return;
-    }
-
-    int mid = (start + end) >> 1;
-
-    render_batch_sort(batch, order, order_tmp, start, mid);
-    render_batch_sort(batch, order, order_tmp, mid, end);
-
-    int a = start;
-    int b = mid;
-    int output = start;
-
-    while (a < mid || b < end) {
-        short a_index = order[a];
-        short b_index = order[b];
-
-        if (b >= end || (a < mid && render_batch_compare_element(&batch->elements[a_index], &batch->elements[b_index]) < 0)) {
-            order_tmp[output] = order[a];
-            ++output;
-            ++a;
-        } else {
-            order_tmp[output] = order[b];
-            ++output;
-            ++b;
-        }
-    }
-
-    for (int i = start; i < end; ++i) {
-        order[i] = order_tmp[i];
-    }
-}
-
 void render_batch_finish(struct render_batch* batch) {
     uint16_t order[RENDER_BATCH_MAX_SIZE];
     uint16_t order_tmp[RENDER_BATCH_MAX_SIZE];
@@ -97,7 +68,7 @@ void render_batch_finish(struct render_batch* batch) {
         order[i] = i;
     }
 
-    render_batch_sort(batch, order, order_tmp, 0, batch->element_count);
+    sort_indices(order, batch->element_count, batch, (sort_compare)render_batch_compare_element);
 
     struct material* current_mat = 0;
 
