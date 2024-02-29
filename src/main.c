@@ -38,8 +38,6 @@ void render() {
 
     glEnable(GL_DEPTH_TEST);
 
-    float aspect_ratio = (float)display_get_width() / (float)display_get_height();
-
     static const float gold[13] = { 0.24725, 0.1995, 0.0745, 1.0,      /* ambient */
                    0.75164, 0.60648, 0.22648, 1.0,    /* diffuse */
                    0.628281, 0.555802, 0.366065, 1.0, /* specular */
@@ -66,7 +64,13 @@ void render() {
     glLightfv( GL_LIGHT0, GL_AMBIENT, blue3 );
     glLightfv( GL_LIGHT0, GL_POSITION, pos);
 
-    render_scene_render(&r_scene_3d, &current_world->camera, aspect_ratio);
+    struct render_viewport viewport;
+    viewport.x = 0;
+    viewport.y = 0;
+    viewport.w = display_get_width();
+    viewport.h = display_get_height();
+
+    render_scene_render(&r_scene_3d, &current_world->camera, &viewport);
 }
 
 volatile static int frame_happened = 0;

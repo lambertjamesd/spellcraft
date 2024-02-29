@@ -27,6 +27,9 @@ void spell_slot_init(
         case SPELL_SYMBOL_PROJECTILE:
             projectile_init(&slot->data.projectile, input, event_options);
             break;
+        case SPELL_SYMBOL_FIRE:
+            fire_init(&slot->data.fire, input, event_options);
+            break;
         default:
             assert(false);
             break;
@@ -45,6 +48,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_SYMBOL_PROJECTILE:
             projectile_destroy(&slot->data.projectile);
             break;
+        case SPELL_SYMBOL_FIRE:
+            fire_destroy(&slot->data.fire);
+            break;
         default:
             break;
     }
@@ -61,6 +67,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
     switch (slot->type) {
         case SPELL_SYMBOL_PROJECTILE:
             projectile_update(&slot->data.projectile, &event_listener, &exec->data_sources);
+            break;
+        case SPELL_SYMBOL_FIRE:
+            fire_update(&slot->data.fire, &event_listener, &exec->data_sources);
             break;
         default:
             break;

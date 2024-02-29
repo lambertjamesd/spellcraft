@@ -38,6 +38,16 @@ void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4
     }
 }
 
+struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count) {
+    struct render_batch_element* result = render_batch_add(batch);
+
+    result->type = RENDER_BATCH_BILLBOARD;
+    result->material = material;
+    result->billboard = render_batch_get_sprites(batch, count);
+
+    return &result->billboard;
+}
+
 struct render_batch_billboard_element render_batch_get_sprites(struct render_batch* batch, int count) {
     struct render_batch_billboard_element result;
 
@@ -83,7 +93,7 @@ int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, u
     return a->type - b->type;
 }
 
-void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix) {
+void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, struct render_viewport* viewport) {
     uint16_t order[RENDER_BATCH_MAX_SIZE];
     uint16_t order_tmp[RENDER_BATCH_MAX_SIZE];
 
@@ -91,11 +101,28 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix) {
         order[i] = i;
     }
 
+    // used to scale billboard sprites
+    float scale_x = sqrtf(
+        view_proj_matrix[0][0] * view_proj_matrix[0][0] + 
+        view_proj_matrix[0][1] * view_proj_matrix[0][1] +
+        view_proj_matrix[0][2] * view_proj_matrix[0][2]
+    ) * 0.5f;
+
+    float scale_y = sqrtf(
+        view_proj_matrix[1][0] * view_proj_matrix[1][0] + 
+        view_proj_matrix[1][1] * view_proj_matrix[1][1] +
+        view_proj_matrix[1][2] * view_proj_matrix[1][2]
+    ) * 0.5f;
+
     sort_indices(order, batch->element_count, batch, (sort_compare)render_batch_compare_element);
 
     struct material* current_mat = 0;
 
+    glViewport(viewport->x, viewport->y, viewport->w, viewport->h);
+    glScissor(viewport->x, viewport->y, viewport->w, viewport->h);
+
     glEnable(GL_CULL_FACE);
+    glEnable(GL_SCISSOR_TEST);
     glEnable(GL_RDPQ_MATERIAL_N64);
     // glEnable(GL_RDPQ_TEXTURING_N64);
     rdpq_set_mode_standard();
@@ -133,7 +160,10 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix) {
                 glPopMatrix();
             }
         } else if (element->type == RENDER_BATCH_BILLBOARD) {
-            is_sprite_mode = true;
+            if (!is_sprite_mode) {
+                is_sprite_mode = true;
+                rdpq_mode_persp(false);
+            }
 
             for (int sprite_index = 0; sprite_index < element->billboard.sprite_count; ++sprite_index) {
                 struct render_billboard_sprite sprite = element->billboard.sprites[sprite_index];
@@ -141,20 +171,50 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix) {
                 struct Vector4 transformed;
                 matrixVec3Mul(view_proj_matrix, &sprite.position, &transformed);
 
+                if (transformed.w < 0.0f) {
+                    continue;
+                }
+
                 float wInv = 1.0f / transformed.w;
 
-                // float x = transformed.x * wInv;
-                // float y = transformed.y * wInv;
-                float z = transformed.z * wInv * -0.5f + 0.5f;
+                float x = (transformed.x * wInv + 1.0f) * 0.5f;
+                float y = (-transformed.y * wInv + 1.0f) * 0.5f;
+                float z = transformed.z * wInv * 0.5f + 0.5f;
+
+                float size = sprite.radius * wInv;
 
                 if (z < 0.0f || z > 1.0f) {
                     continue;
                 }
 
                 rdpq_mode_zoverride(true, z, 0);
-                rdpq_mode_persp(false);
 
-                rdpq_texture_rectangle(TILE0, 0, 0, 128, 128, 0, 0);
+                int screen_x = (int)(x * (viewport->w)) + viewport->x;
+                int screen_y = (int)(y * (viewport->h)) + viewport->y;
+
+                int half_screen_width = (int)(size * scale_x * viewport->w);
+                int half_screen_height = (int)(size * scale_y * viewport->h);
+
+                int image_w = 32;
+                int image_h = 32;
+
+                if (current_mat && current_mat->tex0.sprite) {
+                    image_w = current_mat->tex0.sprite->width;
+                    image_h = current_mat->tex0.sprite->height;
+                }
+
+                rdpq_set_prim_color(sprite.color);
+                rdpq_texture_rectangle_scaled(
+                    TILE0, 
+                    screen_x - half_screen_width, 
+                    screen_y - half_screen_height, 
+                    screen_x + half_screen_width, 
+                    screen_y + half_screen_height, 
+                    0,
+                    0,
+                    image_w,
+                    image_h
+                );
             }
         }
     }

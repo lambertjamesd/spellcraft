@@ -1,9 +1,10 @@
 {
-    "tex0": "../../images/desert/ground.png",
+    "tex0": "../../images/spell/fire_particle.png",
     "combineMode": [{
-        "color": ["0", "0", "0", "TEX0"],
-        "alpha": ["0", "0", "0", "PRIM"]
+        "color": ["TEX0", "0", "PRIM", "0"],
+        "alpha": ["TEX0", "0", "PRIM", "0"]
     }],
-    "primColor": [255, 0, 255, 64],
-    "blendMode": "OPAQUE"
+    "primColor": [255, 0, 255, 255],
+    "blendMode": "TRANSPARENT",
+    "zBuffer": true
 }

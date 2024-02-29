@@ -1,8 +1,11 @@
 #ifndef __RENDER_RENDER_BATCH_H__
 #define __RENDER_RENDER_BATCH_H__
 
+#include <libdragon.h>
+
 #include "mesh.h"
 #include "material.h"
+#include "viewport.h"
 
 #include "../math/matrix.h"
 
@@ -12,7 +15,8 @@
 
 struct render_billboard_sprite {
     struct Vector3 position;
-    float size;
+    float radius;
+    color_t color;
 };
 
 enum render_batch_type {
@@ -51,10 +55,13 @@ void render_batch_init(struct render_batch* batch);
 struct render_batch_element* render_batch_add(struct render_batch* batch);
 
 void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4* transform);
+// caller is responsible for populating sprite list
+// the sprite count returned may be less than the sprite count requested
+struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count);
 
 struct render_batch_billboard_element render_batch_get_sprites(struct render_batch* batch, int count);
 mat4x4* render_batch_get_transform(struct render_batch* batch);
 
-void render_batch_finish(struct render_batch* batch, mat4x4 view_proj);
+void render_batch_finish(struct render_batch* batch, mat4x4 view_proj, struct render_viewport* viewport);
 
 #endif

@@ -7,12 +7,14 @@
 
 #include "../math/vector3.h"
 #include "projectile.h"
+#include "fire.h"
 #include "spell_data_source.h"
 
 typedef uint32_t spell_slot_id;
 
 union spell_exec_data {
     struct projectile projectile;
+    struct fire fire;
 };
 
 struct spell_exec_slot {

@@ -36,16 +36,6 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     transformToMatrix(&transform, *mtx);
 
     render_batch_add_mesh(batch, spell_assets_get()->projectile_mesh, mtx);
-
-    struct render_batch_element* billboard_test = render_batch_add(batch);
-    
-    billboard_test->type = RENDER_BATCH_BILLBOARD;
-
-    billboard_test->billboard = render_batch_get_sprites(batch, 1);
-
-    billboard_test->material = spell_assets_get()->fire_particle_mesh;
-    billboard_test->billboard.sprites->position = projectile->pos;
-    billboard_test->billboard.sprites->size = 1.0f;
 }
 
 void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options) {

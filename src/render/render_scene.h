@@ -5,6 +5,7 @@
 #include "renderable.h"
 #include "render_batch.h"
 #include "camera.h"
+#include "viewport.h"
 #include "../util/callback_list.h"
 
 typedef void (*render_scene_callback)(void* data, struct render_batch* batch);
@@ -27,7 +28,7 @@ render_id render_scene_add(struct render_scene* scene, struct Vector3* center, f
 render_id render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius);
 void render_scene_remove(struct render_scene* scene, render_id id);
 
-void render_scene_render(struct render_scene* scene, struct Camera* camera, float aspect_ratio);
+void render_scene_render(struct render_scene* scene, struct Camera* camera, struct render_viewport* viewport);
 
 extern struct render_scene r_scene_3d;
 

@@ -24,7 +24,7 @@ static struct dynamic_object_type player_collision = {
 
 struct spell_symbol projectile_spell_sybols[] = {
     {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
-    {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
+    {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
 };
 
 struct spell projectile_spell = {
