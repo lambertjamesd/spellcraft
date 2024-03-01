@@ -100,6 +100,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 hit_source->direction = first_contact->normal;
                 hit_source->position = first_contact->point;
                 hit_source->flags = projectile->data_source->flags;
+                hit_source->flags.cast_state = SPELL_CAST_STATE_INSTANT;
                 spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source);
             }
         }

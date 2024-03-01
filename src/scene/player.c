@@ -24,12 +24,13 @@ static struct dynamic_object_type player_collision = {
 
 struct spell_symbol projectile_spell_sybols[] = {
     {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
+    {.reserved = 0, .type = SPELL_SYBMOL_RECAST},
     {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
 };
 
 struct spell projectile_spell = {
     .symbols = projectile_spell_sybols,
-    .cols = 2,
+    .cols = 3,
     .rows = 1,
 };
 
@@ -92,6 +93,7 @@ void player_update(struct player* player) {
     quatMultVector(&player->transform.rotation, &gForward, &player->player_spell_source.direction);
     player->player_spell_source.position = player->transform.position;
     player->player_spell_source.position.y += 1.0f;
+    player->player_spell_source.flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
 
     if (pressed.a) {
         spell_exec_start(&player->spell_exec, 0, &projectile_spell, &player->player_spell_source);

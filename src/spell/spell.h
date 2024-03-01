@@ -12,6 +12,7 @@ enum spell_symbol_type {
     SPELL_SYMBOL_FIRE,
     SPELL_SYMBOL_PROJECTILE,
     SPELL_SYMBOL_PUSH,
+    SPELL_SYBMOL_RECAST,
     
     SPELL_SYBMOL_PASS_DOWN,
 };

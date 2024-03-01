@@ -7,11 +7,17 @@
 
 #define MAX_SPELL_DATA_SOURCES  32
 
+enum spell_cast_state {
+    SPELL_CAST_STATE_INACTIVE,
+    SPELL_CAST_STATE_ACTIVE,
+    SPELL_CAST_STATE_INSTANT,
+};
+
 union spell_source_flags {
     struct {
         uint16_t flaming: 1;
         uint16_t controlled: 1;
-        uint16_t active: 1;
+        uint16_t cast_state: 2;
     };
     uint16_t all;
 };
