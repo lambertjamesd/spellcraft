@@ -48,6 +48,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     projectile->has_hit = 0;
     projectile->has_primary_event = event_options.has_primary_event;
     projectile->has_secondary_event = event_options.has_secondary_event;
+    projectile->is_controlled = 0;
 
     spell_data_source_retain(data_source);
 
@@ -56,7 +57,10 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
 
-    if (!data_source->flags.controlled) {
+    if (data_source->flags.controlled) {
+        projectile->dynamic_object.flags &= ~DYNAMIC_OBJECT_GRAVITY;
+        projectile->is_controlled = 1;
+    } else {
         projectile->dynamic_object.velocity.y += PROJECTILE_SPEED * 0.5f;
     }
 }
@@ -74,13 +78,24 @@ bool projectile_is_active(struct projectile* projectile) {
 }
 
 void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
+    if (projectile->is_controlled) {
+        vector3Scale(&projectile->data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
+
+        if (projectile->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
+            projectile->is_controlled = 0;
+            projectile->dynamic_object.flags |= DYNAMIC_OBJECT_GRAVITY;
+        }
+    }
+
     if (projectile->has_secondary_event) {
         if (!projectile->data_output) {
             projectile->data_output = spell_data_source_pool_get(pool);
 
             if (projectile->data_output) {
                 spell_data_source_retain(projectile->data_output);
-                *projectile->data_output = *projectile->data_source;
+                projectile->data_output->direction = projectile->data_source->direction;
+                projectile->data_output->position = projectile->data_source->position;
+                projectile->data_output->flags = projectile->data_source->flags;
 
                 spell_event_listener_add(event_listener, SPELL_EVENT_SECONDARY, projectile->data_output);
             }

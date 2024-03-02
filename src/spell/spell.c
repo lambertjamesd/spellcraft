@@ -26,3 +26,17 @@ bool spell_has_secondary_event(struct spell* spell, int col, int row) {
 
     return sibling_symbol.type == SPELL_SYMBOL_BLANK || sibling_symbol.type == SPELL_SYBMOL_PASS_DOWN;
 }
+
+static uint8_t is_modifier_mapping[] = {
+    [SPELL_SYMBOL_BLANK] = 0,
+    [SPELL_SYMBOL_FIRE] = 1,
+    [SPELL_SYMBOL_PROJECTILE] = 0,
+    [SPELL_SYMBOL_PUSH] = 1,
+    [SPELL_SYBMOL_RECAST] = 0,
+    
+    [SPELL_SYBMOL_PASS_DOWN] = 0,
+};
+
+bool spell_is_modifier(struct spell* spell, int col, int row) {
+    return is_modifier_mapping[spell_get_symbol(spell, col, row).type] && spell_has_primary_event(spell, col, row);
+}

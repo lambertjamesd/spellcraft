@@ -180,8 +180,103 @@ int spell_exec_find_slot(struct spell_exec* exec) {
     return result;
 }
 
+void spell_source_modifier_apply(struct spell_source_modifier* modifier) {
+    modifier->output->flags.all = modifier->source->flags.all | modifier->flag_mask.all;
+    modifier->output->direction = modifier->source->direction;
+    modifier->output->position = modifier->source->position;
+}
+
+void spell_source_modifier_init(struct spell_source_modifier* modifier, struct spell_data_source* source, struct spell_data_source* output, union spell_source_flags flag_mask) {
+    modifier->source = source;
+    spell_data_source_retain(source);
+    modifier->output = output;
+    spell_data_source_retain(output);
+    modifier->flag_mask = flag_mask;
+
+    spell_source_modifier_apply(modifier);
+}
+
+void spell_source_modifier_destroy(struct spell_exec* exec, int index) {
+    struct spell_source_modifier* modifier = &exec->modifiers[index];
+    spell_data_source_release(modifier->source);
+    spell_data_source_release(modifier->output);
+    exec->modifier_ids[index] = 0;
+}
+
+int spell_exec_find_modifier(struct spell_exec* exec) {
+    int result = 0;
+    int result_id = exec->modifier_ids[0];
+
+    for (int i = 0; i < MAX_SOURCE_MODIFIERS; ++i) {
+        int id = exec->modifier_ids[exec->next_slot];
+        int current = exec->next_modifier;
+
+        exec->next_modifier += 1;
+
+        if (exec->next_modifier == MAX_SOURCE_MODIFIERS) {
+            exec->next_modifier = 0;
+        }
+
+        if (id == 0) {
+            return current;
+        }
+
+        // if there is no consumer of this modifier it can be reused
+        if (exec->modifiers[current].output->reference_count == 1) {
+            spell_source_modifier_destroy(exec, current);
+            return current;
+        }
+
+        if (id < result_id) {
+            result = current;
+            result_id = id;
+        }
+    }
+
+    spell_source_modifier_destroy(exec, result);
+
+    return result;
+}
+
+static union spell_source_flags symbol_to_modifier[] = {
+    [SPELL_SYMBOL_FIRE] = { .flaming = 1 },
+    [SPELL_SYMBOL_PUSH] = { .controlled = 1 },
+};
+
+void spell_modifier_init(
+    struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source
+) {
+    union spell_source_flags flags;
+
+    flags.all = 0;
+
+    while (spell_is_modifier(spell, col, row)) {
+        // TODO check for sibilings
+        flags.all |= symbol_to_modifier[spell_get_symbol(spell, col, row).type].all;
+        col += 1;
+    }
+
+    int index = spell_exec_find_modifier(exec);
+    struct spell_source_modifier* modifier = &exec->modifiers[index];
+
+    struct spell_data_source* output = spell_data_source_pool_get(&exec->data_sources);
+
+    spell_slot_id id = exec->next_id;
+    exec->next_id += 1;
+
+    spell_source_modifier_init(modifier, data_source, output, flags);
+    exec->modifier_ids[index] = id;
+
+    spell_exec_step(exec, button_index, spell, col, row, output);
+}
+
 void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source) {
     if (!data_source) {
+        return;
+    }
+
+    if (spell_is_modifier(spell, col, row)) {
+        spell_modifier_init(exec, button_index, spell, col, row, data_source);
         return;
     }
 
@@ -214,6 +309,7 @@ void spell_exec_init(struct spell_exec* exec) {
     exec->next_slot = 0;
     spell_data_source_pool_init(&exec->data_sources);
     memset(&exec->ids, 0, sizeof(exec->ids));
+    memset(&exec->ids, 0, sizeof(exec->modifier_ids));
     exec->update_id = update_add(exec, (update_callback)spell_exec_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
     memset(exec->pending_recast, 0, sizeof(exec->pending_recast));
 }
@@ -249,25 +345,53 @@ void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* s
     spell_exec_step(exec, button_index, spell, 0, 0, data_source);
 }
 
-int spell_slot_compare(spell_slot_id* ids, uint16_t a, uint16_t b) {
-    return (int)ids[a] - (int)ids[b];
+#define GET_ID_FROM_INDEX(exec, idx) (int)(((idx) & 0x8000) ? (exec)->modifier_ids[(idx) & 0x7FFF] : (exec)->ids[idx])
+#define DEFINE_MODIFIER_IDX(idx) ((idx) | 0x8000)
+#define IS_MODIFIER_ID(idx) ((idx) & 0x8000)
+#define EXTRACT_MODIFIER_IDX(idx) ((idx) & 0x7FFF)
+
+int spell_slot_compare(struct spell_exec* exec, uint16_t a, uint16_t b) {
+    return GET_ID_FROM_INDEX(exec, a) - GET_ID_FROM_INDEX(exec, b);
 }
 
 void spell_exec_update(struct spell_exec* exec) {
-    uint16_t indices[MAX_SPELL_EXECUTORS];
+    uint16_t indices[MAX_SPELL_EXECUTORS + MAX_SOURCE_MODIFIERS];
+    spell_slot_id start_ids[MAX_SPELL_EXECUTORS];
+    spell_slot_id start_modifier_id[MAX_SOURCE_MODIFIERS];
     int count = 0;
 
     for (int i = 0; i < MAX_SPELL_EXECUTORS; ++i) {
         if (exec->ids[i]) {
             indices[count] = i;
+            start_ids[i] = exec->ids[i];
+            count += 1;
+        }
+    }
+
+    for (int i = 0; i < MAX_SOURCE_MODIFIERS; ++i) {
+        if (exec->modifier_ids[i]) {
+            indices[count] = DEFINE_MODIFIER_IDX(i);
+            start_modifier_id[i] = exec->modifier_ids[i];
             count += 1;
         }
     }
 
     // update from oldest spell to newest
-    sort_indices(indices, count, exec->ids, (sort_compare)spell_slot_compare);
+    sort_indices(indices, count, exec, (sort_compare)spell_slot_compare);
 
     for (int i = 0; i < count; ++i) {
-        spell_slot_update(exec, indices[i]);
+        uint16_t index = indices[i];
+        if (IS_MODIFIER_ID(index)) {
+            index = EXTRACT_MODIFIER_IDX(index);
+            // make sure modifier hasn't been replaced
+            if (start_modifier_id[index] == exec->modifier_ids[index]) {
+                spell_source_modifier_apply(&exec->modifiers[index]);
+            }
+        } else {
+            // make sur ethe slot hasn'te been replaced
+            if (start_ids[index] == exec->ids[index]) {
+                spell_slot_update(exec, index);
+            }
+        }
     }
 }

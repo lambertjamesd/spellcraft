@@ -1,8 +1,9 @@
 #ifndef __SPELL_SPELL_EXEC_H__
 #define __SPELL_SPELL_EXEC_H__
 
-#define MAX_SPELL_EXECUTORS 16
-#define MAX_BUTTON_INDEX    8    
+#define MAX_SPELL_EXECUTORS     16
+#define MAX_SOURCE_MODIFIERS    32
+#define MAX_BUTTON_INDEX        8    
 
 #include "spell.h"
 
@@ -41,13 +42,22 @@ struct spell_exec_slot {
     union spell_exec_data data;
 };
 
+struct spell_source_modifier {
+    struct spell_data_source* source;
+    struct spell_data_source* output;
+    union spell_source_flags flag_mask;
+};
+
 struct spell_exec {
     // 0 when the cooresponding slot isn't active
     spell_slot_id ids[MAX_SPELL_EXECUTORS];
+    spell_slot_id modifier_ids[MAX_SOURCE_MODIFIERS];
     struct spell_exec_slot slots[MAX_SPELL_EXECUTORS];
+    struct spell_source_modifier modifiers[MAX_SOURCE_MODIFIERS];
     struct spell_data_source_pool data_sources;
     struct recast* pending_recast[MAX_BUTTON_INDEX];
     uint8_t next_slot;
+    uint8_t next_modifier;
     spell_slot_id next_id;
     int update_id;
 };

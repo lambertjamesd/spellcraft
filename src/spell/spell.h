@@ -31,5 +31,6 @@ struct spell {
 struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row);
 bool spell_has_primary_event(struct spell* spell, int col, int row);
 bool spell_has_secondary_event(struct spell* spell, int col, int row);
+bool spell_is_modifier(struct spell* spell, int col, int row);
 
 #endif
