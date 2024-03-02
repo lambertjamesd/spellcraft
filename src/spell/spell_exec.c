@@ -41,6 +41,10 @@ void spell_slot_init(
             slot->type = SPELL_EXEC_SLOT_TYPE_RECAST;
             recast_init(&slot->data.recast, input, event_options);
             break;
+        case SPELL_SYMBOL_PUSH:
+            slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
+            push_init(&slot->data.push, input, event_options);
+            break;
         default:
             assert(false);
             slot->type = SPELL_EXEC_SLOT_TYPE_EMPTY;
@@ -72,6 +76,8 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
             recast_destroy(&slot->data.recast);
             remove_recast = &slot->data.recast;
             break;
+        case SPELL_EXEC_SLOT_TYPE_PUSH:
+            push_destroy(&slot->data.push);
         default:
             break;
     }
@@ -116,6 +122,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_RECAST:
             recast_update(&slot->data.recast, &event_listener, &exec->data_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_PUSH:
+            push_update(&slot->data.push, &event_listener, &exec->data_sources);
             break;
         default:
             break;

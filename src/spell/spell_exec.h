@@ -13,6 +13,7 @@
 #include "explosion.h"
 #include "spell_data_source.h"
 #include "recast.h"
+#include "push.h"
 
 typedef uint32_t spell_slot_id;
 
@@ -21,6 +22,7 @@ union spell_exec_data {
     struct fire fire;
     struct explosion explosion;
     struct recast recast;
+    struct push push;
 };
 
 enum spell_exec_slot_type {

@@ -30,7 +30,7 @@ struct spell_symbol projectile_spell_sybols[] = {
 
 struct spell projectile_spell = {
     .symbols = projectile_spell_sybols,
-    .cols = 3,
+    .cols = 1,
     .rows = 1,
 };
 

@@ -92,13 +92,13 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    // for (;;) {
-    //     joypad_poll();
+    for (;;) {
+        joypad_poll();
 
-    //     if (joypad_get_buttons_pressed(0).start) {
-    //         break;
-    //     }
-    // }
+        if (joypad_get_buttons_pressed(0).start) {
+            break;
+        }
+    }
 
     setup();
 

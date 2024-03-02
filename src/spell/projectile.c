@@ -117,7 +117,11 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 hit_source->position = first_contact->point;
                 hit_source->flags = projectile->data_source->flags;
                 hit_source->flags.cast_state = SPELL_CAST_STATE_INSTANT;
-                hit_source->target = first_contact->other_object->entity_id;
+                if (first_contact->other_object) {
+                    hit_source->target = first_contact->other_object->entity_id;
+                } else {
+                    hit_source->target = 0;
+                }
                 spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source);
             }
         }

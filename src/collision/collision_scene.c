@@ -6,6 +6,7 @@
 #include "mesh_collider.h"
 #include "collide.h"
 #include "contact.h"
+#include "../util/hash_map.h"
 
 #define MIN_DYNAMIC_OBJECTS 64
 #define MAX_ACTIVE_CONTACTS 128
@@ -18,6 +19,7 @@ struct collision_scene {
     struct collision_scene_element* elements;
     struct contact* next_free_contact;
     struct contact* all_contacts;
+    struct hash_map entity_mapping;
     uint16_t count;
     uint16_t capacity;
 
@@ -28,6 +30,9 @@ static struct collision_scene g_scene;
 
 void collision_scene_reset() {
     free(g_scene.elements);
+    hash_map_destroy(&g_scene.entity_mapping);
+
+    hash_map_init(&g_scene.entity_mapping, MIN_DYNAMIC_OBJECTS);
 
     g_scene.elements = malloc(sizeof(struct collision_scene_element) * MIN_DYNAMIC_OBJECTS);
     g_scene.capacity = MIN_DYNAMIC_OBJECTS;
@@ -53,6 +58,17 @@ void collision_scene_add(struct dynamic_object* object) {
     next->object = object;
 
     g_scene.count += 1;
+
+    hash_map_set(&g_scene.entity_mapping, object->entity_id, object);
+}
+
+
+struct dynamic_object* collision_scene_find_object(entity_id id) {
+    if (!id) {
+        return 0;
+    }
+
+    return hash_map_get(&g_scene.entity_mapping, id);
 }
 
 void collision_scene_return_contacts(struct dynamic_object* object) {
@@ -86,6 +102,8 @@ void collision_scene_remove(struct dynamic_object* object) {
     if (has_found) {
         g_scene.count -= 1;
     }
+
+    hash_map_delete(&g_scene.entity_mapping, object->entity_id);
 }
 
 void collision_scene_use_static_collision(struct mesh_collider* collider) {

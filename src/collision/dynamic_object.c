@@ -3,11 +3,13 @@
 #include "../time/time.h"
 
 void dynamic_object_init(
+    entity_id entity_id,
     struct dynamic_object* object, 
     struct dynamic_object_type* type,
     struct Vector3* position, 
     struct Vector2* rotation
 ) {
+    object->entity_id = entity_id;
     object->type = type;
     object->position = position;
     object->rotation = rotation;

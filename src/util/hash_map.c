@@ -12,6 +12,8 @@ void hash_map_init(struct hash_map* hash_map, int capacity) {
         capacity = MIN_CAPACITY;
     }
 
+    capacity *= 2;
+
     hash_map->entries = malloc(sizeof(struct hash_map_entry) * capacity);
     hash_map->capacity = capacity;
     hash_map->count = 0;
