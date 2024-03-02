@@ -101,6 +101,8 @@ void player_update(struct player* player) {
 }
 
 void player_init(struct player* player, struct Transform* camera_transform) {
+    entity_id entity_id = entity_id_new();
+
     transformInitIdentity(&player->transform);
     renderable_init(&player->renderable, &player->transform, "rom:/meshes/player/player.mesh");
 
@@ -116,6 +118,7 @@ void player_init(struct player* player, struct Transform* camera_transform) {
     vector2ComplexFromAngle(fixed_time_step * 3.14f, &player_max_rotation);
 
     dynamic_object_init(
+        entity_id,
         &player->collision,
         &player_collision,
         &player->transform.position,
@@ -128,6 +131,7 @@ void player_init(struct player* player, struct Transform* camera_transform) {
 
     player->player_spell_source.flags.all = 0;
     player->player_spell_source.reference_count = 1;
+    player->player_spell_source.target = entity_id;
 }
 
 void player_destroy(struct player* player) {

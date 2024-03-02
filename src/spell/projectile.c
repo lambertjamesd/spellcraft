@@ -52,7 +52,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 
     spell_data_source_retain(data_source);
 
-    dynamic_object_init(&projectile->dynamic_object, &projectile_collision, &projectile->pos, NULL);
+    dynamic_object_init(entity_id_new(), &projectile->dynamic_object, &projectile_collision, &projectile->pos, NULL);
     collision_scene_add(&projectile->dynamic_object);
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
@@ -96,6 +96,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 projectile->data_output->direction = projectile->data_source->direction;
                 projectile->data_output->position = projectile->data_source->position;
                 projectile->data_output->flags = projectile->data_source->flags;
+                projectile->data_output->target = projectile->dynamic_object.entity_id;
 
                 spell_event_listener_add(event_listener, SPELL_EVENT_SECONDARY, projectile->data_output);
             }
@@ -116,6 +117,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 hit_source->position = first_contact->point;
                 hit_source->flags = projectile->data_source->flags;
                 hit_source->flags.cast_state = SPELL_CAST_STATE_INSTANT;
+                hit_source->target = first_contact->other_object->entity_id;
                 spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source);
             }
         }

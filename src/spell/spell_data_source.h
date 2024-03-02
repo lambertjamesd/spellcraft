@@ -1,6 +1,7 @@
 #ifndef __SPELL_SPELL_DATA_SOURCE_H__
 #define __SPELL_SPELL_DATA_SOURCE_H__
 
+#include "../entity/entity_id.h"
 #include "../math/vector3.h"
 
 #include <stdint.h>
@@ -25,8 +26,9 @@ union spell_source_flags {
 struct spell_data_source {
     struct Vector3 position;
     struct Vector3 direction;
-
     union spell_source_flags flags;
+    entity_id target;
+
     uint8_t reference_count;
 };
 

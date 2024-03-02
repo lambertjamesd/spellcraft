@@ -1,6 +1,7 @@
 #ifndef __COLLISION_DYNAMIC_OBJECT_H__
 #define __COLLISION_DYNAMIC_OBJECT_H__
 
+#include "../entity/entity_id.h"
 #include "../math/vector3.h"
 #include "../math/box3d.h"
 #include "../math/box2d.h"
@@ -32,6 +33,7 @@ struct dynamic_object_type {
 };
 
 struct dynamic_object {
+    entity_id entity_id;
     struct dynamic_object_type* type;
     struct Vector3* position;
     struct Vector2* rotation;
@@ -44,6 +46,7 @@ struct dynamic_object {
 
 
 void dynamic_object_init(
+    entity_id entity_id,
     struct dynamic_object* object, 
     struct dynamic_object_type* type,
     struct Vector3* position, 

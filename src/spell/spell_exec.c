@@ -184,6 +184,7 @@ void spell_source_modifier_apply(struct spell_source_modifier* modifier) {
     modifier->output->flags.all = modifier->source->flags.all | modifier->flag_mask.all;
     modifier->output->direction = modifier->source->direction;
     modifier->output->position = modifier->source->position;
+    modifier->output->target = modifier->source->target;
 }
 
 void spell_source_modifier_init(struct spell_source_modifier* modifier, struct spell_data_source* source, struct spell_data_source* output, union spell_source_flags flag_mask) {
