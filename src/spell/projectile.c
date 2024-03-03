@@ -12,7 +12,7 @@
 
 static struct dynamic_object_type projectile_collision = {
     .minkowsi_sum = dynamic_object_box_minkowski_sum,
-    .bounding_box = 0,
+    .bounding_box = dynamic_object_box_bouding_box,
     .data = {
         .box = {
             .half_size = {0.25f, 0.25f, 0.25f},

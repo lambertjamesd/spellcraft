@@ -14,7 +14,7 @@ static struct Vector2 player_max_rotation;
 
 static struct dynamic_object_type player_collision = {
     .minkowsi_sum = dynamic_object_box_minkowski_sum,
-    .bounding_box = 0,
+    .bounding_box = dynamic_object_box_bouding_box,
     .data = {
         .box = {
             .half_size = {0.5f, 0.5f, 0.5f},
@@ -23,8 +23,8 @@ static struct dynamic_object_type player_collision = {
 };
 
 struct spell_symbol projectile_spell_sybols[] = {
-    {.reserved = 0, .type = SPELL_SYMBOL_PUSH},
     {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
+    {.reserved = 0, .type = SPELL_SYBMOL_RECAST},
     {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
 };
 

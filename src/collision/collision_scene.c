@@ -2,6 +2,7 @@
 
 #include <malloc.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "mesh_collider.h"
 #include "collide.h"
@@ -116,6 +117,108 @@ void collision_scene_remove_static_collision(struct mesh_collider* collider) {
     }
 }
 
+struct collide_edge {
+    uint16_t is_start_edge: 1;
+    uint16_t object_index: 15;
+    short x;
+};
+
+void collide_edge_sort(struct collide_edge* edges, struct collide_edge* tmp, int start, int end) {
+    if (start + 1 >= end) {
+        return;
+    }
+
+    int mid = (start + end) >> 1;
+
+    collide_edge_sort(edges, tmp, start, mid);
+    collide_edge_sort(edges, tmp, mid, end);
+
+    int a = start;
+    int b = mid;
+    int output = start;
+
+    while (a < mid || b < end) {
+        if (b >= end || (a < mid && edges[a].x < edges[b].x)) {
+            tmp[output] = edges[a];
+            ++output;
+            ++a;
+        } else {
+            tmp[output] = edges[b];
+            ++output;
+            ++b;
+        }
+    }
+
+    for (int i = start; i < end; ++i) {
+        edges[i] = tmp[i];
+    }
+}
+
+void collision_scene_collide_dynamic() {
+    int edge_count = g_scene.count * 2;
+
+    struct collide_edge collide_edges[edge_count];
+
+    struct collide_edge* curr_edge = &collide_edges[0];
+
+    for (int i = 0; i < g_scene.count; ++i) {
+        struct collision_scene_element* element = &g_scene.elements[i];
+
+        curr_edge->is_start_edge = 1;
+        curr_edge->object_index = i;
+        curr_edge->x = (short)(element->object->bounding_box.min.x * 32.0f);
+
+        curr_edge += 1;
+
+        curr_edge->is_start_edge = 0;
+        curr_edge->object_index = i;
+        curr_edge->x = (short)(element->object->bounding_box.max.x * 32.0f);
+
+        curr_edge += 1;
+    }
+
+    struct collide_edge tmp[edge_count];
+    collide_edge_sort(collide_edges, tmp, 0, edge_count);
+
+    uint16_t active_objects[g_scene.count];
+    int active_object_count = 0;
+
+    for (int edge_index = 0; edge_index < edge_count; edge_index += 1) {
+        struct collide_edge edge = collide_edges[edge_index];
+
+        if (edge.is_start_edge) {
+            struct dynamic_object* a = g_scene.elements[edge.object_index].object;
+
+            for (int active_index = 0; active_index < active_object_count; active_index += 1) {
+                struct dynamic_object* b = g_scene.elements[active_objects[active_index]].object;
+
+                if (box3DHasOverlap(&a->bounding_box, &b->bounding_box)) {
+                    collide_object_to_object(a, b);
+                }
+            }
+
+            active_objects[active_object_count] = edge.object_index;
+            active_object_count += 1;
+            
+        } else {
+            int found_index = -1;
+
+            for (int active_index = 0; active_index < active_object_count; active_index += 1) {
+                if (active_objects[active_index] == edge.object_index) {
+                    found_index = active_index;
+                    break;
+                }
+            }
+
+            assert(found_index != -1);
+
+            // remove item by replacing it with the last one
+            active_objects[found_index] = active_objects[active_object_count - 1];
+            active_object_count -= 1;
+        }
+    }
+}
+
 void collision_scene_collide() {
     struct Vector3 prev_pos[g_scene.count];
 
@@ -127,10 +230,18 @@ void collision_scene_collide() {
 
         dynamic_object_update(element->object);
 
+        dynamic_object_recalc_bb(element->object);
+    }
+
+    for (int i = 0; i < g_scene.count; ++i) {
+        struct collision_scene_element* element = &g_scene.elements[i];
+
         if (g_scene.mesh_collider) {
             collide_object_to_mesh(element->object, g_scene.mesh_collider);
         }
     }
+
+    collision_scene_collide_dynamic();
 }
 
 struct contact* collision_scene_new_contact() {

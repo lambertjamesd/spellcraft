@@ -1,6 +1,7 @@
 #include "dynamic_object.h"
 
 #include "../time/time.h"
+#include <math.h>
 
 void dynamic_object_init(
     entity_id entity_id,
@@ -51,10 +52,34 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
     output->z = unrotated_out.z * object->rotation->x + unrotated_out.x * object->rotation->y + object->position->z;
 }
 
+void dynamic_object_recalc_bb(struct dynamic_object* object) {
+    object->type->bounding_box(&object->type->data, object->rotation, &object->bounding_box);
+    vector3Add(&object->bounding_box.min, object->position, &object->bounding_box.min);
+    vector3Add(&object->bounding_box.max, object->position, &object->bounding_box.max);
+}
+
 void dynamic_object_box_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     output->x = direction->x > 0.0f ? shape_data->box.half_size.x : -shape_data->box.half_size.x;
     output->y = direction->y > 0.0f ? shape_data->box.half_size.y : -shape_data->box.half_size.y;
     output->z = direction->z > 0.0f ? shape_data->box.half_size.z : -shape_data->box.half_size.z;
+}
+
+void dynamic_object_box_bouding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
+    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+
+    struct Vector3* half_size = &shape_data->box.half_size;
+
+    if (!rotation) {
+        vector3Negate(half_size, &box->min);
+        box->max = *half_size;
+        return;
+    }
+
+    box->max.x = half_size->x * fabsf(rotation->x) + half_size->z * fabsf(rotation->y);
+    box->max.y = half_size->y;
+    box->max.z = half_size->x * fabsf(rotation->y) + half_size->z * fabsf(rotation->x);
+
+    vector3Negate(&box->max, &box->min);
 }
