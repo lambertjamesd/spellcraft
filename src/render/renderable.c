@@ -4,10 +4,20 @@
 
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename) {
     renderable->transform = transform;
-    renderable->mesh = mesh_cache_load("rom:/meshes/player/player.mesh");
+    renderable->mesh = mesh_cache_load(mesh_filename);
 }
 
 void renderable_destroy(struct renderable* renderable) {
+    mesh_cache_release(renderable->mesh);
+    renderable->mesh = NULL;
+}
+
+void renderable_single_axis_init(struct renderable_single_axis* renderable, struct TransformSingleAxis* transform, const char* mesh_filename) {
+    renderable->transform = transform;
+    renderable->mesh = mesh_cache_load(mesh_filename);
+}
+
+void renderable_single_axis_destroy(struct renderable_single_axis* renderable) {
     mesh_cache_release(renderable->mesh);
     renderable->mesh = NULL;
 }

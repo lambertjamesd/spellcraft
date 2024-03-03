@@ -36,8 +36,26 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
     render_batch_add_mesh(batch, renderable->mesh, mtx);
 }
 
+void render_scene_render_renderable_single_axis(void* data, struct render_batch* batch) {
+    struct renderable_single_axis* renderable = (struct renderable_single_axis*)data;
+
+    mat4x4* mtx = render_batch_get_transform(batch);
+
+    if (!mtx) {
+        return;
+    }
+
+    transformSAToMatrix(renderable->transform, *mtx);
+
+    render_batch_add_mesh(batch, renderable->mesh, mtx);
+}
+
 render_id render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius) {
     return render_scene_add(scene, &renderable->transform->position, radius, render_scene_render_renderable, renderable);
+}
+
+render_id render_scene_add_renderable_single_axis(struct render_scene* scene, struct renderable_single_axis* renderable, float radius) {
+    return render_scene_add(scene, &renderable->transform->position, radius, render_scene_render_renderable_single_axis, renderable);
 }
 
 void render_scene_remove(struct render_scene* scene, render_id id) {

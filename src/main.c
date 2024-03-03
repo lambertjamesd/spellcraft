@@ -17,10 +17,12 @@
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
 #include "time/time.h"
+#include "objects/crate.h"
 
 #include <libdragon.h>
 
 struct world* current_world;
+struct crate crate_test;
 
 void setup() {
     spell_assets_init();
@@ -28,6 +30,15 @@ void setup() {
     update_reset();
     collision_scene_reset();
     current_world = world_load("rom:/worlds/test.world");
+
+    struct crate_definition def;
+
+    def.position.x = 2.0f;
+    def.position.y = 1.0f;
+    def.position.z = 0.0f;
+    def.rotation = gRight2;
+
+    crate_init(&crate_test, &def);
 }
 
 float angle = 0.0f;
@@ -92,13 +103,13 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    for (;;) {
-        joypad_poll();
+    // for (;;) {
+    //     joypad_poll();
 
-        if (joypad_get_buttons_pressed(0).start) {
-            break;
-        }
-    }
+    //     if (joypad_get_buttons_pressed(0).start) {
+    //         break;
+    //     }
+    // }
 
     setup();
 

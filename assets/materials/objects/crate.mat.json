@@ -1,0 +1,10 @@
+{
+    "tex0": "../../images/objects/crate.png",
+    "combineMode": [{
+        "color": ["0", "0", "0", "TEX0"],
+        "alpha": ["0", "0", "0", "TEX0"]
+    }],
+    "blendMode": "OPAQUE",
+    "lighting": false,
+    "zBuffer": true
+}
