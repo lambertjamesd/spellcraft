@@ -22,7 +22,7 @@ void crate_init(struct crate* crate, struct crate_definition* definition) {
     dynamic_object_init(entity_id_new(), &crate->dynamic_object, &create_collision_type, &crate->transform.position, &crate->transform.rotation);
 
     crate->render_id = render_scene_add_renderable_single_axis(&r_scene_3d, &crate->renderable, 1.73f);
-    // collision_scene_add(&crate->dynamic_object);
+    collision_scene_add(&crate->dynamic_object);
 }
 
 void crate_destroy(struct crate* crate) {

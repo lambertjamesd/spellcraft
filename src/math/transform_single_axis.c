@@ -19,5 +19,5 @@ void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix) {
     matrix[3][0] = transform->position.x;
     matrix[3][1] = transform->position.y;
     matrix[3][2] = transform->position.z;
-    matrix[3][3] = 0.0f;
+    matrix[3][3] = 1.0f;
 }

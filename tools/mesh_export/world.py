@@ -8,17 +8,37 @@ sys.path.append(os.path.dirname(__file__))
 
 import entities.mesh
 import entities.mesh_collider
+import parse.struct_parse
 
 class StaticEntry():
     def __init__(self, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
         self.mesh = mesh
         self.transform = transform
 
+class ObjectEntry():
+    def __init__(self, obj: bpy.types.Object, def_type: parse.struct_parse.StructureInfo):
+        self.obj: bpy.types.Object = obj
+        self.def_type: parse.struct_parse.StructureInfo = def_type
+
 class World():
     def __init__(self):
         self.static = []
+        self.objects = []
         self.world_mesh_collider = entities.mesh_collider.MeshCollider()
 
+def process_linked_object(world: World, obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo]):
+    if not 'type' in mesh:
+        return
+    
+    def_type_name = mesh['type']
+
+    if not def_type_name in definitions:
+        raise Exception(f"could not find def type {def_type_name}")
+    
+    print(f"found object {obj.name} of type {def_type_name}")
+    
+    world.objects.append(ObjectEntry(obj, definitions[def_type_name]))
+    
 def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-1]
@@ -26,6 +46,10 @@ def process_scene():
     world = World()
 
     base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
+    definitions = {}
+
+    with open('src/scene/world_definition.h', 'r') as file:
+        definitions = parse.struct_parse.find_structs(file.read())
 
     for obj in bpy.data.objects:
         if obj.type != "MESH":
@@ -42,9 +66,7 @@ def process_scene():
         mesh_source = None
 
         if mesh.library:
-            # TODO add decor object
-            mesh_source = os.path.normpath(os.path.join(os.path.dirname(input_filename), mesh.library.filepath[2:]))
-            print(mesh_source)
+            process_linked_object(world, obj, mesh, definitions)
         elif len(mesh.materials) > 0:
             world.static.append(StaticEntry(mesh, final_transform))
 

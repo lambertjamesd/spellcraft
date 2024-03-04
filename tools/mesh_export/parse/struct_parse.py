@@ -1,0 +1,268 @@
+
+class StructureAttribute:
+    def __init__(self, name: str, data_type: str):
+        self.name: str = name
+        self.data_type: str = data_type
+    
+    def __str__(self):
+        return f"{self.name}: {self.data_type}"
+
+class StructureInfo:
+    def __init__(self, name: str, children: list[StructureAttribute]):
+        self.name: str = name
+        self.children: list[StructureAttribute] = children
+
+    def __str__(self):
+        result: list[str] = []
+
+        result.append(f"struct {self.name} {'{'}")
+
+        for child in self.children:
+            result.append(f"    {str(child)}")
+
+        result.append("}")
+
+        return '\n'.join(result)
+
+class Token:
+    def __init__(self, value: str, token_type: str, at: int):
+        self.value: str = value
+        self.token_type: str = token_type
+        self.at: int = at
+
+    def __str__(self):
+        return f"{self.value} : {self.token_type} : {self.at}"
+
+def token_identifier(chr: str):
+    if chr.isalpha() or chr.isdigit() or chr == '_':
+        return (token_identifier, None)
+    
+    return (token_default_state(chr), 'identifier')
+
+def token_emit(token_type: str):
+    def result(chr: str):
+        return (token_default_state(chr), token_type)
+    
+    return result
+
+def token_white(chr: str):
+    if chr.isspace():
+        return (token_white, None)
+    return (token_default_state(chr), 'white')
+
+def token_single_comment(chr: str):
+    if chr == '\n':
+        return (token_white, 'comment')
+    return (token_single_comment, None)
+
+def token_multi_comment_2(chr: str):
+    if chr == '/':
+        return (token_emit('comment'), None)
+    if chr == '*':
+        return (token_multi_comment_2, None)
+    
+    return (token_multi_comment, None)
+
+def token_multi_comment(chr: str):
+    if chr == '*':
+        return (token_multi_comment_2, None)
+    
+    return (token_multi_comment, None)
+
+def token_comment_start(chr: str):
+    if chr == '/':
+        return (token_single_comment, None)
+    if chr == '*':
+        return (token_multi_comment, None)
+    return (token_default_state, 'error')
+
+def token_error(chr: str):
+    if chr == '':
+        return (token_error, 'error')
+    
+    return (token_error, None)
+
+single_tokens = {'{', '}', ';'}
+
+def token_default_state(chr: str):
+    if chr.isalpha() or chr == '_':
+        return token_identifier
+    if chr.isspace():
+        return token_white
+    if chr == '/':
+        return token_comment_start
+    if chr in single_tokens:
+        return token_emit(chr)
+    
+    return token_error
+
+def tokenize(string: str, offset: int) -> list[Token]:
+    state = token_default_state(string[0])
+    last_start = 0
+
+    result: list[Token] = []
+
+    for idx in range(1, len(string) + 1):
+        if idx == len(string):
+            chr = ''
+        else:
+            chr = string[idx]
+
+        next, token_type = state(chr)
+
+        state = next
+
+        if token_type:
+            if token_type != 'white' and token_type != 'comment':
+                token = Token(string[last_start:idx], token_type, last_start + offset)
+                result.append(token)
+            last_start = idx
+
+    result.append(Token('', 'eof', len(string) + offset))
+
+    return result
+
+def determine_source_location(source: str, offset: int):
+    line = 1
+    col = 1
+
+    for idx in range(offset):
+        if source[idx] == '\n':
+            line += 1
+            col = 1
+        else:
+            col += 1
+
+    return (line, col)
+
+def get_line_start(source: str, offset: int):
+    return source.rfind('\n', offset) + 1
+
+def get_line_end(source: str, offset: int):
+    result = source.find('\n', offset)
+
+    if result == -1:
+        return len(source)
+    
+    return result
+
+def get_full_line(source: str, offset: int):
+    start = get_line_start(source, offset)
+    end = get_line_end(source, offset)
+    return source[start, end]
+
+class ParseState:
+    def __init__(self, tokens: list[Token], source: str):
+        self.tokens: list[Token] = tokens
+        self.current: int = 0
+        self.source: str = source
+
+    def format_error(self, at: Token, message: str):
+        line, col = determine_source_location(self.source, at.at)
+        return f"{message}: line {line} col {col}\n{self.source[get_full_line(self.source)]}\n{' ' * (col - 1)}^"
+
+    def peek(self, offset: int):
+        return self.tokens[min(offset + self.current, len(self.tokens) - 1)]
+    
+    def advance(self):
+        self.current += 1
+    
+    def require(self, token_type, value = None):
+        next = self.peek(0)
+
+        if next.token_type != token_type:
+            raise Exception(self.format_error(next, f"expected {token_type} got {next.token_type}"))
+        
+        if not value is None and next.value != value:
+            raise Exception(self.format_error(next, f"expected {value} got {next.value}"))
+        
+        self.advance()
+
+        return next
+    
+    def optional(self, token_type, value = None) -> Token | None:
+        next = self.peek(0)
+
+        if next.token_type != token_type:
+            return None
+        
+        if not value is None and value != next.value:
+            return None
+
+        self.advance()
+        return next
+
+def parse_struct(state: ParseState):
+    state.require('identifier', 'struct')
+
+    name = state.optional('identifier')
+
+    if name and state.peek(0).token_type != '{':
+        return f"struct {name.value}"
+
+    state.require('{')
+
+    children: list[StructureAttribute] = []
+
+    while not state.optional('}'):
+        if state.peek(0).token_type == 'eof':
+            raise Exception(state.format_error(state.peek(0), 'unexpected end of file'))
+        
+        data_type = parse_type(state)
+        field_name = state.require('identifier')
+        state.require(';')
+
+        children.append(StructureAttribute(field_name.value, data_type))
+
+    return StructureInfo('' if name is None else name.value, children)
+
+
+
+def parse_type(state: ParseState):
+    next = state.peek(0)
+
+    if next.token_type == 'identifier' and next.value == 'struct':
+        return parse_struct(state)
+    
+    if next.token_type == 'identifier':
+        return next.value
+
+    raise Exception(state.format_error(state.peek(0), 'unknown type'))
+
+def determine_type(source: str, starting_at: int, ending_at: int):
+    struct_source = source[starting_at:ending_at]
+    return parse_type(ParseState(tokenize(struct_source, starting_at), source))
+
+def find_end_curly(file_string: str, starting_at: int):
+    depth = 0
+
+    for idx in range(starting_at, len(file_string)):
+        if file_string[idx] == '{':
+            depth += 1
+
+        if file_string[idx] == '}':
+            depth -= 1
+
+            if depth == 0:
+                return idx + 1
+
+    return -1
+
+def find_structs(file_string: str) -> dict[str, StructureInfo]:
+    current_position = file_string.find('struct ')
+
+    result: dict[str, StructureInfo] = {}
+
+    while current_position != -1:
+        next_end = find_end_curly(file_string, current_position)
+
+        if next_end == -1:
+            raise Exception('Unmatched curly braces')
+
+        struct_type = determine_type(file_string, current_position, next_end)
+
+        result[struct_type.name] = struct_type
+
+        current_position = file_string.find('struct ', next_end)
+
+    return result
