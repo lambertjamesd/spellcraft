@@ -9,6 +9,23 @@
 #include "player.h"
 #include "camera_controller.h"
 
+typedef void(*entity_init)(void* entity, void* definition);
+typedef void(*entity_destroy)(void* entity);
+
+struct entity_definition {
+    const char* name;
+    entity_init init;
+    entity_destroy destroy;
+    uint16_t entity_size;
+    uint16_t definition_size;
+};
+
+struct entity_data {
+    struct entity_definition* definition;
+    void* entities;
+    uint16_t entity_count;
+};
+
 enum STATIC_ENTITY_FLAGS {
     STATIC_ENTITY_FLAGS_EMBEDDED_MESH = (1 << 0),
 };
@@ -29,6 +46,9 @@ struct world {
     struct player player;
     struct Camera camera;
     struct camera_controller camera_controller;
+    
+    struct entity_data* entity_data;
+    uint16_t entity_data_count;
 };
 
 void world_render(void* data, struct render_batch* batch);

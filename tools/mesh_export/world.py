@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(__file__))
 import entities.mesh
 import entities.mesh_collider
 import parse.struct_parse
+import parse.struct_serialize
 
 class StaticEntry():
     def __init__(self, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
@@ -16,28 +17,29 @@ class StaticEntry():
         self.transform = transform
 
 class ObjectEntry():
-    def __init__(self, obj: bpy.types.Object, def_type: parse.struct_parse.StructureInfo):
+    def __init__(self, obj: bpy.types.Object, name: str, def_type: parse.struct_parse.StructureInfo):
         self.obj: bpy.types.Object = obj
+        self.name: str = name
         self.def_type: parse.struct_parse.StructureInfo = def_type
 
 class World():
     def __init__(self):
-        self.static = []
-        self.objects = []
+        self.static:list[StaticEntry] = []
+        self.objects: list[ObjectEntry] = []
         self.world_mesh_collider = entities.mesh_collider.MeshCollider()
 
 def process_linked_object(world: World, obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo]):
     if not 'type' in mesh:
         return
     
-    def_type_name = mesh['type']
+    def_type_name = f"{mesh['type']}_definition" 
 
     if not def_type_name in definitions:
         raise Exception(f"could not find def type {def_type_name}")
     
     print(f"found object {obj.name} of type {def_type_name}")
     
-    world.objects.append(ObjectEntry(obj, definitions[def_type_name]))
+    world.objects.append(ObjectEntry(obj, mesh['type'], definitions[def_type_name]))
     
 def process_scene():
     input_filename = sys.argv[1]
@@ -87,5 +89,32 @@ def process_scene():
             mesh_list.write_mesh(file)
 
         world.world_mesh_collider.write_out(file)
+
+        grouped: dict[str, list[ObjectEntry]] = {}
+
+        for object in world.objects:
+            key = object.name
+
+            if key in grouped:
+                grouped[key].append(object)
+            else:
+                grouped[key] = [object]
+
+        grouped_list = sorted(list(grouped.items()), key=lambda x: x[0])
+
+        file.write(len(grouped_list).to_bytes(2, 'big'))
+
+        for item in grouped_list:
+            def_name = item[0]
+
+            file.write(len(def_name).to_bytes(1, 'big'))
+            file.write(def_name.encode())
+
+            file.write(len(item[1]).to_bytes(2, 'big'))
+            file.write(parse.struct_serialize.obj_size(item[1][0].def_type).to_bytes(2, 'big'))
+            
+            for entry in item[1]:
+                parse.struct_serialize.write_obj(file, entry.obj, entry.def_type)
+            
 
 process_scene()
