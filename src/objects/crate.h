@@ -6,11 +6,13 @@
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
 #include "../math/transform_single_axis.h"
+#include "../entity/health.h"
 
 struct crate {
     struct TransformSingleAxis transform;
     struct renderable_single_axis renderable;
     struct dynamic_object dynamic_object;
+    struct health health;
     int render_id;
 };
 

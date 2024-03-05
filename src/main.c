@@ -13,6 +13,7 @@
 #include "render/render_scene.h"
 #include "spell/assets.h"
 #include "collision/collision_scene.h"
+#include "entity/health.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -29,6 +30,7 @@ void setup() {
     render_scene_reset(&r_scene_3d);
     update_reset();
     collision_scene_reset();
+    health_reset();
     current_world = world_load("rom:/worlds/test.world");
 
     struct crate_definition def;
