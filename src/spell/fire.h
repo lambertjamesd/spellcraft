@@ -3,12 +3,16 @@
 
 #include "spell_data_source.h"
 #include "spell_event.h"
+#include "../collision/dynamic_object.h"
 
 #define MAX_FIRE_PARTICLE_COUNT     8
 
 struct fire {
     struct spell_data_source* data_source;
     struct Vector3 particle_offset[MAX_FIRE_PARTICLE_COUNT];
+    struct dynamic_object dynamic_object;
+    struct Vector3 position;
+    struct Vector2 rotation;
     int render_id;
     float cycle_time;
     float total_time;

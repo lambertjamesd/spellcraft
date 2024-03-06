@@ -23,14 +23,15 @@ static struct dynamic_object_type player_collision = {
 };
 
 struct spell_symbol projectile_spell_sybols[] = {
+    {.reserved = 0, .type = SPELL_SYBMOL_STICKY_CAST},
+    {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
     {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
     {.reserved = 0, .type = SPELL_SYBMOL_RECAST},
-    {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
 };
 
 struct spell projectile_spell = {
     .symbols = projectile_spell_sybols,
-    .cols = 1,
+    .cols = 2,
     .rows = 1,
 };
 
@@ -92,7 +93,7 @@ void player_update(struct player* player) {
 
     quatMultVector(&player->transform.rotation, &gForward, &player->player_spell_source.direction);
     player->player_spell_source.position = player->transform.position;
-    player->player_spell_source.position.y += 1.0f;
+    player->player_spell_source.position.y += 0.5f;
     player->player_spell_source.flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
 
     if (pressed.a) {
@@ -121,6 +122,7 @@ void player_init(struct player* player, struct Transform* camera_transform) {
         entity_id,
         &player->collision,
         &player_collision,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
         &player->transform.position,
         &player->look_direction
     );

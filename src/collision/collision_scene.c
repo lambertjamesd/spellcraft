@@ -123,6 +123,14 @@ struct collide_edge {
     short x;
 };
 
+int collide_edge_compare(struct collide_edge a, struct collide_edge b) {
+    if (a.x == b.x) {
+        return b.is_start_edge - a.is_start_edge;
+    }
+
+    return a.x - b.x;
+}
+
 void collide_edge_sort(struct collide_edge* edges, struct collide_edge* tmp, int start, int end) {
     if (start + 1 >= end) {
         return;
@@ -138,7 +146,7 @@ void collide_edge_sort(struct collide_edge* edges, struct collide_edge* tmp, int
     int output = start;
 
     while (a < mid || b < end) {
-        if (b >= end || (a < mid && edges[a].x < edges[b].x)) {
+        if (b >= end || (a < mid && collide_edge_compare(edges[a], edges[b]) < 0)) {
             tmp[output] = edges[a];
             ++output;
             ++a;

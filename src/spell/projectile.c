@@ -52,13 +52,20 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 
     spell_data_source_retain(data_source);
 
-    dynamic_object_init(entity_id_new(), &projectile->dynamic_object, &projectile_collision, &projectile->pos, NULL);
+    dynamic_object_init(
+        entity_id_new(), 
+        &projectile->dynamic_object, 
+        &projectile_collision, 
+        COLLISION_LAYER_TANGIBLE | COLLISOIN_LAYER_DAMAGE_ENEMY,
+        &projectile->pos, 
+        NULL
+    );
     collision_scene_add(&projectile->dynamic_object);
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
 
     if (data_source->flags.controlled) {
-        projectile->dynamic_object.flags &= ~DYNAMIC_OBJECT_GRAVITY;
+        projectile->dynamic_object.has_gravity = 0;;
         projectile->is_controlled = 1;
     } else {
         projectile->dynamic_object.velocity.y += PROJECTILE_SPEED * 0.5f;
@@ -83,7 +90,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
 
         if (projectile->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
             projectile->is_controlled = 0;
-            projectile->dynamic_object.flags |= DYNAMIC_OBJECT_GRAVITY;
+            projectile->dynamic_object.has_gravity = 1;
         }
     }
 
@@ -118,7 +125,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 hit_source->flags = projectile->data_source->flags;
                 hit_source->flags.cast_state = SPELL_CAST_STATE_INSTANT;
                 if (first_contact->other_object) {
-                    hit_source->target = first_contact->other_object->entity_id;
+                    hit_source->target = first_contact->other_object;
                 } else {
                     hit_source->target = 0;
                 }

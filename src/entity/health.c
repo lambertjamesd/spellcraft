@@ -20,3 +20,11 @@ void health_init(struct health* health, entity_id id, float max_health) {
 void health_destroy(struct health* health) {
     hash_map_delete(&health_entity_mapping, health->entity_id);
 }
+
+void health_damage(struct health* health, float amount, entity_id source) {
+    health->current_health -= amount;
+}
+
+struct health* health_get(entity_id id) {
+    return hash_map_get(&health_entity_mapping, id);
+}

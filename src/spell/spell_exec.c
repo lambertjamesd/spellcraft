@@ -39,7 +39,11 @@ void spell_slot_init(
             break;
         case SPELL_SYBMOL_RECAST:
             slot->type = SPELL_EXEC_SLOT_TYPE_RECAST;
-            recast_init(&slot->data.recast, input, event_options);
+            recast_init(&slot->data.recast, input, event_options, RECAST_MODE_RECAST);
+            break;
+        case SPELL_SYBMOL_STICKY_CAST:
+            slot->type = SPELL_EXEC_SLOT_TYPE_RECAST;
+            recast_init(&slot->data.recast, input, event_options, REACT_MODE_STICKY);
             break;
         case SPELL_SYMBOL_PUSH:
             slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;

@@ -3,6 +3,7 @@
 #include "epa.h"
 
 #include "collision_scene.h"
+#include "../util/flags.h"
 
 void correct_overlap(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce) {
     vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
@@ -19,7 +20,11 @@ void correct_overlap(struct dynamic_object* object, struct EpaResult* result, fl
     }
 }
 
-void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider* mesh) {
+void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider* mesh) {   
+    if (object->is_trigger) {
+        return;
+    }
+
     struct mesh_triangle triangle;
 
     triangle.vertices = mesh->vertices;
@@ -54,6 +59,14 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
 }
 
 void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b) {
+    if (!(a->collision_layers & b->collision_layers)) {
+        return;
+    }
+
+    if (a->is_trigger && b->is_trigger) {
+        return;
+    }
+
     struct Simplex simplex;
     if (!gjkCheckForOverlap(&simplex, a, dynamic_object_minkowski_sum, b, dynamic_object_minkowski_sum, &gRight)) {
         return;
@@ -66,9 +79,11 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
     float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;
 
-    // TODO determine push ratio
-    correct_overlap(b, &result, -0.5f, friction, bounce);
-    correct_overlap(a, &result, 0.5f, friction, bounce);
+    // TODO determine push 
+    if (!a->is_trigger && !b->is_trigger) {
+        correct_overlap(b, &result, -0.5f, friction, bounce);
+        correct_overlap(a, &result, 0.5f, friction, bounce);
+    }
 
     struct contact* contact = collision_scene_new_contact();
 
@@ -76,23 +91,27 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         return;
     }
 
-    contact->normal = result.normal;
-    contact->point = result.contactA;
-    contact->other_object = a;
+    if (!a->is_trigger) {
+        contact->normal = result.normal;
+        contact->point = result.contactA;
+        contact->other_object = a ? a->entity_id : 0;
 
-    contact->next = b->active_contacts;
-    b->active_contacts = contact;
-    
-    contact = collision_scene_new_contact();
+        contact->next = b->active_contacts;
+        b->active_contacts = contact;
+        
+        contact = collision_scene_new_contact();
+    }
 
     if (!contact) {
         return;
     }
 
-    vector3Negate(&result.normal, &contact->normal);
-    contact->point = result.contactB;
-    contact->other_object = b;
+    if (!b->is_trigger) {
+        vector3Negate(&result.normal, &contact->normal);
+        contact->point = result.contactB;
+        contact->other_object = b ? b->entity_id : 0;
 
-    contact->next = a->active_contacts;
-    a->active_contacts = contact;
+        contact->next = a->active_contacts;
+        a->active_contacts = contact;
+    }
 }

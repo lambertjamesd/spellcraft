@@ -4,6 +4,8 @@
 #include "assets.h"
 #include "../time/time.h"
 #include "../math/mathf.h"
+#include "../collision/collision_scene.h"
+#include "../entity/health.h"
 
 #define CYCLE_TIME  0.08f
 
@@ -15,6 +17,25 @@
 #define START_FADE          0.75f
 
 #define TIP_RISE            0.5f
+
+static struct dynamic_object_type fire_object_type = {
+    .minkowsi_sum = dynamic_object_cone_minkowski_sum,
+    .bounding_box = dynamic_object_cone_bouding_box,
+    .data = { 
+        .cone = {
+            .size = {MAX_RADIUS, MAX_RADIUS, FIRE_LENGTH},
+        },
+    },
+};
+
+void fire_apply_transform(struct fire* fire) {
+    fire->position = fire->data_source->position;
+
+    fire->rotation.x = fire->data_source->direction.z;
+    fire->rotation.y = -fire->data_source->direction.x;
+
+    vector2Normalize(&fire->rotation, &fire->rotation);
+}
 
 void fire_render(struct fire* fire, struct render_batch* batch) {
     int particle_count = (int)(fire->total_time * (1.0f / CYCLE_TIME));
@@ -80,6 +101,8 @@ void fire_init(struct fire* fire, struct spell_data_source* source, struct spell
 
     fire->index_offset = 0;
 
+    fire_apply_transform(fire);
+
     for (int i = 0; i < MAX_FIRE_PARTICLE_COUNT; i += 1) {
         fire->particle_offset[i] = gZeroVec;
 
@@ -88,11 +111,23 @@ void fire_init(struct fire* fire, struct spell_data_source* source, struct spell
         offset->y = randomInRangef(-MAX_RANDOM_OFFSET, MAX_RANDOM_OFFSET);
         offset->z = randomInRangef(-MAX_RANDOM_OFFSET, MAX_RANDOM_OFFSET);
     }
+
+    dynamic_object_init(
+        entity_id_new(), 
+        &fire->dynamic_object, 
+        &fire_object_type, 
+        COLLISOIN_LAYER_DAMAGE_ENEMY,
+        &fire->position, 
+        &fire->rotation
+    );
+    fire->dynamic_object.is_trigger = 1;
+    collision_scene_add(&fire->dynamic_object);
 }
 
 void fire_destroy(struct fire* fire) {
     render_scene_remove(&r_scene_3d, fire->render_id);
     spell_data_source_release(fire->data_source);
+    collision_scene_remove(&fire->dynamic_object);
 }
 
 void fire_update(struct fire* fire, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
@@ -115,5 +150,20 @@ void fire_update(struct fire* fire, struct spell_event_listener* event_listener,
 
     if (fire->end_time != -1 && fire->total_time > fire->end_time + CYCLE_TIME * MAX_FIRE_PARTICLE_COUNT) {
         spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL);
+    }
+
+    fire_apply_transform(fire);
+
+    struct contact* curr = fire->dynamic_object.active_contacts;
+
+    while (curr) {
+        struct health* target_health = health_get(curr->other_object);
+        curr = curr->next;
+
+        if (!target_health) {
+            continue;
+        }
+
+        health_damage(target_health, 1.0f, fire->dynamic_object.entity_id);
     }
 }

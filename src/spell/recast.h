@@ -4,14 +4,20 @@
 #include "spell_data_source.h"
 #include "spell_event.h"
 
+enum recast_mode {
+    RECAST_MODE_RECAST,
+    REACT_MODE_STICKY,
+};
+
 struct recast {
     struct recast* next_recast;
     struct spell_data_source* recast_source;
     struct spell_data_source* original_source;
     struct spell_data_source* output;
+    enum recast_mode mode;
 };
 
-void recast_init(struct recast* recast, struct spell_data_source* source, struct spell_event_options event_options);
+void recast_init(struct recast* recast, struct spell_data_source* source, struct spell_event_options event_options, enum recast_mode mode);
 void recast_destroy(struct recast* recast);
 
 void recast_recast(struct recast* recast, struct spell_data_source* recast_source);
