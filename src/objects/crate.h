@@ -13,8 +13,6 @@ struct crate {
     struct renderable_single_axis renderable;
     struct dynamic_object dynamic_object;
     struct health health;
-    int render_id;
-    int update_id;
 };
 
 void crate_init(struct crate* crate, struct crate_definition* definition);

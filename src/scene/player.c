@@ -111,8 +111,8 @@ void player_init(struct player* player, struct Transform* camera_transform) {
 
     player->transform.position.y = 1.0f;
 
-    player->render_id = render_scene_add_renderable(&r_scene_3d, &player->renderable, 2.0f);
-    player->update_id = update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD);
+    render_scene_add_renderable(&r_scene_3d, &player->renderable, 2.0f);
+    update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD);
 
     player->look_direction = gRight2;
 
@@ -140,7 +140,7 @@ void player_destroy(struct player* player) {
     renderable_destroy(&player->renderable);
     spell_exec_destroy(&player->spell_exec);
 
-    render_scene_remove(&r_scene_3d, player->render_id);
-    update_remove(player->update_id);
+    render_scene_remove(&r_scene_3d, &player->renderable);
+    update_remove(player);
     collision_scene_remove(&player->collision);
 }

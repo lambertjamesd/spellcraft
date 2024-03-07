@@ -7,7 +7,6 @@
 struct camera_controller {
     struct Camera* camera;
     struct player* player;
-    int update_id;
     float follow_distace;
     struct Vector3 target;
 };

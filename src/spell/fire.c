@@ -90,7 +90,7 @@ void fire_render(struct fire* fire, struct render_batch* batch) {
 }
 
 void fire_init(struct fire* fire, struct spell_data_source* source, struct spell_event_options event_options) {
-    fire->render_id = render_scene_add(&r_scene_3d, &fire->data_source->position, 4.0f, (render_scene_callback)fire_render, fire);
+    render_scene_add(&r_scene_3d, &fire->data_source->position, 4.0f, (render_scene_callback)fire_render, fire);
 
     fire->data_source = source;
     spell_data_source_retain(source);
@@ -125,7 +125,7 @@ void fire_init(struct fire* fire, struct spell_data_source* source, struct spell
 }
 
 void fire_destroy(struct fire* fire) {
-    render_scene_remove(&r_scene_3d, fire->render_id);
+    render_scene_remove(&r_scene_3d, fire);
     spell_data_source_release(fire->data_source);
     collision_scene_remove(&fire->dynamic_object);
 }

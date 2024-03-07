@@ -36,17 +36,17 @@ void crate_init(struct crate* crate, struct crate_definition* definition) {
         &crate->transform.rotation
     );
 
-    crate->update_id = update_add(crate, (update_callback)crate_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
+    update_add(crate, (update_callback)crate_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
 
-    crate->render_id = render_scene_add_renderable_single_axis(&r_scene_3d, &crate->renderable, 1.73f);
+    render_scene_add_renderable_single_axis(&r_scene_3d, &crate->renderable, 1.73f);
     collision_scene_add(&crate->dynamic_object);
 
     health_init(&crate->health, id, 10.0f);
 }
 
 void crate_destroy(struct crate* crate) {
-    render_scene_remove(&r_scene_3d, crate->render_id);
+    render_scene_remove(&r_scene_3d, &crate->renderable);
     collision_scene_remove(&crate->dynamic_object);
     health_destroy(&crate->health);
-    update_remove(crate->update_id);
+    update_remove(crate);
 }

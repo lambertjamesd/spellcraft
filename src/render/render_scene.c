@@ -12,14 +12,14 @@ void render_scene_reset(struct render_scene* scene) {
     callback_list_reset(&scene->callbacks, sizeof(struct render_scene_element), MIN_RENDER_SCENE_SIZE, NULL);
 }
 
-render_id render_scene_add(struct render_scene* scene, struct Vector3* center, float radius, render_scene_callback callback, void* data) {
+void render_scene_add(struct render_scene* scene, struct Vector3* center, float radius, render_scene_callback callback, void* data) {
     struct render_scene_element element;
 
     element.data = data;
     element.center = center;
     element.radius = radius;
 
-    return callback_list_insert(&scene->callbacks, callback, &element);
+    callback_list_insert_with_id(&scene->callbacks, callback, &element, (callback_id)data);
 }
 
 void render_scene_render_renderable(void* data, struct render_batch* batch) {
@@ -50,16 +50,16 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
     render_batch_add_mesh(batch, renderable->mesh, mtx);
 }
 
-render_id render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius) {
-    return render_scene_add(scene, &renderable->transform->position, radius, render_scene_render_renderable, renderable);
+void render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius) {
+    render_scene_add(scene, &renderable->transform->position, radius, render_scene_render_renderable, renderable);
 }
 
-render_id render_scene_add_renderable_single_axis(struct render_scene* scene, struct renderable_single_axis* renderable, float radius) {
-    return render_scene_add(scene, &renderable->transform->position, radius, render_scene_render_renderable_single_axis, renderable);
+void render_scene_add_renderable_single_axis(struct render_scene* scene, struct renderable_single_axis* renderable, float radius) {
+    render_scene_add(scene, &renderable->transform->position, radius, render_scene_render_renderable_single_axis, renderable);
 }
 
-void render_scene_remove(struct render_scene* scene, render_id id) {
-    callback_list_remove(&scene->callbacks, id);
+void render_scene_remove(struct render_scene* scene, void* data) {
+    callback_list_remove(&scene->callbacks, (callback_id)data);
 }
 
 void render_scene_render(struct render_scene* scene, struct Camera* camera, struct render_viewport* viewport) {

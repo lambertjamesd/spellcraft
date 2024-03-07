@@ -324,7 +324,7 @@ void spell_exec_init(struct spell_exec* exec) {
     spell_data_source_pool_init(&exec->data_sources);
     memset(&exec->ids, 0, sizeof(exec->ids));
     memset(&exec->ids, 0, sizeof(exec->modifier_ids));
-    exec->update_id = update_add(exec, (update_callback)spell_exec_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
+    update_add(exec, (update_callback)spell_exec_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
     memset(exec->pending_recast, 0, sizeof(exec->pending_recast));
 }
 
@@ -334,7 +334,7 @@ void spell_exec_destroy(struct spell_exec* exec) {
             spell_slot_destroy(exec, i);
         }
     }
-    update_remove(exec->update_id);
+    update_remove(exec);
 }
 
 void spell_exec_recast(struct spell_exec* exec, int button_index, struct spell_data_source* data_source) {

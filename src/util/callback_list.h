@@ -38,6 +38,7 @@ void callback_list_reset(struct callback_list* list, int data_size, int min_capc
 #define callback_list_next(list, curr) (struct callback_element*)((char*)(curr) + (list)->element_size)
 
 callback_id callback_list_insert(struct callback_list* list, void* callback, void* data);
+void callback_list_insert_with_id(struct callback_list* list, void* callback, void* data, callback_id id);
 void callback_list_remove(struct callback_list* list, callback_id id);
 
 void callback_list_begin(struct callback_list* list);

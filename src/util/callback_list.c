@@ -57,7 +57,7 @@ void callback_list_insert_pending(struct callback_list* list, void* callback, in
     list->pending_element_count += 1;
 }
 
-void callback_list_insert_with_id(struct callback_list* list, void* callback, int id, void* data) {
+void callback_list_do_insert_with_id(struct callback_list* list, void* callback, int id, void* data) {
     if (list->capacity == list->count) {
         list->capacity *= 2;
         list->elements = realloc(list->elements, list->element_size * list->capacity);
@@ -89,19 +89,23 @@ void callback_list_insert_with_id(struct callback_list* list, void* callback, in
 }
 
 callback_id callback_list_insert(struct callback_list* list, void* callback, void* data) {
-    assert(list->element_size);
-
     list->next_id += 1;
     callback_id result = list->next_id;
 
-    if (list->flags & CALLBACK_LIST_ENUMERATING) {
-        callback_list_insert_pending(list, callback, result, data);
-        return result;
-    }
-
-    callback_list_insert_with_id(list, callback, result, data);
+    callback_list_insert_with_id(list, callback, data, result);
 
     return result;
+}
+
+void callback_list_insert_with_id(struct callback_list* list, void* callback, void* data, callback_id id) {
+    assert(list->element_size);
+
+    if (list->flags & CALLBACK_LIST_ENUMERATING) {
+        callback_list_insert_pending(list, callback, id, data);
+        return;
+    }
+
+    callback_list_do_insert_with_id(list, callback, id, data);
 }
 
 void callback_list_remove(struct callback_list* list, callback_id id) {
@@ -195,7 +199,7 @@ void callback_list_end(struct callback_list* list) {
         // pending id may be 0 if the callback was removed after it was added
         // and before callback_list_end
         if (pending->id) {
-            callback_list_insert_with_id(list, pending->callback, pending->id, callback_element_get_data(pending));
+            callback_list_do_insert_with_id(list, pending->callback, pending->id, callback_element_get_data(pending));
         }
 
         pending = callback_list_next(list, pending);

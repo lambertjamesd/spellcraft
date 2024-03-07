@@ -32,18 +32,18 @@ void update_reset() {
     fixed_time_step = 1.0f / 30.0f;
 }
 
-update_id update_add(void* data, update_callback callback, int priority, int mask) {
+void update_add(void* data, update_callback callback, int priority, int mask) {
     struct update_element element;
 
     element.data = data;
     element.priority = priority;
     element.mask = mask;
 
-    return callback_list_insert(&g_update_state.callbacks, callback, &element);
+    callback_list_insert_with_id(&g_update_state.callbacks, callback, &element, (callback_id)data);
 }
 
-void update_remove(update_id id) {
-    callback_list_remove(&g_update_state.callbacks, id);
+void update_remove(void* data) {
+    callback_list_remove(&g_update_state.callbacks, (callback_id)data);
 }
 
 void update_dispatch(int mask) {

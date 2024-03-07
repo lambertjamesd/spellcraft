@@ -12,8 +12,8 @@ typedef int update_id;
 #define UPDATE_PRIORITY_CAMERA  2
 
 void update_reset();
-update_id update_add(void* data, update_callback callback, int priority, int mask);
-void update_remove(update_id id);
+void update_add(void* data, update_callback callback, int priority, int mask);
+void update_remove(void* data);
 void update_remove_with_data(void* data, update_callback callback);
 
 void update_dispatch(int mask);

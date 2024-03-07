@@ -116,7 +116,7 @@ struct world* world_load(const char* filename) {
 
     fclose(file);
 
-    world->static_render_id = render_scene_add(&r_scene_3d, NULL, 0.0f, world_render, world);
+    render_scene_add(&r_scene_3d, NULL, 0.0f, world_render, world);
 
     return world;
 }
@@ -132,7 +132,7 @@ void world_release(struct world* world) {
         }
     }
 
-    render_scene_remove(&r_scene_3d, world->static_render_id);
+    render_scene_remove(&r_scene_3d, world);
 
     player_destroy(&world->player);
     camera_controller_destroy(&world->camera_controller);

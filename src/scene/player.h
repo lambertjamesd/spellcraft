@@ -15,8 +15,6 @@ struct player {
     struct Transform transform;
     struct renderable renderable;
     struct Transform* camera_transform;
-    int render_id;
-    int update_id;
     struct Vector2 look_direction;
     struct dynamic_object collision;
 

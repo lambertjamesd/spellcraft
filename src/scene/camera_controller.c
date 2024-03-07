@@ -18,7 +18,7 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     controller->camera = camera;
     controller->player = player;
 
-    controller->update_id = update_add(controller, (update_callback)camera_controller_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD);
+    update_add(controller, (update_callback)camera_controller_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD);
 
     controller->target = player->transform.position;
     controller->follow_distace = 12.0f;
@@ -29,5 +29,5 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
 }
 
 void camera_controller_destroy(struct camera_controller* controller) {
-    update_remove(controller->update_id);
+    update_remove(controller);
 }

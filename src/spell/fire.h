@@ -13,7 +13,6 @@ struct fire {
     struct dynamic_object dynamic_object;
     struct Vector3 position;
     struct Vector2 rotation;
-    int render_id;
     float cycle_time;
     float total_time;
     float end_time;

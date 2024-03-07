@@ -7,7 +7,6 @@
 struct explosion {
     struct spell_data_source* data_source;
     struct Vector3 position;
-    int render_id;
     float total_time;
 };
 

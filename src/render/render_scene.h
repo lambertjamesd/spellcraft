@@ -24,10 +24,10 @@ struct render_scene {
 
 void render_scene_reset(struct render_scene* scene);
 
-render_id render_scene_add(struct render_scene* scene, struct Vector3* center, float radius, render_scene_callback callback, void* data);
-render_id render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius);
-render_id render_scene_add_renderable_single_axis(struct render_scene* scene, struct renderable_single_axis* renderable, float radius);
-void render_scene_remove(struct render_scene* scene, render_id id);
+void render_scene_add(struct render_scene* scene, struct Vector3* center, float radius, render_scene_callback callback, void* data);
+void render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius);
+void render_scene_add_renderable_single_axis(struct render_scene* scene, struct renderable_single_axis* renderable, float radius);
+void render_scene_remove(struct render_scene* scene, void* data);
 
 void render_scene_render(struct render_scene* scene, struct Camera* camera, struct render_viewport* viewport);
 

@@ -41,8 +41,6 @@ struct world {
 
     struct mesh_collider mesh_collider;
 
-    int static_render_id;
-
     struct player player;
     struct Camera camera;
     struct camera_controller camera_controller;
