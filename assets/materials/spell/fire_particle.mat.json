@@ -1,5 +1,15 @@
 {
-    "tex0": "../../images/spell/fire_particle.png",
+    "tex0": {
+        "filename": "../../images/spell/fire_particle.png",
+        "s": {
+            "repeats": 0,
+            "mirror": false
+        },
+        "t": {
+            "repeats": 0,
+            "mirror": false
+        }
+    },
     "combineMode": [{
         "color": ["TEX0", "0", "PRIM", "0"],
         "alpha": ["TEX0", "0", "PRIM", "0"]

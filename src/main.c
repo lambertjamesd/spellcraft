@@ -14,6 +14,8 @@
 #include "spell/assets.h"
 #include "collision/collision_scene.h"
 #include "entity/health.h"
+#include "menu/menu_rendering.h"
+#include "menu/spell_building_menu.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -24,6 +26,7 @@
 
 struct world* current_world;
 struct crate crate_test;
+struct spell_building_menu spell_menu;
 
 void setup() {
     spell_assets_init();
@@ -31,6 +34,7 @@ void setup() {
     update_reset();
     collision_scene_reset();
     health_reset();
+    menu_reset();
     current_world = world_load("rom:/worlds/test.world");
 
     struct crate_definition def;
@@ -41,6 +45,8 @@ void setup() {
     def.rotation = gRight2;
 
     crate_init(&crate_test, &def);
+    spell_building_menu_init(&spell_menu);
+    spell_building_menu_show(&spell_menu, NULL);
 }
 
 float angle = 0.0f;
@@ -84,6 +90,9 @@ void render() {
     viewport.h = display_get_height();
 
     render_scene_render(&r_scene_3d, &current_world->camera, &viewport);
+    rdpq_mode_persp(false);
+    glDisable(GL_DEPTH_TEST);
+    menu_render();
 }
 
 volatile static int frame_happened = 0;
