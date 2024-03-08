@@ -1,6 +1,6 @@
 {
     "tex0": {
-        "filename": "../../images/spell/symbols.png",
+        "filename": "../../images/menu/menu_cursor.png",
         "s": {
             "repeats": 0,
             "mirror": false
@@ -11,9 +11,10 @@
         }
     },
     "combineMode": [{
-        "color": ["0", "0", "0", "PRIM"],
-        "alpha": ["TEX0", "0", "PRIM", "0"]
+        "color": ["PRIM", "ENV", "TEX0", "ENV"],
+        "alpha": ["PRIM", "ENV", "TEX0", "ENV"]
     }],
-    "primColor": [255, 255, 255, 255],
+    "primColor": [203, 203, 99, 128],
+    "envColor": [132, 122, 89, 64],
     "blendMode": "TRANSPARENT"
 }

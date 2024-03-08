@@ -16,6 +16,7 @@
 #include "entity/health.h"
 #include "menu/menu_rendering.h"
 #include "menu/spell_building_menu.h"
+#include "menu/menu_common.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -28,12 +29,25 @@ struct world* current_world;
 struct crate crate_test;
 struct spell_building_menu spell_menu;
 
+struct spell_symbol test_spell_symbols[] = {
+    {.reserved = 0, .type = SPELL_SYMBOL_PUSH},
+    {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
+    {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
+};
+
+struct spell test_spell = {
+    .symbols = test_spell_symbols,
+    .cols = 3,
+    .rows = 1,
+};
+
 void setup() {
     spell_assets_init();
     render_scene_reset(&r_scene_3d);
     update_reset();
     collision_scene_reset();
     health_reset();
+    menu_common_init();
     menu_reset();
     current_world = world_load("rom:/worlds/test.world");
 
@@ -46,7 +60,7 @@ void setup() {
 
     crate_init(&crate_test, &def);
     spell_building_menu_init(&spell_menu);
-    spell_building_menu_show(&spell_menu, NULL);
+    spell_building_menu_show(&spell_menu, &test_spell);
 }
 
 float angle = 0.0f;
@@ -147,6 +161,6 @@ int main(void)
 
         joypad_poll();
         collision_scene_collide();
-        update_dispatch(UPDATE_LAYER_WORLD);
+        update_dispatch(UPDATE_LAYER_WORLD | UPDATE_LAYER_MENU);
     }
 }

@@ -23,15 +23,15 @@ static struct dynamic_object_type player_collision = {
 };
 
 struct spell_symbol projectile_spell_sybols[] = {
-    {.reserved = 0, .type = SPELL_SYBMOL_STICKY_CAST},
-    {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
+    {.reserved = 0, .type = SPELL_SYMBOL_PUSH},
     {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
-    {.reserved = 0, .type = SPELL_SYBMOL_RECAST},
+    {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
+    {.reserved = 0, .type = SPELL_SYMBOL_RECAST},
 };
 
 struct spell projectile_spell = {
     .symbols = projectile_spell_sybols,
-    .cols = 2,
+    .cols = 3,
     .rows = 1,
 };
 

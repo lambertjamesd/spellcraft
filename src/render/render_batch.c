@@ -126,6 +126,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
     glEnable(GL_RDPQ_MATERIAL_N64);
     // glEnable(GL_RDPQ_TEXTURING_N64);
     rdpq_set_mode_standard();
+    rdpq_mode_persp(true);
 
     bool is_sprite_mode = false;
 

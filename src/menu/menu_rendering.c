@@ -1,5 +1,7 @@
 #include "menu_rendering.h"
 
+#include <libdragon.h>
+#include <GL/gl.h>
 #include "../util/callback_list.h"
 
 #define MIN_MENU_COUNT  8
@@ -35,6 +37,12 @@ void menu_remove_callback(void* data) {
 }
 
 void menu_render() {
+    glEnable(GL_RDPQ_MATERIAL_N64);
+    glEnable(GL_RDPQ_TEXTURING_N64);
+
+    rdpq_mode_zbuf(false, false);
+    rdpq_mode_persp(false);
+
     struct callback_element* current = callback_list_get(&g_menu_callbacks, 0);
 
     for (int i = 0; i < g_menu_callbacks.count; ++i) {

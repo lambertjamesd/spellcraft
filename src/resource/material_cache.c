@@ -117,7 +117,6 @@ void material_load(struct material* into, FILE* material_file) {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, into->tex0.gl_texture);
         rdpq_mode_mipmap(MIPMAP_NONE, 0);
-        rdpq_mode_persp(true);
         surface_t surface = sprite_get_pixels(into->tex0.sprite);
         rdpq_tex_upload(TILE0, &surface, &into->tex0.params);
     }

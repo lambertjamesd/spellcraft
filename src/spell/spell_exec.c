@@ -37,11 +37,11 @@ void spell_slot_init(
                 explosion_init(&slot->data.explosion, input, event_options);
             }
             break;
-        case SPELL_SYBMOL_RECAST:
+        case SPELL_SYMBOL_RECAST:
             slot->type = SPELL_EXEC_SLOT_TYPE_RECAST;
             recast_init(&slot->data.recast, input, event_options, RECAST_MODE_RECAST);
             break;
-        case SPELL_SYBMOL_STICKY_CAST:
+        case SPELL_SYMBOL_STICKY_CAST:
             slot->type = SPELL_EXEC_SLOT_TYPE_RECAST;
             recast_init(&slot->data.recast, input, event_options, REACT_MODE_STICKY);
             break;
@@ -222,7 +222,7 @@ int spell_exec_find_modifier(struct spell_exec* exec) {
     int result_id = exec->modifier_ids[0];
 
     for (int i = 0; i < MAX_SOURCE_MODIFIERS; ++i) {
-        int id = exec->modifier_ids[exec->next_slot];
+        int id = exec->modifier_ids[exec->next_modifier];
         int current = exec->next_modifier;
 
         exec->next_modifier += 1;

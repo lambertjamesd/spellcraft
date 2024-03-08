@@ -18,8 +18,8 @@ SPRITES := $(PNG_RGBA16:assets/%.png=filesystem/%.sprite)
 
 filesystem/%.sprite: assets/%.png
 	@mkdir -p $(dir $@)
-	@echo "    [SPRITE] $@" ${shell jq -r .format ${<:%.png=%.json} | sed 's/null/AUTO/g'}
-	@$(N64_MKSPRITE) -f ${shell jq -r .format ${<:%.png=%.json} | sed 's/null/AUTO/g'} --compress -o "$(dir $@)" "$<"
+	@echo "    [SPRITE] $@"
+	@$(N64_MKSPRITE) -f ${shell jq -r .format ${<:%.png=%.json} || echo AUTO} --compress -o "$(dir $@)" "$<"
 
 ###
 # meshes
