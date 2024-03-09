@@ -96,7 +96,7 @@ void player_update(struct player* player) {
     player->player_spell_source.flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
 
     if (pressed.a) {
-        spell_exec_start(&player->spell_exec, 0, &projectile_spell, &player->player_spell_source);
+        spell_exec_start(&player->spell_exec, 0, &player->inventory->custom_spells[0], &player->player_spell_source);
     }
 }
 
