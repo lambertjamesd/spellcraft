@@ -2,7 +2,7 @@
 #define __SCENE_CAMERA_CONTROLLER_H__
 
 #include "../render/camera.h"
-#include "player.h"
+#include "../player/player.h"
 
 struct camera_controller {
     struct Camera* camera;

@@ -31,7 +31,13 @@ struct spell {
     uint8_t rows;
 };
 
+void spell_init(struct spell* spell, uint8_t cols, uint8_t rows);
+void spell_destroy(struct spell* spell);
+
 struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row);
+
+void spell_set_symbol(struct spell* spell, int col, int row, struct spell_symbol value);
+
 bool spell_has_primary_event(struct spell* spell, int col, int row);
 bool spell_has_secondary_event(struct spell* spell, int col, int row);
 bool spell_is_modifier(struct spell* spell, int col, int row);

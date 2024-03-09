@@ -13,6 +13,8 @@ struct spell_building_menu {
     uint8_t spell_cursor_y;
 
     struct spell_symbol symbol_grid[SPELL_MAX_ROWS][SPELL_MAX_COLS];
+
+    struct spell* current_spell;
 };
 
 void spell_building_menu_init(struct spell_building_menu* menu);

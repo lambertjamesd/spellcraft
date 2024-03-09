@@ -72,9 +72,12 @@ struct world* world_load(const char* filename) {
 
     struct world* world = malloc(sizeof(struct world));
 
+    inventory_init(&world->inventory);
     camera_init(&world->camera, 70.0f, 0.5f, 30.0f);
-    player_init(&world->player, &world->camera.transform);
+    player_init(&world->player, &world->camera.transform, &world->inventory);
     camera_controller_init(&world->camera_controller, &world->camera, &world->player);
+
+    pause_menu_init(&world->pause_menu, &world->inventory);
 
     uint16_t static_count;
     fread(&static_count, 2, 1, file);
@@ -134,8 +137,11 @@ void world_release(struct world* world) {
 
     render_scene_remove(&r_scene_3d, world);
 
+    pause_menu_destroy(&world->pause_menu);
     player_destroy(&world->player);
     camera_controller_destroy(&world->camera_controller);
+
+    inventory_destroy(&world->inventory);
 
     collision_scene_remove_static_collision(&world->mesh_collider);
     mesh_collider_release(&world->mesh_collider);

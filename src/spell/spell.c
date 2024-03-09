@@ -1,5 +1,28 @@
 #include "spell.h"
 
+#include <malloc.h>
+
+void spell_init(struct spell* spell, uint8_t cols, uint8_t rows) {
+    int cell_count = cols * rows;
+
+    spell->symbols = malloc(sizeof(struct spell_symbol) * cell_count);
+    spell->rows = rows;
+    spell->cols = cols;
+
+    struct spell_symbol* curr = spell->symbols;
+
+    for (int i = 0; i < cell_count; i += 1) {
+        curr->reserved = 0;
+        curr->type = 0;
+        ++curr;
+    }
+}
+
+void spell_destroy(struct spell* spell) {
+    free(spell->symbols);
+    spell->symbols = 0;
+}
+
 struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row) {
     if (col >= spell->cols || row >= spell->rows || col < 0 || row < 0) {
         struct spell_symbol result;
@@ -9,6 +32,14 @@ struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row) {
     }
 
     return spell->symbols[col + row * spell->cols];
+}
+
+void spell_set_symbol(struct spell* spell, int col, int row, struct spell_symbol value) {
+    if (col >= spell->cols || row >= spell->rows || col < 0 || row < 0) {
+        return;
+    }
+
+    spell->symbols[col + row * spell->cols] = value;
 }
 
 bool spell_has_primary_event(struct spell* spell, int col, int row) {

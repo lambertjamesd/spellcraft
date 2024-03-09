@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include <memory.h>
 
+#include "../util/flags.h"
 #include "../util/blist.h"
 #include "../util/callback_list.h"
 
@@ -14,6 +15,7 @@ struct update_element {
 
 struct update_state {
     struct callback_list callbacks;
+    int enabled_layers;
 };
 
 #define MIN_UPDATE_COUNT    64
@@ -29,6 +31,7 @@ int update_compare_elements(void* a, void* b) {
 
 void update_reset() {
     callback_list_reset(&g_update_state.callbacks, sizeof(struct update_element), MIN_UPDATE_COUNT, update_compare_elements);
+    g_update_state.enabled_layers = ~0;
     fixed_time_step = 1.0f / 30.0f;
 }
 
@@ -46,7 +49,15 @@ void update_remove(void* data) {
     callback_list_remove(&g_update_state.callbacks, (callback_id)data);
 }
 
-void update_dispatch(int mask) {
+void update_pause_layers(int mask) {
+    CLEAR_FLAG(g_update_state.enabled_layers, mask);
+}
+
+void update_unpause_layers(int mask) {
+    SET_FLAG(g_update_state.enabled_layers, mask);
+}
+
+void update_dispatch() {
     callback_list_begin(&g_update_state.callbacks);
 
     struct callback_element* current = callback_list_get(&g_update_state.callbacks, 0);
@@ -54,7 +65,7 @@ void update_dispatch(int mask) {
     for (int i = 0; i < g_update_state.callbacks.count; ++i) {
         struct update_element* element = callback_element_get_data(current);
 
-        if (element->mask & mask) {
+        if (element->mask & g_update_state.enabled_layers) {
             ((update_callback)current->callback)(element->data);
         }
         

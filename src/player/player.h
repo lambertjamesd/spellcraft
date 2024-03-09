@@ -11,6 +11,8 @@
 #include "../spell/projectile.h"
 #include "../spell/spell_exec.h"
 
+#include "inventory.h"
+
 struct player {
     struct Transform transform;
     struct renderable renderable;
@@ -21,9 +23,11 @@ struct player {
     struct spell_data_source player_spell_source;
     
     struct spell_exec spell_exec;
+
+    struct inventory* inventory;
 };
 
-void player_init(struct player* player, struct Transform* camera_transform);
+void player_init(struct player* player, struct Transform* camera_transform, struct inventory* inventory);
 
 void player_render(struct player* player, struct render_batch* batch);
 

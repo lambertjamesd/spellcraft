@@ -22,17 +22,16 @@ static struct dynamic_object_type player_collision = {
     }
 };
 
-struct spell_symbol projectile_spell_sybols[] = {
+struct spell_symbol projectile_spell_sybols[SPELL_MAX_COLS * SPELL_MAX_ROWS] = {
     {.reserved = 0, .type = SPELL_SYMBOL_PUSH},
     {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
     {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
-    {.reserved = 0, .type = SPELL_SYMBOL_RECAST},
 };
 
 struct spell projectile_spell = {
     .symbols = projectile_spell_sybols,
-    .cols = 3,
-    .rows = 1,
+    .cols = SPELL_MAX_COLS,
+    .rows = SPELL_MAX_ROWS,
 };
 
 void player_get_move_basis(struct Transform* transform, struct Vector3* forward, struct Vector3* right) {
@@ -101,13 +100,14 @@ void player_update(struct player* player) {
     }
 }
 
-void player_init(struct player* player, struct Transform* camera_transform) {
+void player_init(struct player* player, struct Transform* camera_transform, struct inventory* inventory) {
     entity_id entity_id = entity_id_new();
 
     transformInitIdentity(&player->transform);
     renderable_init(&player->renderable, &player->transform, "rom:/meshes/player/player.mesh");
 
     player->camera_transform = camera_transform;
+    player->inventory = inventory;
 
     player->transform.position.y = 1.0f;
 

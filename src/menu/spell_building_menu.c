@@ -136,6 +136,7 @@ void spell_building_menu_init(struct spell_building_menu* menu) {
 
 void spell_building_menu_destroy(struct spell_building_menu* menu) {
     material_cache_release(spell_symbol_material);
+    material_cache_release(spell_cursor_material);
 }
 
 void spell_building_menu_show(struct spell_building_menu* menu, struct spell* spell) {
@@ -147,9 +148,17 @@ void spell_building_menu_show(struct spell_building_menu* menu, struct spell* sp
             menu->symbol_grid[row][col] = spell_get_symbol(spell, col, row);
         }
     }
+
+    menu->current_spell = spell;
 }
 
 void spell_buliding_menu_hide(struct spell_building_menu* menu) {
     menu_remove_callback(menu);
     update_remove(menu);
+
+    for (int row = 0; row < SPELL_MAX_ROWS; ++row) {
+        for (int col = 0; col < SPELL_MAX_COLS; ++col) {
+            spell_set_symbol(menu->current_spell, col, row, menu->symbol_grid[row][col]);
+        }
+    }
 }

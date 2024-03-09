@@ -6,7 +6,9 @@
 #include "../render/camera.h"
 #include "../collision/mesh_collider.h"
 
-#include "player.h"
+#include "../player/player.h"
+#include "../player/inventory.h"
+#include "../menu/pause_menu.h"
 #include "camera_controller.h"
 
 typedef void(*entity_init)(void* entity, void* definition);
@@ -44,6 +46,9 @@ struct world {
     struct player player;
     struct Camera camera;
     struct camera_controller camera_controller;
+
+    struct inventory inventory;
+    struct pause_menu pause_menu;
     
     struct entity_data* entity_data;
     uint16_t entity_data_count;
