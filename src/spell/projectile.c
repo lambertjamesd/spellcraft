@@ -11,11 +11,11 @@
 #define PROJECTILE_SPEED    10.0f
 
 static struct dynamic_object_type projectile_collision = {
-    .minkowsi_sum = dynamic_object_box_minkowski_sum,
-    .bounding_box = dynamic_object_box_bouding_box,
+    .minkowsi_sum = dynamic_object_sphere_minkowski_sum,
+    .bounding_box = dynamic_object_sphere_bounding_box,
     .data = {
-        .box = {
-            .half_size = {0.25f, 0.25f, 0.25f},
+        .sphere = {
+            .radius = 0.25f,
         }
     },
     .bounce = 0.4f,
@@ -124,11 +124,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 hit_source->position = first_contact->point;
                 hit_source->flags = projectile->data_source->flags;
                 hit_source->flags.cast_state = SPELL_CAST_STATE_INSTANT;
-                if (first_contact->other_object) {
-                    hit_source->target = first_contact->other_object;
-                } else {
-                    hit_source->target = 0;
-                }
+                hit_source->target = first_contact->other_object;
                 spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source);
             }
         }

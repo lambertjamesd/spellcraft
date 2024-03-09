@@ -356,6 +356,10 @@ void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* s
         return;
     }
 
+    if (spell_get_symbol(spell, 0, 0).type == SPELL_EXEC_SLOT_TYPE_EMPTY) {
+        return;
+    }
+
     spell_exec_step(exec, button_index, spell, 0, 0, data_source);
 }
 

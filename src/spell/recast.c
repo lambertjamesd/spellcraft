@@ -74,7 +74,7 @@ void recast_update(struct recast* recast, struct spell_event_listener* event_lis
         output->flags = recast->original_source->flags;
         output->direction = recast->recast_source->direction;
         output->flags.cast_state = recast->recast_source->flags.cast_state;
-        output->target = recast->recast_source->target;
+        output->target = recast->original_source->target;
 
         spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, output);
     }
