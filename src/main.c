@@ -27,6 +27,8 @@
 #include <libdragon.h>
 #include <n64sys.h>
 
+#define RDPQ_VALIDATE_DETACH_ADDR    0x00800000
+
 struct world* current_world;
 struct crate crate_test;
 
@@ -105,12 +107,13 @@ void render(surface_t* zbuffer) {
 
         render_scene_render(&r_scene_3d, &current_world->camera, &viewport);
     } else if (current_game_mode == GAME_MODE_MENU) {
-        rdpq_mode_dithering(DITHER_NONE_NONE);
         surface_t background = *zbuffer;
         background.flags = FMT_RGBA16;
+        rdpq_set_mode_copy(false);
         rdpq_tex_blit(&background, 0, 0, NULL);
     }
     rdpq_mode_persp(false);
+    rdpq_set_mode_standard();
     glDisable(GL_DEPTH_TEST);
     menu_render();
 }
@@ -175,6 +178,7 @@ int main(void)
                 zbuffer.stride
             );
 
+            rdpq_set_mode_copy(false);
             rdpq_tex_blit(fb, 0, 0, NULL);
 
             rdpq_detach_show();
@@ -197,7 +201,9 @@ int main(void)
         }
 
         joypad_poll();
-        collision_scene_collide();
+        if (update_has_layer(UPDATE_LAYER_WORLD)) {
+            collision_scene_collide();
+        }
         update_dispatch();
     }
 }

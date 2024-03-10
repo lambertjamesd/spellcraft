@@ -57,6 +57,10 @@ void update_unpause_layers(int mask) {
     SET_FLAG(g_update_state.enabled_layers, mask);
 }
 
+bool update_has_layer(int mask) {
+    return mask & g_update_state.enabled_layers;
+}
+
 void update_dispatch() {
     callback_list_begin(&g_update_state.callbacks);
 

@@ -1,6 +1,8 @@
 #ifndef __TIME_TIME_H__
 #define __TIME_TIME_H__
 
+#include <stdbool.h>
+
 typedef void (*update_callback)(void* data);
 
 typedef int update_id;
@@ -19,6 +21,7 @@ void update_remove_with_data(void* data, update_callback callback);
 
 void update_pause_layers(int mask);
 void update_unpause_layers(int mask);
+bool update_has_layer(int mask);
 
 void update_dispatch();
 

@@ -9,4 +9,8 @@ struct crate_definition {
     struct Vector2 rotation;
 };
 
+struct collectable_definition {
+    struct Vector3 position;
+};
+
 #endif
