@@ -7,6 +7,7 @@
 #include "../render/render_scene.h"
 #include "../collision/collision_scene.h"
 #include "../time/time.h"
+#include "../objects/collectable.h"
 
 #define PLAYER_MAX_SPEED    3.0f
 
@@ -62,6 +63,7 @@ void player_update(struct player* player) {
 
     struct Vector2 direction;
 
+
     direction.x = input.stick_x * (1.0f / 80.0f);
     direction.y = -input.stick_y * (1.0f / 80.0f);
 
@@ -97,6 +99,18 @@ void player_update(struct player* player) {
 
     if (pressed.a) {
         spell_exec_start(&player->spell_exec, 0, &player->inventory->custom_spells[0], &player->player_spell_source);
+    }
+
+    struct contact* contact = player->collision.active_contacts;
+
+    while (contact) {
+        struct collectable* collectable = collectable_get(contact->other_object);
+
+        if (collectable) {
+            collectable_collected(collectable);
+        }
+
+        contact = contact->next;
     }
 }
 

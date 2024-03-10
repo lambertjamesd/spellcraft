@@ -63,12 +63,10 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     collision_scene_add(&projectile->dynamic_object);
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
+    projectile->dynamic_object.has_gravity = 0;
 
     if (data_source->flags.controlled) {
-        projectile->dynamic_object.has_gravity = 0;;
         projectile->is_controlled = 1;
-    } else {
-        projectile->dynamic_object.velocity.y += PROJECTILE_SPEED * 0.5f;
     }
 }
 
@@ -87,11 +85,11 @@ bool projectile_is_active(struct projectile* projectile) {
 void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
     if (projectile->is_controlled) {
         vector3Scale(&projectile->data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
+    }
 
-        if (projectile->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
-            projectile->is_controlled = 0;
-            projectile->dynamic_object.has_gravity = 1;
-        }
+    if (projectile->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
+        projectile->is_controlled = 0;
+        projectile->dynamic_object.has_gravity = 1;
     }
 
     if (projectile->has_secondary_event) {
@@ -110,6 +108,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
         } else {
             projectile->data_output->position = projectile->pos;
             projectile->data_output->direction = projectile->data_source->direction;
+            projectile->data_output->flags.cast_state = projectile->data_source->flags.cast_state;
         }
     }
 

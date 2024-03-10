@@ -17,6 +17,7 @@
 #include "menu/menu_rendering.h"
 #include "menu/spell_building_menu.h"
 #include "menu/menu_common.h"
+#include "objects/collectable.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -31,6 +32,7 @@
 
 struct world* current_world;
 struct crate crate_test;
+struct collectable collectable_test;
 
 struct spell_symbol test_spell_symbols[] = {
     {.reserved = 0, .type = SPELL_SYMBOL_PUSH},
@@ -52,6 +54,7 @@ void setup() {
     health_reset();
     menu_common_init();
     menu_reset();
+    collectable_assets_load();
     current_world = world_load("rom:/worlds/test.world");
 
     struct crate_definition def;
@@ -62,6 +65,12 @@ void setup() {
     def.rotation = gRight2;
 
     crate_init(&crate_test, &def);
+
+    struct collectable_definition collect_def;
+    collect_def.position.x = 4.0f;
+    collect_def.position.y = 1.0f;
+    collect_def.position.z = 0.0f;
+    collectable_init(&collectable_test, &collect_def);
 }
 
 float angle = 0.0f;

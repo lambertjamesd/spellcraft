@@ -72,7 +72,11 @@ void recast_update(struct recast* recast, struct spell_event_listener* event_lis
 
         output->position = recast->original_source->position;
         output->flags = recast->original_source->flags;
-        output->direction = recast->recast_source->direction;
+        if (recast->recast_source->flags.controlled) {
+            output->direction = recast->recast_source->direction;
+        } else {
+            output->direction = recast->original_source->direction;
+        }
         output->flags.cast_state = recast->recast_source->flags.cast_state;
         output->target = recast->original_source->target;
 
@@ -82,7 +86,11 @@ void recast_update(struct recast* recast, struct spell_event_listener* event_lis
     if (recast->output) {
         recast->output->position = recast->original_source->position;
         recast->output->flags = recast->original_source->flags;
-        recast->output->direction = recast->recast_source->direction;
+        if (recast->recast_source->flags.controlled) {
+            recast->output->direction = recast->recast_source->direction;
+        } else {
+            recast->output->direction = recast->original_source->direction;
+        }
         recast->output->flags.cast_state = recast->recast_source->flags.cast_state;
 
         if (recast->recast_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
