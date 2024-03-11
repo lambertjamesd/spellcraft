@@ -118,7 +118,7 @@ void player_init(struct player* player, struct Transform* camera_transform, stru
     entity_id entity_id = entity_id_new();
 
     transformInitIdentity(&player->transform);
-    renderable_init(&player->renderable, &player->transform, "rom:/meshes/player/player.mesh");
+    renderable_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.mesh");
 
     player->camera_transform = camera_transform;
     player->inventory = inventory;
