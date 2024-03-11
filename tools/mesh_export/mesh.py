@@ -8,9 +8,27 @@ import os.path
 sys.path.append(os.path.dirname(__file__))
 
 import entities.mesh
+import entities.armature
 
 def process_scene():
     bpy.ops.object.mode_set(mode="OBJECT")
+
+    armature: entities.armature.ArmatureData | None = None
+
+    for obj in bpy.data.objects:
+        if obj.type != 'ARMATURE':
+            continue
+
+        if not armature is None:
+            raise Exception('Only 1 armature allowed')
+
+        armature = entities.armature.ArmatureData(obj.data)
+
+    if armature:
+        for obj in bpy.data.objects:
+            armature.check_connected_mesh_object(obj)
+
+    print(armature.used_bones)
 
     for mesh in bpy.data.meshes:
         bm = bmesh.new()
