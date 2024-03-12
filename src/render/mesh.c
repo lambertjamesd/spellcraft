@@ -17,12 +17,16 @@ void mesh_init(struct mesh* mesh, int submesh_count) {
         mesh->materials[i] = NULL;
         mesh->material_flags[i] = 0;
     }
+
+    armature_definition_init(&mesh->armature, 0);
 }
 
 void mesh_destroy(struct mesh* mesh) {
     glDeleteLists(mesh->list, mesh->submesh_count);
     free(mesh->materials);
     free(mesh->material_flags);
+
+    armature_definition_destroy(&mesh->armature);
 }
 
 int mesh_attribute_size(int attributes) {
@@ -42,6 +46,10 @@ int mesh_attribute_size(int attributes) {
 
     if (attributes & MeshAttributesNormal) {
         result += sizeof(char) * 3;
+    }
+
+    if (attributes & MeshAttributesMatrixIndex) {
+        result += sizeof(char);
     }
 
     return result;

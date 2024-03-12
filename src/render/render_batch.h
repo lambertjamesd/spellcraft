@@ -36,6 +36,7 @@ struct render_batch_element {
         struct {
             GLuint list;
             mat4x4* transform;
+            struct armature* armature;
         } mesh;
         struct render_batch_billboard_element billboard;
     };
@@ -54,7 +55,7 @@ void render_batch_init(struct render_batch* batch);
 
 struct render_batch_element* render_batch_add(struct render_batch* batch);
 
-void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4* transform);
+void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4* transform, struct armature* armature);
 // caller is responsible for populating sprite list
 // the sprite count returned may be less than the sprite count requested
 struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count);

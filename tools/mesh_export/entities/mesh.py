@@ -29,6 +29,12 @@ class mesh_data():
         normal_transform.invert()
         normal_transform.transpose()
 
+        if obj.parent_bone and armature:
+            bone = armature.find_bone_data(obj.parent_bone)
+
+            final_transform = bone.matrix_world_inv @ final_transform
+            normal_transform = bone.matrix_normal_inv @ normal_transform
+
         for polygon in mesh.polygons:
             if polygon.material_index != material_index:
                 continue
@@ -76,8 +82,8 @@ class mesh_data():
                     bone = armature.find_bone_data(bone_name)
                     bone_index = bone.index
 
-                    vertex_transform = bone.matrix_normal_inv
-                    normal_vertex_transform = bone.matrix_normal_inv
+                    vertex_transform = bone.matrix_world_inv @ final_transform
+                    normal_vertex_transform = bone.matrix_normal_inv @ normal_transform
 
 
             pos = vertex_transform @ mesh.vertices[vtx_index].co
@@ -284,8 +290,9 @@ ATTR_POS = 1 << 0
 ATTR_UV = 1 << 1
 ATTR_COLOR = 1 << 2
 ATTR_NORMAL = 1 << 3
+ATTR_MATRIX = 1 << 4
 
-def _write_meshes(file, mesh_list):
+def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
     file.write('MESH'.encode())
     file.write(len(mesh_list).to_bytes(1, 'big'))
 
@@ -334,6 +341,9 @@ def _write_meshes(file, mesh_list):
         if needs_normal:
             attribute_mask |= ATTR_NORMAL
 
+        if armature:
+            attribute_mask |= ATTR_MATRIX
+
         file.write((attribute_mask).to_bytes(1, 'big'))
 
         # TODO deduplicate vertices
@@ -377,6 +387,9 @@ def _write_meshes(file, mesh_list):
                     int(normal[1] * 127), 
                     int(normal[2] * 127)
                 ))
+
+            if armature:
+                file.write(mesh.bone_indices[idx].to_bytes(1, 'big'))
 
         index_size = 1
 
@@ -498,5 +511,5 @@ class mesh_list():
 
         all_meshes.sort(key=lambda x: x[0])
 
-        _write_meshes(write_to, all_meshes)
+        _write_meshes(write_to, all_meshes, armature)
         _write_armature(write_to, armature)

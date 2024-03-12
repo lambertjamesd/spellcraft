@@ -86,6 +86,13 @@ void mesh_load(struct mesh* into, FILE* meshFile) {
             offset += sizeof(char) * 3;
         }
 
+        if (attributes & MeshAttributesMatrixIndex) {
+            glEnableClientState(GL_MATRIX_INDEX_ARRAY_ARB);
+            glMatrixIndexPointerARB(1, GL_UNSIGNED_BYTE, size, (void*)offset);
+
+            offset += sizeof(char);
+        }
+
         uint16_t vertexCount;
         fread(&vertexCount, 2, 1, meshFile);
 
@@ -130,12 +137,10 @@ void mesh_load(struct mesh* into, FILE* meshFile) {
 
     uint16_t bone_count;
     fread(&bone_count, 2, 1, meshFile);
-    
-    uint8_t bone_parent[bone_count];
-    fread(bone_parent, 1, bone_count, meshFile);
 
-    struct armature_packed_transform default_pose[bone_count];
-    fread(default_pose, sizeof(struct armature_packed_transform), bone_count, meshFile);
+    armature_definition_init(&into->armature, bone_count);
+    fread(into->armature.parent_linkage, 1, bone_count, meshFile);
+    fread(into->armature.default_pose, sizeof(struct armature_packed_transform), bone_count, meshFile);
 }
 
 void mesh_release(struct mesh* mesh) {

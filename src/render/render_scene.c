@@ -33,7 +33,7 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
 
     transformToMatrix(renderable->transform, *mtx);
 
-    render_batch_add_mesh(batch, renderable->mesh, mtx);
+    render_batch_add_mesh(batch, renderable->mesh, mtx, &renderable->armature);
 }
 
 void render_scene_render_renderable_single_axis(void* data, struct render_batch* batch) {
@@ -47,7 +47,7 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
 
     transformSAToMatrix(renderable->transform, *mtx);
 
-    render_batch_add_mesh(batch, renderable->mesh, mtx);
+    render_batch_add_mesh(batch, renderable->mesh, mtx, &renderable->armature);
 }
 
 void render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius) {

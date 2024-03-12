@@ -20,11 +20,12 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->type = RENDER_BATCH_MESH;
     result->mesh.list = 0;
     result->mesh.transform = NULL;
+    result->mesh.armature = NULL;
 
     return result;
 }
 
-void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4* transform) {
+void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4* transform, struct armature* armature) {
     for (int i = 0; i < mesh->submesh_count; ++i) {
         struct render_batch_element* element = render_batch_add(batch);
 
@@ -35,6 +36,7 @@ void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4
         element->mesh.list = mesh->list + i;
         element->material = mesh->materials[i];
         element->mesh.transform = transform;
+        element->mesh.armature = armature && armature->bone_count ? armature : NULL;
     }
 }
 
@@ -155,7 +157,38 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
                 glMultMatrixf((GLfloat*)element->mesh.transform);
             }
 
+            if (element->mesh.armature) {
+                glMatrixMode(GL_MATRIX_PALETTE_ARB);
+
+                mat4x4 pose[element->mesh.armature->bone_count];
+
+                for(uint32_t i=0; i<element->mesh.armature->bone_count; i++)
+                {
+                    int parent_index = element->mesh.armature->parent_linkage[i];
+                    if (parent_index == NO_BONE_PARENT) {
+                        transformToMatrix(&element->mesh.armature->pose[i], pose[i]);
+                    } else {
+                        mat4x4 tmp;
+                        transformToMatrix(&element->mesh.armature->pose[i], tmp);
+                        matrixMul(pose[parent_index], tmp, pose[i]);
+                    }
+                }
+
+                for(uint32_t i=0; i<element->mesh.armature->bone_count; i++)
+                {
+                    glCurrentPaletteMatrixARB(i);
+                    glCopyMatrixN64(GL_MODELVIEW); //Copy matrix at top of modelview stack to matrix palette
+                    glMultMatrixf((GLfloat*)&pose[i]);
+                }
+                glEnable(GL_MATRIX_PALETTE_ARB);
+                glMatrixMode(GL_MODELVIEW);
+            }
+
             glCallList(element->mesh.list);
+
+            if (element->mesh.armature) {
+                glDisable(GL_MATRIX_PALETTE_ARB);
+            }
 
             if (element->mesh.transform) {
                 glPopMatrix();
