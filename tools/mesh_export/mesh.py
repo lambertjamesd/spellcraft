@@ -13,6 +13,8 @@ import entities.armature
 def process_scene():
     bpy.ops.object.mode_set(mode="OBJECT")
 
+    base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
+
     armature: entities.armature.ArmatureData | None = None
 
     for obj in bpy.data.objects:
@@ -22,13 +24,13 @@ def process_scene():
         if not armature is None:
             raise Exception('Only 1 armature allowed')
 
-        armature = entities.armature.ArmatureData(obj.data)
+        armature = entities.armature.ArmatureData(obj, base_transform)
 
     if armature:
         for obj in bpy.data.objects:
             armature.check_connected_mesh_object(obj)
 
-    print(armature.used_bones)
+        armature.build_bone_data()
 
     for mesh in bpy.data.meshes:
         bm = bmesh.new()
@@ -36,8 +38,6 @@ def process_scene():
         bmesh.ops.triangulate(bm, faces=bm.faces[:])
         bm.to_mesh(mesh)
         bm.free()
-
-    base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
 
     mesh_list = entities.mesh.mesh_list()
 
@@ -47,9 +47,9 @@ def process_scene():
 
         final_transform = base_transform @ obj.matrix_world
 
-        mesh_list.append(obj.data, final_transform)
+        mesh_list.append(obj, final_transform)
 
     with open(sys.argv[-1], 'wb') as file:
-        mesh_list.write_mesh(file)
+        mesh_list.write_mesh(file, armature = armature)
 
 process_scene()

@@ -8,9 +8,13 @@
 #include "../math/vector2.h"
 #include "../render/coloru8.h"
 #include "material_cache.h"
+#include "../render/armature.h"
 
 // MESH
 #define EXPECTED_HEADER 0x4D455348
+
+// AMTR
+#define ARMATURE_HEADER 0x41524D54
 
 void mesh_load(struct mesh* into, FILE* meshFile) {
     int header;
@@ -22,7 +26,6 @@ void mesh_load(struct mesh* into, FILE* meshFile) {
     mesh_init(into, submesh_count);
 
     for (uint16_t i = 0; i < submesh_count; ++i) {
-
         uint8_t strLength;
 
         fread(&strLength, 1, 1, meshFile);
@@ -121,6 +124,18 @@ void mesh_load(struct mesh* into, FILE* meshFile) {
 
     glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
     glBindVertexArray(0);
+
+    fread(&header, 1, 4, meshFile);
+    assert(header == ARMATURE_HEADER);
+
+    uint16_t bone_count;
+    fread(&bone_count, 2, 1, meshFile);
+    
+    uint8_t bone_parent[bone_count];
+    fread(bone_parent, 1, bone_count, meshFile);
+
+    struct armature_packed_transform default_pose[bone_count];
+    fread(default_pose, sizeof(struct armature_packed_transform), bone_count, meshFile);
 }
 
 void mesh_release(struct mesh* mesh) {

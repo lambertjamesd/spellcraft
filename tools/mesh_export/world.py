@@ -12,7 +12,8 @@ import parse.struct_parse
 import parse.struct_serialize
 
 class StaticEntry():
-    def __init__(self, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
+    def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
+        self.obj = obj
         self.mesh = mesh
         self.transform = transform
 
@@ -70,7 +71,7 @@ def process_scene():
         if mesh.library:
             process_linked_object(world, obj, mesh, definitions)
         elif len(mesh.materials) > 0:
-            world.static.append(StaticEntry(mesh, final_transform))
+            world.static.append(StaticEntry(obj, mesh, final_transform))
 
         if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH':
             world.world_mesh_collider.append(mesh, final_transform)
@@ -85,7 +86,7 @@ def process_scene():
             file.write((0).to_bytes(1, 'big'))
 
             mesh_list = entities.mesh.mesh_list()
-            mesh_list.append(entry.mesh, entry.transform)
+            mesh_list.append(entry.obj, entry.transform)
             mesh_list.write_mesh(file)
 
         world.world_mesh_collider.write_out(file)

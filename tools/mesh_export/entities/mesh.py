@@ -8,6 +8,8 @@ import bmesh
 import sys
 import math
 
+from . import armature
+
 class mesh_data():
     def __init__(self, mat: bpy.types.Material) -> None:
         self.mat: bpy.types.Material = mat
@@ -16,8 +18,9 @@ class mesh_data():
         self.color = []
         self.uv = []
         self.indices = []
+        self.bone_indices = []
 
-    def append_mesh(self, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix):
+    def append_mesh(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix, armature: armature.ArmatureData | None):
         triangles = []
         max_index = -1
         used_indices = set()
@@ -55,10 +58,32 @@ class mesh_data():
 
             vtx_index = mesh.loops[loop_index].vertex_index
 
-            pos = final_transform @ mesh.vertices[vtx_index].co
+            bone_index = 0
+            vertex_transform = final_transform
+            normal_vertex_transform = normal_transform
+
+            if not armature is None:
+                group_index = -1
+                group_weight = 0
+
+                for element in mesh.vertices[vtx_index].groups:
+                    if element.weight > group_weight:
+                        group_weight = element.weight
+                        group_index = element.group
+
+                if group_index != -1:
+                    bone_name = obj.vertex_groups[group_index].name
+                    bone = armature.find_bone_data(bone_name)
+                    bone_index = bone.index
+
+                    vertex_transform = bone.matrix_normal_inv
+                    normal_vertex_transform = bone.matrix_normal_inv
+
+
+            pos = vertex_transform @ mesh.vertices[vtx_index].co
             pos[0] = -pos[0]
             self.vertices.append(pos)
-            self.normals.append(normal_transform @ mesh.vertices[vtx_index].normal)
+            self.normals.append(normal_vertex_transform @ mesh.vertices[vtx_index].normal)
 
             if uv_layer:
                 self.uv.append(mesh.uv_layers[0].uv[loop_index].vector)
@@ -69,6 +94,8 @@ class mesh_data():
                 self.color.append(color.data[loop_index].color)
             elif color and color.domain == 'POINT':
                 self.color.append(color.data[vtx_index].color)
+
+            self.bone_indices.append(bone_index)
 
             index_mapping[loop_index] = next_output
             next_output += 1
@@ -258,7 +285,7 @@ ATTR_UV = 1 << 1
 ATTR_COLOR = 1 << 2
 ATTR_NORMAL = 1 << 3
 
-def write_meshes(file, mesh_list):
+def _write_meshes(file, mesh_list):
     file.write('MESH'.encode())
     file.write(len(mesh_list).to_bytes(1, 'big'))
 
@@ -361,24 +388,96 @@ def write_meshes(file, mesh_list):
         for index in mesh.indices:
             file.write(index.to_bytes(index_size, 'big'))
 
+def _pack_position(input: float) -> int:
+    return int(input * 256)
+
+def _write_packed_quaternion(file, input: mathutils.Quaternion):
+    if input.w < 0:
+        final_input = -input
+    else:
+        final_input = input
+
+    file.write(struct.pack(
+        ">hhh",
+        int(32767 * final_input.x),
+        int(32767 * final_input.y),
+        int(32767 * final_input.z)
+    ))
+
+def _write_armature(file, armature: armature.ArmatureData | None):
+    file.write('ARMT'.encode())
+    
+    if armature is None:
+        file.write((0).to_bytes(2, 'big'))
+        return
+    
+    bones = armature.get_filtered_bones()
+    
+    file.write(len(bones).to_bytes(2, 'big'))
+
+    for bone in bones:      
+        parent = armature.find_parent_bone(bone.bone.name)
+
+        if parent:
+            file.write(parent.index.to_bytes(1, 'big'))
+        else:
+            file.write((255).to_bytes(1, 'big'))
+
+    for bone in bones:      
+        parent = armature.find_parent_bone(bone.bone.name)
+
+        transform = bone.matrix_world
+
+        if parent:
+            transform = parent.matrix_world_inv @ transform 
+
+        loc, rot, scale = transform.decompose()
+
+        file.write(
+            struct.pack(
+                '>hhh',
+                _pack_position(loc.x),
+                _pack_position(loc.y),
+                _pack_position(loc.z)
+            )
+        )
+
+        _write_packed_quaternion(file, rot)
+
+        file.write(
+            struct.pack(
+                '>hhh',
+                _pack_position(scale.x),
+                _pack_position(scale.y),
+                _pack_position(scale.z)
+            )
+        )
+
+class mesh_list_entry:
+    def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
+        self.obj: bpy.types.Object= obj
+        self.mesh: bpy.types.Mesh = mesh
+        self.transform: mathutils.Matrix = transform
+
 class mesh_list():
     def __init__(self) -> None:
-        self.meshes = []
+        self.meshes: list[mesh_list_entry] = []
 
-    def append(self, mesh, transform):
+    def append(self, obj, transform):
+        mesh = obj.data
         bm = bmesh.new()
         bm.from_mesh(mesh)
         bmesh.ops.triangulate(bm, faces=bm.faces[:])
         bm.to_mesh(mesh)
         bm.free()
-        self.meshes.append([mesh, transform])
+        self.meshes.append(mesh_list_entry(obj, mesh, transform))
 
-    def write_mesh(self, write_to):
+    def write_mesh(self, write_to, armature: armature.ArmatureData | None = None):
         mesh_by_material = dict()
 
-        for pair in self.meshes:
-            mesh = pair[0]
-            transform = pair[1]
+        for entry in self.meshes:
+            mesh = entry.mesh
+            transform = entry.transform
 
             for material_index in range(max(len(mesh.materials), 1)):
                 if material_index < len(mesh.materials):
@@ -393,10 +492,11 @@ class mesh_list():
 
                 mesh_data_instance = mesh_by_material[name]
 
-                mesh_data_instance.append_mesh(mesh, material_index, transform)
+                mesh_data_instance.append_mesh(entry.obj, mesh, material_index, transform, armature)
 
         all_meshes = list(mesh_by_material.items())
 
         all_meshes.sort(key=lambda x: x[0])
 
-        write_meshes(write_to, all_meshes)
+        _write_meshes(write_to, all_meshes)
+        _write_armature(write_to, armature)
