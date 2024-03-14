@@ -32,8 +32,8 @@ class mesh_data():
         if obj.parent_bone and armature:
             bone = armature.find_bone_data(obj.parent_bone)
 
-            final_transform = bone.matrix_world_inv @ final_transform
-            normal_transform = bone.matrix_normal_inv @ normal_transform
+            final_transform = obj.matrix_local.inverted()
+            normal_transform = final_transform.to_3x3().inverted().transposed()
 
         for polygon in mesh.polygons:
             if polygon.material_index != material_index:
@@ -44,8 +44,8 @@ class mesh_data():
                 used_indices.add(loop_index)
                 
             triangles.append(polygon.loop_indices[0])
-            triangles.append(polygon.loop_indices[2])
             triangles.append(polygon.loop_indices[1])
+            triangles.append(polygon.loop_indices[2])
 
         next_output = len(self.indices)
         index_mapping = dict()
@@ -68,6 +68,10 @@ class mesh_data():
             vertex_transform = final_transform
             normal_vertex_transform = normal_transform
 
+            bone_name = None
+            group_index = None
+            bone = None
+
             if not armature is None:
                 group_index = -1
                 group_weight = 0
@@ -85,9 +89,12 @@ class mesh_data():
                     vertex_transform = bone.matrix_world_inv @ final_transform
                     normal_vertex_transform = bone.matrix_normal_inv @ normal_transform
 
-
             pos = vertex_transform @ mesh.vertices[vtx_index].co
-            pos[0] = -pos[0]
+
+            # if vtx_index == 79:
+            #     print(bone_name, vtx_index, mesh.vertices[vtx_index].co, pos)
+
+
             self.vertices.append(pos)
             self.normals.append(normal_vertex_transform @ mesh.vertices[vtx_index].normal)
 
@@ -428,8 +435,8 @@ def _write_armature(file, armature: armature.ArmatureData | None):
     
     file.write(len(bones).to_bytes(2, 'big'))
 
-    for bone in bones:      
-        parent = armature.find_parent_bone(bone.bone.name)
+    for bone in bones:
+        parent = armature.find_parent_bone(bone.name)
 
         if parent:
             file.write(parent.index.to_bytes(1, 'big'))
@@ -437,12 +444,14 @@ def _write_armature(file, armature: armature.ArmatureData | None):
             file.write((255).to_bytes(1, 'big'))
 
     for bone in bones:      
-        parent = armature.find_parent_bone(bone.bone.name)
+        parent = armature.find_parent_bone(bone.name)
 
-        transform = bone.matrix_world
+        transform = bone.pose_matrix
 
         if parent:
-            transform = parent.matrix_world_inv @ transform 
+            transform = parent.pose_matrix_inv @ transform 
+        else: 
+            transform = armature.relative_bone_transform @ transform
 
         loc, rot, scale = transform.decompose()
 

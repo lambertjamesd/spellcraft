@@ -6,17 +6,30 @@ import mathutils
 sys.path.append(os.path.dirname(__file__))
 
 class ArmatureBone:
-    def __init__(self, index: int, bone: bpy.types.Bone, armature_transform: mathutils.Matrix):
+    def __init__(self, index: int, bone: bpy.types.Bone, edit_bone: bpy.types.EditBone, pose_bone: bpy.types.PoseBone, armature_transform: mathutils.Matrix):
         self.index: int = index
-        self.bone: bpy.types.Bone = bone
-        self.matrix_world: mathutils.Matrix = armature_transform @ bone.matrix_local
+        self.name: str = bone.name
+        self.parent_names: list[str] = []
+
+        curr = bone.parent
+
+        while curr:
+            self.parent_names.append(curr.name)
+            curr = curr.parent
+
+        self.matrix_world: mathutils.Matrix = armature_transform @ edit_bone.matrix
         self.matrix_world_inv: mathutils.Matrix = self.matrix_world.inverted()
         self.matrix_normal_inv = self.matrix_world_inv.to_3x3().inverted().transposed()
 
+        self.pose_matrix = pose_bone.matrix
+        self.pose_matrix_inv = self.pose_matrix.inverted()
+
 class ArmatureData:
     def __init__(self, obj: bpy.types.Object, base_transform: mathutils.Matrix):
-        self.transfrom: mathutils.Matrix = base_transform @ obj.matrix_world
+        self.relative_vertex_transform: mathutils.Matrix = base_transform @ obj.matrix_world
+        self.relative_bone_transform: mathutils.Matrix = base_transform @ obj.matrix_world.inverted()
         self.armature: bpy.types.Armature = obj.data
+        self.obj: bpy.types.Object = obj
         self.used_bones: set[str] = set()
 
         self._filtered_bones: dict[str, ArmatureBone] = {}
@@ -59,15 +72,24 @@ class ArmatureData:
         self.used_bones.add(name)
 
     def build_bone_data(self):
-        for bone in self.armature.bones:
+        bpy.ops.object.select_all(action = 'DESELECT')
+        self.obj.select_set(True)
+        bpy.context.view_layer.objects.active = self.obj
+        bpy.ops.object.editmode_toggle()
+
+        for idx, bone in enumerate(self.armature.bones):
             if bone.name not in self.used_bones:
                 continue
 
             self._filtered_bones[bone.name] = ArmatureBone(
                 len(self._filtered_bones),
                 bone,
-                self.transfrom
+                self.armature.edit_bones[idx],
+                self.obj.pose.bones[idx],
+                self.relative_vertex_transform
             )
+        
+        bpy.ops.object.editmode_toggle()
 
     def find_bone_data(self, bone_name: str):
         return self._filtered_bones[bone_name]
@@ -75,15 +97,11 @@ class ArmatureData:
     def find_parent_bone(self, bone_name: str):
         curr = self.find_bone_data(bone_name)
 
-        result = curr.bone.parent
-
-        while result and not result.name in self.used_bones:
-            result = result.parent
-
-        if result is None:
-            return None
-        
-        return self._filtered_bones[result.name]
+        for parent_name in curr.parent_names:
+            if parent_name in self.used_bones:
+                return self._filtered_bones[parent_name]
+            
+        return None
     
     def get_filtered_bones(self) -> list[ArmatureBone]:
         return sorted(list(self._filtered_bones.values()), key = lambda x: x.index)

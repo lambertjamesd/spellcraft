@@ -24,7 +24,7 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     controller->target = player->transform.position;
     controller->follow_distace = 3.0f;
 
-    quatAxisAngle(&gRight, -3.14159f * 0.25f * 0.5f, &controller->camera->transform.rotation);
+    quatAxisAngle(&gRight, -3.14159f * 0.125f, &controller->camera->transform.rotation);
 
     camera_controller_update_position(controller);
 }

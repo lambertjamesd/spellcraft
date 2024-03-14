@@ -165,6 +165,9 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
                 for(uint32_t i=0; i<element->mesh.armature->bone_count; i++)
                 {
                     int parent_index = element->mesh.armature->parent_linkage[i];
+
+                    assert(parent_index == NO_BONE_PARENT || parent_index < i);
+
                     if (parent_index == NO_BONE_PARENT) {
                         transformToMatrix(&element->mesh.armature->pose[i], pose[i]);
                     } else {
