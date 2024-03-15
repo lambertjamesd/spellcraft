@@ -21,7 +21,6 @@ class ArmatureBone:
         self.matrix_world_inv: mathutils.Matrix = self.matrix_world.inverted()
         self.matrix_normal_inv = self.matrix_world_inv.to_3x3().inverted().transposed()
 
-        self.pose_world_matrix_inv = (armature_transform @ pose_bone.matrix).inverted()
         self.pose_matrix = pose_bone.matrix
         self.pose_matrix_inv = self.pose_matrix.inverted()
 

@@ -28,10 +28,13 @@ class mesh_data():
         normal_transform = final_transform.to_3x3()
         normal_transform.invert()
         normal_transform.transpose()
+        bone_index = 0
 
         if obj.parent_bone and armature:
-            final_transform = obj.matrix_parent_inverse @ obj.matrix_world
+            bone = armature.find_bone_data(obj.parent_bone)
+            final_transform = bone.pose_matrix_inv @ obj.matrix_world
             normal_transform = final_transform.to_3x3().inverted().transposed()
+            bone_index = bone.index
             
             # world = parent_inverse @ obj.matrix_world
 
@@ -64,7 +67,6 @@ class mesh_data():
 
             vtx_index = mesh.loops[loop_index].vertex_index
 
-            bone_index = 0
             vertex_transform = final_transform
             normal_vertex_transform = normal_transform
 
