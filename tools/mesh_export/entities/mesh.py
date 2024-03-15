@@ -30,10 +30,10 @@ class mesh_data():
         normal_transform.transpose()
 
         if obj.parent_bone and armature:
-            bone = armature.find_bone_data(obj.parent_bone)
-
-            final_transform = obj.matrix_local.inverted()
+            final_transform = obj.matrix_parent_inverse @ obj.matrix_world
             normal_transform = final_transform.to_3x3().inverted().transposed()
+            
+            # world = parent_inverse @ obj.matrix_world
 
         for polygon in mesh.polygons:
             if polygon.material_index != material_index:
@@ -72,7 +72,7 @@ class mesh_data():
             group_index = None
             bone = None
 
-            if not armature is None:
+            if not armature is None and not obj.parent_bone:
                 group_index = -1
                 group_weight = 0
 
@@ -482,17 +482,18 @@ class mesh_list_entry:
         self.transform: mathutils.Matrix = transform
 
 class mesh_list():
-    def __init__(self) -> None:
+    def __init__(self, base_transform: mathutils.Matrix) -> None:
         self.meshes: list[mesh_list_entry] = []
+        self.base_transform: mathutils.Matrix = base_transform
 
-    def append(self, obj, transform):
+    def append(self, obj):
         mesh = obj.data
         bm = bmesh.new()
         bm.from_mesh(mesh)
         bmesh.ops.triangulate(bm, faces=bm.faces[:])
         bm.to_mesh(mesh)
         bm.free()
-        self.meshes.append(mesh_list_entry(obj, mesh, transform))
+        self.meshes.append(mesh_list_entry(obj, mesh, self.base_transform @ obj.matrix_world))
 
     def write_mesh(self, write_to, armature: armature.ArmatureData | None = None):
         mesh_by_material = dict()

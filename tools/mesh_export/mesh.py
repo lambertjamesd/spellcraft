@@ -39,15 +39,13 @@ def process_scene():
         bm.to_mesh(mesh)
         bm.free()
 
-    mesh_list = entities.mesh.mesh_list()
+    mesh_list = entities.mesh.mesh_list(base_transform)
 
     for obj in bpy.data.objects:
         if obj.type != "MESH":
             continue
 
-        final_transform = base_transform @ obj.matrix_world
-
-        mesh_list.append(obj, final_transform)
+        mesh_list.append(obj)
 
     with open(sys.argv[-1], 'wb') as file:
         mesh_list.write_mesh(file, armature = armature)

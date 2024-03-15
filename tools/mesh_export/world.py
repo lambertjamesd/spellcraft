@@ -15,7 +15,6 @@ class StaticEntry():
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
         self.obj = obj
         self.mesh = mesh
-        self.transform = transform
 
 class ObjectEntry():
     def __init__(self, obj: bpy.types.Object, name: str, def_type: parse.struct_parse.StructureInfo):
@@ -85,8 +84,8 @@ def process_scene():
             # this signals the mesh should be embedded
             file.write((0).to_bytes(1, 'big'))
 
-            mesh_list = entities.mesh.mesh_list()
-            mesh_list.append(entry.obj, entry.transform)
+            mesh_list = entities.mesh.mesh_list(base_transform)
+            mesh_list.append(entry.obj)
             mesh_list.write_mesh(file)
 
         world.world_mesh_collider.write_out(file)
