@@ -16,7 +16,7 @@ void armature_unpack_transform(struct armature_packed_transform* packed, struct 
     result->rotation.y = packed->ry * QUATERNION_SCALE;
     result->rotation.z = packed->rz * QUATERNION_SCALE;
 
-    float wSqrd = 1.0f - result->rotation.x * result->rotation.x - result->rotation.y * result->rotation.y - result->rotation.z * result->rotation.x;
+    float wSqrd = 1.0f - result->rotation.x * result->rotation.x - result->rotation.y * result->rotation.y - result->rotation.z * result->rotation.z;
     result->rotation.w = wSqrd > 0.0f ? sqrtf(wSqrd) : 0.0f;
 
     result->scale.x = packed->sx * POSITION_SCALE;
