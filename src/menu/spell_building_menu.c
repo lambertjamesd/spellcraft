@@ -15,7 +15,7 @@ void spell_building_menu_menu(struct spell_building_menu* menu) {
 
     menu_common_render_background(32, 134, 256, 74);
 
-    glCallList(spell_symbol_material->list);
+    rspq_block_run(spell_symbol_material->block);
 
     for (int row = 0; row < SPELL_MAX_ROWS; ++row) {
         int y = row * 24 + 32;
@@ -57,7 +57,7 @@ void spell_building_menu_menu(struct spell_building_menu* menu) {
         x += 32;
     }
 
-    glCallList(spell_cursor_material->list);
+    rspq_block_run(spell_cursor_material->block);
 
     x = 32 + 8 + menu->symbol_cursor_x * 32;
     y = 134 + 8;

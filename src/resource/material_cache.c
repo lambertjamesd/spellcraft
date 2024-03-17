@@ -104,7 +104,7 @@ void material_load(struct material* into, FILE* material_file) {
     material_load_tex(&into->tex0, material_file, true);
     material_load_tex(&into->tex1, material_file, true);
 
-    glNewList(into->list, GL_COMPILE);
+    rspq_block_begin();
 
     bool autoLayoutTMem = into->tex1.gl_texture != 0 && into->tex1.params.tmem_addr == 0;
 
@@ -167,14 +167,14 @@ void material_load(struct material* into, FILE* material_file) {
                     } else {
                         glEnable(GL_ALPHA_TEST);
                         glAlphaFunc(GL_GREATER, 0.5f);
-                        into->sortPriority = SORT_PRIORITY_DECAL;
+                        into->sort_priority = SORT_PRIORITY_DECAL;
                     }
 
                     if (blendMode & SOM_Z_WRITE) {
                         glDepthMask(GL_TRUE);
                     } else {
                         glDepthMask(GL_FALSE);
-                        into->sortPriority = SORT_PRIORITY_TRANSPARENT;
+                        into->sort_priority = SORT_PRIORITY_TRANSPARENT;
                     }
                 }
                 break;
@@ -229,14 +229,14 @@ void material_load(struct material* into, FILE* material_file) {
                         glEnable(GL_DEPTH_TEST);
                     } else {
                         glDisable(GL_DEPTH_TEST);
-                        into->sortPriority = SORT_PRIORITY_NO_DEPTH_TEST;
+                        into->sort_priority = SORT_PRIORITY_NO_DEPTH_TEST;
                     }
                 }
                 break;
         }
     }
 
-    glEndList();
+    into->block = rspq_block_end();
 }
 
 void material_release(struct material* material) {

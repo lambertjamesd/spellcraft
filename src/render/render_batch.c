@@ -84,8 +84,8 @@ int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, u
         return 0;
     }
 
-    if (a->material->sortPriority != b->material->sortPriority) {
-        return a->material->sortPriority - b->material->sortPriority;
+    if (a->material->sort_priority != b->material->sort_priority) {
+        return a->material->sort_priority - b->material->sort_priority;
     }
 
     if (a->material != b->material) {
@@ -137,7 +137,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
         struct render_batch_element* element = &batch->elements[index];
 
         if (current_mat != element->material) {
-            glCallList(element->material->list);
+            rspq_block_run(element->material->block);
             current_mat = element->material;
         }
 

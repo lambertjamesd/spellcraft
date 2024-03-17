@@ -50,4 +50,7 @@ def process_scene():
     with open(sys.argv[-1], 'wb') as file:
         mesh_list.write_mesh(file, armature = armature)
 
+    if armature:
+        print(list(filter(lambda action: armature.is_action_compatible(action), bpy.data.actions)))
+
 process_scene()

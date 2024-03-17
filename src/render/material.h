@@ -16,10 +16,10 @@ struct material_tex {
 };
 
 struct material {
-    GLuint list;
+    rspq_block_t* block;
     struct material_tex tex0;
     struct material_tex tex1;
-    int16_t sortPriority;
+    int16_t sort_priority;
 };
 
 void material_init(struct material* material);

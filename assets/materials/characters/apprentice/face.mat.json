@@ -1,5 +1,8 @@
 {
-    "tex0": "../../../images/characters/apprentice/face_expression1.png",
+    "tex0": {
+        "filename": "../../../images/characters/apprentice/face_expression-0001.png",
+        "sequenceLength": 2
+    },
     "combineMode": [{
         "color": ["TEX0", "0", "SHADE", "0"],
         "alpha": ["0", "0", "0", "1"]

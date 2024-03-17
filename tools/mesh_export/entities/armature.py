@@ -97,3 +97,13 @@ class ArmatureData:
     
     def get_filtered_bones(self) -> list[ArmatureBone]:
         return sorted(list(self._filtered_bones.values()), key = lambda x: x.index)
+    
+    def is_action_compatible(self, action: bpy.types.Action) -> bool:
+        if len(action.groups) == 0:
+            return False
+
+        for group in action.groups:
+            if not group.name in self.armature.bones:
+                return False
+            
+        return True

@@ -82,6 +82,7 @@ class Tex():
         self.mag_filter = "nearest"
         self.s = TexAxis()
         self.t = TexAxis()
+        self.sequenceLength: int = 0
 
     def rom_filename(self) -> str:
         return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
@@ -463,6 +464,9 @@ def _parse_tex(json_data, key_path, relative_to):
 
         if 't' in json_data:
             _parse_tex_axis(json_data['t'], result.t, f"{key_path}.t")
+
+        if 'sequenceLength' in json_data:
+            result.sequence_length = _check_is_int(json_data['sequenceLength'], f"{key_path}.sequenceLength", 0, 64)
 
     combined_path = os.path.join(os.path.dirname(relative_to), result.filename)
     combined_path = os.path.normpath(combined_path)
