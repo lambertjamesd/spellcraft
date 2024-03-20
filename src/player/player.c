@@ -10,7 +10,7 @@
 #include "../time/time.h"
 #include "../objects/collectable.h"
 
-#define PLAYER_MAX_SPEED    3.0f
+#define PLAYER_MAX_SPEED    4.2f
 
 static struct Vector2 player_max_rotation;
 
@@ -54,10 +54,32 @@ void player_get_move_basis(struct Transform* transform, struct Vector3* forward,
     vector3Normalize(right, right);
 }
 
+struct animation_clip* player_determine_animation(struct player* player, float* playback_speed) {
+    struct Vector3 horizontal_velocity = player->collision.velocity;
+    horizontal_velocity.y = 0.0f;
+    float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
+
+    if (speed < 0.000001f) {
+        *playback_speed = 1.0f;
+        return player->animations.idle;
+    }
+
+    *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
+    return player->animations.run;
+}
+
 void player_update(struct player* player) {
     struct Vector3 right;
     struct Vector3 forward;
-    animator_update(&player->animator, player->renderable.armature.pose, fixed_time_step);
+
+    float playback_speed = 1.0f;
+    struct animation_clip* next_clip = player_determine_animation(player, &playback_speed);
+
+    if (next_clip != player->animator.current_clip) {
+        animator_run_clip(&player->animator, next_clip, 0.0f, true);
+    }
+
+    animator_update(&player->animator, player->renderable.armature.pose, playback_speed * fixed_time_step);
     player_get_move_basis(player->camera_transform, &forward, &right);
 
     joypad_inputs_t input = joypad_get_inputs(0);
@@ -157,7 +179,7 @@ void player_init(struct player* player, struct Transform* camera_transform, stru
 
     animator_init(&player->animator, player->renderable.armature.bone_count);
 
-    animator_run_clip(&player->animator, player->animations.run, 0.0f, true);
+    animator_run_clip(&player->animator, player->animations.idle, 0.0f, true);
 }
 
 void player_destroy(struct player* player) {

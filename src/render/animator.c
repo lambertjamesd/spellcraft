@@ -52,10 +52,17 @@ void animator_request_frame(struct animator* animator, int next_frame) {
 
     animator->bone_state_frames[animator->next_frame_state_index] = next_frame;
 
-    dma_read_raw_async(animator->bone_state[animator->next_frame_state_index], current_clip->frames_rom_address + current_clip->frame_size * next_frame, current_clip->frame_size);
+    uint32_t start = (uint32_t)animator->bone_state[animator->next_frame_state_index];
+    uint32_t end = start + current_clip->frame_size;
+
+    start &= ~0xF;
+    end = (end + 0xF) & ~0xF;
+
+    data_cache_hit_invalidate((void*)start, end - start);
+    dma_read(animator->bone_state[animator->next_frame_state_index], current_clip->frames_rom_address + current_clip->frame_size * next_frame, current_clip->frame_size);
 }
 
-uint16_t* animator_extract_bone(uint16_t* bone_data, struct animation_used_attributes attributes, struct Transform* result) {
+int16_t* animator_extract_bone(int16_t* bone_data, struct animation_used_attributes attributes, struct Transform* result) {
     if (attributes.has_pos) {
         result->position.x = (float)(bone_data[0] * (1.0f / 256.0f));
         result->position.y = (float)(bone_data[1] * (1.0f / 256.0f));
@@ -116,7 +123,7 @@ void animator_normalize(struct animator* animator, struct Transform* transforms)
     }
 }
 
-void animator_blend_transform(uint16_t* frame, struct animation_used_attributes* used_attributes, struct Transform* transforms, int bone_count, float weight) {
+void animator_blend_transform(int16_t* frame, struct animation_used_attributes* used_attributes, struct Transform* transforms, int bone_count, float weight) {
     for (int i = 0; i < bone_count; ++i) {
         struct Transform boneTransform;
         frame = animator_extract_bone(frame, *used_attributes, &boneTransform);

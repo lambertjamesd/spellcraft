@@ -102,7 +102,7 @@ class Material():
         self.tex1: Tex | None = None
         self.culling: bool | None = None
         self.z_buffer: bool | None = None
-        self.vertex_gamma: float = 1
+        self.vertex_gamma: float = 0.454545
 
     def __str__(self):
         return f"""Material:

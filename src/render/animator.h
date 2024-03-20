@@ -9,7 +9,7 @@
 
 struct animator {
     struct animation_clip* current_clip;
-    uint16_t* bone_state[2];
+    int16_t* bone_state[2];
     float current_time;
     float blend_lerp;
     uint16_t bone_state_frames[2];

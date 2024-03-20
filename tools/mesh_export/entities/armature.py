@@ -76,6 +76,9 @@ class PackedArmatureData():
             default_pose._data[8] != self._data[8]:
             output.has_scale = True
 
+    def __str__(self) -> str:
+        return f"[{', '.join([str(entry) for entry in self._data])}]"
+
 class PackedAnimation():
     def __init__(self):
         self._frames: list[list[PackedArmatureData]] = []
