@@ -10,7 +10,7 @@ struct animation_used_attributes {
 };
 
 struct animation_clip {
-    const char* name;
+    char* name;
 
     uint16_t bone_count;
     uint16_t frame_count;

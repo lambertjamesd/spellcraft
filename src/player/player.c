@@ -2,6 +2,7 @@
 
 #include <libdragon.h>
 #include "../resource/mesh_cache.h"
+#include "../resource/animation_cache.h"
 #include "../math/vector2.h"
 
 #include "../render/render_scene.h"
@@ -148,6 +149,11 @@ void player_init(struct player* player, struct Transform* camera_transform, stru
     player->player_spell_source.flags.all = 0;
     player->player_spell_source.reference_count = 1;
     player->player_spell_source.target = entity_id;
+
+    player->animation_set = animation_cache_load("rom:/meshes/characters/apprentice.anim");
+    player->animations.attack = animation_set_find_clip(player->animation_set, "attack1");
+    player->animations.idle = animation_set_find_clip(player->animation_set, "idle");
+    player->animations.run = animation_set_find_clip(player->animation_set, "run");
 }
 
 void player_destroy(struct player* player) {

@@ -7,11 +7,18 @@
 #include "../render/render_batch.h"
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
+#include "../render/animation_clip.h"
 
 #include "../spell/projectile.h"
 #include "../spell/spell_exec.h"
 
 #include "inventory.h"
+
+struct player_animations {
+    struct animation_clip* idle;
+    struct animation_clip* run;
+    struct animation_clip* attack;
+};
 
 struct player {
     struct Transform transform;
@@ -25,6 +32,9 @@ struct player {
     struct spell_exec spell_exec;
 
     struct inventory* inventory;
+
+    struct animation_set* animation_set;
+    struct player_animations animations;
 };
 
 void player_init(struct player* player, struct Transform* camera_transform, struct inventory* inventory);

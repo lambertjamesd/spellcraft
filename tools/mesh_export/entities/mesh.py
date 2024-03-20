@@ -32,7 +32,7 @@ class mesh_data():
 
         if obj.parent_bone and armature:
             bone = armature.find_bone_data(obj.parent_bone)
-            final_transform = bone.pose_matrix_inv @ obj.matrix_world
+            final_transform = bone.pose_bone.matrix.inverted() @ obj.matrix_world
             normal_transform = final_transform.to_3x3().inverted().transposed()
             bone_index = bone.index
             
@@ -426,56 +426,29 @@ def _write_packed_quaternion(file, input: mathutils.Quaternion):
         int(32767 * final_input.z)
     ))
 
-def _write_armature(file, armature: armature.ArmatureData | None):
+def _write_armature(file, arm: armature.ArmatureData | None):
     file.write('ARMT'.encode())
     
-    if armature is None:
+    if arm is None:
         file.write((0).to_bytes(2, 'big'))
         return
     
-    bones = armature.get_filtered_bones()
+    bones = arm.get_filtered_bones()
     
     file.write(len(bones).to_bytes(2, 'big'))
 
     for bone in bones:
-        parent = armature.find_parent_bone(bone.name)
+        parent = arm.find_parent_bone(bone.name)
 
         if parent:
             file.write(parent.index.to_bytes(1, 'big'))
         else:
             file.write((255).to_bytes(1, 'big'))
 
-    for bone in bones:      
-        parent = armature.find_parent_bone(bone.name)
+    default_pose = arm.generate_pose_data()
 
-        transform = bone.pose_matrix
-
-        if parent:
-            transform = parent.pose_matrix_inv @ transform 
-        else: 
-            transform = armature.relative_bone_transform @ transform
-
-        loc, rot, scale = transform.decompose()
-
-        file.write(
-            struct.pack(
-                '>hhh',
-                _pack_position(loc.x),
-                _pack_position(loc.y),
-                _pack_position(loc.z)
-            )
-        )
-
-        _write_packed_quaternion(file, rot)
-
-        file.write(
-            struct.pack(
-                '>hhh',
-                _pack_position(scale.x),
-                _pack_position(scale.y),
-                _pack_position(scale.z)
-            )
-        )
+    for bone_pose in default_pose:
+        bone_pose.write_to_file(file)
 
 class mesh_list_entry:
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):

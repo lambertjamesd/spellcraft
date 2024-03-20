@@ -37,6 +37,7 @@ filesystem/meshes/%.mesh: assets/meshes/%.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh))
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/mesh.py -- $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
 	mkasset -o $(dir $@) -w 256 $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
+	-cp $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.anim) $(@:%.mesh=%.anim)
 
 ###
 # materials

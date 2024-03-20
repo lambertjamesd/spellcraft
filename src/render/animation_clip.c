@@ -16,20 +16,26 @@ struct animation_clip_header {
     uint16_t frame_size;
 };
 
+#define EXPECTED_HEADER 0x414E494D
 
 // dma_read_raw_async
 // dfs_rom_addr
 
 struct animation_set* animation_set_load(const char* filename) {
-    struct animation_set* result = malloc(sizeof(struct animation_set*));
+    struct animation_set* result = malloc(sizeof(struct animation_set));
 
-    uint32_t start_address = dfs_rom_addr(filename);
-    uint32_t current_address = start_address;
+    assert(strncmp(filename, "rom:/", 5) == 0);
+    filename += 5;
+
+    int file = dfs_open(filename);
 
     struct animation_set_header header;
 
-    dma_read(&header, current_address, sizeof(struct animation_set_header));
-    current_address += sizeof(struct animation_set_header);
+    uint32_t anim;
+    dfs_read(&anim, sizeof(uint32_t), 1, file);
+    assert(anim == EXPECTED_HEADER);
+
+    dfs_read(&header, sizeof(struct animation_set_header), 1, file);
 
     result->clip_count = header.clip_count;
     result->bone_count = header.bone_count;
@@ -40,22 +46,27 @@ struct animation_set* animation_set_load(const char* filename) {
     }
 
     struct animation_clip_header clip_headers[header.clip_count];
-    dma_read(clip_headers, current_address, sizeof(struct animation_clip_header) * header.clip_count);
-    current_address += sizeof(struct animation_clip_header) * header.clip_count;
+    dfs_read(clip_headers, sizeof(struct animation_clip_header), header.clip_count, file);
 
     result->clips = malloc(sizeof(struct animation_clip) * header.clip_count);
 
     int attibute_buffer_size = sizeof(struct animation_used_attributes) * header.bone_count * header.clip_count;
     struct animation_used_attributes* attributes_buffer = malloc(attibute_buffer_size);
-    dma_read(attributes_buffer, current_address, attibute_buffer_size);
-    current_address += attibute_buffer_size;
+    dfs_read(attributes_buffer, attibute_buffer_size, 1, file);
     
     char* text_buffer = malloc(header.name_buffer_length);
-    dma_read(text_buffer, current_address, header.name_buffer_length);
-    // align to next 2 byte boundary
-    current_address = (current_address + 1) & ~1;
+    dfs_read(text_buffer, header.name_buffer_length, 1, file);
+
+    uint32_t start_address = dfs_rom_addr(filename);
+    assert(start_address);
+
+    uint32_t address_offset = dfs_tell(file);
+    address_offset = (address_offset + 1) & ~1;
 
     for (int i = 0; i < header.clip_count; i += 1) {
+        // align to 2 bytes
+        address_offset = (address_offset + 1) & ~1;
+
         struct animation_clip* clip = &result->clips[i];
 
         clip->name = text_buffer;
@@ -64,15 +75,17 @@ struct animation_set* animation_set_load(const char* filename) {
         clip->frame_count = clip_headers[i].frame_count;
         clip->frames_per_second = clip_headers[i].frames_per_second;
         clip->frame_size = clip_headers[i].frame_size;
-        clip->frames_rom_address = current_address;
+        clip->frames_rom_address = start_address + address_offset;
 
         clip->used_bone_attributes = attributes_buffer;
 
         // advance to next string
         text_buffer += strlen(text_buffer) + 1;
         attributes_buffer += header.bone_count;
-        current_address += clip_headers[i].frame_size * clip_headers[i].frame_count;
+        address_offset += clip_headers[i].frame_size * clip_headers[i].frame_count;
     }
+
+    dfs_close(file);
 
     return result;
 }
