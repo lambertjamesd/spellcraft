@@ -67,7 +67,7 @@ def process_scene():
 
         mesh_source = None
 
-        if mesh.library:
+        if mesh.library or 'type' in mesh:
             process_linked_object(world, obj, mesh, definitions)
         elif len(mesh.materials) > 0:
             world.static.append(StaticEntry(obj, mesh, final_transform))

@@ -85,11 +85,6 @@ def export_animations(arm: entities.armature.ArmatureData | None):
 
             if current_size & 1:
                 file.write((0).to_bytes(1, 'big'))
-
-            print(file.tell())
-
-            if animations[anim_idx].name == "run":
-                print(anim._frames[0][0])
                 
             anim.write_to_file(file, attributes_for_anim[anim_idx])
 

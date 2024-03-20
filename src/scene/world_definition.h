@@ -13,4 +13,9 @@ struct collectable_definition {
     struct Vector3 position;
 };
 
+struct biter_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+};
+
 #endif
