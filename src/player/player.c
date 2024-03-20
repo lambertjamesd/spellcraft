@@ -57,13 +57,13 @@ void player_get_move_basis(struct Transform* transform, struct Vector3* forward,
 void player_update(struct player* player) {
     struct Vector3 right;
     struct Vector3 forward;
+    animator_update(&player->animator, player->renderable.armature.pose, fixed_time_step);
     player_get_move_basis(player->camera_transform, &forward, &right);
 
     joypad_inputs_t input = joypad_get_inputs(0);
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
     struct Vector2 direction;
-
 
     direction.x = input.stick_x * (1.0f / 80.0f);
     direction.y = -input.stick_y * (1.0f / 80.0f);
@@ -154,6 +154,10 @@ void player_init(struct player* player, struct Transform* camera_transform, stru
     player->animations.attack = animation_set_find_clip(player->animation_set, "attack1");
     player->animations.idle = animation_set_find_clip(player->animation_set, "idle");
     player->animations.run = animation_set_find_clip(player->animation_set, "run");
+
+    animator_init(&player->animator, player->renderable.armature.bone_count);
+
+    animator_run_clip(&player->animator, player->animations.run, 0.0f, true);
 }
 
 void player_destroy(struct player* player) {
@@ -163,4 +167,6 @@ void player_destroy(struct player* player) {
     render_scene_remove(&r_scene_3d, &player->renderable);
     update_remove(player);
     collision_scene_remove(&player->collision);
+    animation_cache_release(player->animation_set);
+    animator_destroy(&player->animator);
 }

@@ -4,27 +4,16 @@
 #include <stdint.h>
 #include "../math/vector3.h"
 #include "../math/transform.h"
-
-struct armature_packed_transform {
-    int16_t x, y, z;
-    int16_t rx, ry, rz; // w is derived from the other values
-    int16_t sx, sy, sz;
-};
+#include "armature_definition.h"
 
 #define NO_BONE_PARENT  0xFF
-
-struct armature_definition {
-    uint8_t* parent_linkage;
-    struct armature_packed_transform* default_pose;
-    uint16_t bone_count;
-};
 
 struct armature {
     uint8_t* parent_linkage;
     struct Transform* pose;
     uint16_t bone_count;
     uint8_t image_frame_0;
-    uint8_t imagE_frame_1;
+    uint8_t image_frame_1;
 };
 
 void armature_definition_init(struct armature_definition* definition, int boune_count);

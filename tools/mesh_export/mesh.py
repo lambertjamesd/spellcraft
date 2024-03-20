@@ -25,7 +25,7 @@ def export_animations(arm: entities.armature.ArmatureData | None):
 
     default_pose = arm.generate_pose_data()
 
-    start_action = arm.obj.animation_data.action
+    start_action = arm.obj.animation_data.action if arm.obj.animation_data else None
     start_frame = bpy.context.scene.frame_current
 
     for anim in animations:
@@ -44,7 +44,8 @@ def export_animations(arm: entities.armature.ArmatureData | None):
         attributes_for_anim.append(attributes)
         packed_animations.append(packed_animation)
 
-    arm.obj.animation_data.action = start_action
+    if arm.obj.animation_data:
+        arm.obj.animation_data.action = start_action
     bpy.context.scene.frame_set(start_frame)
 
     name_lengths = 0

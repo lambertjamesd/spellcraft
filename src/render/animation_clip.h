@@ -3,10 +3,12 @@
 
 #include <stdint.h>
 
+#include "armature_definition.h"
+
 struct animation_used_attributes {
     uint8_t has_pos: 1;
-    uint8_t has_rot: 2;
-    uint8_t has_scale: 3;
+    uint8_t has_rot: 1;
+    uint8_t has_scale: 1;
 };
 
 struct animation_clip {

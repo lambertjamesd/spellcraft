@@ -8,6 +8,7 @@
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
 #include "../render/animation_clip.h"
+#include "../render/animator.h"
 
 #include "../spell/projectile.h"
 #include "../spell/spell_exec.h"
@@ -35,6 +36,7 @@ struct player {
 
     struct animation_set* animation_set;
     struct player_animations animations;
+    struct animator animator;
 };
 
 void player_init(struct player* player, struct Transform* camera_transform, struct inventory* inventory);
