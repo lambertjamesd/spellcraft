@@ -15,11 +15,12 @@
 static struct Vector2 player_max_rotation;
 
 static struct dynamic_object_type player_collision = {
-    .minkowsi_sum = dynamic_object_box_minkowski_sum,
-    .bounding_box = dynamic_object_box_bouding_box,
+    .minkowsi_sum = dynamic_object_capsule_minkowski_sum,
+    .bounding_box = dynamic_object_capsule_bounding_box,
     .data = {
-        .box = {
-            .half_size = {0.5f, 0.5f, 0.5f},
+        .capsule = {
+            .radius = 0.25f,
+            .inner_half_height = 0.5f,
         }
     }
 };
@@ -153,7 +154,7 @@ void player_init(struct player* player, struct Transform* camera_transform, stru
 
     player->look_direction = gRight2;
 
-    vector2ComplexFromAngle(fixed_time_step * 3.14f, &player_max_rotation);
+    vector2ComplexFromAngle(fixed_time_step * 7.0f, &player_max_rotation);
 
     dynamic_object_init(
         entity_id,
@@ -163,6 +164,8 @@ void player_init(struct player* player, struct Transform* camera_transform, stru
         &player->transform.position,
         &player->look_direction
     );
+
+    player->collision.center.y = player_collision.data.capsule.inner_half_height + player_collision.data.capsule.radius;
 
     collision_scene_add(&player->collision);
 

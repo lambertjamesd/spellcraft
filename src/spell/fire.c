@@ -116,7 +116,7 @@ void fire_init(struct fire* fire, struct spell_data_source* source, struct spell
         entity_id_new(), 
         &fire->dynamic_object, 
         &fire_object_type, 
-        COLLISOIN_LAYER_DAMAGE_ENEMY,
+        COLLISION_LAYER_DAMAGE_ENEMY,
         &fire->position, 
         &fire->rotation
     );

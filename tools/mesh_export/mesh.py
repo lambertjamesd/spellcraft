@@ -97,6 +97,18 @@ def process_scene():
     arm: entities.armature.ArmatureData | None = None
 
     for obj in bpy.data.objects:
+        if obj.type != "MESH":
+            continue
+
+        bpy.context.view_layer.objects.active = obj
+
+        for modifier in obj.modifiers:
+            if modifier.type != 'MIRROR':
+                continue
+            bpy.ops.object.modifier_apply(modifier=modifier.name, single_user = True)
+
+
+    for obj in bpy.data.objects:
         if obj.type != 'ARMATURE':
             continue
 

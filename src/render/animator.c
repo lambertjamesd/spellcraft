@@ -211,7 +211,7 @@ void animator_step(struct animator* animator, float delta_time) {
 
     if ((animator->current_time >= duration && delta_time > 0.0f) || (animator->current_time < 0.0f && delta_time < 0.0f)) {
         if (animator->loop) {
-            animator->current_time = mathfMod(animator->current_time, duration);
+            animator->current_time = duration ? mathfMod(animator->current_time, duration) : 0.0f;
         } else {
             animator->current_time = minf(duration, maxf(0.0f, animator->current_time));
             animator->done = 1;

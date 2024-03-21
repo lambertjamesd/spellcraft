@@ -72,6 +72,32 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         return;
     }
 
+    if (a->is_trigger || b->is_trigger) {
+        struct contact* contact = collision_scene_new_contact();
+
+        if (!contact) {
+            return;
+        }
+
+        if (b->is_trigger) {
+            contact->normal = gZeroVec;
+            contact->point = *a->position;
+            contact->other_object = a ? a->entity_id : 0;
+
+            contact->next = b->active_contacts;
+            b->active_contacts = contact;
+        } else {
+            contact->normal = gZeroVec;
+            contact->point = *b->position;
+            contact->other_object = b ? b->entity_id : 0;
+
+            contact->next = a->active_contacts;
+            a->active_contacts = contact;
+        }
+
+        return;
+    }
+
     struct EpaResult result;
 
     epaSolve(&simplex, a, dynamic_object_minkowski_sum, b, dynamic_object_minkowski_sum, &result);
@@ -80,10 +106,8 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;
 
     // TODO determine push 
-    if (!a->is_trigger && !b->is_trigger) {
-        correct_overlap(b, &result, -0.5f, friction, bounce);
-        correct_overlap(a, &result, 0.5f, friction, bounce);
-    }
+    correct_overlap(b, &result, -0.5f, friction, bounce);
+    correct_overlap(a, &result, 0.5f, friction, bounce);
 
     struct contact* contact = collision_scene_new_contact();
 
@@ -91,27 +115,23 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         return;
     }
 
-    if (!a->is_trigger) {
-        contact->normal = result.normal;
-        contact->point = result.contactA;
-        contact->other_object = a ? a->entity_id : 0;
+    contact->normal = result.normal;
+    contact->point = result.contactA;
+    contact->other_object = a ? a->entity_id : 0;
 
-        contact->next = b->active_contacts;
-        b->active_contacts = contact;
-        
-        contact = collision_scene_new_contact();
-    }
+    contact->next = b->active_contacts;
+    b->active_contacts = contact;
+
+    contact = collision_scene_new_contact();
 
     if (!contact) {
         return;
     }
+    
+    vector3Negate(&result.normal, &contact->normal);
+    contact->point = result.contactB;
+    contact->other_object = b ? b->entity_id : 0;
 
-    if (!b->is_trigger) {
-        vector3Negate(&result.normal, &contact->normal);
-        contact->point = result.contactB;
-        contact->other_object = b ? b->entity_id : 0;
-
-        contact->next = a->active_contacts;
-        a->active_contacts = contact;
-    }
+    contact->next = a->active_contacts;
+    a->active_contacts = contact;
 }

@@ -14,7 +14,7 @@
 enum collision_layers {
     COLLISION_LAYER_TANGIBLE = (1 << 0),
     COLLISION_LAYER_DAMAGE_PLAYER = (1 << 1),
-    COLLISOIN_LAYER_DAMAGE_ENEMY = (1 << 2),
+    COLLISION_LAYER_DAMAGE_ENEMY = (1 << 2),
 };
 
 typedef void (*bounding_box_calculator)(void* data, struct Vector2* rotation, struct Box3D* box);
@@ -22,6 +22,7 @@ typedef void (*bounding_box_calculator)(void* data, struct Vector2* rotation, st
 union dynamic_object_type_data
 {
     struct { float radius; } sphere;
+    struct { float radius; float inner_half_height; } capsule;
     struct { struct Vector3 half_size; } box;
     struct { struct Vector3 size; } cone;
 };
@@ -40,6 +41,7 @@ struct dynamic_object {
     struct Vector3* position;
     struct Vector2* rotation;
     struct Vector2* pitch;
+    struct Vector3 center;
     struct Vector3 velocity;
     struct Box3D bounding_box;
     float time_scalar;
@@ -60,6 +62,8 @@ void dynamic_object_init(
 
 void dynamic_object_update(struct dynamic_object* object);
 
+struct contact* dynamic_object_nearest_contact(struct dynamic_object* object);
+
 void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 void dynamic_object_recalc_bb(struct dynamic_object* object);
 
@@ -71,5 +75,8 @@ void dynamic_object_cone_bouding_box(void* data, struct Vector2* rotation, struc
 
 void dynamic_object_sphere_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 void dynamic_object_sphere_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
+
+void dynamic_object_capsule_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
+void dynamic_object_capsule_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
 
 #endif

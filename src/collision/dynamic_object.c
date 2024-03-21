@@ -3,6 +3,7 @@
 #include "../time/time.h"
 #include "../math/minmax.h"
 #include <math.h>
+#include <stddef.h>
 
 void dynamic_object_init(
     entity_id entity_id,
@@ -18,6 +19,7 @@ void dynamic_object_init(
     object->rotation = rotation;
     object->pitch = 0;
     object->velocity = gZeroVec;
+    object->center = gZeroVec;
     object->time_scalar = 1.0f;
     object->has_gravity = 1;
     object->is_trigger = 0;
@@ -37,6 +39,24 @@ void dynamic_object_update(struct dynamic_object* object) {
     }
 }
 
+struct contact* dynamic_object_nearest_contact(struct dynamic_object* object) {
+    struct contact* nearest_target = NULL;
+    struct contact* current = object->active_contacts;
+    float distance = 0.0f;
+
+    while (current) {
+        float check = vector3DistSqrd(&current->point, object->position);
+        if (!nearest_target || check < distance) {
+            distance = check;
+            nearest_target = current;
+        }
+
+        current = current->next;
+    }
+
+    return nearest_target;
+}
+
 void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
     struct dynamic_object* object = (struct dynamic_object*)data;
 
@@ -45,6 +65,7 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
     if (!object->rotation && !object->pitch) {
         object->type->minkowsi_sum(&object->type->data, direction, output);
         vector3Add(output, object->position, output);
+        vector3Add(output, &object->center, output);
         return;
     }
 
@@ -79,6 +100,8 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
     } else {
         *output = unpitched_out;
     }
+
+    vector3Add(output, &object->center, output);
 }
 
 void dynamic_object_recalc_bb(struct dynamic_object* object) {
@@ -185,29 +208,29 @@ void dynamic_object_sphere_minkowski_sum(void* data, struct Vector3* direction, 
         }
     }
 
-    float distanceCheck = (fabsf(direction->x) + fabsf(direction->y) + fabsf(direction->z)) * SQRT_1_3;
+    // float distanceCheck = (fabsf(direction->x) + fabsf(direction->y) + fabsf(direction->z)) * SQRT_1_3;
 
-    if (distanceCheck > distance) {
-        float scaledRadius = radius * SQRT_1_3;
+    // if (distanceCheck > distance) {
+    //     float scaledRadius = radius * SQRT_1_3;
 
-        if (output->x > 0.0f) {
-            output->x = scaledRadius;
-        } else {
-            output->x = -scaledRadius;
-        }
+    //     if (output->x > 0.0f) {
+    //         output->x = scaledRadius;
+    //     } else {
+    //         output->x = -scaledRadius;
+    //     }
 
-        if (output->y > 0.0f) {
-            output->y = scaledRadius;
-        } else {
-            output->y = -scaledRadius;
-        }
+    //     if (output->y > 0.0f) {
+    //         output->y = scaledRadius;
+    //     } else {
+    //         output->y = -scaledRadius;
+    //     }
 
-        if (output->z > 0.0f) {
-            output->z = scaledRadius;
-        } else {
-            output->z = -scaledRadius;
-        }
-    }
+    //     if (output->z > 0.0f) {
+    //         output->z = scaledRadius;
+    //     } else {
+    //         output->z = -scaledRadius;
+    //     }
+    // }
 }
 
 void dynamic_object_sphere_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
@@ -215,4 +238,25 @@ void dynamic_object_sphere_bounding_box(void* data, struct Vector2* rotation, st
 
     vector3Scale(&gOneVec, &box->max, shape_data->sphere.radius);
     vector3Scale(&gOneVec, &box->min, -shape_data->sphere.radius);
+}
+
+void dynamic_object_capsule_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
+    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    dynamic_object_sphere_minkowski_sum(data, direction, output);
+
+    if (direction->y > 0.0f) {
+        output->y += shape_data->capsule.inner_half_height;
+    } else {
+        output->y -= shape_data->capsule.inner_half_height;
+    }
+}
+
+void dynamic_object_capsule_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
+    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+
+    vector3Scale(&gOneVec, &box->max, shape_data->capsule.radius);
+    vector3Scale(&gOneVec, &box->min, -shape_data->capsule.radius);
+
+    box->max.y += shape_data->capsule.inner_half_height;
+    box->min.y -= shape_data->capsule.inner_half_height;
 }
