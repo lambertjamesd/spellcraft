@@ -20,7 +20,7 @@
 
 static struct dynamic_object_type fire_object_type = {
     .minkowsi_sum = dynamic_object_cone_minkowski_sum,
-    .bounding_box = dynamic_object_cone_bouding_box,
+    .bounding_box = dynamic_object_cone_bounding_box,
     .data = { 
         .cone = {
             .size = {MAX_RADIUS, MAX_RADIUS, FIRE_LENGTH},

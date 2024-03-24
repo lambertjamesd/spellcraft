@@ -25,6 +25,7 @@ void dynamic_object_init(
     object->is_trigger = 0;
     object->collision_layers = collision_layers;
     object->active_contacts = 0;
+    dynamic_object_recalc_bb(object);
 }
 
 void dynamic_object_update(struct dynamic_object* object) {
@@ -79,9 +80,9 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
         pitched_dir = *direction;
     }
 
-    rotated_dir.x = pitched_dir.x * object->rotation->x - pitched_dir.z * object->rotation->y;
+    rotated_dir.x = pitched_dir.x * object->rotation->x + pitched_dir.z * object->rotation->y;
     rotated_dir.y = pitched_dir.y;
-    rotated_dir.z = pitched_dir.z * object->rotation->x + pitched_dir.x * object->rotation->y;
+    rotated_dir.z = pitched_dir.z * object->rotation->x - pitched_dir.x * object->rotation->y;
 
     struct Vector3 unrotated_out;
     
@@ -89,9 +90,9 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
 
     struct Vector3 unpitched_out;
 
-    unpitched_out.x = unrotated_out.x * object->rotation->x + unrotated_out.z * object->rotation->y + object->position->x;
+    unpitched_out.x = unrotated_out.x * object->rotation->x - unrotated_out.z * object->rotation->y + object->position->x;
     unpitched_out.y = unrotated_out.y + object->position->y;
-    unpitched_out.z = unrotated_out.z * object->rotation->x - unrotated_out.x * object->rotation->y + object->position->z;
+    unpitched_out.z = unrotated_out.z * object->rotation->x + unrotated_out.x * object->rotation->y + object->position->z;
 
     if (object->pitch) {
         output->x = unpitched_out.x;
@@ -148,7 +149,7 @@ void dynamic_object_cone_minkowski_sum(void* data, struct Vector3* direction, st
     }
 }
 
-void dynamic_object_cone_bouding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
+void dynamic_object_cone_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     struct Vector2 corner;
@@ -170,10 +171,10 @@ void dynamic_object_cone_bouding_box(void* data, struct Vector2* rotation, struc
     vector2ComplexMul(&corner, rotation, &cornerRotated);
 
     box->min.x = MIN(box->min.x, cornerRotated.x);
-    box->min.z = MIN(box->min.x, cornerRotated.y);
+    box->min.z = MIN(box->min.z, cornerRotated.y);
 
     box->max.x = MAX(box->max.x, cornerRotated.x);
-    box->max.z = MAX(box->max.x, cornerRotated.y);
+    box->max.z = MAX(box->max.z, cornerRotated.y);
 
     box->min.x = MIN(box->min.x, 0.0f);
     box->min.z = MIN(box->min.z, 0.0f);
