@@ -34,23 +34,34 @@ static struct dynamic_object_type biter_vision_collision_type = {
     },
 };
 
+void biter_update_target(struct biter* biter) {
+    if (!biter->current_target) {
+        struct contact* nearest_target = dynamic_object_nearest_contact(&biter->vision);
+
+        if (nearest_target) {
+            biter->current_target = nearest_target->other_object;
+        }
+    }
+
+    if (!biter->current_target) {
+        return;
+    }
+
+    struct dynamic_object* target_object = collision_scene_find_object(biter->current_target);
+
+    struct Vector3 direction;
+    struct Vector2 rotation;
+
+    vector3Sub(target_object->position, &biter->transform.position, &direction);
+    vector2LookDir(&rotation, &direction);
+
+    vector2RotateTowards(&biter->transform.rotation, &rotation, &biter_max_rotation, &biter->transform.rotation);
+}
+
 void biter_update(struct biter* biter) {
     animator_update(&biter->animator, biter->renderable.armature.pose, fixed_time_step);
 
-    struct contact* nearest_target = dynamic_object_nearest_contact(&biter->vision);
-
-    if (nearest_target) {
-        struct Vector3 target;
-        target = nearest_target->point;
-
-        struct Vector2 direction;
-        direction.y = biter->transform.position.x - target.x;
-        direction.x = target.z - biter->transform.position.z;
-
-        vector2Normalize(&direction, &direction);
-        vector2RotateTowards(&biter->transform.rotation, &direction, &biter_max_rotation, &biter->transform.rotation);
-    }
-
+    biter_update_target(biter);
 
     if (biter->health.current_health <= 0.0f) {
         biter_destroy(biter);
@@ -99,6 +110,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
     biter->animations.attack = animation_set_find_clip(biter->animation_set, "enemy1_attack1");
     biter->animations.idle = animation_set_find_clip(biter->animation_set, "enemy1_idle");
     biter->animations.run = animation_set_find_clip(biter->animation_set, "enemy1_walk");
+    biter->current_target = 0;
 
     animator_init(&biter->animator, biter->renderable.armature.bone_count);
 

@@ -25,6 +25,8 @@ struct biter {
     struct animation_set* animation_set;
     struct biter_animations animations;
     struct animator animator;
+
+    entity_id current_target;
 };
 
 void biter_init(struct biter* biter, struct biter_definition* definition);

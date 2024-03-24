@@ -10,6 +10,8 @@ extern struct Vector2 gUp2;
 extern struct Vector2 gZeroVec2;
 extern struct Vector2 gOneVec2;
 
+struct Vector3;
+
 void vector2ComplexMul(struct Vector2* a, struct Vector2* b, struct Vector2* out);
 void vector2ComplexConj(struct Vector2* a, struct Vector2* out);
 int vector2RotateTowards(struct Vector2* from, struct Vector2* towards, struct Vector2* max, struct Vector2* out);
@@ -31,5 +33,7 @@ void vector2Max(struct Vector2* a, struct Vector2* b, struct Vector2* out);
 void vector2Lerp(struct Vector2* a, struct Vector2* b, float lerp, struct Vector2* out);
 
 void vector2RandomUnitCircle(struct Vector2* result);
+
+void vector2LookDir(struct Vector2* result, struct Vector3* direction);
 
 #endif

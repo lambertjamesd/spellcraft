@@ -1,5 +1,6 @@
 
 #include "vector2.h"
+#include "vector3.h"
 #include "mathf.h"
 
 struct Vector2 gRight2 = {1.0f, 0.0f};
@@ -136,4 +137,10 @@ void vector2RandomUnitCircle(struct Vector2* result) {
     if (randomInt() & 0x800) {
         result->y = -result->y;
     }
+}
+
+void vector2LookDir(struct Vector2* result, struct Vector3* direction) {
+    result->x = direction->z;
+    result->y = -direction->x;
+    vector2Normalize(result, result);
 }
