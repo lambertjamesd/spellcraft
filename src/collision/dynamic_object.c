@@ -79,9 +79,9 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
         pitched_dir = *direction;
     }
 
-    rotated_dir.x = pitched_dir.x * object->rotation->x + pitched_dir.z * object->rotation->y;
+    rotated_dir.x = pitched_dir.x * object->rotation->x - pitched_dir.z * object->rotation->y;
     rotated_dir.y = pitched_dir.y;
-    rotated_dir.z = pitched_dir.z * object->rotation->x - pitched_dir.x * object->rotation->y;
+    rotated_dir.z = pitched_dir.z * object->rotation->x + pitched_dir.x * object->rotation->y;
 
     struct Vector3 unrotated_out;
     
@@ -89,9 +89,9 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
 
     struct Vector3 unpitched_out;
 
-    unpitched_out.x = unrotated_out.x * object->rotation->x - unrotated_out.z * object->rotation->y + object->position->x;
+    unpitched_out.x = unrotated_out.x * object->rotation->x + unrotated_out.z * object->rotation->y + object->position->x;
     unpitched_out.y = unrotated_out.y + object->position->y;
-    unpitched_out.z = unrotated_out.z * object->rotation->x + unrotated_out.x * object->rotation->y + object->position->z;
+    unpitched_out.z = unrotated_out.z * object->rotation->x - unrotated_out.x * object->rotation->y + object->position->z;
 
     if (object->pitch) {
         output->x = unpitched_out.x;
@@ -141,7 +141,7 @@ void dynamic_object_cone_minkowski_sum(void* data, struct Vector3* direction, st
 
     output->x = direction->x > 0.0f ? shape_data->cone.size.x : -shape_data->cone.size.x;
     output->y = direction->y > 0.0f ? shape_data->cone.size.y : -shape_data->cone.size.y;
-    output->z = direction->z;
+    output->z = shape_data->cone.size.z;
 
     if (vector3Dot(output, direction) < 0) {
         *output = gZeroVec;

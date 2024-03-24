@@ -5,6 +5,9 @@
 #include "../collision/collision_scene.h"
 #include "../resource/animation_cache.h"
 
+#include "../scene/world.h"
+extern struct world* current_world;
+
 #define VISION_DISTANCE 8.0f
 
 static struct Vector2 biter_max_rotation;
@@ -20,13 +23,18 @@ static struct dynamic_object_type biter_collision_type = {
 };
 
 static struct dynamic_object_type biter_vision_collision_type = {
-    .minkowsi_sum = dynamic_object_cone_minkowski_sum,
-    .bounding_box = dynamic_object_cone_bouding_box,
+    .minkowsi_sum = dynamic_object_sphere_minkowski_sum,
+    .bounding_box = dynamic_object_sphere_bounding_box,
     .data = {
-        .cone = {
-            .size = {VISION_DISTANCE * 0.5f, VISION_DISTANCE * 0.5f, VISION_DISTANCE},
+        .sphere = {
+            .radius = VISION_DISTANCE,
         },
     },
+    // .data = {
+    //     .cone = {
+    //         .size = {VISION_DISTANCE, VISION_DISTANCE, VISION_DISTANCE},
+    //     },
+    // },
 };
 
 void biter_update(struct biter* biter) {
