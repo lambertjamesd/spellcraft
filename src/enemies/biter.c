@@ -5,7 +5,10 @@
 #include "../collision/collision_scene.h"
 #include "../resource/animation_cache.h"
 
-#define VISION_DISTANCE 4.0f
+#define VISION_DISTANCE     4.0f
+#define ATTACK_RANGE        1.0f
+#define MOVE_SPEED          8.5f
+#define MOVE_ACCELERATION   12.0f
 
 static struct Vector2 biter_max_rotation;
 
@@ -17,6 +20,7 @@ static struct dynamic_object_type biter_collision_type = {
             .radius = 0.4f,
         },
     },
+    .friction = 0.5f,
 };
 
 static struct dynamic_object_type biter_vision_collision_type = {
@@ -35,6 +39,10 @@ static struct dynamic_object_type biter_vision_collision_type = {
 };
 
 void biter_update_target(struct biter* biter) {
+    if (biter->animator.current_clip == biter->animations.attack) {
+        return;
+    }
+
     if (!biter->current_target) {
         struct contact* nearest_target = dynamic_object_nearest_contact(&biter->vision);
 
@@ -44,6 +52,10 @@ void biter_update_target(struct biter* biter) {
     }
 
     if (!biter->current_target) {
+        if (biter->animator.current_clip != biter->animations.idle) {
+            animator_run_clip(&biter->animator, biter->animations.idle, 0.0f, true);
+        }
+
         return;
     }
 
@@ -53,9 +65,42 @@ void biter_update_target(struct biter* biter) {
     struct Vector2 rotation;
 
     vector3Sub(target_object->position, &biter->transform.position, &direction);
+    
+    float distance_sqrd = vector3MagSqrd(&direction);
+
+    if (distance_sqrd > VISION_DISTANCE * VISION_DISTANCE) {
+        biter->current_target = 0;
+        return;
+    }
+
+    bool should_attack = distance_sqrd < ATTACK_RANGE * ATTACK_RANGE || dynamic_object_is_touching(&biter->dynamic_object, biter->current_target);
+
     vector2LookDir(&rotation, &direction);
 
+    float angle_dot = vector2Dot(&rotation, &biter->transform.rotation);
+
+    if (should_attack && angle_dot > 0.9) {
+        animator_run_clip(&biter->animator, biter->animations.attack, 0.0f, false);
+        return;
+    }
+
     vector2RotateTowards(&biter->transform.rotation, &rotation, &biter_max_rotation, &biter->transform.rotation);
+
+    if (should_attack) {
+        // stop moving to attack
+        return;
+    }
+
+    if (angle_dot > 0.0f) {
+        struct Vector3 targetVelocity;
+        vector3RotatedSpeed(&biter->transform.rotation, &targetVelocity, MOVE_SPEED);
+        vector3MoveTowards(&biter->dynamic_object.velocity, &targetVelocity, MOVE_ACCELERATION * fixed_time_step, &biter->dynamic_object.velocity);
+
+
+        if (biter->animator.current_clip != biter->animations.run) {
+            animator_run_clip(&biter->animator, biter->animations.run, 0.0f, true);
+        }
+    }
 }
 
 void biter_update(struct biter* biter) {
@@ -107,7 +152,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
     health_init(&biter->health, id, 10.0f);
 
     biter->animation_set = animation_cache_load("rom:/meshes/enemies/enemy1.anim");
-    biter->animations.attack = animation_set_find_clip(biter->animation_set, "enemy1_attack1");
+    biter->animations.attack = animation_set_find_clip(biter->animation_set, "enemy1_attack");
     biter->animations.idle = animation_set_find_clip(biter->animation_set, "enemy1_idle");
     biter->animations.run = animation_set_find_clip(biter->animation_set, "enemy1_walk");
     biter->current_target = 0;
@@ -125,4 +170,6 @@ void biter_destroy(struct biter* biter) {
     collision_scene_remove(&biter->vision);
     health_destroy(&biter->health);
     update_remove(biter);
+    animator_destroy(&biter->animator);
+    animation_cache_release(biter->animation_set);
 }

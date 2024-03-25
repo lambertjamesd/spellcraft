@@ -35,5 +35,6 @@ void vector2Lerp(struct Vector2* a, struct Vector2* b, float lerp, struct Vector
 void vector2RandomUnitCircle(struct Vector2* result);
 
 void vector2LookDir(struct Vector2* result, struct Vector3* direction);
+void vector3RotatedSpeed(struct Vector2* rotation, struct Vector3* result, float speed);
 
 #endif

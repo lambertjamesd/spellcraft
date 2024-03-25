@@ -8,6 +8,7 @@
 #include "contact.h"
 #include "gjk.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 #define GRAVITY_CONSTANT    -9.8f
 
@@ -63,6 +64,7 @@ void dynamic_object_init(
 void dynamic_object_update(struct dynamic_object* object);
 
 struct contact* dynamic_object_nearest_contact(struct dynamic_object* object);
+bool dynamic_object_is_touching(struct dynamic_object* object, entity_id id);
 
 void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 void dynamic_object_recalc_bb(struct dynamic_object* object);
