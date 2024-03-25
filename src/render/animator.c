@@ -15,12 +15,13 @@ void animator_init(struct animator* animator, int bone_count) {
     animator->current_clip = NULL;
     animator->current_time = 0.0f;
     animator->blend_lerp = 0.0f;
-    animator->bone_state[0] = malloc(sizeof(struct armature_packed_transform) * bone_count);
-    animator->bone_state[1] = malloc(sizeof(struct armature_packed_transform) * bone_count);
+    animator->bone_state[0] = malloc(sizeof(struct armature_packed_transform) * bone_count + sizeof(uint16_t));
+    animator->bone_state[1] = malloc(sizeof(struct armature_packed_transform) * bone_count + sizeof(uint16_t));
     animator->bone_state_frames[0] = -1;
     animator->bone_state_frames[1] = -1;
     animator->next_frame_state_index = -1;
     animator->bone_count = bone_count;
+    animator->events = 0;
 }
 
 void animator_destroy(struct animator* animator) {
@@ -115,6 +116,8 @@ void animator_init_zero_transform(struct animator* animator, struct animation_us
 
         used_attributes += 1;
     }
+
+    animator->events = 0;
 }
 
 void animator_normalize(struct animator* animator, struct Transform* transforms) {
@@ -123,7 +126,7 @@ void animator_normalize(struct animator* animator, struct Transform* transforms)
     }
 }
 
-void animator_blend_transform(int16_t* frame, struct animation_used_attributes* used_attributes, struct Transform* transforms, int bone_count, float weight) {
+void animator_blend_transform(struct animator* animator, int16_t* frame, struct animation_used_attributes* used_attributes, struct Transform* transforms, int bone_count, float weight) {
     for (int i = 0; i < bone_count; ++i) {
         struct Transform boneTransform;
         frame = animator_extract_bone(frame, *used_attributes, &boneTransform);
@@ -152,16 +155,21 @@ void animator_blend_transform(int16_t* frame, struct animation_used_attributes* 
 
         used_attributes += 1;
     }
+
+    if (animator->current_clip->has_events) {
+        animator->events |= (uint16_t)*frame;
+        frame += 1;
+    }
 }
 
 void animator_read_transform_with_weight(struct animator* animator, struct Transform* transforms, float weight) {
     if (animator->blend_lerp >= 1.0f) {
-        animator_blend_transform(animator->bone_state[animator->next_frame_state_index], animator->current_clip->used_bone_attributes, transforms, animator->bone_count, weight);
+        animator_blend_transform(animator, animator->bone_state[animator->next_frame_state_index], animator->current_clip->used_bone_attributes, transforms, animator->bone_count, weight);
         return;
     }
 
-    animator_blend_transform(animator->bone_state[animator->next_frame_state_index], animator->current_clip->used_bone_attributes, transforms, animator->bone_count, animator->blend_lerp * weight);
-    animator_blend_transform(animator->bone_state[animator->next_frame_state_index ^ 1], animator->current_clip->used_bone_attributes, transforms, animator->bone_count, (1.0f - animator->blend_lerp) * weight);
+    animator_blend_transform(animator, animator->bone_state[animator->next_frame_state_index], animator->current_clip->used_bone_attributes, transforms, animator->bone_count, animator->blend_lerp * weight);
+    animator_blend_transform(animator, animator->bone_state[animator->next_frame_state_index ^ 1], animator->current_clip->used_bone_attributes, transforms, animator->bone_count, (1.0f - animator->blend_lerp) * weight);
 }
 
 void animator_read_transform(struct animator* animator, struct Transform* transforms) {
@@ -311,6 +319,7 @@ void animator_run_clip(struct animator* animator, struct animation_clip* clip, f
     animator->current_time = start_time;
     animator->loop = loop;
     animator->done = 0;
+    animator->events = 0;
 
     animator_step(animator, 0.0f);
 }

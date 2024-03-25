@@ -20,7 +20,7 @@ def export_animations(arm: entities.armature.ArmatureData | None):
     animations = list(filter(lambda action: arm.is_action_compatible(action), bpy.data.actions))
 
     bones = arm.get_filtered_bones()
-    attributes_for_anim: list[list[entities.armature.BoneAttributes]] = []
+    attributes_for_anim: list[entities.armature.ArmatureAttributes] = []
     packed_animations: list[entities.armature.PackedAnimation] = []
 
     default_pose = arm.generate_pose_data()
@@ -38,7 +38,7 @@ def export_animations(arm: entities.armature.ArmatureData | None):
 
         for frame in range(frame_start, frame_end):
             bpy.context.scene.frame_set(frame)
-            packed_animation.add_frame(arm.generate_pose_data())
+            packed_animation.add_frame(arm.generate_pose_data(), arm.generate_event_data())
 
         attributes = packed_animation.determine_needed_channels(default_pose)
         attributes_for_anim.append(attributes)
@@ -64,12 +64,13 @@ def export_animations(arm: entities.armature.ArmatureData | None):
             frame_count = packed_anim.frame_count()
             file.write(frame_count.to_bytes(2, 'big'))
             file.write(bpy.context.scene.render.fps.to_bytes(2, 'big'))
-            file.write(entities.armature.determine_attribute_list_size(attributes_for_anim[idx]).to_bytes(2, 'big'))
+            file.write(attributes_for_anim[idx].determine_attribute_list_size().to_bytes(2, 'big'))
+            file.write(attributes_for_anim[idx].determine_used_flags().to_bytes(2, 'big'))
 
         attr_size = 0
         # write used attributes
         for attributes in attributes_for_anim:
-            for attr in attributes:
+            for attr in attributes.bone_attributes:
                 attr_bytes = attr.to_bytes()
                 file.write(attr_bytes)
                 attr_size += len(attr_bytes)

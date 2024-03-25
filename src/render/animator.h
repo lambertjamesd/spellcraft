@@ -18,6 +18,7 @@ struct animator {
     // flags
     uint16_t loop: 1;
     uint16_t done: 1;
+    uint16_t events;
 };
 
 void animator_init(struct animator* animator, int bone_count);

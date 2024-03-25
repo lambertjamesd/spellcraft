@@ -14,6 +14,11 @@ struct animation_clip_header {
     uint16_t frame_count;
     uint16_t frames_per_second;
     uint16_t frame_size;
+
+    uint16_t has_events: 1;
+    uint16_t has_frame_0: 1;
+    uint16_t has_frame_1: 1;
+    uint16_t has_prim_color: 1;
 };
 
 #define EXPECTED_HEADER 0x414E494D
@@ -75,6 +80,10 @@ struct animation_set* animation_set_load(const char* filename) {
         clip->frame_count = clip_headers[i].frame_count;
         clip->frames_per_second = clip_headers[i].frames_per_second;
         clip->frame_size = clip_headers[i].frame_size;
+        clip->has_events = clip_headers[i].has_events;
+        clip->has_frame_0 = clip_headers[i].has_frame_0;
+        clip->has_frame_1 = clip_headers[i].has_frame_1;
+        clip->has_prim_color = clip_headers[i].has_prim_color;
         clip->frames_rom_address = start_address + address_offset;
 
         clip->used_bone_attributes = attributes_buffer;

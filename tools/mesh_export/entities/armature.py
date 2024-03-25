@@ -28,6 +28,59 @@ class BoneAttributes():
 
         return result.to_bytes(1, 'big')
     
+    def determine_attribute_size(self) -> int:
+        result = 0
+
+        if self.has_pos:
+            result += 6
+        if self.has_rot:
+            result += 6
+        if self.has_scale:
+            result += 6
+
+        return result
+
+class ArmatureAttributes():
+    def __init__(self, bone_count):
+        self.bone_attributes: list[BoneAttributes] = []
+
+        for i in range(bone_count):
+            self.bone_attributes.append(BoneAttributes())
+
+        self.has_events: bool = False
+        self.has_frame_0: bool = False
+        self.has_frame_1: bool = False
+        self.has_prim_color: bool = False
+
+    def determine_attribute_list_size(self) -> int:
+        result = 0
+
+        for attr in self.bone_attributes:
+            result += attr.determine_attribute_size()
+
+        if self.has_events:
+            result += 2
+
+        return result
+    
+    def determine_used_flags(self) -> int:
+        result: int = 0
+
+        if self.has_events:
+            result |= 1 << 15
+        
+        if self.has_frame_0:
+            result |= 1 << 14
+
+        if self.has_frame_1:
+            result |= 1 << 13
+
+        if self.has_prim_color:
+            result |= 1 << 12
+
+        return result
+
+    
 class PackedArmatureData():
     def __init__(self, loc: mathutils.Vector, rot: mathutils.Quaternion, scale: mathutils.Vector):
         packed_rotation = _pack_quaternion(rot)
@@ -79,31 +132,55 @@ class PackedArmatureData():
     def __str__(self) -> str:
         return f"[{', '.join([str(entry) for entry in self._data])}]"
 
+class PackedEventData():
+    def __init__(self):
+        self.attack_event: bool = False
+
+    def pack(self):
+        result = 0
+
+        if self.attack_event:
+            result |= 1 << 0
+        
+        return result
+
+class PackedFrame():
+    def __init__(self, pose: list[PackedArmatureData], events: PackedEventData):
+        self.pose: list[PackedArmatureData] = pose
+        self.events: PackedEventData = events
+
 class PackedAnimation():
     def __init__(self):
-        self._frames: list[list[PackedArmatureData]] = []
+        self._frames: list[PackedFrame] = []
 
-    def add_frame(self, frame: list[PackedArmatureData]):
-        self._frames.append(frame)
+    def add_frame(self, frame: list[PackedArmatureData], events: PackedEventData):
+        self._frames.append(PackedFrame(frame, events))
 
     def frame_count(self):
         return len(self._frames)
 
-    def determine_needed_channels(self, default_pose: list[PackedArmatureData]) -> list[BoneAttributes]:
-        result: list[BoneAttributes] = [BoneAttributes() for _ in default_pose]
+    def determine_needed_channels(self, default_pose: list[PackedArmatureData]) -> ArmatureAttributes:
+        result: ArmatureAttributes = ArmatureAttributes(len(default_pose))
 
         for bone_idx, defualt_bone_pose in enumerate(default_pose):
-            bone_attr = result[bone_idx]
+            bone_attr = result.bone_attributes[bone_idx]
 
             for frame in self._frames:
-                frame[bone_idx].determine_needed_channels(defualt_bone_pose, bone_attr)
+                frame.pose[bone_idx].determine_needed_channels(defualt_bone_pose, bone_attr)
+
+        for frame in self._frames:
+            if frame.events.attack_event:
+                result.has_events = True
 
         return result
     
-    def write_to_file(self, file, attributes: list[BoneAttributes]):
+    def write_to_file(self, file, attributes: ArmatureAttributes):
         for frame in self._frames:
-            for bone_idx, bone_pose in enumerate(frame):
-                bone_pose.write_to_file(file, attributes[bone_idx])
+            for bone_idx, bone_pose in enumerate(frame.pose):
+                bone_pose.write_to_file(file, attributes.bone_attributes[bone_idx])
+
+            if attributes.has_events:
+                file.write(frame.events.pack().to_bytes(2, 'big'))
 
 
 class ArmatureBone:
@@ -228,56 +305,13 @@ class ArmatureData:
             result.append(PackedArmatureData(loc, rot, scale))
         return result
     
-def determine_attribute_size(attributes: BoneAttributes) -> int:
-    result = 0
+    def generate_event_data(self) -> PackedEventData:
+        result: PackedEventData = PackedEventData()
 
-    if attributes.has_pos:
-        result += 6
-    if attributes.has_rot:
-        result += 6
-    if attributes.has_scale:
-        result += 6
+        if 'event_attack' in self.obj and self.obj['event_attack']:
+            result.attack_event = True
 
-    return result
-
-def determine_attribute_list_size(attributes: list[BoneAttributes]) -> int:
-    result = 0
-
-    for attr in attributes:
-        result += determine_attribute_size(attr)
-
-    return result
-
-def determine_used_attributes(bones: list[ArmatureBone], action: bpy.types.Action) -> list[BoneAttributes]:
-    result: list[BoneAttributes] = []
-
-    for bone in bones:
-        if not bone.name in action.groups:
-            result.append(BoneAttributes())
-            continue
-
-        group = action.groups[bone.name]
-
-        attrs = BoneAttributes()
-
-        for channel in group.channels:
-            attr_name = channel.data_path.split('.')
-
-            if len(attr_name) != 3:
-                continue
-
-            if attr_name[2] == 'location':
-                attrs.has_pos = True
-
-            if attr_name[2] == 'rotation_quaternion':
-                attrs.has_rot = True
-                
-            if attr_name[2] == 'scale':
-                attrs.has_scale = True
-
-        result.append(attrs)
-
-    return result
+        return result
 
 def get_channels(group: bpy.types.ActionGroup, suffix: str) -> list[bpy.types.FCurve]:
     result = []

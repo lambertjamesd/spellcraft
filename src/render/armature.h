@@ -14,6 +14,8 @@ struct armature {
     uint16_t bone_count;
     uint8_t image_frame_0;
     uint8_t image_frame_1;
+    // frames can trigger events
+    uint16_t active_events;
 };
 
 void armature_definition_init(struct armature_definition* definition, int boune_count);
