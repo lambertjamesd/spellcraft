@@ -66,6 +66,10 @@ class BlendMode():
         
         return f"1 cycle {self.cyc1}"
     
+class Palette():
+    def __init__(self):
+        self.colors: list[Color] = []
+    
 class TexAxis():
     def __init__(self):
         self.translate = 0

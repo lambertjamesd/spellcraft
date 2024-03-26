@@ -4,14 +4,17 @@
 #include "../math/vector3.h"
 #include "../collision/dynamic_object.h"
 #include "../scene/world_definition.h"
+#include "../math/transform_single_axis.h"
+#include "../render/renderable.h"
 
 enum collectable_type {
     COLLECTABLE_TYPE_HEALTH,
 };
 
 struct collectable {
+    struct TransformSingleAxis transform;
+    struct renderable_single_axis renderable;
     enum collectable_type type;
-    struct Vector3 position;
     struct dynamic_object dynamic_object;
 };
 

@@ -19,10 +19,17 @@ struct material_tex {
     // uint16_t num_frames;
 };
 
+struct material_palette {
+    uint16_t *tlut;
+    uint16_t idx;
+    uint16_t size;
+};
+
 struct material {
     rspq_block_t* block;
     struct material_tex tex0;
     struct material_tex tex1;
+    struct material_palette palette;
     int16_t sort_priority;
 };
 

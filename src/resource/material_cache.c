@@ -17,6 +17,7 @@
 #define COMMAND_LIGHTING    0x06
 #define COMMAND_CULLING     0x07
 #define COMMAND_Z_BUFFER    0x08
+#define COMMAND_PALETTE     0x09
 
 struct text_axis {
     float translate;
@@ -233,6 +234,14 @@ void material_load(struct material* into, FILE* material_file) {
                     }
                 }
                 break;
+            case COMMAND_PALETTE:
+                {
+                    fread(&into->palette.idx, 2, 1, material_file);
+                    fread(&into->palette.size, 2, 1, material_file);
+                    into->palette.tlut = malloc(sizeof(uint16_t) * into->palette.size);
+                    rdpq_tex_upload_tlut(into->palette.tlut, into->palette.idx, into->palette.size);
+                }
+                break;
         }
     }
 
@@ -248,6 +257,8 @@ void material_release(struct material* material) {
         sprite_cache_release(material->tex0.sprite);
     }
 
+    free(material->palette.tlut);
+    material->palette.tlut = 0;
     material_free(material);
 }
 

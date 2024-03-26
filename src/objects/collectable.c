@@ -5,7 +5,7 @@
 #include "../render/render_scene.h"
 #include "../resource/material_cache.h"
 
-#define COLLECTABLE_RADIUS  0.25f
+#define COLLECTABLE_RADIUS  0.5f
 
 static struct dynamic_object_type collectable_collision = {
     .minkowsi_sum = dynamic_object_sphere_minkowski_sum,
@@ -27,17 +27,6 @@ static struct hash_map collectable_hash_map;
 
 struct collectable_assets collectable_assets;
 
-void collectable_render(struct collectable* collectable, struct render_batch* batch) {
-    struct render_batch_billboard_element* element = render_batch_add_particles(batch, collectable_assets.collectable_test, 1);
-
-    element->sprites->position = collectable->position;
-    element->sprites->radius = COLLECTABLE_RADIUS;
-    element->sprites->color.r = 255;
-    element->sprites->color.g = 255;
-    element->sprites->color.b = 255;
-    element->sprites->color.a = 255;
-}
-
 void collectable_assets_load() {
     collectable_assets.collectable_test = material_cache_load("rom:/materials/objects/collectable.mat");
 
@@ -46,18 +35,23 @@ void collectable_assets_load() {
 
 void collectable_init(struct collectable* collectable, struct collectable_definition* definition) {
     collectable->type = COLLECTABLE_TYPE_HEALTH;
-    collectable->position = definition->position;
+    collectable->transform.position = definition->position;
+    collectable->transform.rotation = gRight2;
     
     dynamic_object_init(
         entity_id_new(), 
         &collectable->dynamic_object, 
         &collectable_collision, 
         COLLISION_LAYER_TANGIBLE,
-        &collectable->position, 
+        &collectable->transform.position, 
         0
     );
+
+    collectable->dynamic_object.center.y = COLLECTABLE_RADIUS;
+
     collision_scene_add(&collectable->dynamic_object);
-    render_scene_add(&r_scene_3d, &collectable->position, 0.2f, (render_scene_callback)collectable_render, collectable);
+    renderable_single_axis_init(&collectable->renderable, &collectable->transform, "rom:/meshes/objects/pickups/heart.mesh");
+    render_scene_add_renderable_single_axis(&r_scene_3d, &collectable->renderable, 0.2f);
     
     hash_map_set(&collectable_hash_map, collectable->dynamic_object.entity_id, collectable);
 }
@@ -68,7 +62,8 @@ void collectable_collected(struct collectable* collectable) {
 
 void collectable_destroy(struct collectable* collectable) {
     collision_scene_remove(&collectable->dynamic_object);
-    render_scene_remove(&r_scene_3d, collectable);
+    render_scene_remove(&r_scene_3d, &collectable->renderable);
+    renderable_single_axis_destroy(&collectable->renderable);
     hash_map_delete(&collectable_hash_map, collectable->dynamic_object.entity_id);
 }
 
