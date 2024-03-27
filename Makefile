@@ -7,6 +7,21 @@ all: spellcraft.z64
 .PHONY: all
 
 ###
+# fonts
+###
+
+FONT_SOURCES := $(shell find assets/ -type f -name '*.ttf' | sort)
+
+FONTS := $(FONT_SOURCES:assets/%.ttf=filesystem/%.font64)
+
+MKFONT_FLAGS ?=
+
+filesystem/%.font64: assets/%.ttf
+	@mkdir -p $(dir $@)
+	@echo "    [FONT] $@"
+	@$(N64_MKFONT) $(MKFONT_FLAGS) -o $(dir $@) "$<"
+
+###
 # images
 ###
 
@@ -82,9 +97,9 @@ SOURCES := $(shell find src/ -type f -name '*.c' | sort)
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
 
-filesystem/: $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS)
+filesystem/: $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS) $(FONTS)
 
-$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS)
+$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS) $(FONTS)
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"

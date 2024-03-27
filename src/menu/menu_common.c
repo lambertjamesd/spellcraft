@@ -5,13 +5,16 @@
 static struct material* menu_background_material;
 static struct material* menu_border_material;
 
+struct material* menu_icons_material;
+
 void menu_common_init() {
     menu_background_material = material_cache_load("rom:/materials/menu/menu_corner.mat");
     menu_border_material = material_cache_load("rom:/materials/menu/menu_border.mat");
+    menu_icons_material = material_cache_load("rom:/materials/menu/menu_icons.mat");
 }
 
 void menu_common_render_background(int x, int y, int w, int h) {
-    rspq_block_run(menu_background_material->block);
+    rspq_block_run(menu_border_material->block);
 
     rdpq_texture_rectangle(
         TILE0,

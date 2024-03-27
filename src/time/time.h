@@ -7,8 +7,10 @@ typedef void (*update_callback)(void* data);
 
 typedef int update_id;
 
-#define UPDATE_LAYER_WORLD  (1 << 0)
-#define UPDATE_LAYER_MENU   (1 << 1)
+#define UPDATE_LAYER_WORLD          (1 << 0)
+#define UPDATE_LAYER_PLAYER         (1 << 1)
+#define UPDATE_LAYER_DIALOG         (1 << 2)
+#define UPDATE_LAYER_PAUSE_MENU     (1 << 3)
 
 #define UPDATE_PRIORITY_PLAYER  0
 #define UPDATE_PRIORITY_SPELLS  1

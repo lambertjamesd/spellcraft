@@ -5,6 +5,8 @@
 #include "../render/render_scene.h"
 #include "../resource/material_cache.h"
 
+#include "../menu/dialog_box.h"
+
 #define COLLECTABLE_RADIUS  0.5f
 
 static struct dynamic_object_type collectable_collision = {
@@ -58,6 +60,12 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
 
 void collectable_collected(struct collectable* collectable) {
     collectable_destroy(collectable);
+
+    dialog_box_show(&g_dialog_box, 
+        "You got a heart\n\n"
+        "Now if I only had a brain",
+        NULL, NULL
+    );
 }
 
 void collectable_destroy(struct collectable* collectable) {

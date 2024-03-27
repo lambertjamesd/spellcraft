@@ -18,6 +18,7 @@
 #include "menu/spell_building_menu.h"
 #include "menu/menu_common.h"
 #include "objects/collectable.h"
+#include "menu/dialog_box.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -55,6 +56,7 @@ void setup() {
     menu_common_init();
     menu_reset();
     collectable_assets_load();
+    dialog_box_init(&g_dialog_box);
     current_world = world_load("rom:/worlds/test.world");
 
     struct crate_definition def;
@@ -146,13 +148,13 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    for (;;) {
-        joypad_poll();
+    // for (;;) {
+    //     joypad_poll();
 
-        if (joypad_get_buttons_pressed(0).start) {
-            break;
-        }
-    }
+    //     if (joypad_get_buttons_pressed(0).start) {
+    //         break;
+    //     }
+    // }
 
     setup();
 

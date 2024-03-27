@@ -141,7 +141,7 @@ void spell_building_menu_destroy(struct spell_building_menu* menu) {
 
 void spell_building_menu_show(struct spell_building_menu* menu, struct spell* spell) {
     menu_add_callback((menu_render_callback)spell_building_menu_menu, menu, 0);
-    update_add(menu, (update_callback)spell_building_menu_update, 0, UPDATE_LAYER_MENU);
+    update_add(menu, (update_callback)spell_building_menu_update, 0, UPDATE_LAYER_PAUSE_MENU);
 
     for (int row = 0; row < SPELL_MAX_ROWS; ++row) {
         for (int col = 0; col < SPELL_MAX_COLS; ++col) {
