@@ -9,6 +9,7 @@
 #include "../player/player.h"
 #include "../player/inventory.h"
 #include "../menu/pause_menu.h"
+#include "../menu/hud.h"
 #include "camera_controller.h"
 
 typedef void(*entity_init)(void* entity, void* definition);
@@ -49,6 +50,7 @@ struct world {
 
     struct inventory inventory;
     struct pause_menu pause_menu;
+    struct hud hud;
     
     struct entity_data* entity_data;
     uint16_t entity_data_count;

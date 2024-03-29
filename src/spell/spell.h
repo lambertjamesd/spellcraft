@@ -20,6 +20,13 @@ enum spell_symbol_type {
     SPELL_SYBMOL_COUNT,
 };
 
+enum spell_icon {
+    SPELL_ICON_FIRE,
+    SPELL_ICON_DASH,
+    
+    SPELL_ICON_COUNT,
+};
+
 struct spell_symbol {
     uint8_t reserved: 4;
     uint8_t type: 4;
@@ -29,6 +36,7 @@ struct spell {
     struct spell_symbol* symbols;
     uint8_t cols;
     uint8_t rows;
+    uint8_t symbol_index;
 };
 
 void spell_init(struct spell* spell, uint8_t cols, uint8_t rows);

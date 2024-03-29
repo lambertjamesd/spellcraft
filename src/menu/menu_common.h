@@ -2,8 +2,10 @@
 #define __MENU_MENU_COMMON_H__
 
 #include "../render/material.h"
+#include "../spell/spell.h"
 
 extern struct material* menu_icons_material;
+extern struct material* menu_spell_icons[SPELL_ICON_COUNT];
 
 void menu_common_init();
 

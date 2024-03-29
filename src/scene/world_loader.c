@@ -80,6 +80,7 @@ struct world* world_load(const char* filename) {
     camera_controller_init(&world->camera_controller, &world->camera, &world->player);
 
     pause_menu_init(&world->pause_menu, &world->inventory);
+    hud_init(&world->hud, &world->inventory);
 
     uint16_t static_count;
     fread(&static_count, 2, 1, file);

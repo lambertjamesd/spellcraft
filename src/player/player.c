@@ -118,7 +118,7 @@ void player_update(struct player* player) {
 
     quatMultVector(&player->transform.rotation, &gForward, &player->player_spell_source.direction);
     player->player_spell_source.position = player->transform.position;
-    player->player_spell_source.position.y += 0.5f;
+    player->player_spell_source.position.y += 1.0f;
     player->player_spell_source.flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
 
     if (pressed.a) {
