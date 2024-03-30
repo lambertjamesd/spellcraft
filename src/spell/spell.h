@@ -23,6 +23,13 @@ enum spell_symbol_type {
 enum spell_icon {
     SPELL_ICON_FIRE,
     SPELL_ICON_DASH,
+
+    SPELL_ICON_CUSTOM_0,
+    SPELL_ICON_CUSTOM_1,
+    SPELL_ICON_CUSTOM_2,
+    SPELL_ICON_CUSTOM_3,
+    SPELL_ICON_CUSTOM_4,
+    SPELL_ICON_CUSTOM_5,
     
     SPELL_ICON_COUNT,
 };
@@ -39,7 +46,7 @@ struct spell {
     uint8_t symbol_index;
 };
 
-void spell_init(struct spell* spell, uint8_t cols, uint8_t rows);
+void spell_init(struct spell* spell, uint8_t cols, uint8_t rows, int icon);
 void spell_destroy(struct spell* spell);
 
 struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row);

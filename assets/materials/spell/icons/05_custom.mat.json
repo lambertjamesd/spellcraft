@@ -1,0 +1,19 @@
+{
+    "tex0": {
+        "filename": "../../../images/spell/icons/05_custom.png",
+        "s": {
+            "repeats": 0,
+            "mirror": false
+        },
+        "t": {
+            "repeats": 0,
+            "mirror": false
+        }
+    },
+    "combineMode": [{
+        "color": ["0", "0", "0", "PRIM"],
+        "alpha": ["TEX0", "0", "PRIM", "0"]
+    }],
+    "primColor": [248, 0, 114, 255],
+    "blendMode": "TRANSPARENT"
+}

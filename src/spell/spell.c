@@ -2,12 +2,13 @@
 
 #include <malloc.h>
 
-void spell_init(struct spell* spell, uint8_t cols, uint8_t rows) {
+void spell_init(struct spell* spell, uint8_t cols, uint8_t rows, int icon) {
     int cell_count = cols * rows;
 
     spell->symbols = malloc(sizeof(struct spell_symbol) * cell_count);
     spell->rows = rows;
     spell->cols = cols;
+    spell->symbol_index = icon;
 
     struct spell_symbol* curr = spell->symbols;
 

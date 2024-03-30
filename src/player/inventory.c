@@ -37,7 +37,7 @@ void inventory_init(struct inventory* inventory) {
     inventory->spell_slots[0] = &flame_spell;
 
     for (int i = 0; i < MAX_CUSTOM_SPELLS; i += 1) {
-        spell_init(&inventory->custom_spells[i], SPELL_MAX_COLS, SPELL_MAX_ROWS);
+        spell_init(&inventory->custom_spells[i], SPELL_MAX_COLS, SPELL_MAX_ROWS, SPELL_ICON_CUSTOM_0 + i);
     }
 }
 

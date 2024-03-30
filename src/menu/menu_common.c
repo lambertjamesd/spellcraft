@@ -14,6 +14,14 @@ struct material* spell_cursor_material;
 static char* menu_spell_icon_filename[SPELL_ICON_COUNT] = {
     "rom:/materials/spell/icons/00_fire.mat",
     "rom:/materials/spell/icons/01_dash.mat",
+
+    "rom:/materials/spell/icons/00_custom.mat",
+    "rom:/materials/spell/icons/01_custom.mat",
+    "rom:/materials/spell/icons/02_custom.mat",
+    "rom:/materials/spell/icons/03_custom.mat",
+    "rom:/materials/spell/icons/04_custom.mat",
+    "rom:/materials/spell/icons/05_custom.mat",
+
 };
 
 void menu_common_init() {

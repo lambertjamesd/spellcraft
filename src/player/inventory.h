@@ -5,7 +5,7 @@
 
 #define MAX_SPELL_SLOTS 4
 
-#define MAX_CUSTOM_SPELLS   8
+#define MAX_CUSTOM_SPELLS   6
 
 #define INVENTORY_SPELL_COLUMNS   6
 #define INVENTORY_SPELL_ROWS      3

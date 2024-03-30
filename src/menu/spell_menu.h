@@ -17,7 +17,7 @@ void spell_menu_destroy(struct spell_menu* spell_menu);
 void spell_menu_show(struct spell_menu* spell_menu);
 void spell_menu_hide(struct spell_menu* spell_menu);
 
-void spell_menu_update(struct spell_menu* spell_menu);
+struct spell* spell_menu_update(struct spell_menu* spell_menu);
 void spell_menu_render(struct spell_menu* spell_menu);
 
 #endif

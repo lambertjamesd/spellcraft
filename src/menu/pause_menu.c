@@ -68,9 +68,15 @@ void pause_menu_update(struct pause_menu* pause_menu) {
             case ACTIVE_MENU_SPELL_BUILDING:
                 spell_building_menu_update(&pause_menu->spell_building_menu);
                 break;
-            case ACTIVE_MENU_SPELLS:
-                spell_menu_update(&pause_menu->spell_menu);
+            case ACTIVE_MENU_SPELLS: {
+                struct spell* edit_spell = spell_menu_update(&pause_menu->spell_menu);
+
+                if (edit_spell) {
+                    pause_menu_transition(pause_menu, ACTIVE_MENU_SPELL_BUILDING, edit_spell);
+                }
+
                 break;
+            }
             default:
                 break;
         }

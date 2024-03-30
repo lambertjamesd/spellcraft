@@ -22,9 +22,15 @@ void spell_menu_hide(struct spell_menu* spell_menu) {
 }
 
 void spell_menu_assign_slot(struct spell_menu* menu, int slot) {
-    struct spell* selected_spell = menu->inventory->built_in_spells[
-        menu->cursor_y * INVENTORY_SPELL_COLUMNS + menu->cursor_x
-    ];
+    struct spell* selected_spell;
+    
+    if (menu->cursor_y == 3) {
+        selected_spell = &menu->inventory->custom_spells[menu->cursor_x];
+    } else {
+        selected_spell = menu->inventory->built_in_spells[
+            menu->cursor_y * INVENTORY_SPELL_COLUMNS + menu->cursor_x
+        ];
+    }
 
     if (!selected_spell) {
         return;
@@ -45,7 +51,7 @@ void spell_menu_assign_slot(struct spell_menu* menu, int slot) {
     menu->inventory->spell_slots[slot] = selected_spell;
 }
 
-void spell_menu_update(struct spell_menu* spell_menu) {
+struct spell* spell_menu_update(struct spell_menu* spell_menu) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
     if (pressed.c_up) {
@@ -64,6 +70,10 @@ void spell_menu_update(struct spell_menu* spell_menu) {
         spell_menu_assign_slot(spell_menu, 3);
     }
 
+    if (pressed.a && spell_menu->cursor_y == 3) {
+        return &spell_menu->inventory->custom_spells[spell_menu->cursor_x];
+    }
+
     int direction = joypad_get_axis_pressed(0, JOYPAD_AXIS_STICK_X);
 
     if (direction > 0 && spell_menu->cursor_x + 1 < INVENTORY_SPELL_COLUMNS) {
@@ -73,7 +83,22 @@ void spell_menu_update(struct spell_menu* spell_menu) {
     if (direction < 0 && spell_menu->cursor_x > 0) {
         spell_menu->cursor_x -= 1;
     }
+
+    direction = joypad_get_axis_pressed(0, JOYPAD_AXIS_STICK_Y);
+
+    if (direction < 0 && spell_menu->cursor_y + 1 <= INVENTORY_SPELL_ROWS) {
+        spell_menu->cursor_y += 1;
+    }
+
+    if (direction > 0 && spell_menu->cursor_y > 0) {
+        spell_menu->cursor_y -= 1;
+    }
+
+    return NULL;
 }
+
+#define SPELL_SYMBOL_X(x) ((x) * 32 + 28)
+#define SPELL_SYMBOL_Y(y) ((y) * 32 + 28 + 32)
 
 void spell_menu_render(struct spell_menu* spell_menu) {
     menu_common_render_background(20, 20, 200, 200);
@@ -87,8 +112,8 @@ void spell_menu_render(struct spell_menu* spell_menu) {
             if (spell) {
                 rspq_block_run(menu_spell_icons[spell->symbol_index]->block);
 
-                int x = col * 32 + 28;
-                int y = row * 32 + 28 + 32;
+                int x = SPELL_SYMBOL_X(col);
+                int y = SPELL_SYMBOL_Y(row);
 
                 rdpq_texture_rectangle(
                     TILE0,
@@ -104,8 +129,8 @@ void spell_menu_render(struct spell_menu* spell_menu) {
 
     rspq_block_run(spell_cursor_material->block);
 
-    int x = spell_menu->cursor_x * 32 + 28;
-    int y = spell_menu->cursor_y * 32 + 28 + 32;
+    int x = SPELL_SYMBOL_X(spell_menu->cursor_x);
+    int y = SPELL_SYMBOL_Y(spell_menu->cursor_y == 3 ? spell_menu->cursor_y + 1 : spell_menu->cursor_y);
 
     rdpq_texture_rectangle(
         TILE0,
@@ -113,4 +138,18 @@ void spell_menu_render(struct spell_menu* spell_menu) {
         x + 24, y + 24,
         0, 0
     );
+
+    for (int i = 0; i < 6; i += 1) {
+        rspq_block_run(menu_spell_icons[i + SPELL_ICON_CUSTOM_0]->block);
+
+        int x = SPELL_SYMBOL_X(i);
+        int y = SPELL_SYMBOL_Y(4);
+
+        rdpq_texture_rectangle(
+            TILE0,
+            x, y,
+            x + 24, y + 24,
+            0, 0
+        );
+    }
 }
