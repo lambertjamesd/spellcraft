@@ -69,6 +69,21 @@ struct animation_clip* player_determine_animation(struct player* player, float* 
     return player->animations.run;
 }
 
+bool player_cast_state(joypad_buttons_t buttons, int button_index) {
+    switch (button_index) {
+        case 0:
+            return buttons.c_up;
+        case 1:
+            return buttons.c_down;
+        case 2:
+            return buttons.c_down;
+        case 3:
+            return buttons.c_down;
+        default: 
+            return false;
+    }
+}
+
 void player_update(struct player* player) {
     struct Vector3 right;
     struct Vector3 forward;
@@ -116,13 +131,20 @@ void player_update(struct player* player) {
 
     quatAxisComplex(&gUp, &player->look_direction, &player->transform.rotation);
 
-    quatMultVector(&player->transform.rotation, &gForward, &player->player_spell_source.direction);
-    player->player_spell_source.position = player->transform.position;
-    player->player_spell_source.position.y += 1.0f;
-    player->player_spell_source.flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+    struct Vector3 castDirection;
+    quatMultVector(&player->transform.rotation, &gForward, &castDirection);
 
-    if (pressed.a) {
-        spell_exec_start(&player->spell_exec, 0, &player->inventory->custom_spells[0], &player->player_spell_source);
+    for (int i = 0; i < PLAYER_CAST_SOURCE_COUNT; i += 1) {
+        struct spell_data_source* source = &player->player_spell_sources[i];
+
+        source->direction = castDirection;
+        source->position = player->transform.position;
+        source->position.y += 1.0f;
+        source->flags.cast_state = player_cast_state(input.btn, i) ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+
+        if (player_cast_state(pressed, i) && player->inventory->spell_slots[i]) {
+            spell_exec_start(&player->spell_exec, 0, player->inventory->spell_slots[i], source);
+        }
     }
 
     struct contact* contact = player->collision.active_contacts;
@@ -171,9 +193,13 @@ void player_init(struct player* player, struct Transform* camera_transform, stru
 
     spell_exec_init(&player->spell_exec);
 
-    player->player_spell_source.flags.all = 0;
-    player->player_spell_source.reference_count = 1;
-    player->player_spell_source.target = entity_id;
+    for (int i = 0; i < PLAYER_CAST_SOURCE_COUNT; i += 1) {
+        struct spell_data_source* source = &player->player_spell_sources[i];
+
+        source->flags.all = 0;
+        source->reference_count = 1;
+        source->target = entity_id;
+    }
 
     player->animation_set = animation_cache_load("rom:/meshes/characters/apprentice.anim");
     player->animations.attack = animation_set_find_clip(player->animation_set, "attack1");

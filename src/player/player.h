@@ -15,6 +15,8 @@
 
 #include "inventory.h"
 
+#define PLAYER_CAST_SOURCE_COUNT    4
+
 struct player_animations {
     struct animation_clip* idle;
     struct animation_clip* run;
@@ -28,7 +30,7 @@ struct player {
     struct Vector2 look_direction;
     struct dynamic_object collision;
 
-    struct spell_data_source player_spell_source;
+    struct spell_data_source player_spell_sources[PLAYER_CAST_SOURCE_COUNT];
     
     struct spell_exec spell_exec;
 
