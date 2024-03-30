@@ -7,13 +7,13 @@
 
 #define MAX_CUSTOM_SPELLS   8
 
-#define SPELL_COLUMNS   6
-#define SPELL_ROWS      3
+#define INVENTORY_SPELL_COLUMNS   6
+#define INVENTORY_SPELL_ROWS      3
 
 struct inventory {
     struct spell* spell_slots[MAX_SPELL_SLOTS];
 
-    struct spell* built_in_spells[SPELL_COLUMNS * SPELL_ROWS];
+    struct spell* built_in_spells[INVENTORY_SPELL_COLUMNS * INVENTORY_SPELL_ROWS];
 
     struct spell custom_spells[MAX_CUSTOM_SPELLS];
 };

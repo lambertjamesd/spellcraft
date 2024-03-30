@@ -5,7 +5,7 @@
 #include "menu_common.h"
 
 #define SPELL_SLOT_LOCATION_X   232
-#define SPELL_SLOT_LOCATION_Y   154
+#define SPELL_SLOT_LOCATION_Y   152
 
 #define SPELL_SLOT_OFFSET       18
 
@@ -61,6 +61,24 @@ void hud_render(void *data) {
         hud->inventory->spell_slots[0], 
         SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
         SPELL_SLOT_LOCATION_Y + 4
+    );
+
+    hud_render_spell_icon(
+        hud->inventory->spell_slots[1], 
+        SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
+        SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET * 2 + 4
+    );
+
+    hud_render_spell_icon(
+        hud->inventory->spell_slots[2], 
+        SPELL_SLOT_LOCATION_X + 4,
+        SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
+    );
+
+    hud_render_spell_icon(
+        hud->inventory->spell_slots[3], 
+        SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET * 2 + 4,
+        SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
     );
 }
 

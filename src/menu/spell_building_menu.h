@@ -21,6 +21,10 @@ void spell_building_menu_init(struct spell_building_menu* menu);
 void spell_building_menu_destroy(struct spell_building_menu* menu);
 
 void spell_building_menu_show(struct spell_building_menu* menu, struct spell* spell);
-void spell_buliding_menu_hide(struct spell_building_menu* menu);
+void spell_building_menu_hide(struct spell_building_menu* menu);
+
+void spell_building_menu_update(struct spell_building_menu* menu);
+void spell_building_render_menu(struct spell_building_menu* menu);
+
 
 #endif

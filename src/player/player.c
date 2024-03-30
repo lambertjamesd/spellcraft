@@ -76,9 +76,9 @@ bool player_cast_state(joypad_buttons_t buttons, int button_index) {
         case 1:
             return buttons.c_down;
         case 2:
-            return buttons.c_down;
+            return buttons.c_left;
         case 3:
-            return buttons.c_down;
+            return buttons.c_right;
         default: 
             return false;
     }

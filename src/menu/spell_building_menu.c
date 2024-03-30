@@ -8,9 +8,8 @@
 #include "../time/time.h"
 
 static struct material* spell_symbol_material;
-static struct material* spell_cursor_material;
 
-void spell_building_menu_menu(struct spell_building_menu* menu) {
+void spell_building_render_menu(struct spell_building_menu* menu) {
     menu_common_render_background(32, 32, 256, 96);
 
     menu_common_render_background(32, 134, 256, 74);
@@ -131,18 +130,13 @@ void spell_building_menu_update(struct spell_building_menu* menu) {
 
 void spell_building_menu_init(struct spell_building_menu* menu) {
     spell_symbol_material = material_cache_load("rom:/materials/spell/symbols.mat");
-    spell_cursor_material = material_cache_load("rom:/materials/menu/menu_cursor.mat");
 }
 
 void spell_building_menu_destroy(struct spell_building_menu* menu) {
     material_cache_release(spell_symbol_material);
-    material_cache_release(spell_cursor_material);
 }
 
 void spell_building_menu_show(struct spell_building_menu* menu, struct spell* spell) {
-    menu_add_callback((menu_render_callback)spell_building_menu_menu, menu, 0);
-    update_add(menu, (update_callback)spell_building_menu_update, 0, UPDATE_LAYER_PAUSE_MENU);
-
     for (int row = 0; row < SPELL_MAX_ROWS; ++row) {
         for (int col = 0; col < SPELL_MAX_COLS; ++col) {
             menu->symbol_grid[row][col] = spell_get_symbol(spell, col, row);
@@ -152,10 +146,7 @@ void spell_building_menu_show(struct spell_building_menu* menu, struct spell* sp
     menu->current_spell = spell;
 }
 
-void spell_buliding_menu_hide(struct spell_building_menu* menu) {
-    menu_remove_callback(menu);
-    update_remove(menu);
-
+void spell_building_menu_hide(struct spell_building_menu* menu) {
     for (int row = 0; row < SPELL_MAX_ROWS; ++row) {
         for (int col = 0; col < SPELL_MAX_COLS; ++col) {
             spell_set_symbol(menu->current_spell, col, row, menu->symbol_grid[row][col]);

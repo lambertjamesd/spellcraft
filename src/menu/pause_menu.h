@@ -3,11 +3,19 @@
 
 #include "../player/inventory.h"
 #include "spell_building_menu.h"
+#include "spell_menu.h"
+
+enum active_menu {
+    ACTIVE_MENU_NONE,
+    ACTIVE_MENU_SPELLS,
+    ACTIVE_MENU_SPELL_BUILDING,
+};
 
 struct pause_menu {
     struct inventory* inventory;
-    struct spell_building_menu spell_menu;
-    uint16_t is_open: 1;
+    struct spell_building_menu spell_building_menu;
+    struct spell_menu spell_menu;
+    enum active_menu active_menu;
 };
 
 void pause_menu_init(struct pause_menu* pause_menu, struct inventory* inventory);
