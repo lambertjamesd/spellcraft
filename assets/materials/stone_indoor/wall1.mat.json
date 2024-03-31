@@ -1,0 +1,18 @@
+{
+    "tex0": {
+        "filename": "../../images/stone_indoor/wall1.png",
+        "s": {
+            "mirror": true
+        },
+        "t": {
+            "mirror": true
+        }
+    },
+    "combineMode": [{
+        "color": ["TEX0", "0", "SHADE", "0"],
+        "alpha": ["0", "0", "0", "1"]
+    }],
+    "blendMode": "OPAQUE",
+    "lighting": false,
+    "zBuffer": true
+}

@@ -58,7 +58,7 @@ void world_load_entity(struct world* world, struct entity_data* entity_data, FIL
     fread(entity_def_data, definition_size, entity_data->entity_count, file);
 
     for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
-        def->init(entity, entity_def_data);
+        def->init(entity, entity_def);
 
         entity += def->entity_size;
         entity_def += def->definition_size;

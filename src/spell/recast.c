@@ -44,6 +44,8 @@ void recast_update_end_cast(struct recast* recast, struct spell_event_listener* 
     recast->output->position = recast->original_source->position;
     recast->output->direction = recast->original_source->direction;
     recast->output->flags = recast->original_source->flags;
+    // recast consumes this flag
+    recast->output->flags.reversed = 0;
     recast->output->flags.cast_state = SPELL_CAST_STATE_ACTIVE;
     recast->output->target = recast->original_source->target;
     

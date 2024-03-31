@@ -32,7 +32,6 @@
 #define RDPQ_VALIDATE_DETACH_ADDR    0x00800000
 
 struct world* current_world;
-struct crate crate_test;
 struct collectable collectable_test;
 
 struct spell_symbol test_spell_symbols[] = {
@@ -65,8 +64,6 @@ void setup() {
     def.position.y = 1.0f;
     def.position.z = 0.0f;
     def.rotation = gRight2;
-
-    crate_init(&crate_test, &def);
 
     struct collectable_definition collect_def;
     collect_def.position.x = 4.0f;
