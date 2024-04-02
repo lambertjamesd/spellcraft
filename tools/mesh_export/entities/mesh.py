@@ -145,7 +145,7 @@ def find_node_of_type(tree_nodes: bpy.types.Nodes, type_name: str):
     return None
 
 def color_float_to_int(value):
-    result = int(value * 255)
+    result = round(value * 255)
 
     if result > 255:
         result = 255
@@ -286,7 +286,7 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
 
     
 def convert_vertex_channel(input, gamma):
-    result = int(255 * math.pow(input, gamma))
+    result = round(255 * math.pow(input, gamma))
 
     if result > 255:
         return 255
@@ -362,9 +362,9 @@ def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
         for idx, vertex in enumerate(mesh.vertices):
             file.write(struct.pack(
                 ">hhh", 
-                int(vertex[0] * 32), 
-                int(vertex[1] * 32), 
-                int(vertex[2] * 32)
+                round(vertex[0] * 32), 
+                round(vertex[1] * 32), 
+                round(vertex[2] * 32)
             ))
 
             if needs_uv:
@@ -372,8 +372,8 @@ def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
 
                 file.write(struct.pack(
                     ">hh",
-                    int(uv[0] * 256),
-                    int((1 - uv[1]) * 256)
+                    round(uv[0] * 256),
+                    round((1 - uv[1]) * 256)
                 ))
 
             if needs_color:
@@ -392,9 +392,9 @@ def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
 
                 file.write(struct.pack(
                     ">bbb", 
-                    int(normal[0] * 127), 
-                    int(normal[1] * 127), 
-                    int(normal[2] * 127)
+                    round(normal[0] * 127), 
+                    round(normal[1] * 127), 
+                    round(normal[2] * 127)
                 ))
 
             if armature:
@@ -411,7 +411,7 @@ def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
             file.write(index.to_bytes(index_size, 'big'))
 
 def _pack_position(input: float) -> int:
-    return int(input * 256)
+    return round(input * 256)
 
 def _write_packed_quaternion(file, input: mathutils.Quaternion):
     if input.w < 0:
@@ -421,9 +421,9 @@ def _write_packed_quaternion(file, input: mathutils.Quaternion):
 
     file.write(struct.pack(
         ">hhh",
-        int(32767 * final_input.x),
-        int(32767 * final_input.y),
-        int(32767 * final_input.z)
+        round(32767 * final_input.x),
+        round(32767 * final_input.y),
+        round(32767 * final_input.z)
     ))
 
 def _write_armature(file, arm: armature.ArmatureData | None):

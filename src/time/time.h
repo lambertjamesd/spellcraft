@@ -28,5 +28,6 @@ bool update_has_layer(int mask);
 void update_dispatch();
 
 extern float fixed_time_step;
+extern float total_time;
 
 #endif

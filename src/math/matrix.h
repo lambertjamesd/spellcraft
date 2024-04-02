@@ -16,4 +16,6 @@ void matrixMul(float a[4][4], float b[4][4], float output[4][4]);
 
 void matrixFromBasis(float matrix[4][4], struct Vector3* origin, struct Vector3* x, struct Vector3* y, struct Vector3* z);
 
+void matrixFromPosition(float matrix[4][4], struct Vector3* position);
+
 #endif

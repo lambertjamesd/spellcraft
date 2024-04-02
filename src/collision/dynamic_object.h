@@ -48,6 +48,7 @@ struct dynamic_object {
     float time_scalar;
     uint16_t has_gravity: 1;
     uint16_t is_trigger: 1;
+    uint16_t is_fixed: 1;
     uint16_t collision_layers;
     struct contact* active_contacts;
 };

@@ -35,6 +35,8 @@ struct_formats = {
 coordinate_convert = mathutils.Matrix.Rotation(math.pi * 0.5, 4, 'X')
 coordinate_convert_invert = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
 
+
+
 def get_transform(obj: bpy.types.Object) -> mathutils.Matrix:
     return coordinate_convert_invert @ obj.matrix_world @ coordinate_convert
 
@@ -54,7 +56,22 @@ def write_obj(file, obj: bpy.types.Object, definition, field_name = None):
 
                 file.write(struct.pack(">ff", final_right.x, final_right.z))
                 return
+        if definition == 'float':
+            value = obj[field_name] if field_name in obj else 0
+            file.write(struct.pack(">f", value))
+            return
+        if definition in struct_formats:
+            value = obj[field_name] if field_name in obj else 0
 
+            if value == True:
+                value = 1
+
+            if value == False:
+                value = 0
+
+            file.write(struct.pack(">" + struct_formats[definition], value))
+            return
+            
          
         raise Exception(f"unknown field type {definition} {field_name}")
     

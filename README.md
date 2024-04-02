@@ -11,3 +11,5 @@ A new original N64 game
 - build out enemy
 - flesh out spell casting
 -  camera and controls during remote control spell
+- spells
+-  fire push modifier

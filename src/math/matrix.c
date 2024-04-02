@@ -63,6 +63,28 @@ void matrixFromBasis(float matrix[4][4], struct Vector3* origin, struct Vector3*
     matrix[3][3] = 1.0f;
 }
 
+void matrixFromPosition(float matrix[4][4], struct Vector3* position) {
+    matrix[0][0] = 1.0f;
+    matrix[0][1] = 0.0f;
+    matrix[0][2] = 0.0f;
+    matrix[0][3] = 0.0f;
+
+    matrix[1][0] = 0.0f;
+    matrix[1][1] = 1.0f;
+    matrix[1][2] = 0.0f;
+    matrix[1][3] = 0.0f;
+
+    matrix[2][0] = 0.0f;
+    matrix[2][1] = 0.0f;
+    matrix[2][2] = 1.0f;
+    matrix[2][3] = 0.0f;
+
+    matrix[3][0] = position->x;
+    matrix[3][1] = position->y;
+    matrix[3][2] = position->z;
+    matrix[3][3] = 1.0f;
+}
+
 void matrixMul(float a[4][4], float b[4][4], float output[4][4]) {
     for (int x = 0; x < 4; ++x) {
         for (int y = 0; y < 4; ++y) {

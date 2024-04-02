@@ -325,7 +325,7 @@ def get_channels(group: bpy.types.ActionGroup, suffix: str) -> list[bpy.types.FC
     return result
 
 def _pack_position(input: float) -> int:
-    return int(input * 256 + 0.5)
+    return round(input * 256)
 
 def _pack_quaternion(input: mathutils.Quaternion):
     if input.w < 0:
@@ -334,7 +334,7 @@ def _pack_quaternion(input: mathutils.Quaternion):
         final_input = input
 
     return [
-        int(32767 * final_input.x + 0.5),
-        int(32767 * final_input.y + 0.5),
-        int(32767 * final_input.z + 0.5)
+        round(32767 * final_input.x),
+        round(32767 * final_input.y),
+        round(32767 * final_input.z)
     ]

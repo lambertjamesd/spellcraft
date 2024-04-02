@@ -1,6 +1,7 @@
 #include "render_batch.h"
 
 #include "../util/sort.h"
+#include "../time/time.h"
 
 void render_batch_init(struct render_batch* batch) {
     batch->element_count = 0;

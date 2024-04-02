@@ -388,6 +388,12 @@ def _parse_blend_mode(result: Material, json_data):
         result.blend_mode.alpha_compare = 'THRESHOLD'
         result.blend_color = Color(0, 0, 0, 128)
         return
+    
+    if blend_mode == 'ADD':
+        result.blend_mode = BlendMode(BlendModeCycle("IN", "IN_A", "MEMORY", "1"), None)
+        result.blend_mode.z_write = False
+        result.blend_mode.z_mode = 'TRANSPARENT'
+        return
 
     if not 'cyc1' in blend_mode:
         raise Exception(f"blendMode must have at least 1 cycle")

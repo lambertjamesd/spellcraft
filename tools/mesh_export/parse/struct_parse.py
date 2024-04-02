@@ -136,7 +136,7 @@ def determine_source_location(source: str, offset: int):
     return (line, col)
 
 def get_line_start(source: str, offset: int):
-    return source.rfind('\n', offset) + 1
+    return source.rfind('\n', 0, offset) + 1
 
 def get_line_end(source: str, offset: int):
     result = source.find('\n', offset)
@@ -149,7 +149,7 @@ def get_line_end(source: str, offset: int):
 def get_full_line(source: str, offset: int):
     start = get_line_start(source, offset)
     end = get_line_end(source, offset)
-    return source[start, end]
+    return source[start:end]
 
 class ParseState:
     def __init__(self, tokens: list[Token], source: str):
@@ -159,7 +159,7 @@ class ParseState:
 
     def format_error(self, at: Token, message: str):
         line, col = determine_source_location(self.source, at.at)
-        return f"{message}: line {line} col {col}\n{self.source[get_full_line(self.source)]}\n{' ' * (col - 1)}^"
+        return f"{message}: line {line} col {col}\n{get_full_line(self.source, at.at)}\n{' ' * (col - 1)}^"
 
     def peek(self, offset: int):
         return self.tokens[min(offset + self.current, len(self.tokens) - 1)]
@@ -225,6 +225,7 @@ def parse_type(state: ParseState):
         return parse_struct(state)
     
     if next.token_type == 'identifier':
+        state.advance()
         return next.value
 
     raise Exception(state.format_error(state.peek(0), 'unknown type'))

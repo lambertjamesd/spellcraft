@@ -6,6 +6,10 @@
 #include "../util/flags.h"
 
 void correct_overlap(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce) {
+    if (object->is_fixed) {
+        return;
+    }
+
     vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
 
     float velocityDot = vector3Dot(&object->velocity, &result->normal);
