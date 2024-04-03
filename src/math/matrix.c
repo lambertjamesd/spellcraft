@@ -85,6 +85,13 @@ void matrixFromPosition(float matrix[4][4], struct Vector3* position) {
     matrix[3][3] = 1.0f;
 }
 
+
+void matrixApplyPosition(float matrix[4][4], struct Vector3* position) {
+    matrix[3][0] = position->x;
+    matrix[3][1] = position->y;
+    matrix[3][2] = position->z;
+}
+
 void matrixMul(float a[4][4], float b[4][4], float output[4][4]) {
     for (int x = 0; x < 4; ++x) {
         for (int y = 0; y < 4; ++y) {

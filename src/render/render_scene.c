@@ -72,7 +72,7 @@ void render_scene_render(struct render_scene* scene, struct Camera* camera, stru
 
     camera_apply(camera, aspect_ratio, &clipping_planes, view_proj_matrix);
 
-    render_batch_init(&batch);
+    render_batch_init(&batch, &camera->transform);
 
     struct callback_element* current = callback_list_get(&scene->callbacks, 0);
 

@@ -18,4 +18,6 @@ void matrixFromBasis(float matrix[4][4], struct Vector3* origin, struct Vector3*
 
 void matrixFromPosition(float matrix[4][4], struct Vector3* position);
 
+void matrixApplyPosition(float matrix[4][4], struct Vector3* position);
+
 #endif

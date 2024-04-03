@@ -1,8 +1,9 @@
 {
     "combineMode": {
         "color": ["0", "0", "0", "SHADE"],
-        "alpha": ["0", "0", "0", "SHADE"]
+        "alpha": ["0", "0", "0", "PRIM"]
     },
+    "primColor": [255, 255, 255, 10],
     "blendMode": "ADD",
     "lighting": false,
     "zBuffer": true

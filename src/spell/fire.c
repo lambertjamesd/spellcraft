@@ -164,6 +164,6 @@ void fire_update(struct fire* fire, struct spell_event_listener* event_listener,
             continue;
         }
 
-        health_damage(target_health, 1.0f, fire->dynamic_object.entity_id);
+        health_damage(target_health, 1.0f, fire->dynamic_object.entity_id, DAMAGE_TYPE_FIRE);
     }
 }

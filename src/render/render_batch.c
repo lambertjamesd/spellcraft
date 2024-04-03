@@ -3,10 +3,12 @@
 #include "../util/sort.h"
 #include "../time/time.h"
 
-void render_batch_init(struct render_batch* batch) {
+void render_batch_init(struct render_batch* batch, struct Transform* camera_transform) {
     batch->element_count = 0;
     batch->transform_count = 0;
     batch->sprite_count = 0;
+
+    transformToMatrix(camera_transform, batch->camera_matrix);
 }
 
 struct render_batch_element* render_batch_add(struct render_batch* batch) {
@@ -139,6 +141,18 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
 
         if (current_mat != element->material) {
             rspq_block_run(element->material->block);
+
+            sprite_t* sprite = element->material->tex0.sprite;
+
+            if (sprite) {
+                int width = sprite->width * 4;
+                int height = sprite->height * 4;
+
+                int y = (int)(total_time * sprite->height * 4.0f) % (sprite->height * 4);
+
+                rdpq_set_tile_size_fx(TILE0, 0, 0, 32, 32);
+            }
+
             current_mat = element->material;
         }
 
