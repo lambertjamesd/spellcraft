@@ -251,6 +251,15 @@ int spell_exec_find_modifier(struct spell_exec* exec) {
 static union spell_source_flags symbol_to_modifier[] = {
     [SPELL_SYMBOL_FIRE] = { .flaming = 1 },
     [SPELL_SYMBOL_PUSH] = { .controlled = 1 },
+    [SPELL_SYMBOL_REVERSE] = { .reversed = 1 },
+    [SPELL_SYMBOL_UP] = { .up = 1 },
+    [SPELL_SYMBOL_TIME_DIALATION] = { .fast = 1 },
+};
+
+static union spell_source_flags reverse_symbol_to_modifier[] = {
+    [SPELL_SYMBOL_FIRE] = { .icy = 1 },
+    [SPELL_SYMBOL_UP] = { .around = 1 },
+    [SPELL_SYMBOL_TIME_DIALATION] = { .slow = 1 },
 };
 
 void spell_modifier_init(
@@ -262,7 +271,18 @@ void spell_modifier_init(
 
     while (spell_is_modifier(spell, col, row)) {
         // TODO check for sibilings
-        flags.all |= symbol_to_modifier[spell_get_symbol(spell, col, row).type].all;
+
+        int type = spell_get_symbol(spell, col, row).type;
+
+        union spell_source_flags reverse_flags = reverse_symbol_to_modifier[type];
+        
+        if (flags.reversed && reverse_flags.all) {
+            flags.reversed = 0;
+            flags.all |= reverse_flags.all;
+        } else {
+            flags.all |= symbol_to_modifier[type].all;
+        }
+
         col += 1;
     }
 

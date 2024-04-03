@@ -141,18 +141,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
 
         if (current_mat != element->material) {
             rspq_block_run(element->material->block);
-
-            sprite_t* sprite = element->material->tex0.sprite;
-
-            if (sprite) {
-                int width = sprite->width * 4;
-                int height = sprite->height * 4;
-
-                int y = (int)(total_time * sprite->height * 4.0f) % (sprite->height * 4);
-
-                rdpq_set_tile_size_fx(TILE0, 0, 0, 32, 32);
-            }
-
             current_mat = element->material;
         }
 

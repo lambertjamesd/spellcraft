@@ -120,7 +120,6 @@ void material_load(struct material* into, FILE* material_file) {
         rdpq_mode_mipmap(MIPMAP_NONE, 0);
         surface_t surface = sprite_get_pixels(into->tex0.sprite);
         rdpq_tex_upload(TILE0, &surface, &into->tex0.params);
-        rdpq_set_tile_size_fx(TILE0, 0, 0, into->tex0.sprite->width * 4, into->tex0.sprite->height * 4);
     }
 
     if (into->tex1.gl_texture) {

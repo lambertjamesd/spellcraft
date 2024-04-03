@@ -55,7 +55,9 @@ void fire_render(struct fire* fire, struct render_batch* batch) {
         particle_count -= particle_offset;
     }
 
-    struct render_batch_billboard_element* element = render_batch_add_particles(batch, spell_assets_get()->fire_particle_mesh, particle_count);
+    struct material* material = fire->data_source->flags.reversed ? spell_assets_get()->ice_particle_mesh : spell_assets_get()->fire_particle_mesh;
+
+    struct render_batch_billboard_element* element = render_batch_add_particles(batch, material, particle_count);
 
     float time_lerp = fire->cycle_time * (1.0f / CYCLE_TIME);
 
@@ -164,6 +166,8 @@ void fire_update(struct fire* fire, struct spell_event_listener* event_listener,
             continue;
         }
 
-        health_damage(target_health, 1.0f, fire->dynamic_object.entity_id, DAMAGE_TYPE_FIRE);
+        enum damage_type damage_type = fire->data_source->flags.reversed ? DAMAGE_TYPE_ICE : DAMAGE_TYPE_FIRE;
+
+        health_damage(target_health, 1.0f, fire->dynamic_object.entity_id, damage_type);
     }
 }

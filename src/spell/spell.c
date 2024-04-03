@@ -65,6 +65,11 @@ static uint8_t is_modifier_mapping[] = {
     [SPELL_SYMBOL_PROJECTILE] = 0,
     [SPELL_SYMBOL_PUSH] = 1,
     [SPELL_SYMBOL_RECAST] = 0,
+    [SPELL_SYMBOL_SHIELD] = 0,
+    [SPELL_SYMBOL_REVERSE] = 1,
+    [SPELL_SYMBOL_TARGET] = 0,
+    [SPELL_SYMBOL_UP] = 1,
+    [SPELL_SYMBOL_TIME_DIALATION] = 1,
     
     [SPELL_SYMBOL_PASS_DOWN] = 0,
 };
