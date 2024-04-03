@@ -120,6 +120,10 @@ void material_load(struct material* into, FILE* material_file) {
         rdpq_mode_mipmap(MIPMAP_NONE, 0);
         surface_t surface = sprite_get_pixels(into->tex0.sprite);
         rdpq_tex_upload(TILE0, &surface, &into->tex0.params);
+
+        // TODO remove this after implementing material revert
+        rdpq_tlut_t tlut = rdpq_tlut_from_format(into->tex0.sprite->format);
+        rdpq_mode_tlut(tlut);
     }
 
     if (into->tex1.gl_texture) {
