@@ -24,4 +24,13 @@ struct ground_torch_definition {
     uint32_t is_lit;
 };
 
+enum npc_type {
+    NPC_TYPE_MENTOR,
+};
+
+struct npc_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+};
+
 #endif

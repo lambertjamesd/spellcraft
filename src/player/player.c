@@ -112,15 +112,21 @@ void player_update(struct player* player) {
         vector2Scale(&direction, 1.0f / sqrtf(magSqrd), &direction);
     }
 
+    struct Vector3 directionWorld;
+    vector3Scale(&right, &directionWorld, direction.x);
+    vector3AddScaled(&directionWorld, &forward, direction.y, &directionWorld);
+
     float prev_y = player->collision.velocity.y;
-    vector3Scale(&right, &player->collision.velocity, direction.x * PLAYER_MAX_SPEED);
-    vector3AddScaled(&player->collision.velocity, &forward, direction.y * PLAYER_MAX_SPEED, &player->collision.velocity);
+    vector3Scale(&directionWorld, &player->collision.velocity, PLAYER_MAX_SPEED);
     player->collision.velocity.y = prev_y;
 
     if (magSqrd > 0.01f) {
         struct Vector2 directionUnit;
 
-        vector2Normalize(&direction, &directionUnit);
+        directionUnit.x = directionWorld.x;
+        directionUnit.y = directionWorld.z;
+
+        vector2Normalize(&directionUnit, &directionUnit);
 
         float tmp = directionUnit.x;
         directionUnit.x = directionUnit.y;

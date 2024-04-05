@@ -109,6 +109,8 @@ class mesh_data():
                 self.color.append(color.data[loop_index].color)
             elif color and color.domain == 'POINT':
                 self.color.append(color.data[vtx_index].color)
+            else:
+                self.color.append([1, 1, 1, 1])
 
             self.bone_indices.append(bone_index)
 

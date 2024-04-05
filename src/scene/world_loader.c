@@ -10,6 +10,7 @@
 #include "../objects/crate.h"
 #include "../objects/ground_torch.h"
 #include "../enemies/biter.h"
+#include "../npc/npc.h"
 
 #include "../collision/collision_scene.h"
 
@@ -17,6 +18,7 @@ static struct entity_definition world_entity_definitions[] = {
     {"crate", (entity_init)crate_init, (entity_destroy)crate_destroy, sizeof(struct crate), sizeof(struct crate_definition)},
     {"biter", (entity_init)biter_init, (entity_destroy)biter_destroy, sizeof(struct biter), sizeof(struct biter_definition)},
     {"ground_torch", (entity_init)ground_torch_init, (entity_destroy)ground_torch_destroy, sizeof(struct ground_torch), sizeof(struct ground_torch_definition)},
+    {"npc", (entity_init)npc_init, (entity_destroy)npc_destroy, sizeof(struct npc), sizeof(struct npc_definition)},
 };
 
 // WRLD
