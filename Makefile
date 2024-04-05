@@ -3,6 +3,8 @@ SOURCE_DIR=src
 BUILD_DIR=build
 include $(N64_INST)/include/n64.mk
 
+N64_C_AND_CXX_FLAG += -Og
+
 all: spellcraft.z64
 .PHONY: all
 

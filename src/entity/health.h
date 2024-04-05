@@ -8,7 +8,8 @@ enum damage_type {
     DAMAGE_TYPE_PROJECTILE = (1 << 0),
     DAMAGE_TYPE_FIRE = (1 << 1),
     DAMAGE_TYPE_ICE = (1 << 2),
-    DAMAGE_TYPE_BASH = (1 << 3),
+    DAMAGE_TYPE_LIGHTING = (1 << 3),
+    DAMAGE_TYPE_BASH = (1 << 4),
 };
 
 struct health {

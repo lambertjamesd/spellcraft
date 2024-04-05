@@ -132,6 +132,35 @@ void fire_destroy(struct fire* fire) {
     collision_scene_remove(&fire->dynamic_object);
 }
 
+void fire_apply_damage(struct dynamic_object* dyanmic_object, enum damage_type damage_type) {
+    struct contact* curr = dyanmic_object->active_contacts;
+
+    while (curr) {
+        struct health* target_health = health_get(curr->other_object);
+        curr = curr->next;
+
+        if (!target_health) {
+            continue;
+        }
+
+        health_damage(target_health, 1.0f, dyanmic_object->entity_id, damage_type);
+    }
+}
+
+enum damage_type fire_determine_damage_type(struct spell_data_source* source) {
+    if (source->flags.reversed) {
+        if (source->flags.flaming) {
+            return DAMAGE_TYPE_LIGHTING;
+        }
+
+        return DAMAGE_TYPE_ICE;
+    } else if (source->flags.icy) {
+        return DAMAGE_TYPE_LIGHTING;
+    }
+
+    return DAMAGE_TYPE_FIRE;
+}
+
 void fire_update(struct fire* fire, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
     fire->cycle_time += fixed_time_step;
     fire->total_time += fixed_time_step;
@@ -156,18 +185,5 @@ void fire_update(struct fire* fire, struct spell_event_listener* event_listener,
 
     fire_apply_transform(fire);
 
-    struct contact* curr = fire->dynamic_object.active_contacts;
-
-    while (curr) {
-        struct health* target_health = health_get(curr->other_object);
-        curr = curr->next;
-
-        if (!target_health) {
-            continue;
-        }
-
-        enum damage_type damage_type = fire->data_source->flags.reversed ? DAMAGE_TYPE_ICE : DAMAGE_TYPE_FIRE;
-
-        health_damage(target_health, 1.0f, fire->dynamic_object.entity_id, damage_type);
-    }
+    fire_apply_damage(&fire->dynamic_object, fire_determine_damage_type(fire->data_source));
 }

@@ -26,6 +26,7 @@ union dynamic_object_type_data
     struct { float radius; float inner_half_height; } capsule;
     struct { struct Vector3 half_size; } box;
     struct { struct Vector3 size; } cone;
+    struct { float radius; float half_height; } cylinder;
 };
 
 struct dynamic_object_type {
@@ -81,5 +82,8 @@ void dynamic_object_sphere_bounding_box(void* data, struct Vector2* rotation, st
 
 void dynamic_object_capsule_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 void dynamic_object_capsule_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
+
+void dynamic_object_cylinder_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
+void dynamic_object_cylinder_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
 
 #endif

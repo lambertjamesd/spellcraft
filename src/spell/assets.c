@@ -9,6 +9,8 @@ void spell_assets_init() {
     assets.projectile_mesh = mesh_cache_load("rom:/meshes/spell/projectile.mesh");
     assets.fire_particle_mesh = material_cache_load("rom:/materials/spell/fire_particle.mat");
     assets.ice_particle_mesh = material_cache_load("rom:/materials/spell/ice_particle.mat");
+
+    assets.fire_around_mesh = mesh_cache_load("rom:/meshes/spell/flame_around.mesh");
 }
 
 struct spell_assets* spell_assets_get() {

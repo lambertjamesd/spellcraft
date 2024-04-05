@@ -29,12 +29,15 @@ void spell_slot_init(
             projectile_init(&slot->data.projectile, input, event_options);
             break;
         case SPELL_SYMBOL_FIRE:
-            if (input->flags.cast_state != SPELL_CAST_STATE_INSTANT) {
-                slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
-                fire_init(&slot->data.fire, input, event_options);
-            } else {
+            if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options);
+            } else if (input->flags.around) {
+                slot->type = SPELL_EXEC_SLOT_TYPE_FIRE_AROUND;
+                fire_around_init(&slot->data.fire_around, input, event_options);
+            } else {
+                slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
+                fire_init(&slot->data.fire, input, event_options);
             }
             break;
         case SPELL_SYMBOL_RECAST:
@@ -68,6 +71,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_FIRE:
             fire_destroy(&slot->data.fire);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_FIRE_AROUND:
+            fire_around_destroy(&slot->data.fire_around);
             break;
         case SPELL_EXEC_SLOT_TYPE_EXPLOSION:
             explosion_destroy(&slot->data.explosion);
@@ -116,6 +122,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_FIRE:
             fire_update(&slot->data.fire, &event_listener, &exec->data_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_FIRE_AROUND:
+            fire_around_update(&slot->data.fire_around, &event_listener, &exec->data_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_EXPLOSION:
             explosion_update(&slot->data.explosion, &event_listener, &exec->data_sources);
