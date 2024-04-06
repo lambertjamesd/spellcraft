@@ -5,6 +5,7 @@
 #include "../render/render_scene.h"
 #include "../spell/spell.h"
 #include "../resource/material_cache.h"
+#include "../player/inventory.h"
 
 #include "../menu/dialog_box.h"
 
@@ -81,11 +82,12 @@ void collectable_collected(struct collectable* collectable) {
         );
     }
 
-    if (collectable->collectable_type == COLLECTABLE_TYPE_HEALTH) {
+    if (collectable->collectable_type == COLLECTABLE_TYPE_SPELL_RUNE) {
         char* message = spell_messages[collectable->collectable_sub_type];
 
         if (message) {
             dialog_box_show(&g_dialog_box, message, NULL, NULL);
+            inventory_unlock_rune(collectable->collectable_sub_type);
         }
     }
 }

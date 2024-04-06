@@ -13,6 +13,7 @@ struct dialog_box g_dialog_box;
 void dialog_box_init(struct dialog_box* dialog_box) {
     dialog_box->current_message = NULL;
     dialog_box->font = font_cache_load("rom:/fonts/Amarante-Regular.font64");
+    rdpq_text_register_font(1, dialog_box->font);
 }
 
 void dialog_box_update(void* data) {
@@ -91,7 +92,6 @@ void dialog_box_show(struct dialog_box* dialog_box, char* message, dialog_end_ca
     dialog_box->current_message = message;
     menu_add_callback(dialog_box_render, dialog_box, 0);
     update_add(dialog_box, dialog_box_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_DIALOG);
-    rdpq_text_register_font(1, dialog_box->font);
 
     dialog_box->current_message_start = message;
     dialog_box->current_message_end = message;

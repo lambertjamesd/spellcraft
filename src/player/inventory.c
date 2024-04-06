@@ -55,6 +55,10 @@ bool inventory_has_rune(enum spell_symbol_type type) {
     return HAS_FLAG(inventory.unlocked_spell_symbols, SPELL_SYMBOL_TO_MASK(type)); 
 }
 
+void inventory_unlock_rune(enum spell_symbol_type type) {
+    SET_FLAG(inventory.unlocked_spell_symbols, SPELL_SYMBOL_TO_MASK(type));
+}
+
 struct spell* inventory_get_equipped_spell(unsigned index) {
     assert(index < MAX_SPELL_SLOTS);
     return inventory.spell_slots[index];

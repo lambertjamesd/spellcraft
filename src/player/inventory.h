@@ -26,6 +26,7 @@ void inventory_init();
 void inventory_destroy();
 
 bool inventory_has_rune(enum spell_symbol_type type);
+void inventory_unlock_rune(enum spell_symbol_type type);
 
 struct spell* inventory_get_equipped_spell(unsigned index);
 void inventory_set_equipped_spell(unsigned index, struct spell* spell);
