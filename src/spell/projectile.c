@@ -39,7 +39,7 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
 }
 
 void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options) {
-    render_scene_add(&r_scene_3d, &projectile->pos, 0.2f, (render_scene_callback)projectile_render, projectile);
+    render_scene_add(&projectile->pos, 0.2f, (render_scene_callback)projectile_render, projectile);
 
     projectile->data_source = data_source;
     projectile->data_output = NULL;
@@ -137,7 +137,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
 }
 
 void projectile_destroy(struct projectile* projectile) {
-    render_scene_remove(&r_scene_3d, projectile);
+    render_scene_remove(projectile);
     spell_data_source_release(projectile->data_source);
     if (projectile->data_output) {
         spell_data_source_release(projectile->data_output);

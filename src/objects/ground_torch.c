@@ -85,7 +85,7 @@ void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_de
     ground_torch->base_mesh = mesh_cache_load("rom:/meshes/objects/torch.mesh");
     ground_torch->flame_mesh = mesh_cache_load("rom:/meshes/objects/torch_flame.mesh");
 
-    render_scene_add(&r_scene_3d, &ground_torch->position, 1.73f, ground_torch_render, ground_torch);
+    render_scene_add(&ground_torch->position, 1.73f, ground_torch_render, ground_torch);
     collision_scene_add(&ground_torch->dynamic_object);
     health_init(&ground_torch->health, id, 0.0f);
     update_add(ground_torch, ground_torch_update, 1, UPDATE_LAYER_WORLD);
@@ -94,6 +94,6 @@ void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_de
 }
 
 void ground_torch_destroy(struct ground_torch* ground_torch) {
-    render_scene_remove(&r_scene_3d, ground_torch);
+    render_scene_remove(ground_torch);
     collision_scene_remove(&ground_torch->dynamic_object);
 }

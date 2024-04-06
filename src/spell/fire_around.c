@@ -47,7 +47,7 @@ void fire_around_init(struct fire_around* fire_around, struct spell_data_source*
     spell_data_source_retain(source);
     fire_around->timer = 0.0f;
 
-    render_scene_add(&r_scene_3d, &fire_around->data_source->position, 4.0f, (render_scene_callback)fire_around_render, fire_around);
+    render_scene_add(&fire_around->data_source->position, 4.0f, (render_scene_callback)fire_around_render, fire_around);
 
     dynamic_object_init(
         entity_id_new(), 
@@ -64,7 +64,7 @@ void fire_around_init(struct fire_around* fire_around, struct spell_data_source*
 }
 
 void fire_around_destroy(struct fire_around* fire_around) {
-    render_scene_remove(&r_scene_3d, fire_around);
+    render_scene_remove(fire_around);
     spell_data_source_release(fire_around->data_source);
     collision_scene_remove(&fire_around->dynamic_object);
 }

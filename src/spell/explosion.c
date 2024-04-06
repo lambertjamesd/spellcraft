@@ -28,7 +28,7 @@ void explosion_render(struct explosion* explosion, struct render_batch* batch) {
 }
 
 void explosion_init(struct explosion* explosion, struct spell_data_source* source, struct spell_event_options event_options) {
-    render_scene_add(&r_scene_3d, &explosion->data_source->position, 4.0f, (render_scene_callback)explosion_render, explosion);
+    render_scene_add(&explosion->data_source->position, 4.0f, (render_scene_callback)explosion_render, explosion);
 
     explosion->data_source = source;
     spell_data_source_retain(source);
@@ -37,7 +37,7 @@ void explosion_init(struct explosion* explosion, struct spell_data_source* sourc
 }
 
 void explosion_destroy(struct explosion* explosion) {
-    render_scene_remove(&r_scene_3d, explosion);
+    render_scene_remove(explosion);
     spell_data_source_release(explosion->data_source);
 }
 

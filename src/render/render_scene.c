@@ -8,18 +8,18 @@
 
 struct render_scene r_scene_3d;
 
-void render_scene_reset(struct render_scene* scene) {
-    callback_list_reset(&scene->callbacks, sizeof(struct render_scene_element), MIN_RENDER_SCENE_SIZE, NULL);
+void render_scene_reset() {
+    callback_list_reset(&r_scene_3d.callbacks, sizeof(struct render_scene_element), MIN_RENDER_SCENE_SIZE, NULL);
 }
 
-void render_scene_add(struct render_scene* scene, struct Vector3* center, float radius, render_scene_callback callback, void* data) {
+void render_scene_add(struct Vector3* center, float radius, render_scene_callback callback, void* data) {
     struct render_scene_element element;
 
     element.data = data;
     element.center = center;
     element.radius = radius;
 
-    callback_list_insert_with_id(&scene->callbacks, callback, &element, (callback_id)data);
+    callback_list_insert_with_id(&r_scene_3d.callbacks, callback, &element, (callback_id)data);
 }
 
 void render_scene_render_renderable(void* data, struct render_batch* batch) {
@@ -50,19 +50,19 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
     render_batch_add_mesh(batch, renderable->mesh, mtx, &renderable->armature);
 }
 
-void render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius) {
-    render_scene_add(scene, &renderable->transform->position, radius, render_scene_render_renderable, renderable);
+void render_scene_add_renderable(struct renderable* renderable, float radius) {
+    render_scene_add(&renderable->transform->position, radius, render_scene_render_renderable, renderable);
 }
 
-void render_scene_add_renderable_single_axis(struct render_scene* scene, struct renderable_single_axis* renderable, float radius) {
-    render_scene_add(scene, &renderable->transform->position, radius, render_scene_render_renderable_single_axis, renderable);
+void render_scene_add_renderable_single_axis(struct renderable_single_axis* renderable, float radius) {
+    render_scene_add(&renderable->transform->position, radius, render_scene_render_renderable_single_axis, renderable);
 }
 
-void render_scene_remove(struct render_scene* scene, void* data) {
-    callback_list_remove(&scene->callbacks, (callback_id)data);
+void render_scene_remove(void* data) {
+    callback_list_remove(&r_scene_3d.callbacks, (callback_id)data);
 }
 
-void render_scene_render(struct render_scene* scene, struct Camera* camera, struct render_viewport* viewport) {
+void render_scene_render(struct Camera* camera, struct render_viewport* viewport) {
     struct render_batch batch;
 
     struct ClippingPlanes clipping_planes;
@@ -74,13 +74,13 @@ void render_scene_render(struct render_scene* scene, struct Camera* camera, stru
 
     render_batch_init(&batch, &camera->transform);
 
-    struct callback_element* current = callback_list_get(&scene->callbacks, 0);
+    struct callback_element* current = callback_list_get(&r_scene_3d.callbacks, 0);
 
-    for (int i = 0; i < scene->callbacks.count; ++i) {
+    for (int i = 0; i < r_scene_3d.callbacks.count; ++i) {
         struct render_scene_element* el = callback_element_get_data(current);
         ((render_scene_callback)current->callback)(el->data, &batch);
 
-        current = callback_list_next(&scene->callbacks, current);
+        current = callback_list_next(&r_scene_3d.callbacks, current);
     }
     render_batch_finish(&batch, view_proj_matrix, viewport);
 }

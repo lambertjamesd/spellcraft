@@ -47,14 +47,14 @@ struct spell test_spell = {
 
 void setup() {
     spell_assets_init();
-    render_scene_reset(&r_scene_3d);
+    render_scene_reset();
     update_reset();
     collision_scene_reset();
     health_reset();
     menu_common_init();
     menu_reset();
     collectable_assets_load();
-    dialog_box_init(&g_dialog_box);
+    dialog_box_init();
     current_world = world_load("rom:/worlds/test.world");
 }
 
@@ -99,7 +99,7 @@ void render_3d() {
     viewport.w = display_get_width();
     viewport.h = display_get_height();
 
-    render_scene_render(&r_scene_3d, &current_world->camera, &viewport);
+    render_scene_render(&current_world->camera, &viewport);
 }
 
 void render_menu() {

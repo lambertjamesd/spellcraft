@@ -2,6 +2,7 @@
 #define __PLAYER_INVENTORY_H__
 
 #include "../spell/spell.h"
+#include "../scene/world_definition.h"
 
 #define MAX_SPELL_SLOTS 4
 

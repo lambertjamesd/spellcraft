@@ -22,15 +22,13 @@ struct render_scene {
     struct callback_list callbacks;
 };
 
-void render_scene_reset(struct render_scene* scene);
+void render_scene_reset();
 
-void render_scene_add(struct render_scene* scene, struct Vector3* center, float radius, render_scene_callback callback, void* data);
-void render_scene_add_renderable(struct render_scene* scene, struct renderable* renderable, float radius);
-void render_scene_add_renderable_single_axis(struct render_scene* scene, struct renderable_single_axis* renderable, float radius);
-void render_scene_remove(struct render_scene* scene, void* data);
+void render_scene_add(struct Vector3* center, float radius, render_scene_callback callback, void* data);
+void render_scene_add_renderable(struct renderable* renderable, float radius);
+void render_scene_add_renderable_single_axis(struct renderable_single_axis* renderable, float radius);
+void render_scene_remove(void* data);
 
-void render_scene_render(struct render_scene* scene, struct Camera* camera, struct render_viewport* viewport);
-
-extern struct render_scene r_scene_3d;
+void render_scene_render(struct Camera* camera, struct render_viewport* viewport);
 
 #endif

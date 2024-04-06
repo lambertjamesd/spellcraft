@@ -23,11 +23,9 @@ struct dialog_box {
     void* end_callback_data;
 };
 
-extern struct dialog_box g_dialog_box;
-
-void dialog_box_init(struct dialog_box* dialog_box);
-void dialog_box_show(struct dialog_box* dialog_box, char* message, dialog_end_callback end_callback, void* end_callback_data);
-void dialog_box_hide(struct dialog_box* dialog_box);
-void dialog_box_destroy(struct dialog_box* dialog_box);
+void dialog_box_init();
+void dialog_box_show(char* message, dialog_end_callback end_callback, void* end_callback_data);
+void dialog_box_hide();
+void dialog_box_destroy();
 
 #endif

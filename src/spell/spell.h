@@ -4,25 +4,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "../scene/world_definition.h"
+
 #define SPELL_MAX_COLS    10
 #define SPELL_MAX_ROWS    4
-
-enum spell_symbol_type {
-    SPELL_SYMBOL_BLANK,
-    SPELL_SYMBOL_FIRE,
-    SPELL_SYMBOL_PROJECTILE,
-    SPELL_SYMBOL_PUSH,
-    SPELL_SYMBOL_RECAST,
-    SPELL_SYMBOL_SHIELD,
-    SPELL_SYMBOL_REVERSE,
-    SPELL_SYMBOL_TARGET,
-    SPELL_SYMBOL_UP,
-    SPELL_SYMBOL_TIME_DIALATION,
-    
-    SPELL_SYMBOL_PASS_DOWN,
-
-    SPELL_SYBMOL_COUNT,
-};
 
 enum spell_icon {
     SPELL_ICON_FIRE,

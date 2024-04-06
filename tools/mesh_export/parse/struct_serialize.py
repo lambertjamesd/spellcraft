@@ -44,6 +44,13 @@ def get_value(obj: bpy.types.Object, key: str, default_value):
     
     return default_value
 
+def search_enums(value: str, enums):
+    for single_enum in enums.values():
+        if single_enum.is_defined(value):
+            return single_enum.str_to_int(value)
+
+    raise Exception(f'{value} is not found in any enum value')
+
 def get_transform(obj: bpy.types.Object) -> mathutils.Matrix:
     return coordinate_convert_invert @ obj.matrix_world @ coordinate_convert
 
@@ -75,6 +82,9 @@ def write_obj(file, obj: bpy.types.Object, definition, enums, field_name = None)
 
             if value == False:
                 value = 0
+
+            if isinstance(value, str):
+                value = search_enums(value, enums)
 
             file.write(struct.pack(">" + struct_formats[definition], value))
             return

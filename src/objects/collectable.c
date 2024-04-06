@@ -39,7 +39,8 @@ static struct collectable_information collectable_information[] = {
 };
 
 static char* spell_messages[] = {
-    [SPELL_SYMBOL_FIRE] = "You found the fire rune!\n\nWith it you can summon fire or imbue fire into chained runes",
+    // [SPELL_SYMBOL_FIRE] = "You found the fire rune!\n\nWith it you can summon fire or imbue fire into chained runes",
+    [SPELL_SYMBOL_FIRE] = "a\nb\nc",
     [SPELL_SYMBOL_PROJECTILE] = "You found the projectile rune!\n\nUse it to damage enemies from afar or even chain into other runes on impact",
 };
 
@@ -51,7 +52,7 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
     collectable->collectable_type = definition->collectable_type;
     collectable->collectable_sub_type = definition->collectable_sub_type;
     collectable->transform.position = definition->position;
-    collectable->transform.rotation = gRight2;
+    collectable->transform.rotation = definition->rotation;
     
     dynamic_object_init(
         entity_id_new(), 
@@ -66,7 +67,7 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
 
     collision_scene_add(&collectable->dynamic_object);
     renderable_single_axis_init(&collectable->renderable, &collectable->transform, type->mesh_filename);
-    render_scene_add_renderable_single_axis(&r_scene_3d, &collectable->renderable, 0.2f);
+    render_scene_add_renderable_single_axis(&collectable->renderable, 0.2f);
     
     hash_map_set(&collectable_hash_map, collectable->dynamic_object.entity_id, collectable);
 }
@@ -75,7 +76,7 @@ void collectable_collected(struct collectable* collectable) {
     collectable_destroy(collectable);
 
     if (collectable->collectable_type == COLLECTABLE_TYPE_HEALTH) {
-        dialog_box_show(&g_dialog_box, 
+        dialog_box_show( 
             "You got a heart\n\n"
             "Now if I only had a brain",
             NULL, NULL
@@ -86,7 +87,7 @@ void collectable_collected(struct collectable* collectable) {
         char* message = spell_messages[collectable->collectable_sub_type];
 
         if (message) {
-            dialog_box_show(&g_dialog_box, message, NULL, NULL);
+            dialog_box_show(message, NULL, NULL);
             inventory_unlock_rune(collectable->collectable_sub_type);
         }
     }
@@ -94,7 +95,7 @@ void collectable_collected(struct collectable* collectable) {
 
 void collectable_destroy(struct collectable* collectable) {
     collision_scene_remove(&collectable->dynamic_object);
-    render_scene_remove(&r_scene_3d, &collectable->renderable);
+    render_scene_remove(&collectable->renderable);
     renderable_single_axis_destroy(&collectable->renderable);
     hash_map_delete(&collectable_hash_map, collectable->dynamic_object.entity_id);
 }

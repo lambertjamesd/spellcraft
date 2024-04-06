@@ -128,7 +128,7 @@ struct world* world_load(const char* filename) {
 
     fclose(file);
 
-    render_scene_add(&r_scene_3d, NULL, 0.0f, world_render, world);
+    render_scene_add(NULL, 0.0f, world_render, world);
 
     return world;
 }
@@ -144,7 +144,7 @@ void world_release(struct world* world) {
         }
     }
 
-    render_scene_remove(&r_scene_3d, world);
+    render_scene_remove(world);
 
     pause_menu_destroy(&world->pause_menu);
     player_destroy(&world->player);

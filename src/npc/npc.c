@@ -15,7 +15,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
     npc->transform.rotation = definiton->rotation;
     renderable_single_axis_init(&npc->renderable, &npc->transform, "rom:/meshes/characters/mentor.mesh");
 
-    render_scene_add_renderable_single_axis(&r_scene_3d, &npc->renderable, 2.0f);
+    render_scene_add_renderable_single_axis(&npc->renderable, 2.0f);
 
     update_add(npc, npc_update, 0, UPDATE_LAYER_WORLD);
 
@@ -27,7 +27,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
 
 void npc_destroy(struct npc* npc) {
     renderable_single_axis_destroy(&npc->renderable);
-    render_scene_remove(&r_scene_3d, &npc->renderable);
+    render_scene_remove(&npc->renderable);
     update_remove(npc);
     animation_cache_release(npc->animation_set);
 }
