@@ -9,6 +9,11 @@
 
 static struct material* spell_symbol_material;
 
+#define SPELL_SYMBOLS_PER_ROW   6
+
+#define SPELL_SYMBOL_LOCATION_X(index)  ((((index) - SPELL_SYMBOL_FIRE) % SPELL_SYMBOLS_PER_ROW) * 32 + 40)
+#define SPELL_SYMBOL_LOCATION_Y(index)  ((((index) - SPELL_SYMBOL_FIRE) / SPELL_SYMBOLS_PER_ROW) * 32 + 142)
+
 void spell_building_render_menu(struct spell_building_menu* menu) {
     menu_common_render_background(32, 32, 256, 96);
 
@@ -39,11 +44,14 @@ void spell_building_render_menu(struct spell_building_menu* menu) {
         }
     }
 
-    int x = 32 + 8;
-    int y = 134 + 8;
-
     for (int spell_type = SPELL_SYMBOL_FIRE; spell_type < SPELL_SYBMOL_COUNT; spell_type += 1) {
+        if (!inventory_has_rune(spell_type)) {
+            continue;
+        }
+
         int source_x = (spell_type - 1) * 24;
+        int x = SPELL_SYMBOL_LOCATION_X(spell_type);
+        int y = SPELL_SYMBOL_LOCATION_Y(spell_type);
 
         rdpq_texture_rectangle_scaled(
             TILE0,
@@ -53,13 +61,15 @@ void spell_building_render_menu(struct spell_building_menu* menu) {
             source_x + 24, 24
         );
 
-        x += 32;
+        if (spell_type == SPELL_SYMBOL_REVERSE) {
+            x = 32 + 8;
+        }
     }
 
     rspq_block_run(spell_cursor_material->block);
 
-    x = 32 + 8 + menu->symbol_cursor_x * 32;
-    y = 134 + 8;
+    int x = 32 + 8 + menu->symbol_cursor_x * 32;
+    int y = 134 + 8 + menu->symbol_cursor_y * 32;
 
     rdpq_texture_rectangle(
         TILE0,
@@ -100,7 +110,7 @@ void spell_building_menu_update(struct spell_building_menu* menu) {
 
     int direction = joypad_get_axis_pressed(0, JOYPAD_AXIS_STICK_X);
 
-    if (direction > 0 && menu->symbol_cursor_x + 1 < SPELL_SYBMOL_COUNT) {
+    if (direction > 0 && menu->symbol_cursor_x + 1 < SPELL_SYMBOLS_PER_ROW) {
         menu->symbol_cursor_x += 1;
     }
 
@@ -108,15 +118,29 @@ void spell_building_menu_update(struct spell_building_menu* menu) {
         menu->symbol_cursor_x -= 1;
     }
 
-    if (pressed.a && menu->spell_cursor_x < SPELL_MAX_COLS) {
-        // TODO shift connected symbols below
-        for (int i = SPELL_MAX_COLS - 1; i > menu->spell_cursor_x; i -= 1) {
-            menu->symbol_grid[menu->spell_cursor_y][i] = menu->symbol_grid[menu->spell_cursor_y][i - 1];
+    direction = joypad_get_axis_pressed(0, JOYPAD_AXIS_STICK_Y);
+
+    if (direction > 0 && menu->symbol_cursor_y + 1 < 2) {
+        menu->symbol_cursor_y += 1;
+    }
+
+    if (direction < 0 && menu->symbol_cursor_y > 0) {
+        menu->symbol_cursor_y -= 1;
+    }
+
+    if (pressed.a) {
+        int spell_symbol = menu->symbol_cursor_x + menu->symbol_cursor_y * SPELL_SYMBOLS_PER_ROW + SPELL_SYMBOL_FIRE;
+
+        if (spell_symbol >= SPELL_SYMBOL_FIRE && spell_symbol <= SPELL_SYBMOL_COUNT && inventory_has_rune(spell_symbol)) {
+            // TODO shift connected symbols below
+            for (int i = SPELL_MAX_COLS - 1; i > menu->spell_cursor_x; i -= 1) {
+                menu->symbol_grid[menu->spell_cursor_y][i] = menu->symbol_grid[menu->spell_cursor_y][i - 1];
+            }
+
+            menu->symbol_grid[menu->spell_cursor_y][menu->spell_cursor_x].type = spell_symbol;
+
+            menu->spell_cursor_x += 1;
         }
-
-        menu->symbol_grid[menu->spell_cursor_y][menu->spell_cursor_x].type = menu->symbol_cursor_x + 1;
-
-        menu->spell_cursor_x += 1;
     }
 
     if (pressed.b && menu->spell_cursor_x > 0) {

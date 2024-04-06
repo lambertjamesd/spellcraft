@@ -58,33 +58,32 @@ void hud_render(void *data) {
     );
 
     hud_render_spell_icon(
-        hud->inventory->spell_slots[0], 
+        inventory_get_equipped_spell(0), 
         SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
         SPELL_SLOT_LOCATION_Y + 4
     );
 
     hud_render_spell_icon(
-        hud->inventory->spell_slots[1], 
+        inventory_get_equipped_spell(1), 
         SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
         SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET * 2 + 4
     );
 
     hud_render_spell_icon(
-        hud->inventory->spell_slots[2], 
+        inventory_get_equipped_spell(2), 
         SPELL_SLOT_LOCATION_X + 4,
         SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
     );
 
     hud_render_spell_icon(
-        hud->inventory->spell_slots[3], 
+        inventory_get_equipped_spell(3), 
         SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET * 2 + 4,
         SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
     );
 }
 
-void hud_init(struct hud* hud, struct inventory* inventory) {
+void hud_init(struct hud* hud) {
     menu_add_callback(hud_render, hud, 0);
-    hud->inventory = inventory;
     hud->current_spell_icon = material_cache_load("rom:/materials/menu/current_spell_icon.mat");
 }
 

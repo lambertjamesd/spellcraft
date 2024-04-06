@@ -12,13 +12,12 @@ enum active_menu {
 };
 
 struct pause_menu {
-    struct inventory* inventory;
     struct spell_building_menu spell_building_menu;
     struct spell_menu spell_menu;
     enum active_menu active_menu;
 };
 
-void pause_menu_init(struct pause_menu* pause_menu, struct inventory* inventory);
+void pause_menu_init(struct pause_menu* pause_menu);
 void pause_menu_destroy(struct pause_menu* pause_menu);
 
 #endif

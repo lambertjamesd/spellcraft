@@ -148,8 +148,8 @@ void player_update(struct player* player) {
         source->position.y += 1.0f;
         source->flags.cast_state = player_cast_state(input.btn, i) ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
 
-        if (player_cast_state(pressed, i) && player->inventory->spell_slots[i]) {
-            spell_exec_start(&player->spell_exec, 0, player->inventory->spell_slots[i], source);
+        if (player_cast_state(pressed, i) && inventory_get_equipped_spell(i)) {
+            spell_exec_start(&player->spell_exec, 0, inventory_get_equipped_spell(i), source);
         }
     }
 
@@ -166,14 +166,13 @@ void player_update(struct player* player) {
     }
 }
 
-void player_init(struct player* player, struct Transform* camera_transform, struct inventory* inventory) {
+void player_init(struct player* player, struct Transform* camera_transform) {
     entity_id entity_id = entity_id_new();
 
     transformInitIdentity(&player->transform);
     renderable_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.mesh");
 
     player->camera_transform = camera_transform;
-    player->inventory = inventory;
 
     player->transform.position.y = 1.0f;
 

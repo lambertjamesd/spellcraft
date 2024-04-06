@@ -2,8 +2,7 @@
 
 #include "menu_common.h"
 
-void spell_menu_init(struct spell_menu* spell_menu, struct inventory* inventory) {
-    spell_menu->inventory = inventory;
+void spell_menu_init(struct spell_menu* spell_menu) {
     spell_menu->cursor_x = 0;
     spell_menu->cursor_y = 0;
 }
@@ -25,11 +24,9 @@ void spell_menu_assign_slot(struct spell_menu* menu, int slot) {
     struct spell* selected_spell;
     
     if (menu->cursor_y == 3) {
-        selected_spell = &menu->inventory->custom_spells[menu->cursor_x];
+        selected_spell = inventory_get_custom_spell(menu->cursor_x);
     } else {
-        selected_spell = menu->inventory->built_in_spells[
-            menu->cursor_y * INVENTORY_SPELL_COLUMNS + menu->cursor_x
-        ];
+        selected_spell = inventory_get_built_in_spell(menu->cursor_x, menu->cursor_y);
     }
 
     if (!selected_spell) {
@@ -39,16 +36,17 @@ void spell_menu_assign_slot(struct spell_menu* menu, int slot) {
     int existing_slot = -1;
 
     for (int i = 0; i < MAX_SPELL_SLOTS; i += 1) {
-        if (menu->inventory->spell_slots[i] == selected_spell) {
+        if (inventory_get_equipped_spell(i) == selected_spell) {
             existing_slot = i;
             break;
         }
     }
 
     if (existing_slot != -1) {
-        menu->inventory->spell_slots[existing_slot] = menu->inventory->spell_slots[slot];
+        // if already equipped, then swap
+        inventory_set_equipped_spell(existing_slot, inventory_get_equipped_spell(slot));
     }
-    menu->inventory->spell_slots[slot] = selected_spell;
+    inventory_set_equipped_spell(slot, selected_spell);
 }
 
 struct spell* spell_menu_update(struct spell_menu* spell_menu) {
@@ -71,7 +69,7 @@ struct spell* spell_menu_update(struct spell_menu* spell_menu) {
     }
 
     if (pressed.a && spell_menu->cursor_y == 3) {
-        return &spell_menu->inventory->custom_spells[spell_menu->cursor_x];
+        return inventory_get_custom_spell(spell_menu->cursor_x);
     }
 
     int direction = joypad_get_axis_pressed(0, JOYPAD_AXIS_STICK_X);
@@ -103,11 +101,9 @@ struct spell* spell_menu_update(struct spell_menu* spell_menu) {
 void spell_menu_render(struct spell_menu* spell_menu) {
     menu_common_render_background(20, 20, 200, 200);
 
-    struct spell** built_in_spell = spell_menu->inventory->built_in_spells;
-
     for (int row = 0; row < INVENTORY_SPELL_ROWS; row += 1) {
         for (int col = 0; col < INVENTORY_SPELL_COLUMNS; col += 1) {
-            struct spell* spell = *built_in_spell;
+            struct spell* spell = inventory_get_built_in_spell(col, row);
 
             if (spell) {
                 rspq_block_run(menu_spell_icons[spell->symbol_index]->block);
@@ -122,8 +118,6 @@ void spell_menu_render(struct spell_menu* spell_menu) {
                     0, 0
                 );
             }
-
-            built_in_spell += 1;
         }
     }
 

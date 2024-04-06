@@ -5,13 +5,11 @@
 #include "../player/inventory.h"
 
 struct spell_menu {
-    struct inventory* inventory;
-
     uint16_t cursor_x;
     uint16_t cursor_y;
 };
 
-void spell_menu_init(struct spell_menu* spell_menu, struct inventory* inventory);
+void spell_menu_init(struct spell_menu* spell_menu);
 void spell_menu_destroy(struct spell_menu* spell_menu);
 
 void spell_menu_show(struct spell_menu* spell_menu);

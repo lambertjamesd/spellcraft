@@ -34,14 +34,12 @@ struct player {
     
     struct spell_exec spell_exec;
 
-    struct inventory* inventory;
-
     struct animation_set* animation_set;
     struct player_animations animations;
     struct animator animator;
 };
 
-void player_init(struct player* player, struct Transform* camera_transform, struct inventory* inventory);
+void player_init(struct player* player, struct Transform* camera_transform);
 
 void player_render(struct player* player, struct render_batch* batch);
 

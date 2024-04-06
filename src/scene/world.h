@@ -48,7 +48,6 @@ struct world {
     struct Camera camera;
     struct camera_controller camera_controller;
 
-    struct inventory inventory;
     struct pause_menu pause_menu;
     struct hud hud;
     

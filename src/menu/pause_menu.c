@@ -83,12 +83,11 @@ void pause_menu_update(struct pause_menu* pause_menu) {
     }
 }
 
-void pause_menu_init(struct pause_menu* pause_menu, struct inventory* inventory) {
+void pause_menu_init(struct pause_menu* pause_menu) {
     update_add(pause_menu, (update_callback)pause_menu_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_PAUSE_MENU);
     spell_building_menu_init(&pause_menu->spell_building_menu);
-    spell_menu_init(&pause_menu->spell_menu, inventory);
+    spell_menu_init(&pause_menu->spell_menu);
     menu_add_callback(pause_menu_render, pause_menu, 0);
-    pause_menu->inventory = inventory;
     pause_menu->active_menu = ACTIVE_MENU_NONE;
 }
 

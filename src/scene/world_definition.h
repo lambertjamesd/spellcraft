@@ -19,6 +19,7 @@ enum collectable_type {
 struct collectable_definition {
     struct Vector3 position;
     enum collectable_type collectable_type;
+    uint32_t collectable_sub_type;
 };
 
 struct biter_definition {

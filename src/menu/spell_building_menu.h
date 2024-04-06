@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "../spell/spell.h"
+#include "../player/inventory.h"
 
 struct spell_building_menu {
     uint8_t symbol_cursor_x;

@@ -3,6 +3,7 @@
 #include "../util/hash_map.h"
 #include "../collision/collision_scene.h"
 #include "../render/render_scene.h"
+#include "../spell/spell.h"
 #include "../resource/material_cache.h"
 
 #include "../menu/dialog_box.h"
@@ -36,12 +37,18 @@ static struct collectable_information collectable_information[] = {
     },
 };
 
+static char* spell_messages[] = {
+    [SPELL_SYMBOL_FIRE] = "You found the fire rune!\n\nWith it you can summon fire or imbue fire into chained runes",
+    [SPELL_SYMBOL_PROJECTILE] = "You found the projectile rune!\n\nUse it to damage enemies from afar or even chain into other runes on impact",
+};
+
 void collectable_assets_load() {
     hash_map_init(&collectable_hash_map, 8);
 }
 
 void collectable_init(struct collectable* collectable, struct collectable_definition* definition) {
-    collectable->type = definition->collectable_type;
+    collectable->collectable_type = definition->collectable_type;
+    collectable->collectable_sub_type = definition->collectable_sub_type;
     collectable->transform.position = definition->position;
     collectable->transform.rotation = gRight2;
     
@@ -56,8 +63,6 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
 
     struct collectable_information* type = &collectable_information[definition->collectable_type];
 
-    // collectable->dynamic_object.center.y = COLLECTABLE_RADIUS;
-
     collision_scene_add(&collectable->dynamic_object);
     renderable_single_axis_init(&collectable->renderable, &collectable->transform, type->mesh_filename);
     render_scene_add_renderable_single_axis(&r_scene_3d, &collectable->renderable, 0.2f);
@@ -68,11 +73,21 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
 void collectable_collected(struct collectable* collectable) {
     collectable_destroy(collectable);
 
-    dialog_box_show(&g_dialog_box, 
-        "You got a heart\n\n"
-        "Now if I only had a brain",
-        NULL, NULL
-    );
+    if (collectable->collectable_type == COLLECTABLE_TYPE_HEALTH) {
+        dialog_box_show(&g_dialog_box, 
+            "You got a heart\n\n"
+            "Now if I only had a brain",
+            NULL, NULL
+        );
+    }
+
+    if (collectable->collectable_type == COLLECTABLE_TYPE_HEALTH) {
+        char* message = spell_messages[collectable->collectable_sub_type];
+
+        if (message) {
+            dialog_box_show(&g_dialog_box, message, NULL, NULL);
+        }
+    }
 }
 
 void collectable_destroy(struct collectable* collectable) {
