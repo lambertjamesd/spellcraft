@@ -35,12 +35,19 @@ struct_formats = {
 coordinate_convert = mathutils.Matrix.Rotation(math.pi * 0.5, 4, 'X')
 coordinate_convert_invert = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
 
-
+def get_value(obj: bpy.types.Object, key: str, default_value):
+    if key in obj:
+        return obj[key]
+    
+    if key in obj.data:
+        return obj.data[key]
+    
+    return default_value
 
 def get_transform(obj: bpy.types.Object) -> mathutils.Matrix:
     return coordinate_convert_invert @ obj.matrix_world @ coordinate_convert
 
-def write_obj(file, obj: bpy.types.Object, definition, field_name = None):
+def write_obj(file, obj: bpy.types.Object, definition, enums, field_name = None):
     if isinstance(definition, str):
         if definition == 'struct Vector3':
             if field_name == 'position':
@@ -57,11 +64,11 @@ def write_obj(file, obj: bpy.types.Object, definition, field_name = None):
                 file.write(struct.pack(">ff", final_right.x, final_right.z))
                 return
         if definition == 'float':
-            value = obj[field_name] if field_name in obj else 0
+            value = get_value(obj, field_name, 0)
             file.write(struct.pack(">f", value))
             return
         if definition in struct_formats:
-            value = obj[field_name] if field_name in obj else 0
+            value = get_value(obj, field_name, 0)
 
             if value == True:
                 value = 1
@@ -71,16 +78,28 @@ def write_obj(file, obj: bpy.types.Object, definition, field_name = None):
 
             file.write(struct.pack(">" + struct_formats[definition], value))
             return
-            
+        if definition in enums:
+            value = get_value(obj, field_name, None)
+
+            if value == None:
+                value = 0
+            else:
+                value = enums[definition].str_to_int(value)
+
+            file.write(struct.pack(">I", value))
+            return
          
-        raise Exception(f"unknown field type {definition} {field_name}")
+        raise Exception(f"unknown field type '{definition}' {field_name}")
     
     for child in definition.children:
-        write_obj(file, obj, child.data_type, child.name)
+        write_obj(file, obj, child.data_type, enums, child.name)
 
 
-def obj_size(definition):
+def obj_size(definition, enums):
     if isinstance(definition, str):
+        if definition in enums:
+            return 4
+
         if not definition in fixed_sizes:
             raise Exception(f"{definition} is not a known size")
         return fixed_sizes[definition]
@@ -88,6 +107,6 @@ def obj_size(definition):
     result = 0
 
     for child in definition.children:
-        result += obj_size(child.data_type)
+        result += obj_size(child.data_type, enums)
 
     return result

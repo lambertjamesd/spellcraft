@@ -32,7 +32,6 @@
 #define RDPQ_VALIDATE_DETACH_ADDR    0x00800000
 
 struct world* current_world;
-struct collectable collectable_test;
 
 struct spell_symbol test_spell_symbols[] = {
     {.reserved = 0, .type = SPELL_SYMBOL_PUSH},
@@ -57,19 +56,6 @@ void setup() {
     collectable_assets_load();
     dialog_box_init(&g_dialog_box);
     current_world = world_load("rom:/worlds/test.world");
-
-    struct crate_definition def;
-
-    def.position.x = 2.0f;
-    def.position.y = 1.0f;
-    def.position.z = 0.0f;
-    def.rotation = gRight2;
-
-    struct collectable_definition collect_def;
-    collect_def.position.x = 4.0f;
-    collect_def.position.y = 1.0f;
-    collect_def.position.z = 0.0f;
-    collectable_init(&collectable_test, &collect_def);
 }
 
 float angle = 0.0f;
@@ -154,13 +140,13 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    // for (;;) {
-    //     joypad_poll();
+    for (;;) {
+        joypad_poll();
 
-    //     if (joypad_get_buttons_pressed(0).start) {
-    //         break;
-    //     }
-    // }
+        if (joypad_get_buttons_pressed(0).start) {
+            break;
+        }
+    }
 
     setup();
 

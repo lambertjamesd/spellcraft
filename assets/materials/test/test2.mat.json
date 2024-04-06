@@ -1,0 +1,12 @@
+{
+    "tex0": "../../images/test/test1.png",
+    "combineMode": [{
+        "color": ["TEX0", "SHADE", "PRIM", "0"],
+        "alpha": ["TEX0", "SHADE", "PRIM", "0"]
+    }],
+    "primColor": [255, 255, 255, 255],
+    "blendMode": "TRANSPARENT",
+    "lighting": false,
+    "zBuffer": true,
+    "vertexGamma": 1
+}

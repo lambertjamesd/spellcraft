@@ -7,7 +7,7 @@
 
 #include "../menu/dialog_box.h"
 
-#define COLLECTABLE_RADIUS  0.5f
+#define COLLECTABLE_RADIUS  0.75f
 
 static struct dynamic_object_type collectable_collision = {
     .minkowsi_sum = dynamic_object_sphere_minkowski_sum,
@@ -17,26 +17,31 @@ static struct dynamic_object_type collectable_collision = {
             .radius = COLLECTABLE_RADIUS,
         }
     },
-    .bounce = 0.4f,
+    .bounce = 0.2f,
     .friction = 0.25f,
-};
-
-struct collectable_assets {
-    struct material* collectable_test;
 };
 
 static struct hash_map collectable_hash_map;
 
-struct collectable_assets collectable_assets;
+struct collectable_information {
+    char* mesh_filename;
+};
+
+static struct collectable_information collectable_information[] = {
+    [COLLECTABLE_TYPE_HEALTH] = {
+        .mesh_filename = "rom:/meshes/objects/pickups/heart.mesh",
+    },
+    [COLLECTABLE_TYPE_SPELL_RUNE] = {
+        .mesh_filename = "rom:/meshes/objects/pickups/scroll.mesh",
+    },
+};
 
 void collectable_assets_load() {
-    collectable_assets.collectable_test = material_cache_load("rom:/materials/objects/collectable.mat");
-
     hash_map_init(&collectable_hash_map, 8);
 }
 
 void collectable_init(struct collectable* collectable, struct collectable_definition* definition) {
-    collectable->type = COLLECTABLE_TYPE_HEALTH;
+    collectable->type = definition->collectable_type;
     collectable->transform.position = definition->position;
     collectable->transform.rotation = gRight2;
     
@@ -49,10 +54,12 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
         0
     );
 
-    collectable->dynamic_object.center.y = COLLECTABLE_RADIUS;
+    struct collectable_information* type = &collectable_information[definition->collectable_type];
+
+    // collectable->dynamic_object.center.y = COLLECTABLE_RADIUS;
 
     collision_scene_add(&collectable->dynamic_object);
-    renderable_single_axis_init(&collectable->renderable, &collectable->transform, "rom:/meshes/objects/pickups/heart.mesh");
+    renderable_single_axis_init(&collectable->renderable, &collectable->transform, type->mesh_filename);
     render_scene_add_renderable_single_axis(&r_scene_3d, &collectable->renderable, 0.2f);
     
     hash_map_set(&collectable_hash_map, collectable->dynamic_object.entity_id, collectable);

@@ -23,6 +23,17 @@ class StructureInfo:
         result.append("}")
 
         return '\n'.join(result)
+    
+class EnumInfo:
+    def __init__(self, name: str, values: list[str]):
+        self.name: str = name
+        self._values: list[str] = values
+
+    def str_to_int(self, value: str):
+        return self._values.index(value)
+    
+    def is_defined(self, name: str) -> bool:
+        return name in self._values
 
 class Token:
     def __init__(self, value: str, token_type: str, at: int):
@@ -82,7 +93,7 @@ def token_error(chr: str):
     
     return (token_error, None)
 
-single_tokens = {'{', '}', ';'}
+single_tokens = {'{', '}', ';', ','}
 
 def token_default_state(chr: str):
     if chr.isalpha() or chr == '_':
@@ -216,6 +227,27 @@ def parse_struct(state: ParseState):
 
     return StructureInfo('' if name is None else name.value, children)
 
+def parse_enum(state: ParseState):
+    state.require('identifier', 'enum')
+    
+    name = state.optional('identifier')
+
+    if name and state.peek(0).token_type != '{':
+        return f"enum {name.value}"
+    
+    state.require('{')
+
+    values: list[str] = []
+
+    while not state.optional('}'):
+        if state.peek(0).token_type == 'eof':
+            raise Exception(state.format_error(state.peek(0), 'unexpected end of file'))
+        
+        value_name = state.require('identifier')
+        values.append(value_name.value)
+        state.optional(',')
+
+    return EnumInfo(name.value, values)
 
 
 def parse_type(state: ParseState):
@@ -224,11 +256,20 @@ def parse_type(state: ParseState):
     if next.token_type == 'identifier' and next.value == 'struct':
         return parse_struct(state)
     
+    if next.token_type == 'identifier' and next.value == 'enum':
+        return parse_enum(state)
+    
     if next.token_type == 'identifier':
         state.advance()
         return next.value
 
     raise Exception(state.format_error(state.peek(0), 'unknown type'))
+
+
+def determine_enum(source: str, starting_at: int, ending_at: int):
+    struct_source = source[starting_at:ending_at]
+    return parse_enum(ParseState(tokenize(struct_source, starting_at), source))
+
 
 def determine_type(source: str, starting_at: int, ending_at: int):
     struct_source = source[starting_at:ending_at]
@@ -248,6 +289,34 @@ def find_end_curly(file_string: str, starting_at: int):
                 return idx + 1
 
     return -1
+
+def find_enums(file_string: str) -> dict[str, EnumInfo]:
+    result: dict[str, StructureInfo] = {}
+    
+    current_position = file_string.find('enum ')
+
+    result: dict[str, StructureInfo] = {}
+
+    while current_position != -1:
+        # only look for enums definitons
+        # this is pretty shaky but should work
+        if file_string[current_position - 1] != '\n':
+            current_position = file_string.find('enum ', current_position + 5)
+            continue
+
+        next_end = find_end_curly(file_string, current_position)
+
+        if next_end == -1:
+            raise Exception('Unmatched curly braces')
+
+        enum_type = determine_enum(file_string, current_position, next_end)
+
+        result[f'enum {enum_type.name}'] = enum_type
+
+        current_position = file_string.find('enum ', next_end)
+
+    return result
+
 
 def find_structs(file_string: str) -> dict[str, StructureInfo]:
     current_position = file_string.find('struct ')

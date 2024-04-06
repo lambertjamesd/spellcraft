@@ -7,10 +7,6 @@
 #include "../math/transform_single_axis.h"
 #include "../render/renderable.h"
 
-enum collectable_type {
-    COLLECTABLE_TYPE_HEALTH,
-};
-
 struct collectable {
     struct TransformSingleAxis transform;
     struct renderable_single_axis renderable;

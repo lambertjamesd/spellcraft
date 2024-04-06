@@ -10,8 +10,15 @@ struct crate_definition {
     struct Vector2 rotation;
 };
 
+enum collectable_type {
+    COLLECTABLE_TYPE_HEALTH,
+    COLLECTABLE_TYPE_POTION,
+    COLLECTABLE_TYPE_SPELL_RUNE,
+};
+
 struct collectable_definition {
     struct Vector3 position;
+    enum collectable_type collectable_type;
 };
 
 struct biter_definition {

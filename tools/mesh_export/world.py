@@ -49,9 +49,12 @@ def process_scene():
 
     base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
     definitions = {}
+    enums = {}
 
     with open('src/scene/world_definition.h', 'r') as file:
-        definitions = parse.struct_parse.find_structs(file.read())
+        file_content = file.read()
+        definitions = parse.struct_parse.find_structs(file_content)
+        enums = parse.struct_parse.find_enums(file_content)
 
     for obj in bpy.data.objects:
         if obj.type != "MESH":
@@ -111,10 +114,10 @@ def process_scene():
             file.write(def_name.encode())
 
             file.write(len(item[1]).to_bytes(2, 'big'))
-            file.write(parse.struct_serialize.obj_size(item[1][0].def_type).to_bytes(2, 'big'))
+            file.write(parse.struct_serialize.obj_size(item[1][0].def_type, enums).to_bytes(2, 'big'))
             
             for entry in item[1]:
-                parse.struct_serialize.write_obj(file, entry.obj, entry.def_type)
+                parse.struct_serialize.write_obj(file, entry.obj, entry.def_type, enums)
             
 
 process_scene()
