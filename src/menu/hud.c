@@ -3,6 +3,7 @@
 #include "menu_rendering.h"
 #include "../resource/material_cache.h"
 #include "menu_common.h"
+#include "../cutscene/cutscene_runner.h"
 
 #define SPELL_SLOT_LOCATION_X   232
 #define SPELL_SLOT_LOCATION_Y   152
@@ -25,9 +26,13 @@ void hud_render_spell_icon(struct spell* spell, int x, int y) {
 }
 
 void hud_render(void *data) {
+    if (cutscene_runner_is_running()) {
+        return;
+    }
+ 
     struct hud* hud = (struct hud*)data;
 
-    rspq_block_run(hud->current_spell_icon->block);
+    rspq_block_run(current_spell_icon->block);
 
     rdpq_texture_rectangle(
         TILE0,
@@ -84,9 +89,8 @@ void hud_render(void *data) {
 
 void hud_init(struct hud* hud) {
     menu_add_callback(hud_render, hud, 0);
-    hud->current_spell_icon = material_cache_load("rom:/materials/menu/current_spell_icon.mat");
 }
 
 void hud_destroy(struct hud* hud) {
-    material_cache_release(hud->current_spell_icon);
+    
 }

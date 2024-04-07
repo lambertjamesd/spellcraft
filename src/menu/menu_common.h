@@ -7,6 +7,8 @@
 extern struct material* menu_icons_material;
 extern struct material* menu_spell_icons[SPELL_ICON_COUNT];
 extern struct material* spell_cursor_material;
+extern struct material* solid_primitive_material;
+extern struct material* current_spell_icon;
 
 void menu_common_init();
 

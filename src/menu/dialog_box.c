@@ -86,7 +86,7 @@ void dialog_box_render(void* data) {
 
 void dialog_box_show(char* message, dialog_end_callback end_callback, void* end_callback_data) {
     dialog_box.current_message = message;
-    menu_add_callback(dialog_box_render, &dialog_box, 0);
+    menu_add_callback(dialog_box_render, &dialog_box, 1);
     update_add(&dialog_box, dialog_box_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_DIALOG);
 
     dialog_box.current_message_start = message;
@@ -100,9 +100,14 @@ void dialog_box_show(char* message, dialog_end_callback end_callback, void* end_
     dialog_box.end_callback_data = end_callback_data;
 }
 
+bool dialog_box_is_active() {
+    return dialog_box.current_message != NULL;
+}
+
 void dialog_box_hide() {
     menu_remove_callback(&dialog_box);
     update_remove(&dialog_box);
+    dialog_box.current_message = NULL;
 }
 
 void dialog_box_destroy() {

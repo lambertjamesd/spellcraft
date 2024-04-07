@@ -5,7 +5,7 @@
 #include "../render/material.h"
 
 struct hud {
-    struct material* current_spell_icon;
+    int padding;
 };
 
 void hud_init(struct hud* hud);

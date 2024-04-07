@@ -19,6 +19,7 @@
 #include "menu/menu_common.h"
 #include "objects/collectable.h"
 #include "menu/dialog_box.h"
+#include "cutscene/cutscene_runner.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -55,6 +56,7 @@ void setup() {
     menu_reset();
     collectable_assets_load();
     dialog_box_init();
+    cutscene_runner_init();
     current_world = world_load("rom:/worlds/test.world");
 }
 

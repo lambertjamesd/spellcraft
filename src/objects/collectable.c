@@ -6,6 +6,7 @@
 #include "../spell/spell.h"
 #include "../resource/material_cache.h"
 #include "../player/inventory.h"
+#include "../cutscene/cutscene_runner.h"
 
 #include "../menu/dialog_box.h"
 
@@ -39,8 +40,7 @@ static struct collectable_information collectable_information[] = {
 };
 
 static char* spell_messages[] = {
-    // [SPELL_SYMBOL_FIRE] = "You found the fire rune!\n\nWith it you can summon fire or imbue fire into chained runes",
-    [SPELL_SYMBOL_FIRE] = "a\nb\nc",
+    [SPELL_SYMBOL_FIRE] = "You found the fire rune!\n\nWith it you can summon fire or imbue fire into chained runes",
     [SPELL_SYMBOL_PROJECTILE] = "You found the projectile rune!\n\nUse it to damage enemies from afar or even chain into other runes on impact",
 };
 
@@ -86,10 +86,16 @@ void collectable_collected(struct collectable* collectable) {
     if (collectable->collectable_type == COLLECTABLE_TYPE_SPELL_RUNE) {
         char* message = spell_messages[collectable->collectable_sub_type];
 
+        inventory_unlock_rune(collectable->collectable_sub_type);
+        cutscene_runner_pause(true, true);
+        cutscene_runner_show_rune(collectable->collectable_sub_type, true);
+        
         if (message) {
-            dialog_box_show(message, NULL, NULL);
-            inventory_unlock_rune(collectable->collectable_sub_type);
+            cutscene_runner_dialog(message);
         }
+
+        cutscene_runner_show_rune(collectable->collectable_sub_type, false);
+        cutscene_runner_pause(false, true);
     }
 }
 

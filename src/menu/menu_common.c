@@ -10,6 +10,8 @@ static struct material* menu_border_material;
 struct material* menu_icons_material;
 struct material* menu_spell_icons[SPELL_ICON_COUNT];
 struct material* spell_cursor_material;
+struct material* solid_primitive_material;
+struct material* current_spell_icon;
 
 static char* menu_spell_icon_filename[SPELL_ICON_COUNT] = {
     "rom:/materials/spell/icons/00_fire.mat",
@@ -29,6 +31,8 @@ void menu_common_init() {
     menu_border_material = material_cache_load("rom:/materials/menu/menu_border.mat");
     menu_icons_material = material_cache_load("rom:/materials/menu/menu_icons.mat");
     spell_cursor_material = material_cache_load("rom:/materials/menu/menu_cursor.mat");
+    solid_primitive_material = material_cache_load("rom:/materials/menu/solid_primitive.mat");
+    current_spell_icon = material_cache_load("rom:/materials/menu/current_spell_icon.mat");
 
     for (int i = 0; i < SPELL_ICON_COUNT; i += 1) {
         menu_spell_icons[i] = material_cache_load(menu_spell_icon_filename[i]);

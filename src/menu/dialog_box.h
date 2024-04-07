@@ -2,6 +2,7 @@
 #define __MENU_DIALOG_BOX_H__
 
 #include <libdragon.h>
+#include <stdbool.h>
 
 typedef void (*dialog_end_callback)(void* data);
 
@@ -25,6 +26,7 @@ struct dialog_box {
 
 void dialog_box_init();
 void dialog_box_show(char* message, dialog_end_callback end_callback, void* end_callback_data);
+bool dialog_box_is_active();
 void dialog_box_hide();
 void dialog_box_destroy();
 
