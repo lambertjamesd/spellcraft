@@ -114,6 +114,10 @@ void annotation_clip_set_free(struct animation_set* animation_set) {
 }
 
 struct animation_clip* animation_set_find_clip(struct animation_set* set, const char* clip_name) {
+    if (!set) {
+        return NULL;
+    }
+
     for (int i = 0; i < set->clip_count; i += 1) {
         if (strcmp(set->clips[i].name, clip_name) == 0) {
             return &set->clips[i];
