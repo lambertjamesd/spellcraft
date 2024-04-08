@@ -128,48 +128,6 @@ void cutscene_runner_queue_step(struct cutscene_step* step) {
     cutscene_runner.is_active = true;
 }
 
-
-void cutscene_runner_pause(bool should_pause, bool should_change_game_mode) {
-    struct cutscene_step step = {
-        .type = CUTSCENE_STEP_TYPE_PAUSE,
-        .data = {
-            .pause = {
-                .should_pause = should_pause,
-                .should_change_game_mode = should_change_game_mode,
-            },
-        },
-    };
-
-    cutscene_runner_queue_step(&step);
-}
-
-void cutscene_runner_dialog(char* message) {
-    struct cutscene_step step = {
-        .type = CUTSCENE_STEP_TYPE_DIALOG,
-        .data = {
-            .dialog = {
-                .message = message,
-            },
-        },
-    };
-
-    cutscene_runner_queue_step(&step);
-}
-
-void cutscene_runner_show_rune(enum spell_symbol_type rune, bool should_show) {
-    struct cutscene_step step = {
-        .type = CUTSCENE_STEP_TYPE_SHOW_RUNE,
-        .data = {
-            .show_rune = {
-                .rune = rune,
-                .should_show = should_show,
-            },
-        },
-    };
-
-    cutscene_runner_queue_step(&step);
-}
-
 void cutscene_runner_run(struct cutscene* cutscene) {
     for (int i = 0; i < cutscene->step_count; i += 1) {
         cutscene_runner_queue_step(&cutscene->steps[i]);
