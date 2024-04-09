@@ -86,16 +86,25 @@ void collectable_collected(struct collectable* collectable) {
     if (collectable->collectable_type == COLLECTABLE_TYPE_SPELL_RUNE) {
         char* message = spell_messages[collectable->collectable_sub_type];
 
+        struct cutscene_builder builder;
+        cutscene_builder_init(&builder);
+
         inventory_unlock_rune(collectable->collectable_sub_type);
-        cutscene_runner_pause(true, true);
-        cutscene_runner_show_rune(collectable->collectable_sub_type, true);
+        cutscene_builder_pause(&builder, true, true);
+        cutscene_builder_show_rune(&builder, collectable->collectable_sub_type, true);
         
         if (message) {
-            cutscene_runner_dialog(message);
+            cutscene_builder_dialog(&builder, message);
         }
 
-        cutscene_runner_show_rune(collectable->collectable_sub_type, false);
-        cutscene_runner_pause(false, true);
+        cutscene_builder_show_rune(&builder, collectable->collectable_sub_type, false);
+        cutscene_builder_pause(&builder, false, true);
+
+        cutscene_runner_run(
+            cutscene_builder_finish(&builder),
+            cutscene_runner_free_on_finish,
+            NULL
+        );
     }
 }
 

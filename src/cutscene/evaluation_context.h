@@ -23,7 +23,8 @@ struct evaluation_context {
     void* global_variables;
 };
 
-void evaluation_context_init(struct evaluation_context* context);
+void evaluation_context_init(struct evaluation_context* context, int locals_size);
+void evaluation_context_destroy(struct evaluation_context* context);
 
 void evaluation_context_push(struct evaluation_context* context, int value);
 int evaluation_context_pop(struct evaluation_context* context);

@@ -13,6 +13,8 @@ enum cutscene_step_type {
     CUTSCENE_STEP_TYPE_POP_CONTEXT,
 };
 
+struct cutscene;
+
 union cutscene_step_data {
     struct {
         char* message;
@@ -25,6 +27,9 @@ union cutscene_step_data {
         bool should_pause: 1;
         bool should_change_game_mode: 1;
     } pause;
+    struct {
+        uint16_t context_size;
+    } push_context;
 };
 
 struct cutscene_step {

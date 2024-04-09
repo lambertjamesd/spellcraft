@@ -54,7 +54,7 @@ void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause,
 void cutscene_builder_dialog(struct cutscene_builder* builder, char* message) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
 
-    struct cutscene_step step = {
+    *step = (struct cutscene_step){
         .type = CUTSCENE_STEP_TYPE_DIALOG,
         .data = {
             .dialog = {
@@ -62,14 +62,12 @@ void cutscene_builder_dialog(struct cutscene_builder* builder, char* message) {
             },
         },
     };
-
-    cutscene_builder_queue_step(&step);
 }
 
 void cutscene_builder_show_rune(struct cutscene_builder* builder, enum spell_symbol_type rune, bool should_show) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
-    struct cutscene_step step = {
+    *step = (struct cutscene_step){
         .type = CUTSCENE_STEP_TYPE_SHOW_RUNE,
         .data = {
             .show_rune = {
@@ -78,8 +76,6 @@ void cutscene_builder_show_rune(struct cutscene_builder* builder, enum spell_sym
             },
         },
     };
-
-    cutscene_builder_queue_step(&step);
 }
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder) {
