@@ -1,12 +1,40 @@
 
+def determine_source_location(content: str, at: int) -> tuple[int, int]:
+    line = 1
+    col = 1
+
+    for idx in range(at):
+        if content[idx] == '\n':
+            line += 1
+            col = 1
+        else:
+            col += 1
+
+    return line, col
+
+def get_source_line(content: str, at: int) -> str:
+    line_start = content.rfind('\n', 0, at)
+    line_end = content.find('\n', at)
+    return content[line_start:line_end]
+
+def format_message(message: str, content: str, at: int, filename: str):
+    line, col = determine_source_location(content, at)
+    padding = ' ' * (col - 1)
+
+    return f'{filename}:{line}:{col} {message}\n{get_source_line(content, at)}\n{padding}^'
+
 class Token():
-    def __init__(self, token_type: str, value: str, at: int):
+    def __init__(self, token_type: str, value: str, at: int, content: str):
         self.token_type: str = token_type
         self.value: str = value
         self.at: int = at
+        self._content: str = content
 
     def __str__(self):
         return f"'{self.value}':{self.token_type}"
+    
+    def format_message(self, message: str, filename: str) -> str:
+        return format_message(message, self._content, self.at, filename)
 
 def _whitespace_state(current: str):
     if current.isspace():
@@ -76,7 +104,8 @@ def _less_than_state(current: str):
 
 _single_character_tokens = {
     '+', '-', '*', '/',
-    ':', '[', ']', '(', ')', ','
+    ':', '[', ']', '(', ')', ',',
+    ';'
 }
 
 def _default_state(current: str):
@@ -113,12 +142,12 @@ def tokenize(content: str) -> list[Token]:
 
         if emit_token:
             if emit_token != 'whitespace':
-                result.append(Token(emit_token, content[last_start:idx], last_start))
+                result.append(Token(emit_token, content[last_start:idx], last_start, content))
 
             last_start = idx
 
         state = next_state
 
-    result.append(Token('eof', '', len(content)))
+    result.append(Token('eof', '', len(content), content))
 
     return result
