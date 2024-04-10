@@ -78,6 +78,16 @@ assets/materials/materials.blend: tools/mesh_export/material_generator.py $(MATE
 	$(BLENDER_4) --background --python-exit-code 1 --python tools/mesh_export/material_generator.py -- $@ $(MATERIAL_SOURCES)
 
 ###
+# cutscenes
+###
+
+filesystem/%.cutscene: assets/%.script $(EXPORT_SOURCE)
+	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
+	python tools/mesh_export/cutscene.py $< $(@:filesystem/%=build/assets/%)
+	mkasset -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
+
+###
 # worlds
 ###
 

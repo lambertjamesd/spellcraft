@@ -1,8 +1,12 @@
 
 class Token():
     def __init__(self, token_type: str, value: str, at: int):
-        self.token_type = token_type
-        self.value = value
+        self.token_type: str = token_type
+        self.value: str = value
+        self.at: int = at
+
+    def __str__(self):
+        return f"'{self.value}':{self.token_type}"
 
 def _whitespace_state(current: str):
     if current.isspace():
@@ -24,11 +28,25 @@ def _string_state(current: str):
         return _error_state, 'error'
     return _string_state, None
 
+def _float_state(current: str):
+    if current.isdigit():
+        return _float_state, None
+    
+    return _default_state(current), 'float'
+
+def _integer_state(current: str):
+    if current.isdigit():
+        return _integer_state, None
+    if current == '.':
+        return _float_state, None
+    
+    return _default_state(current), 'int'
+
 def _error_state(current: str):
     if current == '':
         return _error_state, 'error'
     
-    return _error_state, 'error'
+    return _error_state, None
 
 def _identifier_state(current: str):
     if current.isalnum() or current == '_':
@@ -36,10 +54,25 @@ def _identifier_state(current: str):
     
     return _default_state(current), 'identifier'
 
-def _single_character_state(token_type: str):
+def _emit_token_state(token_type: str):
     def result(current: str):
         return _default_state(current), token_type
     return result
+
+def _assign_or_equal_state(current: str):
+    if current == '=':
+        return _emit_token_state('==')
+    return _default_state(current), '='
+
+def _greater_than_state(current: str):
+    if current == '=':
+        return _emit_token_state('>=')
+    return _default_state(current), '>'
+
+def _less_than_state(current: str):
+    if current == '=':
+        return _emit_token_state('<=')
+    return _default_state(current), '<'
 
 _single_character_tokens = {
     '+', '-', '*', '/',
@@ -54,7 +87,17 @@ def _default_state(current: str):
     if current.isalpha() or current == '_':
         return _identifier_state
     if current in _single_character_tokens:
-        return _single_character_state(current)
+        return _emit_token_state(current)
+    if current.isdigit():
+        return _integer_state
+    if current == '.':
+        return _float_state
+    if current == '=':
+        return _assign_or_equal_state
+    if current == '>':
+        return _greater_than_state
+    if current == '<':
+        return _less_than_state
     
     return _error_state
 
@@ -75,5 +118,7 @@ def tokenize(content: str) -> list[Token]:
             last_start = idx
 
         state = next_state
+
+    result.append(Token('eof', '', len(content)))
 
     return result
