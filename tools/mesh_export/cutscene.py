@@ -1,6 +1,7 @@
 import argparse
 import cutscene.tokenizer
 import cutscene.parser
+import cutscene.variable_layout
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -8,13 +9,27 @@ if __name__ == "__main__":
         description='Converts a json material into a material binary'
     )
 
+    parser.add_argument('-g', '--globals')
+
     parser.add_argument('input')
     parser.add_argument('output')
 
     args = parser.parse_args()
     result: cutscene.parser.Cutscene = None
+
+    globals = cutscene.variable_layout.VariableLayout()
+
+    with open(args.globals) as file:
+        globals.deserialize(file)
     
     with open(args.input) as file:
         result = cutscene.parser.parse(file.read(), args.input)
+
+    local_builder = cutscene.variable_layout.VariableLayoutBuilder()
+
+    for local_var in result.locals:
+        local_builder.add_variable(local_var)
+
+    locals = local_builder.build()
 
     print(result)

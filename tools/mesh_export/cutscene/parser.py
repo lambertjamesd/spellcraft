@@ -5,12 +5,12 @@ from . import tokenizer
 class _ParseState():
     def __init__(self, tokens: list[tokenizer.Token], content: str, filename: str):
         self.tokens: list[tokenizer.Token] = tokens
-        self.content: str = content
         self.filename: str = filename
         self.current: int = 0
+        self.source = tokenizer.Source(content, filename)
 
     def error(self, message: str, at: int):
-        print(tokenizer.format_message(message, self.content, at))
+        print(self.source.format_message(message, at))
         sys.exit(1)
 
     def peek(self, offset = 0) -> tokenizer.Token:
@@ -138,12 +138,12 @@ class String():
         return self.value.value
 
 class UnaryOperator():
-    def __init__(self, operator: tokenizer.Token, expression):
+    def __init__(self, operator: tokenizer.Token, operand):
         self.operator: tokenizer.Token = operator
-        self.expression = expression
+        self.operand = operand
 
     def __str__(self):
-        return f"{self.operator.value}{self.expression}"
+        return f"{self.operator.value}{self.operand}"
 
 class BinaryOperator():
     def __init__(self, a, operator: tokenizer.Token, b):
@@ -285,7 +285,7 @@ def _parse_binary(parse_state: _ParseState, priority: int):
     while next.value in operator_priority:
         next_priority = operator_priority[next.value]
 
-        if next_priority >= priority:
+        if next_priority < priority:
             return result
         
         parse_state.advance()
@@ -355,5 +355,9 @@ def _parse_cutscene(parse_state: _ParseState) -> Cutscene:
     return result
 
 def parse(content: str, filename: str) -> Cutscene:
-    parse_state = _ParseState(tokenizer.tokenize(content), content, filename)
+    parse_state = _ParseState(tokenizer.tokenize(content, filename), content, filename)
     return _parse_cutscene(parse_state)
+
+def parse_type(content: str) -> DataType:
+    parse_state = _ParseState(tokenizer.tokenize(content, ''), content, '')
+    return _parse_type(parse_state)

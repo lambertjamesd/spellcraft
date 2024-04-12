@@ -1,40 +1,45 @@
 
-def determine_source_location(content: str, at: int) -> tuple[int, int]:
-    line = 1
-    col = 1
+class Source():
+    def __init__(self, content: str, filename: str):
+        self.content: str = content
+        self.filename: str = filename
 
-    for idx in range(at):
-        if content[idx] == '\n':
-            line += 1
-            col = 1
-        else:
-            col += 1
+    def get_source_line(self, at: int) -> str:
+        line_start = self.content.rfind('\n', 0, at)
+        line_end = self.content.find('\n', at)
+        return self.content[line_start:line_end]
 
-    return line, col
+    def determine_source_location(self, at: int) -> tuple[int, int]:
+        line = 1
+        col = 1
 
-def get_source_line(content: str, at: int) -> str:
-    line_start = content.rfind('\n', 0, at)
-    line_end = content.find('\n', at)
-    return content[line_start:line_end]
+        for idx in range(at):
+            if self.content[idx] == '\n':
+                line += 1
+                col = 1
+            else:
+                col += 1
 
-def format_message(message: str, content: str, at: int, filename: str):
-    line, col = determine_source_location(content, at)
-    padding = ' ' * (col - 1)
+        return line, col
 
-    return f'{filename}:{line}:{col} {message}\n{get_source_line(content, at)}\n{padding}^'
+    def format_message(self, message: str, at: int):
+        line, col = self.determine_source_location(at)
+        padding = ' ' * (col - 1)
+
+        return f'{self.filename}:{line}:{col} {message}\n{self.get_source_line(at)}\n{padding}^'
 
 class Token():
-    def __init__(self, token_type: str, value: str, at: int, content: str):
+    def __init__(self, token_type: str, value: str, at: int, source: Source):
         self.token_type: str = token_type
         self.value: str = value
         self.at: int = at
-        self._content: str = content
+        self._source: str = source
 
     def __str__(self):
         return f"'{self.value}':{self.token_type}"
     
-    def format_message(self, message: str, filename: str) -> str:
-        return format_message(message, self._content, self.at, filename)
+    def format_message(self, message: str) -> str:
+        return self._source.format_message(message, self.at)
 
 def _whitespace_state(current: str):
     if current.isspace():
@@ -130,10 +135,12 @@ def _default_state(current: str):
     
     return _error_state
 
-def tokenize(content: str) -> list[Token]:
+def tokenize(content: str, filename: str) -> list[Token]:
     result: list[Token] = []
     state = _default_state(content[0])
     last_start = 0
+
+    source = Source(content, filename)
 
     for idx in range(1, len(content) + 1):
         character = '' if idx == len(content) else content[idx]
@@ -142,12 +149,12 @@ def tokenize(content: str) -> list[Token]:
 
         if emit_token:
             if emit_token != 'whitespace':
-                result.append(Token(emit_token, content[last_start:idx], last_start, content))
+                result.append(Token(emit_token, content[last_start:idx], last_start, source))
 
             last_start = idx
 
         state = next_state
 
-    result.append(Token('eof', '', len(content), content))
+    result.append(Token('eof', '', len(content), source))
 
     return result

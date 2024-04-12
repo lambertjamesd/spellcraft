@@ -18,22 +18,46 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
                 evaluation_context_push(context, data->literal);
                 ++data;
                 break;
-            case EXPRESSION_TYPE_AND:
-                evaluation_context_push(
-                    context,
-                    evaluation_context_pop(context) && evaluation_context_pop(context)
-                );
+            case EXPRESSION_TYPE_AND: {
+                int a = evaluation_context_pop(context);
+                int b = evaluation_context_pop(context);
+                evaluation_context_push(context, a && b);
                 break;
-            case EXPRESSION_TYPE_OR:
-                evaluation_context_push(
-                    context,
-                    evaluation_context_pop(context) || evaluation_context_pop(context)
-                );
+            }
+            case EXPRESSION_TYPE_OR: {
+                int a = evaluation_context_pop(context);
+                int b = evaluation_context_pop(context);
+                evaluation_context_push(context, a || b);
                 break;
+            }
             case EXPRESSION_TYPE_NOT:
                 evaluation_context_push(
                     context,
                     !evaluation_context_pop(context)
+                );
+                break;
+            case EXPRESSION_TYPE_EQ:
+                evaluation_context_push(
+                    context,
+                    evaluation_context_pop(context) == evaluation_context_pop(context)
+                );
+                break;
+            case EXPRESSION_TYPE_NEQ:
+                evaluation_context_push(
+                    context,
+                    evaluation_context_pop(context) != evaluation_context_pop(context)
+                );
+                break;
+            case EXPRESSION_TYPE_GT:
+                evaluation_context_push(
+                    context,
+                    evaluation_context_pop(context) > evaluation_context_pop(context)
+                );
+                break;
+            case EXPRESSION_TYPE_GTE:
+                evaluation_context_push(
+                    context,
+                    evaluation_context_pop(context) >= evaluation_context_pop(context)
                 );
                 break;
             case EXPRESSION_TYPE_ADD:
@@ -60,28 +84,10 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
                     evaluation_context_pop(context) / evaluation_context_pop(context)
                 );
                 break;
-            case EXPRESSION_TYPE_EQ:
+            case EXPRESSION_TYPE_NEGATE:
                 evaluation_context_push(
                     context,
-                    evaluation_context_pop(context) == evaluation_context_pop(context)
-                );
-                break;
-            case EXPRESSION_TYPE_NEQ:
-                evaluation_context_push(
-                    context,
-                    evaluation_context_pop(context) != evaluation_context_pop(context)
-                );
-                break;
-            case EXPRESSION_TYPE_GT:
-                evaluation_context_push(
-                    context,
-                    evaluation_context_pop(context) > evaluation_context_pop(context)
-                );
-                break;
-            case EXPRESSION_TYPE_GTE:
-                evaluation_context_push(
-                    context,
-                    evaluation_context_pop(context) >= evaluation_context_pop(context)
+                    -evaluation_context_pop(context)
                 );
                 break;
         }

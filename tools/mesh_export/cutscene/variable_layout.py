@@ -1,4 +1,5 @@
 import sys
+import json
 from . import parser
 
 _type_bit_sizes = {
@@ -10,9 +11,9 @@ _type_bit_sizes = {
     'float': 32,
 }
 
-def _determine_type_bit_size(type: parser.DataType, filename: str):
+def _determine_type_bit_size(type: parser.DataType):
     if not type.name.value in _type_bit_sizes:
-        print(type.name.format_message('invalid type', filename))
+        print(type.name.format_message('invalid type'))
         sys.exit(1)
 
     result = _type_bit_sizes[type.name.value]
@@ -23,59 +24,94 @@ def _determine_type_bit_size(type: parser.DataType, filename: str):
 
     return result, alignment
 
+class VariableInfo():
+    def __init__(self, name: str, bit_size: int, alignment: int, type_name: str):
+        self.name: str = name
+        self.bit_size: int = bit_size
+        self.alignment: int = alignment
+        self.type_name: str = type_name
+
+
 class VariableLayout():
     def __init__(self):
-        self.bit_used: list[bool] = []
-        self.variable_bit_offset: dict[str, int] = {}
-        self.variable_definition: dict[str, parser.VariableDefinition] = {}
-        self.variable_filename: dict[str, str] = {}
+        self.entries: dict[str, int] = {}
+        self.types: dict[str, str] = {}
 
-    def add_variable(self, variable: parser.VariableDefinition, filename: str) -> bool:
+    def deserialize(self, file):
+        file_contents = json.load(file)
+
+        for entry in file_contents['entries']:
+            self.entries[entry["name"]] = entry["offset"]
+            self.types[entry["name"]] = entry["type"]
+
+    def get_variable_offset(self, name: str) -> int:
+        return self.entries[name]
+    
+    def get_variable_type(self, name: str) -> str | None:
+        if name in self.types:
+            return self.types[name]
+        return None
+
+class VariableLayoutBuilder():
+    def __init__(self):
+        self.entries: list[VariableInfo] = []
+
+        self.variable_definition: dict[str, parser.VariableDefinition] = {}
+
+    def _layout(self) -> list[tuple[VariableInfo, int]]:
+        result = []
+
+        sorted_entries = sorted(self.entries, key=lambda x: x.alignment)
+        
+        offset = 0
+
+        for entry in sorted_entries:
+            offset = (offset + entry.alignment - 1) & ~(entry.alignment - 1)
+            result.append((entry, offset))
+            offset += entry.bit_size
+
+        return result
+
+    def __str__(self):
+        entries = self._layout()
+        return '\n'.join(["0x{0:04x} {1} : {2}".format(entry[1], entry[0].name, entry[0].type_name) for entry in entries])
+
+    def add_variable(self, variable: parser.VariableDefinition) -> bool:
         name_str = variable.name.value
         
         if name_str in self.variable_definition:
             existing = self.variable_definition[name_str]
 
             if not variable.type == str(existing.type):
-                print(variable.name.format_message(f'redefinition of variable with mismatched type', filename))
-                print(existing.name.format_message(f'previous definiton was here', filename))
+                print(variable.name.format_message(f'redefinition of variable with mismatched type'))
+                print(existing.name.format_message(f'previous definiton was here'))
                 return False
 
             return True
         
+        type_str = str(variable.type)
         self.variable_definition[name_str] = variable
-        self.variable_filename[name_str] = filename
 
-        bit_size, alignment = _determine_type_bit_size(variable.type, filename)
+        bit_size, alignment = _determine_type_bit_size(variable.type)
 
-        offset = 0
+        self.entries.append(VariableInfo(name_str, bit_size, alignment, type_str))
 
-        while True:
-            is_valid = True
+        return True
 
-            for idx in range(bit_size):
-                check = offset + idx
+    def serialize(self, file):
+        entries = self._layout()
 
-                if check >= len(self.bit_used):
-                    break
-                elif self.bit_used[check]:
-                    is_valid = False
-                    break
+        file.write(json.dumps({
+            "entries": [{"name": entry[0].name, "offset": entry[1], "type": entry[0].type_name} for entry in entries]
+        }, sort_keys=True, indent=4))
 
-            if is_valid:
-                break
+    def build(self) -> VariableLayout:
+        entries = self._layout()
 
-            offset += alignment
+        result = VariableLayout()
 
-        self.variable_bit_offset[name_str] = offset
+        for entry in entries:
+            result.entries[entry[0].name] = entry[1]
+            result.types[entry[0].name] = entry[0].type_name
 
-        for idx in range(bit_size):
-            check = offset + idx
-
-            if check < len(self.bit_used):
-                self.bit_used.append(True)
-            else
-                self.bit_used[check] = True
-
-
-    
+        return result

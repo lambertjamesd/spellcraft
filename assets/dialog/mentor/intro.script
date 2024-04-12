@@ -2,6 +2,8 @@
 global player_name: char[8];
 global intro_played: bool;
 
+local this_is_a_test: bool;
+
 if intro_played then
     exit;
 end

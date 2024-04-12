@@ -81,10 +81,16 @@ assets/materials/materials.blend: tools/mesh_export/material_generator.py $(MATE
 # cutscenes
 ###
 
-filesystem/%.cutscene: assets/%.script $(EXPORT_SOURCE)
+SCRIPTS := $(shell find assets/dialog -type f -name '*.script' | sort)
+
+build/assets/dialog/globals.json: tools/mesh_export/globals.py assets/dialog/globals.script
+	@mkdir -p $(dir $@)
+	python tools/mesh_export/globals.py $@ assets/dialog/globals.script
+
+filesystem/%.cutscene: assets/%.script build/assets/dialog/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
-	python tools/mesh_export/cutscene.py $< $(@:filesystem/%=build/assets/%)
+	python tools/mesh_export/cutscene.py -g build/assets/dialog/globals.json $< $(@:filesystem/%=build/assets/%)
 	mkasset -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
 
 ###
@@ -100,6 +106,15 @@ filesystem/worlds/%.world: assets/worlds/%.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $(@:filesystem/worlds/%.world=build/assets/worlds/%.world))
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/world.py -- $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
 	mkasset -o $(dir $@) -w 256 $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
+
+###
+# tests
+###
+
+build/test_result.txt: $(EXPORT_SOURCE)
+	@mkdir -p $(dir $@)
+	python tools/mesh_export/cutscene_test.py
+	echo "success" > $@
 
 ###
 # source code
