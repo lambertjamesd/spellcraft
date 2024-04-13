@@ -14,6 +14,8 @@ enum data_type {
     DATA_TYPE_BOOL,
 
     DATA_TYPE_F32,
+
+    DATA_TYPE_ADDRESS,
 };
 
 struct evaluation_context {

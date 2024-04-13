@@ -70,6 +70,22 @@ command_to_name[EXPRESSION_TYPE_NEGATEF] = '-f(unary)'
 command_to_name[EXPRESSION_TYPE_ITOF] = 'itof'
 command_to_name[EXPRESSION_TYPE_FTOI] = 'foti'
 
+data_type_mapping = {
+    "i8": 1,
+    "i16": 2,
+    "i32": 3,
+    "bool": 4,
+    "float": 5,
+}
+
+data_word_size_mapping = {
+    "i8": 8,
+    "i16": 16,
+    "i32": 32,
+    "bool": 1,
+    "float": 32,
+}
+
 # script
 
 class ExpresionScriptLoad():
@@ -87,6 +103,14 @@ class ExpresionScriptLoad():
     
     def has_data() -> bool:
         return True
+    
+    def serialize(self, file):
+        file.write(struct.pack(
+            '>BHH', 
+            self.command, 
+            data_type_mapping[self.data_type], 
+            self.bit_offset // data_word_size_mapping[self.data_type]
+        ))
 
 class ExpresionScriptIntLiteral():
     def __init__(self, value: int):
@@ -98,11 +122,14 @@ class ExpresionScriptIntLiteral():
     
     def has_data() -> bool:
         return True
+    
+    def serialize(self, file):
+        file.write(struct.pack('>Bi', self.command, self.value))
 
 class ExpresionScriptFloatLiteral():
     def __init__(self, value: float):
         self.command: int = EXPRESSION_TYPE_LOAD_LITERAL
-        self.value: int = struct.unpack("<i", struct.pack("<f", value))[0]
+        self.value: int = struct.unpack("<I", struct.pack("<f", value))[0]
         self.original_value = value
 
     def __str__(self):
@@ -110,6 +137,9 @@ class ExpresionScriptFloatLiteral():
 
     def has_data() -> bool:
         return True
+    
+    def serialize(self, file):
+        file.write(struct.pack('>BI', self.command, self.value))
     
 class ExpressionCommand():
     def __init__(self, command: int):
@@ -120,6 +150,9 @@ class ExpressionCommand():
     
     def has_data() -> bool:
         return False
+    
+    def serialize(self, file):
+        file.write(struct.pack('>B', self.command))
 
 class ExpressionScript():
     def __init__(self):
@@ -129,11 +162,18 @@ class ExpressionScript():
         return '\n'.join([str(step) for step in self.steps])
     
     def serialize(self, file):
-        file.write(struct.pack('>H'), len(self.steps))
+        file.write('EXPR'.encode())
 
-        data_count = 0
+        byte_size = len(self.steps)
 
-        for 
+        for step in self.steps:
+            if step.has_data():
+                byte_size += 4
+
+        file.write(struct.pack('>H', byte_size))
+
+        for step in self.steps:
+            step.serialize(file)
 
 # types
 
