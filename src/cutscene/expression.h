@@ -46,8 +46,7 @@ union expression_data {
 };
 
 struct expression {
-    uint8_t* steps;
-    union expression_data* step_data;
+    void* expression_program;
 };
 
 #endif

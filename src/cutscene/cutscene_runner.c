@@ -8,6 +8,7 @@
 #include "../menu/menu_rendering.h"
 #include "../menu/menu_common.h"
 #include "evaluation_context.h"
+#include "expression_evaluate.h"
 #include "show_rune.h"
 #include <assert.h>
 
@@ -43,6 +44,8 @@ struct cutscene_runner {
 
 static struct cutscene_runner cutscene_runner;
 
+void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data);
+
 void cutscene_runner_init_step(struct cutscene_step* step) {
     switch (step->type)
     {
@@ -75,6 +78,14 @@ void cutscene_runner_init_step(struct cutscene_step* step) {
             assert(cutscene_runner.current_context >= MAX_CUTSCENE_CALL_DEPTH);
             cutscene_runner.current_context -= 1;
             break;
+        case CUTSCENE_STEP_TYPE_EXPRESSION:
+            expression_evaluate(&cutscene_runner.evaluation_context[cutscene_runner.current_context], &step->data.expression.expression);
+            break;
+        case CUTSCENE_STEP_TYPE_IF_STATEMENT:
+            if (evaluation_context_pop(&cutscene_runner.evaluation_context[cutscene_runner.current_context])) {
+                cuscene_runner_start(&step->data.if_statement.body, NULL, NULL);
+            }
+            break;
     }
 }
 
@@ -97,14 +108,18 @@ bool cutscene_runner_update_step(struct cutscene_step* step) {
 }
 
 void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data) {
-    assert(cutscene_runner.current_cutscene == -1);
+    if (cutscene->step_count == 0) {
+        return;
+    }
 
-    struct cutscene_queue_entry* next = &cutscene_runner.active_cutscenes[0];
+    cutscene_runner.current_cutscene += 1;
+    assert(cutscene_runner.current_cutscene < MAX_CUTSCENE_CALL_DEPTH);
+
+    struct cutscene_queue_entry* next = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
     next->cutscene = cutscene;
     next->finish_callback = finish_callback;
     next->data = data;
-    cutscene_runner.current_cutscene = 0;
-    cutscene_runner.current_instruction[0] = 0;
+    cutscene_runner.current_instruction[cutscene_runner.current_cutscene] = 0;
 
     cutscene_runner_init_step(&cutscene->steps[0]);
 }
@@ -133,7 +148,9 @@ void cutscene_runner_update(void* data) {
             return;
         }
 
-        active_cutscene->finish_callback(active_cutscene->cutscene, active_cutscene->data);
+        if (active_cutscene->finish_callback) {
+            active_cutscene->finish_callback(active_cutscene->cutscene, active_cutscene->data);
+        }
 
         cutscene_runner.current_cutscene -= 1;
     }

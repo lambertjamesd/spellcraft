@@ -1,22 +1,25 @@
 #include "expression_evaluate.h"
 
 void expression_evaluate(struct evaluation_context* context, struct expression* expression) {
-    uint8_t* current = expression->steps;
-    union expression_data* data = expression->step_data;
+    uint8_t* current = expression->expression_program;
 
     while (*current != EXPRESSION_TYPE_END) {
+
+        ++current;
+        union expression_data *data = (union expression_data*)current;
+
         switch (*current) {
             case EXPRESSION_TYPE_LOAD_LOCAL:
                 evaluation_context_push(context, evaluation_context_load(context->local_varaibles, data->load_variable.data_type, data->load_variable.word_offset));
-                ++data;
+                current += sizeof(union expression_data);
                 break;
             case EXPRESSION_TYPE_LOAD_GLOBAL:
                 evaluation_context_push(context, evaluation_context_load(context->global_variables, data->load_variable.data_type, data->load_variable.word_offset));
-                ++data;
+                current += sizeof(union expression_data);
                 break;
             case EXPRESSION_TYPE_LOAD_LITERAL:
                 evaluation_context_push(context, data->literal);
-                ++data;
+                current += sizeof(union expression_data);
                 break;
             case EXPRESSION_TYPE_AND: {
                 int a = evaluation_context_pop(context);
@@ -91,7 +94,5 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
                 );
                 break;
         }
-
-        ++current;
     }
 }

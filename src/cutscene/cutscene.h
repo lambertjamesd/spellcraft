@@ -16,7 +16,12 @@ enum cutscene_step_type {
     CUTSCENE_STEP_TYPE_IF_STATEMENT,
 };
 
-struct cutscene;
+struct cutscene_step;
+
+struct cutscene {
+    struct cutscene_step* steps;
+    uint16_t step_count;
+};
 
 struct templated_string {
     char* template;
@@ -43,17 +48,12 @@ union cutscene_step_data {
     } expression;
     struct {
         struct cutscene body;
-    } if_statement
+    } if_statement;
 };
 
 struct cutscene_step {
     enum cutscene_step_type type;
     union cutscene_step_data data;
-};
-
-struct cutscene {
-    struct cutscene_step* steps;
-    uint16_t step_count;
 };
 
 struct cutscene* cutscene_new(int capacity);

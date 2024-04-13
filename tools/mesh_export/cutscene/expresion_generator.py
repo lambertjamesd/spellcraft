@@ -84,6 +84,9 @@ class ExpresionScriptLoad():
     def __str__(self):
         location = 'local' if self.command == EXPRESSION_TYPE_LOAD_LOCAL else 'global'
         return '{0} {1}: {2} 0x{3:08x}'.format(location, self.name, self.data_type, self.bit_offset)
+    
+    def has_data() -> bool:
+        return True
 
 class ExpresionScriptIntLiteral():
     def __init__(self, value: int):
@@ -92,6 +95,9 @@ class ExpresionScriptIntLiteral():
 
     def __str__(self):
         return f'int literal {str(self.value)}'
+    
+    def has_data() -> bool:
+        return True
 
 class ExpresionScriptFloatLiteral():
     def __init__(self, value: float):
@@ -102,12 +108,18 @@ class ExpresionScriptFloatLiteral():
     def __str__(self):
         return 'float literal {0} 0x{1:08x}'.format(self.original_value, self.value)
 
+    def has_data() -> bool:
+        return True
+    
 class ExpressionCommand():
     def __init__(self, command: int):
         self.command: int = command
 
     def __str__(self):
         return command_to_name[self.command]
+    
+    def has_data() -> bool:
+        return False
 
 class ExpressionScript():
     def __init__(self):
@@ -115,6 +127,13 @@ class ExpressionScript():
 
     def __str__(self):
         return '\n'.join([str(step) for step in self.steps])
+    
+    def serialize(self, file):
+        file.write(struct.pack('>H'), len(self.steps))
+
+        data_count = 0
+
+        for 
 
 # types
 
