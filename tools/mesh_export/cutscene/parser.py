@@ -113,9 +113,9 @@ class Assignment():
         result.append(f"{space}{self.name.value} = {self.value};")
 
 class CutsceneStep():
-    def __init__(self, name: tokenizer.Token, parameters):
+    def __init__(self, name: tokenizer.Token, parameters: list):
         self.name: tokenizer.Token = name
-        self.parameters = parameters
+        self.parameters: list = parameters
 
     def append_string(self, result: list[str], depth: int):
         space = '  ' * depth
@@ -127,6 +127,7 @@ class CutsceneStep():
 
 class Identifier():
     def __init__(self, name: tokenizer.Token):
+        self.at: tokenizer.Token = name
         self.name: tokenizer.Token = name
 
     def __str__(self):
@@ -134,6 +135,7 @@ class Identifier():
 
 class Integer():
     def __init__(self, value: tokenizer.Token):
+        self.at: tokenizer.Token = value
         self.value: tokenizer.Token = value
 
     def __str__(self):
@@ -141,6 +143,7 @@ class Integer():
 
 class Float():
     def __init__(self, value: tokenizer.Token):
+        self.at: tokenizer.Token = value
         self.value: tokenizer.Token = value
 
     def __str__(self):
@@ -148,6 +151,7 @@ class Float():
 
 class String():
     def __init__(self, start_token: tokenizer.Token, contents: list[str], replacements: list):
+        self.at: tokenizer.Token = start_token
         self.start_token: tokenizer.Token = start_token
         self.contents: list[str] = contents
         self.replacements: list = replacements
@@ -166,6 +170,7 @@ class String():
 
 class UnaryOperator():
     def __init__(self, operator: tokenizer.Token, operand):
+        self.at: tokenizer.Token = operator
         self.operator: tokenizer.Token = operator
         self.operand = operand
 
@@ -174,6 +179,7 @@ class UnaryOperator():
 
 class BinaryOperator():
     def __init__(self, a, operator: tokenizer.Token, b):
+        self.at: tokenizer.Token = operator
         self.a = a
         self.operator: tokenizer.Token = operator
         self.b = b

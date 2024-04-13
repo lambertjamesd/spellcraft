@@ -1,7 +1,9 @@
+import sys
 import argparse
 import cutscene.tokenizer
 import cutscene.parser
 import cutscene.variable_layout
+import cutscene.step_generator
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -31,5 +33,14 @@ if __name__ == "__main__":
         local_builder.add_variable(local_var)
 
     locals = local_builder.build()
+
+    context = cutscene.variable_layout.VariableContext(globals, locals)
+
+    errors: list[str] = []
+    cutscene.step_generator.validate_steps(result.statements, errors, context)
+
+    if len(errors) > 0:
+        print('\n\n'.join(errors))
+        sys.exit(1)
 
     print(result)

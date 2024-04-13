@@ -115,3 +115,19 @@ class VariableLayoutBuilder():
             result.types[entry[0].name] = entry[0].type_name
 
         return result
+
+class VariableContext():
+    def __init__(self, globals: VariableLayout, locals: VariableLayout):
+        self.globals: VariableLayout = globals
+        self.locals: VariableLayout = locals
+
+    def get_variable_offset(self, name: str) -> int:
+        result = self.locals.get_variable_offset(name)
+
+        if not result is None:
+            return result
+        
+        return self.globals.get_variable_offset(name)
+    
+    def get_variable_type(self, name: str) -> str | None:
+        return self.locals.get_variable_type(name) or self.globals.get_variable_type(name)

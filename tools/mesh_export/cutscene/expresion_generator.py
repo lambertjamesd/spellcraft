@@ -151,11 +151,13 @@ def is_numerical_type(type: str):
     return type == 'int' or type == 'float'
 
 class TypeChecker():
-    def __init__(self, globals: variable_layout.VariableLayout, locals: variable_layout.VariableLayout):
+    def __init__(self, context: variable_layout.VariableContext):
         self.expression_to_type: dict = {}
-        self._globals: variable_layout.VariableLayout = globals
-        self._locals: variable_layout.VariableLayout = locals
-        self.has_errors = False
+        self._context: variable_layout.VariableContext = context
+        self.errors: list[str] = []
+
+    def _report_error(self, message: str):
+        self.errors.append(message)
 
     def _determine_type(self, expression):
         if isinstance(expression, parser.Integer):
@@ -174,20 +176,17 @@ class TypeChecker():
                 if operand_type == 'int' or operand_type == 'float':
                     return operand_type
                 
-                self.has_errors = True
-                print(expression.operator.format_message(f"operator does not apply to {operand_type}"))
+                self._report_error(expression.operator.format_message(f"operator does not apply to {operand_type}"))
                 return 'error'
             
             if expression.operator.value == 'not':
                 if operand_type == 'int':
                     return 'int'
                 
-                self.has_errors = True
-                print(expression.operator.format_message(f"operator does not apply to {operand_type}"))
+                self._report_error(expression.operator.format_message(f"operator does not apply to {operand_type}"))
                 return 'error'
             
-            self.has_errors = True
-            print(expression.operator.format_message('invalid operator'))
+            self._report_error(expression.operator.format_message('invalid operator'))
             return 'error'
         if isinstance(expression, parser.BinaryOperator):
             a_type = self.determine_type(expression.a)
@@ -198,44 +197,36 @@ class TypeChecker():
             
             if expression.operator.value in int_operators:
                 if a_type != 'int' or b_type != 'int':
-                    self.has_errors = True
-                    print(expression.operator.format_message(f'operator only applies to int types got {a_type} {b_type}'))
+                    self._report_error(expression.operator.format_message(f'operator only applies to int types got {a_type} {b_type}'))
                     return 'error'
                 return 'int'
             
             if expression.operator.value in compare_operators:
                 if not is_numerical_type(a_type) or not is_numerical_type(b_type):
-                    self.has_errors = True
-                    print(expression.operator.format_message(f'operator only applies to numerical types got {a_type} {b_type}'))
+                    self._report_error(expression.operator.format_message(f'operator only applies to numerical types got {a_type} {b_type}'))
                     return 'error'
                 return 'int'
             
             if expression.operator.value in numerical_operators:
                 if not is_numerical_type(a_type) or not is_numerical_type(b_type):
-                    self.has_errors = True
-                    print(expression.operator.format_message(f'operator only applies to numerical types got {a_type} {b_type}'))
+                    self._report_error(expression.operator.format_message(f'operator only applies to numerical types got {a_type} {b_type}'))
 
                 if a_type == 'float' or b_type == 'float':
                     return 'float'
                 
                 return 'int'
             
-            self.has_errors = True
-            print(expression.operator.format_message('invalid operator'))
+            self._report_error(expression.operator.format_message('invalid operator'))
             return 'error'
         
         if isinstance(expression, parser.Identifier):
             if expression.name.value in global_constant_types:
                 return global_constant_types[expression.name.value]
 
-            type_str: str | None = self._locals.get_variable_type(expression.name.value)
+            type_str: str | None = self._context.get_variable_type(expression.name.value)
 
             if not type_str:
-                type_str = self._globals.get_variable_type(expression.name.value)
-
-            if not type_str:
-                self.has_errors = True
-                print(expression.name.format_message(f'the variable {expression.name.value} is not defined'))
+                self._report_error(expression.name.format_message(f'the variable {expression.name.value} is not defined'))
                 return 'error'
             
             if type_str in type_mapping:
@@ -244,12 +235,10 @@ class TypeChecker():
             if type_str.startswith('char['):
                 return 'str'
             
-            self.has_errors = True
-            print(expression.name.format_message(f'unknown type {type_str}'))
+            self._report_error(expression.name.format_message(f'unknown type {type_str}'))
             return 'error'
     
-        print('unknown expression type')
-        return 'error'
+        raise Exception('unknown expression type')
 
     def determine_type(self, expression):
         result = self._determine_type(expression)
@@ -333,9 +322,8 @@ def type_from_pytype(pytype):
     return 'error'
     
 class ExpressionGenerator():
-    def __init__(self, globals: variable_layout.VariableLayout, locals: variable_layout.VariableLayout, type_info: TypeChecker, static_evaluator: StaticEvaluator):
-        self.globals: variable_layout.VariableLayout = globals
-        self.locals: variable_layout.VariableLayout = locals
+    def __init__(self, context: variable_layout.VariableContext, type_info: TypeChecker, static_evaluator: StaticEvaluator):
+        self.context: variable_layout.VariableContext = context
         self.type_info: TypeChecker = type_info
         self.static_evaluator: StaticEvaluator = static_evaluator
 
@@ -443,31 +431,28 @@ class ExpressionGenerator():
         if isinstance(expression, parser.Identifier):
             name = expression.name.value
             is_global = False
-            data_type = self.locals.get_variable_type(name)
-
-            if not data_type:
-                is_global = True
-                data_type = self.globals.get_variable_type(name)
+            data_type = self.context.get_variable_type(name)
 
             if not data_type:
                 raise Exception(expression.name.format_message('Variable not found'))
             
-            offset = self.globals.get_variable_offset(name) if is_global else self.locals.get_variable_offset(expression.name.value)
+            offset = self.context.get_variable_offset(name)
 
             script.steps.append(ExpresionScriptLoad(is_global, name, data_type, offset))
 
 
-def generate_script(expression, globals: variable_layout.VariableLayout, locals: variable_layout.VariableLayout) -> ExpressionScript | None:
-    type_info = TypeChecker(globals, locals)
+def generate_script(expression, context: variable_layout.VariableContext) -> ExpressionScript | None:
+    type_info = TypeChecker(context)
     type_info.determine_type(expression)
 
-    if type_info.has_errors:
+    if len(type_info.errors):
+        print('\n\n'.join(type_info.errors))
         return None
     
     static_evaluator = StaticEvaluator()
     static_evaluator.check_for_literals(expression)
 
-    generator = ExpressionGenerator(globals, locals, type_info, static_evaluator)
+    generator = ExpressionGenerator(context, type_info, static_evaluator)
 
     result = ExpressionScript()
     generator.generate(expression, result)

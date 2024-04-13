@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../scene/world_definition.h"
+#include "expression.h"
 
 enum cutscene_step_type {
     CUTSCENE_STEP_TYPE_DIALOG,
@@ -11,6 +12,8 @@ enum cutscene_step_type {
     CUTSCENE_STEP_TYPE_PAUSE,
     CUTSCENE_STEP_TYPE_PUSH_CONTEXT,
     CUTSCENE_STEP_TYPE_POP_CONTEXT,
+    CUTSCENE_STEP_TYPE_EXPRESSION,
+    CUTSCENE_STEP_TYPE_IF_STATEMENT,
 };
 
 struct cutscene;
@@ -35,6 +38,12 @@ union cutscene_step_data {
     struct {
         uint16_t context_size;
     } push_context;
+    struct {
+        struct expression expression;
+    } expression;
+    struct {
+        struct cutscene body;
+    } if_statement
 };
 
 struct cutscene_step {
