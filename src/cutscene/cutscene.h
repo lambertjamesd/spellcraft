@@ -15,9 +15,14 @@ enum cutscene_step_type {
 
 struct cutscene;
 
+struct templated_string {
+    char* template;
+    uint16_t nargs;
+};
+
 union cutscene_step_data {
     struct {
-        char* message;
+        struct templated_string message;
     } dialog;
     struct {
         uint16_t rune;

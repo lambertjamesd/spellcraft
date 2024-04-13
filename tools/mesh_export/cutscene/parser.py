@@ -4,7 +4,7 @@ from . import tokenizer
 
 class _ParseState():
     def __init__(self, tokens: list[tokenizer.Token], content: str, filename: str):
-        self.tokens: list[tokenizer.Token] = tokens
+        self._tokens: list[tokenizer.Token] = tokens
         self.filename: str = filename
         self.current: int = 0
         self.source = tokenizer.Source(content, filename)
@@ -13,15 +13,31 @@ class _ParseState():
         print(self.source.format_message(message, at))
         sys.exit(1)
 
-    def peek(self, offset = 0) -> tokenizer.Token:
-        index = self.current + offset
+    def peek(self, offset = 0, include_whitespace = False) -> tokenizer.Token:
+        skip_count = offset
+        index = self.current
 
-        if index < len(self.tokens):
-            return self.tokens[index]
+        while skip_count >= 0:
+            if index >= len(self._tokens):
+                break
+            
+            result = self._tokens[index]
+
+            if not include_whitespace and result.token_type == 'whitespace':
+                index += 1
+            elif skip_count == 0:
+                return result
+            else:
+                index += 1
+                skip_count -= 1
+            
+        return self._tokens[-1]
         
-        return self.tokens[-1]
     
-    def advance(self):
+    def advance(self, include_whitespace = False):
+        if not include_whitespace and self.peek(include_whitespace=True).token_type == 'whitespace':
+            self.current += 1
+
         self.current += 1
 
     def require(self, token_type: str, value: str | None = None) -> tokenizer.Token:
@@ -131,11 +147,22 @@ class Float():
         return self.value.value
 
 class String():
-    def __init__(self, value: tokenizer.Token):
-        self.value = value
+    def __init__(self, start_token: tokenizer.Token, contents: list[str], replacements: list):
+        self.start_token: tokenizer.Token = start_token
+        self.contents: list[str] = contents
+        self.replacements: list = replacements
 
     def __str__(self):
-        return self.value.value
+        parts: list[str] = []
+
+        for idx, replacement in enumerate(self.replacements):
+            parts.append(self.contents[idx])
+            parts.append('{' + str(replacement) + '}')
+
+        if len(self.contents):
+            parts.append(self.contents[-1])
+
+        return ''.join(parts)
 
 class UnaryOperator():
     def __init__(self, operator: tokenizer.Token, operand):
@@ -224,6 +251,45 @@ def _parse_block(parse_state: _ParseState):
 
     return result
 
+def _parse_string(parse_state: _ParseState) -> String:
+    start_token = parse_state.require('"')
+    current_content: list[str] = []
+    contents: list[str] = []
+    replacements: list = []
+
+    next = parse_state.peek(include_whitespace=True)
+
+    while next.token_type != '"':
+        if next.token_type == 'eof':
+            parse_state.error('string not terminated', start_token.at)
+
+        if next.token_type == '{':
+            parse_state.advance()
+            contents.append(''.join(current_content))
+            current_content = []
+            replacements.append(_parse_expression(parse_state))
+            parse_state.require('}')
+        elif next.token_type == '\\':
+            parse_state.advance()
+
+            next = parse_state.peek(include_whitespace=True)
+
+            if next.token_type == '"':
+                current_content.append('"')
+                parse_state.advance()
+        else:
+            current_content.append(next.value)
+            parse_state.advance(include_whitespace=True)
+
+        next = parse_state.peek(include_whitespace=True)
+
+    parse_state.advance()
+    contents.append(''.join(current_content))
+
+    result = String(start_token, contents, replacements)
+    print(result)
+    return result
+
 def _parse_single(parse_state: _ParseState):
     next = parse_state.peek()
 
@@ -239,9 +305,8 @@ def _parse_single(parse_state: _ParseState):
         parse_state.advance()
         return Float(next)
     
-    if next.token_type == 'str':
-        parse_state.advance()
-        return String(next)
+    if next.token_type == '"':
+        return _parse_string(parse_state)
     
     if next.token_type == '(':
         parse_state.advance()

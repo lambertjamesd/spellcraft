@@ -58,7 +58,10 @@ void cutscene_builder_dialog(struct cutscene_builder* builder, char* message) {
         .type = CUTSCENE_STEP_TYPE_DIALOG,
         .data = {
             .dialog = {
-                .message = message,
+                .message = {
+                    .template = message,
+                    .nargs = 0,
+                },
             },
         },
     };

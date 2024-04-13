@@ -83,7 +83,7 @@ bool cutscene_runner_update_step(struct cutscene_step* step) {
     {
         case CUTSCENE_STEP_TYPE_DIALOG:
             if (!cutscene_runner.active_step_data.dialog.has_shown && !dialog_box_is_active()) {
-                dialog_box_show(step->data.dialog.message, NULL, NULL);
+                dialog_box_show(step->data.dialog.message.template, NULL, NULL);
                 cutscene_runner.active_step_data.dialog.has_shown = true;
             } else if (cutscene_runner.active_step_data.dialog.has_shown) {
                 return !dialog_box_is_active();

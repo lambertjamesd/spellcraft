@@ -10,7 +10,10 @@ if __name__ == "__main__":
 
         if a * 3 < 10 then
             exit;
-        end                  
+        end      
+
+        say "this is a {a} \\\" test";
+                                   
     """, "example")
 
     globals_builder = cutscene.variable_layout.VariableLayoutBuilder()

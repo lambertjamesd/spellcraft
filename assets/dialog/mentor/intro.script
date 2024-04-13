@@ -1,15 +1,2 @@
 
-global player_name: char[8];
-global intro_played: bool;
-
-local this_is_a_test: bool;
-
-if intro_played then
-    exit;
-end
-
-intro_played = true;
-
-say "Good morining {player_name}! Today is the day you start your training. Meet me in the training area. Be quick!";
-
-walk_to mentor, exit;
+say "Hello world!"
