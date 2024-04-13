@@ -2,6 +2,7 @@
 #define __CUTSCENE_EXPRESSION_H__
 
 #include <stdint.h>
+#include <libdragon.h>
 
 enum expression_type {
     EXPRESSION_TYPE_END,
@@ -48,5 +49,8 @@ union expression_data {
 struct expression {
     void* expression_program;
 };
+
+void expression_load(struct expression* expression, FILE* mesh_file);
+void expression_destroy(struct expression* expression);
 
 #endif

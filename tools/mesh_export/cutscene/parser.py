@@ -292,9 +292,7 @@ def _parse_string(parse_state: _ParseState) -> String:
     parse_state.advance()
     contents.append(''.join(current_content))
 
-    result = String(start_token, contents, replacements)
-    print(result)
-    return result
+    return String(start_token, contents, replacements)
 
 def _parse_single(parse_state: _ParseState):
     next = parse_state.peek()

@@ -81,10 +81,9 @@ void cutscene_runner_init_step(struct cutscene_step* step) {
         case CUTSCENE_STEP_TYPE_EXPRESSION:
             expression_evaluate(&cutscene_runner.evaluation_context[cutscene_runner.current_context], &step->data.expression.expression);
             break;
-        case CUTSCENE_STEP_TYPE_IF_STATEMENT:
-            if (evaluation_context_pop(&cutscene_runner.evaluation_context[cutscene_runner.current_context])) {
-                cuscene_runner_start(&step->data.if_statement.body, NULL, NULL);
-            }
+        case CUTSCENE_STEP_TYPE_JUMP_IF_NOT:
+        case CUTSCENE_STEP_TYPE_JUMP:
+            // logic is done in update step
             break;
     }
 }
@@ -102,6 +101,14 @@ bool cutscene_runner_update_step(struct cutscene_step* step) {
             return false;
         case CUTSCENE_STEP_TYPE_SHOW_RUNE:
             return show_rune_update(&cutscene_runner.show_rune, &step->data);
+        case CUTSCENE_STEP_TYPE_JUMP_IF_NOT:
+            if (!evaluation_context_pop(&cutscene_runner.evaluation_context[cutscene_runner.current_context])) {
+                cutscene_runner.current_instruction[cutscene_runner.current_cutscene] += step->data.jump.offset;
+            }
+            return true;
+        case CUTSCENE_STEP_TYPE_JUMP:
+            cutscene_runner.current_instruction[cutscene_runner.current_cutscene] += step->data.jump.offset;
+            return true;
         default:
             return true;
     }
@@ -140,10 +147,10 @@ void cutscene_runner_update(void* data) {
     cutscene_runner.current_instruction[cutscene_runner.current_cutscene] += 1;
 
     while (cutscene_runner.current_cutscene >= 0) {
+        step = &active_cutscene->cutscene->steps[cutscene_runner.current_instruction[cutscene_runner.current_cutscene]];
         active_cutscene = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
 
         if (cutscene_runner.current_instruction[cutscene_runner.current_cutscene] < active_cutscene->cutscene->step_count) {
-            step += 1;
             cutscene_runner_init_step(step);
             return;
         }

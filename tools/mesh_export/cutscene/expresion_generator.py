@@ -515,4 +515,5 @@ def generate_script(expression, context: variable_layout.VariableContext) -> Exp
 
     result = ExpressionScript()
     generator.generate(expression, result)
+    result.steps.append(ExpressionCommand(EXPRESSION_TYPE_END))
     return result

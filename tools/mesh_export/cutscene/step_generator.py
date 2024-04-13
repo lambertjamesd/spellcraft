@@ -10,7 +10,8 @@ CUTSCENE_STEP_TYPE_PAUSE = 2
 CUTSCENE_STEP_TYPE_PUSH_CONTEXT = 3
 CUTSCENE_STEP_TYPE_POP_CONTEXT = 4
 CUTSCENE_STEP_TYPE_EXPRESSION = 5
-CUTSCENE_STEP_TYPE_IF_STATEMENT = 6
+CUTSCENE_STEP_TYPE_JUMP_IF_NOT = 7
+CUTSCENE_STEP_TYPE_JUMP = 7
 
 _step_args = {
     "say": ["tstr"]
@@ -34,28 +35,33 @@ def _write_string(file, string: str):
 
 
 def _generate_function_step(file, step: parser.CutsceneStep, args: list[str], context:variable_layout.VariableContext):
-    file.write(struct.pack('>B', _step_ids[step.name.value]))
-
     for idx, arg in enumerate(args):
         parameter = step.parameters[idx]
 
         if arg == 'tstr':
             if not isinstance(parameter, parser.String):
                 raise Exception('Parameter should be a string')
-            file.write(struct.pack('>B', len(parameter.replacements)))
 
             for replacment in parameter.replacements:
                 expression = expresion_generator.generate_script(replacment, context)
                 if not expression:
                     raise Exception(f"Could not generate expression {replacment}")
+                file.write(struct.pack('>B', CUTSCENE_STEP_TYPE_EXPRESSION))
                 expression.serialize(file)
 
+
+    file.write(struct.pack('>B', _step_ids[step.name.value]))
+
+    for idx, arg in enumerate(args):
+        parameter = step.parameters[idx]
+
+        if arg == 'tstr':
+            file.write(struct.pack('>B', len(parameter.replacements)))
             _write_string(file, '%v'.join(parameter.contents))
             
         elif arg == 'str':
-            if not isinstance(parameter, parser.String):
-                raise Exception('Parameter should be a string')
             _write_string(file, parameter.contents[0])
+
 
 
 def _validate_step(step, errors: list[str], context: variable_layout.VariableContext):
@@ -116,6 +122,26 @@ def validate_steps(statements: list, errors: list[str], context: variable_layout
     for statement in statements:
         _validate_step(statement, errors, context)
 
+def _calculate_step_count(step) -> int:
+    if isinstance(step, parser.CutsceneStep):
+        if step.name.value == 'say':
+            return 1 + len(step.parameters[0].replacements)
+        return 1
+    if isinstance(step, parser.IfStatement):
+        return 2 + _calculate_step_count(step.statements)
+    if isinstance(step, parser.Assignment):
+        return 2
+    
+    return 0
+
+def _calculate_statements_count(statements) -> int:
+    result = 0
+
+    for statement in statements:
+        result += _calculate_step_count(statement)
+
+    return result
+
 def _generate_step(file, step, context: variable_layout.VariableContext):
     if isinstance(step, parser.CutsceneStep):
         _generate_function_step(file, step, _step_args[step.name.value], context)
@@ -126,8 +152,12 @@ def _generate_step(file, step, context: variable_layout.VariableContext):
         if not expression:
             raise Exception(f"Could not generate expression {step.condition}")
         expression.serialize(file)
-        file.write(struct.pack('>B', CUTSCENE_STEP_TYPE_IF_STATEMENT))
-        generate_steps(file, step.statements, context)
+
+        file.write(struct.pack('>B', CUTSCENE_STEP_TYPE_JUMP_IF_NOT))
+        file.write(struct.pack('>h', _calculate_statements_count(step.statements)))
+        
+        for statement in step.statements:
+            _generate_step(file, statement, context)
 
     if isinstance(step, parser.Assignment):
         file.write(struct.pack('>B', CUTSCENE_STEP_TYPE_EXPRESSION))
@@ -135,11 +165,12 @@ def _generate_step(file, step, context: variable_layout.VariableContext):
         if not expression:
             raise Exception(f"Could not generate expression {step.condition}")
         expression.serialize(file)
+        # todo
 
 
 def generate_steps(file, statements: list, context: variable_layout.VariableContext):
     file.write('CTSN'.encode())
-    file.write(struct.pack('>H', len(statements)))
+    file.write(struct.pack('>H', _calculate_statements_count(statements)))
 
     for statement in statements:
         _generate_step(file, statement, context)
