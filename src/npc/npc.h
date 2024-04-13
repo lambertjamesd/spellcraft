@@ -6,6 +6,8 @@
 #include "../render/renderable.h"
 #include "../render/animator.h"
 #include "../collision/dynamic_object.h"
+#include "../entity/interactable.h"
+#include "../cutscene/cutscene.h"
 
 struct npc_information {
     char* mesh;
@@ -27,6 +29,10 @@ struct npc {
     struct animation_set* animation_set;
     struct npc_animations animations;
     struct animator animator;
+
+    struct interactable interactable;
+
+    struct cutscene* talk_to_cutscene;
 };
 
 void npc_init(struct npc* npc, struct npc_definition* definiton);

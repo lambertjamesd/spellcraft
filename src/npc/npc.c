@@ -4,6 +4,7 @@
 #include "../time/time.h"
 #include "../resource/animation_cache.h"
 #include "../collision/collision_scene.h"
+#include "../cutscene/cutscene_runner.h"
 
 struct npc_information npc_information[] = {
     [NPC_TYPE_MENTOR] = {
@@ -22,6 +23,14 @@ struct npc_information npc_information[] = {
         .half_height = 1.0f,
     },
 };
+
+void npc_interact(struct interactable* interactable, entity_id from) {
+    struct npc* npc = (struct npc*)interactable->data;
+
+    if (npc->talk_to_cutscene) {
+        cutscene_runner_run(npc->talk_to_cutscene, NULL, NULL);
+    }
+}
 
 void npc_update(void *data) {
     struct npc* npc = (struct npc*)data;
@@ -61,6 +70,8 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
     npc->collider.is_fixed = 1;
 
     collision_scene_add(&npc->collider);
+
+    interactable_init(&npc->interactable, entity_id, npc_interact, npc);
 }
 
 void npc_destroy(struct npc* npc) {
@@ -68,4 +79,5 @@ void npc_destroy(struct npc* npc) {
     render_scene_remove(&npc->renderable);
     update_remove(npc);
     animation_cache_release(npc->animation_set);
+    interactable_destroy(&npc->interactable);
 }
