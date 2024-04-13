@@ -43,4 +43,5 @@ if __name__ == "__main__":
         print('\n\n'.join(errors))
         sys.exit(1)
 
-    print(result)
+    with open(args.output, 'wb') as file:
+        cutscene.step_generator.generate_steps(file, result.statements, context)
