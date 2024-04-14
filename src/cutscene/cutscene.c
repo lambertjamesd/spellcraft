@@ -52,6 +52,8 @@ struct cutscene* cutscene_load(char* filename) {
         uint8_t step_type;
         fread(&step_type, 1, 1, file);
 
+        step->type = step_type;
+
         switch (step_type) {
             case CUTSCENE_STEP_TYPE_DIALOG:
                 cutscene_load_template_string(&step->data.dialog.message, file);

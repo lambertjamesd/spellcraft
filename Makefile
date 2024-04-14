@@ -81,16 +81,18 @@ assets/materials/materials.blend: tools/mesh_export/material_generator.py $(MATE
 # cutscenes
 ###
 
-SCRIPTS := $(shell find assets/dialog -type f -name '*.script' | sort)
+SCRIPTS := $(shell find assets/scripts -type f -name '*.script' | sort)
 
-build/assets/dialog/globals.json: tools/mesh_export/globals.py assets/dialog/globals.script
+SCRIPTS_COMPILED := $(SCRIPTS:assets/scripts/%=filesystem/scripts/%)
+
+build/assets/scripts/globals.json: tools/mesh_export/globals.py assets/scripts/globals.script
 	@mkdir -p $(dir $@)
-	python tools/mesh_export/globals.py $@ assets/dialog/globals.script
+	python tools/mesh_export/globals.py $@ assets/scripts/globals.script
 
-filesystem/%.cutscene: assets/%.script build/assets/dialog/globals.json $(EXPORT_SOURCE)
+filesystem/%.script: assets/%.script build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
-	python tools/mesh_export/cutscene.py -g build/assets/dialog/globals.json $< $(@:filesystem/%=build/assets/%)
+	python tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json $< $(@:filesystem/%=build/assets/%)
 	mkasset -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
 
 ###
@@ -124,9 +126,9 @@ SOURCES := $(shell find src/ -type f -name '*.c' | sort)
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
 
-filesystem/: $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS) $(FONTS)
+filesystem/: $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED)
 
-$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS) $(FONTS)
+$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED)
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"

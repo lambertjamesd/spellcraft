@@ -13,6 +13,8 @@ struct interactable {
     void* data;
 };
 
+void interactable_reset();
+
 void interactable_init(struct interactable* interactable, entity_id id, interaction_callback callback, void* data);
 void interactable_destroy(struct interactable* interactable);
 

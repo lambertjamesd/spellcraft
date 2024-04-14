@@ -9,6 +9,7 @@
 #include "../collision/collision_scene.h"
 #include "../time/time.h"
 #include "../objects/collectable.h"
+#include "../entity/interactable.h"
 
 #define PLAYER_MAX_SPEED    4.2f
 
@@ -21,6 +22,17 @@ static struct dynamic_object_type player_collision = {
         .capsule = {
             .radius = 0.25f,
             .inner_half_height = 0.5f,
+        }
+    }
+};
+
+static struct dynamic_object_type player_visual_shape = {
+    .minkowsi_sum = dynamic_object_cylinder_minkowski_sum,
+    .bounding_box = dynamic_object_cylinder_bounding_box,
+    .data = {
+        .cylinder = {
+            .half_height = 0.5f,
+            .radius = 0.5f,
         }
     }
 };
@@ -82,6 +94,23 @@ bool player_cast_state(joypad_buttons_t buttons, int button_index) {
         default: 
             return false;
     }
+}
+
+void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
+    bool* did_intersect = (bool*)data;
+
+    if (*did_intersect) {
+        return;
+    }
+
+    struct interactable* interactable = interactable_get(overlaps->entity_id);
+
+    if (!interactable) {
+        return;
+    }
+    
+    *did_intersect = true;
+    interactable->callback(interactable, 0);
 }
 
 void player_update(struct player* player) {
@@ -163,6 +192,16 @@ void player_update(struct player* player) {
         }
 
         contact = contact->next;
+    }
+
+    if (pressed.a) {
+        struct Vector3 query_center = player->transform.position;
+        struct Vector3 query_offset;
+        quatMultVector(&player->transform.rotation, &gForward, &query_offset);
+        vector3AddScaled(&query_center, &query_offset, 1.0f, &query_center);
+        query_center.y += player_visual_shape.data.cylinder.half_height;
+        bool did_intersect = false;
+        collision_scene_query(&player_visual_shape, &query_center, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_intersect);
     }
 }
 

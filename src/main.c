@@ -20,6 +20,7 @@
 #include "objects/collectable.h"
 #include "menu/dialog_box.h"
 #include "cutscene/cutscene_runner.h"
+#include "entity/interactable.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -52,6 +53,7 @@ void setup() {
     update_reset();
     collision_scene_reset();
     health_reset();
+    interactable_reset();
     menu_common_init();
     menu_reset();
     collectable_assets_load();

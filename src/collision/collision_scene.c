@@ -261,3 +261,49 @@ struct contact* collision_scene_new_contact() {
     g_scene.next_free_contact = result->next;
     return result;
 }
+
+struct positioned_shape {
+    struct dynamic_object_type* type;
+    struct Vector3* center;
+};
+
+void positioned_shape_mink_sum(void* data, struct Vector3* direction, struct Vector3* output) {
+    struct positioned_shape* shape = (struct positioned_shape*)data;
+    shape->type->minkowsi_sum(&shape->type->data, direction, output);
+    vector3Add(output, shape->center, output);
+}
+
+void collision_scene_query(struct dynamic_object_type* shape, struct Vector3* center, int collision_layers, collision_scene_query_callback callback, void* callback_data) {
+    struct Box3D bounding_box;
+    shape->bounding_box(&shape->data, NULL, &bounding_box);
+    vector3Add(&bounding_box.min, center, &bounding_box.min);
+    vector3Add(&bounding_box.max, center, &bounding_box.max);
+
+    struct positioned_shape positioned_shape;
+
+    positioned_shape.type = shape;
+    positioned_shape.center = center;
+
+    for (int i = 0; i < g_scene.count; ++i) {
+        struct collision_scene_element* element = &g_scene.elements[i];
+
+        if (!(element->object->collision_layers & collision_layers)) {
+            continue;
+        }
+
+        if (!box3DHasOverlap(&bounding_box, &element->object->bounding_box)) {
+            continue;
+        }
+
+        struct Simplex simplex;
+
+        struct Vector3 first_dir;
+        vector3Sub(center, element->object->position, &first_dir);
+
+        if (!gjkCheckForOverlap(&simplex, &positioned_shape, positioned_shape_mink_sum, element->object, dynamic_object_minkowski_sum, &first_dir)) {
+            continue;;
+        }
+
+        callback(callback_data, element->object);
+    }
+}

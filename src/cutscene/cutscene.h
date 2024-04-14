@@ -67,6 +67,7 @@ struct cutscene_builder {
     uint16_t step_count;
 };
 
+struct cutscene* cutscene_load(char* filename);
 void cutscene_builder_init(struct cutscene_builder* builder);
 
 void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode);

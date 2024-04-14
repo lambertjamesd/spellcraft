@@ -72,6 +72,8 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
     collision_scene_add(&npc->collider);
 
     interactable_init(&npc->interactable, entity_id, npc_interact, npc);
+
+    npc->talk_to_cutscene = cutscene_load("rom:/scripts/mentor/intro.script");
 }
 
 void npc_destroy(struct npc* npc) {

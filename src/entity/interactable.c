@@ -4,6 +4,11 @@
 
 static struct hash_map interactable_entity_mapping;
 
+void interactable_reset() {
+    hash_map_destroy(&interactable_entity_mapping);
+    hash_map_init(&interactable_entity_mapping, 32);
+}
+
 void interactable_init(struct interactable* interactable, entity_id id, interaction_callback callback, void* data) {
     interactable->id = id;
     interactable->callback = callback;
