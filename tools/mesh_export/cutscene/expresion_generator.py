@@ -1,5 +1,5 @@
 import struct
-import sys
+import io
 
 from . import parser
 from . import variable_layout
@@ -86,6 +86,13 @@ data_word_size_mapping = {
     "float": 32,
 }
 
+def generate_variable_address(data_type: str, bit_offset: int) -> bytes:
+    return struct.pack(
+        '>HH', 
+        data_type_mapping[data_type], 
+        bit_offset // data_word_size_mapping[data_type]
+    )
+
 # script
 
 class ExpresionScriptLoad():
@@ -105,12 +112,8 @@ class ExpresionScriptLoad():
         return True
     
     def serialize(self, file):
-        file.write(struct.pack(
-            '>BHH', 
-            self.command, 
-            data_type_mapping[self.data_type], 
-            self.bit_offset // data_word_size_mapping[self.data_type]
-        ))
+        file.write(struct.pack('>B', self.command))
+        file.write(generate_variable_address(self.data_type, self.bit_offset))
 
 class ExpresionScriptIntLiteral():
     def __init__(self, value: int):
@@ -155,8 +158,8 @@ class ExpressionCommand():
         file.write(struct.pack('>B', self.command))
 
 class ExpressionScript():
-    def __init__(self):
-        self.steps: list = []
+    def __init__(self, steps: list = []):
+        self.steps: list = steps
 
     def __str__(self):
         return '\n'.join([str(step) for step in self.steps])
@@ -174,6 +177,14 @@ class ExpressionScript():
 
         for step in self.steps:
             step.serialize(file)
+
+    def to_bytes(self) -> bytes:
+        result = io.BytesIO()
+        self.serialize(result)
+        return result.getvalue()
+
+    def concat(self, other):        
+        return ExpressionScript(self.steps[0:-1] + other.steps)
 
 # types
 
@@ -489,7 +500,7 @@ class ExpressionGenerator():
 
         if isinstance(expression, parser.Identifier):
             name = expression.name.value
-            is_global = False
+            is_global = not self.context.is_local(name)
             data_type = self.context.get_variable_type(name)
 
             if not data_type:
@@ -500,9 +511,9 @@ class ExpressionGenerator():
             script.steps.append(ExpresionScriptLoad(is_global, name, data_type, offset))
 
 
-def generate_script(expression, context: variable_layout.VariableContext) -> ExpressionScript | None:
+def generate_script(expression, context: variable_layout.VariableContext, expected_type: str | None = None) -> ExpressionScript | None:
     type_info = TypeChecker(context)
-    type_info.determine_type(expression)
+    actual_type = type_info.determine_type(expression)
 
     if len(type_info.errors):
         print('\n\n'.join(type_info.errors))
@@ -514,6 +525,11 @@ def generate_script(expression, context: variable_layout.VariableContext) -> Exp
     generator = ExpressionGenerator(context, type_info, static_evaluator)
 
     result = ExpressionScript()
-    generator.generate(expression, result)
+    
+    if expected_type != None and actual_type != expected_type:
+        generator.generate_to_type(expression, expected_type, result)
+    else:
+        generator.generate(expression, result)
+
     result.steps.append(ExpressionCommand(EXPRESSION_TYPE_END))
     return result

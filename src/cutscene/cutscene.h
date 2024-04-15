@@ -15,6 +15,8 @@ enum cutscene_step_type {
     CUTSCENE_STEP_TYPE_EXPRESSION,
     CUTSCENE_STEP_TYPE_JUMP_IF_NOT,
     CUTSCENE_STEP_TYPE_JUMP,
+    CUTSCENE_STEP_TYPE_SET_LOCAL,
+    CUTSCENE_STEP_TYPE_SET_GLOBAL,
 };
 
 struct cutscene_step;
@@ -38,8 +40,8 @@ union cutscene_step_data {
         uint16_t should_show;
     } show_rune;
     struct {
-        bool should_pause: 1;
-        bool should_change_game_mode: 1;
+        uint8_t should_pause;
+        uint8_t should_change_game_mode;
     } pause;
     struct {
         uint16_t context_size;
@@ -50,6 +52,10 @@ union cutscene_step_data {
     struct {
         int offset;
     } jump;
+    struct {
+        uint16_t data_type;
+        uint16_t word_offset;
+    } store_variable;
 };
 
 struct cutscene_step {

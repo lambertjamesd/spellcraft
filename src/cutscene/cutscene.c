@@ -58,6 +58,9 @@ struct cutscene* cutscene_load(char* filename) {
             case CUTSCENE_STEP_TYPE_DIALOG:
                 cutscene_load_template_string(&step->data.dialog.message, file);
                 break;
+            case CUTSCENE_STEP_TYPE_PAUSE:
+                fread(&step->data.pause, 1, 2, file);
+                break;
         }
     }
 

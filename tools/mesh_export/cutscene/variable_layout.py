@@ -121,6 +121,9 @@ class VariableContext():
         self.globals: VariableLayout = globals
         self.locals: VariableLayout = locals
 
+    def is_local(self, name: str) -> bool:
+        return name in self.locals
+
     def get_variable_offset(self, name: str) -> int:
         result = self.locals.get_variable_offset(name)
 

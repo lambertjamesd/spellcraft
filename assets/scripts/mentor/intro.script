@@ -1,2 +1,6 @@
 
+pause true, true;
+
 say "Hello world!";
+
+pause false, true;

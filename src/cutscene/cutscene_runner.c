@@ -85,6 +85,28 @@ void cutscene_runner_init_step(struct cutscene_step* step) {
         case CUTSCENE_STEP_TYPE_JUMP:
             // logic is done in update step
             break;
+        case CUTSCENE_STEP_TYPE_SET_LOCAL: {
+            struct evaluation_context* context = &cutscene_runner.evaluation_context[cutscene_runner.current_context];
+
+            evaluation_context_save(
+                context->local_varaibles,
+                step->data.store_variable.data_type,
+                step->data.store_variable.word_offset,
+                evaluation_context_pop(context)
+            );
+            break;
+        }
+        case CUTSCENE_STEP_TYPE_SET_GLOBAL: {
+            struct evaluation_context* context = &cutscene_runner.evaluation_context[cutscene_runner.current_context];
+
+            evaluation_context_save(
+                context->global_variables,
+                step->data.store_variable.data_type,
+                step->data.store_variable.word_offset,
+                evaluation_context_pop(context)
+            );
+            break;
+        }
     }
 }
 
