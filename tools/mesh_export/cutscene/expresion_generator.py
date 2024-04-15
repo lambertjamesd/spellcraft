@@ -3,6 +3,7 @@ import io
 
 from . import parser
 from . import variable_layout
+from . import static_evaluator
 
 EXPRESSION_TYPE_END = 0
 EXPRESSION_TYPE_LOAD_LOCAL = 1
@@ -207,11 +208,6 @@ global_constant_types = {
     'false': 'int',
 }
 
-global_constant_values = {
-    'true': 1,
-    'false': 0,
-}
-
 mirrored_operators = {
     '<' : '>',
     '<=' : '>=',
@@ -315,71 +311,6 @@ class TypeChecker():
         self.expression_to_type[expression] = result
         return result
     
-class StaticEvaluator():
-    def __init__(self):
-        self.literal_value = {}
-
-    def _check_for_literals(self, expression):
-        if isinstance(expression, parser.Integer):
-            return int(expression.value.value)
-        if isinstance(expression, parser.Float):
-            return float(expression.value.value)
-        if isinstance(expression, parser.String):
-            return None
-        if isinstance(expression, parser.UnaryOperator):
-            operand_value = self.check_for_literals(expression.operand)
-
-            if operand_value is None:
-                return None
-
-            if expression.operator.value == '-':
-                return -operand_value
-
-            if expression.operator.value == 'not':
-                return 0 if operand_value else 1
-        if isinstance(expression, parser.BinaryOperator):
-            a_value = self.check_for_literals(expression.a)
-            b_value = self.check_for_literals(expression.b)
-
-            if a_value is None or b_value is None:
-                return None
-            
-            if expression.operator.value == 'and':
-                return 1 if a_value and b_value else 0
-            if expression.operator.value == 'or':
-                return 1 if a_value or b_value else 0
-            if expression.operator.value == '==':
-                return 1 if a_value == b_value else 0
-            if expression.operator.value == '!=':
-                return 1 if a_value != b_value else 0
-            if expression.operator.value == '>':
-                return 1 if a_value > b_value else 0
-            if expression.operator.value == '<':
-                return 1 if a_value < b_value else 0
-            if expression.operator.value == '>=':
-                return 1 if a_value >= b_value else 0
-            if expression.operator.value == '<=':
-                return 1 if a_value <= b_value else 0
-            if expression.operator.value == '+':
-                return a_value + b_value
-            if expression.operator.value == '-':
-                return a_value - b_value
-            if expression.operator.value == '*':
-                return a_value * b_value
-            if expression.operator.value == '/':
-                if type_from_pytype(a_value) == 'int' and type_from_pytype(b_value) == 'int':
-                    return a_value // b_value
-                return a_value / b_value
-        if isinstance(expression, parser.Identifier):
-            if expression.name.value in global_constant_values:
-                return global_constant_values[expression.name.value]
-        
-        return None
-
-    def check_for_literals(self, expression):
-        result = self._check_for_literals(expression)
-        self.literal_value[expression] = result
-        return result
     
 def type_from_pytype(pytype):
     if isinstance(pytype, int):
@@ -392,10 +323,10 @@ def type_from_pytype(pytype):
     return 'error'
     
 class ExpressionGenerator():
-    def __init__(self, context: variable_layout.VariableContext, type_info: TypeChecker, static_evaluator: StaticEvaluator):
+    def __init__(self, context: variable_layout.VariableContext, type_info: TypeChecker, eval: static_evaluator.StaticEvaluator):
         self.context: variable_layout.VariableContext = context
         self.type_info: TypeChecker = type_info
-        self.static_evaluator: StaticEvaluator = static_evaluator
+        self.static_evaluator: static_evaluator.StaticEvaluator = eval
 
     def generate_to_type(self, expression, to_type: str, script: ExpressionScript):
         self.generate(expression, script)
@@ -519,10 +450,10 @@ def generate_script(expression, context: variable_layout.VariableContext, expect
         print('\n\n'.join(type_info.errors))
         return None
     
-    static_evaluator = StaticEvaluator()
-    static_evaluator.check_for_literals(expression)
+    eval = static_evaluator.StaticEvaluator()
+    eval.check_for_literals(expression)
 
-    generator = ExpressionGenerator(context, type_info, static_evaluator)
+    generator = ExpressionGenerator(context, type_info, eval)
 
     result = ExpressionScript()
     

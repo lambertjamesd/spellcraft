@@ -82,9 +82,10 @@ class DataType():
         return self.name.value == other.name.value and self.count == other.count
 
 class VariableDefinition():
-    def __init__(self, name: tokenizer.Token, type: DataType):
+    def __init__(self, name: tokenizer.Token, type: DataType, initializer):
         self.name: tokenizer.Token = name
         self.type: DataType = type
+        self.initializer = initializer
 
     def __str__(self):
         return f"{self.name.value}: {self.type};"
@@ -197,7 +198,7 @@ class Cutscene():
         parts: list[str] = []
 
         for variable in self.globals:
-            parts.append('global ' +str(variable))
+            parts.append('global ' + str(variable))
 
         for variable in self.locals:
             parts.append('local ' + str(variable))
@@ -215,31 +216,26 @@ def _parse_type(parse_state: _ParseState):
         parse_state.require(']')
     return DataType(name, count)
 
-def _parse_global(parse_state: _ParseState):
-    parse_state.require('identifier', 'global')
+def _parse_variable_definition(parse_state: _ParseState, type: str):
+    parse_state.require('identifier', type)
     name = parse_state.require('identifier')
     parse_state.require(':')
     type = _parse_type(parse_state)
+    initializer = None
+    if parse_state.optional('='):
+        initializer = _parse_expression(parse_state)
     parse_state.require(';')
-    return VariableDefinition(name, type)
-    
-def _parse_local(parse_state: _ParseState):
-    parse_state.require('identifier', 'local')
-    name = parse_state.require('identifier')
-    parse_state.require(':')
-    type = _parse_type(parse_state)
-    parse_state.require(';')
-    return VariableDefinition(name, type)
+    return VariableDefinition(name, type, initializer)
     
 
 def _maybe_parse_cutscene_def(parse_state: _ParseState, into: Cutscene) -> bool:
     next = parse_state.peek()
 
     if next.value == 'global':
-        into.globals.append(_parse_global(parse_state))
+        into.globals.append(_parse_variable_definition(parse_state, 'global'))
         return True
     if next.value == 'local':
-        into.locals.append(_parse_local(parse_state))
+        into.locals.append(_parse_variable_definition(parse_state, 'local'))
         return True
     
     return False

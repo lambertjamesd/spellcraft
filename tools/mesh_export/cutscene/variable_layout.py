@@ -1,6 +1,9 @@
 import sys
 import json
+import struct
+import base64
 from . import parser
+from . import static_evaluator
 
 _type_bit_sizes = {
     'char': 8,
@@ -24,44 +27,81 @@ def _determine_type_bit_size(type: parser.DataType):
 
     return result, alignment
 
+def _calculate_initial_value(value, type: parser.DataType):
+    name = type.name.value
+
+    if name == 'bool':
+        return struct.pack('>B', 1 if value else 0)
+    if name == 'i8':
+        return struct.pack('>b', value or 0)
+    if name == 'i16':
+        return struct.pack('>h', value or 0)
+    if name == 'i32':
+        return struct.pack('>i', value or 0)
+    if name == 'float':
+        return struct.pack('>f', value or 0)
+    if name == 'char':
+        result = (value or '').encode()
+        return result[0:type.count] + bytes(max(0, type.count - len(result)))
+    raise Exception(f'Could not determine inital value for {type}')
+
 class VariableInfo():
-    def __init__(self, name: str, bit_size: int, alignment: int, type_name: str):
+    def __init__(self, name: str, bit_size: int, alignment: int, type_name: str, initial_value: bytes):
         self.name: str = name
         self.bit_size: int = bit_size
         self.alignment: int = alignment
         self.type_name: str = type_name
+        self.initial_value: bytes = initial_value
 
+class VaraibleLayoutEntry():
+    def __init__(self, name: str, type_name: str, offset: int, bit_size: int):
+        self.name: str = name
+        self.type_name: str = type_name
+        self.offset: int = offset
+        self.bit_size: int = bit_size
 
 class VariableLayout():
     def __init__(self):
-        self.entries: dict[str, int] = {}
-        self.types: dict[str, str] = {}
+        self._entries: dict[str, VaraibleLayoutEntry] = {}
 
     def deserialize(self, file):
         file_contents = json.load(file)
 
         for entry in file_contents['entries']:
-            self.entries[entry["name"]] = entry["offset"]
-            self.types[entry["name"]] = entry["type"]
+            self._entries[entry["name"]] = VaraibleLayoutEntry(
+                entry["name"],
+                entry["type"],
+                entry["offset"],
+                entry["bitSize"]
+            )
 
     def get_variable_offset(self, name: str) -> int:
-        return self.entries[name]
+        return self._entries[name]
     
     def get_variable_type(self, name: str) -> str | None:
         if name in self.types:
             return self.types[name]
         return None
+    
+    def get_total_size(self) -> int:
+        result: int = 0
+
+        for entry in self._entries.values():
+            result = max(result, entry.offset + entry.bit_size)
+
+        return int((result + 7) // 8)
+            
 
 class VariableLayoutBuilder():
     def __init__(self):
-        self.entries: list[VariableInfo] = []
+        self._entries: list[VariableInfo] = []
 
         self.variable_definition: dict[str, parser.VariableDefinition] = {}
 
     def _layout(self) -> list[tuple[VariableInfo, int]]:
         result = []
 
-        sorted_entries = sorted(self.entries, key=lambda x: x.alignment)
+        sorted_entries = sorted(self._entries, key=lambda x: x.alignment)
         
         offset = 0
 
@@ -94,7 +134,27 @@ class VariableLayoutBuilder():
 
         bit_size, alignment = _determine_type_bit_size(variable.type)
 
-        self.entries.append(VariableInfo(name_str, bit_size, alignment, type_str))
+        value = None
+
+        if variable.initializer:
+            eval = static_evaluator.StaticEvaluator()
+
+            if isinstance(variable.initializer, parser.String):
+                if len(variable.initializer.replacements) > 0:
+                    print(variable.initializer.at.format_message('varaibles cannot be initialized with a template string'))
+                    sys.exit()
+
+                value = variable.initializer.contents[0]
+            else:
+                value = eval.check_for_literals(variable.initializer)
+
+                if not value:
+                    print(variable.initializer.at.format_message('variables can only be initialized with a constant'))
+                    sys.exit()
+
+        initial_value = _calculate_initial_value(value, variable.type)
+
+        self._entries.append(VariableInfo(name_str, bit_size, alignment, type_str, initial_value))
 
         return True
 
@@ -102,7 +162,13 @@ class VariableLayoutBuilder():
         entries = self._layout()
 
         file.write(json.dumps({
-            "entries": [{"name": entry[0].name, "offset": entry[1], "type": entry[0].type_name} for entry in entries]
+            "entries": [{
+                "name": entry[0].name, 
+                "type": entry[0].type_name,
+                "offset": entry[1], 
+                "bitSize": entry[0].bit_size,
+                "intialvalue": entry[0].initial_value.hex()
+            } for entry in entries]
         }, sort_keys=True, indent=4))
 
     def build(self) -> VariableLayout:
@@ -111,8 +177,12 @@ class VariableLayoutBuilder():
         result = VariableLayout()
 
         for entry in entries:
-            result.entries[entry[0].name] = entry[1]
-            result.types[entry[0].name] = entry[0].type_name
+            result._entries[entry[0].name] = VaraibleLayoutEntry(
+                entry[0].name,
+                entry[0].type_name,
+                entry[1],
+                entry[0].bit_size
+            )
 
         return result
 

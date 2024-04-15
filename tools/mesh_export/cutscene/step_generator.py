@@ -1,9 +1,11 @@
 import struct
 import io
+import sys
 
 from . import parser
 from . import expresion_generator
 from . import variable_layout
+from . import static_evaluator
 
 CUTSCENE_STEP_TYPE_DIALOG = 0
 CUTSCENE_STEP_TYPE_SHOW_RUNE = 1
@@ -46,13 +48,36 @@ class CutsceneStep():
         self.data: bytes = data
 
 class JumpCutsceneStep():
-    def __init__(self, command: int):
+    def __init__(self, command: int, label: str | None = None, token = None):
         self.command: int = command
         self.offset: int = 0
+        self.label: str | None = label
+        self.token = token
 
 class Cutscene():
     def __init__(self):
         self.steps: list[CutsceneStep | JumpCutsceneStep] = []
+        self.labels: dict[str, int] = {}
+
+    def add_label(self, label: str):
+        self.labels[label] = len(self.steps)
+
+    def apply_jump_labels(self) -> list[str]:
+        errors = []
+
+        for idx, step in enumerate(self.steps):
+            if not isinstance(step, JumpCutsceneStep):
+                continue
+            if not step.label:
+                continue
+
+            if not step.label in self.labels:
+                errors.append(step.token.format_message(f'the label {step.label} was not found'))
+
+            step.offset = self.labels[step.label] - (idx + 1)
+
+        return errors
+            
 
 def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext):
     pre_expression: expresion_generator.ExpressionScript | None = None
@@ -114,8 +139,8 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
         if not arg.is_static:
             continue
 
-        static_evaluator = expresion_generator.StaticEvaluator()
-        static_value = static_evaluator.check_for_literals(parameter)
+        eval = static_evaluator.StaticEvaluator()
+        static_value = eval.check_for_literals(parameter)
 
         if arg.name == 'bool':
             data.write(struct.pack('>B', 1 if static_value else 0))
@@ -166,8 +191,8 @@ def _validate_step(step, errors: list[str], context: variable_layout.VariableCon
                 raise Exception(f'unknown type {arg_type.name}')
             
             if arg_type.is_static:
-                static_evaluator = expresion_generator.StaticEvaluator()
-                static_value = static_evaluator.check_for_literals(parameter)
+                eval = static_evaluator.StaticEvaluator()
+                static_value = eval.check_for_literals(parameter)
 
                 if static_value == None:
                     errors.append(parameter.at.format_message(f'parameter must be a literal'))
@@ -242,9 +267,25 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
 
 def generate_steps(file, statements: list, context: variable_layout.VariableContext):
     cutscene = Cutscene()
+
+    local_size = context.locals.get_total_size()
+
+    if local_size > 0:
+        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_TYPE_PUSH_CONTEXT, struct.pack('>H', local_size)))
     
     for statement in statements:
         _generate_step(cutscene, statement, context)
+
+    cutscene.add_label('$exit')
+
+    if local_size > 0:
+        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_TYPE_POP_CONTEXT))
+
+    errors = cutscene.apply_jump_labels()
+
+    if len(errors) > 0:
+        print('\n\n'.join(errors))
+        sys.exit(1)
 
     file.write('CTSN'.encode())
     file.write(struct.pack('>H', len(cutscene.steps)))
