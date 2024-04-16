@@ -10,13 +10,11 @@ from . import static_evaluator
 CUTSCENE_STEP_TYPE_DIALOG = 0
 CUTSCENE_STEP_TYPE_SHOW_RUNE = 1
 CUTSCENE_STEP_TYPE_PAUSE = 2
-CUTSCENE_STEP_TYPE_PUSH_CONTEXT = 3
-CUTSCENE_STEP_TYPE_POP_CONTEXT = 4
-CUTSCENE_STEP_TYPE_EXPRESSION = 5
-CUTSCENE_STEP_TYPE_JUMP_IF_NOT = 7
-CUTSCENE_STEP_TYPE_JUMP = 7
-CUTSCENE_STEP_TYPE_SET_LOCAL = 8
-CUTSCENE_STEP_TYPE_SET_GLOBAL = 9
+CUTSCENE_STEP_TYPE_EXPRESSION = 3
+CUTSCENE_STEP_TYPE_JUMP_IF_NOT = 4
+CUTSCENE_STEP_TYPE_JUMP = 5
+CUTSCENE_STEP_TYPE_SET_LOCAL = 6
+CUTSCENE_STEP_TYPE_SET_GLOBAL = 7
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -78,6 +76,26 @@ class Cutscene():
 
         return errors
             
+def build_template_string(string: parser.String, context: variable_layout.VariableContext):
+    parts: list[str] = []
+
+    for idx, replacement in enumerate(string.replacements):
+        parts.append(string.contents[idx])
+
+        type_checker = expresion_generator.TypeChecker(context)
+        argument_type = type_checker.determine_type(replacement)
+
+        if argument_type == 'str':
+            parts.append('%s')
+        if argument_type == 'int':
+            parts.append('%d')
+        if argument_type == 'float':
+            parts.append('%f')
+
+    parts.append(string.contents[-1])
+        
+    return ''.join(parts)
+
 
 def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext):
     pre_expression: expresion_generator.ExpressionScript | None = None
@@ -92,8 +110,7 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
             for replacment in parameter.replacements:
                 expression = expresion_generator.generate_script(replacment, context)
                 if not expression:
-                    raise Exception(f"Could not generate expression {replacment}")
-                
+                    raise Exception(f"Could not generate expression {replacment}")   
 
                 if pre_expression:
                     pre_expression = pre_expression.concat(expression)
@@ -129,7 +146,7 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
         if arg.name == 'tstr':
             data.write(struct.pack('>B', len(parameter.replacements)))
-            data.write(_encode_string('%v'.join(parameter.contents)))
+            data.write(_encode_string(build_template_string(parameter, context)))
             continue
             
         if arg.name == 'str':
@@ -175,6 +192,14 @@ def _validate_step(step, errors: list[str], context: variable_layout.VariableCon
             if arg_type.name == 'tstr':
                 if not isinstance(parameter, parser.String):
                     errors.append(parameter.at.format_message('expected string'))
+                else:
+                    for replacement in parameter.replacements:
+                        replacement_type = type_info.determine_type(replacement)
+                        
+                        if replacement_type != 'str' and replacement_type != 'int' and replacement_type != 'float':
+                            errors.append(replacement.at.format_message(f'expected string, int or float but got {replacement_type}'))
+                            
+                        
                 continue
             elif arg_type.name == 'str':
                 if isinstance(parameter, parser.String):
@@ -268,18 +293,10 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
 def generate_steps(file, statements: list, context: variable_layout.VariableContext):
     cutscene = Cutscene()
 
-    local_size = context.locals.get_total_size()
-
-    if local_size > 0:
-        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_TYPE_PUSH_CONTEXT, struct.pack('>H', local_size)))
-    
     for statement in statements:
         _generate_step(cutscene, statement, context)
 
     cutscene.add_label('$exit')
-
-    if local_size > 0:
-        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_TYPE_POP_CONTEXT))
 
     errors = cutscene.apply_jump_labels()
 
@@ -288,7 +305,10 @@ def generate_steps(file, statements: list, context: variable_layout.VariableCont
         sys.exit(1)
 
     file.write('CTSN'.encode())
+
     file.write(struct.pack('>H', len(cutscene.steps)))
+
+    context.locals.write_default_values(file)
 
     for step in cutscene.steps:
         file.write(struct.pack('>B', step.command))

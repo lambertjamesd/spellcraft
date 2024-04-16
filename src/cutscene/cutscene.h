@@ -10,8 +10,6 @@ enum cutscene_step_type {
     CUTSCENE_STEP_TYPE_DIALOG,
     CUTSCENE_STEP_TYPE_SHOW_RUNE,
     CUTSCENE_STEP_TYPE_PAUSE,
-    CUTSCENE_STEP_TYPE_PUSH_CONTEXT,
-    CUTSCENE_STEP_TYPE_POP_CONTEXT,
     CUTSCENE_STEP_TYPE_EXPRESSION,
     CUTSCENE_STEP_TYPE_JUMP_IF_NOT,
     CUTSCENE_STEP_TYPE_JUMP,
@@ -24,6 +22,9 @@ struct cutscene_step;
 struct cutscene {
     struct cutscene_step* steps;
     uint16_t step_count;
+    
+    uint16_t locals_size;
+    void* locals;
 };
 
 struct templated_string {
@@ -63,7 +64,7 @@ struct cutscene_step {
     union cutscene_step_data data;
 };
 
-struct cutscene* cutscene_new(int capacity);
+struct cutscene* cutscene_new(int capacity, int locals_capacity);
 void cutscene_free(struct cutscene* cutscene);
 
 #define MAX_BUILDER_STEP_COUNT  32

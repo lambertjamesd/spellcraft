@@ -54,42 +54,72 @@ class VariableInfo():
         self.initial_value: bytes = initial_value
 
 class VaraibleLayoutEntry():
-    def __init__(self, name: str, type_name: str, offset: int, bit_size: int):
+    def __init__(self, name: str, type_name: str, offset: int, bit_size: int, initial_value: bytes):
         self.name: str = name
         self.type_name: str = type_name
         self.offset: int = offset
         self.bit_size: int = bit_size
+        self.initial_value: bytes = initial_value
 
 class VariableLayout():
     def __init__(self):
         self._entries: dict[str, VaraibleLayoutEntry] = {}
+        self._ordered_entires: list[VaraibleLayoutEntry] = []
+
+    def add_entry(self, entry: VaraibleLayoutEntry):
+        self._entries[entry.name] = entry
+        self._ordered_entires.append(entry)
 
     def deserialize(self, file):
         file_contents = json.load(file)
 
         for entry in file_contents['entries']:
-            self._entries[entry["name"]] = VaraibleLayoutEntry(
+            self.add_entry(VaraibleLayoutEntry(
                 entry["name"],
                 entry["type"],
                 entry["offset"],
-                entry["bitSize"]
-            )
+                entry["bitSize"],
+                bytes.fromhex(entry["initialValue"])
+            ))
+
+    def has_variable(self, name: str) -> bool:
+        return name in self._entries
 
     def get_variable_offset(self, name: str) -> int:
-        return self._entries[name]
+        return self._entries[name].offset
     
     def get_variable_type(self, name: str) -> str | None:
-        if name in self.types:
-            return self.types[name]
+        if name in self._entries:
+            return self._entries[name].type_name
         return None
     
     def get_total_size(self) -> int:
         result: int = 0
 
-        for entry in self._entries.values():
+        for entry in self._ordered_entires:
             result = max(result, entry.offset + entry.bit_size)
 
         return int((result + 7) // 8)
+    
+    def write_default_values(self, file):
+        size = self.get_total_size()
+
+        file.write(struct.pack('>H', size))
+        data = bytearray(size)
+
+        for entry in self._ordered_entires:
+            byte_offset = entry.offset // 8
+
+            if entry.bit_size == 1:
+                bit_offset = entry.offset % 8
+
+                if entry.initial_value[0]:
+                    data[byte_offset] |= 128 >> bit_offset
+            else:
+                for offset in range(entry.bit_size // 8):
+                    data[byte_offset + offset] = entry.initial_value[offset]
+
+        file.write(bytes(data))
             
 
 class VariableLayoutBuilder():
@@ -101,7 +131,7 @@ class VariableLayoutBuilder():
     def _layout(self) -> list[tuple[VariableInfo, int]]:
         result = []
 
-        sorted_entries = sorted(self._entries, key=lambda x: x.alignment)
+        sorted_entries = sorted(self._entries, key=lambda x: (x.alignment, x.name))
         
         offset = 0
 
@@ -167,7 +197,7 @@ class VariableLayoutBuilder():
                 "type": entry[0].type_name,
                 "offset": entry[1], 
                 "bitSize": entry[0].bit_size,
-                "intialvalue": entry[0].initial_value.hex()
+                "initialValue": entry[0].initial_value.hex()
             } for entry in entries]
         }, sort_keys=True, indent=4))
 
@@ -177,12 +207,13 @@ class VariableLayoutBuilder():
         result = VariableLayout()
 
         for entry in entries:
-            result._entries[entry[0].name] = VaraibleLayoutEntry(
+            result.add_entry(VaraibleLayoutEntry(
                 entry[0].name,
                 entry[0].type_name,
                 entry[1],
-                entry[0].bit_size
-            )
+                entry[0].bit_size,
+                entry[0].initial_value
+            ))
 
         return result
 
@@ -192,13 +223,11 @@ class VariableContext():
         self.locals: VariableLayout = locals
 
     def is_local(self, name: str) -> bool:
-        return name in self.locals
-
+        return self.locals.has_variable(name)
+    
     def get_variable_offset(self, name: str) -> int:
-        result = self.locals.get_variable_offset(name)
-
-        if not result is None:
-            return result
+        if self.locals.has_variable(name):
+            return self.locals.get_variable_offset(name)
         
         return self.globals.get_variable_offset(name)
     

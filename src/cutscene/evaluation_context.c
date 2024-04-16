@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <malloc.h>
+#include <memory.h>
 
 void evaluation_context_init(struct evaluation_context* context, int locals_size) {
     context->current_stack = 0;
@@ -24,6 +25,12 @@ int evaluation_context_pop(struct evaluation_context* context) {
     return context->stack[context->current_stack];
 }
 
+void evaluation_context_popn(struct evaluation_context* context, int* into, int count) {
+    assert(context->current_stack >= count);
+    context->current_stack -= count;
+    memcpy(into, &context->stack[context->current_stack], sizeof(int) * count);
+}
+
 int evaluation_context_load(void* data, enum data_type data_type, int word_offset) {
     switch (data_type) {
         case DATA_TYPE_NULL:
@@ -39,6 +46,8 @@ int evaluation_context_load(void* data, enum data_type data_type, int word_offse
             uint32_t word = ((uint32_t*)data)[word_offset >> 5];
             return ((uint32_t)0x80000000 >> (word_offset & 0x1F)) != 0;
         }
+        case DATA_TYPE_ADDRESS:
+            return (int)((char*)data + word_offset);
         default:
             return 0;
     }

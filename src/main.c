@@ -21,6 +21,7 @@
 #include "menu/dialog_box.h"
 #include "cutscene/cutscene_runner.h"
 #include "entity/interactable.h"
+#include "savefile/savefile.h"
 
 #include "render/render_batch.h"
 #include "scene/world_loader.h"
@@ -59,6 +60,7 @@ void setup() {
     collectable_assets_load();
     dialog_box_init();
     cutscene_runner_init();
+    savefile_new();
     current_world = world_load("rom:/worlds/test.world");
 }
 
@@ -144,13 +146,13 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    // for (;;) {
-    //     joypad_poll();
+    for (;;) {
+        joypad_poll();
 
-    //     if (joypad_get_buttons_pressed(0).start) {
-    //         break;
-    //     }
-    // }
+        if (joypad_get_buttons_pressed(0).start) {
+            break;
+        }
+    }
 
     setup();
 

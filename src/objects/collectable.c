@@ -79,7 +79,7 @@ void collectable_collected(struct collectable* collectable) {
         dialog_box_show( 
             "You got a heart\n\n"
             "Now if I only had a brain",
-            NULL, NULL
+            NULL, NULL, NULL
         );
     }
 

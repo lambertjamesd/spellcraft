@@ -1,3 +1,5 @@
 
 global player_name: char[8] = "Carl";
 global intro_played: bool;
+
+global talk_count: i16;

@@ -5,6 +5,7 @@
 #include "menu_rendering.h"
 #include "../time/time.h"
 #include "../util/text.h"
+#include <string.h>
 
 #define CHARACTERS_PER_SECOND   15.0f
 
@@ -84,13 +85,39 @@ void dialog_box_render(void* data) {
     }
 }
 
-void dialog_box_show(char* message, dialog_end_callback end_callback, void* end_callback_data) {
-    dialog_box.current_message = message;
+void dialog_box_format_string(char* into, char* format, int* args) {
+    while (*format) {
+        if (*format == '%') {
+            format += 1;
+
+            int arg = *args;
+            args += 1;
+
+            if (*format == 's') {
+                char* as_str = (char*)arg;
+                while (*as_str) *into++ = *as_str++;
+            } else if (*format == 'd') {
+                into += sprintf(into, "%d", arg);
+            } else if (*format == '%') {
+                *into++ = '%';
+            }
+        } else {
+            *into++ = *format;
+        }
+
+        format += 1;
+    }
+}
+
+void dialog_box_show(char* message, int* args, dialog_end_callback end_callback, void* end_callback_data) {
+    dialog_box_format_string(dialog_box.current_text, message, args);
+    dialog_box.current_message = dialog_box.current_text;
+
     menu_add_callback(dialog_box_render, &dialog_box, 1);
     update_add(&dialog_box, dialog_box_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_DIALOG);
 
-    dialog_box.current_message_start = message;
-    dialog_box.current_message_end = message;
+    dialog_box.current_message_start = dialog_box.current_message;
+    dialog_box.current_message_end = dialog_box.current_message;
 
     dialog_box.requested_characters = 0.0f;
     dialog_box.paused = 0;

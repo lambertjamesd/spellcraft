@@ -1,24 +1,36 @@
 #include "expression_evaluate.h"
 
+#include "../savefile/savefile.h"
+
 void expression_evaluate(struct evaluation_context* context, struct expression* expression) {
     uint8_t* current = expression->expression_program;
 
     while (*current != EXPRESSION_TYPE_END) {
-
+        int instruction = *current;
         ++current;
-        union expression_data *data = (union expression_data*)current;
 
-        switch (*current) {
+        union expression_data data;
+
+        switch (instruction) {
             case EXPRESSION_TYPE_LOAD_LOCAL:
-                evaluation_context_push(context, evaluation_context_load(context->local_varaibles, data->load_variable.data_type, data->load_variable.word_offset));
+                // this avoids alignment issues
+                memcpy(&data, current, sizeof(union expression_data));
+                
+                evaluation_context_push(context, evaluation_context_load(context->local_varaibles, data.load_variable.data_type, data.load_variable.word_offset));
                 current += sizeof(union expression_data);
                 break;
             case EXPRESSION_TYPE_LOAD_GLOBAL:
-                evaluation_context_push(context, evaluation_context_load(context->global_variables, data->load_variable.data_type, data->load_variable.word_offset));
+                // this avoids alignment issues
+                memcpy(&data, current, sizeof(union expression_data));
+
+                evaluation_context_push(context, evaluation_context_load(savefile_get_globals(), data.load_variable.data_type, data.load_variable.word_offset));
                 current += sizeof(union expression_data);
                 break;
             case EXPRESSION_TYPE_LOAD_LITERAL:
-                evaluation_context_push(context, data->literal);
+                // this avoids alignment issues
+                memcpy(&data, current, sizeof(union expression_data));
+
+                evaluation_context_push(context, data.literal);
                 current += sizeof(union expression_data);
                 break;
             case EXPRESSION_TYPE_AND: {

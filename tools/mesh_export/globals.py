@@ -28,5 +28,10 @@ if __name__ == "__main__":
     if not success:
         sys.exit(1)
 
-    with open(args.output, 'w') as file:
+    with open(args.output + '.dat', 'wb') as file:
+        result.build().write_default_values(file)
+
+    with open(args.output + '.json', 'w') as file:
         result.serialize(file)
+
+    

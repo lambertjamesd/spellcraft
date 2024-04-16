@@ -77,6 +77,7 @@ data_type_mapping = {
     "i32": 3,
     "bool": 4,
     "float": 5,
+    "str": 6,
 }
 
 data_word_size_mapping = {
@@ -85,9 +86,13 @@ data_word_size_mapping = {
     "i32": 32,
     "bool": 1,
     "float": 32,
+    "str": 8,
 }
 
 def generate_variable_address(data_type: str, bit_offset: int) -> bytes:
+    if data_type.startswith('char'):
+        data_type = 'str'
+
     return struct.pack(
         '>HH', 
         data_type_mapping[data_type], 
@@ -109,7 +114,7 @@ class ExpresionScriptLoad():
         location = 'local' if self.command == EXPRESSION_TYPE_LOAD_LOCAL else 'global'
         return '{0} {1}: {2} 0x{3:08x}'.format(location, self.name, self.data_type, self.bit_offset)
     
-    def has_data() -> bool:
+    def has_data(self) -> bool:
         return True
     
     def serialize(self, file):
@@ -124,7 +129,7 @@ class ExpresionScriptIntLiteral():
     def __str__(self):
         return f'int literal {str(self.value)}'
     
-    def has_data() -> bool:
+    def has_data(self) -> bool:
         return True
     
     def serialize(self, file):
@@ -139,7 +144,7 @@ class ExpresionScriptFloatLiteral():
     def __str__(self):
         return 'float literal {0} 0x{1:08x}'.format(self.original_value, self.value)
 
-    def has_data() -> bool:
+    def has_data(self) -> bool:
         return True
     
     def serialize(self, file):
@@ -152,15 +157,15 @@ class ExpressionCommand():
     def __str__(self):
         return command_to_name[self.command]
     
-    def has_data() -> bool:
+    def has_data(self) -> bool:
         return False
     
     def serialize(self, file):
         file.write(struct.pack('>B', self.command))
 
 class ExpressionScript():
-    def __init__(self, steps: list = []):
-        self.steps: list = steps
+    def __init__(self, steps: list = None):
+        self.steps: list = steps or []
 
     def __str__(self):
         return '\n'.join([str(step) for step in self.steps])
@@ -306,7 +311,7 @@ class TypeChecker():
     
         raise Exception('unknown expression type')
 
-    def determine_type(self, expression):
+    def determine_type(self, expression) -> str:
         result = self._determine_type(expression)
         self.expression_to_type[expression] = result
         return result

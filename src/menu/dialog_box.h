@@ -25,7 +25,7 @@ struct dialog_box {
 };
 
 void dialog_box_init();
-void dialog_box_show(char* message, dialog_end_callback end_callback, void* end_callback_data);
+void dialog_box_show(char* message, int* args, dialog_end_callback end_callback, void* end_callback_data);
 bool dialog_box_is_active();
 void dialog_box_hide();
 void dialog_box_destroy();

@@ -50,7 +50,7 @@ struct expression {
     void* expression_program;
 };
 
-void expression_load(struct expression* expression, FILE* mesh_file);
+void expression_load(struct expression* expression, FILE* file);
 void expression_destroy(struct expression* expression);
 
 #endif

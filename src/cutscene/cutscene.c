@@ -43,8 +43,15 @@ struct cutscene* cutscene_load(char* filename) {
 
     uint16_t step_count;
     fread(&step_count, 2, 1, file);
+
+    uint16_t locals_size;
+    fread(&locals_size, 2, 1, file);
     
-    struct cutscene* result = cutscene_new(step_count);
+    struct cutscene* result = cutscene_new(step_count, locals_size);
+
+    if (locals_size) {
+        fread(result->locals, 1, locals_size, file);
+    }
 
     for (int i = 0; i < step_count; i += 1) {
         struct cutscene_step* step = &result->steps[i];
@@ -61,6 +68,13 @@ struct cutscene* cutscene_load(char* filename) {
             case CUTSCENE_STEP_TYPE_PAUSE:
                 fread(&step->data.pause, 1, 2, file);
                 break;
+            case CUTSCENE_STEP_TYPE_EXPRESSION:
+                expression_load(&step->data.expression.expression, file);
+                break;
+            case CUTSCENE_STEP_TYPE_SET_LOCAL:
+            case CUTSCENE_STEP_TYPE_SET_GLOBAL:
+                fread(&step->data.store_variable, 4, 1, file);
+                break;
         }
     }
 
@@ -69,9 +83,15 @@ struct cutscene* cutscene_load(char* filename) {
     return result;
 }
 
-void cutscene_init(struct cutscene* cutscene, int capacity) {
+void cutscene_init(struct cutscene* cutscene, int capacity, int locals_size) {
     cutscene->steps = malloc(sizeof(struct cutscene_step) * capacity);
     cutscene->step_count = capacity;
+    cutscene->locals_size = locals_size;
+    if (locals_size) {
+        cutscene->locals = malloc(locals_size);
+    } else {
+        cutscene->locals = NULL;
+    }
 }
 
 void cutscene_destroy(struct cutscene* cutscene) {
@@ -91,11 +111,12 @@ void cutscene_destroy(struct cutscene* cutscene) {
     }
 
     free(cutscene->steps);
+    free(cutscene->locals);
 }
 
-struct cutscene* cutscene_new(int capacity) {
+struct cutscene* cutscene_new(int capacity, int locals_capacity) {
     struct cutscene* result = malloc(sizeof(struct cutscene));
-    cutscene_init(result, capacity);
+    cutscene_init(result, capacity, locals_capacity);
     return result;
 }
 
@@ -164,7 +185,7 @@ void cutscene_builder_show_rune(struct cutscene_builder* builder, enum spell_sym
 }
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder) {
-    struct cutscene* result = cutscene_new(builder->step_count);
+    struct cutscene* result = cutscene_new(builder->step_count, 0);
     memcpy(result->steps, builder->steps, sizeof(struct cutscene_step) * builder->step_count);
     return result;
 }
