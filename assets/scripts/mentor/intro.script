@@ -11,6 +11,8 @@ if talk_count <= 3 then
 
         You have spoken to me {talk_count} times
     ";
+elif talk_count == 4 then
+    say "{player_name}, you can stop.";
 else
     say "That is enough";
 end

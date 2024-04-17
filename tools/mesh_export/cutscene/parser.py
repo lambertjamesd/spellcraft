@@ -255,7 +255,7 @@ def _parse_block(parse_state: _ParseState, block_terminators: set[str]):
 def _adjust_string_whitespace(contents: list[str]):
     first_str = contents[0]
 
-    if first_str[0] != '\n':
+    if len(first_str) == 0 or first_str[0] != '\n':
         return
     
     idx = 1
@@ -276,12 +276,11 @@ def _adjust_string_whitespace(contents: list[str]):
         for idx in range(len(current_str)):
             curr = current_str[idx]
 
-            if whitepsace_index == None:
+            if whitepsace_index == None or whitepsace_index >= len(white_space_prefix) or white_space_prefix[whitepsace_index] != curr:
                 current_output.append(curr)
-            elif whitepsace_index < len(white_space_prefix) and white_space_prefix[whitepsace_index] == curr:
-                whitepsace_index += 1
-            else:
                 whitepsace_index = None
+            else:
+                whitepsace_index += 1
 
             if curr == '\n':
                 whitepsace_index = 0
@@ -408,17 +407,20 @@ def _parse_binary(parse_state: _ParseState, priority: int):
 def _parse_expression(parse_state: _ParseState):
     return _parse_binary(parse_state, 0)
 
-def _parse_if(parse_state: _ParseState):
-    parse_state.require('identifier', 'if')
+def _parse_if(parse_state: _ParseState, if_token = 'if'):
+    parse_state.require('identifier', if_token)
     condition = _parse_expression(parse_state)
     parse_state.require('identifier', 'then')
-    body = _parse_block(parse_state, {'else', 'end'})
+    body = _parse_block(parse_state, {'elif', 'else', 'end'})
     else_block = None
 
     if parse_state.optional('identifier', 'else'):
         else_block = _parse_block(parse_state, {'end'})
+    elif parse_state.peek().value == 'elif':
+        else_block = [_parse_if(parse_state, 'elif')]
 
-    parse_state.require('identifier', 'end')
+    if if_token == 'if':
+        parse_state.require('identifier', 'end')
 
     return IfStatement(condition, body, else_block)
     

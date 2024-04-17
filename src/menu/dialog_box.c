@@ -33,6 +33,9 @@ void dialog_box_update(void* data) {
                 if (character_point == 0) {
                     dialog_box.end_of_message = 1;
                 }
+
+                dialog_box.requested_characters = 0;
+                break;
             }
 
             dialog_box.requested_characters -= 1.0f;
@@ -108,7 +111,7 @@ void dialog_box_format_string(char* into, char* format, int* args) {
         format += 1;
     }
 
-    *into = '\0';
+    *into++ = '\0';
 }
 
 void dialog_box_show(char* message, int* args, dialog_end_callback end_callback, void* end_callback_data) {
