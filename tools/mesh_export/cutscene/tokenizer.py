@@ -81,17 +81,17 @@ def _emit_token_state(token_type: str):
 
 def _assign_or_equal_state(current: str):
     if current == '=':
-        return _emit_token_state('==')
+        return _emit_token_state('=='), None
     return _default_state(current), '='
 
 def _greater_than_state(current: str):
     if current == '=':
-        return _emit_token_state('>=')
+        return _emit_token_state('>='), None
     return _default_state(current), '>'
 
 def _less_than_state(current: str):
     if current == '=':
-        return _emit_token_state('<=')
+        return _emit_token_state('<='), None
     return _default_state(current), '<'
 
 _single_character_tokens = {

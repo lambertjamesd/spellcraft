@@ -71,6 +71,13 @@ struct cutscene* cutscene_load(char* filename) {
             case CUTSCENE_STEP_TYPE_EXPRESSION:
                 expression_load(&step->data.expression.expression, file);
                 break;
+            case CUTSCENE_STEP_TYPE_JUMP_IF_NOT:
+            case CUTSCENE_STEP_TYPE_JUMP: {
+                int16_t offset;
+                fread(&offset, 2, 1, file);
+                step->data.jump.offset = offset;
+                break;
+            }
             case CUTSCENE_STEP_TYPE_SET_LOCAL:
             case CUTSCENE_STEP_TYPE_SET_GLOBAL:
                 fread(&step->data.store_variable, 4, 1, file);

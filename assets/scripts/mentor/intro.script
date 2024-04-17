@@ -5,8 +5,14 @@ talk_count = talk_count + 1;
 
 pause true, true;
 
-say "Hello {player_name}!
+if talk_count <= 3 then
+    say "
+        Hello {player_name}!
 
-You have spoken to me {talk_count} times";
+        You have spoken to me {talk_count} times
+    ";
+else
+    say "That is enough";
+end
 
 pause false, true;

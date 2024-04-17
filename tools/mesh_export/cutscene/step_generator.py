@@ -264,16 +264,32 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_TYPE_EXPRESSION, expression.to_bytes()))
 
         if_step = JumpCutsceneStep(CUTSCENE_STEP_TYPE_JUMP_IF_NOT)
-
         cutscene.steps.append(if_step)
-
         size_before = len(cutscene.steps)
         
         for statement in step.statements:
             _generate_step(cutscene, statement, context)
 
-        # update the correct jump offset
-        if_step.offset = len(cutscene.steps) - size_before
+        if step.else_block:
+            # setup the jump that skips over the else block
+            # after the end of the if block
+            skip_else = JumpCutsceneStep(CUTSCENE_STEP_TYPE_JUMP)
+            cutscene.steps.append(skip_else)
+
+            # if there is an else block, skipping the if content should 
+            # jump to the start of the else block
+            if_step.offset = len(cutscene.steps) - size_before
+
+            size_before = len(cutscene.steps)
+
+            for statement in step.else_block:
+                _generate_step(cutscene, statement, context)
+
+            # update the correct jump offset
+            skip_else.offset = len(cutscene.steps) - size_before
+        else:
+            # update the correct jump offset
+            if_step.offset = len(cutscene.steps) - size_before
 
     if isinstance(step, parser.Assignment):
         expression = expresion_generator.generate_script(step.value, context)

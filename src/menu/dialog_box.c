@@ -7,7 +7,7 @@
 #include "../util/text.h"
 #include <string.h>
 
-#define CHARACTERS_PER_SECOND   15.0f
+#define CHARACTERS_PER_SECOND   45.0f
 
 struct dialog_box dialog_box;
 
@@ -22,7 +22,7 @@ void dialog_box_update(void* data) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
     if (!dialog_box.paused) {
-        dialog_box.requested_characters += fixed_time_step * (input.btn.a ? CHARACTERS_PER_SECOND * 2.0f : CHARACTERS_PER_SECOND);
+        dialog_box.requested_characters += fixed_time_step * (input.btn.a ? CHARACTERS_PER_SECOND * 4.0f : CHARACTERS_PER_SECOND);
 
         while (dialog_box.requested_characters >= 1.0f) {
             uint32_t character_point = utf8_decode(&dialog_box.current_message_end);
@@ -107,6 +107,8 @@ void dialog_box_format_string(char* into, char* format, int* args) {
 
         format += 1;
     }
+
+    *into = '\0';
 }
 
 void dialog_box_show(char* message, int* args, dialog_end_callback end_callback, void* end_callback_data) {

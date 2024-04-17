@@ -92,9 +92,10 @@ class VariableDefinition():
 
 
 class IfStatement():
-    def __init__(self, condition, statements: list):
+    def __init__(self, condition, statements: list, else_block: list):
         self.condition = condition
-        self.statements = statements
+        self.statements: list = statements
+        self.else_block: list = else_block
 
     def append_string(self, result: list[str], depth: int):
         space = '  ' * depth
@@ -240,18 +241,56 @@ def _maybe_parse_cutscene_def(parse_state: _ParseState, into: Cutscene) -> bool:
     
     return False
 
-def _parse_block(parse_state: _ParseState):
+def _parse_block(parse_state: _ParseState, block_terminators: set[str]):
     next = parse_state.peek()
 
     result = []
 
-    while next.token_type != 'eof' and next.value != 'end':
+    while next.token_type != 'eof' and not next.value in block_terminators:
         result.append(_parse_statement(parse_state))
         next = parse_state.peek()
 
-    parse_state.require('identifier', 'end')
-
     return result
+
+def _adjust_string_whitespace(contents: list[str]):
+    first_str = contents[0]
+
+    if first_str[0] != '\n':
+        return
+    
+    idx = 1
+    while idx < len(first_str) and first_str[idx].isspace() and first_str[idx] != '\n':
+        idx += 1
+        
+    white_space_prefix = first_str[1:idx]
+
+    content_index = 0
+    contents[0] = first_str[idx:]
+    whitepsace_index = None
+
+    current_output: list[str] = []
+
+    while content_index < len(contents):
+        current_str = contents[content_index]
+
+        for idx in range(len(current_str)):
+            curr = current_str[idx]
+
+            if whitepsace_index == None:
+                current_output.append(curr)
+            elif whitepsace_index < len(white_space_prefix) and white_space_prefix[whitepsace_index] == curr:
+                whitepsace_index += 1
+            else:
+                whitepsace_index = None
+
+            if curr == '\n':
+                whitepsace_index = 0
+
+        contents[content_index] = ''.join(current_output)
+        current_output = []
+
+        content_index += 1
+
 
 def _parse_string(parse_state: _ParseState) -> String:
     start_token = parse_state.require('"')
@@ -287,6 +326,8 @@ def _parse_string(parse_state: _ParseState) -> String:
 
     parse_state.advance()
     contents.append(''.join(current_content))
+
+    _adjust_string_whitespace(contents)
 
     return String(start_token, contents, replacements)
 
@@ -371,8 +412,15 @@ def _parse_if(parse_state: _ParseState):
     parse_state.require('identifier', 'if')
     condition = _parse_expression(parse_state)
     parse_state.require('identifier', 'then')
-    body = _parse_block(parse_state)
-    return IfStatement(condition, body)
+    body = _parse_block(parse_state, {'else', 'end'})
+    else_block = None
+
+    if parse_state.optional('identifier', 'else'):
+        else_block = _parse_block(parse_state, {'end'})
+
+    parse_state.require('identifier', 'end')
+
+    return IfStatement(condition, body, else_block)
     
 
 def _is_assignment(parse_state: _ParseState):
