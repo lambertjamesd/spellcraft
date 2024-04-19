@@ -150,6 +150,30 @@ class MeshIndex():
         indices = '\n'.join(block_indices)
 
         return f"min = {self.min_point}\nstride_inv = {self.stride_inv}\nblock_count = {self.block_count}\nblocks = {len(self.blocks)}\n{indices}"
+    
+    def serialize(self, file):
+        file.write(struct.pack(">fff", self.min_point.x, self.min_point.y, self.min_point.z))
+        file.write(struct.pack(">fff", self.stride_inv.x, self.stride_inv.y, self.stride_inv.z))
+        file.write(struct.pack(">BBB", int(self.block_count.x), int(self.block_count.y), int(self.block_count.z)))
+
+        index_count = 0
+
+        for block in self.blocks:
+            index_count += len(block.indices)
+
+        file.write(struct.pack(">H", index_count))
+
+        for block in self.blocks:
+            for index in block.indices:
+                file.write(struct.pack(">H", index))
+
+        current_index = 0
+
+        for block in self.blocks:
+            file.write(struct.pack(">HH", current_index, current_index + len(block.indices)))
+            current_index += len(block.indices)
+
+
 
     def _block_coordinates(self, input: mathutils.Vector) -> mathutils.Vector:
         return (input - self.min_point) * self.stride_inv
@@ -183,8 +207,8 @@ class MeshIndex():
             min_pos = _vector_min(min_pos, self.vertices[triangle.indices[idx]])
             max_pos = _vector_max(max_pos, self.vertices[triangle.indices[idx]])
 
-        min_block = _vector_floor(self._block_coordinates(min_pos))
-        max_block = _vector_ceil(self._block_coordinates(max_pos))
+        min_block = _vector_floor(self._block_coordinates(min_pos) - mathutils.Vector((ERROR_MARGIN, ERROR_MARGIN, ERROR_MARGIN)))
+        max_block = _vector_ceil(self._block_coordinates(max_pos) + mathutils.Vector((ERROR_MARGIN, ERROR_MARGIN, ERROR_MARGIN)))
 
         min_block = _vector_max(min_block, mathutils.Vector((0, 0, 0)))
         max_block = _vector_min(max_block, self.block_count)
@@ -248,3 +272,4 @@ class MeshCollider():
 
         index = MeshIndex(self.vertices, self.triangles)
         print(index)
+        index.serialize(file)

@@ -24,9 +24,27 @@ void mesh_collider_load(struct mesh_collider* into, FILE* file) {
     fread(into->triangles, sizeof(struct mesh_triangle_indices), triangle_count, file);
 
     into->triangle_count = triangle_count;
+
+    fread(&into->index.min, sizeof(struct Vector3), 1, file);
+    fread(&into->index.stride_inv, sizeof(struct Vector3), 1, file);
+    fread(&into->index.block_count, sizeof(struct Vector3u8), 1, file);
+
+    uint16_t index_count;
+    fread(&index_count, sizeof(uint16_t), 1, file);
+
+    into->index.index_indices = malloc(sizeof(uint16_t) * index_count);
+    fread(into->index.index_indices, sizeof(uint16_t), index_count, file);
+
+    int total_block_count = (int)into->index.block_count.x * (int)into->index.block_count.y * (int)into->index.block_count.z;
+
+    into->index.blocks = malloc(sizeof(struct mesh_index_block) * total_block_count);
+    fread(into->index.blocks, sizeof(struct mesh_index_block), total_block_count, file);
 }
 
 void mesh_collider_release(struct mesh_collider* mesh) {
     free(mesh->vertices);
     free(mesh->triangles);
+
+    free(mesh->index.index_indices);
+    free(mesh->index.blocks);
 }

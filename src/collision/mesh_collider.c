@@ -38,17 +38,21 @@ int mesh_index_merge_indices(struct mesh_index_block* block, uint16_t* index_ind
     uint16_t* max_out = tmp + max_index_count;
 
     while (out < max_out && (a < max_a || b < max_b)) {
-        if (b == max_b || (a < max_a && *a < *b)) {
+        if (b == max_b || (a < max_a && *a <= *b)) {
+            if (*a == *b) {
+                ++b;
+            }
+
             *out++ = *a++;
         } else {
             *out++ = *b++;
         }
     }
 
-    out = tmp;
+    uint16_t* copy_from = tmp;
 
-    while (out < tmp) {
-        *into++ = *out++;
+    while (copy_from < out) {
+        *into++ = *copy_from++;
     }
 
     return out - tmp;
@@ -91,7 +95,7 @@ int mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* b
         for (int y = min.y; y < max.y; y += 1) {
             struct mesh_index_block* block = start_row;
 
-            for (int x = min.z; x < max.z; x += 1) {
+            for (int x = min.x; x < max.x; x += 1) {
                 index_count = mesh_index_merge_indices(block, index->index_indices, indices, max_index_count, index_count);
 
                 if (index_count == max_index_count) {
