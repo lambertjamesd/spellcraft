@@ -24,6 +24,10 @@ class StructureInfo:
 
         return '\n'.join(result)
     
+class PointerType:
+    def __init__(self, sub_type):
+        self.sub_type = sub_type
+    
 class EnumInfo:
     def __init__(self, name: str, values: list[str]):
         self.name: str = name
@@ -93,7 +97,7 @@ def token_error(chr: str):
     
     return (token_error, None)
 
-single_tokens = {'{', '}', ';', ','}
+single_tokens = {'{', '}', ';', ',', '*'}
 
 def token_default_state(chr: str):
     if chr.isalpha() or chr == '_':
@@ -219,7 +223,7 @@ def parse_struct(state: ParseState):
         if state.peek(0).token_type == 'eof':
             raise Exception(state.format_error(state.peek(0), 'unexpected end of file'))
         
-        data_type = parse_type(state)
+        data_type = _parse_type(state)
         field_name = state.require('identifier')
         state.require(';')
 
@@ -249,8 +253,7 @@ def parse_enum(state: ParseState):
 
     return EnumInfo(name.value, values)
 
-
-def parse_type(state: ParseState):
+def _parse_type_scalar(state: ParseState):
     next = state.peek(0)
 
     if next.token_type == 'identifier' and next.value == 'struct':
@@ -266,6 +269,14 @@ def parse_type(state: ParseState):
     raise Exception(state.format_error(state.peek(0), 'unknown type'))
 
 
+def _parse_type(state: ParseState):
+    result = _parse_type_scalar(state)
+
+    if state.optional('*'):
+        return PointerType(result)
+    
+    return result
+
 def determine_enum(source: str, starting_at: int, ending_at: int):
     struct_source = source[starting_at:ending_at]
     return parse_enum(ParseState(tokenize(struct_source, starting_at), source))
@@ -273,7 +284,7 @@ def determine_enum(source: str, starting_at: int, ending_at: int):
 
 def determine_type(source: str, starting_at: int, ending_at: int):
     struct_source = source[starting_at:ending_at]
-    return parse_type(ParseState(tokenize(struct_source, starting_at), source))
+    return _parse_type(ParseState(tokenize(struct_source, starting_at), source))
 
 def find_end_curly(file_string: str, starting_at: int):
     depth = 0

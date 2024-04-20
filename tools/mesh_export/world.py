@@ -3,6 +3,7 @@ import sys
 import os
 import mathutils
 import math
+import struct
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -56,6 +57,8 @@ def process_scene():
         definitions = parse.struct_parse.find_structs(file_content)
         enums = parse.struct_parse.find_enums(file_content)
 
+    context = parse.struct_serialize.SerializeContext(enums)
+
     for obj in bpy.data.objects:
         if obj.type != "MESH":
             continue
@@ -98,10 +101,14 @@ def process_scene():
         for object in world.objects:
             key = object.name
 
+            parse.struct_serialize.layout_strings(object.obj, object.def_type, context, None)
+
             if key in grouped:
                 grouped[key].append(object)
             else:
                 grouped[key] = [object]
+
+        context.write_strings(file)
 
         grouped_list = sorted(list(grouped.items()), key=lambda x: x[0])
 
@@ -113,11 +120,19 @@ def process_scene():
             file.write(len(def_name).to_bytes(1, 'big'))
             file.write(def_name.encode())
 
+            type_locations: list[parse.struct_serialize.TypeLocation] = []
+
             file.write(len(item[1]).to_bytes(2, 'big'))
-            file.write(parse.struct_serialize.obj_size(item[1][0].def_type, enums).to_bytes(2, 'big'))
+            struct_size, struct_alignment = parse.struct_serialize.obj_gather_types(item[1][0].def_type, type_locations, context)
+            file.write(struct_size.to_bytes(2, 'big'))
+
+            file.write(struct.pack(">B", len(type_locations)))
+
+            for type_location in type_locations:
+                file.write(struct.pack(">BB", type_location.type_id, type_location.offset))
             
             for entry in item[1]:
-                parse.struct_serialize.write_obj(file, entry.obj, entry.def_type, enums)
+                parse.struct_serialize.write_obj(file, entry.obj, entry.def_type, context)
             
 
 process_scene()

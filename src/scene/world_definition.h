@@ -58,6 +58,7 @@ struct npc_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     enum npc_type npc_type;
+    char* dialog;
 };
 
 #endif

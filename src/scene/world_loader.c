@@ -155,5 +155,7 @@ void world_release(struct world* world) {
     collision_scene_remove_static_collision(&world->mesh_collider);
     mesh_collider_release(&world->mesh_collider);
 
+    free(world->string_table);
+
     free(world);
 }

@@ -271,5 +271,4 @@ class MeshCollider():
             ))
 
         index = MeshIndex(self.vertices, self.triangles)
-        print(index)
         index.serialize(file)

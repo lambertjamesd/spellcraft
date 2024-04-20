@@ -53,6 +53,8 @@ struct world {
     
     struct entity_data* entity_data;
     uint16_t entity_data_count;
+
+    char* string_table;
 };
 
 void world_render(void* data, struct render_batch* batch);
