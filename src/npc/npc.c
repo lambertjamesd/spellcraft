@@ -73,7 +73,11 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
 
     interactable_init(&npc->interactable, entity_id, npc_interact, npc);
 
-    npc->talk_to_cutscene = cutscene_load("rom:/scripts/mentor/intro.script");
+    if (*definiton->dialog) {
+        npc->talk_to_cutscene = cutscene_load(definiton->dialog);
+    } else {
+        npc->talk_to_cutscene = NULL;
+    }
 }
 
 void npc_destroy(struct npc* npc) {
@@ -82,4 +86,5 @@ void npc_destroy(struct npc* npc) {
     update_remove(npc);
     animation_cache_release(npc->animation_set);
     interactable_destroy(&npc->interactable);
+    cutscene_free(npc->talk_to_cutscene);
 }

@@ -38,6 +38,27 @@ struct entity_definition* world_find_def(const char* name) {
    return NULL;
 }
 
+struct type_location {
+    uint8_t type;
+    uint8_t offset;
+};
+
+enum type_location_types {
+    TYPE_LOCATION_STRING,
+};
+
+void world_apply_types(void* definition, char* string_table, struct type_location* type_locations, int type_location_count) {
+    for (int i = 0; i < type_location_count; i += 1) {
+        switch (type_locations[i].type) {
+            case TYPE_LOCATION_STRING: {
+                char** entry_location = (char**)((char*)definition + type_locations[i].offset);
+                *entry_location += (int)string_table;
+                break;
+            }
+        }
+    }
+}
+
 void world_load_entity(struct world* world, struct entity_data* entity_data, FILE* file) {
     uint8_t name_len;
     fread(&name_len, 1, 1, file);
@@ -54,6 +75,13 @@ void world_load_entity(struct world* world, struct entity_data* entity_data, FIL
     fread(&definition_size, 2, 1, file);
     assert(definition_size == def->definition_size);
 
+    uint8_t type_location_count;
+
+    fread(&type_location_count, 1, 1, file);
+
+    struct type_location type_locations[type_location_count];
+    fread(type_locations, sizeof(struct type_location), type_location_count, file);
+
     char* entity = malloc(def->entity_size * entity_data->entity_count);
     char entity_def_data[definition_size * entity_data->entity_count];
     char* entity_def = entity_def_data;
@@ -64,6 +92,7 @@ void world_load_entity(struct world* world, struct entity_data* entity_data, FIL
     fread(entity_def_data, definition_size, entity_data->entity_count, file);
 
     for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
+        world_apply_types(entity_def, world->string_table, type_locations, type_location_count);
         def->init(entity, entity_def);
 
         entity += def->entity_size;
@@ -117,6 +146,12 @@ struct world* world_load(const char* filename) {
 
     mesh_collider_load(&world->mesh_collider, file);
     collision_scene_use_static_collision(&world->mesh_collider);
+
+    uint16_t strings_length;
+    fread(&strings_length, 2, 1, file);
+
+    world->string_table = malloc(strings_length);
+    fread(world->string_table, strings_length, 1, file);
 
     fread(&world->entity_data_count, 2, 1, file);
 

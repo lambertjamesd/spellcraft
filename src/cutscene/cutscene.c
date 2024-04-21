@@ -128,6 +128,9 @@ struct cutscene* cutscene_new(int capacity, int locals_capacity) {
 }
 
 void cutscene_free(struct cutscene* cutscene) {
+    if (!cutscene) {
+        return;
+    }
     cutscene_destroy(cutscene);
     free(cutscene);
 }
