@@ -109,9 +109,35 @@ struct world* world_load(const char* filename) {
 
     struct world* world = malloc(sizeof(struct world));
 
+    struct player_definition player_def;
+    player_def.location = gZeroVec;
+    player_def.rotation = gRight2;
+
+    uint8_t location_count;
+    fread(&location_count, 1, 1, file);
+    
+    for (int i = 0; i < location_count; i += 1) {
+        uint8_t name_length;
+        fread(&name_length, 1, 1, file);
+        char name[name_length + 1];
+        fread(name, name_length, 1, file);
+        name[name_length] = '\0';
+
+        struct Vector3 pos;
+        struct Vector2 rot;
+
+        fread(&pos, sizeof(struct Vector3), 1, file);
+        fread(&rot, sizeof(struct Vector2), 1, file);
+
+        if (strcmp(name, "default") == 0) {
+            player_def.location = pos;
+            player_def.rotation = rot;
+        }
+    }
+
     inventory_init();
     camera_init(&world->camera, 70.0f, 0.5f, 30.0f);
-    player_init(&world->player, &world->camera.transform);
+    player_init(&world->player, &player_def, &world->camera.transform);
     camera_controller_init(&world->camera_controller, &world->camera, &world->player);
 
     pause_menu_init(&world->pause_menu);

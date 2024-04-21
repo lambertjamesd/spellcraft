@@ -4,6 +4,7 @@
 #include "cutscene.h"
 #include "../scene/world_definition.h"
 #include <stdbool.h>
+#include "../entity/entity_id.h"
 
 typedef void (*cutscene_finish_callback)(struct cutscene* cutscene, void* data);
 

@@ -107,21 +107,29 @@ def layout_strings(obj: bpy.types.Object, definition, context: SerializeContext,
         for child in definition.children:
             layout_strings(obj, child.data_type, context, child.name)
 
+def write_vector3_position(file, obj: bpy.types.Object):
+    loc, rot, scale = _get_transform(obj).decompose()
+    file.write(struct.pack(">fff", loc.x, loc.y, loc.z))
+
+
+def write_vector2_rotation(file, obj: bpy.types.Object):
+    loc, rot, scale = _get_transform(obj).decompose()
+    rotated_right = rot @ mathutils.Vector([1, 0, 0])
+
+    final_right = mathutils.Vector([rotated_right.x, 0, rotated_right.z]).normalized()
+
+    file.write(struct.pack(">ff", final_right.x, final_right.z))
+
+
 def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext, field_name = None):
     if isinstance(definition, str):
         if definition == 'struct Vector3':
             if field_name == 'position':
-                loc, rot, scale = _get_transform(obj).decompose()
-                file.write(struct.pack(">fff", loc.x, loc.y, loc.z))
+                write_vector3_position(file, obj)
                 return
         if definition == 'struct Vector2':
             if field_name == 'rotation':
-                loc, rot, scale = _get_transform(obj).decompose()
-                rotated_right = rot @ mathutils.Vector([1, 0, 0])
-
-                final_right = mathutils.Vector([rotated_right.x, 0, rotated_right.z]).normalized()
-
-                file.write(struct.pack(">ff", final_right.x, final_right.z))
+                write_vector2_rotation(file, obj)
                 return
         if definition == 'float':
             value = _get_value(obj, field_name, 0)

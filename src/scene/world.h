@@ -59,4 +59,11 @@ struct world {
 
 void world_render(void* data, struct render_batch* batch);
 
+void world_queue_next(char* world_name);
+void world_clear_next();
+
+bool world_has_next();
+
+char* world_get_next();
+
 #endif

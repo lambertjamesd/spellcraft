@@ -23,6 +23,11 @@ struct player_animations {
     struct animation_clip* attack;
 };
 
+struct player_definition {
+    struct Vector3 location;
+    struct Vector2 rotation;
+};
+
 struct player {
     struct Transform transform;
     struct renderable renderable;
@@ -39,7 +44,7 @@ struct player {
     struct animator animator;
 };
 
-void player_init(struct player* player, struct Transform* camera_transform);
+void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform);
 
 void player_render(struct player* player, struct render_batch* batch);
 

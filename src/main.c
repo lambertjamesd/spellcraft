@@ -50,18 +50,18 @@ struct spell test_spell = {
 
 void setup() {
     spell_assets_init();
+    menu_common_init();
     render_scene_reset();
     update_reset();
     collision_scene_reset();
     health_reset();
     interactable_reset();
-    menu_common_init();
     menu_reset();
     collectable_assets_load();
     dialog_box_init();
     cutscene_runner_init();
     savefile_new();
-    current_world = world_load("rom:/worlds/test.world");
+    current_world = world_load("rom:/worlds/desert.world");
 }
 
 float angle = 0.0f;
@@ -133,6 +133,31 @@ void on_vi_interrupt() {
     frame_happened = 1;
 }
 
+bool check_world_load() {
+    static uint8_t frame_wait = 0;
+
+    if (!world_has_next()) {
+        return false;
+    }
+
+    if (frame_wait == 0) {
+        frame_wait = 2;
+        return true;
+    } 
+
+    --frame_wait;
+
+    if (frame_wait > 0) {
+        return true;
+    }
+
+    world_release(current_world);
+    current_world = world_load(world_get_next());
+    world_clear_next();
+
+    return false;
+}
+
 int main(void)
 {
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
@@ -163,6 +188,10 @@ int main(void)
             // TODO process low priority tasks
         }
         frame_happened = 0;
+
+        if (check_world_load()) {
+            continue;
+        }
 
         if (current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
             surface_t* fb = display_get();

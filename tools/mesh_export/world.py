@@ -23,10 +23,16 @@ class ObjectEntry():
         self.name: str = name
         self.def_type: parse.struct_parse.StructureInfo = def_type
 
+class LocationEntry():
+    def __init__(self, obj: bpy.types.Object, name: str):
+        self.obj: bpy.types.Object = obj
+        self.name: str = name
+
 class World():
     def __init__(self):
         self.static:list[StaticEntry] = []
         self.objects: list[ObjectEntry] = []
+        self.locations: list[LocationEntry] = []
         self.world_mesh_collider = entities.mesh_collider.MeshCollider()
 
 def process_linked_object(world: World, obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo]):
@@ -61,6 +67,8 @@ def process_scene():
 
     for obj in bpy.data.objects:
         if obj.type != "MESH":
+            if 'entry_point' in obj:
+                world.locations.append(LocationEntry(obj, obj['entry_point']))
             continue
 
         if obj.name.startswith('@'):
@@ -83,6 +91,16 @@ def process_scene():
 
     with open(output_filename, 'wb') as file:
         file.write('WRLD'.encode())
+
+        file.write(len(world.locations).to_bytes(1, 'big'))
+
+        for location in world.locations:
+            location_bytes = location.name.encode()
+            file.write(len(location_bytes).to_bytes(1, 'big'))
+            file.write(location_bytes)
+
+            parse.struct_serialize.write_vector3_position(file, location.obj)
+            parse.struct_serialize.write_vector2_rotation(file, location.obj)
 
         file.write(len(world.static).to_bytes(2, 'big'))
 
@@ -133,6 +151,7 @@ def process_scene():
             
             for entry in item[1]:
                 parse.struct_serialize.write_obj(file, entry.obj, entry.def_type, context)
+
             
 
 process_scene()

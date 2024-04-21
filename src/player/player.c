@@ -205,7 +205,7 @@ void player_update(struct player* player) {
     }
 }
 
-void player_init(struct player* player, struct Transform* camera_transform) {
+void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
     entity_id entity_id = entity_id_new();
 
     transformInitIdentity(&player->transform);
@@ -213,12 +213,12 @@ void player_init(struct player* player, struct Transform* camera_transform) {
 
     player->camera_transform = camera_transform;
 
-    player->transform.position.y = 1.0f;
+    player->transform.position = definition->location;
 
     render_scene_add_renderable(&player->renderable, 2.0f);
     update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD);
 
-    player->look_direction = gRight2;
+    player->look_direction = definition->rotation;
 
     vector2ComplexFromAngle(fixed_time_step * 7.0f, &player_max_rotation);
 
