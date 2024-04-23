@@ -61,7 +61,7 @@ void setup() {
     dialog_box_init();
     cutscene_runner_init();
     savefile_new();
-    current_world = world_load("rom:/worlds/desert.world");
+    current_world = world_load("rom:/worlds/playerhome_outside.world");
 }
 
 float angle = 0.0f;
@@ -171,13 +171,13 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    for (;;) {
-        joypad_poll();
+    // for (;;) {
+    //     joypad_poll();
 
-        if (joypad_get_buttons_pressed(0).start) {
-            break;
-        }
-    }
+    //     if (joypad_get_buttons_pressed(0).start) {
+    //         break;
+    //     }
+    // }
 
     setup();
 

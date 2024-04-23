@@ -136,7 +136,7 @@ struct world* world_load(const char* filename) {
     }
 
     inventory_init();
-    camera_init(&world->camera, 70.0f, 0.5f, 30.0f);
+    camera_init(&world->camera, 70.0f, 0.5f, 50.0f);
     player_init(&world->player, &player_def, &world->camera.transform);
     camera_controller_init(&world->camera_controller, &world->camera, &world->player);
 

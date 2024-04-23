@@ -1,0 +1,10 @@
+{
+    "tex0": "../../images/forest/water_edge.png",
+    "combineMode": [{
+        "color": ["TEX0", "0", "SHADE", "0"],
+        "alpha": ["0", "0", "0", "TEX0"]
+    }],
+    "blendMode": "TRANSPARENT",
+    "lighting": false,
+    "zBuffer": true
+}
