@@ -1,12 +1,6 @@
 {
     "tex0": {
-        "filename": "../../images/forest/rocks_top.png",
-        "s": {
-            "repeats": 0
-        },
-        "t": {
-            "repeats": 0
-        }
+        "filename": "../../images/forest/rocks_top.png"
     },
     "combineMode": [{
         "color": ["TEX0", "0", "SHADE", "0"],

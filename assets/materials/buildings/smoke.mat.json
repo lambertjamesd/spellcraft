@@ -2,7 +2,7 @@
     "tex0": "../../images/buildings/smoke.png",
     "combineMode": [{
         "color": ["0", "0", "0", "SHADE"],
-        "alpha": ["0", "0", "0", "TEX0"]
+        "alpha": ["SHADE", "0", "TEX0", "0"]
     }],
     "blendMode": "TRANSPARENT",
     "lighting": false,

@@ -24,7 +24,7 @@ void correct_overlap(struct dynamic_object* object, struct EpaResult* result, fl
     }
 }
 
-#define MAX_TRIANGLES_TO_CHECK  64
+#define MAX_TRIANGLES_TO_CHECK  256
 
 void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider* mesh) {   
     if (object->is_trigger) {
@@ -38,8 +38,8 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
 
     triangle.vertices = mesh->vertices;
 
-    for (int i = 0; i < mesh->triangle_count; ++i) {
-        triangle.triangle = mesh->triangles[i];
+    for (int i = 0; i < triangle_count; ++i) {
+        triangle.triangle = mesh->triangles[indices[i]];
 
         struct Simplex simplex;
         if (!gjkCheckForOverlap(&simplex, &triangle, mesh_triangle_minkowski_sum, object, dynamic_object_minkowski_sum, &gRight)) {

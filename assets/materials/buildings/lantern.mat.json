@@ -1,5 +1,13 @@
 {
-    "tex0": "../../images/buildings/lantern.png",
+    "tex0": {
+        "filename": "../../images/buildings/lantern.png",
+        "s": {
+            "mirror": true
+        },
+        "t": {
+            "mirror": true
+        }
+    },
     "combineMode": [{
         "color": ["TEX0", "0", "SHADE", "0"],
         "alpha": ["0", "0", "0", "TEX0"]

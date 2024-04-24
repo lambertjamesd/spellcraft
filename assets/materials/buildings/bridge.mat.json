@@ -3,6 +3,9 @@
         "filename": "../../images/buildings/bridge.png",
         "s": {
             "mirror": true
+        },
+        "t": {
+            "mirror": true
         }
     },
     "combineMode": [{
