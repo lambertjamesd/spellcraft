@@ -60,8 +60,6 @@ class mesh_data():
                 uv_layer = layer
                 break
 
-        print(uv_layer)
-
         color = None
 
         for attr in mesh.attributes:
