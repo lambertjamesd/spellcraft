@@ -53,7 +53,14 @@ class mesh_data():
         next_output = len(self.indices)
         index_mapping = dict()
 
-        uv_layer = None if len(mesh.uv_layers) == 0 else mesh.uv_layers[0]
+        uv_layer = None
+        
+        for layer in mesh.uv_layers:
+            if layer.active:
+                uv_layer = layer
+                break
+
+        print(uv_layer)
 
         color = None
 
@@ -101,7 +108,7 @@ class mesh_data():
             self.normals.append(normal_vertex_transform @ mesh.vertices[vtx_index].normal)
 
             if uv_layer:
-                self.uv.append(mesh.uv_layers[0].uv[loop_index].vector)
+                self.uv.append(uv_layer.uv[loop_index].vector)
             else:
                 self.uv.append([0, 0])
 
