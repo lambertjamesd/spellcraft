@@ -12,6 +12,16 @@ void world_render(void* data, struct render_batch* batch) {
     }
 }
 
+void world_update(void* data) {
+    struct world* world = (struct world*)data;
+
+    for (int i = 0; i < world->loading_zone_count; i += 1) {
+        if (box3DContainsPoint(&world->loading_zones[i].bounding_box, &world->player.transform.position)) {
+            world_queue_next(world->loading_zones[i].world_name);
+        }
+    }
+}
+
 void world_queue_next(char* world_name) {
     char* curr = world_name;
     char* out = next_world_name;
@@ -41,4 +51,8 @@ bool world_has_next() {
 
 char* world_get_next() {
     return next_world_name;
+}
+
+char* world_get_next_entry() {
+    return next_entrance_name;
 }

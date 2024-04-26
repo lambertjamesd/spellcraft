@@ -38,9 +38,13 @@ struct static_entity {
     uint8_t flags;
 };
 
+struct loading_zone {
+    struct Box3D bounding_box;
+    char* world_name;
+};
+
 struct world {
     struct static_entity* static_entities;
-    uint16_t static_entity_count;
 
     struct mesh_collider mesh_collider;
 
@@ -52,12 +56,17 @@ struct world {
     struct hud hud;
     
     struct entity_data* entity_data;
+    struct loading_zone* loading_zones;
+
+    uint16_t static_entity_count;
     uint16_t entity_data_count;
+    uint16_t loading_zone_count;
 
     char* string_table;
 };
 
 void world_render(void* data, struct render_batch* batch);
+void world_update(void* data);
 
 void world_queue_next(char* world_name);
 void world_clear_next();
@@ -65,5 +74,6 @@ void world_clear_next();
 bool world_has_next();
 
 char* world_get_next();
+char* world_get_next_entry();
 
 #endif

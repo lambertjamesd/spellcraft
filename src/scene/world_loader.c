@@ -6,6 +6,7 @@
 #include "../resource/mesh_cache.h"
 #include "../resource/mesh_collider.h"
 #include "../render/render_scene.h"
+#include "../time/time.h"
 
 #include "../objects/crate.h"
 #include "../objects/ground_torch.h"
@@ -115,6 +116,8 @@ struct world* world_load(const char* filename) {
 
     uint8_t location_count;
     fread(&location_count, 1, 1, file);
+
+    bool found_entry = false;
     
     for (int i = 0; i < location_count; i += 1) {
         uint8_t name_length;
@@ -129,9 +132,19 @@ struct world* world_load(const char* filename) {
         fread(&pos, sizeof(struct Vector3), 1, file);
         fread(&rot, sizeof(struct Vector2), 1, file);
 
+        if (found_entry) {
+            continue;
+        }
+
         if (strcmp(name, "default") == 0) {
             player_def.location = pos;
             player_def.rotation = rot;
+        }
+
+        if (strcmp(name, world_get_next_entry()) == 0) {
+            player_def.location = pos;
+            player_def.rotation = rot;
+            found_entry = true;
         }
     }
 
@@ -187,9 +200,19 @@ struct world* world_load(const char* filename) {
         world_load_entity(world, &world->entity_data[i], file);
     }
 
+    fread(&world->loading_zone_count, 2, 1, file);
+
+    world->loading_zones = malloc(sizeof(struct loading_zone) * world->loading_zone_count);
+    fread(world->loading_zones, sizeof(struct loading_zone), world->loading_zone_count, file);
+
+    for (int i = 0; i < world->loading_zone_count; i += 1) {
+        world->loading_zones[i].world_name += (int)world->string_table;
+    }
+
     fclose(file);
 
     render_scene_add(NULL, 0.0f, world_render, world);
+    update_add(world, world_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD);
 
     return world;
 }
@@ -206,6 +229,7 @@ void world_release(struct world* world) {
     }
 
     render_scene_remove(world);
+    update_remove(world);
 
     pause_menu_destroy(&world->pause_menu);
     player_destroy(&world->player);

@@ -28,11 +28,37 @@ class LocationEntry():
         self.obj: bpy.types.Object = obj
         self.name: str = name
 
+class LoadingZone():
+    def __init__(self, obj: bpy.types.Object, target: str):
+        self.obj: bpy.types.Object = obj
+        self.target: str = target
+
+    def bounding_box(self, world_rotation: mathutils.Matrix) -> tuple[mathutils.Vector, mathutils.Vector]:
+        transformed = [world_rotation @ vtx for vtx in self.obj.bound_box]
+
+        bb_min = transformed[0]
+        bb_max = transformed[0]
+
+        for vtx in transformed:
+            bb_min = mathutils.Vector((
+                min(bb_min.x, vtx.x),
+                min(bb_min.y, vtx.y),
+                min(bb_min.z, vtx.z)
+            ))
+            bb_max = mathutils.Vector((
+                max(bb_max.x, vtx.x),
+                max(bb_max.y, vtx.y),
+                max(bb_max.z, vtx.z)
+            ))
+
+        return bb_min, bb_max
+
 class World():
     def __init__(self):
         self.static:list[StaticEntry] = []
         self.objects: list[ObjectEntry] = []
         self.locations: list[LocationEntry] = []
+        self.loading_zones: list[LoadingZone] = []
         self.world_mesh_collider = entities.mesh_collider.MeshCollider()
 
 def process_linked_object(world: World, obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo]):
@@ -66,13 +92,15 @@ def process_scene():
     context = parse.struct_serialize.SerializeContext(enums)
 
     for obj in bpy.data.objects:
-        if obj.type != "MESH":
-            if 'entry_point' in obj:
-                world.locations.append(LocationEntry(obj, obj['entry_point']))
+        if 'loading_zone' in obj:
+            world.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
             continue
 
-        if obj.name.startswith('@'):
-            # TODO process non static objects
+        if 'entry_point' in obj:
+            world.locations.append(LocationEntry(obj, obj['entry_point']))
+            continue
+
+        if obj.type != "MESH":
             continue
 
         final_transform = base_transform @ obj.matrix_world
@@ -126,6 +154,9 @@ def process_scene():
             else:
                 grouped[key] = [object]
 
+        for loading_zone in world.loading_zones:
+            context.get_string_offset(loading_zone.target)
+
         context.write_strings(file)
 
         grouped_list = sorted(list(grouped.items()), key=lambda x: x[0])
@@ -152,6 +183,13 @@ def process_scene():
             for entry in item[1]:
                 parse.struct_serialize.write_obj(file, entry.obj, entry.def_type, context)
 
+        file.write(struct.pack(">H", len(world.loading_zones)))
+
+        for loading_zone in world.loading_zones:
+            bb_min, bb_max = loading_zone.bounding_box(final_transform)
+            file.write(struct.pack(">fff", bb_min.x, bb_min.y, bb_min.z))
+            file.write(struct.pack(">fff", bb_max.x, bb_max.y, bb_max.z))
+            file.write(struct.pack(">I", context.get_string_offset(loading_zone.target)))
             
 
 process_scene()
