@@ -34,7 +34,8 @@ class LoadingZone():
         self.target: str = target
 
     def bounding_box(self, world_rotation: mathutils.Matrix) -> tuple[mathutils.Vector, mathutils.Vector]:
-        transformed = [world_rotation @ vtx for vtx in self.obj.bound_box]
+        final_transform = world_rotation @ self.obj.matrix_world
+        transformed = [final_transform @ mathutils.Vector(vtx) for vtx in self.obj.bound_box]
 
         bb_min = transformed[0]
         bb_max = transformed[0]
@@ -186,7 +187,8 @@ def process_scene():
         file.write(struct.pack(">H", len(world.loading_zones)))
 
         for loading_zone in world.loading_zones:
-            bb_min, bb_max = loading_zone.bounding_box(final_transform)
+            bb_min, bb_max = loading_zone.bounding_box(base_transform)
+            print(bb_min, bb_max)
             file.write(struct.pack(">fff", bb_min.x, bb_min.y, bb_min.z))
             file.write(struct.pack(">fff", bb_max.x, bb_max.y, bb_max.z))
             file.write(struct.pack(">I", context.get_string_offset(loading_zone.target)))

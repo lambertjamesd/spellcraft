@@ -348,7 +348,7 @@ void spell_exec_init(struct spell_exec* exec) {
     exec->next_slot = 0;
     spell_data_source_pool_init(&exec->data_sources);
     memset(&exec->ids, 0, sizeof(exec->ids));
-    memset(&exec->ids, 0, sizeof(exec->modifier_ids));
+    memset(&exec->modifier_ids, 0, sizeof(exec->modifier_ids));
     update_add(exec, (update_callback)spell_exec_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
     memset(exec->pending_recast, 0, sizeof(exec->pending_recast));
 }

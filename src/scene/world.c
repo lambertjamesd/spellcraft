@@ -15,8 +15,11 @@ void world_render(void* data, struct render_batch* batch) {
 void world_update(void* data) {
     struct world* world = (struct world*)data;
 
+    struct Vector3 player_center = world->player.transform.position;
+    player_center.y += world->player.collision.center.y;
+
     for (int i = 0; i < world->loading_zone_count; i += 1) {
-        if (box3DContainsPoint(&world->loading_zones[i].bounding_box, &world->player.transform.position)) {
+        if (box3DContainsPoint(&world->loading_zones[i].bounding_box, &player_center)) {
             world_queue_next(world->loading_zones[i].world_name);
         }
     }
@@ -37,6 +40,9 @@ void world_queue_next(char* world_name) {
         next_entrance_name[0] = '\0';
         return;
     }
+
+    // skip the bound symbol
+    ++curr;
 
     while ((*out++ = *curr++));
 }
