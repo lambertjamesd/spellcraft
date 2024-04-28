@@ -67,7 +67,7 @@ MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat)
 filesystem/%.mat: assets/%.mat.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%.mat=build/assets/%.mat))
-	python tools/mesh_export/material.py --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
+	python3 tools/mesh_export/material.py --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
 	mkasset -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
 
 ###
@@ -87,7 +87,7 @@ SCRIPTS_COMPILED := $(SCRIPTS:assets/scripts/%=filesystem/scripts/%)
 
 build/assets/scripts/globals.json build/assets/scripts/globals.dat: tools/mesh_export/globals.py assets/scripts/globals.script
 	@mkdir -p $(dir $@)
-	python tools/mesh_export/globals.py build/assets/scripts/globals assets/scripts/globals.script
+	python3 tools/mesh_export/globals.py build/assets/scripts/globals assets/scripts/globals.script
 
 filesystem/scripts/globals.dat: build/assets/scripts/globals.dat
 	mkasset -o $(dir $@) -w 4 $<
@@ -95,7 +95,7 @@ filesystem/scripts/globals.dat: build/assets/scripts/globals.dat
 filesystem/%.script: assets/%.script build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
-	python tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json $< $(@:filesystem/%=build/assets/%)
+	python3 tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json $< $(@:filesystem/%=build/assets/%)
 	mkasset -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
 
 ###
@@ -118,7 +118,7 @@ filesystem/worlds/%.world: assets/worlds/%.blend $(EXPORT_SOURCE)
 
 build/test_result.txt: $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
-	python tools/mesh_export/cutscene_test.py
+	python3 tools/mesh_export/cutscene_test.py
 	echo "success" > $@
 
 ###
