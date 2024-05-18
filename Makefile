@@ -3,6 +3,8 @@ SOURCE_DIR=src
 BUILD_DIR=build
 include $(N64_INST)/include/n64.mk
 
+MK_ASSET=$(N64_INST)/bin/mkasset
+
 N64_C_AND_CXX_FLAG += -Og
 
 all: spellcraft.z64
@@ -53,7 +55,7 @@ filesystem/meshes/%.mesh: assets/meshes/%.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh))
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/mesh.py -- $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
-	mkasset -o $(dir $@) -w 256 $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
+	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
 	-cp $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.anim) $(@:%.mesh=%.anim)
 
 ###
@@ -68,7 +70,7 @@ filesystem/%.mat: assets/%.mat.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%.mat=build/assets/%.mat))
 	python3 tools/mesh_export/material.py --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
-	mkasset -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
+	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
 
 ###
 # material_builder
@@ -90,13 +92,13 @@ build/assets/scripts/globals.json build/assets/scripts/globals.dat: tools/mesh_e
 	python3 tools/mesh_export/globals.py build/assets/scripts/globals assets/scripts/globals.script
 
 filesystem/scripts/globals.dat: build/assets/scripts/globals.dat
-	mkasset -o $(dir $@) -w 4 $<
+	$(MK_ASSET) -o $(dir $@) -w 4 $<
 
 filesystem/%.script: assets/%.script build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
 	python3 tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json $< $(@:filesystem/%=build/assets/%)
-	mkasset -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
+	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
 
 ###
 # worlds
@@ -110,7 +112,7 @@ filesystem/worlds/%.world: assets/worlds/%.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/worlds/%.world=build/assets/worlds/%.world))
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/world.py -- $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
-	mkasset -o $(dir $@) -w 256 $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
+	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
 
 ###
 # tests
