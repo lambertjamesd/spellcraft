@@ -8,6 +8,9 @@ class Color():
         self.g = g
         self.b = b
         self.a = a
+
+    def __eq__(self, value: object) -> bool:
+        return False
     
     def __str__(self):
         return f"Color({self.r} {self.g} {self.b} {self.a})"
@@ -31,6 +34,9 @@ class CombineMode():
     def __init__(self, cyc1: CombineModeCycle, cyc2: CombineModeCycle):
         self.cyc1: CombineModeCycle = cyc1
         self.cyc2: CombineModeCycle = cyc2
+
+    def __eq__(self, value: object) -> bool:
+        return False
 
     def __str__(self):
         if self.cyc2:
@@ -59,6 +65,9 @@ class BlendMode():
         self.z_mode = 'OPAQUE'
         self.z_write = True
         self.z_compare = True
+
+    def __eq__(self, value: object) -> bool:
+        return False
 
     def __str__(self):
         if self.cyc2:

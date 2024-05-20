@@ -20,6 +20,18 @@ class mesh_data():
         self.indices = []
         self.bone_indices = []
 
+    def copy(self):
+        result = mesh_data(self.mat)
+
+        result.vertices = self.vertices.copy()
+        result.normals = self.normals.copy()
+        result.color = self.color.copy()
+        result.uv = self.uv.copy()
+        result.indices = self.indices.copy()
+        result.bone_indices = self.bone_indices.copy()
+
+        return result
+
     def append_mesh(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix, armature: armature.ArmatureData | None):
         triangles = []
         max_index = -1
@@ -302,6 +314,42 @@ def convert_vertex_channel(input, gamma):
     
     return result
 
+def pack_vertex(vertex, uv, color, normal, bone_index):
+    result = struct.pack(
+        ">hhh", 
+        round(vertex[0] * 32), 
+        round(vertex[1] * 32), 
+        round(vertex[2] * 32)
+    )
+
+    if uv:
+        result = result + struct.pack(
+            ">hh",
+            round(uv[0] * 256),
+            round((1 - uv[1]) * 256)
+        )
+
+    if color:
+        result = result + struct.pack(
+            ">bbb", 
+            round(normal[0] * 127), 
+            round(normal[1] * 127), 
+            round(normal[2] * 127)
+        )
+
+    if normal:
+        result = result + struct.pack(
+            ">bbb", 
+            round(normal[0] * 127), 
+            round(normal[1] * 127), 
+            round(normal[2] * 127)
+        )
+
+    if bone_index != None:
+        result = result + bone_index.to_bytes(1, 'big')
+
+    return result
+
 ATTR_POS = 1 << 0
 ATTR_UV = 1 << 1
 ATTR_COLOR = 1 << 2
@@ -367,45 +415,13 @@ def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
 
         file.write(len(mesh.vertices).to_bytes(2, 'big'))
         for idx, vertex in enumerate(mesh.vertices):
-            file.write(struct.pack(
-                ">hhh", 
-                round(vertex[0] * 32), 
-                round(vertex[1] * 32), 
-                round(vertex[2] * 32)
+            file.write(pack_vertex(
+                vertex,
+                mesh.uv[idx] if needs_uv else None,
+                mesh.color[idx] if needs_color else None,
+                mesh.normals[idx] if needs_normal else None,
+                mesh.bone_indices[idx] if armature else None,
             ))
-
-            if needs_uv:
-                uv = mesh.uv[idx]
-
-                file.write(struct.pack(
-                    ">hh",
-                    round(uv[0] * 256),
-                    round((1 - uv[1]) * 256)
-                ))
-
-            if needs_color:
-                color = mesh.color[idx]
-
-                file.write(struct.pack(
-                    ">BBBB", 
-                    convert_vertex_channel(color[0], material_object.vertex_gamma), 
-                    convert_vertex_channel(color[1], material_object.vertex_gamma), 
-                    convert_vertex_channel(color[2], material_object.vertex_gamma), 
-                    convert_vertex_channel(color[3], 1)
-                ))
-
-            if needs_normal:
-                normal = mesh.normals[idx].normalized()
-
-                file.write(struct.pack(
-                    ">bbb", 
-                    round(normal[0] * 127), 
-                    round(normal[1] * 127), 
-                    round(normal[2] * 127)
-                ))
-
-            if armature:
-                file.write(mesh.bone_indices[idx].to_bytes(1, 'big'))
 
         index_size = 1
 
