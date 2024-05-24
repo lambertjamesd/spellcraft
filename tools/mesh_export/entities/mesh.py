@@ -314,7 +314,7 @@ def convert_vertex_channel(input, gamma):
     
     return result
 
-def pack_vertex(vertex, uv, color, normal, bone_index):
+def pack_vertex(vertex, uv, color, normal, bone_index, gamma = 1):
     result = struct.pack(
         ">hhh", 
         round(vertex[0] * 32), 
@@ -331,10 +331,11 @@ def pack_vertex(vertex, uv, color, normal, bone_index):
 
     if color:
         result = result + struct.pack(
-            ">bbb", 
-            round(normal[0] * 127), 
-            round(normal[1] * 127), 
-            round(normal[2] * 127)
+            ">BBBB", 
+            convert_vertex_channel(color[0], gamma), 
+            convert_vertex_channel(color[1], gamma), 
+            convert_vertex_channel(color[2], gamma), 
+            convert_vertex_channel(color[3], 1)
         )
 
     if normal:
@@ -421,6 +422,8 @@ def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
                 mesh.color[idx] if needs_color else None,
                 mesh.normals[idx] if needs_normal else None,
                 mesh.bone_indices[idx] if armature else None,
+
+                gamma=material_object.vertex_gamma,
             ))
 
         index_size = 1

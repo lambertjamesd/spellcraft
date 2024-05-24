@@ -1,9 +1,6 @@
 #include <stdio.h>
 
-
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/gl_integration.h>
+#include <t3d/t3d.h>
 
 #include "resource/mesh_cache.h"
 #include "resource/material_cache.h"
@@ -68,52 +65,28 @@ void setup() {
 float angle = 0.0f;
 
 void render_3d() {
-    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    T3DViewport viewport = t3d_viewport_create();
 
-    glEnable(GL_DEPTH_TEST);
+    t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(85.0f), 10.0f, 100.0f);
+    t3d_viewport_look_at(&viewport, &(T3DVec3){{0,0,0}}, &(T3DVec3){{0,0,1}}, &(T3DVec3){{0,1,0}});
 
-    static const float gold[13] = { 
-        0.24725, 0.1995, 0.0745, 1.0,      /* ambient */
-        0.75164, 0.60648, 0.22648, 1.0,    /* diffuse */
-        0.628281, 0.555802, 0.366065, 1.0, /* specular */
-        50.0                               /* shininess */
-    };
+    t3d_frame_start();
+    t3d_viewport_attach(&viewport);
 
-    float goldGlow[4] = {0.2, 0.1, 0.05, 1};
+    rdpq_mode_combiner(RDPQ_COMBINER_SHADE);
+    // this cleans the entire screen (even if out viewport is smaller)
+    t3d_screen_clear_color(RGBA32(100, 0, 100, 0));
+    t3d_screen_clear_depth();
 
-    glEnable( GL_COLOR_MATERIAL );
-    glEnable(GL_LIGHTING);
-    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, gold );
-    glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, &gold[4] );
-    glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, &gold[8] );
-    glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, goldGlow );
-    glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, gold[12] );
+    // struct render_viewport viewport;
 
-    float blue1[4] = { 0.4, 0.4, 0.6, 1 };
-    float blue2[4] = { 0.0, 0, 0.8, 1 };
-    float blue3[4] = { 0.0, 0, 0.15, 1 };
-    float pos[4] = {1, 0, 0, 0};
-    glEnable( GL_LIGHT0 );
-    glLightfv( GL_LIGHT0, GL_DIFFUSE, blue1 );
-    glLightfv( GL_LIGHT0, GL_SPECULAR, blue2 );
-    glLightfv( GL_LIGHT0, GL_AMBIENT, blue3 );
-    glLightfv( GL_LIGHT0, GL_POSITION, pos);
-
-    struct render_viewport viewport;
-    viewport.x = 0;
-    viewport.y = 0;
-    viewport.w = display_get_width();
-    viewport.h = display_get_height();
-
-    render_scene_render(&current_world->camera, &viewport);
+    // render_scene_render(&current_world->camera, &viewport);
 }
 
 void render_menu() {
-    rdpq_mode_persp(false);
-    rdpq_set_mode_standard();
-    glDisable(GL_DEPTH_TEST);
-    menu_render();
+    // rdpq_mode_persp(false);
+    // rdpq_set_mode_standard();
+    // menu_render();
 }
 
 void render(surface_t* zbuffer) {
@@ -163,7 +136,7 @@ int main(void)
 {
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
     rdpq_init();
-    gl_init();
+    t3d_init((T3DInitParams){});
     dfs_init(DFS_DEFAULT_LOCATION);
     joypad_init();
 
@@ -199,11 +172,7 @@ int main(void)
 
             rdpq_attach(fb, &zbuffer);
 
-            gl_context_begin();
-
             render_3d();
-
-            gl_context_end();
 
             // copy the frame buffer into the z buffer
             // to be used as the background while the game
@@ -233,11 +202,7 @@ int main(void)
             if (fb) {
                 rdpq_attach(fb, current_game_mode == GAME_MODE_MENU ? NULL : &zbuffer);
 
-                gl_context_begin();
-
                 render(&zbuffer);
-
-                gl_context_end();
 
                 rdpq_detach_show();
             } 

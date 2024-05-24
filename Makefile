@@ -2,6 +2,7 @@ V=1
 SOURCE_DIR=src
 BUILD_DIR=build
 include $(N64_INST)/include/n64.mk
+include $(T3D_INST)/t3d.mk
 
 MK_ASSET=$(N64_INST)/bin/mkasset
 

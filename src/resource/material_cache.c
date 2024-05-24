@@ -80,17 +80,17 @@ void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture
         return;
     }
 
-    glGenTextures(1, &tex->gl_texture);
+    // glGenTextures(1, &tex->gl_texture);
 
-    glBindTexture(GL_TEXTURE_2D, tex->gl_texture);
+    // glBindTexture(GL_TEXTURE_2D, tex->gl_texture);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, material_filter_modes[mag_filter]);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, material_filter_modes[mag_filter]);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, material_filter_modes[min_filter]);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, material_filter_modes[min_filter]);
 
-    glSpriteTextureN64(GL_TEXTURE_2D, tex->sprite, &tex->params);
+    // glSpriteTextureN64(GL_TEXTURE_2D, tex->sprite, &tex->params);
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    // glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void material_load(struct material* into, FILE* material_file) {
@@ -114,9 +114,9 @@ void material_load(struct material* into, FILE* material_file) {
     }
 
     if (into->tex0.gl_texture) {
-        glDisable(GL_RDPQ_TEXTURING_N64);
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, into->tex0.gl_texture);
+        // glDisable(GL_RDPQ_TEXTURING_N64);
+        // glEnable(GL_TEXTURE_2D);
+        // glBindTexture(GL_TEXTURE_2D, into->tex0.gl_texture);
         rdpq_mode_mipmap(MIPMAP_NONE, 0);
         surface_t surface = sprite_get_pixels(into->tex0.sprite);
         rdpq_tex_upload(TILE0, &surface, &into->tex0.params);
@@ -127,7 +127,7 @@ void material_load(struct material* into, FILE* material_file) {
     }
 
     if (into->tex1.gl_texture) {
-        glEnable(GL_RDPQ_TEXTURING_N64);
+        // glEnable(GL_RDPQ_TEXTURING_N64);
         surface_t surface = sprite_get_pixels(into->tex1.sprite);
         rdpq_tex_upload(TILE1, &surface, &into->tex1.params);
     }
@@ -159,26 +159,26 @@ void material_load(struct material* into, FILE* material_file) {
                     // rdpq_change_other_modes_raw(SOM_ZMODE_MASK | SOM_Z_COMPARE | SOM_Z_WRITE | SOM_ALPHACOMPARE_MASK, blendMode);
                     
                     if ((SOM_Z_COMPARE & blendMode) == 0) {
-                        glDepthFunc(GL_ALWAYS);
+                        // glDepthFunc(GL_ALWAYS);
                     } else if ((SOM_ZMODE_MASK & blendMode) == SOM_ZMODE_DECAL) {
-                        glDepthFunc(GL_EQUAL);
+                        // glDepthFunc(GL_EQUAL);
                     } else {
-                        glDepthFunc(GL_LESS);
+                        // glDepthFunc(GL_LESS);
                     }
 
                     if ((blendMode & SOM_ALPHACOMPARE_MASK) == 0) {
-                        glDisable(GL_ALPHA_TEST);
-                        glAlphaFunc(GL_ALWAYS, 0.5f);
+                        // glDisable(GL_ALPHA_TEST);
+                        // glAlphaFunc(GL_ALWAYS, 0.5f);
                     } else {
-                        glEnable(GL_ALPHA_TEST);
-                        glAlphaFunc(GL_GREATER, 0.5f);
+                        // glEnable(GL_ALPHA_TEST);
+                        // glAlphaFunc(GL_GREATER, 0.5f);
                         into->sort_priority = SORT_PRIORITY_DECAL;
                     }
 
                     if (blendMode & SOM_Z_WRITE) {
-                        glDepthMask(GL_TRUE);
+                        // glDepthMask(GL_TRUE);
                     } else {
-                        glDepthMask(GL_FALSE);
+                        // glDepthMask(GL_FALSE);
                         into->sort_priority = SORT_PRIORITY_TRANSPARENT;
                     }
                 }
@@ -209,9 +209,9 @@ void material_load(struct material* into, FILE* material_file) {
                     uint8_t enabled;
                     fread(&enabled, 1, 1, material_file);
                     if (enabled) {
-                        glEnable(GL_LIGHTING);
+                        // glEnable(GL_LIGHTING);
                     } else {
-                        glDisable(GL_LIGHTING);
+                        // glDisable(GL_LIGHTING);
                     }
                 }
                 break;
@@ -220,9 +220,9 @@ void material_load(struct material* into, FILE* material_file) {
                     uint8_t enabled;
                     fread(&enabled, 1, 1, material_file);
                     if (enabled) {
-                        glEnable(GL_CULL_FACE);
+                        // glEnable(GL_CULL_FACE);
                     } else {
-                        glDisable(GL_CULL_FACE);
+                        // glDisable(GL_CULL_FACE);
                     }
                 }
                 break;
@@ -231,9 +231,9 @@ void material_load(struct material* into, FILE* material_file) {
                     uint8_t enabled;
                     fread(&enabled, 1, 1, material_file);
                     if (enabled) {
-                        glEnable(GL_DEPTH_TEST);
+                        // glEnable(GL_DEPTH_TEST);
                     } else {
-                        glDisable(GL_DEPTH_TEST);
+                        // glDisable(GL_DEPTH_TEST);
                         into->sort_priority = SORT_PRIORITY_NO_DEPTH_TEST;
                     }
                 }

@@ -50,45 +50,45 @@ void mesh_load(struct mesh* into, FILE* meshFile) {
 
         GLuint vertexBuffer;
         GLuint vertexArray;
-        glGenVertexArrays(1, &vertexArray);
-        glBindVertexArray(vertexArray);
-        glGenBuffersARB(1, &vertexBuffer);
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
+        // glGenVertexArrays(1, &vertexArray);
+        // glBindVertexArray(vertexArray);
+        // glGenBuffersARB(1, &vertexBuffer);
+        // glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
 
         int offset = 0;
         int size = mesh_attribute_size(attributes);
 
         if (attributes & MeshAttributesPosition) {
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glVertexPointer(3, GL_HALF_FIXED_N64, size, (void*)offset);
+            // glEnableClientState(GL_VERTEX_ARRAY);
+            // glVertexPointer(3, GL_HALF_FIXED_N64, size, (void*)offset);
 
             offset += sizeof(short) * 3;
         }
 
         if (attributes & MeshAttributesUV) {
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glTexCoordPointer(2, GL_HALF_FIXED_N64, size, (void*)offset);
+            // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            // glTexCoordPointer(2, GL_HALF_FIXED_N64, size, (void*)offset);
 
             offset += sizeof(short) * 2;
         }
 
         if (attributes & MeshAttributesColor) {
-            glEnableClientState(GL_COLOR_ARRAY);
-            glColorPointer(4, GL_UNSIGNED_BYTE, size, (void*)offset);
+            // glEnableClientState(GL_COLOR_ARRAY);
+            // glColorPointer(4, GL_UNSIGNED_BYTE, size, (void*)offset);
 
             offset += sizeof(struct Coloru8);
         }
 
         if (attributes & MeshAttributesNormal) {
-            glEnableClientState(GL_NORMAL_ARRAY);
-            glNormalPointer(GL_BYTE, size, (void*)offset);
+            // glEnableClientState(GL_NORMAL_ARRAY);
+            // glNormalPointer(GL_BYTE, size, (void*)offset);
 
             offset += sizeof(char) * 3;
         }
 
         if (attributes & MeshAttributesMatrixIndex) {
-            glEnableClientState(GL_MATRIX_INDEX_ARRAY_ARB);
-            glMatrixIndexPointerARB(1, GL_UNSIGNED_BYTE, size, (void*)offset);
+            // glEnableClientState(GL_MATRIX_INDEX_ARRAY_ARB);
+            // glMatrixIndexPointerARB(1, GL_UNSIGNED_BYTE, size, (void*)offset);
 
             offset += sizeof(char);
         }
@@ -96,10 +96,11 @@ void mesh_load(struct mesh* into, FILE* meshFile) {
         uint16_t vertexCount;
         fread(&vertexCount, 2, 1, meshFile);
 
-        glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertexCount * size, NULL, GL_STATIC_DRAW_ARB);
-        void* vertices = glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
+        // glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertexCount * size, NULL, GL_STATIC_DRAW_ARB);
+        // void* vertices = glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
+        char vertices[size * vertexCount];
         fread(vertices, size, vertexCount, meshFile);
-        glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
+        // glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
 
         int indexSize = vertexCount >= 256 ? 2 : 1;
 
@@ -107,30 +108,31 @@ void mesh_load(struct mesh* into, FILE* meshFile) {
         fread(&indexCount, 2, 1, meshFile);
 
         GLuint indexBuffer;
-        glGenBuffersARB(1, &indexBuffer);
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, indexBuffer);
+        // glGenBuffersARB(1, &indexBuffer);
+        // glBindBufferARB(GL_ARRAY_BUFFER_ARB, indexBuffer);
         
-        glBufferDataARB(GL_ARRAY_BUFFER_ARB, indexCount * indexSize, NULL, GL_STATIC_DRAW_ARB);
-        void* indices = glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
+        // glBufferDataARB(GL_ARRAY_BUFFER_ARB, indexCount * indexSize, NULL, GL_STATIC_DRAW_ARB);
+        // void* indices = glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
+        char indices[indexSize * indexCount];
         fread(indices, indexSize, indexCount, meshFile);
-        glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
+        // glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
 
-        glBindVertexArray(0);
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        // glBindVertexArray(0);
+        // glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
-        glNewList(into->list + i, GL_COMPILE);
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indexBuffer);
-        glBindVertexArray(vertexArray);
-        glDrawElements(GL_TRIANGLES, indexCount, indexSize == 1 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT, 0);
-        glBindVertexArray(0);
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-        glEndList();
+        // glNewList(into->list + i, GL_COMPILE);
+        // glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indexBuffer);
+        // glBindVertexArray(vertexArray);
+        // glDrawElements(GL_TRIANGLES, indexCount, indexSize == 1 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT, 0);
+        // glBindVertexArray(0);
+        // glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+        // glEndList();
 
         // TODO clenaup vertex buffers
     }
 
-    glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-    glBindVertexArray(0);
+    // glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+    // glBindVertexArray(0);
 
     fread(&header, 1, 4, meshFile);
     assert(header == ARMATURE_HEADER);

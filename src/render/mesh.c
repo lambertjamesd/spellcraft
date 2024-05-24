@@ -7,7 +7,7 @@
 #include "coloru8.h"
 
 void mesh_init(struct mesh* mesh, int submesh_count) {
-    mesh->list = glGenLists(submesh_count);
+    mesh->list = 0;//glGenLists(submesh_count);
     mesh->submesh_count = submesh_count;
 
     mesh->materials = malloc(sizeof(struct material) * submesh_count);
