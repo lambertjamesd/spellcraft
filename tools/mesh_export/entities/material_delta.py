@@ -22,6 +22,8 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
 def determine_material_delta(start: material.Material, end: material.Material) -> material.Material:
     result = material.Material()
 
+    print(start, end)
+
     if end.combine_mode and (not start.combine_mode or start.combine_mode != end.combine_mode):
         result.combine_mode = end.combine_mode
     

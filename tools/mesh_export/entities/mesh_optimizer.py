@@ -4,9 +4,10 @@ from . import material
 from . import material_delta
 
 class mesh_chunk():
-    def __init__(self, data: mesh.mesh_data, used_bones: tuple[int, int, int]):
+    def __init__(self, data: mesh.mesh_data, used_bones: tuple[int, int, int], mat: material.Material):
         self.data: mesh.mesh_data = data
         self.used_bones: tuple[int, int, int] = used_bones
+        self.material: material.Material = mat
 
 def remove_duplicates(mesh_data: mesh.mesh_data) -> mesh.mesh_data:
     first_vertex_index = {}
@@ -62,7 +63,7 @@ def remove_unused_vertices(mesh_data: mesh.mesh_data) -> mesh.mesh_data:
 
     return result
 
-def split_into_bone_pairs(mesh_data: mesh.mesh_data) -> list[mesh_chunk]:
+def split_into_bone_pairs(mesh_data: mesh.mesh_data, mat: material.Material) -> list[mesh_chunk]:
     result: dict[tuple[int, int, int], mesh.mesh_data] = {}
 
     for idx in range(0, len(mesh_data.indices), 3):
@@ -79,7 +80,7 @@ def split_into_bone_pairs(mesh_data: mesh.mesh_data) -> list[mesh_chunk]:
             new_mesh.indices = indices
             result[key] = new_mesh
 
-    return [mesh_chunk(remove_unused_vertices(data), key) for key, data in result.items()]
+    return [mesh_chunk(remove_unused_vertices(data), key, mat) for key, data in result.items()]
 
 # TODO use tiny3d time
 MATRIX_TIME = 4.134
@@ -100,7 +101,9 @@ def determine_chunk_order(chunks: list[mesh_chunk], default_material: material.M
             if idx in used_chunks:
                 continue
 
-            cost_to_switch = material_delta.determine_material_delta(current_material, chunk.data.mat)
+            diff = material_delta.determine_material_delta(current_material, chunk.material)
+
+            cost_to_switch = material_delta.determine_material_cost(diff)
 
             if current_bones != chunk.used_bones:
                 cost_to_switch += MATRIX_TIME
@@ -112,8 +115,11 @@ def determine_chunk_order(chunks: list[mesh_chunk], default_material: material.M
 
         next_chunk: mesh_chunk = chunks[next_chunk_index]
         current_bones = next_chunk.used_bones
-        current_material = next_chunk.data.mat
+        current_material = next_chunk.material
         result.append(next_chunk)
         used_chunks.add(next_chunk_index)
 
     return result
+
+def chunkify_mesh(mesh_data: mesh.mesh_data, mesh_material: material.Material, default_material: material.Material) -> list[mesh_chunk]:
+    return split_into_bone_pairs(mesh_data, mesh_material)

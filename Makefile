@@ -60,6 +60,16 @@ filesystem/meshes/%.mesh: assets/meshes/%.blend $(EXPORT_SOURCE)
 	-cp $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.anim) $(@:%.mesh=%.anim)
 
 ###
+# t3d_meshes
+###
+
+filesystem/meshes/%.tmesh: assets/meshes/%.blend $(EXPORT_SOURCE)
+	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh))
+	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/t3d_mesh.py -- $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.tmesh)
+	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.tmesh)
+
+###
 # materials
 ###
 

@@ -33,19 +33,11 @@
 
 struct world* current_world;
 
-struct spell_symbol test_spell_symbols[] = {
-    {.reserved = 0, .type = SPELL_SYMBOL_PUSH},
-    {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
-    {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
-};
-
-struct spell test_spell = {
-    .symbols = test_spell_symbols,
-    .cols = 3,
-    .rows = 1,
-};
+static T3DVertPacked __attribute__ ((aligned (16))) vertices[2];
 
 void setup() {
+    debug_init_isviewer();
+    // fprintf(stderr, "This is how to talk");
     spell_assets_init();
     menu_common_init();
     render_scene_reset();
@@ -58,17 +50,43 @@ void setup() {
     dialog_box_init();
     cutscene_runner_init();
     savefile_new();
+
+    uint16_t norm = t3d_vert_pack_normal(&(T3DVec3){{ 0, 0, 1}}); // normals are packed in a 5.6.5 format
+    vertices[0] = (T3DVertPacked){
+        .posA = {-16, -16, 0}, .rgbaA = 0xFF0000FF, .normA = norm,
+        .posB = { 16, -16, 0}, .rgbaB = 0x00FF00FF, .normB = norm,
+    };
+    vertices[1] = (T3DVertPacked){
+        .posA = { 16,  16, 0}, .rgbaA = 0x0000FFFF, .normA = norm,
+        .posB = {-16,  16, 0}, .rgbaB = 0xFF00FFFF, .normB = norm,
+    };
+
+    data_cache_hit_writeback(vertices, sizeof(vertices));
     
-    current_world = world_load("rom:/worlds/playerhome_outside.world");
+    // current_world = world_load("rom:/worlds/playerhome_outside.world");
 }
 
 float angle = 0.0f;
 
+T3DMat4FP modelMatFP;
+
+void transform_to_t3d(struct Transform* transform, T3DMat4FP* matrix) {
+    T3DMat4 tmp;
+    transformToMatrix(transform, tmp.m);
+    t3d_mat4_to_fixed(matrix, &tmp);
+}
+
 void render_3d() {
     T3DViewport viewport = t3d_viewport_create();
 
+    uint8_t colorAmbient[4] = {50, 50, 50, 0xFF};
+    uint8_t colorDir[4]     = {0xFF, 0xFF, 0xFF, 0xFF};
+
+    T3DVec3 lightDirVec = {{0.0f, 0.0f, 1.0f}};
+    t3d_vec3_norm(&lightDirVec);
+
     t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(85.0f), 10.0f, 100.0f);
-    t3d_viewport_look_at(&viewport, &(T3DVec3){{0,0,0}}, &(T3DVec3){{0,0,1}}, &(T3DVec3){{0,1,0}});
+    t3d_viewport_look_at(&viewport, &(T3DVec3){{0,0,-18}}, &(T3DVec3){{0,0,1}}, &(T3DVec3){{0,1,0}});
 
     t3d_frame_start();
     t3d_viewport_attach(&viewport);
@@ -77,6 +95,23 @@ void render_3d() {
     // this cleans the entire screen (even if out viewport is smaller)
     t3d_screen_clear_color(RGBA32(100, 0, 100, 0));
     t3d_screen_clear_depth();
+
+    t3d_light_set_ambient(colorAmbient); // one global ambient light, always active
+    t3d_light_set_directional(0, colorDir, &lightDirVec); // optional directional light, can be disabled
+    t3d_light_set_count(1);
+
+    t3d_state_set_drawflags(T3D_FLAG_SHADED | T3D_FLAG_DEPTH);
+
+    struct Transform transform;
+    transformInitIdentity(&transform);
+    transform_to_t3d(&transform, &modelMatFP);
+
+    t3d_matrix_push(&modelMatFP); // Matrix load can be recorded as they DMA the data in internally
+    t3d_vert_load(vertices, 0, 4); // load 4 vertices...
+    t3d_matrix_pop(1); // ...and pop the matrix, this can be done as soon as the vertices are loaded...
+    t3d_tri_draw(0, 1, 2); // ...then draw 2 triangles
+    t3d_tri_draw(2, 3, 0);
+    t3d_tri_sync();
 
     // struct render_viewport viewport;
 
