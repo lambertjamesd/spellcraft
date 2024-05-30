@@ -9,6 +9,7 @@ import sys
 import math
 
 from . import armature
+from . import material_extract
 
 class mesh_data():
     def __init__(self, mat: bpy.types.Material) -> None:
@@ -200,7 +201,7 @@ def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
         mesh: mesh_data = mesh_pair[1]
 
         material_filename = f"assets/{material_name}.mat.json"
-        material_object = material.load_material_with_name(material_name, mesh.mat)
+        material_object = material_extract.load_material_with_name(material_name, mesh.mat)
 
         if not material_name.startswith('materials/'):
             print(f"embedding material {material_name}")
@@ -323,7 +324,7 @@ class mesh_list():
         self.meshes.append(mesh_list_entry(obj, mesh, self.base_transform @ obj.matrix_world))
 
     def determine_mesh_data(self, armature: armature.ArmatureData | None = None):
-        mesh_by_material = dict()
+        mesh_by_material: dict[str, mesh_data] = dict()
 
         for entry in self.meshes:
             mesh = entry.mesh

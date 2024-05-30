@@ -3,7 +3,7 @@ import struct
 from . import mesh
 from . import mesh_optimizer
 from . import export_settings
-from . import material
+from . import material_extract
 
 def add_to_adjacency(adjacency: dict[int, set[int]], from_index: int, to_index: int):
     if from_index in adjacency:
@@ -176,7 +176,7 @@ class _vertex_layout():
 
         for triangle_index in batch.triangles:
             original_indices = map(lambda index: mesh.indices[index], range(triangle_index, triangle_index + 3))
-            triangles.append(map(lambda index: self.current_indices.index(index), original_indices))
+            triangles.append(list(map(lambda index: self.current_indices.index(index), original_indices)))
 
         return _batch_layout(offset, new_indicies, triangles)
             
@@ -194,8 +194,11 @@ def _determine_triangle_order(data: mesh.mesh_data) -> list[_batch_layout]:
         if prev_batch:
             current_batch = pending_data.determine_usable_vertices(prev_batch)
         
-        while len(current_batch) < MAX_BATCH_SIZE:
+        while pending_data.has_more() and len(current_batch) < MAX_BATCH_SIZE:
             vertex, new_triangles = pending_data.find_candidate(current_batch)
+
+            if vertex == -1:
+                raise Exception('Could not find a candidate for a new vertex')
 
             current_batch.add(vertex)
             triangles += new_triangles
@@ -240,12 +243,12 @@ def _pack_normal(normal):
   y_int = int(round(normal[1] * 15.5))
   z_int = int(round(normal[2] * 15.5))
   x_int = min(max(x_int, -16), 15)
-  y_int = min(max(y_int, -16, 15))
-  z_int = min(max(z_int, -16, 15))
+  y_int = min(max(y_int, -16), 15)
+  z_int = min(max(z_int, -16), 15)
 
   return ((x_int & 0b11111) << 10 | (y_int & 0b11111) <<  5 | (z_int & 0b11111) << 0).to_bytes(2, 'big')
 
-def _pack_color(color, settings: export_settings.ExportSettings):
+def _pack_color(color):
     return struct.pack(
         '>BBBB', 
         int(color[0] * 255),
@@ -262,8 +265,11 @@ def _pack_uv(uv):
         round(uv[0] * 32 * 32)
     )
 
+VERTICES_COMMAND = 0
+TRIANGLES_COMMAND = 1
+
 def _build_vertices_command(source_index: int, offset: int, vertex_count: int):
-    return struct.pack('>BBBH', 0, offset, vertex_count, source_index)
+    return struct.pack('>BBBH', VERTICES_COMMAND, offset, vertex_count, source_index)
 
 def _pack_vertices(mesh: mesh.mesh_data, a: int, b: int, settings: export_settings.ExportSettings):
     result = bytes()
@@ -293,8 +299,10 @@ def _pack_vertices(mesh: mesh.mesh_data, a: int, b: int, settings: export_settin
     else:
         result += (struct.pack('>hh', 0, 0))
 
+    return result
+
 def _build_triangles_command(indices: list[list[int]]):
-    result = struct.pack('>BB', 0, len(indices))
+    result = struct.pack('>BB', TRIANGLES_COMMAND, len(indices))
 
     for triangle in indices:
         result += struct.pack('>BBB', triangle[0], triangle[1], triangle[2])
@@ -329,7 +337,7 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], settings: export_set
     chunks = []
     
     for mesh in mesh_list:
-        mat = material.load_material_with_name(mesh[0], mesh[1].mat)
+        mat = material_extract.load_material_with_name(mesh[0], mesh[1].mat)
         chunks += mesh_optimizer.chunkify_mesh(mesh[1], mat, settings.default_material)
 
     chunks = mesh_optimizer.determine_chunk_order(chunks, settings.default_material)

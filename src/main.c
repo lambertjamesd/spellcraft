@@ -25,6 +25,7 @@
 #include "time/time.h"
 #include "objects/crate.h"
 #include "time/game_mode.h"
+#include "render/tmesh.h"
 
 #include <libdragon.h>
 #include <n64sys.h>
@@ -34,6 +35,7 @@
 struct world* current_world;
 
 static T3DVertPacked __attribute__ ((aligned (16))) vertices[2];
+struct tmesh tmesh_test;
 
 void setup() {
     debug_init_isviewer();
@@ -60,6 +62,10 @@ void setup() {
         .posA = { 16,  16, 0}, .rgbaA = 0x0000FFFF, .normA = norm,
         .posB = {-16,  16, 0}, .rgbaB = 0xFF00FFFF, .normB = norm,
     };
+
+    FILE* file = asset_fopen("rom:/meshes/cube.tmesh", NULL);
+    tmesh_load(&tmesh_test, file);
+    fclose(file);
 
     data_cache_hit_writeback(vertices, sizeof(vertices));
     
@@ -107,11 +113,16 @@ void render_3d() {
     transform_to_t3d(&transform, &modelMatFP);
 
     t3d_matrix_push(&modelMatFP); // Matrix load can be recorded as they DMA the data in internally
-    t3d_vert_load(vertices, 0, 4); // load 4 vertices...
+    // t3d_vert_load(vertices, 0, 4); // load 4 vertices...
+
+    rspq_block_run(tmesh_test.block);
+
     t3d_matrix_pop(1); // ...and pop the matrix, this can be done as soon as the vertices are loaded...
-    t3d_tri_draw(0, 1, 2); // ...then draw 2 triangles
-    t3d_tri_draw(2, 3, 0);
-    t3d_tri_sync();
+    // t3d_tri_draw(0, 1, 2); // ...then draw 2 triangles
+    // t3d_tri_draw(2, 3, 0);
+    // t3d_tri_sync();
+
+
 
     // struct render_viewport viewport;
 

@@ -10,6 +10,7 @@ sys.path.append(os.path.dirname(__file__))
 import entities.mesh
 import entities.tiny3d_mesh_writer
 import entities.export_settings
+import entities.mesh_optimizer
 
 def replace_extension(filename: str, ext: str) -> str:
     return os.path.splitext(filename)[0]+ext
@@ -67,6 +68,9 @@ def process_scene():
 
     with open(sys.argv[-1], 'wb') as file:
         meshes = mesh_list.determine_mesh_data(arm)
+
+        meshes = list(map(lambda x: (x[0], entities.mesh_optimizer.remove_duplicates(x[1])), meshes))
+
         entities.tiny3d_mesh_writer.write_mesh(meshes, settings, file)
 
 process_scene()
