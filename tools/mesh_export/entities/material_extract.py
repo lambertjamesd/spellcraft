@@ -171,6 +171,9 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
         result.blend_mode.z_write = False
 
 def load_material_with_name(material_name: str, bpy_mat: bpy.types.Material):
+    if not bpy_mat:
+        return material.Material()
+
     material_filename = f"assets/{material_name}.mat.json"
 
     if not material_name.startswith('materials/'):

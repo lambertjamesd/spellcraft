@@ -5,11 +5,10 @@ from . import mesh_optimizer
 from . import export_settings
 from . import material_extract
 
-def add_to_adjacency(adjacency: dict[int, set[int]], from_index: int, to_index: int):
-    if from_index in adjacency:
-        adjacency[from_index].add(to_index)
-    else:
-        adjacency[from_index] = {to_index}
+MAX_BATCH_SIZE = 64
+
+def triangle_vertices(data: mesh.mesh_data, triangle: int) -> list[int]:
+    return [data.indices[index_index] for index_index in range(triangle, triangle + 3)]
 
 class _mesh_pending_data():
     def __init__(self, data: mesh.mesh_data):
@@ -21,91 +20,66 @@ class _mesh_pending_data():
         for i in range(len(data.vertices)):
             self.vertex_triangle_usages.append([])
 
-        self.adjacency: dict[int, set[int]] = {}
-
         self.triangle_count = len(data.indices) // 3
 
         for triangle_index in range(0, len(data.indices), 3):
             for offset in range(3):
                 from_index = data.indices[triangle_index + offset]
-                to_index = data.indices[(triangle_index + offset + 1) % 3]
-
                 self.vertex_triangle_usages[from_index].append(triangle_index)
-
-                add_to_adjacency(self.adjacency, from_index, to_index)
-                add_to_adjacency(self.adjacency, to_index, from_index)
-
-                # add to adjacency
-
-    def is_triangle_complete(self, triangle: int, current_indices: set[int], next: int):
-        triangle_indices = map(lambda index: self.data.indices[index], range(triangle, triangle + 3))
-        return all(map(lambda index: index in current_indices or index == next, triangle_indices))
     
-    def is_triangle_nearly_complete(self, triangle: int, current_indices: set[int]):
-        triangle_indices = map(lambda index: self.data.indices[index], range(triangle, triangle + 3))
-        return any(map(lambda index: index in current_indices, triangle_indices))
+    def mark_triangle_used(self, triangle):
+        self.triangle_count -= 1
+        for vertex_index in triangle_vertices(self.data, triangle):
+            self.vertex_triangle_usages[vertex_index].remove(triangle)
 
-    def find_candidate(self, current_indices: set[int]) -> tuple[int, list[int]]:
-        if len(current_indices) == 0:
-            idx = -1
-            max_triangles = 0
+    def determine_needed_vertex_count(self, triangle: int, current_indices: set[int]) -> int:
+        result: int = 0
 
-            for i, usage in enumerate(self.vertex_triangle_usages):
-                if idx == -1 or len(usage) >  max_triangles:
-                    max_triangles = len(usage)
-                    idx = i
-
-            return idx, []
-
-        adjacent_set = set()
-        for index in current_indices:
-            adjacent_set = adjacent_set.union(self.adjacency[index])
-        
-        adjacent_set = adjacent_set.difference(current_indices)
-
-        result = -1
-        completed_triangles = []
-        incomplete_triangle_count = 0
-
-        for adjacent in adjacent_set:
-            current_completed_triangles = []
-            current_incomplete_triangle_count = 0
-
-            for triangle in self.vertex_triangle_usages[adjacent]:
-                if self.is_triangle_complete(triangle, current_indices, adjacent):
-                    current_completed_triangles.append(triangle)
-                elif self.is_triangle_nearly_complete(triangle, current_indices):
-                    current_incomplete_triangle_count += 1
-
-            if result == -1 or len(current_completed_triangles) > len(completed_triangles) or \
-                (len(current_completed_triangles) == len(completed_triangles) and current_incomplete_triangle_count > incomplete_triangle_count):
-                completed_triangles = current_completed_triangles
-                result = adjacent
-                incomplete_triangle_count = current_incomplete_triangle_count
-
-        if result == -1:
-            return -1, []
-
-        self.vertex_triangle_usages[result] = [triangle for triangle in self.vertex_triangle_usages[result] if not triangle in completed_triangles]
-
-        self.triangle_count -= len(completed_triangles)
-
-        return result, completed_triangles
-    
-    def determine_best_removal(self, current_indices: set[int], can_remove: set[int], triangles: list[int]):
-        for vertex_index in can_remove:
+        for vertex_index in triangle_vertices(self.data, triangle):
             if not vertex_index in current_indices:
-                continue
+                result += 1
 
-            if any(map(lambda triangle: any(map(lambda index: vertex_index == self.data.indices[index], range(triangle, triangle + 3))), triangles)):
-                continue
+        return result
 
-            return vertex_index
+    def find_next_triangle(self, current_indices: set[int]) -> int:
+        triangle_result = -1
+        needed_vertex_count = 0
 
-        return -1
+        for index in current_indices:
+            for triangle in self.vertex_triangle_usages[index]:
+                current_needed_vertex_count = self.determine_needed_vertex_count(triangle, current_indices)
+
+                if current_needed_vertex_count == 0:
+                    self.mark_triangle_used(triangle)
+                    return triangle
+                
+                if triangle_result == -1 or current_needed_vertex_count < needed_vertex_count:
+                    needed_vertex_count = current_needed_vertex_count
+                    triangle_result = triangle
+
+        space = MAX_BATCH_SIZE - len(current_indices)
+
+        if triangle_result == -1:
+            for triangles in self.vertex_triangle_usages:
+                for triangle in triangles:
+                    current_needed_vertex_count = self.determine_needed_vertex_count(triangle, current_indices)
+
+                    if current_needed_vertex_count <= space:
+                        self.mark_triangle_used(triangle)
+                        return triangle
+
+            return -1    
+        
+        if needed_vertex_count > space:
+            return -1
+        
+        self.mark_triangle_used(triangle_result)
+
+        return triangle_result
+
     
-    def determine_usable_vertices(self, vertices: set[int]) -> set[int]:
-        return set([x for x in vertices if len(self.vertex_triangle_usages[x] > 0)])
+    def determine_usable_vertices(self, vertices: set[int]) -> list[int]:
+        return set([x for x in vertices if len(self.vertex_triangle_usages[x]) > 0])
     
     def has_more(self):
         return self.triangle_count > 0
@@ -121,15 +95,13 @@ class _vertex_batch():
         for vertex in vertices:
             self.vertex_lifetime[vertex] = 1
 
-    def check_vertex_life(self, vertices: set[int], offset: int) -> bool:
-        for vertex in vertices:
-            if vertex in self.vertex_lifetime and self.vertex_lifetime[vertex] == offset:
-                self.vertex_lifetime[vertex] = offset + 1
+    def check_vertex_life(self, next_vertices: set[int], offset: int) -> bool:
+        for next_vertex in next_vertices:
+            if next_vertex in self.vertex_lifetime and self.vertex_lifetime[next_vertex] == offset:
+                self.vertex_lifetime[next_vertex] = offset + 1
                 self.max_vertex_lifetime = offset + 1
 
         return self.max_vertex_lifetime > offset
-    
-MAX_BATCH_SIZE = 64
 
 class _batch_layout():
     def __init__(self, offset: int, new_indices: list[int], triangles: list[list[int]]):
@@ -183,42 +155,41 @@ class _vertex_layout():
 def _determine_triangle_order(data: mesh.mesh_data) -> list[_batch_layout]:
     pending_data = _mesh_pending_data(data)
 
-    prev_batch: set[int] | None = None
+    can_remove: set[int] = set()
 
     batches: list[_vertex_batch] = []
 
     while pending_data.has_more():
-        current_batch: set[int] = set()
+        current_batch: set[int] = set(can_remove)
         triangles: list[int] = []
 
-        if prev_batch:
-            current_batch = pending_data.determine_usable_vertices(prev_batch)
-        
-        while pending_data.has_more() and len(current_batch) < MAX_BATCH_SIZE:
-            vertex, new_triangles = pending_data.find_candidate(current_batch)
+        while pending_data.has_more() and (len(current_batch) < MAX_BATCH_SIZE or len(can_remove) > 0):
+            new_triangle = pending_data.find_next_triangle(current_batch)
 
-            if vertex == -1:
-                raise Exception('Could not find a candidate for a new vertex')
+            if new_triangle == -1:
+                if len(can_remove) == 0:
+                    break
+                
+                current_batch.remove(can_remove.pop())
+                continue
+                
+            for vertex in triangle_vertices(data, new_triangle):
+                current_batch.add(vertex)
+                if vertex in can_remove:
+                    can_remove.remove(vertex)
 
-            current_batch.add(vertex)
-            triangles += new_triangles
-
-            if len(current_batch) == MAX_BATCH_SIZE:
-                best_removal = pending_data.determine_best_removal(current_batch, prev_batch, triangles)
-
-                if best_removal != -1:
-                    current_batch.remove(best_removal)
+            triangles.append(new_triangle)
 
         batches.append(_vertex_batch(current_batch, triangles))
 
-        prev_batch = set(current_batch)
+        can_remove = pending_data.determine_usable_vertices(current_batch)
 
     for i in range(0, len(batches) - 1):
         next_index = i + 1
 
         batch = batches[i]
 
-        while batch.check_vertex_life(batches[next_index].vertices, next_index - i):
+        while next_index < len(batches) and batch.check_vertex_life(batches[next_index].vertices, next_index - i):
             next_index += 1
 
     layout = _vertex_layout()

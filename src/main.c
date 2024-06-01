@@ -63,7 +63,7 @@ void setup() {
         .posB = {-16,  16, 0}, .rgbaB = 0xFF00FFFF, .normB = norm,
     };
 
-    FILE* file = asset_fopen("rom:/meshes/cube.tmesh", NULL);
+    FILE* file = asset_fopen("rom:/meshes/test.tmesh", NULL);
     tmesh_load(&tmesh_test, file);
     fclose(file);
 
@@ -92,7 +92,7 @@ void render_3d() {
     t3d_vec3_norm(&lightDirVec);
 
     t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(85.0f), 10.0f, 100.0f);
-    t3d_viewport_look_at(&viewport, &(T3DVec3){{0,0,-18}}, &(T3DVec3){{0,0,1}}, &(T3DVec3){{0,1,0}});
+    t3d_viewport_look_at(&viewport, &(T3DVec3){{0,0,-80}}, &(T3DVec3){{0,0,1}}, &(T3DVec3){{0,1,0}});
 
     t3d_frame_start();
     t3d_viewport_attach(&viewport);
@@ -191,13 +191,13 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    // for (;;) {
-    //     joypad_poll();
+    for (;;) {
+        joypad_poll();
 
-    //     if (joypad_get_buttons_pressed(0).start) {
-    //         break;
-    //     }
-    // }
+        if (joypad_get_buttons_pressed(0).start) {
+            break;
+        }
+    }
 
     setup();
 

@@ -16,6 +16,7 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     fread(&tmesh->vertex_count, sizeof(uint16_t), 1, file);
     tmesh->vertices = malloc(sizeof(T3DVertPacked) * tmesh->vertex_count);
     fread(&tmesh->vertices[0], sizeof(T3DVertPacked), tmesh->vertex_count, file);
+    data_cache_hit_writeback(&tmesh->vertices[0], sizeof(T3DVertPacked) * tmesh->vertex_count);
 
     uint16_t command_count;
     fread(&command_count, sizeof(uint16_t), 1, file);
