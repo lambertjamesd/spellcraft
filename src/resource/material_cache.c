@@ -1,6 +1,7 @@
 #include "material_cache.h"
 
 #include <libdragon.h>
+#include <t3d/t3d.h>
 #include <malloc.h>
 #include "resource_cache.h"
 #include "sprite_cache.h"
@@ -79,18 +80,6 @@ void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture
     if (!create_texture) {
         return;
     }
-
-    // glGenTextures(1, &tex->gl_texture);
-
-    // glBindTexture(GL_TEXTURE_2D, tex->gl_texture);
-
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, material_filter_modes[mag_filter]);
-
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, material_filter_modes[min_filter]);
-
-    // glSpriteTextureN64(GL_TEXTURE_2D, tex->sprite, &tex->params);
-
-    // glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void material_load(struct material* into, FILE* material_file) {
@@ -107,16 +96,13 @@ void material_load(struct material* into, FILE* material_file) {
 
     rspq_block_begin();
 
-    bool autoLayoutTMem = into->tex1.gl_texture != 0 && into->tex1.params.tmem_addr == 0;
+    bool autoLayoutTMem = into->tex1.sprite != 0 && into->tex1.params.tmem_addr == 0;
 
     if (autoLayoutTMem) {
         rdpq_tex_multi_begin();
     }
 
-    if (into->tex0.gl_texture) {
-        // glDisable(GL_RDPQ_TEXTURING_N64);
-        // glEnable(GL_TEXTURE_2D);
-        // glBindTexture(GL_TEXTURE_2D, into->tex0.gl_texture);
+    if (into->tex0.sprite) {
         rdpq_mode_mipmap(MIPMAP_NONE, 0);
         surface_t surface = sprite_get_pixels(into->tex0.sprite);
         rdpq_tex_upload(TILE0, &surface, &into->tex0.params);
@@ -126,7 +112,7 @@ void material_load(struct material* into, FILE* material_file) {
         rdpq_mode_tlut(tlut);
     }
 
-    if (into->tex1.gl_texture) {
+    if (into->tex1.sprite) {
         // glEnable(GL_RDPQ_TEXTURING_N64);
         surface_t surface = sprite_get_pixels(into->tex1.sprite);
         rdpq_tex_upload(TILE1, &surface, &into->tex1.params);
@@ -253,16 +239,6 @@ void material_load(struct material* into, FILE* material_file) {
 }
 
 void material_release(struct material* material) {
-    if (material->tex0.gl_texture) {
-        glDeleteTextures(1, &material->tex0.gl_texture);
-    }
-
-    if (material->tex0.sprite) {
-        sprite_cache_release(material->tex0.sprite);
-    }
-
-    free(material->palette.tlut);
-    material->palette.tlut = 0;
     material_free(material);
 }
 
@@ -286,6 +262,12 @@ struct material* material_cache_load(const char* filename) {
 
 void material_cache_release(struct material* material) {
     if (resource_cache_free(&material_resource_cache, material)) {
+        if (material->tex0.sprite) {
+            sprite_cache_release(material->tex0.sprite);
+        }
+        if (material->tex1.sprite) {
+            sprite_cache_release(material->tex1.sprite);
+        }
         material_release(material);
         free(material);
     }

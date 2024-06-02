@@ -11,7 +11,6 @@
 
 struct material_tex {
     sprite_t* sprite;
-    GLuint gl_texture;
     rdpq_texparms_t params;
     // rdpq_set_lookup_address
     // surface_make_placeholder_linear

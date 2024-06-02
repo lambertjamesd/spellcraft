@@ -102,3 +102,34 @@ def determine_material_cost(mat: material.Material) -> float:
         result += CHANGE_MODE
 
     return result
+
+def apply_material_delta(delta: material.Material, into: material.Material):
+    if delta.combine_mode != None:
+        into.combine_mode = delta.combine_mode
+
+    if delta.blend_mode != None:
+        into.blend_mode = delta.blend_mode
+
+    if delta.env_color != None:
+        into.env_color = delta.env_color
+
+    if delta.prim_color != None:
+        into.prim_color = delta.prim_color
+
+    if delta.blend_color != None:
+        into.blend_color = delta.blend_color
+
+    if delta.lighting != None:
+        into.lighting = delta.lighting
+
+    if delta.tex0 != None:
+        into.tex0 = delta.tex0
+
+    if delta.tex1 != None:
+        into.tex1 = delta.tex1
+
+    if delta.culling != None:
+        into.culling = delta.culling
+
+    if delta.z_buffer != None:
+        into.z_buffer = delta.z_buffer

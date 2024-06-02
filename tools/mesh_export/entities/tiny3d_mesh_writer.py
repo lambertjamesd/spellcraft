@@ -4,6 +4,9 @@ from . import mesh
 from . import mesh_optimizer
 from . import export_settings
 from . import material_extract
+from . import material_delta
+from . import material
+from . import serialize
 
 MAX_BATCH_SIZE = 64
 
@@ -238,6 +241,7 @@ def _pack_uv(uv):
 
 VERTICES_COMMAND = 0
 TRIANGLES_COMMAND = 1
+MATERIAL_COMMAND = 2
 
 def _build_vertices_command(source_index: int, offset: int, vertex_count: int):
     return struct.pack('>BBBH', VERTICES_COMMAND, offset, vertex_count, source_index)
@@ -280,6 +284,10 @@ def _build_triangles_command(indices: list[list[int]]):
 
     return result
 
+def _build_material_command(material_index: int):
+    return struct.pack('>BH', MATERIAL_COMMAND, material_index)
+
+
 def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes]):
     mesh = chunk.data
 
@@ -315,14 +323,42 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], settings: export_set
 
     commands = []
     vertices = []
+    material_transitions: list[material.Material] = []
+
+    current_material = material.Material()
+
+    if settings.default_material_name != None and settings.default_material_name.startswith('materials/'):
+        material_filename = f"assets/{settings.default_material_name}.mat.json"
+        current_material = material.parse_material(material_filename)
+
+        material_romname = f"rom:/{settings.default_material_name}.mat".encode()
+        file.write(len(material_romname).to_bytes(1, 'big'))
+        file.write(material_romname)
+    else:
+        # no material specified
+        file.write((0).to_bytes(1, 'big'))
+
+    material_delta.apply_material_delta(settings.default_material, current_material)
 
     for chunk in chunks:
+        delta = material_delta.determine_material_delta(current_material, chunk.material)
+
+        if not delta.is_empty():
+            commands.append(_build_material_command(len(material_transitions)))
+            material_transitions.append(delta)
+            material_delta.apply_material_delta(delta, current_material)
+
         _write_mesh_chunk(chunk, settings, commands, vertices)
 
     file.write(len(vertices).to_bytes(2, 'big'))
 
     for vertex in vertices:
         file.write(vertex)
+
+    file.write(len(material_transitions).to_bytes(2, 'big'))
+
+    for transition in material_transitions:
+        serialize.serialize_material_file(file, transition)
 
     file.write(len(commands).to_bytes(2, 'big'))
 

@@ -119,6 +119,11 @@ class Material():
         self.z_buffer: bool | None = None
         self.vertex_gamma: float = 0.454545
 
+    def is_empty(self):
+        return self.combine_mode == None and self.blend_color == None and self.env_color == None and self.prim_color == None and \
+            self.blend_color == None and self.lighting == None and self.tex0 == None and self.tex1 == None and self.culling == None and \
+            self.z_buffer == None
+
     def __str__(self):
         return f"""Material:
     combine_mode = {self.combine_mode}
