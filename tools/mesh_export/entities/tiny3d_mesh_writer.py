@@ -287,7 +287,6 @@ def _build_triangles_command(indices: list[list[int]]):
 def _build_material_command(material_index: int):
     return struct.pack('>BH', MATERIAL_COMMAND, material_index)
 
-
 def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes]):
     mesh = chunk.data
 

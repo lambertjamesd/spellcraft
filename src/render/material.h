@@ -35,4 +35,10 @@ struct material {
 void material_init(struct material* material);
 void material_free(struct material* material);
 
+// used to directly load a material
+// materials loaded this way must be 
+// released with material_release
+void material_load(struct material* into, FILE* material_file);
+void material_release(struct material* material);
+
 #endif

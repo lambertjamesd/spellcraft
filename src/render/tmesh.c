@@ -1,11 +1,14 @@
 #include "tmesh.h"
 
+#include "../resource/material_cache.h"
+
 // T3MS
 #define EXPECTED_HEADER 0x54334D53
 
 enum TMeshCommandType {
     TMESH_COMMAND_VERTICES,
     TMESH_COMMAND_TRIANGLES,
+    TMESH_COMMAND_MATERIAL,
 };
 
 void tmesh_load(struct tmesh* tmesh, FILE* file) {
@@ -13,11 +16,38 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     fread(&header, 1, 4, file);
     assert(header == EXPECTED_HEADER);
 
+    uint8_t material_name_length;
+    fread(&material_name_length, 1, 1, file);
+
+    char material_name[material_name_length + 1];
+    fread(&material_name[0], 1, material_name_length, file);
+    material_name[material_name_length] = '\0';
+
+    if (material_name_length) {
+        tmesh->material = material_cache_load(material_name);
+    } else {
+        tmesh->material = NULL;
+    }
+
     fread(&tmesh->vertex_count, sizeof(uint16_t), 1, file);
     tmesh->vertices = malloc(sizeof(T3DVertPacked) * tmesh->vertex_count);
     fread(&tmesh->vertices[0], sizeof(T3DVertPacked), tmesh->vertex_count, file);
     data_cache_hit_writeback(&tmesh->vertices[0], sizeof(T3DVertPacked) * tmesh->vertex_count);
 
+    uint16_t transition_count;
+    fread(&transition_count, sizeof(uint16_t), 1, file);
+    tmesh->material_transition_count = transition_count;
+
+    if (transition_count) {
+        tmesh->transition_materials = malloc(sizeof(struct material) * transition_count);
+
+        for (int i = 0; i < transition_count; i += 1) {
+            material_load(&tmesh->transition_materials[i], file);
+        }
+    } else {
+        tmesh->transition_materials = NULL;
+    }
+    
     uint16_t command_count;
     fread(&command_count, sizeof(uint16_t), 1, file);
 
@@ -53,6 +83,14 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
                 t3d_tri_sync();
                 break;
             }
+            case TMESH_COMMAND_MATERIAL:
+            {
+                uint16_t material_index;
+                fread(&material_index, sizeof(uint16_t), 1, file);
+                assert(material_index < tmesh->material_transition_count);
+                rspq_block_run(tmesh->transition_materials[material_index].block);
+                break;
+            }
             default:
                 assert(false);
         }
@@ -64,4 +102,16 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
 void tmesh_release(struct tmesh* tmesh) {
     rspq_block_free(tmesh->block);
     free(tmesh->vertices);
+
+    if (tmesh->material) {
+        material_cache_release(tmesh->material);
+    }
+
+    if (tmesh->transition_materials) {
+        for (int i = 0; i < tmesh->material_transition_count; i += 1) {
+            material_release(&tmesh->transition_materials[i]);
+        }
+
+        free(tmesh->transition_materials);
+    }
 }
