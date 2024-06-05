@@ -10,9 +10,13 @@ COMMAND_BLEND = 2
 COMMAND_ENV = 3
 COMMAND_PRIM = 4
 COMMAND_BLEND_COLOR = 5
-COMMAND_LIGHTING = 6
-COMMAND_CULLING = 7
-COMMAND_Z_BUFFER = 8
+COMMAND_FLAGS = 6
+
+T3D_FLAG_DEPTH      = 1 << 0
+T3D_FLAG_TEXTURED   = 1 << 1
+T3D_FLAG_SHADED     = 1 << 2
+T3D_FLAG_CULL_FRONT = 1 << 3
+T3D_FLAG_CULL_BACK  = 1 << 4
 
 def _serialize_color(file, color: material.Color):
     file.write(struct.pack('>BBBB', color.r, color.g, color.b, color.a))
@@ -320,17 +324,24 @@ def serialize_material_file(output, mat: material.Material):
         output.write(COMMAND_BLEND_COLOR.to_bytes(1, 'big'))
         _serialize_color(output, mat.blend_color)
 
-    if not mat.lighting is None:
-        output.write(COMMAND_LIGHTING.to_bytes(1, 'big'))
-        output.write((1 if mat.lighting else 0).to_bytes(1, 'big'))
+    flags = 0
 
-    if not mat.culling is None:
-        output.write(COMMAND_CULLING.to_bytes(1, 'big'))
-        output.write((1 if mat.culling else 0).to_bytes(1, 'big'))
+    if mat.culling == 'front':
+        flags |= T3D_FLAG_CULL_FRONT
+    elif mat.culling == True:
+        flags |= T3D_FLAG_CULL_BACK
 
-    if not mat.z_buffer is None:
-        output.write(COMMAND_Z_BUFFER.to_bytes(1, 'big'))
-        output.write((1 if mat.z_buffer else 0).to_bytes(1, 'big'))
+    if mat.z_buffer:
+        flags |= T3D_FLAG_DEPTH
+
+    if mat.tex0:
+        flags |= T3D_FLAG_TEXTURED
+
+    if mat.combine_mode and mat.combine_mode.uses_shade():
+        flags |= T3D_FLAG_SHADED
+
+    output.write(COMMAND_FLAGS.to_bytes(1, 'big'))
+    output.write(flags.to_bytes(2, 'big'))
 
     output.write(COMMAND_EOF.to_bytes(1, 'big'))
 

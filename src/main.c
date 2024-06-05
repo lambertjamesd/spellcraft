@@ -63,13 +63,13 @@ void setup() {
         .posB = {-16,  16, 0}, .rgbaB = 0xFF00FFFF, .normB = norm,
     };
 
+    data_cache_hit_writeback(&vertices[0], sizeof(vertices));
+
     FILE* file = asset_fopen("rom:/meshes/test.tmesh", NULL);
     tmesh_load(&tmesh_test, file);
     fclose(file);
 
-    data_cache_hit_writeback(vertices, sizeof(vertices));
-    
-    // current_world = world_load("rom:/worlds/playerhome_outside.world");
+    current_world = world_load("rom:/worlds/playerhome_outside.world");
 }
 
 float angle = 0.0f;
@@ -85,7 +85,7 @@ void transform_to_t3d(struct Transform* transform, T3DMat4FP* matrix) {
 void render_3d() {
     T3DViewport viewport = t3d_viewport_create();
 
-    uint8_t colorAmbient[4] = {50, 50, 50, 0xFF};
+    uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
     uint8_t colorDir[4]     = {0xFF, 0xFF, 0xFF, 0xFF};
 
     T3DVec3 lightDirVec = {{0.0f, 0.0f, 1.0f}};
@@ -97,32 +97,32 @@ void render_3d() {
     t3d_frame_start();
     t3d_viewport_attach(&viewport);
 
-    rdpq_mode_combiner(RDPQ_COMBINER_SHADE);
+    rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
     // this cleans the entire screen (even if out viewport is smaller)
     t3d_screen_clear_color(RGBA32(100, 0, 100, 0));
     t3d_screen_clear_depth();
 
     t3d_light_set_ambient(colorAmbient); // one global ambient light, always active
     t3d_light_set_directional(0, colorDir, &lightDirVec); // optional directional light, can be disabled
-    t3d_light_set_count(1);
+    t3d_light_set_count(0);
 
-    t3d_state_set_drawflags(T3D_FLAG_SHADED | T3D_FLAG_DEPTH);
+    t3d_state_set_drawflags(T3D_FLAG_DEPTH | T3D_FLAG_SHADED);
 
     struct Transform transform;
     transformInitIdentity(&transform);
     transform_to_t3d(&transform, &modelMatFP);
+    data_cache_hit_writeback(&modelMatFP, sizeof(modelMatFP));
 
     t3d_matrix_push(&modelMatFP); // Matrix load can be recorded as they DMA the data in internally
+
     // t3d_vert_load(vertices, 0, 4); // load 4 vertices...
-
-    rspq_block_run(tmesh_test.block);
-
-    t3d_matrix_pop(1); // ...and pop the matrix, this can be done as soon as the vertices are loaded...
     // t3d_tri_draw(0, 1, 2); // ...then draw 2 triangles
     // t3d_tri_draw(2, 3, 0);
     // t3d_tri_sync();
 
+    rspq_block_run(tmesh_test.block);
 
+    t3d_matrix_pop(1); // ...and pop the matrix, this can be done as soon as the vertices are loaded...
 
     // struct render_viewport viewport;
 

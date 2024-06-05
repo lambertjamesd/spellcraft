@@ -31,6 +31,10 @@ class CombineModeCycle():
 
     def __str__(self):
         return f"({self.a} {self.b} {self.c} {self.d}) ({self.aa} {self.ab} {self.ac} {self.ad})"
+    
+    def uses_shade(self):
+        return self.a == 'SHADE' or self.b == 'SHADE' or self.c == 'SHADE' or self.c == 'SHADE_ALPHA' or self.d == 'SHADE' or \
+            self.aa == 'SHADE' or self.ab == 'SHADE' or self.ac == 'SHADE' or self.ad == 'SHADE'
 
 class CombineMode():
     def __init__(self, cyc1: CombineModeCycle, cyc2: CombineModeCycle):
@@ -45,6 +49,9 @@ class CombineMode():
             return f"2 cycle {self.cyc1} {self.cyc2}"
         
         return f"1 cycle {self.cyc1}"
+    
+    def uses_shade(self) -> bool:
+        return self.cyc1.uses_shade() or (self.cyc2 and self.cyc2.uses_shade())
     
 class BlendModeCycle():
     def __init__(self, a1, b1, a2, b2):

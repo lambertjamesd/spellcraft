@@ -1,5 +1,6 @@
 #include "material.h"
 
+#include <t3d/t3d.h>
 #include "../resource/sprite_cache.h"
 
 void material_init(struct material* material) {
@@ -31,10 +32,8 @@ void material_free(struct material* material) {
 #define COMMAND_ENV         0x03
 #define COMMAND_PRIM        0x04
 #define COMMAND_BLEND_COLOR 0x05
-#define COMMAND_LIGHTING    0x06
-#define COMMAND_CULLING     0x07
-#define COMMAND_Z_BUFFER    0x08
-#define COMMAND_PALETTE     0x09
+#define COMMAND_FLAGS       0x06
+#define COMMAND_PALETTE     0x07
 
 struct text_axis {
     float translate;
@@ -206,38 +205,11 @@ void material_load(struct material* into, FILE* material_file) {
                     rdpq_set_blend_color(color);
                 }
                 break;
-            case COMMAND_LIGHTING:
+            case COMMAND_FLAGS:
                 {
-                    uint8_t enabled;
-                    fread(&enabled, 1, 1, material_file);
-                    if (enabled) {
-                        // glEnable(GL_LIGHTING);
-                    } else {
-                        // glDisable(GL_LIGHTING);
-                    }
-                }
-                break;
-            case COMMAND_CULLING:
-                {
-                    uint8_t enabled;
-                    fread(&enabled, 1, 1, material_file);
-                    if (enabled) {
-                        // glEnable(GL_CULL_FACE);
-                    } else {
-                        // glDisable(GL_CULL_FACE);
-                    }
-                }
-                break;
-            case COMMAND_Z_BUFFER:
-                {
-                    uint8_t enabled;
-                    fread(&enabled, 1, 1, material_file);
-                    if (enabled) {
-                        // glEnable(GL_DEPTH_TEST);
-                    } else {
-                        // glDisable(GL_DEPTH_TEST);
-                        into->sort_priority = SORT_PRIORITY_NO_DEPTH_TEST;
-                    }
+                    uint16_t flags;
+                    fread(&flags, 2, 1, material_file);
+                    t3d_state_set_drawflags(flags);
                 }
                 break;
             case COMMAND_PALETTE:
