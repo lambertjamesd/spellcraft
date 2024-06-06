@@ -1,8 +1,7 @@
-import bpy
 import json
 import os.path
 import numbers
-import sys
+import struct
 
 class Color():
     def __init__(self, r, g, b, a):
@@ -97,7 +96,7 @@ class TexAxis():
     
 class Tex():
     def __init__(self):
-        self.filename = None
+        self.filename: str | None = None
         self.tmem_addr = 0
         self.palette = 0
         self.min_filter = "nearest"
@@ -106,9 +105,33 @@ class Tex():
         self.t = TexAxis()
         self.sequenceLength: int = 0
 
+        self._size: tuple[int, int] | None = None
+
     def rom_filename(self) -> str:
         return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
 
+    def get_image_size(self) -> tuple[int, int]:
+        if self._size:
+            return self._size
+
+        if not self.filename:
+            return (128, 128)
+
+        if self.filename.endswith('.png'):
+            with open(self.filename, 'rb') as file:
+                file.seek(16, 0)
+                # the png specification states the header
+                # should be the first chunk so the iamge
+                # size should always be at this location
+                w, = struct.unpack('>I', file.read(4))
+                h, = struct.unpack('>I', file.read(4))
+
+                self._size = (w, h)
+
+                return self._size
+            
+        raise Exception(f"{self.filename} is not a supported file type")
+        
     def __str__(self):
         return self.filename
 
@@ -125,6 +148,12 @@ class Material():
         self.culling: bool | None = None
         self.z_buffer: bool | None = None
         self.vertex_gamma: float = 0.454545
+
+    def get_image_size(self) -> tuple[int, int]:
+        if self.tex0:
+            return self.tex0.get_image_size()
+        
+        return 128, 128
 
     def is_empty(self):
         return self.combine_mode == None and self.blend_color == None and self.env_color == None and self.prim_color == None and \

@@ -326,6 +326,9 @@ def serialize_material_file(output, mat: material.Material):
 
     flags = 0
 
+    if mat.blend_mode and mat.blend_mode.z_compare:
+        flags |= T3D_FLAG_DEPTH
+
     if mat.culling == 'front':
         flags |= T3D_FLAG_CULL_FRONT
     elif mat.culling == True:

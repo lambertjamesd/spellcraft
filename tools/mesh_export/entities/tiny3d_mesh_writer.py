@@ -231,12 +231,14 @@ def _pack_color(color):
         int(color[3] * 255)
     )
 
-def _pack_uv(uv):
+def _pack_uv(uv, materail: material.Material):
+    w, h = materail.get_image_size()
+
     return struct.pack(
         '>hh',
         # TODO multiply by the texture size
-        round(uv[0] * 32 * 32),
-        round(uv[0] * 32 * 32)
+        round(uv[0] * w * 32),
+        round(uv[1] * h * 32)
     )
 
 VERTICES_COMMAND = 0
@@ -246,7 +248,9 @@ MATERIAL_COMMAND = 2
 def _build_vertices_command(source_index: int, offset: int, vertex_count: int):
     return struct.pack('>BBBH', VERTICES_COMMAND, offset, vertex_count, source_index)
 
-def _pack_vertices(mesh: mesh.mesh_data, a: int, b: int, settings: export_settings.ExportSettings):
+def _pack_vertices(chunk: mesh_optimizer.mesh_chunk, a: int, b: int, settings: export_settings.ExportSettings):
+    mesh = chunk.data
+    
     result = bytes()
 
     result += (_pack_pos(mesh.vertices[a], settings))
@@ -267,10 +271,10 @@ def _pack_vertices(mesh: mesh.mesh_data, a: int, b: int, settings: export_settin
     else:
         result += (struct.pack('>BBBB', 0, 0, 0, 0))
 
-    result += (_pack_uv(mesh.uv[a]))
+    result += (_pack_uv(mesh.uv[a], chunk.material))
                 
     if has_second:
-        result += (_pack_uv(mesh.uv[b]))
+        result += (_pack_uv(mesh.uv[b], chunk.material))
     else:
         result += (struct.pack('>hh', 0, 0))
 
@@ -288,9 +292,7 @@ def _build_material_command(material_index: int):
     return struct.pack('>BH', MATERIAL_COMMAND, material_index)
 
 def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes]):
-    mesh = chunk.data
-
-    batch_layouts = _determine_triangle_order(mesh)
+    batch_layouts = _determine_triangle_order(chunk.data)
 
     for batch in batch_layouts:
         source_index = len(vertices)
@@ -301,7 +303,7 @@ def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_setting
 
         for i in range(0, vertex_count, 2):
             vertices.append(_pack_vertices(
-                mesh, 
+                chunk, 
                 batch.new_indices[i], batch.new_indices[i + 1] if i + 1 < len(batch.new_indices) else -1,
                 settings
             ))
