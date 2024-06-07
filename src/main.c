@@ -65,7 +65,7 @@ void setup() {
 
     data_cache_hit_writeback(&vertices[0], sizeof(vertices));
 
-    FILE* file = asset_fopen("rom:/meshes/test.tmesh", NULL);
+    FILE* file = asset_fopen("rom:/meshes/objects/pickups/heart.tmesh", NULL);
     tmesh_load(&tmesh_test, file);
     fclose(file);
 
@@ -104,7 +104,7 @@ void render_3d() {
 
     t3d_light_set_ambient(colorAmbient); // one global ambient light, always active
     t3d_light_set_directional(0, colorDir, &lightDirVec); // optional directional light, can be disabled
-    t3d_light_set_count(0);
+    t3d_light_set_count(1);
 
     t3d_state_set_drawflags(T3D_FLAG_DEPTH | T3D_FLAG_SHADED);
 

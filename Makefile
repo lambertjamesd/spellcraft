@@ -63,6 +63,8 @@ filesystem/meshes/%.mesh: assets/meshes/%.blend $(EXPORT_SOURCE)
 # t3d_meshes
 ###
 
+TMESHES := $(MESH_SOURCES:assets/meshes/%.blend=filesystem/meshes/%.tmesh)
+
 filesystem/meshes/%.tmesh: assets/meshes/%.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh))
@@ -142,9 +144,9 @@ SOURCES := $(shell find src/ -type f -name '*.c' | sort)
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
 
-filesystem/: $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat filesystem/meshes/test.tmesh
+filesystem/: $(SPRITES) $(MESHES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 
-$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(MESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat filesystem/meshes/test.tmesh
+$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(MESHES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"

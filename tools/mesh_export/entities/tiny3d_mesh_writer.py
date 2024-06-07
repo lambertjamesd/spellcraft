@@ -238,7 +238,7 @@ def _pack_uv(uv, materail: material.Material):
         '>hh',
         # TODO multiply by the texture size
         round(uv[0] * w * 32),
-        round(uv[1] * h * 32)
+        round((1 - uv[1]) * h * 32)
     )
 
 VERTICES_COMMAND = 0
