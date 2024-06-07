@@ -11,6 +11,7 @@ import entities.mesh
 import entities.tiny3d_mesh_writer
 import entities.export_settings
 import entities.mesh_optimizer
+import entities.material_extract
 
 def replace_extension(filename: str, ext: str) -> str:
     return os.path.splitext(filename)[0]+ext
@@ -71,6 +72,10 @@ def process_scene():
 
         meshes = list(map(lambda x: (x[0], entities.mesh_optimizer.remove_duplicates(x[1])), meshes))
 
+        if len(meshes) == 1 and meshes[0][0].startswith('materials/'):
+            settings.default_material_name = meshes[0][0]
+            settings.default_material = entities.material_extract.load_material_with_name(meshes[0][0], meshes[0][1].mat)
+            
         entities.tiny3d_mesh_writer.write_mesh(meshes, settings, file)
 
 process_scene()

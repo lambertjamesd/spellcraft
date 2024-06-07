@@ -120,6 +120,10 @@ void render_3d() {
     // t3d_tri_draw(2, 3, 0);
     // t3d_tri_sync();
 
+    if (tmesh_test.material) {
+        rspq_block_run(tmesh_test.material->block);
+    }
+
     rspq_block_run(tmesh_test.block);
 
     t3d_matrix_pop(1); // ...and pop the matrix, this can be done as soon as the vertices are loaded...

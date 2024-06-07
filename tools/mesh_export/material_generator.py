@@ -219,8 +219,6 @@ def generate_combine_alpha_cycle(node_cache: dict[str, bpy.types.NodeSocket], ma
     return add.outputs['Value']
 
 def generate_material(idx: int, material: bpy.types.Material, source: entities.material.Material):
-    print(source)
-
     bpy.ops.mesh.primitive_plane_add(location=((idx % row_size) * 3, (idx // row_size) * 3, 0))
 
     bpy.ops.object.material_slot_add()

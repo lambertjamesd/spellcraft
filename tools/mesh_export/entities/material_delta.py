@@ -8,21 +8,11 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
     if start.filename != end.filename:
         return end
     
-    result = material.Tex()
-
-    result.tmem_addr = end.tmem_addr
-    result.palette = end.palette
-    result.min_filter = end.min_filter
-    result.mag_filter = end.mag_filter
-    result.s = end.s
-    result.t = end.t
-    
-    return result
+    # TODO check for palette changes
+    return None
 
 def determine_material_delta(start: material.Material, end: material.Material) -> material.Material:
     result = material.Material()
-
-    print(start, end)
 
     if end.combine_mode and (not start.combine_mode or start.combine_mode != end.combine_mode):
         result.combine_mode = end.combine_mode

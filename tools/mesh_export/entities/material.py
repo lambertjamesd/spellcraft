@@ -11,7 +11,10 @@ class Color():
         self.a = a
 
     def __eq__(self, value: object) -> bool:
-        return False
+        if not value:
+            return False
+        
+        return self.r == value.r and self.g == value.g and self.b == value.b and self.a == value.a
     
     def __str__(self):
         return f"Color({self.r} {self.g} {self.b} {self.a})"
@@ -31,6 +34,13 @@ class CombineModeCycle():
     def __str__(self):
         return f"({self.a} {self.b} {self.c} {self.d}) ({self.aa} {self.ab} {self.ac} {self.ad})"
     
+    def __eq__(self, value: object) -> bool:
+        if not value or not isinstance(value, CombineModeCycle):
+            return False
+        
+        return self.a == value.a and self.b == value.b and self.c == value.c and self.d == value.d and \
+            self.aa == value.aa and self.ab == value.ab and self.ac == value.ac and self.ad == value.ad
+
     def uses_shade(self):
         return self.a == 'SHADE' or self.b == 'SHADE' or self.c == 'SHADE' or self.c == 'SHADE_ALPHA' or self.d == 'SHADE' or \
             self.aa == 'SHADE' or self.ab == 'SHADE' or self.ac == 'SHADE' or self.ad == 'SHADE'
@@ -41,7 +51,10 @@ class CombineMode():
         self.cyc2: CombineModeCycle = cyc2
 
     def __eq__(self, value: object) -> bool:
-        return False
+        if not value or not isinstance(value, CombineMode):
+            return False
+
+        return self.cyc1 == value.cyc1 and self.cyc2 == value.cyc2
 
     def __str__(self):
         if self.cyc2:
@@ -59,6 +72,12 @@ class BlendModeCycle():
         self.a2 = a2
         self.b2 = b2
 
+    def __eq__(self, value: object) -> bool:
+        if not value or not isinstance(value, BlendModeCycle):
+            return False
+        
+        return self.a1 == value.a1 and self.b1 == value.b1 and self.a2 == value.a2 and self.b2 == value.b2
+
     def needs_read(self):
         return self.a1 == 'MEMORY' or self.a2 == 'MEMORY' or self.b1 == 'MEMORY_CVG' or self.b2 == 'MEMORY_CVG'
     
@@ -75,7 +94,11 @@ class BlendMode():
         self.z_compare = True
 
     def __eq__(self, value: object) -> bool:
-        return False
+        if not value or not isinstance(value, BlendMode):
+            return False
+        
+        return self.cyc1 == value.cyc1 and self.cyc2 == value.cyc2 and self.alpha_compare == value.alpha_compare and \
+            self.z_mode == value.z_mode and self.z_write == value.z_write and self.z_compare == value.z_compare
 
     def __str__(self):
         if self.cyc2:
@@ -133,7 +156,10 @@ class Tex():
         raise Exception(f"{self.filename} is not a supported file type")
         
     def __str__(self):
-        return self.filename
+        if self.filename:
+            return self.filename
+        
+        return "NULL"
 
 class Material():
     def __init__(self):
