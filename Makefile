@@ -42,26 +42,13 @@ filesystem/%.sprite: assets/%.png
 	$(N64_MKSPRITE) -f ${shell jq -r .format ${<:%.png=%.json} || echo AUTO} --compress -o "$(dir $@)" "$<"
 
 ###
-# meshes
+# t3d_meshes
 ###
 
 EXPORT_SOURCE := $(shell find tools/mesh_export/ -type f -name '*.py' | sort)
 # BLENDER_4 := /home/james/Blender/blender-4.0.2-linux-x64/blender
 
 MESH_SOURCES := $(shell find assets/meshes -type f -name '*.blend' | sort)
-
-MESHES := $(MESH_SOURCES:assets/meshes/%.blend=filesystem/meshes/%.mesh)
-
-filesystem/meshes/%.mesh: assets/meshes/%.blend $(EXPORT_SOURCE)
-	@mkdir -p $(dir $@)
-	@mkdir -p $(dir $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh))
-	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/mesh.py -- $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
-	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.mesh)
-	-cp $(@:filesystem/meshes/%.mesh=build/assets/meshes/%.anim) $(@:%.mesh=%.anim)
-
-###
-# t3d_meshes
-###
 
 TMESHES := $(MESH_SOURCES:assets/meshes/%.blend=filesystem/meshes/%.tmesh)
 
@@ -144,9 +131,9 @@ SOURCES := $(shell find src/ -type f -name '*.c' | sort)
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
 
-filesystem/: $(SPRITES) $(MESHES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
+filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 
-$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(MESHES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
+$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"

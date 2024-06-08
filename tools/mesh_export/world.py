@@ -9,6 +9,9 @@ sys.path.append(os.path.dirname(__file__))
 
 import entities.mesh
 import entities.mesh_collider
+import entities.tiny3d_mesh_writer
+import entities.mesh_optimizer
+import entities.material_extract
 import parse.struct_parse
 import parse.struct_serialize
 
@@ -120,8 +123,6 @@ def process_scene():
 
         mesh: bpy.types.Mesh = obj.data
 
-        mesh_source = None
-
         if len(mesh.materials) > 0:
             world.static.append(StaticEntry(obj, mesh, final_transform))
 
@@ -143,13 +144,23 @@ def process_scene():
 
         file.write(len(world.static).to_bytes(2, 'big'))
 
+        settings = entities.export_settings.ExportSettings()
+
         for entry in world.static:
             # this signals the mesh should be embedded
             file.write((0).to_bytes(1, 'big'))
 
             mesh_list = entities.mesh.mesh_list(base_transform)
             mesh_list.append(entry.obj)
-            mesh_list.write_mesh(file)
+
+            meshes = mesh_list.determine_mesh_data()
+
+            meshes = list(map(lambda x: (x[0], entities.mesh_optimizer.remove_duplicates(x[1])), meshes))
+
+            settings.default_material_name = meshes[0][0]
+            settings.default_material = entities.material_extract.load_material_with_name(meshes[0][0], meshes[0][1].mat)
+
+            entities.tiny3d_mesh_writer.write_mesh(meshes, settings ,file)
 
         world.world_mesh_collider.write_out(file)
 

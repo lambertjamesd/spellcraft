@@ -119,7 +119,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
 
     entity_id id = entity_id_new();
 
-    renderable_single_axis_init(&biter->renderable, &biter->transform, "rom:/meshes/enemies/enemy1.mesh");
+    renderable_single_axis_init(&biter->renderable, &biter->transform, "rom:/meshes/enemies/enemy1.tmesh");
     dynamic_object_init(
         id, 
         &biter->dynamic_object, 

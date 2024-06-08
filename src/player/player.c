@@ -209,7 +209,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     entity_id entity_id = entity_id_new();
 
     transformInitIdentity(&player->transform);
-    renderable_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.mesh");
+    renderable_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.tmesh");
 
     player->camera_transform = camera_transform;
 

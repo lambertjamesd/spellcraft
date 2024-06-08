@@ -21,26 +21,24 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
 
     result->material = NULL;
     result->type = RENDER_BATCH_MESH;
-    result->mesh.list = 0;
+    result->mesh.block = 0;
     result->mesh.transform = NULL;
     result->mesh.armature = NULL;
 
     return result;
 }
 
-void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4* transform, struct armature* armature) {
-    for (int i = 0; i < mesh->submesh_count; ++i) {
-        struct render_batch_element* element = render_batch_add(batch);
+void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, mat4x4* transform, struct armature* armature) {
+    struct render_batch_element* element = render_batch_add(batch);
 
-        if (!element) {
-            return;
-        }
-
-        element->mesh.list = mesh->list + i;
-        element->material = mesh->materials[i];
-        element->mesh.transform = transform;
-        element->mesh.armature = armature && armature->bone_count ? armature : NULL;
+    if (!element) {
+        return;
     }
+
+    element->mesh.block = mesh->block;
+    element->material = mesh->material;
+    element->mesh.transform = transform;
+    element->mesh.armature = armature && armature->bone_count ? armature : NULL;
 }
 
 struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count) {
@@ -140,7 +138,9 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
         struct render_batch_element* element = &batch->elements[index];
 
         if (current_mat != element->material) {
-            rspq_block_run(element->material->block);
+            if (element->material->block) {
+                rspq_block_run(element->material->block);
+            }
             current_mat = element->material;
         }
 
@@ -151,18 +151,15 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
                 is_sprite_mode = false;
             }
 
-            if (!element->mesh.list) {
+            if (!element->mesh.block) {
                 continue;
             }
 
             if (element->mesh.transform) {
-                glPushMatrix();
-                glMultMatrixf((GLfloat*)element->mesh.transform);
+                t3d_matrix_push(mtx);
             }
 
             if (element->mesh.armature) {
-                glMatrixMode(GL_MATRIX_PALETTE_ARB);
-
                 mat4x4 pose[element->mesh.armature->bone_count];
 
                 for(uint32_t i=0; i<element->mesh.armature->bone_count; i++)
@@ -179,25 +176,12 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
                         matrixMul(pose[parent_index], tmp, pose[i]);
                     }
                 }
-
-                for(uint32_t i=0; i<element->mesh.armature->bone_count; i++)
-                {
-                    glCurrentPaletteMatrixARB(i);
-                    glCopyMatrixN64(GL_MODELVIEW); //Copy matrix at top of modelview stack to matrix palette
-                    glMultMatrixf((GLfloat*)&pose[i]);
-                }
-                glEnable(GL_MATRIX_PALETTE_ARB);
-                glMatrixMode(GL_MODELVIEW);
             }
 
-            glCallList(element->mesh.list);
-
-            if (element->mesh.armature) {
-                glDisable(GL_MATRIX_PALETTE_ARB);
-            }
+            rspq_block_run(element->mesh.block);
 
             if (element->mesh.transform) {
-                glPopMatrix();
+                t3d_matrix_pop(1);
             }
         } else if (element->type == RENDER_BATCH_BILLBOARD) {
             if (!is_sprite_mode) {

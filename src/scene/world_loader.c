@@ -5,6 +5,7 @@
 #include <libdragon.h>
 #include "../resource/mesh_cache.h"
 #include "../resource/mesh_collider.h"
+#include "../resource/tmesh_cache.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
 
@@ -167,20 +168,7 @@ struct world* world_load(const char* filename) {
         fread(&str_len, 1, 1, file);
 
         struct static_entity* entity = &world->static_entities[i];
-
-        entity->flags = 0;
-
-        if (str_len == 0) {
-            struct mesh* result = malloc(sizeof(struct mesh));
-            mesh_load(result, file);
-            entity->mesh = result;
-            entity->flags |= STATIC_ENTITY_FLAGS_EMBEDDED_MESH;
-        } else {
-            char mesh_filename[str_len + 1];
-            fread(mesh_filename, str_len, 1, file);
-            mesh_filename[str_len] = '\0';
-            entity->mesh = mesh_cache_load(mesh_filename);
-        }
+        tmesh_load(&world->static_entities[i].tmesh, file);
     }
 
     mesh_collider_load(&world->mesh_collider, file);
@@ -220,12 +208,7 @@ struct world* world_load(const char* filename) {
 void world_release(struct world* world) {
     for (int i = 0; i < world->static_entity_count; ++i) {
         struct static_entity* entity = &world->static_entities[i];
-        if (entity->flags & STATIC_ENTITY_FLAGS_EMBEDDED_MESH) {
-            mesh_release(entity->mesh);
-            free(entity->mesh);
-        } else {
-            mesh_cache_release(entity->mesh);
-        }
+        tmesh_release(&entity->tmesh);
     }
 
     render_scene_remove(world);

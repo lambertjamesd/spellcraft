@@ -82,8 +82,8 @@ void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_de
     ground_torch->dynamic_object.center.y = 0.8f;
     ground_torch->dynamic_object.is_fixed = 1;
 
-    ground_torch->base_mesh = mesh_cache_load("rom:/meshes/objects/torch.mesh");
-    ground_torch->flame_mesh = mesh_cache_load("rom:/meshes/objects/torch_flame.mesh");
+    ground_torch->base_mesh = mesh_cache_load("rom:/meshes/objects/torch.tmesh");
+    ground_torch->flame_mesh = mesh_cache_load("rom:/meshes/objects/torch_flame.tmesh");
 
     render_scene_add(&ground_torch->position, 1.73f, ground_torch_render, ground_torch);
     collision_scene_add(&ground_torch->dynamic_object);

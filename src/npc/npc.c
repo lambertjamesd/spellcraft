@@ -8,7 +8,7 @@
 
 struct npc_information npc_information[] = {
     [NPC_TYPE_MENTOR] = {
-        .mesh = "rom:/meshes/characters/mentor.mesh",
+        .mesh = "rom:/meshes/characters/mentor.tmesh",
         .animations = "rom:/meshes/characters/mentor.anim",
         .collider = {
             .minkowsi_sum = dynamic_object_capsule_minkowski_sum,

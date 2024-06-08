@@ -3,7 +3,8 @@
 
 #include <libdragon.h>
 
-#include "mesh.h"
+#include "tmesh.h"
+#include "armature.h"
 #include "material.h"
 #include "viewport.h"
 
@@ -35,7 +36,7 @@ struct render_batch_element {
     uint16_t type;
     union {
         struct {
-            GLuint list;
+            rspq_block_t* block;
             mat4x4* transform;
             struct armature* armature;
         } mesh;
@@ -57,7 +58,7 @@ void render_batch_init(struct render_batch* batch, struct Transform* camera_tran
 
 struct render_batch_element* render_batch_add(struct render_batch* batch);
 
-void render_batch_add_mesh(struct render_batch* batch, struct mesh* mesh, mat4x4* transform, struct armature* armature);
+void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, mat4x4* transform, struct armature* armature);
 // caller is responsible for populating sprite list
 // the sprite count returned may be less than the sprite count requested
 struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count);

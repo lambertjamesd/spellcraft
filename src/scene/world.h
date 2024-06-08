@@ -4,6 +4,7 @@
 #include "../render/mesh.h"
 #include "../render/render_batch.h"
 #include "../render/camera.h"
+#include "../render/tmesh.h"
 #include "../collision/mesh_collider.h"
 
 #include "../player/player.h"
@@ -29,13 +30,8 @@ struct entity_data {
     uint16_t entity_count;
 };
 
-enum STATIC_ENTITY_FLAGS {
-    STATIC_ENTITY_FLAGS_EMBEDDED_MESH = (1 << 0),
-};
-
 struct static_entity {
-    struct mesh* mesh;
-    uint8_t flags;
+    struct tmesh tmesh;
 };
 
 struct loading_zone {

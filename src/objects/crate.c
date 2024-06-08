@@ -26,7 +26,7 @@ void crate_init(struct crate* crate, struct crate_definition* definition) {
 
     entity_id id = entity_id_new();
 
-    renderable_single_axis_init(&crate->renderable, &crate->transform, "rom:/meshes/objects/crate.mesh");
+    renderable_single_axis_init(&crate->renderable, &crate->transform, "rom:/meshes/objects/crate.tmesh");
     dynamic_object_init(
         id, 
         &crate->dynamic_object, 

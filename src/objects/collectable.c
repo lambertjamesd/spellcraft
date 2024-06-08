@@ -32,10 +32,10 @@ struct collectable_information {
 
 static struct collectable_information collectable_information[] = {
     [COLLECTABLE_TYPE_HEALTH] = {
-        .mesh_filename = "rom:/meshes/objects/pickups/heart.mesh",
+        .mesh_filename = "rom:/meshes/objects/pickups/heart.tmesh",
     },
     [COLLECTABLE_TYPE_SPELL_RUNE] = {
-        .mesh_filename = "rom:/meshes/objects/pickups/scroll.mesh",
+        .mesh_filename = "rom:/meshes/objects/pickups/scroll.tmesh",
     },
 };
 
