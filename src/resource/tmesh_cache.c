@@ -4,7 +4,7 @@
 
 struct resource_cache tmesh_resource_cache;
 
-struct tmesh* mesh_cache_load(const char* filename) {
+struct tmesh* tmesh_cache_load(const char* filename) {
     struct resource_cache_entry* entry = resource_cache_use(&tmesh_resource_cache, filename);
 
     if (!entry->resource) {
@@ -20,7 +20,7 @@ struct tmesh* mesh_cache_load(const char* filename) {
     return entry->resource;
 }
 
-void mesh_cache_release(struct tmesh* mesh) {
+void tmesh_cache_release(struct tmesh* mesh) {
     if (resource_cache_free(&tmesh_resource_cache, mesh)) {
         tmesh_release(mesh);
         free(mesh);

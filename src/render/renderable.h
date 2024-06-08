@@ -7,7 +7,7 @@
 
 struct renderable {
     struct Transform* transform;
-    struct mesh* mesh;
+    struct tmesh* mesh;
     struct armature armature;
 };
 
@@ -16,7 +16,7 @@ void renderable_destroy(struct renderable* renderable);
 
 struct renderable_single_axis {
     struct TransformSingleAxis* transform;
-    struct mesh* mesh;
+    struct tmesh* mesh;
     struct armature armature;
 };
 

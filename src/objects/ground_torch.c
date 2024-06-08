@@ -4,7 +4,7 @@
 #include "../render/render_scene.h"
 #include "../time/time.h"
 #include "../collision/collision_scene.h"
-#include "../resource/mesh_cache.h"
+#include "../resource/tmesh_cache.h"
 #include "../time/time.h"
 #include <memory.h>
 
@@ -44,7 +44,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
 
     matrixFromPosition(*mtx, &torch->position);
 
-    render_batch_add_mesh(batch, torch->base_mesh, mtx, NULL);
+    render_batch_add_tmesh(batch, torch->base_mesh, mtx, NULL);
 
     if (!torch->is_lit) {
         return;
@@ -63,7 +63,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
 
     matrixApplyPosition(*mtx, &flame_position);
 
-    render_batch_add_mesh(batch, torch->flame_mesh, mtx, NULL);
+    render_batch_add_tmesh(batch, torch->flame_mesh, mtx, NULL);
 }
 
 void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition) {
@@ -82,8 +82,8 @@ void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_de
     ground_torch->dynamic_object.center.y = 0.8f;
     ground_torch->dynamic_object.is_fixed = 1;
 
-    ground_torch->base_mesh = mesh_cache_load("rom:/meshes/objects/torch.tmesh");
-    ground_torch->flame_mesh = mesh_cache_load("rom:/meshes/objects/torch_flame.tmesh");
+    ground_torch->base_mesh = tmesh_cache_load("rom:/meshes/objects/torch.tmesh");
+    ground_torch->flame_mesh = tmesh_cache_load("rom:/meshes/objects/torch_flame.tmesh");
 
     render_scene_add(&ground_torch->position, 1.73f, ground_torch_render, ground_torch);
     collision_scene_add(&ground_torch->dynamic_object);

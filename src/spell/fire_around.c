@@ -37,7 +37,7 @@ void fire_around_render(void* data, struct render_batch* batch) {
     matrixFromScale(*mtx, ATTACK_RADIUS);
     matrixApplyPosition(*mtx, &fire_around->position);
 
-    render_batch_add_mesh(batch, spell_assets_get()->fire_around_mesh, mtx, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->fire_around_mesh, mtx, NULL);
 }
 
 void fire_around_init(struct fire_around* fire_around, struct spell_data_source* source, struct spell_event_options event_options) {

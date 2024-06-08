@@ -174,6 +174,7 @@ def pack_vertex(vertex, uv, color, normal, bone_index, gamma = 1):
         )
 
     if normal:
+        normal = normal.normalized()
         result = result + struct.pack(
             ">bbb", 
             round(normal[0] * 127), 

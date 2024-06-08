@@ -76,6 +76,9 @@ float angle = 0.0f;
 
 T3DMat4FP modelMatFP;
 
+static struct frame_memory_pool frame_memory_pools[2];
+static uint8_t next_frame_memoy_pool;
+
 void transform_to_t3d(struct Transform* transform, T3DMat4FP* matrix) {
     T3DMat4 tmp;
     transformToMatrix(transform, tmp.m);
@@ -130,7 +133,8 @@ void render_3d() {
 
     // struct render_viewport viewport;
 
-    // render_scene_render(&current_world->camera, &viewport);
+    // render_scene_render(&current_world->camera, &viewport, &frame_memory_pools[next_frame_memoy_pool]);
+    // next_frame_memoy_pool ^= 1;
 }
 
 void render_menu() {

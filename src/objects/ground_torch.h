@@ -9,8 +9,8 @@
 
 struct ground_torch {
     struct Vector3 position;
-    struct mesh* base_mesh;
-    struct mesh* flame_mesh;
+    struct tmesh* base_mesh;
+    struct tmesh* flame_mesh;
     
     struct dynamic_object dynamic_object;
     struct health health;

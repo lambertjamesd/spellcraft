@@ -35,7 +35,7 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     transform.scale = gOneVec;
     transformToMatrix(&transform, *mtx);
 
-    render_batch_add_mesh(batch, spell_assets_get()->projectile_mesh, mtx, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->projectile_mesh, mtx, NULL);
 }
 
 void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options) {

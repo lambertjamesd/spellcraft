@@ -2,11 +2,13 @@
 #define __RENDER_RENDER_BATCH_H__
 
 #include <libdragon.h>
+#include <t3d/t3d.h>
 
 #include "tmesh.h"
 #include "armature.h"
 #include "material.h"
 #include "viewport.h"
+#include "frame_alloc.h"
 
 #include "../math/matrix.h"
 #include "../math/transform.h"
@@ -46,6 +48,7 @@ struct render_batch_element {
 
 struct render_batch {
     mat4x4 camera_matrix;
+    struct frame_memory_pool* pool;
     struct render_batch_element elements[RENDER_BATCH_MAX_SIZE];
     mat4x4 transform[RENDER_BATCH_TRANSFORM_COUNT];
     struct render_billboard_sprite sprites[MAX_BILLBOARD_SPRITES];
@@ -54,7 +57,7 @@ struct render_batch {
     short sprite_count;
 };
 
-void render_batch_init(struct render_batch* batch, struct Transform* camera_transform);
+void render_batch_init(struct render_batch* batch, struct Transform* camera_transform, struct frame_memory_pool* pool);
 
 struct render_batch_element* render_batch_add(struct render_batch* batch);
 

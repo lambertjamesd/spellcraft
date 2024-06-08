@@ -3,10 +3,11 @@
 #include "../util/sort.h"
 #include "../time/time.h"
 
-void render_batch_init(struct render_batch* batch, struct Transform* camera_transform) {
+void render_batch_init(struct render_batch* batch, struct Transform* camera_transform, struct frame_memory_pool* pool) {
     batch->element_count = 0;
     batch->transform_count = 0;
     batch->sprite_count = 0;
+    batch->pool = pool;
 
     transformToMatrix(camera_transform, batch->camera_matrix);
 }
@@ -156,7 +157,14 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
             }
 
             if (element->mesh.transform) {
-                t3d_matrix_push(mtx);
+                T3DMat4FP* mtxfp = frame_malloc(batch->pool, sizeof(T3DMat4FP));
+
+                if (!mtxfp) {
+                    continue;
+                }
+
+                t3d_mat4_to_fixed(mtxfp, (const T3DMat4*)element->mesh.transform);
+                t3d_matrix_push(mtxfp);
             }
 
             if (element->mesh.armature) {

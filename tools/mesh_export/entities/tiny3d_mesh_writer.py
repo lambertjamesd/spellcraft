@@ -235,10 +235,10 @@ def _pack_uv(uv, materail: material.Material):
     w, h = materail.get_image_size()
 
     return struct.pack(
-        '>hh',
+        '>HH',
         # TODO multiply by the texture size
-        round(uv[0] * w * 32),
-        round((1 - uv[1]) * h * 32)
+        round(uv[0] * w * 32) & 65535,
+        round((1 - uv[1]) * h * 32) & 65535
     )
 
 VERTICES_COMMAND = 0

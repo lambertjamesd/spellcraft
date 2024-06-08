@@ -33,7 +33,7 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
 
     transformToMatrix(renderable->transform, *mtx);
 
-    render_batch_add_mesh(batch, renderable->mesh, mtx, &renderable->armature);
+    render_batch_add_tmesh(batch, renderable->mesh, mtx, &renderable->armature);
 }
 
 void render_scene_render_renderable_single_axis(void* data, struct render_batch* batch) {
@@ -47,7 +47,7 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
 
     transformSAToMatrix(renderable->transform, *mtx);
 
-    render_batch_add_mesh(batch, renderable->mesh, mtx, &renderable->armature);
+    render_batch_add_tmesh(batch, renderable->mesh, mtx, &renderable->armature);
 }
 
 void render_scene_add_renderable(struct renderable* renderable, float radius) {
@@ -62,7 +62,7 @@ void render_scene_remove(void* data) {
     callback_list_remove(&r_scene_3d.callbacks, (callback_id)data);
 }
 
-void render_scene_render(struct Camera* camera, struct render_viewport* viewport) {
+void render_scene_render(struct Camera* camera, struct render_viewport* viewport, struct frame_memory_pool* pool) {
     struct render_batch batch;
 
     struct ClippingPlanes clipping_planes;
@@ -72,7 +72,7 @@ void render_scene_render(struct Camera* camera, struct render_viewport* viewport
 
     camera_apply(camera, aspect_ratio, &clipping_planes, view_proj_matrix);
 
-    render_batch_init(&batch, &camera->transform);
+    render_batch_init(&batch, &camera->transform, pool);
 
     struct callback_element* current = callback_list_get(&r_scene_3d.callbacks, 0);
 
