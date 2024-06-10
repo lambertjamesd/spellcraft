@@ -3,7 +3,7 @@
 
 #include "../math/transform.h"
 #include "../math/transform_single_axis.h"
-#include "mesh.h"
+#include "armature.h"
 
 struct renderable {
     struct Transform* transform;

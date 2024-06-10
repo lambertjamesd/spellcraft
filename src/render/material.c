@@ -128,7 +128,6 @@ void material_load(struct material* into, FILE* material_file) {
     }
 
     if (into->tex1.sprite) {
-        // glEnable(GL_RDPQ_TEXTURING_N64);
         surface_t surface = sprite_get_pixels(into->tex1.sprite);
         rdpq_tex_upload(TILE1, &surface, &into->tex1.params);
     }
@@ -158,28 +157,12 @@ void material_load(struct material* into, FILE* material_file) {
                     fread(&blendMode, sizeof(rdpq_blender_t), 1, material_file);
                     rdpq_mode_blender(blendMode);
                     // rdpq_change_other_modes_raw(SOM_ZMODE_MASK | SOM_Z_COMPARE | SOM_Z_WRITE | SOM_ALPHACOMPARE_MASK, blendMode);
-                    
-                    if ((SOM_Z_COMPARE & blendMode) == 0) {
-                        // glDepthFunc(GL_ALWAYS);
-                    } else if ((SOM_ZMODE_MASK & blendMode) == SOM_ZMODE_DECAL) {
-                        // glDepthFunc(GL_EQUAL);
-                    } else {
-                        // glDepthFunc(GL_LESS);
-                    }
 
-                    if ((blendMode & SOM_ALPHACOMPARE_MASK) == 0) {
-                        // glDisable(GL_ALPHA_TEST);
-                        // glAlphaFunc(GL_ALWAYS, 0.5f);
-                    } else {
-                        // glEnable(GL_ALPHA_TEST);
-                        // glAlphaFunc(GL_GREATER, 0.5f);
+                    if ((blendMode & SOM_ALPHACOMPARE_MASK) != 0) {
                         into->sort_priority = SORT_PRIORITY_DECAL;
                     }
 
-                    if (blendMode & SOM_Z_WRITE) {
-                        // glDepthMask(GL_TRUE);
-                    } else {
-                        // glDepthMask(GL_FALSE);
+                    if ((blendMode & SOM_Z_WRITE) != 0) {
                         into->sort_priority = SORT_PRIORITY_TRANSPARENT;
                     }
                 }

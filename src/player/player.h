@@ -3,7 +3,6 @@
 
 #include "../math/transform.h"
 #include "../math/vector2.h"
-#include "../render/mesh.h"
 #include "../render/render_batch.h"
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"

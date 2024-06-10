@@ -5,9 +5,9 @@
 #include "renderable.h"
 #include "render_batch.h"
 #include "camera.h"
-#include "viewport.h"
 #include "../util/callback_list.h"
 #include "frame_alloc.h"
+#include <t3d/t3d.h>
 
 typedef void (*render_scene_callback)(void* data, struct render_batch* batch);
 
@@ -30,6 +30,6 @@ void render_scene_add_renderable(struct renderable* renderable, float radius);
 void render_scene_add_renderable_single_axis(struct renderable_single_axis* renderable, float radius);
 void render_scene_remove(void* data);
 
-void render_scene_render(struct Camera* camera, struct render_viewport* viewport, struct frame_memory_pool* pool);
+void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool);
 
 #endif

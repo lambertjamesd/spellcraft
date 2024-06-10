@@ -3,7 +3,6 @@
 #include <malloc.h>
 #include <string.h>
 #include <libdragon.h>
-#include "../resource/mesh_cache.h"
 #include "../resource/mesh_collider.h"
 #include "../resource/tmesh_cache.h"
 #include "../render/render_scene.h"

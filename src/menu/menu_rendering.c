@@ -37,9 +37,6 @@ void menu_remove_callback(void* data) {
 }
 
 void menu_render() {
-    glEnable(GL_RDPQ_MATERIAL_N64);
-    glEnable(GL_RDPQ_TEXTURING_N64);
-
     rdpq_mode_zbuf(false, false);
     rdpq_mode_persp(false);
 

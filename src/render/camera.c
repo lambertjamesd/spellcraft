@@ -27,14 +27,12 @@ void camera_extract_clipping_plane(float viewPersp[4][4], struct Plane* output, 
 }
 
 
-void camera_apply(struct Camera* camera, float aspect_ratio, struct ClippingPlanes* clipping_planes, mat4x4 view_proj_matrix) {
-    glMatrixMode(GL_PROJECTION);
-
+void camera_apply(struct Camera* camera, T3DViewport* viewport, struct ClippingPlanes* clipping_planes, mat4x4 view_proj_matrix) {
     float tan_fov = tanf(camera->fov * (0.5f * 3.14159f / 180.0f));
+    float aspect_ratio = (float)viewport->size[0] / (float)viewport->size[1];
 
-    mat4x4 proj_matrix;
     matrixPerspective(
-        proj_matrix, 
+        viewport->matProj.m, 
         -aspect_ratio * tan_fov * camera->near,
         aspect_ratio * tan_fov * camera->near,
         tan_fov * camera->near,
@@ -43,21 +41,16 @@ void camera_apply(struct Camera* camera, float aspect_ratio, struct ClippingPlan
         camera->far
     );
 
-    glLoadMatrixf((GLfloat*)proj_matrix);
-
-    glMatrixMode(GL_MODELVIEW);
-    mat4x4 view_matrix;
-
     struct Transform inverse;
     transformInvert(&camera->transform, &inverse);
-    transformToMatrix(&inverse, view_matrix);
-    glLoadMatrixf((GLfloat*)view_matrix);
-
+    transformToMatrix(&inverse, viewport->matCamera.m);
+    viewport->_isCamProjDirty = true;
+    
     if (!view_proj_matrix) {
         return;
     }
 
-    matrixMul(proj_matrix, view_matrix, view_proj_matrix);
+    matrixMul(viewport->matProj.m, viewport->matCamera.m, view_proj_matrix);
 
     if (!clipping_planes) {
         return;

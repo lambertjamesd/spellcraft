@@ -62,15 +62,15 @@ void render_scene_remove(void* data) {
     callback_list_remove(&r_scene_3d.callbacks, (callback_id)data);
 }
 
-void render_scene_render(struct Camera* camera, struct render_viewport* viewport, struct frame_memory_pool* pool) {
+void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool) {
     struct render_batch batch;
 
     struct ClippingPlanes clipping_planes;
     mat4x4 view_proj_matrix;
 
-    float aspect_ratio = (float)viewport->w / (float)viewport->h;
+    camera_apply(camera, viewport, &clipping_planes, view_proj_matrix);
 
-    camera_apply(camera, aspect_ratio, &clipping_planes, view_proj_matrix);
+    t3d_viewport_attach(viewport);
 
     render_batch_init(&batch, &camera->transform, pool);
 
@@ -83,4 +83,6 @@ void render_scene_render(struct Camera* camera, struct render_viewport* viewport
         current = callback_list_next(&r_scene_3d.callbacks, current);
     }
     render_batch_finish(&batch, view_proj_matrix, viewport);
+
+    frame_pool_finish(pool);
 }

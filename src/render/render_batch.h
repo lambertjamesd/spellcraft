@@ -7,7 +7,6 @@
 #include "tmesh.h"
 #include "armature.h"
 #include "material.h"
-#include "viewport.h"
 #include "frame_alloc.h"
 
 #include "../math/matrix.h"
@@ -69,6 +68,6 @@ struct render_batch_billboard_element* render_batch_add_particles(struct render_
 struct render_batch_billboard_element render_batch_get_sprites(struct render_batch* batch, int count);
 mat4x4* render_batch_get_transform(struct render_batch* batch);
 
-void render_batch_finish(struct render_batch* batch, mat4x4 view_proj, struct render_viewport* viewport);
+void render_batch_finish(struct render_batch* batch, mat4x4 view_proj, T3DViewport* viewport);
 
 #endif

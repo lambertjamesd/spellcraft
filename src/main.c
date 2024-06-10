@@ -2,7 +2,6 @@
 
 #include <t3d/t3d.h>
 
-#include "resource/mesh_cache.h"
 #include "resource/material_cache.h"
 #include "resource/sprite_cache.h"
 #include "render/camera.h"
@@ -74,8 +73,6 @@ void setup() {
 
 float angle = 0.0f;
 
-T3DMat4FP modelMatFP;
-
 static struct frame_memory_pool frame_memory_pools[2];
 static uint8_t next_frame_memoy_pool;
 
@@ -91,50 +88,44 @@ void render_3d() {
     uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
     uint8_t colorDir[4]     = {0xFF, 0xFF, 0xFF, 0xFF};
 
-    T3DVec3 lightDirVec = {{0.0f, 0.0f, 1.0f}};
-    t3d_vec3_norm(&lightDirVec);
-
-    t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(85.0f), 10.0f, 100.0f);
-    t3d_viewport_look_at(&viewport, &(T3DVec3){{0,0,-80}}, &(T3DVec3){{0,0,1}}, &(T3DVec3){{0,1,0}});
-
     t3d_frame_start();
-    t3d_viewport_attach(&viewport);
 
-    rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
-    // this cleans the entire screen (even if out viewport is smaller)
     t3d_screen_clear_color(RGBA32(100, 0, 100, 0));
     t3d_screen_clear_depth();
 
     t3d_light_set_ambient(colorAmbient); // one global ambient light, always active
-    t3d_light_set_directional(0, colorDir, &lightDirVec); // optional directional light, can be disabled
-    t3d_light_set_count(1);
+    t3d_light_set_count(0);
+    
+    struct frame_memory_pool* pool = &frame_memory_pools[next_frame_memoy_pool];
+    frame_pool_reset(pool);
 
-    t3d_state_set_drawflags(T3D_FLAG_DEPTH | T3D_FLAG_SHADED);
+    struct Camera camera;
+    camera_init(&camera, 90.0f, 10.0f, 100.0f);
+    camera.transform.position.z = 80.0f;
+
+    mat4x4 view_proj_matrix;
+
+    camera_apply(&camera, &viewport, NULL, view_proj_matrix);
+
+    t3d_viewport_attach(&viewport);
+
+    struct render_batch batch;
+    render_batch_init(&batch, &camera.transform, pool);
 
     struct Transform transform;
     transformInitIdentity(&transform);
-    transform_to_t3d(&transform, &modelMatFP);
-    data_cache_hit_writeback(&modelMatFP, sizeof(modelMatFP));
+    mat4x4 mtx;
+    transformToMatrix(&transform, mtx);
+    render_batch_add_tmesh(&batch, &tmesh_test, &mtx, NULL);
 
-    t3d_matrix_push(&modelMatFP); // Matrix load can be recorded as they DMA the data in internally
+    render_batch_finish(&batch, view_proj_matrix, &viewport);
 
-    // t3d_vert_load(vertices, 0, 4); // load 4 vertices...
-    // t3d_tri_draw(0, 1, 2); // ...then draw 2 triangles
-    // t3d_tri_draw(2, 3, 0);
-    // t3d_tri_sync();
-
-    if (tmesh_test.material) {
-        rspq_block_run(tmesh_test.material->block);
-    }
-
-    rspq_block_run(tmesh_test.block);
-
-    t3d_matrix_pop(1); // ...and pop the matrix, this can be done as soon as the vertices are loaded...
-
-    // struct render_viewport viewport;
+    frame_pool_finish(pool);
 
     // render_scene_render(&current_world->camera, &viewport, &frame_memory_pools[next_frame_memoy_pool]);
-    // next_frame_memoy_pool ^= 1;
+    
+    
+    next_frame_memoy_pool ^= 1;
 }
 
 void render_menu() {

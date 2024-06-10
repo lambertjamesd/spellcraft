@@ -97,7 +97,7 @@ int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, u
     return a->type - b->type;
 }
 
-void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, struct render_viewport* viewport) {
+void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3DViewport* viewport) {
     uint16_t order[RENDER_BATCH_MAX_SIZE];
     uint16_t order_tmp[RENDER_BATCH_MAX_SIZE];
 
@@ -122,13 +122,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
 
     struct material* current_mat = 0;
 
-    glViewport(viewport->x, viewport->y, viewport->w, viewport->h);
-    glScissor(viewport->x, viewport->y, viewport->w, viewport->h);
-
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_SCISSOR_TEST);
-    glEnable(GL_RDPQ_MATERIAL_N64);
-    // glEnable(GL_RDPQ_TEXTURING_N64);
     rdpq_set_mode_standard();
     rdpq_mode_persp(true);
 
@@ -221,11 +214,11 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
 
                 rdpq_mode_zoverride(true, z, 0);
 
-                int screen_x = (int)(x * (viewport->w)) + viewport->x;
-                int screen_y = (int)(y * (viewport->h)) + viewport->y;
+                int screen_x = (int)(x * (viewport->size[0])) + viewport->offset[0];
+                int screen_y = (int)(y * (viewport->size[1])) + viewport->offset[1];
 
-                int half_screen_width = (int)(size * scale_x * viewport->w);
-                int half_screen_height = (int)(size * scale_y * viewport->h);
+                int half_screen_width = (int)(size * scale_x * viewport->size[0]);
+                int half_screen_height = (int)(size * scale_y * viewport->size[1]);
 
                 int image_w = 32;
                 int image_h = 32;
@@ -250,7 +243,4 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, st
             }
         }
     }
-
-    glDisable(GL_RDPQ_MATERIAL_N64);
-    glDisable(GL_RDPQ_TEXTURING_N64);
 }

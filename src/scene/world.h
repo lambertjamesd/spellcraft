@@ -1,7 +1,6 @@
 #ifndef __SCENE_WORLD_H__
 #define __SCENE_WORLD_H__
 
-#include "../render/mesh.h"
 #include "../render/render_batch.h"
 #include "../render/camera.h"
 #include "../render/tmesh.h"

@@ -1,7 +1,6 @@
 #include "player.h"
 
 #include <libdragon.h>
-#include "../resource/mesh_cache.h"
 #include "../resource/animation_cache.h"
 #include "../math/vector2.h"
 
