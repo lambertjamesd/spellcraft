@@ -49,11 +49,7 @@ struct render_batch {
     mat4x4 camera_matrix;
     struct frame_memory_pool* pool;
     struct render_batch_element elements[RENDER_BATCH_MAX_SIZE];
-    mat4x4 transform[RENDER_BATCH_TRANSFORM_COUNT];
-    struct render_billboard_sprite sprites[MAX_BILLBOARD_SPRITES];
     short element_count;
-    short transform_count;
-    short sprite_count;
 };
 
 void render_batch_init(struct render_batch* batch, struct Transform* camera_transform, struct frame_memory_pool* pool);

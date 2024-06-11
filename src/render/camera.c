@@ -6,6 +6,7 @@
 #include <math.h>
 
 #include "../math/matrix.h"
+#include "defs.h"
 
 void camera_init(struct Camera* camera, float fov, float near, float far) {
     transformInitIdentity(&camera->transform);
@@ -31,18 +32,21 @@ void camera_apply(struct Camera* camera, T3DViewport* viewport, struct ClippingP
     float tan_fov = tanf(camera->fov * (0.5f * 3.14159f / 180.0f));
     float aspect_ratio = (float)viewport->size[0] / (float)viewport->size[1];
 
+    float near = camera->near * SCENE_SCALE;
+
     matrixPerspective(
         viewport->matProj.m, 
-        -aspect_ratio * tan_fov * camera->near,
-        aspect_ratio * tan_fov * camera->near,
-        tan_fov * camera->near,
-        -tan_fov * camera->near,
-        camera->near,
-        camera->far
+        -aspect_ratio * tan_fov * near,
+        aspect_ratio * tan_fov * near,
+        tan_fov * near,
+        -tan_fov * near,
+        near,
+        camera->far * SCENE_SCALE
     );
 
     struct Transform inverse;
     transformInvert(&camera->transform, &inverse);
+    vector3Scale(&inverse.position, &inverse.position, SCENE_SCALE);
     transformToMatrix(&inverse, viewport->matCamera.m);
     viewport->_isCamProjDirty = true;
     

@@ -36,6 +36,14 @@ struct world* current_world;
 static T3DVertPacked __attribute__ ((aligned (16))) vertices[2];
 struct tmesh tmesh_test;
 
+void draw_test(void* data, struct render_batch* batch) {
+    struct Transform transform;
+    transformInitIdentity(&transform);
+    mat4x4* mtx = render_batch_get_transform(batch);
+    transformToMatrix(&transform, *mtx);
+    render_batch_add_tmesh(batch, &tmesh_test, mtx, NULL);
+}
+
 void setup() {
     debug_init_isviewer();
     // fprintf(stderr, "This is how to talk");
@@ -68,10 +76,12 @@ void setup() {
     tmesh_load(&tmesh_test, file);
     fclose(file);
 
+    render_scene_add(&gZeroVec, 1.0f, draw_test, NULL);
+
     current_world = world_load("rom:/worlds/playerhome_outside.world");
 }
 
-float angle = 0.0f;
+static float time = 0.0f;
 
 static struct frame_memory_pool frame_memory_pools[2];
 static uint8_t next_frame_memoy_pool;
@@ -100,30 +110,30 @@ void render_3d() {
     frame_pool_reset(pool);
 
     struct Camera camera;
-    camera_init(&camera, 90.0f, 10.0f, 100.0f);
-    camera.transform.position.z = 80.0f;
+    camera_init(&camera, 90.0f, 0.5f, 10.0f);
+    camera.transform.position.z = 2.0f;
+    camera.transform.position.x = sinf(time);
+    time += 0.1f;
 
-    mat4x4 view_proj_matrix;
+    // mat4x4 view_proj_matrix;
 
-    camera_apply(&camera, &viewport, NULL, view_proj_matrix);
+    // camera_apply(&camera, &viewport, NULL, view_proj_matrix);
 
-    t3d_viewport_attach(&viewport);
+    // t3d_viewport_attach(&viewport);
 
-    struct render_batch batch;
-    render_batch_init(&batch, &camera.transform, pool);
+    // struct render_batch batch;
+    // render_batch_init(&batch, &camera.transform, pool);
 
-    struct Transform transform;
-    transformInitIdentity(&transform);
-    mat4x4 mtx;
-    transformToMatrix(&transform, mtx);
-    render_batch_add_tmesh(&batch, &tmesh_test, &mtx, NULL);
+    // struct Transform transform;
+    // transformInitIdentity(&transform);
+    // mat4x4 mtx;
+    // transformToMatrix(&transform, mtx);
+    // render_batch_add_tmesh(&batch, &tmesh_test, &mtx, NULL);
 
-    render_batch_finish(&batch, view_proj_matrix, &viewport);
+    // render_batch_finish(&batch, view_proj_matrix, &viewport);
 
+    render_scene_render(&camera, &viewport, &frame_memory_pools[next_frame_memoy_pool]);
     frame_pool_finish(pool);
-
-    // render_scene_render(&current_world->camera, &viewport, &frame_memory_pools[next_frame_memoy_pool]);
-    
     
     next_frame_memoy_pool ^= 1;
 }
@@ -190,13 +200,13 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    // for (;;) {
-    //     joypad_poll();
+    for (;;) {
+        joypad_poll();
 
-    //     if (joypad_get_buttons_pressed(0).start) {
-    //         break;
-    //     }
-    // }
+        if (joypad_get_buttons_pressed(0).start) {
+            break;
+        }
+    }
 
     setup();
 

@@ -2,11 +2,10 @@
 
 #include "../util/sort.h"
 #include "../time/time.h"
+#include "defs.h"
 
 void render_batch_init(struct render_batch* batch, struct Transform* camera_transform, struct frame_memory_pool* pool) {
     batch->element_count = 0;
-    batch->transform_count = 0;
-    batch->sprite_count = 0;
     batch->pool = pool;
 
     transformToMatrix(camera_transform, batch->camera_matrix);
@@ -55,27 +54,14 @@ struct render_batch_billboard_element* render_batch_add_particles(struct render_
 struct render_batch_billboard_element render_batch_get_sprites(struct render_batch* batch, int count) {
     struct render_batch_billboard_element result;
 
-    result.sprites = &batch->sprites[batch->sprite_count];
-
-    if (batch->sprite_count + count > RENDER_BATCH_TRANSFORM_COUNT) {
-        result.sprite_count = RENDER_BATCH_TRANSFORM_COUNT - batch->sprite_count;
-    } else {
-        result.sprite_count = count;
-    }
-
-    batch->sprite_count += result.sprite_count;
+    result.sprites = frame_malloc(batch->pool, count * sizeof(struct render_billboard_sprite));
+    result.sprite_count = count;
 
     return result;
 }
 
 mat4x4* render_batch_get_transform(struct render_batch* batch) {
-    if (batch->transform_count >= RENDER_BATCH_TRANSFORM_COUNT) {
-        return NULL;
-    }
-
-    mat4x4* result = &batch->transform[batch->transform_count];
-    ++batch->transform_count;
-    return result;
+    return frame_malloc(batch->pool, sizeof(mat4x4));
 }
 
 int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, uint16_t b_index) {
@@ -156,8 +142,21 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                     continue;
                 }
 
+                struct Vector3 prevOffset;
+                prevOffset.x = (*element->mesh.transform)[3][0];
+                prevOffset.y = (*element->mesh.transform)[3][1];
+                prevOffset.z = (*element->mesh.transform)[3][2];
+
+                (*element->mesh.transform)[3][0] *= SCENE_SCALE;
+                (*element->mesh.transform)[3][1] *= SCENE_SCALE;
+                (*element->mesh.transform)[3][2] *= SCENE_SCALE;
+
                 t3d_mat4_to_fixed(mtxfp, (const T3DMat4*)element->mesh.transform);
                 t3d_matrix_push(mtxfp);
+
+                (*element->mesh.transform)[3][0] = prevOffset.x;
+                (*element->mesh.transform)[3][1] = prevOffset.y;
+                (*element->mesh.transform)[3][2] = prevOffset.z;
             }
 
             if (element->mesh.armature) {

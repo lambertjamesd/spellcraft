@@ -83,6 +83,4 @@ void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct fr
         current = callback_list_next(&r_scene_3d.callbacks, current);
     }
     render_batch_finish(&batch, view_proj_matrix, viewport);
-
-    frame_pool_finish(pool);
 }
