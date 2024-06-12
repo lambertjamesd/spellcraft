@@ -132,7 +132,7 @@ void render_3d() {
 
     // render_batch_finish(&batch, view_proj_matrix, &viewport);
 
-    render_scene_render(&camera, &viewport, &frame_memory_pools[next_frame_memoy_pool]);
+    render_scene_render(&current_world->camera, &viewport, &frame_memory_pools[next_frame_memoy_pool]);
     frame_pool_finish(pool);
     
     next_frame_memoy_pool ^= 1;

@@ -119,12 +119,18 @@ void material_load(struct material* into, FILE* material_file) {
 
     if (into->tex0.sprite) {
         rdpq_mode_mipmap(MIPMAP_NONE, 0);
+
+        uint16_t* pallete = sprite_get_palette(into->tex0.sprite);
+
+        if (pallete) {
+            rdpq_mode_tlut(TLUT_RGBA16);
+            rdpq_tex_upload_tlut(pallete, 0, 16);
+        } else {
+            rdpq_mode_tlut(TLUT_NONE);
+        }
+
         surface_t surface = sprite_get_pixels(into->tex0.sprite);
         rdpq_tex_upload(TILE0, &surface, &into->tex0.params);
-
-        // TODO remove this after implementing material revert
-        rdpq_tlut_t tlut = rdpq_tlut_from_format(into->tex0.sprite->format);
-        rdpq_mode_tlut(tlut);
     }
 
     if (into->tex1.sprite) {
