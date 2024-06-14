@@ -86,8 +86,26 @@ def process_linked_object(world: World, obj: bpy.types.Object, mesh: bpy.types.M
     
     world.objects.append(ObjectEntry(obj, type, definitions[def_type_name]))
 
-def write_state():
-    pass
+def write_static(world: World, base_transform: mathutils.Matrix, file):
+    settings = entities.export_settings.ExportSettings()
+    mesh_list = entities.mesh.mesh_list(base_transform)
+
+    for entry in world.static:
+        mesh_list.append(entry.obj)
+
+    meshes = mesh_list.determine_mesh_data()
+    meshes = list(map(lambda x: (x[0], entities.mesh_optimizer.remove_duplicates(x[1])), meshes))
+
+    file.write(len(meshes).to_bytes(2, 'big'))
+
+    for mesh in meshes:
+        # this signals the mesh should be embedded
+        file.write((0).to_bytes(1, 'big'))
+
+        settings.default_material_name = mesh[0]
+        settings.default_material = entities.material_extract.load_material_with_name(mesh[0], mesh[1].mat)
+
+        entities.tiny3d_mesh_writer.write_mesh([mesh], settings, file)
     
 def process_scene():
     input_filename = sys.argv[1]
@@ -145,25 +163,7 @@ def process_scene():
             parse.struct_serialize.write_vector3_position(file, location.obj)
             parse.struct_serialize.write_vector2_rotation(file, location.obj)
 
-        file.write(len(world.static).to_bytes(2, 'big'))
-
-        settings = entities.export_settings.ExportSettings()
-
-        for entry in world.static:
-            # this signals the mesh should be embedded
-            file.write((0).to_bytes(1, 'big'))
-
-            mesh_list = entities.mesh.mesh_list(base_transform)
-            mesh_list.append(entry.obj)
-
-            meshes = mesh_list.determine_mesh_data()
-
-            meshes = list(map(lambda x: (x[0], entities.mesh_optimizer.remove_duplicates(x[1])), meshes))
-
-            settings.default_material_name = meshes[0][0]
-            settings.default_material = entities.material_extract.load_material_with_name(meshes[0][0], meshes[0][1].mat)
-
-            entities.tiny3d_mesh_writer.write_mesh(meshes, settings, file)
+        write_static(world, base_transform, file)
 
         world.world_mesh_collider.write_out(file)
 
