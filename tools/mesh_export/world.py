@@ -85,6 +85,9 @@ def process_linked_object(world: World, obj: bpy.types.Object, mesh: bpy.types.M
     print(f"found object {obj.name} of type {def_type_name}")
     
     world.objects.append(ObjectEntry(obj, type, definitions[def_type_name]))
+
+def write_state():
+    pass
     
 def process_scene():
     input_filename = sys.argv[1]
@@ -160,7 +163,7 @@ def process_scene():
             settings.default_material_name = meshes[0][0]
             settings.default_material = entities.material_extract.load_material_with_name(meshes[0][0], meshes[0][1].mat)
 
-            entities.tiny3d_mesh_writer.write_mesh(meshes, settings ,file)
+            entities.tiny3d_mesh_writer.write_mesh(meshes, settings, file)
 
         world.world_mesh_collider.write_out(file)
 

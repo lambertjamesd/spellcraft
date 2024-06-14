@@ -118,24 +118,11 @@ void material_load(struct material* into, FILE* material_file) {
     }
 
     if (into->tex0.sprite) {
-        rdpq_mode_mipmap(MIPMAP_NONE, 0);
-
-        uint16_t* pallete = sprite_get_palette(into->tex0.sprite);
-
-        if (pallete) {
-            rdpq_mode_tlut(TLUT_RGBA16);
-            rdpq_tex_upload_tlut(pallete, 0, 16);
-        } else {
-            rdpq_mode_tlut(TLUT_NONE);
-        }
-
-        surface_t surface = sprite_get_pixels(into->tex0.sprite);
-        rdpq_tex_upload(TILE0, &surface, &into->tex0.params);
+        rdpq_sprite_upload(TILE0, into->tex0.sprite, &into->tex0.params);
     }
 
     if (into->tex1.sprite) {
-        surface_t surface = sprite_get_pixels(into->tex1.sprite);
-        rdpq_tex_upload(TILE1, &surface, &into->tex1.params);
+        rdpq_sprite_upload(TILE1, into->tex1.sprite, &into->tex1.params);
     }
 
     if (autoLayoutTMem) {
@@ -161,8 +148,16 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     rdpq_blender_t blendMode;
                     fread(&blendMode, sizeof(rdpq_blender_t), 1, material_file);
-                    rdpq_mode_blender(blendMode);
-                    // rdpq_change_other_modes_raw(SOM_ZMODE_MASK | SOM_Z_COMPARE | SOM_Z_WRITE | SOM_ALPHACOMPARE_MASK, blendMode);
+
+                    rdpq_mode_begin();
+                        rdpq_set_mode_standard();
+                        rdpq_mode_combiner(RDPQ_COMBINER1((TEX0,0,SHADE,0), (0,0,0,1)));
+                        rdpq_mode_mipmap(MIPMAP_NONE, 0);
+                        rdpq_mode_dithering(DITHER_SQUARE_SQUARE);
+                        rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+                        rdpq_mode_zbuf(true, true);
+                        rdpq_mode_persp(true);
+                    rdpq_mode_end();
 
                     if ((blendMode & SOM_ALPHACOMPARE_MASK) != 0) {
                         into->sort_priority = SORT_PRIORITY_DECAL;

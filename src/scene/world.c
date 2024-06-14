@@ -7,6 +7,7 @@ static char next_entrance_name[16];
 
 void world_render(void* data, struct render_batch* batch) {
     struct world* world = (struct world*)data;
+
     for (int i = 0; i < world->static_entity_count; ++i) {
         render_batch_add_tmesh(batch, &world->static_entities[i].tmesh, NULL, NULL);
     }

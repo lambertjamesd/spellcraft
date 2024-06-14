@@ -324,7 +324,6 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], settings: export_set
 
     commands = []
     vertices = []
-    material_transitions: list[material.Material] = []
 
     current_material = material.Material()
 
@@ -341,13 +340,18 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], settings: export_set
 
     material_delta.apply_material_delta(settings.default_material, current_material)
 
+    material_transitions: list[tuple[material.Material, material.Material]] = []
+
     for chunk in chunks:
         delta = material_delta.determine_material_delta(current_material, chunk.material)
 
         if not delta.is_empty():
             commands.append(_build_material_command(len(material_transitions)))
-            material_transitions.append(delta)
             material_delta.apply_material_delta(delta, current_material)
+
+            curr_copy = material.Material()
+            material_delta.apply_material_delta(current_material, curr_copy)
+            material_transitions.append((delta, curr_copy))
 
         _write_mesh_chunk(chunk, settings, commands, vertices)
 
@@ -359,7 +363,7 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], settings: export_set
     file.write(len(material_transitions).to_bytes(2, 'big'))
 
     for transition in material_transitions:
-        serialize.serialize_material_file(file, transition)
+        serialize.serialize_material_file(file, transition[0], transition[1])
 
     file.write(len(commands).to_bytes(2, 'big'))
 

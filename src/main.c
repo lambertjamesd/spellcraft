@@ -33,17 +33,6 @@
 
 struct world* current_world;
 
-static T3DVertPacked __attribute__ ((aligned (16))) vertices[2];
-struct tmesh tmesh_test;
-
-void draw_test(void* data, struct render_batch* batch) {
-    struct Transform transform;
-    transformInitIdentity(&transform);
-    mat4x4* mtx = render_batch_get_transform(batch);
-    transformToMatrix(&transform, *mtx);
-    render_batch_add_tmesh(batch, &tmesh_test, mtx, NULL);
-}
-
 void setup() {
     debug_init_isviewer();
     // fprintf(stderr, "This is how to talk");
@@ -60,25 +49,7 @@ void setup() {
     cutscene_runner_init();
     savefile_new();
 
-    uint16_t norm = t3d_vert_pack_normal(&(T3DVec3){{ 0, 0, 1}}); // normals are packed in a 5.6.5 format
-    vertices[0] = (T3DVertPacked){
-        .posA = {-16, -16, 0}, .rgbaA = 0xFF0000FF, .normA = norm,
-        .posB = { 16, -16, 0}, .rgbaB = 0x00FF00FF, .normB = norm,
-    };
-    vertices[1] = (T3DVertPacked){
-        .posA = { 16,  16, 0}, .rgbaA = 0x0000FFFF, .normA = norm,
-        .posB = {-16,  16, 0}, .rgbaB = 0xFF00FFFF, .normB = norm,
-    };
-
-    data_cache_hit_writeback(&vertices[0], sizeof(vertices));
-
-    FILE* file = asset_fopen("rom:/meshes/objects/pickups/heart.tmesh", NULL);
-    tmesh_load(&tmesh_test, file);
-    fclose(file);
-
-    render_scene_add(&gZeroVec, 1.0f, draw_test, NULL);
-
-    current_world = world_load("rom:/worlds/playerhome_outside.world");
+    current_world = world_load("rom:/worlds/desert.world");
 }
 
 static float time = 0.0f;
@@ -108,29 +79,6 @@ void render_3d() {
     
     struct frame_memory_pool* pool = &frame_memory_pools[next_frame_memoy_pool];
     frame_pool_reset(pool);
-
-    struct Camera camera;
-    camera_init(&camera, 90.0f, 0.5f, 10.0f);
-    camera.transform.position.z = 2.0f;
-    camera.transform.position.x = sinf(time);
-    time += 0.1f;
-
-    // mat4x4 view_proj_matrix;
-
-    // camera_apply(&camera, &viewport, NULL, view_proj_matrix);
-
-    // t3d_viewport_attach(&viewport);
-
-    // struct render_batch batch;
-    // render_batch_init(&batch, &camera.transform, pool);
-
-    // struct Transform transform;
-    // transformInitIdentity(&transform);
-    // mat4x4 mtx;
-    // transformToMatrix(&transform, mtx);
-    // render_batch_add_tmesh(&batch, &tmesh_test, &mtx, NULL);
-
-    // render_batch_finish(&batch, view_proj_matrix, &viewport);
 
     render_scene_render(&current_world->camera, &viewport, &frame_memory_pools[next_frame_memoy_pool]);
     frame_pool_finish(pool);

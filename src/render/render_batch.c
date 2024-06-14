@@ -110,10 +110,12 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
     rdpq_set_mode_standard();
     rdpq_mode_persp(true);
+    t3d_state_set_drawflags(T3D_FLAG_DEPTH | T3D_FLAG_SHADED | T3D_FLAG_TEXTURED);
 
     bool is_sprite_mode = false;
 
     for (int i = 0; i < batch->element_count; ++i) {
+
         int index = order[i];
         struct render_batch_element* element = &batch->elements[index];
 

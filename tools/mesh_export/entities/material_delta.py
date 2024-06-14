@@ -85,10 +85,7 @@ def determine_material_cost(mat: material.Material) -> float:
     result += determine_texture_cost(mat.tex0)
     result += determine_texture_cost(mat.tex1)
 
-    if mat.culling != None:
-        result += CHANGE_MODE
-
-    if mat.z_buffer != None:
+    if mat.culling != None or mat.z_buffer:
         result += CHANGE_MODE
 
     return result

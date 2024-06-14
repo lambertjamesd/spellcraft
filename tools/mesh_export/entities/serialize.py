@@ -288,7 +288,29 @@ def _serialize_tex(file, tex):
     else:
         file.write((0).to_bytes(1, 'big'))
 
-def serialize_material_file(output, mat: material.Material):
+def flags_for_material(mat: material.Material) -> int:
+    flags = 0
+
+    if mat.blend_mode and mat.blend_mode.z_compare:
+        flags |= T3D_FLAG_DEPTH
+
+    if mat.z_buffer:
+        flags |= T3D_FLAG_DEPTH
+
+    if mat.culling == 'front':
+        flags |= T3D_FLAG_CULL_FRONT
+    elif mat.culling == True:
+        flags |= T3D_FLAG_CULL_BACK
+
+    if mat.tex0:
+        flags |= T3D_FLAG_TEXTURED
+
+    if mat.combine_mode and mat.combine_mode.uses_shade():
+        flags |= T3D_FLAG_SHADED
+
+    return flags
+
+def serialize_material_file(output, mat: material.Material, current_state: material.Material | None = None):
     output.write('MATR'.encode())
 
     _serialize_tex(output, mat.tex0)
@@ -324,24 +346,10 @@ def serialize_material_file(output, mat: material.Material):
         output.write(COMMAND_BLEND_COLOR.to_bytes(1, 'big'))
         _serialize_color(output, mat.blend_color)
 
-    flags = 0
+    flags = flags_for_material(mat)
 
-    if mat.blend_mode and mat.blend_mode.z_compare:
-        flags |= T3D_FLAG_DEPTH
-
-    if mat.culling == 'front':
-        flags |= T3D_FLAG_CULL_FRONT
-    elif mat.culling == True:
-        flags |= T3D_FLAG_CULL_BACK
-
-    if mat.z_buffer:
-        flags |= T3D_FLAG_DEPTH
-
-    if mat.tex0:
-        flags |= T3D_FLAG_TEXTURED
-
-    if mat.combine_mode and mat.combine_mode.uses_shade():
-        flags |= T3D_FLAG_SHADED
+    if current_state:
+        flags |= flags_for_material(current_state)
 
     output.write(COMMAND_FLAGS.to_bytes(1, 'big'))
     output.write(flags.to_bytes(2, 'big'))
