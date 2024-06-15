@@ -152,8 +152,7 @@ void material_load(struct material* into, FILE* material_file) {
                     fread(&blendMode, sizeof(rdpq_blender_t), 1, material_file);
                     rdpq_mode_blender(blendMode & SOM_BLEND_MASK);                    
 
-                    // rdpq_mode_zbuf((blendMode & SOM_Z_COMPARE) != 0, (blendMode & SOM_Z_WRITE) != 0);
-                    rdpq_mode_zbuf(true, true);
+                    rdpq_mode_zbuf((blendMode & SOM_Z_COMPARE) != 0, (blendMode & SOM_Z_WRITE) != 0);
 
                     if ((blendMode & SOM_ALPHACOMPARE_MASK) != 0) {
                         into->sort_priority = SORT_PRIORITY_DECAL;
@@ -167,7 +166,7 @@ void material_load(struct material* into, FILE* material_file) {
                         rdpq_mode_alphacompare(0);
                     }
 
-                    if ((blendMode & SOM_Z_WRITE) != 0) {
+                    if ((blendMode & SOM_Z_WRITE) == 0) {
                         into->sort_priority = SORT_PRIORITY_TRANSPARENT;
                     }
                 }
