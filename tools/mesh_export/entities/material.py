@@ -593,8 +593,8 @@ def parse_material(filename: str):
 
     result.lighting = json_data['lighting'] if 'lighting' in json_data else None
 
-    result.culling = _optional_boolean(json_data, 'culling', 'culling', None)
-    result.z_buffer = _optional_boolean(json_data, 'zBuffer', 'zBuffer', None)
+    result.culling = _optional_boolean(json_data, 'culling', 'culling', True)
+    result.z_buffer = _optional_boolean(json_data, 'zBuffer', 'zBuffer', True)
 
     result.vertex_gamma = _optional_number(json_data, 'vertexGamma', 'vertexGamma', 1)
 

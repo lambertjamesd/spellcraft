@@ -33,6 +33,7 @@ void camera_apply(struct Camera* camera, T3DViewport* viewport, struct ClippingP
     float aspect_ratio = (float)viewport->size[0] / (float)viewport->size[1];
 
     float near = camera->near * SCENE_SCALE;
+    float far = camera->far * SCENE_SCALE;
 
     matrixPerspective(
         viewport->matProj.m, 
@@ -41,8 +42,9 @@ void camera_apply(struct Camera* camera, T3DViewport* viewport, struct ClippingP
         tan_fov * near,
         -tan_fov * near,
         near,
-        camera->far * SCENE_SCALE
+        far
     );
+    t3d_viewport_set_w_normalize(viewport, near, far);
 
     struct Transform inverse;
     transformInvert(&camera->transform, &inverse);

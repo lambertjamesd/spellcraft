@@ -5,8 +5,18 @@
 static char next_world_name[64];
 static char next_entrance_name[16];
 
+int only_index = 0;
+
 void world_render(void* data, struct render_batch* batch) {
     struct world* world = (struct world*)data;
+
+    if (joypad_get_buttons_pressed(0).a) {
+        only_index += 1;
+
+        if (only_index == world->static_entity_count) {
+            only_index = 0;
+        }
+    }
 
     for (int i = 0; i < world->static_entity_count; ++i) {
         render_batch_add_tmesh(batch, &world->static_entities[i].tmesh, NULL, NULL);

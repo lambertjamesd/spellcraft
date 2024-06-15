@@ -143,7 +143,7 @@ ZMODE = {
 ALPHACOMPARE = {
     "NONE": 0,
     "THRESHOLD": 1,
-    "NOISE": 2,
+    "NOISE": 3,
 }
 
 RDPQ_COMBINER_2PASS = 1 << 63

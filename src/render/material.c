@@ -129,6 +129,8 @@ void material_load(struct material* into, FILE* material_file) {
         rdpq_tex_multi_end();
     }
 
+    rdpq_mode_begin();
+
     while (has_more) {
         uint8_t nextCommand;
         fread(&nextCommand, 1, 1, material_file);
@@ -148,19 +150,21 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     rdpq_blender_t blendMode;
                     fread(&blendMode, sizeof(rdpq_blender_t), 1, material_file);
+                    rdpq_mode_blender(blendMode & SOM_BLEND_MASK);                    
 
-                    rdpq_mode_begin();
-                        rdpq_set_mode_standard();
-                        rdpq_mode_combiner(RDPQ_COMBINER1((TEX0,0,SHADE,0), (0,0,0,1)));
-                        rdpq_mode_mipmap(MIPMAP_NONE, 0);
-                        rdpq_mode_dithering(DITHER_SQUARE_SQUARE);
-                        rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
-                        rdpq_mode_zbuf(true, true);
-                        rdpq_mode_persp(true);
-                    rdpq_mode_end();
+                    // rdpq_mode_zbuf((blendMode & SOM_Z_COMPARE) != 0, (blendMode & SOM_Z_WRITE) != 0);
+                    rdpq_mode_zbuf(true, true);
 
                     if ((blendMode & SOM_ALPHACOMPARE_MASK) != 0) {
                         into->sort_priority = SORT_PRIORITY_DECAL;
+
+                        if ((blendMode & SOM_ALPHACOMPARE_MASK) == SOM_ALPHACOMPARE_THRESHOLD) {
+                            rdpq_mode_alphacompare(128);
+                        } else {
+                            rdpq_mode_alphacompare(-1);
+                        }
+                    } else {
+                        rdpq_mode_alphacompare(0);
                     }
 
                     if ((blendMode & SOM_Z_WRITE) != 0) {
@@ -206,6 +210,8 @@ void material_load(struct material* into, FILE* material_file) {
                 break;
         }
     }
+
+    rdpq_mode_end();
 
     into->block = rspq_block_end();
 }
