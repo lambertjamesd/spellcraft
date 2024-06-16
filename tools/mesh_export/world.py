@@ -105,7 +105,7 @@ def write_static(world: World, base_transform: mathutils.Matrix, file):
         settings.default_material_name = mesh[0]
         settings.default_material = entities.material_extract.load_material_with_name(mesh[0], mesh[1].mat)
 
-        entities.tiny3d_mesh_writer.write_mesh([mesh], settings, file)
+        entities.tiny3d_mesh_writer.write_mesh([mesh], None, settings, file)
     
 def process_scene():
     input_filename = sys.argv[1]

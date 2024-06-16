@@ -67,15 +67,15 @@ def process_scene():
 
     settings = entities.export_settings.ExportSettings()
 
+    meshes = mesh_list.determine_mesh_data(arm)
+
+    meshes = list(map(lambda x: (x[0], entities.mesh_optimizer.remove_duplicates(x[1])), meshes))
+
+    if len(meshes) == 1 and meshes[0][0].startswith('materials/'):
+        settings.default_material_name = meshes[0][0]
+        settings.default_material = entities.material_extract.load_material_with_name(meshes[0][0], meshes[0][1].mat)
+
     with open(sys.argv[-1], 'wb') as file:
-        meshes = mesh_list.determine_mesh_data(arm)
-
-        meshes = list(map(lambda x: (x[0], entities.mesh_optimizer.remove_duplicates(x[1])), meshes))
-
-        if len(meshes) == 1 and meshes[0][0].startswith('materials/'):
-            settings.default_material_name = meshes[0][0]
-            settings.default_material = entities.material_extract.load_material_with_name(meshes[0][0], meshes[0][1].mat)
-            
-        entities.tiny3d_mesh_writer.write_mesh(meshes, settings, file)
+        entities.tiny3d_mesh_writer.write_mesh(meshes, arm, settings, file)
 
 process_scene()

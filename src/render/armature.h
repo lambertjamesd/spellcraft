@@ -2,6 +2,7 @@
 #define __RENDER_ARMATURE_H__
 
 #include <stdint.h>
+#include <t3d/t3d.h>
 #include "../math/vector3.h"
 #include "../math/transform.h"
 #include "armature_definition.h"
@@ -23,5 +24,8 @@ void armature_definition_destroy(struct armature_definition* definition);
 
 void armature_init(struct armature* armature, struct armature_definition* definition);
 void armature_destroy(struct armature* armature);
+
+// this wont be needed once instancing is working
+void armature_def_apply(struct armature_definition* definition, T3DMat4FP* pose);
 
 #endif

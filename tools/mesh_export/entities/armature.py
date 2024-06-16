@@ -338,3 +338,25 @@ def _pack_quaternion(input: mathutils.Quaternion):
         round(32767 * final_input.y),
         round(32767 * final_input.z)
     ]
+
+def write_armature(file, arm: ArmatureData | None):
+    if arm is None:
+        file.write((0).to_bytes(2, 'big'))
+        return
+    
+    bones = arm.get_filtered_bones()
+    
+    file.write(len(bones).to_bytes(2, 'big'))
+
+    for bone in bones:
+        parent = arm.find_parent_bone(bone.name)
+
+        if parent:
+            file.write(parent.index.to_bytes(1, 'big'))
+        else:
+            file.write((255).to_bytes(1, 'big'))
+
+    default_pose = arm.generate_pose_data()
+
+    for bone_pose in default_pose:
+        bone_pose.write_to_file(file)

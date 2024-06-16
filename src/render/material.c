@@ -155,8 +155,6 @@ void material_load(struct material* into, FILE* material_file) {
                     rdpq_mode_zbuf((blendMode & SOM_Z_COMPARE) != 0, (blendMode & SOM_Z_WRITE) != 0);
 
                     if ((blendMode & SOM_ALPHACOMPARE_MASK) != 0) {
-                        into->sort_priority = SORT_PRIORITY_DECAL;
-
                         if ((blendMode & SOM_ALPHACOMPARE_MASK) == SOM_ALPHACOMPARE_THRESHOLD) {
                             rdpq_mode_alphacompare(128);
                         } else {
@@ -165,6 +163,9 @@ void material_load(struct material* into, FILE* material_file) {
                     } else {
                         rdpq_mode_alphacompare(0);
                     }
+
+                    // TODO check when the zmode is decal
+                    // into->sort_priority = SORT_PRIORITY_DECAL;
 
                     if ((blendMode & SOM_Z_WRITE) == 0) {
                         into->sort_priority = SORT_PRIORITY_TRANSPARENT;

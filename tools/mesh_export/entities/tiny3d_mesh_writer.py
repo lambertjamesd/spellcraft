@@ -7,6 +7,7 @@ from . import material_extract
 from . import material_delta
 from . import material
 from . import serialize
+from . import armature
 
 MAX_BATCH_SIZE = 64
 
@@ -241,12 +242,13 @@ def _pack_uv(uv, materail: material.Material):
         round((1 - uv[1]) * h * 32) & 65535
     )
 
-VERTICES_COMMAND = 0
-TRIANGLES_COMMAND = 1
-MATERIAL_COMMAND = 2
+TMESH_COMMAND_VERTICES = 0
+TMESH_COMMAND_TRIANGLES = 1
+TMESH_COMMAND_MATERIAL = 2
+TMESH_COMMAND_BONE = 3
 
 def _build_vertices_command(source_index: int, offset: int, vertex_count: int):
-    return struct.pack('>BBBH', VERTICES_COMMAND, offset, vertex_count, source_index)
+    return struct.pack('>BBBH', TMESH_COMMAND_VERTICES, offset, vertex_count, source_index)
 
 def _pack_vertices(chunk: mesh_optimizer.mesh_chunk, a: int, b: int, settings: export_settings.ExportSettings):
     mesh = chunk.data
@@ -281,7 +283,7 @@ def _pack_vertices(chunk: mesh_optimizer.mesh_chunk, a: int, b: int, settings: e
     return result
 
 def _build_triangles_command(indices: list[list[int]]):
-    result = struct.pack('>BB', TRIANGLES_COMMAND, len(indices))
+    result = struct.pack('>BB', TMESH_COMMAND_TRIANGLES, len(indices))
 
     for triangle in indices:
         result += struct.pack('>BBB', triangle[0], triangle[1], triangle[2])
@@ -289,7 +291,7 @@ def _build_triangles_command(indices: list[list[int]]):
     return result
 
 def _build_material_command(material_index: int):
-    return struct.pack('>BH', MATERIAL_COMMAND, material_index)
+    return struct.pack('>BH', TMESH_COMMAND_MATERIAL, material_index)
 
 def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes]):
     batch_layouts = _determine_triangle_order(chunk.data)
@@ -311,7 +313,7 @@ def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_setting
         command_list.append(_build_triangles_command(batch.traingles))
         
 
-def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], settings: export_settings.ExportSettings, file):
+def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.ArmatureData | None, settings: export_settings.ExportSettings, file):
     file.write('T3MS'.encode())
 
     chunks = []
@@ -364,6 +366,8 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], settings: export_set
 
     for transition in material_transitions:
         serialize.serialize_material_file(file, transition[0], transition[1])
+
+    armature.write_armature(file, arm)
 
     file.write(len(commands).to_bytes(2, 'big'))
 

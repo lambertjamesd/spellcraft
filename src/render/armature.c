@@ -67,3 +67,27 @@ void armature_destroy(struct armature* armature) {
     armature->pose = 0;
     armature->parent_linkage = 0;
 }
+
+void armature_def_apply(struct armature_definition* definition, T3DMat4FP* pose) {
+    if (!definition->bone_count) {
+        return;
+    }
+
+    struct Transform fullTransforms[definition->bone_count];
+
+    for (int i = 0; i < definition->bone_count; i += 1) {
+        int parent = definition->parent_linkage[i];
+
+        if (parent == -1) {
+            armature_unpack_transform(&definition->default_pose[i], &fullTransforms[i]);
+        } else {
+            struct Transform unpacked;
+            armature_unpack_transform(&definition->default_pose[i], &unpacked);
+            transformConcat(&fullTransforms[parent], &unpacked, &fullTransforms[i]);
+        }
+
+        T3DMat4 mtx;
+        transformToMatrix(&fullTransforms[i], mtx.m);
+        t3d_mat4_to_fixed(&pose[i], &mtx);
+    }
+}

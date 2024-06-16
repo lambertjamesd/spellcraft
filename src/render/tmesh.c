@@ -9,12 +9,16 @@ enum TMeshCommandType {
     TMESH_COMMAND_VERTICES,
     TMESH_COMMAND_TRIANGLES,
     TMESH_COMMAND_MATERIAL,
+    TMESH_COMMAND_BONE,
 };
 
 void tmesh_load(struct tmesh* tmesh, FILE* file) {
     int header;
+
     fread(&header, 1, 4, file);
     assert(header == EXPECTED_HEADER);
+
+    // load material
 
     uint8_t material_name_length;
     fread(&material_name_length, 1, 1, file);
@@ -29,10 +33,14 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
         tmesh->material = NULL;
     }
 
+    // load vertices
+
     fread(&tmesh->vertex_count, sizeof(uint16_t), 1, file);
     tmesh->vertices = malloc(sizeof(T3DVertPacked) * tmesh->vertex_count);
     fread(&tmesh->vertices[0], sizeof(T3DVertPacked), tmesh->vertex_count, file);
     data_cache_hit_writeback(&tmesh->vertices[0], sizeof(T3DVertPacked) * tmesh->vertex_count);
+
+    // load material transitions
 
     uint16_t transition_count;
     fread(&transition_count, sizeof(uint16_t), 1, file);
@@ -47,9 +55,29 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     } else {
         tmesh->transition_materials = NULL;
     }
+
+    // load armature
+
+    uint16_t bone_count;
+    fread(&bone_count, 2, 1, file);
+
+    armature_definition_init(&tmesh->armature, bone_count);
+    fread(tmesh->armature.parent_linkage, 1, bone_count, file);
+    fread(tmesh->armature.default_pose, sizeof(struct armature_packed_transform), bone_count, file);
+
+    if (bone_count) {
+        tmesh->armature_pose = malloc(sizeof(T3DMat4FP) * bone_count);
+        armature_def_apply(&tmesh->armature, tmesh->armature_pose);
+    } else {
+        tmesh->armature_pose = NULL;
+    }
+
+    // load mesh draw commands
     
     uint16_t command_count;
     fread(&command_count, sizeof(uint16_t), 1, file);
+
+    bool has_bone = false;
 
     rspq_block_begin();
 
@@ -91,9 +119,23 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
                 rspq_block_run(tmesh->transition_materials[material_index].block);
                 break;
             }
+            case TMESH_COMMAND_BONE:
+            {
+                uint16_t bone_index;
+                fread(&bone_index, sizeof(uint16_t), 1, file);
+                if (has_bone) {
+                    t3d_matrix_set(&tmesh->armature_pose[bone_index], true);
+                } else {
+                    t3d_matrix_push(&tmesh->armature_pose[bone_index]);
+                }
+            }
             default:
                 assert(false);
         }
+    }
+
+    if (has_bone) {
+        t3d_matrix_pop(1);
     }
 
     tmesh->block = rspq_block_end();

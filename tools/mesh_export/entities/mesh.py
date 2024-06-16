@@ -280,30 +280,6 @@ def _write_packed_quaternion(file, input: mathutils.Quaternion):
         round(32767 * final_input.z)
     ))
 
-def _write_armature(file, arm: armature.ArmatureData | None):
-    file.write('ARMT'.encode())
-    
-    if arm is None:
-        file.write((0).to_bytes(2, 'big'))
-        return
-    
-    bones = arm.get_filtered_bones()
-    
-    file.write(len(bones).to_bytes(2, 'big'))
-
-    for bone in bones:
-        parent = arm.find_parent_bone(bone.name)
-
-        if parent:
-            file.write(parent.index.to_bytes(1, 'big'))
-        else:
-            file.write((255).to_bytes(1, 'big'))
-
-    default_pose = arm.generate_pose_data()
-
-    for bone_pose in default_pose:
-        bone_pose.write_to_file(file)
-
 class mesh_list_entry:
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
         self.obj: bpy.types.Object= obj
@@ -356,4 +332,4 @@ class mesh_list():
     def write_mesh(self, write_to, armature: armature.ArmatureData | None = None):
         all_meshes = self.determine_mesh_data(armature)
         _write_meshes(write_to, all_meshes, armature)
-        _write_armature(write_to, armature)
+        armature.write_armature(write_to, armature)
