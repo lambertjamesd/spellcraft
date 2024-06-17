@@ -41,7 +41,7 @@ class mesh_data():
         normal_transform = final_transform.to_3x3()
         normal_transform.invert()
         normal_transform.transpose()
-        bone_index = 0
+        bone_index = -1
 
         if obj.parent_bone and armature:
             bone = armature.find_bone_data(obj.parent_bone)
@@ -183,7 +183,10 @@ def pack_vertex(vertex, uv, color, normal, bone_index, gamma = 1):
         )
 
     if bone_index != None:
-        result = result + bone_index.to_bytes(1, 'big')
+        result = result + struct.pack(
+            ">h", 
+            bone_index
+        )
 
     return result
 

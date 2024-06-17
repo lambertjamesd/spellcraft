@@ -123,11 +123,18 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
             {
                 uint16_t bone_index;
                 fread(&bone_index, sizeof(uint16_t), 1, file);
-                if (has_bone) {
+                if (bone_index == 0xFFFF) {
+                    if (has_bone) {
+                        t3d_matrix_pop(1);
+                        has_bone = false;
+                    }
+                } else if (has_bone) {
                     t3d_matrix_set(&tmesh->armature_pose[bone_index], true);
                 } else {
                     t3d_matrix_push(&tmesh->armature_pose[bone_index]);
+                    has_bone = true;
                 }
+                break;
             }
             default:
                 assert(false);

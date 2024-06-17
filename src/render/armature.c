@@ -90,4 +90,6 @@ void armature_def_apply(struct armature_definition* definition, T3DMat4FP* pose)
         transformToMatrix(&fullTransforms[i], mtx.m);
         t3d_mat4_to_fixed(&pose[i], &mtx);
     }
+
+    data_cache_hit_writeback_invalidate(pose, sizeof(T3DMat4FP) * definition->bone_count);
 }
