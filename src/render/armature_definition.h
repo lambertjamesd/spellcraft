@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define ARM_NO_PARENT_LINK  0xff
+
 struct armature_packed_transform {
     int16_t x, y, z;
     int16_t rx, ry, rz; // w is derived from the other values

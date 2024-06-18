@@ -40,6 +40,7 @@ struct render_batch_element {
             rspq_block_t* block;
             mat4x4* transform;
             struct armature* armature;
+            T3DMat4FP* tmp_fixed_pose;
         } mesh;
         struct render_batch_billboard_element billboard;
     };

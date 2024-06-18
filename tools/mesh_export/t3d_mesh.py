@@ -12,6 +12,7 @@ import entities.tiny3d_mesh_writer
 import entities.export_settings
 import entities.mesh_optimizer
 import entities.material_extract
+import entities.animation
 
 def replace_extension(filename: str, ext: str) -> str:
     return os.path.splitext(filename)[0]+ext
@@ -78,4 +79,6 @@ def process_scene():
     with open(sys.argv[-1], 'wb') as file:
         entities.tiny3d_mesh_writer.write_mesh(meshes, arm, settings, file)
 
+    entities.animation.export_animations(replace_extension(sys.argv[-1], '.anim'), arm, settings)
+    
 process_scene()

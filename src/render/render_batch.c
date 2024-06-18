@@ -24,6 +24,7 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->mesh.block = 0;
     result->mesh.transform = NULL;
     result->mesh.armature = NULL;
+    result->mesh.tmp_fixed_pose = NULL;
 
     return result;
 }
@@ -39,6 +40,7 @@ void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, mat4
     element->material = mesh->material;
     element->mesh.transform = transform;
     element->mesh.armature = armature && armature->bone_count ? armature : NULL;
+    element->mesh.tmp_fixed_pose = mesh->armature_pose;
 }
 
 struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count) {
@@ -162,8 +164,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 (*element->mesh.transform)[3][2] = prevOffset.z;
             }
 
-            if (element->mesh.armature) {
-                mat4x4 pose[element->mesh.armature->bone_count];
+            if (element->mesh.armature && element->mesh.tmp_fixed_pose) {
+                T3DMat4 pose[element->mesh.armature->bone_count];
 
                 for(uint32_t i=0; i<element->mesh.armature->bone_count; i++)
                 {
@@ -172,13 +174,17 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                     assert(parent_index == NO_BONE_PARENT || parent_index < i);
 
                     if (parent_index == NO_BONE_PARENT) {
-                        transformToMatrix(&element->mesh.armature->pose[i], pose[i]);
+                        transformToMatrix(&element->mesh.armature->pose[i], pose[i].m);
                     } else {
                         mat4x4 tmp;
                         transformToMatrix(&element->mesh.armature->pose[i], tmp);
-                        matrixMul(pose[parent_index], tmp, pose[i]);
+                        matrixMul(pose[parent_index].m, tmp, pose[i].m);
                     }
+
+                    t3d_mat4_to_fixed(&element->mesh.tmp_fixed_pose[i], &pose[i]);
                 }
+
+                data_cache_hit_writeback_invalidate(element->mesh.tmp_fixed_pose, sizeof(T3DMat4FP) * element->mesh.armature->bone_count);
             }
 
             rspq_block_run(element->mesh.block);

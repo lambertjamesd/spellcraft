@@ -459,7 +459,7 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
     for transition in material_transitions:
         serialize.serialize_material_file(file, transition[0], transition[1])
 
-    armature.write_armature(file, arm)
+    armature.write_armature(file, arm, settings)
 
     file.write(len(commands).to_bytes(2, 'big'))
 

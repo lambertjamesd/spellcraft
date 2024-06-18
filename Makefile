@@ -52,11 +52,12 @@ MESH_SOURCES := $(shell find assets/meshes -type f -name '*.blend' | sort)
 
 TMESHES := $(MESH_SOURCES:assets/meshes/%.blend=filesystem/meshes/%.tmesh)
 
-filesystem/meshes/%.tmesh: assets/meshes/%.blend $(EXPORT_SOURCE)
+filesystem/meshes/%.tmesh filesystem/meshes/%.anim: assets/meshes/%.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh))
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/t3d_mesh.py -- $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)
 	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)
+	-cp $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.anim) $(@:%.tmesh=%.anim)
 
 ###
 # materials

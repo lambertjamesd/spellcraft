@@ -78,7 +78,7 @@ void armature_def_apply(struct armature_definition* definition, T3DMat4FP* pose)
     for (int i = 0; i < definition->bone_count; i += 1) {
         int parent = definition->parent_linkage[i];
 
-        if (parent == -1) {
+        if (parent == ARM_NO_PARENT_LINK) {
             armature_unpack_transform(&definition->default_pose[i], &fullTransforms[i]);
         } else {
             struct Transform unpacked;

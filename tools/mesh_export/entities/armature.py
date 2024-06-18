@@ -7,6 +7,8 @@ import math
 
 sys.path.append(os.path.dirname(__file__))
 
+from . import export_settings
+
 class BoneAttributes():
     def __init__(self):
         self.has_pos = False
@@ -288,7 +290,7 @@ class ArmatureData:
             
         return True
     
-    def generate_pose_data(self) -> list[PackedArmatureData]:
+    def generate_pose_data(self, settings: export_settings.ExportSettings) -> list[PackedArmatureData]:
         result: list[PackedArmatureData] = []
         for bone in self._ordered_bones:      
             parent = self.find_parent_bone(bone.name)
@@ -302,7 +304,7 @@ class ArmatureData:
 
             loc, rot, scale = transform.decompose()
 
-            result.append(PackedArmatureData(loc, rot, scale))
+            result.append(PackedArmatureData(loc * settings.fixed_point_scale, rot, scale))
         return result
     
     def generate_event_data(self) -> PackedEventData:
@@ -339,7 +341,7 @@ def _pack_quaternion(input: mathutils.Quaternion):
         round(32767 * final_input.z)
     ]
 
-def write_armature(file, arm: ArmatureData | None):
+def write_armature(file, arm: ArmatureData | None, settings: export_settings.ExportSettings):
     if arm is None:
         file.write((0).to_bytes(2, 'big'))
         return
@@ -356,7 +358,7 @@ def write_armature(file, arm: ArmatureData | None):
         else:
             file.write((255).to_bytes(1, 'big'))
 
-    default_pose = arm.generate_pose_data()
+    default_pose = arm.generate_pose_data(settings)
 
     for bone_pose in default_pose:
         bone_pose.write_to_file(file)
