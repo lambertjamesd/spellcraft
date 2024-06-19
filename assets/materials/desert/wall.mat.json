@@ -7,5 +7,6 @@
     "blendMode": "OPAQUE",
     "lighting": false,
     "zBuffer": true,
+    "culling": true,
     "vertexGamma": 0.454545
 }

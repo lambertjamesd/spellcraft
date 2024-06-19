@@ -12,6 +12,7 @@
 struct material_tex {
     sprite_t* sprite;
     rdpq_texparms_t params;
+    float scroll_x, scroll_y;
     // rdpq_set_lookup_address
     // surface_make_placeholder_linear
     // sprite_t** frames;

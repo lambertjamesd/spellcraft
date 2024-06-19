@@ -85,6 +85,9 @@ void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture
     material_load_tex_axis((struct text_axis*)&tex->params.s, file);
     material_load_tex_axis((struct text_axis*)&tex->params.t, file);
 
+    fread(&tex->scroll_x, sizeof(float), 1, file);
+    fread(&tex->scroll_y, sizeof(float), 1, file);
+
     tex->sprite = sprite_cache_load(filename);
 
     uint8_t mag_filter;

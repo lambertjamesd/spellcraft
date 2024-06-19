@@ -1,5 +1,10 @@
 {
-    "tex0": "../../images/desert/water.png",
+    "tex0": {
+        "filename": "../../images/desert/water.png",
+        "s": {
+            "scroll": 0.12
+        }
+    },
     "combineMode": [{
         "color": ["1", "TEX0", "SHADE", "TEX0"],
         "alpha": ["0", "0", "0", "PRIM"]

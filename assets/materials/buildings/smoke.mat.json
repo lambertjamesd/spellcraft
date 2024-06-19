@@ -1,5 +1,10 @@
 {
-    "tex0": "../../images/buildings/smoke.png",
+    "tex0": {
+        "filename": "../../images/buildings/smoke.png",
+        "t": {
+            "scroll": 0.1
+        }
+    },
     "combineMode": [{
         "color": ["0", "0", "0", "SHADE"],
         "alpha": ["SHADE", "0", "TEX0", "0"]

@@ -23,6 +23,8 @@ struct update_state {
 static struct update_state g_update_state;
 float fixed_time_step;
 float total_time;
+float game_time;
+float global_time_scale = 1.0f;
 
 int update_compare_elements(void* a, void* b) {
     struct update_element* a_el = (struct update_element*)a;
@@ -64,6 +66,10 @@ bool update_has_layer(int mask) {
 
 void update_dispatch() {
     total_time += fixed_time_step;
+
+    if (g_update_state.enabled_layers & UPDATE_LAYER_WORLD) {
+        game_time += fixed_time_step * global_time_scale;
+    }
 
     callback_list_begin(&g_update_state.callbacks);
 

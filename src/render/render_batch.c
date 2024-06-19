@@ -85,6 +85,33 @@ int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, u
     return a->type - b->type;
 }
 
+void render_batch_check_texture_scroll(int tile, struct material_tex* tex) {
+    if (!tex->sprite || (!tex->scroll_x && !tex->scroll_y)) {
+        return;
+    }
+
+    int w = tex->sprite->width << 2;
+    int h = tex->sprite->height << 2;
+
+    int x_offset = (int)(game_time * tex->scroll_x * w) % w;
+    int y_offset = (int)(game_time * tex->scroll_y * h) % h;
+
+    if (x_offset < 0) {
+        x_offset += w;
+    }
+
+    if (y_offset < 0) {
+        y_offset += h;
+    }
+
+    rdpq_set_tile_size_fx(
+        tile, 
+        x_offset, y_offset, 
+        x_offset + w, 
+        y_offset + h
+    );
+}
+
 void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3DViewport* viewport) {
     uint16_t order[RENDER_BATCH_MAX_SIZE];
     uint16_t order_tmp[RENDER_BATCH_MAX_SIZE];
@@ -126,6 +153,10 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             if (element->material->block) {
                 rspq_block_run(element->material->block);
             }
+
+            render_batch_check_texture_scroll(TILE0, &element->material->tex0);
+            render_batch_check_texture_scroll(TILE1, &element->material->tex1);
+
             current_mat = element->material;
         }
 

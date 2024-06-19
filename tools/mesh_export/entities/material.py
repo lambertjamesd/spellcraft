@@ -116,6 +116,7 @@ class TexAxis():
         self.scale_log = 0
         self.repeats = 2048
         self.mirror = False
+        self.scroll = 0
     
 class Tex():
     def __init__(self):
@@ -519,6 +520,7 @@ def _parse_tex_axis(json_data, into: TexAxis, key_path):
     into.scale_log = _optional_number(json_data, 'scale_log', key_path, into.scale_log)
     into.repeats = _optional_number(json_data, 'repeats', key_path, into.repeats)
     into.mirror = _optional_boolean(json_data, 'mirror', key_path, False)
+    into.scroll = _optional_number(json_data, 'scroll', key_path, into.scroll)
 
 def _parse_tex(json_data, key_path, relative_to):
     if not json_data:

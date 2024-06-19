@@ -268,13 +268,15 @@ def _serialize_tex_axis(file, axis):
 
     file.write(repeats.to_bytes(2, 'big'))
 
-def _serialize_tex(file, tex):
+def _serialize_tex(file, tex: material.Tex):
     if tex:
         _serialze_string(file, tex.rom_filename())
         file.write(tex.tmem_addr.to_bytes(2, 'big'))
         file.write(tex.palette.to_bytes(1, 'big'))
         _serialize_tex_axis(file, tex.s)
         _serialize_tex_axis(file, tex.t)
+
+        file.write(struct.pack('>ff', tex.s.scroll, -tex.t.scroll))
 
         if tex.mag_filter == 'nearest':
             file.write((0).to_bytes(1, 'big'))
