@@ -25,12 +25,16 @@ struct material_palette {
     uint16_t size;
 };
 
+#define MATERIAL_FLAGS_Z_WRITE  (1 << 0)
+#define MATERIAL_FLAGS_Z_READ   (1 << 1)
+
 struct material {
     rspq_block_t* block;
     struct material_tex tex0;
     struct material_tex tex1;
     struct material_palette palette;
     int16_t sort_priority;
+    uint16_t flags;
 };
 
 void material_init(struct material* material);

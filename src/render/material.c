@@ -15,6 +15,7 @@ void material_init(struct material* material) {
     material->palette.tlut = 0;
     material->palette.idx = 0;
     material->palette.size = 0;
+    material->flags = 0;
 }
 
 void material_free(struct material* material) {
@@ -153,9 +154,15 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     rdpq_blender_t blendMode;
                     fread(&blendMode, sizeof(rdpq_blender_t), 1, material_file);
-                    rdpq_mode_blender(blendMode & SOM_BLEND_MASK);                    
+                    rdpq_mode_blender(blendMode & SOM_BLEND_MASK);  
 
-                    rdpq_mode_zbuf((blendMode & SOM_Z_COMPARE) != 0, (blendMode & SOM_Z_WRITE) != 0);
+                    if (blendMode & SOM_Z_COMPARE) {
+                        into->flags |= MATERIAL_FLAGS_Z_READ;
+                    }                  
+
+                    if (blendMode & SOM_Z_WRITE) {
+                        into->flags |= MATERIAL_FLAGS_Z_WRITE;
+                    }
 
                     if ((blendMode & SOM_ALPHACOMPARE_MASK) != 0) {
                         if ((blendMode & SOM_ALPHACOMPARE_MASK) == SOM_ALPHACOMPARE_THRESHOLD) {

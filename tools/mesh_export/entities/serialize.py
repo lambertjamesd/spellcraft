@@ -293,7 +293,7 @@ def _serialize_tex(file, tex: material.Tex):
 def flags_for_material(mat: material.Material) -> int:
     flags = 0
 
-    if mat.blend_mode and mat.blend_mode.z_compare:
+    if mat.blend_mode and (mat.blend_mode.z_compare or mat.blend_mode.z_write):
         flags |= T3D_FLAG_DEPTH
 
     if mat.z_buffer:

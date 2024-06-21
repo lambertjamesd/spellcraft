@@ -87,9 +87,9 @@ void render_3d() {
 }
 
 void render_menu() {
-    // rdpq_mode_persp(false);
-    // rdpq_set_mode_standard();
-    // menu_render();
+    rdpq_mode_persp(false);
+    rdpq_set_mode_standard();
+    menu_render();
 }
 
 void render(surface_t* zbuffer) {
@@ -203,7 +203,7 @@ int main(void)
             surface_t* fb = display_try_get();
 
             if (fb) {
-                rdpq_attach(fb, current_game_mode == GAME_MODE_MENU ? NULL : &zbuffer);
+                rdpq_attach(fb, &zbuffer);
 
                 render(&zbuffer);
 

@@ -143,6 +143,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
     t3d_state_set_drawflags(T3D_FLAG_DEPTH | T3D_FLAG_SHADED | T3D_FLAG_TEXTURED);
 
     bool is_sprite_mode = false;
+    bool z_write = true;
+    bool z_read = true;
 
     for (int i = 0; i < batch->element_count; ++i) {
 
@@ -156,6 +158,15 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
             render_batch_check_texture_scroll(TILE0, &element->material->tex0);
             render_batch_check_texture_scroll(TILE1, &element->material->tex1);
+
+            bool need_z_write = (element->material->flags & MATERIAL_FLAGS_Z_WRITE) != 0;
+            bool need_z_read = (element->material->flags & MATERIAL_FLAGS_Z_READ) != 0;
+
+            if (need_z_write != z_write || need_z_read != z_read) {
+                rdpq_mode_zbuf(need_z_read, need_z_write);
+                z_write = need_z_write;
+                z_read = need_z_read;
+            }
 
             current_mat = element->material;
         }
