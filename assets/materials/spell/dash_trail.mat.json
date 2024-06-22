@@ -1,0 +1,9 @@
+{
+    "combineMode": [{
+        "color": ["0", "0", "0", "1"],
+        "alpha": ["0", "0", "0", "1"]
+    }],
+    "primColor": [255, 255, 255, 255],
+    "blendMode": "OPAQUE",
+    "culling": false
+}

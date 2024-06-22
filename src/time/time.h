@@ -25,11 +25,14 @@ void update_pause_layers(int mask);
 void update_unpause_layers(int mask);
 bool update_has_layer(int mask);
 
+void update_render_time();
+
 void update_dispatch();
 
 extern float fixed_time_step;
 extern float total_time;
 extern float game_time;
 extern float global_time_scale;
+extern float render_time_step;
 
 #endif

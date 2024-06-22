@@ -25,6 +25,8 @@ float fixed_time_step;
 float total_time;
 float game_time;
 float global_time_scale = 1.0f;
+float render_time_step;
+float last_render_time = 0.0f;
 
 int update_compare_elements(void* a, void* b) {
     struct update_element* a_el = (struct update_element*)a;
@@ -62,6 +64,11 @@ void update_unpause_layers(int mask) {
 
 bool update_has_layer(int mask) {
     return mask & g_update_state.enabled_layers;
+}
+
+void update_render_time() {
+    render_time_step = game_time - last_render_time;
+    last_render_time = game_time;
 }
 
 void update_dispatch() {

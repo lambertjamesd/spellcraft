@@ -39,6 +39,7 @@ void inventory_init() {
     inventory.built_in_spells[1] = &dash_spell;
 
     inventory.spell_slots[0] = &flame_spell;
+    inventory.spell_slots[1] = &dash_spell;
 
     for (int i = 0; i < MAX_CUSTOM_SPELLS; i += 1) {
         spell_init(&inventory.custom_spells[i], SPELL_MAX_COLS, SPELL_MAX_ROWS, SPELL_ICON_CUSTOM_0 + i);

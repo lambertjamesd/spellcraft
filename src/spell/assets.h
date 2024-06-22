@@ -7,6 +7,7 @@ struct spell_assets {
     struct tmesh* projectile_mesh;
     struct material* fire_particle_mesh;
     struct material* ice_particle_mesh;
+    struct material* dash_trail_material;
 
     struct tmesh* fire_around_mesh;
 };

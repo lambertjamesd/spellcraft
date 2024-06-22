@@ -52,8 +52,6 @@ void setup() {
     current_world = world_load("rom:/worlds/desert.world");
 }
 
-static float time = 0.0f;
-
 static struct frame_memory_pool frame_memory_pools[2];
 static uint8_t next_frame_memoy_pool;
 
@@ -67,7 +65,6 @@ void render_3d() {
     T3DViewport viewport = t3d_viewport_create();
 
     uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-    uint8_t colorDir[4]     = {0xFF, 0xFF, 0xFF, 0xFF};
 
     t3d_frame_start();
 
@@ -93,6 +90,8 @@ void render_menu() {
 }
 
 void render(surface_t* zbuffer) {
+    update_render_time();
+
     if (current_game_mode == GAME_MODE_3D || current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
         render_3d();
     } else if (current_game_mode == GAME_MODE_MENU) {
