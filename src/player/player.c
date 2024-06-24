@@ -71,7 +71,7 @@ struct animation_clip* player_determine_animation(struct player* player, float* 
     horizontal_velocity.y = 0.0f;
     float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
 
-    if (speed < 0.000001f) {
+    if (speed < 0.1f) {
         *playback_speed = 1.0f;
         return player->animations.idle;
     }

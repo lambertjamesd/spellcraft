@@ -9,7 +9,7 @@
 struct frame_memory_pool {
     uint64_t memory[FRAME_WORD_COUNT];
     uint16_t current_word;
-};
+} __attribute__((aligned(16)));
 
 void frame_pool_reset(struct frame_memory_pool* pool);
 void frame_pool_finish(struct frame_memory_pool* pool);

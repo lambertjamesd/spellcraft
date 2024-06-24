@@ -7,7 +7,6 @@
 
 void dash_trail_init(struct dash_trail* trail, struct Vector3* emit_from, bool flipped) {
     trail->vertices = malloc(sizeof(T3DVertPacked) * DASH_PARTICLE_COUNT);
-    data_cache_hit_writeback_invalidate(trail->vertices, sizeof(T3DVertPacked) * DASH_PARTICLE_COUNT);
 
     for (int i = 0; i < DASH_PARTICLE_COUNT; i += 1) {
         trail->vertices[i].normA = 0;
@@ -28,11 +27,13 @@ void dash_trail_init(struct dash_trail* trail, struct Vector3* emit_from, bool f
         trail->tangent[i] = gZeroVec;
     }
 
+    data_cache_hit_writeback_invalidate(trail->vertices, sizeof(T3DVertPacked) * DASH_PARTICLE_COUNT);
+
     rspq_block_begin();
 
     t3d_vert_load(trail->vertices, 0, DASH_PARTICLE_COUNT * 2);
 
-    for (int i = 0; i < (DASH_PARTICLE_COUNT - 1) * 2; i += 2) {
+    for (int i = 0; i < (DASH_PARTICLE_COUNT - 2) * 2; i += 2) {
         t3d_tri_draw(i, i + 1, i + 2);
         t3d_tri_draw(i + 2, i + 1, i + 3);
     }
@@ -63,19 +64,22 @@ void dash_trail_update(struct dash_trail* trail, struct Vector3* emit_from) {
     int current = trail->first_vertex;
     float particle_time = trail->first_time;
 
-    for (int i = 0; i < DASH_PARTICLE_COUNT; i += 1) {
+    for (int i = 0; i < trail->vertex_count; i += 1) {
         int vertex_index = i * 2;
 
         struct Vector3 offset;
-        vector3AddScaled(&trail->emit_from[current], &trail->tangent[i], (particle_time * TANGENT_OFFSET) * TANGENT_VELOCITY_BOTTOM, &offset);
+        vector3AddScaled(&trail->emit_from[current], &trail->tangent[current], (particle_time * TANGENT_OFFSET) * TANGENT_VELOCITY_BOTTOM, &offset);
 
         pack_position_vector(
             &offset, 
             t3d_vertbuffer_get_pos(trail->vertices, vertex_index)
         );
 
-        vector3AddScaled(&trail->emit_from[current], &trail->tangent[i], (particle_time * TANGENT_OFFSET) * TANGENT_VELOCITY_TOP, &offset);
-        offset.y += particle_time * INITIAL_V + particle_time * particle_time * GRAVITY;
+        vector3AddScaled(&trail->emit_from[current], &trail->tangent[current], (particle_time * TANGENT_OFFSET) * TANGENT_VELOCITY_TOP, &offset);
+        float vertical_jump = particle_time * INITIAL_V + particle_time * particle_time * GRAVITY;
+        if (vertical_jump > 0) {
+            offset.y += vertical_jump;
+        }
 
         pack_position_vector(
             &offset, 
@@ -98,15 +102,19 @@ void dash_trail_update(struct dash_trail* trail, struct Vector3* emit_from) {
 
         struct Vector3 offset;
         vector3Sub(emit_from, &trail->emit_from[start_index], &offset);
-        vector3Normalize(&offset, &offset);
 
         if (trail->flipped) {
             vector3Negate(&offset, &offset);
         }
 
         vector3Cross(&offset, &gUp, &trail->tangent[trail->first_vertex]);
+        vector3Normalize(&trail->tangent[trail->first_vertex], &trail->tangent[trail->first_vertex]);
 
         trail->emit_from[trail->first_vertex] = *emit_from;
+
+        if (trail->vertex_count < DASH_PARTICLE_COUNT) {
+            trail->vertex_count += 1;
+        }
     }
 
     data_cache_hit_writeback_invalidate(trail->vertices, sizeof(T3DVertPacked) * DASH_PARTICLE_COUNT);

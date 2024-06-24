@@ -182,6 +182,36 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 continue;
             }
 
+            if (element->mesh.armature && element->mesh.tmp_fixed_pose) {
+                T3DMat4* pose = frame_malloc(batch->pool, sizeof(T3DMat4) * element->mesh.armature->bone_count);
+
+                if (!pose) {
+                    continue;
+                }
+
+                for(int i = 0; i < element->mesh.armature->bone_count; i++) {
+                    int parent_index = element->mesh.armature->parent_linkage[i];
+
+                    assert(parent_index == NO_BONE_PARENT || parent_index < i);
+
+                    if (parent_index == NO_BONE_PARENT) {
+                        transformToMatrix(&element->mesh.armature->pose[i], pose[i].m);
+                    } else {
+                        mat4x4 tmp;
+                        transformToMatrix(&element->mesh.armature->pose[i], tmp);
+                        matrixMul(pose[parent_index].m, tmp, pose[i].m);
+                    }
+
+                }
+
+                for(int i = 0; i < element->mesh.armature->bone_count; i++) {
+                    // TODO modify pose and 
+                    t3d_mat4_to_fixed(&element->mesh.tmp_fixed_pose[i], &pose[i]);
+                }
+
+                data_cache_hit_writeback_invalidate(element->mesh.tmp_fixed_pose, sizeof(T3DMat4FP) * element->mesh.armature->bone_count);
+            }
+
             if (element->mesh.transform) {
                 T3DMat4FP* mtxfp = frame_malloc(batch->pool, sizeof(T3DMat4FP));
 
@@ -204,29 +234,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 (*element->mesh.transform)[3][0] = prevOffset.x;
                 (*element->mesh.transform)[3][1] = prevOffset.y;
                 (*element->mesh.transform)[3][2] = prevOffset.z;
-            }
-
-            if (element->mesh.armature && element->mesh.tmp_fixed_pose) {
-                T3DMat4 pose[element->mesh.armature->bone_count];
-
-                for(uint32_t i=0; i<element->mesh.armature->bone_count; i++)
-                {
-                    int parent_index = element->mesh.armature->parent_linkage[i];
-
-                    assert(parent_index == NO_BONE_PARENT || parent_index < i);
-
-                    if (parent_index == NO_BONE_PARENT) {
-                        transformToMatrix(&element->mesh.armature->pose[i], pose[i].m);
-                    } else {
-                        mat4x4 tmp;
-                        transformToMatrix(&element->mesh.armature->pose[i], tmp);
-                        matrixMul(pose[parent_index].m, tmp, pose[i].m);
-                    }
-
-                    t3d_mat4_to_fixed(&element->mesh.tmp_fixed_pose[i], &pose[i]);
-                }
-
-                data_cache_hit_writeback_invalidate(element->mesh.tmp_fixed_pose, sizeof(T3DMat4FP) * element->mesh.armature->bone_count);
             }
 
             rspq_block_run(element->mesh.block);

@@ -18,5 +18,11 @@ void* frame_malloc(struct frame_memory_pool* pool, int bytes) {
 
     void* result = &pool->memory[pool->current_word];
     pool->current_word += (bytes + 7) >> 3;
+
+    // align to 16 bytes
+    if (pool->current_word & 1) {
+        pool->current_word += 1;
+    }
+
     return result;
 }
