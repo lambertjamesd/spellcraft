@@ -150,7 +150,13 @@ def _group_vertices_by_bone(batch: _vertex_batch, mesh: mesh.mesh_data):
 
     for key in by_bone.keys():
         curr_list = by_bone[key]
+
         curr_list = sorted(curr_list, key = lambda index: -batch.vertex_lifetime[index])
+
+        if len(curr_list) % 2 == 1:
+            # batches much have an even number of vertices
+            curr_list.append(curr_list[-1])
+
         by_bone[key] = curr_list
 
     groups = sorted(list(by_bone.values()), key = lambda index_list: -batch.vertex_lifetime[index_list[0]])
@@ -190,19 +196,10 @@ class _vertex_layout():
 
         new_indicies: list[int] = []
 
-        last_bone_index = -1
-
         for vertex_index in ordered_vertices:
             if vertex_index in reused_indices:
                 continue
 
-            bone_index = mesh.bone_indices[vertex_index]
-
-            if bone_index != last_bone_index and len(new_indicies) % 2 == 1:
-                # batches much have an even number of vertices
-                new_indicies.append(new_indicies[-1])
-
-            last_bone_index = bone_index
             new_indicies.append(vertex_index)
 
         if len(new_indicies) % 2 == 1:
@@ -383,13 +380,13 @@ def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_setting
 
             if bone_index != current_bone:
                 if last_start != index:
-                    command_list.append(_build_vertices_command(source_index + last_start, batch.offset + last_start, index - last_start))
+                    command_list.append(_build_vertices_command(source_index + last_start // 2, batch.offset + last_start, index - last_start))
 
                 command_list.append(_build_bone_command(bone_index))
                 current_bone = bone_index
                 last_start = index
-
-        command_list.append(_build_vertices_command(source_index + last_start, batch.offset + last_start, vertex_count - last_start))
+            
+        command_list.append(_build_vertices_command(source_index + last_start // 2, batch.offset + last_start, vertex_count - last_start))
 
         for i in range(0, vertex_count, 2):
             vertices.append(_pack_vertices(
@@ -437,6 +434,11 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
     current_bone = -1
 
     for chunk in chunks:
+        # if chunk.material.tex0 and chunk.material.tex0.filename and chunk.material.tex0.filename.endswith('cloth.png'):
+        #     print(chunk.used_bones)
+        #     bones = arm.get_filtered_bones()
+        #     print([bones[index].name for index in list(chunk.used_bones)])
+
         delta = material_delta.determine_material_delta(current_material, chunk.material)
 
         if not delta.is_empty():

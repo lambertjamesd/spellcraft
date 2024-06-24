@@ -4,9 +4,9 @@ from . import material
 from . import material_delta
 
 class mesh_chunk():
-    def __init__(self, data: mesh.mesh_data, used_bones: tuple[int, int, int], mat: material.Material):
+    def __init__(self, data: mesh.mesh_data, used_bones: tuple[int, int, int] | tuple[int, int] | tuple[int], mat: material.Material):
         self.data: mesh.mesh_data = data
-        self.used_bones: tuple[int, int, int] = used_bones
+        self.used_bones: tuple[int, int, int] | tuple[int, int] | tuple[int] = used_bones
         self.material: material.Material = mat
 
 def remove_duplicates(mesh_data: mesh.mesh_data) -> mesh.mesh_data:
@@ -71,7 +71,7 @@ def split_into_bone_pairs(mesh_data: mesh.mesh_data, mat: material.Material) -> 
 
         bone_indices = [mesh_data.bone_indices[index] for index in indices]
 
-        key = tuple(sorted(bone_indices))
+        key = tuple(sorted(list(set(bone_indices))))
 
         if key in result:
             result[key].indices += indices

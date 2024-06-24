@@ -152,9 +152,9 @@ def convert_vertex_channel(input, gamma):
 def pack_vertex(vertex, uv, color, normal, bone_index, gamma = 1):
     result = struct.pack(
         ">hhh", 
-        round(vertex[0] * 32), 
-        round(vertex[1] * 32), 
-        round(vertex[2] * 32)
+        round(vertex[0] * 64), 
+        round(vertex[1] * 64), 
+        round(vertex[2] * 64)
     )
 
     if uv:
