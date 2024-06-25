@@ -21,7 +21,7 @@ char* cutscene_load_string(FILE* file) {
         length = lower_length;
     }
 
-    char* result = malloc(length) + 1;
+    char* result = malloc(length + 1);
     fread(result, 1, length, file);
     result[length] = '\0';
     return result;

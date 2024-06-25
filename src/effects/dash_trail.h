@@ -2,13 +2,12 @@
 #define __EFFECTS_DASH_TRAIL_H__
 
 #include "../math/vector3.h"
+#include "../render/render_batch.h"
 #include <t3d/t3d.h>
 
 #define DASH_PARTICLE_COUNT 16
 
 struct dash_trail {
-    T3DVertPacked* vertices;
-    rspq_block_t* render_block;
     struct Vector3 emit_from[DASH_PARTICLE_COUNT];
     struct Vector3 tangent[DASH_PARTICLE_COUNT];
 
@@ -21,7 +20,7 @@ struct dash_trail {
 };
 
 void dash_trail_init(struct dash_trail* trail, struct Vector3* emit_from, bool flipped);
-void dash_trail_update(struct dash_trail* trail, struct Vector3* emit_from);
+void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, struct render_batch* batch);
 
 void dash_trail_destroy(struct dash_trail* trail);
 

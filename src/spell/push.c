@@ -5,38 +5,17 @@
 #include "../render/render_scene.h"
 #include "assets.h"
 
+int which_one = 0;
+
 void push_render(struct push* push, struct render_batch* batch) {
     struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
 
     if (!target) {
         return;
     }
-    
-    struct render_batch_element* element = render_batch_add(batch);
 
-    if (!element) {
-        return;
-    }
-
-    element->mesh.block = push->dash_trail_right.render_block;
-    element->mesh.armature = NULL;
-    element->mesh.transform = NULL;
-    element->material = spell_assets_get()->dash_trail_material;
-
-    dash_trail_update(&push->dash_trail_right, target->position);
-
-    element = render_batch_add(batch);
-
-    if (!element) {
-        return;
-    }
-
-    element->mesh.block = push->dash_trail_left.render_block;
-    element->mesh.armature = NULL;
-    element->mesh.transform = NULL;
-    element->material = spell_assets_get()->dash_trail_material;
-
-    dash_trail_update(&push->dash_trail_left, target->position);
+    dash_trail_render(&push->dash_trail_right, target->position, batch);
+    dash_trail_render(&push->dash_trail_left, target->position, batch);
 }
 
 void push_init(struct push* push, struct spell_data_source* source, struct spell_event_options event_options) {
