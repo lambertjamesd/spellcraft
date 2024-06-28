@@ -46,6 +46,12 @@ Reverse recast will continue casting a spell even if the player releases the spe
 
 Blocks damage of an enemy attack (or fall damage). If you time the shield to block right before taking damage you can chain an additional effect to trigger with power proportional to the damage that would have been taken effectively allowing the player to parry.
 
+Some ideas for shield variants based on adding elements.
+
+* Fire - Doesn't block damage unless the player parries but increases the power of the parry.
+* Ice - Breaks on any hit but always parries. The parry has a fixed power instead of being proportional to the attack damage
+* Lighting - Can block all damage but can't parry
+
 A reverse sheild will put up a shield in the opposite direction.
 
 ## Reverse

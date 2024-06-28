@@ -6,12 +6,13 @@
 #include "../util/sort.h"
 #include "../time/time.h"
 
-void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source);
+void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana);
 
 void spell_slot_init(
     struct spell_exec_slot* slot, 
     int button_index,
     struct spell_data_source* input,
+    float burst_mana,
     struct spell* for_spell,
     uint8_t curr_col,
     uint8_t curr_row
@@ -22,6 +23,7 @@ void spell_slot_init(
 
     event_options.has_primary_event = spell_has_primary_event(for_spell, curr_col, curr_row);
     event_options.has_secondary_event = spell_has_secondary_event(for_spell, curr_col, curr_row);
+    event_options.burst_mana = burst_mana;
 
     switch ((enum spell_symbol_type)symbol.type) {
         case SPELL_SYMBOL_PROJECTILE:
@@ -118,22 +120,22 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
 
     switch (slot->type) {
         case SPELL_EXEC_SLOT_TYPE_PROJECTILE:
-            projectile_update(&slot->data.projectile, &event_listener, &exec->data_sources);
+            projectile_update(&slot->data.projectile, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_FIRE:
-            fire_update(&slot->data.fire, &event_listener, &exec->data_sources);
+            fire_update(&slot->data.fire, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_FIRE_AROUND:
-            fire_around_update(&slot->data.fire_around, &event_listener, &exec->data_sources);
+            fire_around_update(&slot->data.fire_around, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_EXPLOSION:
-            explosion_update(&slot->data.explosion, &event_listener, &exec->data_sources);
+            explosion_update(&slot->data.explosion, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_RECAST:
-            recast_update(&slot->data.recast, &event_listener, &exec->data_sources);
+            recast_update(&slot->data.recast, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
-            push_update(&slot->data.push, &event_listener, &exec->data_sources);
+            push_update(&slot->data.push, &event_listener, &exec->spell_sources);
             break;
         default:
             break;
@@ -150,15 +152,17 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
 
     // then handle the remaining events
     for (int i = 0; i < event_listener.event_count; ++i) {
-        switch (event_listener.events[i].type) {
+        struct spell_event* event = &event_listener.events[i];
+
+        switch (event->type) {
         case SPELL_EVENT_PRIMARY:
             if (spell_has_primary_event(slot->for_spell, slot->curr_col, slot->curr_row) != SPELL_SYMBOL_BLANK) {
-                spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row, event_listener.events[i].data_source);
+                spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row, event->data_source, event->burst_mana);
             }
             break;
         case SPELL_EVENT_SECONDARY:
             if (spell_has_secondary_event(slot->for_spell, slot->curr_col, slot->curr_row))  {
-                spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row + 1, event_listener.events[i].data_source);
+                spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row + 1, event->data_source, event->burst_mana);
             }
             break;
         }
@@ -272,7 +276,7 @@ static union spell_source_flags reverse_symbol_to_modifier[] = {
 };
 
 void spell_modifier_init(
-    struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source
+    struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana
 ) {
     union spell_source_flags flags;
 
@@ -298,7 +302,7 @@ void spell_modifier_init(
     int index = spell_exec_find_modifier(exec);
     struct spell_source_modifier* modifier = &exec->modifiers[index];
 
-    struct spell_data_source* output = spell_data_source_pool_get(&exec->data_sources);
+    struct spell_data_source* output = spell_data_source_pool_get(&exec->spell_sources.data_sources);
 
     spell_slot_id id = exec->next_id;
     exec->next_id += 1;
@@ -306,16 +310,16 @@ void spell_modifier_init(
     spell_source_modifier_init(modifier, data_source, output, flags);
     exec->modifier_ids[index] = id;
 
-    spell_exec_step(exec, button_index, spell, col, row, output);
+    spell_exec_step(exec, button_index, spell, col, row, output, burst_mana);
 }
 
-void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source) {
+void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana) {
     if (!data_source) {
         return;
     }
 
     if (spell_is_modifier(spell, col, row)) {
-        spell_modifier_init(exec, button_index, spell, col, row, data_source);
+        spell_modifier_init(exec, button_index, spell, col, row, data_source, burst_mana);
         return;
     }
 
@@ -332,6 +336,7 @@ void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* sp
         slot,
         button_index,
         data_source,
+        burst_mana,
         spell,
         col,
         row
@@ -346,7 +351,7 @@ void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* sp
 void spell_exec_init(struct spell_exec* exec) {
     exec->next_id = 1;
     exec->next_slot = 0;
-    spell_data_source_pool_init(&exec->data_sources);
+    spell_sources_init(&exec->spell_sources);
     memset(&exec->ids, 0, sizeof(exec->ids));
     memset(&exec->modifier_ids, 0, sizeof(exec->modifier_ids));
     update_add(exec, (update_callback)spell_exec_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
@@ -364,11 +369,22 @@ void spell_exec_destroy(struct spell_exec* exec) {
 
 void spell_exec_recast(struct spell_exec* exec, int button_index, struct spell_data_source* data_source) {
     struct recast* recast = exec->pending_recast[button_index];
+    
+    int count = 0;
 
     while (recast) {
-        recast_recast(recast, data_source);     
+        count += 1;
+        recast = recast->next_recast;
+    }
+
+    recast = exec->pending_recast[button_index];
+
+    float burst_amount = mana_pool_request_charged_mana(&exec->spell_sources.mana_pool) / count;
+
+    while (recast) {
+        recast_recast(recast, data_source, burst_amount);     
         struct recast* next = recast->next_recast;
-        recast->next_recast = 0;   
+        recast->next_recast = 0;
         recast = next;
     }
 
@@ -385,7 +401,18 @@ void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* s
         return;
     }
 
-    spell_exec_step(exec, button_index, spell, 0, 0, data_source);
+    spell_exec_step(exec, button_index, spell, 0, 0, data_source, 0.0f);
+}
+
+bool spell_exec_charge(struct spell_exec* exec) {
+    for (int i = 0; i < MAX_BUTTON_INDEX; i += 1) {
+        if (exec->pending_recast[i]) {
+            mana_pool_charge(&exec->spell_sources.mana_pool, 10.0f);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 #define GET_ID_FROM_INDEX(exec, idx) (int)(((idx) & 0x8000) ? (exec)->modifier_ids[(idx) & 0x7FFF] : (exec)->ids[idx])
@@ -402,6 +429,8 @@ void spell_exec_update(struct spell_exec* exec) {
     spell_slot_id start_ids[MAX_SPELL_EXECUTORS];
     spell_slot_id start_modifier_id[MAX_SOURCE_MODIFIERS];
     int count = 0;
+
+    mana_pool_update(&exec->spell_sources.mana_pool);
 
     for (int i = 0; i < MAX_SPELL_EXECUTORS; ++i) {
         if (exec->ids[i]) {
@@ -437,4 +466,16 @@ void spell_exec_update(struct spell_exec* exec) {
             }
         }
     }
+}
+
+float spell_exec_max_mana(struct spell_exec* exec) {
+    return exec->spell_sources.mana_pool.max_mana;
+}
+
+float spell_exec_current_mana(struct spell_exec* exec) {
+    return exec->spell_sources.mana_pool.current_mana;
+}
+
+float spell_exec_prev_mana(struct spell_exec* exec) {
+    return mana_pool_get_previous_mana(&exec->spell_sources.mana_pool);
 }

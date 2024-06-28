@@ -27,7 +27,6 @@ void dash_trail_init(struct dash_trail* trail, struct Vector3* emit_from, bool f
 #define NEXT_VERTEX(idx) ((idx) == DASH_PARTICLE_COUNT - 1 ? 0 : (idx) + 1)
 
 void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, struct render_batch* batch) {
-    int current = trail->first_vertex;
     float particle_time = trail->first_time;
 
     trail->first_time += render_time_step;
@@ -67,6 +66,7 @@ void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, stru
     }
 
     T3DVertPacked* vertex = vertices;
+    int current = trail->first_vertex;
 
     for (int i = 0; i < trail->vertex_count; i += 1) {
         int vertex_index = i * 2;
@@ -92,8 +92,11 @@ void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, stru
 
         vector3AddScaled(&trail->emit_from[current], &trail->tangent[current], (particle_time * TANGENT_OFFSET) * TANGENT_VELOCITY_TOP, &offset);
         float vertical_jump = particle_time * INITIAL_V + particle_time * particle_time * GRAVITY;
-        if (vertical_jump > 0) {
+        if (vertical_jump >= 0) {
             offset.y += vertical_jump;
+        } else {
+            trail->vertex_count = i;
+            break;
         }
 
         pack_position_vector(

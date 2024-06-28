@@ -4,7 +4,7 @@
 #include "../math/vector3.h"
 #include "../collision/dynamic_object.h"
 
-#include "spell_data_source.h"
+#include "spell_sources.h"
 #include "spell_event.h"
 
 struct projectile {
@@ -21,6 +21,6 @@ struct projectile {
 void projectile_init(struct projectile* projectile, struct spell_data_source* source, struct spell_event_options event_options);
 void projectile_destroy(struct projectile* projectile);
 
-void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool);
+void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
 #endif

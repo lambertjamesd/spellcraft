@@ -1,7 +1,7 @@
 #ifndef __SPELL_FIRE_AROUND_H__
 #define __SPELL_FIRE_AROUND_H__
 
-#include "spell_data_source.h"
+#include "spell_sources.h"
 #include "spell_event.h"
 #include "../collision/dynamic_object.h"
 
@@ -17,6 +17,6 @@ struct fire_around {
 void fire_around_init(struct fire_around* fire_around, struct spell_data_source* source, struct spell_event_options event_options);
 void fire_around_destroy(struct fire_around* fire_around);
 
-void fire_around_update(struct fire_around* fire_around, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool);
+void fire_around_update(struct fire_around* fire_around, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
 #endif

@@ -12,9 +12,10 @@
 #include "fire.h"
 #include "fire_around.h"
 #include "explosion.h"
-#include "spell_data_source.h"
+#include "spell_sources.h"
 #include "recast.h"
 #include "push.h"
+#include "mana_pool.h"
 
 typedef uint32_t spell_slot_id;
 
@@ -59,7 +60,7 @@ struct spell_exec {
     spell_slot_id modifier_ids[MAX_SOURCE_MODIFIERS];
     struct spell_exec_slot slots[MAX_SPELL_EXECUTORS];
     struct spell_source_modifier modifiers[MAX_SOURCE_MODIFIERS];
-    struct spell_data_source_pool data_sources;
+    struct spell_sources spell_sources;
     struct recast* pending_recast[MAX_BUTTON_INDEX];
     uint8_t next_slot;
     uint8_t next_modifier;
@@ -72,5 +73,10 @@ void spell_exec_destroy(struct spell_exec* exec);
 void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* spell, struct spell_data_source* data_source);
 void spell_exec_update(struct spell_exec* exec);
 void spell_exec_stop(struct spell_exec* exec, int button_index);
+bool spell_exec_charge(struct spell_exec* exec);
+
+float spell_exec_max_mana(struct spell_exec* exec);
+float spell_exec_current_mana(struct spell_exec* exec);
+float spell_exec_prev_mana(struct spell_exec* exec);
 
 #endif

@@ -112,6 +112,20 @@ void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
     interactable->callback(interactable, 0);
 }
 
+void player_handle_a_action(struct player* player) {
+    if (spell_exec_charge(&player->spell_exec)) {
+        return;
+    }
+
+    struct Vector3 query_center = player->transform.position;
+    struct Vector3 query_offset;
+    quatMultVector(&player->transform.rotation, &gForward, &query_offset);
+    vector3AddScaled(&query_center, &query_offset, 1.0f, &query_center);
+    query_center.y += player_visual_shape.data.cylinder.half_height;
+    bool did_intersect = false;
+    collision_scene_query(&player_visual_shape, &query_center, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_intersect);
+}
+
 void player_update(struct player* player) {
     struct Vector3 right;
     struct Vector3 forward;
@@ -194,13 +208,7 @@ void player_update(struct player* player) {
     }
 
     if (pressed.a) {
-        struct Vector3 query_center = player->transform.position;
-        struct Vector3 query_offset;
-        quatMultVector(&player->transform.rotation, &gForward, &query_offset);
-        vector3AddScaled(&query_center, &query_offset, 1.0f, &query_center);
-        query_center.y += player_visual_shape.data.cylinder.half_height;
-        bool did_intersect = false;
-        collision_scene_query(&player_visual_shape, &query_center, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_intersect);
+        player_handle_a_action(player);
     }
 }
 

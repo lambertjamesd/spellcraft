@@ -7,6 +7,7 @@ void recast_init(struct recast* recast, struct spell_data_source* source, struct
     recast->output = 0;
     recast->next_recast = 0;
     recast->mode = mode;
+    recast->burst_mana = 0.0f;
 }
 
 void recast_destroy(struct recast* recast) {
@@ -21,8 +22,9 @@ void recast_destroy(struct recast* recast) {
     }
 }
 
-void recast_recast(struct recast* recast, struct spell_data_source* recast_source) {
+void recast_recast(struct recast* recast, struct spell_data_source* recast_source, float burst_mana) {
     recast->recast_source = recast_source;
+    recast->burst_mana = burst_mana;
     spell_data_source_retain(recast->recast_source);
 }
 
@@ -31,14 +33,14 @@ void recast_update_end_cast(struct recast* recast, struct spell_event_listener* 
         struct spell_data_source* output = spell_data_source_pool_get(pool);
         
         if (!output) {
-            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0);
+            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
             return;
         }
 
         spell_data_source_retain(output);
         recast->output = output;
 
-        spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, output);
+        spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, output, recast->burst_mana);
     }
 
     recast->output->position = recast->original_source->position;
@@ -51,21 +53,21 @@ void recast_update_end_cast(struct recast* recast, struct spell_event_listener* 
     
     if (recast->recast_source) {
         recast->output->flags.cast_state = SPELL_CAST_STATE_INACTIVE;
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0);
+        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
     }
 }
 
-void recast_update(struct recast* recast, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
+void recast_update(struct recast* recast, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     if (recast->mode == REACT_MODE_STICKY) {
-        recast_update_end_cast(recast, event_listener, pool);
+        recast_update_end_cast(recast, event_listener, &spell_sources->data_sources);
         return;
     }
 
     if (recast->recast_source && !recast->output) {
-        struct spell_data_source* output = spell_data_source_pool_get(pool);
+        struct spell_data_source* output = spell_data_source_pool_get(&spell_sources->data_sources);
 
         if (!output) {
-            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0);
+            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
             return;
         }
 
@@ -82,7 +84,7 @@ void recast_update(struct recast* recast, struct spell_event_listener* event_lis
         output->flags.cast_state = recast->recast_source->flags.cast_state;
         output->target = recast->original_source->target;
 
-        spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, output);
+        spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, output, recast->burst_mana);
     }
 
     if (recast->output) {
@@ -96,7 +98,7 @@ void recast_update(struct recast* recast, struct spell_event_listener* event_lis
         recast->output->flags.cast_state = recast->recast_source->flags.cast_state;
 
         if (recast->recast_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
-            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0);
+            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
         }
     }
 }

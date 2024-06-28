@@ -41,10 +41,10 @@ void explosion_destroy(struct explosion* explosion) {
     spell_data_source_release(explosion->data_source);
 }
 
-void explosion_update(struct explosion* explosion, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
+void explosion_update(struct explosion* explosion, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     explosion->total_time += fixed_time_step;
 
     if (explosion->total_time >= EXPLOSION_TIME) {
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL);
+        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
     }
 }

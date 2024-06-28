@@ -15,6 +15,7 @@ enum spell_event_type {
 struct spell_event {
     uint8_t type;
     struct spell_data_source* data_source;
+    float burst_mana;
 };
 
 struct spell_event_listener {
@@ -24,7 +25,7 @@ struct spell_event_listener {
 
 
 void spell_event_listener_init(struct spell_event_listener* listener);
-void spell_event_listener_add(struct spell_event_listener* listener, enum spell_event_type type, struct spell_data_source* data_source);
+void spell_event_listener_add(struct spell_event_listener* listener, enum spell_event_type type, struct spell_data_source* data_source, float burst_mana);
 void spell_event_listener_destroy(struct spell_event_listener* listener);
 
 #endif

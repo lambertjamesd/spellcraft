@@ -1,7 +1,7 @@
 #ifndef __SPELL_FIRE_H__
 #define __SPELL_FIRE_H__
 
-#include "spell_data_source.h"
+#include "spell_sources.h"
 #include "spell_event.h"
 #include "../collision/dynamic_object.h"
 #include "../entity/health.h"
@@ -23,7 +23,7 @@ struct fire {
 void fire_init(struct fire* fire, struct spell_data_source* source, struct spell_event_options event_options);
 void fire_destroy(struct fire* fire);
 
-void fire_update(struct fire* fire, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool);
+void fire_update(struct fire* fire, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
 void fire_apply_damage(struct dynamic_object* dyanmic_object, enum damage_type damage_type);
 enum damage_type fire_determine_damage_type(struct spell_data_source* source);

@@ -161,7 +161,7 @@ enum damage_type fire_determine_damage_type(struct spell_data_source* source) {
     return DAMAGE_TYPE_FIRE;
 }
 
-void fire_update(struct fire* fire, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
+void fire_update(struct fire* fire, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     fire->cycle_time += fixed_time_step;
     fire->total_time += fixed_time_step;
 
@@ -180,7 +180,7 @@ void fire_update(struct fire* fire, struct spell_event_listener* event_listener,
     }
 
     if (fire->end_time != -1 && fire->total_time > fire->end_time + CYCLE_TIME * MAX_FIRE_PARTICLE_COUNT) {
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL);
+        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
     }
 
     fire_apply_transform(fire);

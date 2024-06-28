@@ -30,6 +30,8 @@ void update_render_time();
 void update_dispatch();
 
 extern float fixed_time_step;
+extern float scaled_time_step;
+extern float scaled_time_step_inv;
 extern float total_time;
 extern float game_time;
 extern float global_time_scale;

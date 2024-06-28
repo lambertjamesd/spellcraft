@@ -69,7 +69,7 @@ void fire_around_destroy(struct fire_around* fire_around) {
     collision_scene_remove(&fire_around->dynamic_object);
 }
 
-void fire_around_update(struct fire_around* fire_around, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
+void fire_around_update(struct fire_around* fire_around, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     if (fire_around->end_time == -1 && fire_around->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
         fire_around->end_time = DISAPPEAR_TIME;
     }
@@ -78,7 +78,7 @@ void fire_around_update(struct fire_around* fire_around, struct spell_event_list
         fire_around->end_time -= fixed_time_step;
 
         if (fire_around->end_time <= 0.0f) {
-            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL);
+            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
         }
     }
 

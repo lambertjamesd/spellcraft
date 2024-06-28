@@ -82,7 +82,7 @@ bool projectile_is_active(struct projectile* projectile) {
     return projectile->data_output->reference_count > 1;
 }
 
-void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
+void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     if (projectile->is_controlled) {
         vector3Scale(&projectile->data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
     }
@@ -94,7 +94,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
 
     if (projectile->has_secondary_event) {
         if (!projectile->data_output) {
-            projectile->data_output = spell_data_source_pool_get(pool);
+            projectile->data_output = spell_data_source_pool_get(&spell_sources->data_sources);
 
             if (projectile->data_output) {
                 spell_data_source_retain(projectile->data_output);
@@ -103,7 +103,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 projectile->data_output->flags = projectile->data_source->flags;
                 projectile->data_output->target = projectile->dynamic_object.entity_id;
 
-                spell_event_listener_add(event_listener, SPELL_EVENT_SECONDARY, projectile->data_output);
+                spell_event_listener_add(event_listener, SPELL_EVENT_SECONDARY, projectile->data_output, 0.0f);
             }
         } else {
             projectile->data_output->position = projectile->pos;
@@ -116,7 +116,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
         if (projectile->has_primary_event) {
             struct contact* first_contact = projectile->dynamic_object.active_contacts;
 
-            struct spell_data_source* hit_source = spell_data_source_pool_get(pool);
+            struct spell_data_source* hit_source = spell_data_source_pool_get(&spell_sources->data_sources);
 
             if (hit_source) {
                 hit_source->direction = first_contact->normal;
@@ -124,7 +124,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 hit_source->flags = projectile->data_source->flags;
                 hit_source->flags.cast_state = SPELL_CAST_STATE_INSTANT;
                 hit_source->target = first_contact->other_object;
-                spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source);
+                spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source, 0.0f);
             }
         }
 
@@ -132,7 +132,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
     }
 
     if (!projectile_is_active(projectile)) {
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL);
+        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
     }
 }
 
