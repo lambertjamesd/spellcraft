@@ -63,7 +63,6 @@ void transform_to_t3d(struct Transform* transform, T3DMat4FP* matrix) {
 
 void render_3d() {
     // fprintf(stderr, "This is how to talk");
-    T3DViewport viewport = t3d_viewport_create();
 
     uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
@@ -78,7 +77,10 @@ void render_3d() {
     struct frame_memory_pool* pool = &frame_memory_pools[next_frame_memoy_pool];
     frame_pool_reset(pool);
 
-    render_scene_render(&current_world->camera, &viewport, &frame_memory_pools[next_frame_memoy_pool]);
+    T3DViewport* viewport = frame_malloc(pool, sizeof(T3DViewport));
+    *viewport = t3d_viewport_create();
+
+    render_scene_render(&current_world->camera, viewport, &frame_memory_pools[next_frame_memoy_pool]);
     frame_pool_finish(pool);
     
     next_frame_memoy_pool ^= 1;
