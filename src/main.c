@@ -81,7 +81,6 @@ void render_3d() {
     *viewport = t3d_viewport_create();
 
     render_scene_render(&current_world->camera, viewport, &frame_memory_pools[next_frame_memoy_pool]);
-    frame_pool_finish(pool);
     
     next_frame_memoy_pool ^= 1;
 }

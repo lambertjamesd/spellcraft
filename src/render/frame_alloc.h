@@ -12,7 +12,6 @@ struct frame_memory_pool {
 } __attribute__((aligned(16)));
 
 void frame_pool_reset(struct frame_memory_pool* pool);
-void frame_pool_finish(struct frame_memory_pool* pool);
 void* frame_malloc(struct frame_memory_pool* pool, int bytes);
 
 #endif

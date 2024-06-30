@@ -110,6 +110,8 @@ void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, stru
         vertex += 1;
     }
 
+    data_cache_hit_writeback_invalidate(vertices, sizeof(T3DVertPacked) * trail->vertex_count);
+
     struct render_batch_element* element = render_batch_add(batch);
 
     if (!element) {

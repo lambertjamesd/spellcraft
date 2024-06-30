@@ -229,6 +229,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 (*element->mesh.transform)[3][2] *= SCENE_SCALE;
 
                 t3d_mat4_to_fixed(mtxfp, (const T3DMat4*)element->mesh.transform);
+                data_cache_hit_writeback_invalidate(mtxfp, sizeof(T3DMat4FP));
                 t3d_matrix_push(mtxfp);
 
                 (*element->mesh.transform)[3][0] = prevOffset.x;
