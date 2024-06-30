@@ -38,7 +38,7 @@ struct render_batch_element {
     union {
         struct {
             rspq_block_t* block;
-            mat4x4* transform;
+            T3DMat4FP* transform;
             struct armature* armature;
             T3DMat4FP* tmp_fixed_pose;
         } mesh;
@@ -57,13 +57,14 @@ void render_batch_init(struct render_batch* batch, struct Transform* camera_tran
 
 struct render_batch_element* render_batch_add(struct render_batch* batch);
 
-void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, mat4x4* transform, struct armature* armature);
+void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature);
 // caller is responsible for populating sprite list
 // the sprite count returned may be less than the sprite count requested
 struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count);
 
 struct render_batch_billboard_element render_batch_get_sprites(struct render_batch* batch, int count);
 mat4x4* render_batch_get_transform(struct render_batch* batch);
+T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch);
 
 void render_batch_finish(struct render_batch* batch, mat4x4 view_proj, T3DViewport* viewport);
 

@@ -3,6 +3,7 @@
 #include "../util/blist.h"
 #include <malloc.h>
 #include <stdbool.h>
+#include "defs.h"
 
 #define MIN_RENDER_SCENE_SIZE   64
 
@@ -25,29 +26,39 @@ void render_scene_add(struct Vector3* center, float radius, render_scene_callbac
 void render_scene_render_renderable(void* data, struct render_batch* batch) {
     struct renderable* renderable = (struct renderable*)data;
 
-    mat4x4* mtx = render_batch_get_transform(batch);
+    T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
-    if (!mtx) {
+    if (!mtxfp) {
         return;
     }
 
-    transformToMatrix(renderable->transform, *mtx);
+    mat4x4 mtx;
+    transformToMatrix(renderable->transform, mtx);
+    mtx[3][0] *= SCENE_SCALE;
+    mtx[3][1] *= SCENE_SCALE;
+    mtx[3][2] *= SCENE_SCALE;
+    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, renderable->mesh, mtx, &renderable->armature);
+    render_batch_add_tmesh(batch, renderable->mesh, mtxfp, &renderable->armature);
 }
 
 void render_scene_render_renderable_single_axis(void* data, struct render_batch* batch) {
     struct renderable_single_axis* renderable = (struct renderable_single_axis*)data;
 
-    mat4x4* mtx = render_batch_get_transform(batch);
+    T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
-    if (!mtx) {
+    if (!mtxfp) {
         return;
     }
 
-    transformSAToMatrix(renderable->transform, *mtx);
+    mat4x4 mtx;
+    transformSAToMatrix(renderable->transform, mtx);
+    mtx[3][0] *= SCENE_SCALE;
+    mtx[3][1] *= SCENE_SCALE;
+    mtx[3][2] *= SCENE_SCALE;
+    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, renderable->mesh, mtx, &renderable->armature);
+    render_batch_add_tmesh(batch, renderable->mesh, mtxfp, &renderable->armature);
 }
 
 void render_scene_add_renderable(struct renderable* renderable, float radius) {

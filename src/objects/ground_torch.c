@@ -1,11 +1,11 @@
 #include "ground_torch.h"
 
-
 #include "../render/render_scene.h"
 #include "../time/time.h"
 #include "../collision/collision_scene.h"
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
+#include "../render/defs.h"
 #include <memory.h>
 
 #define TORCH_HEIGHT    0.84124f
@@ -36,15 +36,20 @@ void ground_torch_update(void* data) {
 void ground_torch_render(void* data, struct render_batch* batch) {
     struct ground_torch* torch = (struct ground_torch*)data;
 
-    mat4x4* mtx = render_batch_get_transform(batch);
+    T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
-    if (!mtx) {
+    if (!mtxfp) {
         return;
     }
 
-    matrixFromPosition(*mtx, &torch->position);
+    mat4x4 mtx;
 
-    render_batch_add_tmesh(batch, torch->base_mesh, mtx, NULL);
+    struct Vector3 scaledPos;
+    vector3Scale(&torch->position, &scaledPos, SCENE_SCALE);
+    matrixFromPosition(mtx, &torch->position);
+    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
+
+    render_batch_add_tmesh(batch, torch->base_mesh, mtxfp, NULL);
 
     if (!torch->is_lit) {
         return;
@@ -52,18 +57,19 @@ void ground_torch_render(void* data, struct render_batch* batch) {
 
     struct Vector3 flame_position = torch->position;
     flame_position.y += TORCH_HEIGHT;
+    vector3Scale(&flame_position, &flame_position, SCENE_SCALE);
         
-    mtx = render_batch_get_transform(batch);
+    mtxfp = render_batch_get_transformfp(batch);
 
-    if (!mtx) {
+    if (!mtxfp) {
         return;
     }
 
     memcpy(mtx, &batch->camera_matrix, sizeof(mat4x4));
+    matrixApplyPosition(mtx, &flame_position);
+    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    matrixApplyPosition(*mtx, &flame_position);
-
-    render_batch_add_tmesh(batch, torch->flame_mesh, mtx, NULL);
+    render_batch_add_tmesh(batch, torch->flame_mesh, mtxfp, NULL);
 }
 
 void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition) {

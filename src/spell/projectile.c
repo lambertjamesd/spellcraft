@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "../render/render_scene.h"
+#include "../render/defs.h"
 #include "../time/time.h"
 #include "../collision/collision_scene.h"
 
@@ -23,19 +24,21 @@ static struct dynamic_object_type projectile_collision = {
 };
 
 void projectile_render(struct projectile* projectile, struct render_batch* batch) {
-    mat4x4* mtx = render_batch_get_transform(batch);
+    T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
-    if (!mtx) {
+    if (!mtxfp) {
         return;
     }
 
+    mat4x4 mtx;
     struct Transform transform;
-    transform.position = projectile->pos;
+    vector3Scale(&projectile->pos, &transform.position, SCENE_SCALE);
     quatIdent(&transform.rotation);
     transform.scale = gOneVec;
-    transformToMatrix(&transform, *mtx);
+    transformToMatrix(&transform, mtx);
+    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, spell_assets_get()->projectile_mesh, mtx, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->projectile_mesh, mtxfp, NULL);
 }
 
 void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options) {

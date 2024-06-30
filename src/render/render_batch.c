@@ -29,7 +29,7 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     return result;
 }
 
-void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, mat4x4* transform, struct armature* armature) {
+void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature) {
     struct render_batch_element* element = render_batch_add(batch);
 
     if (!element) {
@@ -64,6 +64,10 @@ struct render_batch_billboard_element render_batch_get_sprites(struct render_bat
 
 mat4x4* render_batch_get_transform(struct render_batch* batch) {
     return frame_malloc(batch->pool, sizeof(mat4x4));
+}
+
+T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch) {
+    return frame_malloc(batch->pool, sizeof(T3DMat4FP));
 }
 
 int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, uint16_t b_index) {
@@ -213,28 +217,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             }
 
             if (element->mesh.transform) {
-                T3DMat4FP* mtxfp = frame_malloc(batch->pool, sizeof(T3DMat4FP));
-
-                if (!mtxfp) {
-                    continue;
-                }
-
-                struct Vector3 prevOffset;
-                prevOffset.x = (*element->mesh.transform)[3][0];
-                prevOffset.y = (*element->mesh.transform)[3][1];
-                prevOffset.z = (*element->mesh.transform)[3][2];
-
-                (*element->mesh.transform)[3][0] *= SCENE_SCALE;
-                (*element->mesh.transform)[3][1] *= SCENE_SCALE;
-                (*element->mesh.transform)[3][2] *= SCENE_SCALE;
-
-                t3d_mat4_to_fixed(mtxfp, (const T3DMat4*)element->mesh.transform);
-                data_cache_hit_writeback_invalidate(mtxfp, sizeof(T3DMat4FP));
-                t3d_matrix_push(mtxfp);
-
-                (*element->mesh.transform)[3][0] = prevOffset.x;
-                (*element->mesh.transform)[3][1] = prevOffset.y;
-                (*element->mesh.transform)[3][2] = prevOffset.z;
+                data_cache_hit_writeback_invalidate(element->mesh.transform, sizeof(T3DMat4FP));
+                t3d_matrix_push(element->mesh.transform);
             }
 
             rspq_block_run(element->mesh.block);

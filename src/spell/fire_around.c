@@ -4,6 +4,7 @@
 #include "../time/time.h"
 #include "../collision/collision_scene.h"
 #include "../entity/health.h"
+#include "../render/defs.h"
 #include "assets.h"
 
 #include "fire.h"
@@ -28,16 +29,20 @@ static struct dynamic_object_type fire_around_object_type = {
 void fire_around_render(void* data, struct render_batch* batch) {
     struct fire_around* fire_around = (struct fire_around*)data;
 
-    mat4x4* mtx = render_batch_get_transform(batch);
+    T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
-    if (!mtx) {
+    if (!mtxfp) {
         return;
     }
 
-    matrixFromScale(*mtx, ATTACK_RADIUS);
-    matrixApplyPosition(*mtx, &fire_around->position);
+    mat4x4 mtx;
+    struct Vector3 scaledPosition;
+    matrixFromScale(mtx, ATTACK_RADIUS);
+    vector3Scale(&fire_around->position, &scaledPosition, SCENE_SCALE);
+    matrixApplyPosition(mtx, &scaledPosition);
+    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, spell_assets_get()->fire_around_mesh, mtx, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->fire_around_mesh, mtxfp, NULL);
 }
 
 void fire_around_init(struct fire_around* fire_around, struct spell_data_source* source, struct spell_event_options event_options) {
