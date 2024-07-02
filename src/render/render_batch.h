@@ -25,12 +25,17 @@ struct render_billboard_sprite {
 enum render_batch_type {
     RENDER_BATCH_MESH,
     RENDER_BATCH_BILLBOARD,
+    RENDER_BATCH_CALLBACK,
 };
 
 struct render_batch_billboard_element {
     struct render_billboard_sprite* sprites;
     uint16_t sprite_count;
 };
+
+struct render_batch;
+
+typedef void (*RenderCallback)(void* data, struct render_batch* batch);
 
 struct render_batch_element {
     struct material* material;
@@ -43,6 +48,10 @@ struct render_batch_element {
             T3DMat4FP* tmp_fixed_pose;
         } mesh;
         struct render_batch_billboard_element billboard;
+        struct {
+            RenderCallback callback;
+            void* data;
+        } callback;
     };
 };
 
@@ -58,6 +67,8 @@ void render_batch_init(struct render_batch* batch, struct Transform* camera_tran
 struct render_batch_element* render_batch_add(struct render_batch* batch);
 
 void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature);
+
+void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data);
 // caller is responsible for populating sprite list
 // the sprite count returned may be less than the sprite count requested
 struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count);

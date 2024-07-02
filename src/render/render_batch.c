@@ -40,7 +40,20 @@ void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DM
     element->material = mesh->material;
     element->mesh.transform = transform;
     element->mesh.armature = armature && armature->bone_count ? armature : NULL;
-    element->mesh.tmp_fixed_pose = mesh->armature_pose;
+    element->mesh.tmp_fixed_pose = UncachedAddr(mesh->armature_pose);
+}
+
+void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data) {
+    struct render_batch_element* element = render_batch_add(batch);
+
+    if (!element) {
+        return;
+    }
+
+    element->type = RENDER_BATCH_CALLBACK;
+    element->material = material;
+    element->callback.callback = callback;
+    element->callback.data = data;
 }
 
 struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count) {
@@ -67,7 +80,7 @@ mat4x4* render_batch_get_transform(struct render_batch* batch) {
 }
 
 T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch) {
-    return frame_malloc(batch->pool, sizeof(T3DMat4FP));
+    return UncachedAddr(frame_malloc(batch->pool, sizeof(T3DMat4FP)));
 }
 
 int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, uint16_t b_index) {
@@ -116,6 +129,12 @@ void render_batch_check_texture_scroll(int tile, struct material_tex* tex) {
     );
 }
 
+static bool element_type_2d[] = {
+    [RENDER_BATCH_MESH] = false,
+    [RENDER_BATCH_BILLBOARD] = true,
+    [RENDER_BATCH_CALLBACK] = false,
+};
+
 void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3DViewport* viewport) {
     uint16_t order[RENDER_BATCH_MAX_SIZE];
     uint16_t order_tmp[RENDER_BATCH_MAX_SIZE];
@@ -151,7 +170,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
     bool z_read = true;
 
     for (int i = 0; i < batch->element_count; ++i) {
-
         int index = order[i];
         struct render_batch_element* element = &batch->elements[index];
 
@@ -175,13 +193,20 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             current_mat = element->material;
         }
 
-        if (element->type == RENDER_BATCH_MESH) {
+        bool should_sprite_mode = element_type_2d[element->type];
+
+        if (should_sprite_mode != is_sprite_mode) {
             if (is_sprite_mode) {
+                rdpq_mode_persp(false);
+            } else {
                 rdpq_mode_zoverride(false, 0, 0);
                 rdpq_mode_persp(true);
-                is_sprite_mode = false;
             }
 
+            is_sprite_mode = should_sprite_mode;
+        }
+
+        if (element->type == RENDER_BATCH_MESH) {
             if (!element->mesh.block) {
                 continue;
             }
@@ -212,12 +237,9 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                     // TODO modify pose and 
                     t3d_mat4_to_fixed(&element->mesh.tmp_fixed_pose[i], &pose[i]);
                 }
-
-                data_cache_hit_writeback_invalidate(element->mesh.tmp_fixed_pose, sizeof(T3DMat4FP) * element->mesh.armature->bone_count);
             }
 
             if (element->mesh.transform) {
-                data_cache_hit_writeback_invalidate(element->mesh.transform, sizeof(T3DMat4FP));
                 t3d_matrix_push(element->mesh.transform);
             }
 
@@ -227,11 +249,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 t3d_matrix_pop(1);
             }
         } else if (element->type == RENDER_BATCH_BILLBOARD) {
-            if (!is_sprite_mode) {
-                is_sprite_mode = true;
-                rdpq_mode_persp(false);
-            }
-
             for (int sprite_index = 0; sprite_index < element->billboard.sprite_count; ++sprite_index) {
                 struct render_billboard_sprite sprite = element->billboard.sprites[sprite_index];
 
@@ -283,6 +300,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                     image_h
                 );
             }
+        } else if (element->type == RENDER_BATCH_CALLBACK) {
+            element->callback.callback(element->callback.data, batch);
         }
     }
 }

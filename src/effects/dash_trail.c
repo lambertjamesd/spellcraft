@@ -26,34 +26,8 @@ void dash_trail_init(struct dash_trail* trail, struct Vector3* emit_from, bool f
 #define PREV_VERTEX(idx) ((idx) == 0 ? DASH_PARTICLE_COUNT - 1 : (idx) - 1)
 #define NEXT_VERTEX(idx) ((idx) == DASH_PARTICLE_COUNT - 1 ? 0 : (idx) + 1)
 
-void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, struct render_batch* batch) {
-    float particle_time = trail->first_time;
-
-    trail->first_time += render_time_step;
-
-    if (trail->first_time >= TIME_SPACING) {
-        int start_index = trail->first_vertex;
-
-        trail->first_time = fmodf(trail->first_time, TIME_SPACING);
-
-        trail->first_vertex = PREV_VERTEX(trail->first_vertex);
-
-        struct Vector3 offset;
-        vector3Sub(emit_from, &trail->emit_from[start_index], &offset);
-
-        if (trail->flipped) {
-            vector3Negate(&offset, &offset);
-        }
-
-        vector3Cross(&offset, &gUp, &trail->tangent[trail->first_vertex]);
-        vector3Normalize(&trail->tangent[trail->first_vertex], &trail->tangent[trail->first_vertex]);
-
-        trail->emit_from[trail->first_vertex] = *emit_from;
-
-        if (trail->vertex_count < DASH_PARTICLE_COUNT) {
-            trail->vertex_count += 1;
-        }
-    }
+void dash_trail_render_callback(void* data, struct render_batch* batch) {
+    struct dash_trail* trail = (struct dash_trail*)data;
 
     if (!trail->vertex_count) {
         return;
@@ -67,6 +41,7 @@ void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, stru
 
     T3DVertPacked* vertex = vertices;
     int current = trail->first_vertex;
+    float particle_time = trail->first_time;
 
     for (int i = 0; i < trail->vertex_count; i += 1) {
         int vertex_index = i * 2;
@@ -112,30 +87,44 @@ void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, stru
 
     data_cache_hit_writeback_invalidate(vertices, sizeof(T3DVertPacked) * trail->vertex_count);
 
-    struct render_batch_element* element = render_batch_add(batch);
-
-    if (!element) {
-        return;
-    }
-
-    rspq_block_begin();
-
     t3d_vert_load(vertices, 0, trail->vertex_count * 2);
+    
     for (int i = 0; i < (trail->vertex_count - 1) * 2; i += 2) {
         t3d_tri_draw(i, i + 1, i + 2);
         t3d_tri_draw(i + 2, i + 1, i + 3);
     }
 
     t3d_tri_sync();
+}
 
-    rspq_block_t* block = rspq_block_end();;
+void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, struct render_batch* batch) {
+    trail->first_time += render_time_step;
 
-    rspq_call_deferred((void (*)(void*))rspq_block_free, block);
+    if (trail->first_time >= TIME_SPACING) {
+        int start_index = trail->first_vertex;
 
-    element->mesh.block = block;
-    element->mesh.armature = NULL;
-    element->mesh.transform = NULL;
-    element->material = spell_assets_get()->dash_trail_material;
+        trail->first_time = fmodf(trail->first_time, TIME_SPACING);
+
+        trail->first_vertex = PREV_VERTEX(trail->first_vertex);
+
+        struct Vector3 offset;
+        vector3Sub(emit_from, &trail->emit_from[start_index], &offset);
+
+        if (trail->flipped) {
+            vector3Negate(&offset, &offset);
+        }
+
+        vector3Cross(&offset, &gUp, &trail->tangent[trail->first_vertex]);
+        vector3Normalize(&trail->tangent[trail->first_vertex], &trail->tangent[trail->first_vertex]);
+
+        trail->emit_from[trail->first_vertex] = *emit_from;
+
+        if (trail->vertex_count < DASH_PARTICLE_COUNT) {
+            trail->vertex_count += 1;
+        }
+    }
+
+    render_batch_add_callback(batch, spell_assets_get()->dash_trail_material, dash_trail_render_callback, trail);
 }
 
 void dash_trail_destroy(struct dash_trail* trail) {
