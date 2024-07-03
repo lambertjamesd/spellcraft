@@ -17,7 +17,7 @@ struct spell flame_spell = {
 };
 
 struct spell_symbol dash_spell_symbols[] = {
-    {.type = SPELL_SYMBOL_RECAST},
+    {.type = SPELL_SYMBOL_FIRE},
     {.type = SPELL_SYMBOL_PUSH},
 };
 

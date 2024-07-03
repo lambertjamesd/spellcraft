@@ -5,6 +5,7 @@
 #include <memory.h>
 #include "../util/sort.h"
 #include "../time/time.h"
+#include "elements.h"
 
 void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana);
 
@@ -48,7 +49,7 @@ void spell_slot_init(
             break;
         case SPELL_SYMBOL_PUSH:
             slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
-            push_init(&slot->data.push, input, event_options);
+            push_init(&slot->data.push, input, event_options, spell_data_source_determine_element(input));
             break;
         default:
             assert(false);

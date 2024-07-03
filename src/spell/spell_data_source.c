@@ -45,3 +45,19 @@ void spell_data_source_release(struct spell_data_source* data_source) {
 
     data_source->reference_count -= 1;
 }
+
+enum element_type spell_data_source_determine_element(struct spell_data_source* data_source) {
+    if (data_source->flags.flaming) {
+        if (data_source->flags.icy) {
+            return ELEMENT_TYPE_LIGHTNING;
+        }
+
+        return ELEMENT_TYPE_FIRE;
+    }
+
+    if (data_source->flags.icy) {
+        return ELEMENT_TYPE_ICE;
+    }
+
+    return ELEMENT_TYPE_NONE;
+}
