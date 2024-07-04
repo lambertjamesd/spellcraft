@@ -1,0 +1,10 @@
+{
+    "tex0": "../../images/buildings/wallsupport.png",
+    "combineMode": [{
+        "color": ["TEX0", "0", "SHADE", "0"],
+        "alpha": ["0", "0", "0", "1"]
+    }],
+    "blendMode": "OPAQUE",
+    "lighting": false,
+    "zBuffer": true
+}
