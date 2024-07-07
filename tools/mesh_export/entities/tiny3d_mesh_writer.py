@@ -296,10 +296,10 @@ def _pack_normal(normal):
 def _pack_color(color):
     return struct.pack(
         '>BBBB', 
-        int(color[0] * 255),
-        int(color[1] * 255),
-        int(color[2] * 255),
-        int(color[3] * 255)
+        int(pow(color[0], 1 / 2.2) * 255),
+        int(pow(color[1], 1 / 2.2) * 255),
+        int(pow(color[2], 1 / 2.2) * 255),
+        int(pow(color[3], 1 / 2.2) * 255)
     )
 
 def _pack_uv(uv, materail: material.Material):
