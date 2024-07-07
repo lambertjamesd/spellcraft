@@ -38,7 +38,7 @@ struct material {
 };
 
 void material_init(struct material* material);
-void material_free(struct material* material);
+void material_destroy(struct material* material);
 
 // used to directly load a material
 // materials loaded this way must be 

@@ -26,12 +26,6 @@ struct material* material_cache_load(const char* filename) {
 
 void material_cache_release(struct material* material) {
     if (resource_cache_free(&material_resource_cache, material)) {
-        if (material->tex0.sprite) {
-            sprite_cache_release(material->tex0.sprite);
-        }
-        if (material->tex1.sprite) {
-            sprite_cache_release(material->tex1.sprite);
-        }
         material_release(material);
         free(material);
     }

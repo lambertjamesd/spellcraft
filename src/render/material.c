@@ -18,7 +18,13 @@ void material_init(struct material* material) {
     material->flags = 0;
 }
 
-void material_free(struct material* material) {
+void material_destroy(struct material* material) {
+    if (material->tex0.sprite) {
+        sprite_cache_release(material->tex0.sprite);
+    }
+    if (material->tex1.sprite) {
+        sprite_cache_release(material->tex1.sprite);
+    }
     rspq_block_free(material->block);
     free(material->palette.tlut);
     material->palette.tlut = 0;
@@ -227,5 +233,5 @@ void material_load(struct material* into, FILE* material_file) {
 }
 
 void material_release(struct material* material) {
-    material_free(material);
+    material_destroy(material);
 }

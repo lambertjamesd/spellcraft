@@ -181,6 +181,7 @@ struct world* world_load(const char* filename) {
 
     fread(&world->entity_data_count, 2, 1, file);
 
+    // TODO don't leak memory here
     world->entity_data = malloc(sizeof(struct entity_data) * world->entity_data_count);
 
     for (int i = 0; i < world->entity_data_count; i += 1) {
@@ -209,6 +210,7 @@ void world_release(struct world* world) {
         struct static_entity* entity = &world->static_entities[i];
         tmesh_release(&entity->tmesh);
     }
+    free(world->static_entities);
 
     render_scene_remove(world);
     update_remove(world);
@@ -223,6 +225,7 @@ void world_release(struct world* world) {
     mesh_collider_release(&world->mesh_collider);
 
     free(world->string_table);
+    free(world->loading_zones);
 
     free(world);
 }

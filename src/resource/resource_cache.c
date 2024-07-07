@@ -19,6 +19,17 @@ uint32_t string_hash(const void* key) {
 
 
 void resource_cache_reset(struct resource_cache* cache) {
+    for (int i = 0; i < cache->entry_capacity; i += 1) {
+        struct resource_cache_entry* entry = &cache->entries[i];
+
+        // skip empty entries
+        if (!entry->filename) {
+            continue;
+        }
+
+        free(entry->filename);
+    }
+
     free(cache->entries);
     free(cache->filename_index);
     free(cache->resource_index);
@@ -73,6 +84,16 @@ void resource_cache_resize(struct resource_cache* cache) {
     for (int i = 0; i < new_capacity; ++i) {
         new_filename_index[i] = NO_ENTRY;
         new_resource_index[i] = NO_ENTRY;
+    }
+
+    for (int i = 0; i < new_capacity; ++i) {
+        struct resource_cache_entry* target_entry = &new_entries[i];
+
+        target_entry->filename = NULL;
+        target_entry->resource = NULL;
+        target_entry->filename_hash = 0;
+        target_entry->filename_index = 0;
+        target_entry->reference_count = 0;
     }
 
     cache->next_entry_index = 0;
