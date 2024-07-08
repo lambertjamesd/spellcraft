@@ -148,13 +148,13 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         view_proj_matrix[0][0] * view_proj_matrix[0][0] + 
         view_proj_matrix[0][1] * view_proj_matrix[0][1] +
         view_proj_matrix[0][2] * view_proj_matrix[0][2]
-    ) * 0.5f;
+    ) * 0.5f * 4;
 
     float scale_y = sqrtf(
         view_proj_matrix[1][0] * view_proj_matrix[1][0] + 
         view_proj_matrix[1][1] * view_proj_matrix[1][1] +
         view_proj_matrix[1][2] * view_proj_matrix[1][2]
-    ) * 0.5f;
+    ) * 0.5f * 4;
 
     sort_indices(order, batch->element_count, batch, (sort_compare)render_batch_compare_element);
 
@@ -196,7 +196,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         bool should_sprite_mode = element_type_2d[element->type];
 
         if (should_sprite_mode != is_sprite_mode) {
-            if (is_sprite_mode) {
+            if (should_sprite_mode) {
                 rdpq_mode_persp(false);
             } else {
                 rdpq_mode_zoverride(false, 0, 0);
@@ -253,7 +253,9 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 struct render_billboard_sprite sprite = element->billboard.sprites[sprite_index];
 
                 struct Vector4 transformed;
-                matrixVec3Mul(view_proj_matrix, &sprite.position, &transformed);
+                struct Vector3 scaled;
+                vector3Scale(&sprite.position, &scaled, SCENE_SCALE);
+                matrixVec3Mul(view_proj_matrix, &scaled, &transformed);
 
                 if (transformed.w < 0.0f) {
                     continue;
@@ -261,11 +263,11 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
                 float wInv = 1.0f / transformed.w;
 
-                float x = (transformed.x * wInv + 1.0f) * 0.5f;
-                float y = (-transformed.y * wInv + 1.0f) * 0.5f;
+                float x = (transformed.x * wInv + 1.0f) * 0.5f * 4.0f;
+                float y = (-transformed.y * wInv + 1.0f) * 0.5f * 4.0f;
                 float z = transformed.z * wInv * 0.5f + 0.5f;
 
-                float size = sprite.radius * wInv;
+                float size = sprite.radius * wInv * SCENE_SCALE;
 
                 if (z < 0.0f || z > 1.0f) {
                     continue;
@@ -273,8 +275,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
                 rdpq_mode_zoverride(true, z, 0);
 
-                int screen_x = (int)(x * (viewport->size[0])) + viewport->offset[0];
-                int screen_y = (int)(y * (viewport->size[1])) + viewport->offset[1];
+                int screen_x = (int)(x * (viewport->size[0])) + viewport->offset[0] * 4;
+                int screen_y = (int)(y * (viewport->size[1])) + viewport->offset[1] * 4;
 
                 int half_screen_width = (int)(size * scale_x * viewport->size[0]);
                 int half_screen_height = (int)(size * scale_y * viewport->size[1]);
@@ -283,12 +285,12 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 int image_h = 32;
 
                 if (current_mat && current_mat->tex0.sprite) {
-                    image_w = current_mat->tex0.sprite->width;
-                    image_h = current_mat->tex0.sprite->height;
+                    image_w = current_mat->tex0.sprite->width * 32;
+                    image_h = current_mat->tex0.sprite->height * 32;
                 }
 
                 rdpq_set_prim_color(sprite.color);
-                rdpq_texture_rectangle_scaled(
+                __rdpq_texture_rectangle_scaled_fx(
                     TILE0, 
                     screen_x - half_screen_width, 
                     screen_y - half_screen_height, 
