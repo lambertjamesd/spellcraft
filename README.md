@@ -22,6 +22,25 @@ sudo apt install python3
 I have version 3.12.3 installed.
 
 After that it should only take running `make` in the root directory of this project
+### JQ
+Building requires jq
+```
+sudo apt install jq
+```
+
+## Docker
+You can optionally build the project with docker. Build the container
+```
+docker build -t spellcraft-dev-env .
+```
+Run the container
+```
+docker run -v ${pwd}:/spellcraft -it spellcraft-dev-env
+```
+Run Make
+```
+make
+```
 
 ## TODO
 
