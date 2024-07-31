@@ -3,9 +3,11 @@
 #include <malloc.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <math.h>
 
 #include "mesh_collider.h"
 #include "collide.h"
+#include "collide_swept.h"
 #include "contact.h"
 #include "../util/hash_map.h"
 
@@ -246,7 +248,21 @@ void collision_scene_collide() {
         struct collision_scene_element* element = &g_scene.elements[i];
 
         if (g_scene.mesh_collider) {
-            collide_object_to_mesh(element->object, g_scene.mesh_collider);
+            struct Vector3 offset;
+            vector3Sub(element->object->position, &prev_pos[i], &offset);
+            struct Vector3 bbSize;
+            vector3Sub(&element->object->bounding_box.max, &element->object->bounding_box.min, &bbSize);
+            vector3Scale(&bbSize, &bbSize, 0.5f);
+
+            if (fabs(offset.x) > bbSize.x ||
+                fabs(offset.y) > bbSize.y ||
+                fabs(offset.z) > bbSize.z
+            ) {
+                collide_object_to_mesh_swept(element->object, g_scene.mesh_collider, &prev_pos[i]);
+            } else {
+                collide_object_to_mesh(element->object, g_scene.mesh_collider);
+            }
+            
         }
     }
 

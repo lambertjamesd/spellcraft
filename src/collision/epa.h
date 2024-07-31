@@ -3,6 +3,8 @@
 
 #include "gjk.h"
 
+#include <stdbool.h>
+
 struct EpaResult {
     struct Vector3 contactA;
     struct Vector3 contactB;
@@ -11,7 +13,7 @@ struct EpaResult {
     float penetration;
 };
 
-void epaSolve(struct Simplex* startingSimplex, void* objectA, MinkowsiSum objectASum, void* objectB, MinkowsiSum objectBSum, struct EpaResult* result);
+bool epaSolve(struct Simplex* startingSimplex, void* objectA, MinkowsiSum objectASum, void* objectB, MinkowsiSum objectBSum, struct EpaResult* result);
 int epaSolveSwept(struct Simplex* startingSimplex, void* objectA, MinkowsiSum objectASum, void* objectB, MinkowsiSum objectBSum, struct Vector3* bStart, struct Vector3* bEnd, struct EpaResult* result);
 void epaSwapResult(struct EpaResult* result);
 

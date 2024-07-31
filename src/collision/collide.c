@@ -48,22 +48,16 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
 
         struct EpaResult result;
 
-        epaSolve(&simplex, &triangle, mesh_triangle_minkowski_sum, object, dynamic_object_minkowski_sum, &result);
-
-        correct_overlap(object, &result, -1.0f, object->type->friction, object->type->bounce);
-
-        struct contact* contact = collision_scene_new_contact();
-
-        if (!contact) {
-            continue;
+        if (epaSolve(
+            &simplex, 
+            &triangle, 
+            mesh_triangle_minkowski_sum, 
+            object, 
+            dynamic_object_minkowski_sum, 
+            &result)) {
+            correct_overlap(object, &result, -1.0f, object->type->friction, object->type->bounce);
+            collide_add_contact(object, &result);
         }
-
-        contact->normal = result.normal;
-        contact->point = result.contactA;
-        contact->other_object = 0;
-
-        contact->next = object->active_contacts;
-        object->active_contacts = contact;
     }
 }
 
@@ -143,4 +137,19 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
 
     contact->next = a->active_contacts;
     a->active_contacts = contact;
+}
+
+void collide_add_contact(struct dynamic_object* object, struct EpaResult* result) {
+    struct contact* contact = collision_scene_new_contact();
+
+    if (!contact) {
+        return;
+    }
+
+    contact->normal = result->normal;
+    contact->point = result->contactA;
+    contact->other_object = 0;
+
+    contact->next = object->active_contacts;
+    object->active_contacts = contact;
 }

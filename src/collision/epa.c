@@ -429,7 +429,7 @@ void epaCalculateContact(struct ExpandingSimplex* simplex, struct SimplexTriangl
     vector3AddScaled(&result->contactA, &result->normal, result->penetration, &result->contactB);
 }
 
-void epaSolve(struct Simplex* startingSimplex, void* objectA, MinkowsiSum objectASum, void* objectB, MinkowsiSum objectBSum, struct EpaResult* result) {
+bool epaSolve(struct Simplex* startingSimplex, void* objectA, MinkowsiSum objectASum, void* objectB, MinkowsiSum objectBSum, struct EpaResult* result) {
     struct ExpandingSimplex simplex;
     expandingSimplexInit(&simplex, startingSimplex, 0);
     struct SimplexTriangle* closestFace = 0;
@@ -467,7 +467,11 @@ void epaSolve(struct Simplex* startingSimplex, void* objectA, MinkowsiSum object
         struct Vector3 planePos;
         vector3Scale(&closestFace->normal, &planePos, closestFace->distanceToOrigin);
         epaCalculateContact(&simplex, closestFace, &planePos, result);
+
+        return true;
     }
+    
+    return false;
 }
 
 void epaSweptFindFace(struct ExpandingSimplex* simplex, struct Vector3* direction, int* startTriangleIndex, int* startFaceEdge) {
