@@ -22,9 +22,9 @@ void swept_dynamic_object_minkowski_sum(void* data, struct Vector3* direction, s
 
 #define MAX_TRIANGLES_TO_CHECK  256
 
-void collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_collider* mesh, struct Vector3* prev_pos) {
+bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_collider* mesh, struct Vector3* prev_pos, struct swept_collide_result* result) {
     if (object->is_trigger) {
-        return;
+        return false;
     }
 
     struct swept_dynamic_object swept;

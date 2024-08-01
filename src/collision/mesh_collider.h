@@ -2,6 +2,7 @@
 #define __COLLISION_MESH_COLLIDER_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "../math/vector3.h"
 #include "../math/box3d.h"
