@@ -20,7 +20,56 @@ void swept_dynamic_object_minkowski_sum(void* data, struct Vector3* direction, s
     }
 }
 
-#define MAX_TRIANGLES_TO_CHECK  256
+struct object_mesh_collide_data {
+    struct mesh_collider* mesh;
+    struct dynamic_object* object;
+    struct mesh_triangle triangle;
+};
+
+bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int triangle_index) {
+    triangle.triangle = mesh->triangles[indices[i]];
+
+    struct Simplex simplex;
+    if (!gjkCheckForOverlap(&simplex, &triangle, mesh_triangle_minkowski_sum, &swept, swept_dynamic_object_minkowski_sum, &gRight)) {
+        continue;
+    }
+
+    struct EpaResult result;
+
+    struct Vector3 curr_pos = *object->position;
+
+    if (epaSolveSwept(
+        &simplex, 
+        &triangle, 
+        mesh_triangle_minkowski_sum, 
+        &swept, 
+        swept_dynamic_object_minkowski_sum, 
+        prev_pos,
+        object->position,
+        &result
+    )) {
+        collide_add_contact(object, &result);
+    } else if (epaSolve(
+        &simplex, 
+        &triangle, 
+        mesh_triangle_minkowski_sum, 
+        object, 
+        dynamic_object_minkowski_sum, 
+        &result
+    )) {
+        correct_overlap(object, &result, -1.0f, object->type->friction, object->type->bounce);
+        collide_add_contact(object, &result);
+    } else {
+        continue;
+    }
+
+    struct Vector3 move_amount;
+    vector3Sub(object->position, &curr_pos, &move_amount);
+    vector3Add(&move_amount, &object->bounding_box.min, &object->bounding_box.min);
+    vector3Add(&move_amount, &object->bounding_box.max, &object->bounding_box.max);
+
+    vector3Sub(prev_pos, object->position, &swept.offset);
+}
 
 bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_collider* mesh, struct Vector3* prev_pos, struct swept_collide_result* result) {
     if (object->is_trigger) {
@@ -34,55 +83,7 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
     struct Box3D sweptBox;
     box3DExtendDirection(&object->bounding_box, &swept.offset, &sweptBox);
 
-    uint16_t indices[MAX_TRIANGLES_TO_CHECK];
-    int triangle_count = mesh_index_lookup_triangle_indices(&mesh->index, &sweptBox, indices, MAX_TRIANGLES_TO_CHECK);
+    struct object_mesh_collide_data collide_data;
 
-    struct mesh_triangle triangle;
-
-    triangle.vertices = mesh->vertices;
-
-    for (int i = 0; i < triangle_count; ++i) {
-        triangle.triangle = mesh->triangles[indices[i]];
-
-        struct Simplex simplex;
-        if (!gjkCheckForOverlap(&simplex, &triangle, mesh_triangle_minkowski_sum, &swept, swept_dynamic_object_minkowski_sum, &gRight)) {
-            continue;
-        }
-
-        struct EpaResult result;
-
-        struct Vector3 curr_pos = *object->position;
-
-        if (epaSolveSwept(
-            &simplex, 
-            &triangle, 
-            mesh_triangle_minkowski_sum, 
-            &swept, 
-            swept_dynamic_object_minkowski_sum, 
-            prev_pos,
-            object->position,
-            &result
-        )) {
-            collide_add_contact(object, &result);
-        } else if (epaSolve(
-            &simplex, 
-            &triangle, 
-            mesh_triangle_minkowski_sum, 
-            object, 
-            dynamic_object_minkowski_sum, 
-            &result
-        )) {
-            correct_overlap(object, &result, -1.0f, object->type->friction, object->type->bounce);
-            collide_add_contact(object, &result);
-        } else {
-            continue;
-        }
-
-        struct Vector3 move_amount;
-        vector3Sub(object->position, &curr_pos, &move_amount);
-        vector3Add(&move_amount, &object->bounding_box.min, &object->bounding_box.min);
-        vector3Add(&move_amount, &object->bounding_box.max, &object->bounding_box.max);
-
-        vector3Sub(prev_pos, object->position, &swept.offset);
-    }
+    mesh_index_swept_lookup(&mesh->index, &object->bounding_box, &swept.offset, collide_object_swept_to_triangle, &collide_data);
 }

@@ -20,6 +20,8 @@ extern struct Vector3 gForward;
 extern struct Vector3 gZeroVec;
 extern struct Vector3 gOneVec;
 
+
+#define VECTOR3I_AS_ARRRAY(vector) ((int*)(vector))
 #define VECTOR3_AS_ARRAY(vector) ((float*)(vector))
 
 void vector3Abs(struct Vector3* in, struct Vector3* out);
