@@ -5,13 +5,7 @@
 #include "collision_scene.h"
 #include "../util/flags.h"
 
-void correct_overlap(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce) {
-    if (object->is_fixed) {
-        return;
-    }
-
-    vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
-
+void correct_velocity(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce) {
     float velocityDot = vector3Dot(&object->velocity, &result->normal);
 
     if ((velocityDot < 0) == (ratio < 0)) {
@@ -22,6 +16,16 @@ void correct_overlap(struct dynamic_object* object, struct EpaResult* result, fl
 
         vector3AddScaled(&tangentVelocity, &result->normal, velocityDot * -bounce, &object->velocity);
     }
+}
+
+void correct_overlap(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce) {
+    if (object->is_fixed) {
+        return;
+    }
+
+    vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
+
+    correct_velocity(object, result, ratio, friction, bounce);
 }
 
 struct object_mesh_collide_data {

@@ -27,11 +27,11 @@ void mesh_triangle_minkowski_sum(void* data, struct Vector3* direction, struct V
     *output = triangle->vertices[triangle->triangle.indices[idx]];
 }
 
-int mesh_index_merge_indices(
+bool mesh_index_merge_indices(
     struct mesh_index* index,
     struct mesh_index_block* block, 
     uint16_t* into, 
-    int actual_index_count,
+    int* actual_index_count,
     triangle_callback callback,
     void* data
 ) {
@@ -39,12 +39,14 @@ int mesh_index_merge_indices(
     uint16_t* b = into;
 
     uint16_t* max_a = index->index_indices + block->last_index;
-    uint16_t* max_b = into + actual_index_count;
+    uint16_t* max_b = into + *actual_index_count;
 
     uint16_t tmp[MAX_INDEX_SET_SIZE];
 
     uint16_t* out = tmp;
     uint16_t* max_out = tmp + MAX_INDEX_SET_SIZE;
+
+    bool did_hit = false;
 
     while (a < max_a || b < max_b) {
         if (out == max_out) {
@@ -60,7 +62,7 @@ int mesh_index_merge_indices(
                 ++b;
             } else {
                 // new index added
-                callback(index, data, *a);
+                did_hit = callback(index, data, *a) || did_hit;
             }
 
             *out++ = *a++;
@@ -75,18 +77,21 @@ int mesh_index_merge_indices(
         *into++ = *copy_from++;
     }
 
-    return out - tmp;
+    *actual_index_count = out - tmp;
+
+    return did_hit;
 }
 
-int mesh_index_traverse_index(
+bool mesh_index_traverse_index(
     struct mesh_index* index,
     struct Vector3i32* min,
     struct Vector3i32* max,
     triangle_callback callback,
     void* data,
     uint16_t* indices,
-    int index_count
+    int* index_count
 ) {
+    bool did_hit = false;
 
     struct mesh_index_block* start_block = &index->blocks[min->x + ((min->y + min->z * index->block_count.y) * index->block_count.x)];
 
@@ -97,14 +102,14 @@ int mesh_index_traverse_index(
             struct mesh_index_block* block = start_row;
 
             for (int x = min->x; x < max->x; x += 1) {
-                index_count = mesh_index_merge_indices(
+                did_hit = mesh_index_merge_indices(
                     index,
                     block, 
                     indices, 
                     index_count,
                     callback,
                     data
-                );
+                ) || did_hit;
 
                 block += 1;
             }
@@ -115,38 +120,43 @@ int mesh_index_traverse_index(
         start_block += index->block_count.x * index->block_count.y;
     }
 
-    return index_count;
+    return did_hit;
 }
 
-void mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* box, triangle_callback callback, void* data) {
+void mesh_index_calculate_box(struct mesh_index* index, struct Box3D* box, struct Vector3i32* min, struct Vector3i32* max) {
     struct Vector3 offset;
     vector3Sub(&box->min, &index->min, &offset);
     struct Vector3 grid_index;
     vector3Multiply(&offset, &index->stride_inv, &grid_index);
 
-    struct Vector3i32 min;
-    min.x = floorf(grid_index.x);
-    min.y = floorf(grid_index.y);
-    min.z = floorf(grid_index.z);
+    min->x = floorf(grid_index.x);
+    min->y = floorf(grid_index.y);
+    min->z = floorf(grid_index.z);
 
-    min.x = MAX(0, min.x);
-    min.y = MAX(0, min.y);
-    min.z = MAX(0, min.z);
+    min->x = MAX(0, min->x);
+    min->y = MAX(0, min->y);
+    min->z = MAX(0, min->z);
 
     vector3Sub(&box->max, &index->min, &offset);
     vector3Multiply(&offset, &index->stride_inv, &grid_index);
 
+    min->x = ceilf(grid_index.x);
+    min->y = ceilf(grid_index.y);
+    min->z = ceilf(grid_index.z);
+
+    min->x = MIN(index->block_count.x, min->x);
+    min->y = MIN(index->block_count.x, min->y);
+    min->z = MIN(index->block_count.x, min->z);
+}
+
+void mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* box, triangle_callback callback, void* data) {
+    struct Vector3i32 min;
     struct Vector3i32 max;
-    max.x = ceilf(grid_index.x);
-    max.y = ceilf(grid_index.y);
-    max.z = ceilf(grid_index.z);
 
-    max.x = MIN(index->block_count.x, max.x);
-    max.y = MIN(index->block_count.x, max.y);
-    max.z = MIN(index->block_count.x, max.z);
-
+    mesh_index_calculate_box(index, box, &min, &max);
     uint16_t indices[MAX_INDEX_SET_SIZE];
-    mesh_index_traverse_index(index, &min, &max, callback, data, &indices, 0);
+    int index_count = 0;
+    mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count);
 }
 
 float mesh_index_inv_offset(float input) {
@@ -160,15 +170,14 @@ float mesh_index_inv_offset(float input) {
 void mesh_index_swept_init(
     struct mesh_index* index, 
     struct Box3D* start_position,
-    struct Vector3* offset,
+    struct Vector3* move_amount,
     struct Vector3* dir_inv,
     struct Vector3* dir_local,
     struct Vector3* leading_point,
     struct Vector3* next_point
 ) {
     // convert from world coordinates to index coordinates
-    vector3Multiply(offset, &index->stride_inv, &dir_local);
-    vector3Negate(&dir_local, &dir_local);
+    vector3Multiply(move_amount, &index->stride_inv, dir_local);
     dir_inv->x = mesh_index_inv_offset(dir_local->x);
     dir_inv->y = mesh_index_inv_offset(dir_local->y);
     dir_inv->z = mesh_index_inv_offset(dir_local->z);
@@ -179,8 +188,8 @@ void mesh_index_swept_init(
     leading_point->z = dir_local->z > 0 ? start_position->max.z : start_position->min.z;
 
     // convert leading edge to local coordinates
-    vector3Sub(&leading_point, &index->min, &leading_point);
-    vector3Multiply(&leading_point, &index->stride_inv, &leading_point);
+    vector3Sub(leading_point, &index->min, leading_point);
+    vector3Multiply(leading_point, &index->stride_inv, leading_point);
 
     // determine the next corner to check against
     next_point->x = dir_local->x > 0 ? floorf(leading_point->x) : ceilf(leading_point->x);
@@ -243,23 +252,18 @@ void mesh_index_swept_determine_ranges(
     }
 }
 
-void mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* offset, triangle_callback callback, void* data) {
+bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* move_amount, triangle_callback callback, void* data) {
     struct Box3D start_position;
-    vector3Add(&end_position->min, offset, &start_position.min);
-    vector3Add(&end_position->max, offset, &start_position.max);
+    vector3Sub(&end_position->min, move_amount, &start_position.min);
+    vector3Sub(&end_position->max, move_amount, &start_position.max);
 
-    int index_count = 0;
+    struct Vector3i32 min;
+    struct Vector3i32 max;
+    mesh_index_calculate_box(index, &start_position, &min, &max);
     uint16_t indices[MAX_INDEX_SET_SIZE];
-    index_count = mesh_index_lookup_triangle_indices(index, &start_position, indices, MAX_INDEX_SET_SIZE);
-
-    bool did_hit = false;
-
-    for (int i = 0; i < index_count; i += 1) {
-        did_hit = callback(index, data, indices[i]) || did_hit;
-    }
-
-    if (did_hit) {
-        return;
+    int index_count = 0;
+    if (mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count)) {
+        return false;
     }
 
     struct Vector3 dir_inv;
@@ -270,7 +274,7 @@ void mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
     mesh_index_swept_init(
         index,
         &start_position,
-        offset,
+        move_amount,
         &dir_inv,
         &dir_local,
         &leading_point,
@@ -297,16 +301,17 @@ void mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
 
         VECTOR3_AS_ARRAY(&next_point)[axis] += VECTOR3_AS_ARRAY(&dir_local)[axis] > 0 ? 1 : -1;
         vector3AddScaled(&leading_point, &dir_local, VECTOR3_AS_ARRAY(&offset_time)[axis], &leading_point);
-
-        struct Vector3i32 min;
-        struct Vector3i32 max;
         
         mesh_index_swept_determine_ranges(
             axis, &min, &max, &dir_local, &leading_point, &next_point, &box_size
         );
 
-        index_count = mesh_index_traverse_index(index, &min, &max, callback, data, &indices, index_count);
+        if (mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count)) {
+            return true;
+        }
 
         vector3Sub(&next_point, &leading_point, &next_offset);
     }
+
+    return false;
 }

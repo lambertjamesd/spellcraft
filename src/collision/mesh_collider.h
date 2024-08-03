@@ -43,6 +43,6 @@ typedef bool (*triangle_callback)(struct mesh_index* index, void* data, int tria
 void mesh_triangle_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 
 void mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* box, triangle_callback callback, void* data);
-void mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* offset, triangle_callback callback, void* data);
+bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* offset, triangle_callback callback, void* data);
 
 #endif
