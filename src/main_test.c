@@ -5,6 +5,7 @@
 #include "test/framework_test.h"
 
 void test_mesh_index_lookup_triangle_indices(struct test_context* t);
+void test_mesh_index_swept_lookup(struct test_context* t);
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(500)
 
@@ -25,6 +26,7 @@ int main() {
     console_set_render_mode(RENDER_MANUAL);
 
     test_run(test_mesh_index_lookup_triangle_indices);
+    test_run(test_mesh_index_swept_lookup);
 
     test_report_failures();
 

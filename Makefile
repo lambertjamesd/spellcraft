@@ -6,7 +6,7 @@ include $(T3D_INST)/t3d.mk
 
 MK_ASSET=$(N64_INST)/bin/mkasset
 
-N64_C_AND_CXX_FLAG += -Og
+N64_C_AND_CXX_FLAGS += -Og
 
 all: spellcraft.z64
 .PHONY: all

@@ -17,7 +17,7 @@ bool test_traingle_callback(struct mesh_index* index, void* data, int triangle_i
 
     info->collide_count += 1;
 
-    return false;
+    return true;
 }
 
 void test_mesh_index_lookup_triangle_indices(struct test_context* t) {
@@ -32,6 +32,26 @@ void test_mesh_index_lookup_triangle_indices(struct test_context* t) {
             {10.0f, 40.0f, -10.0f},
             {30.0f, 45.0f, 10.0f},
         },
+        test_traingle_callback,
+        &info
+    );
+
+    test_equali(t, 2, info.collide_count);
+}
+
+void test_mesh_index_swept_lookup(struct test_context* t) {
+    test_load_world("rom:/worlds/testing.world");
+
+    struct test_collide_info info;
+    test_collide_info_init(&info);
+
+    mesh_index_swept_lookup(
+        &g_scene.mesh_collider->index, 
+        &(struct Box3D) {
+            {10.0f, 40.0f, -10.0f},
+            {30.0f, 45.0f, 10.0f},
+        },
+        &(struct Vector3){40.0f, 0.f, 0.0f},
         test_traingle_callback,
         &info
     );

@@ -1,6 +1,7 @@
 #include "mesh_collider.h"
 
 #include <math.h>
+#include <stdio.h>
 #include "../math/minmax.h"
 
 #define MAX_INDEX_SET_SIZE 64
@@ -174,6 +175,7 @@ void mesh_index_swept_init(
     struct Vector3* dir_inv,
     struct Vector3* dir_local,
     struct Vector3* leading_point,
+    struct Vector3* max_point,
     struct Vector3* next_point
 ) {
     // convert from world coordinates to index coordinates
@@ -192,13 +194,22 @@ void mesh_index_swept_init(
     vector3Multiply(leading_point, &index->stride_inv, leading_point);
 
     // determine the next corner to check against
-    next_point->x = dir_local->x > 0 ? floorf(leading_point->x) : ceilf(leading_point->x);
-    next_point->y = dir_local->y > 0 ? floorf(leading_point->y) : ceilf(leading_point->y);
-    next_point->z = dir_local->z > 0 ? floorf(leading_point->z) : ceilf(leading_point->z);
+    next_point->x = dir_local->x > 0 ? ceilf(leading_point->x) : floorf(leading_point->x);
+    next_point->y = dir_local->y > 0 ? ceilf(leading_point->y) : floorf(leading_point->y);
+    next_point->z = dir_local->z > 0 ? ceilf(leading_point->z) : floorf(leading_point->z);
+
+    vector3Add(leading_point, dir_local, max_point);
 
 }
 
-void mesh_index_swept_determine_ranges(
+enum mesh_range_result {
+    MESH_RANGE_RESULT_COLLIDE,
+    MESH_RANGE_RESULT_SKIP,
+    MESH_RANGE_RESULT_END,
+};
+
+enum mesh_range_result mesh_index_swept_determine_ranges(
+    struct mesh_index* index,
     int axis,
     struct Vector3i32* min,
     struct Vector3i32* max,
@@ -207,49 +218,63 @@ void mesh_index_swept_determine_ranges(
     struct Vector3* next_point,
     struct Vector3* box_size
 ) {
-    int prev_axis = axis == 0 ? 2 : axis - 1;
-    int next_axis = axis == 2 ? 0 : axis + 1;
+
+    // TODO handle out of bounds
+
+    enum mesh_range_result result = MESH_RANGE_RESULT_COLLIDE;
 
     int axis_index = (int)VECTOR3_AS_ARRAY(next_point)[axis];
     if (VECTOR3_AS_ARRAY(dir_local)[axis] > 0) {
+        VECTOR3I_AS_ARRRAY(min)[axis] = axis_index - 1;
+        VECTOR3I_AS_ARRRAY(max)[axis] = axis_index;
+
+        if (VECTOR3I_AS_ARRRAY(min)[axis] >= VECTOR3U8_AS_ARRRAY(&index->block_count)[axis]) {
+            return MESH_RANGE_RESULT_END;
+        }
+    } else {
         VECTOR3I_AS_ARRRAY(min)[axis] = axis_index;
         VECTOR3I_AS_ARRRAY(max)[axis] = axis_index + 1;
-    } else {
-        VECTOR3I_AS_ARRRAY(min)[axis] = axis_index;
-        VECTOR3I_AS_ARRRAY(max)[axis] = axis_index + 1;
+
+        if (VECTOR3I_AS_ARRRAY(max)[axis] <= 0) {
+            return MESH_RANGE_RESULT_END;
+        }
     }
 
-    if (VECTOR3_AS_ARRAY(dir_local)[prev_axis] > 0) {
-        VECTOR3I_AS_ARRRAY(min)[prev_axis] = floorf(
-            VECTOR3_AS_ARRAY(leading_point)[prev_axis] - VECTOR3_AS_ARRAY(box_size)[prev_axis]
-        );
-        VECTOR3I_AS_ARRRAY(min)[prev_axis] = ceilf(
-            VECTOR3_AS_ARRAY(leading_point)[prev_axis]
-        );
-    } else {
-        VECTOR3I_AS_ARRRAY(min)[prev_axis] = floorf(
-            VECTOR3_AS_ARRAY(leading_point)[prev_axis]
-        );
-        VECTOR3I_AS_ARRRAY(min)[prev_axis] = ceilf(
-            VECTOR3_AS_ARRAY(leading_point)[prev_axis] + VECTOR3_AS_ARRAY(box_size)[prev_axis]
-        );
+    for (int curr_axis = 0; curr_axis < 3; curr_axis += 1) {
+        if (curr_axis == axis) {
+            continue;
+        }
+
+        if (VECTOR3_AS_ARRAY(dir_local)[curr_axis] > 0) {
+            VECTOR3I_AS_ARRRAY(min)[curr_axis] = floorf(
+                VECTOR3_AS_ARRAY(leading_point)[curr_axis] - VECTOR3_AS_ARRAY(box_size)[curr_axis]
+            );
+            VECTOR3I_AS_ARRRAY(max)[curr_axis] = ceilf(
+                VECTOR3_AS_ARRAY(leading_point)[curr_axis]
+            );
+        } else {
+            VECTOR3I_AS_ARRRAY(min)[curr_axis] = floorf(
+                VECTOR3_AS_ARRAY(leading_point)[curr_axis]
+            );
+            VECTOR3I_AS_ARRRAY(max)[curr_axis] = ceilf(
+                VECTOR3_AS_ARRAY(leading_point)[curr_axis] + VECTOR3_AS_ARRAY(box_size)[curr_axis]
+            );
+        }
     }
 
-    if (VECTOR3_AS_ARRAY(dir_local)[next_axis] > 0) {
-        VECTOR3I_AS_ARRRAY(min)[next_axis] = floorf(
-            VECTOR3_AS_ARRAY(leading_point)[next_axis] - VECTOR3_AS_ARRAY(box_size)[next_axis]
-        );
-        VECTOR3I_AS_ARRRAY(min)[next_axis] = ceilf(
-            VECTOR3_AS_ARRAY(leading_point)[next_axis]
-        );
-    } else {
-        VECTOR3I_AS_ARRRAY(min)[next_axis] = floorf(
-            VECTOR3_AS_ARRAY(leading_point)[next_axis]
-        );
-        VECTOR3I_AS_ARRRAY(min)[next_axis] = ceilf(
-            VECTOR3_AS_ARRAY(leading_point)[next_axis] + VECTOR3_AS_ARRAY(box_size)[next_axis]
-        );
-    }
+    min->x = MAX(min->x, 0);
+    min->y = MAX(min->y, 0);
+    min->z = MAX(min->z, 0);
+
+    max->x = MIN(max->x, index->block_count.x);
+    max->y = MIN(max->y, index->block_count.y);
+    max->z = MIN(max->z, index->block_count.z);
+
+    return result;
+}
+
+bool is_inf(float value) {
+    return value == infinityf() || value == -infinityf();
 }
 
 bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* move_amount, triangle_callback callback, void* data) {
@@ -269,6 +294,7 @@ bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
     struct Vector3 dir_inv;
     struct Vector3 dir_local;
     struct Vector3 leading_point;
+    struct Vector3 max_point;
     struct Vector3 next_point;
 
     mesh_index_swept_init(
@@ -278,22 +304,37 @@ bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
         &dir_inv,
         &dir_local,
         &leading_point,
+        &max_point,
         &next_point
     );
 
+    int max_iterations = index->block_count.x + index->block_count.y + index->block_count.z;
+
     struct Vector3 box_size;
     vector3Sub(&end_position->max, &end_position->min, &box_size);
+    // convert to index space
+    vector3Multiply(&box_size, &index->stride_inv, &box_size);
     struct Vector3 next_offset;
-    vector3Sub(&next_point, &leading_point, &next_offset);
-    while (vector3Dot(&dir_local, &next_offset) < 0.0f) {
+    vector3Sub(&max_point, &leading_point, &next_offset);
+    for (int iteration = 0; iteration < max_iterations && vector3Dot(&dir_local, &next_offset) > 0.0f; iteration += 1) {
         struct Vector3 offset_time;
+        vector3Sub(&next_point, &leading_point, &next_offset);
         vector3Multiply(&next_offset, &dir_inv, &offset_time);
 
-        int axis;
+        int axis = 0;
 
-        if (offset_time.x < offset_time.y && offset_time.x < offset_time.z) {
+        bool is_x_inf = is_inf(offset_time.x);
+        bool is_y_inf = is_inf(offset_time.y);
+        bool is_z_inf = is_inf(offset_time.z);
+
+        if (!is_x_inf && 
+            (offset_time.x < offset_time.y || is_y_inf) && 
+            (offset_time.x < offset_time.z || is_z_inf)
+        ) {
             axis = 0;
-        } else if (offset_time.y < offset_time.z) {
+        } else if (!is_y_inf && 
+            (offset_time.y < offset_time.z || is_z_inf)
+        ) {
             axis = 1;
         } else {
             axis = 2;
@@ -301,18 +342,20 @@ bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
 
         VECTOR3_AS_ARRAY(&next_point)[axis] += VECTOR3_AS_ARRAY(&dir_local)[axis] > 0 ? 1 : -1;
         vector3AddScaled(&leading_point, &dir_local, VECTOR3_AS_ARRAY(&offset_time)[axis], &leading_point);
-
-        // TODO handle out of bounds
         
-        mesh_index_swept_determine_ranges(
-            axis, &min, &max, &dir_local, &leading_point, &next_point, &box_size
+        enum mesh_range_result range_result = mesh_index_swept_determine_ranges(
+            index, axis, &min, &max, &dir_local, &leading_point, &next_point, &box_size
         );
 
-        if (mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count)) {
+        if (range_result == MESH_RANGE_RESULT_END) {
+            return false;
+        }
+
+        if (range_result == MESH_RANGE_RESULT_COLLIDE && mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count)) {
             return true;
         }
 
-        vector3Sub(&next_point, &leading_point, &next_offset);
+        vector3Sub(&max_point, &leading_point, &next_offset);
     }
 
     return false;

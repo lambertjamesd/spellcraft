@@ -11,7 +11,7 @@ struct Vector3 {
 };
 
 struct Vector3u8 {
-    char x, y, z;
+    unsigned char x, y, z;
 };
 
 extern struct Vector3 gRight;
@@ -22,6 +22,7 @@ extern struct Vector3 gOneVec;
 
 
 #define VECTOR3I_AS_ARRRAY(vector) ((int*)(vector))
+#define VECTOR3U8_AS_ARRRAY(vector) ((unsigned char*)(vector))
 #define VECTOR3_AS_ARRAY(vector) ((float*)(vector))
 
 void vector3Abs(struct Vector3* in, struct Vector3* out);
@@ -47,8 +48,6 @@ void vector3Max(struct Vector3* a, struct Vector3* b, struct Vector3* out);
 void vector3Min(struct Vector3* a, struct Vector3* b, struct Vector3* out);
 
 int vector3IsZero(struct Vector3* vector);
-
-void vector3ToVector3u8(struct Vector3* input, struct Vector3u8* output);
 
 float vector3EvalBarycentric1D(struct Vector3* baryCoords, float a, float b, float c);
 
