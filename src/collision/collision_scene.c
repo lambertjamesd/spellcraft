@@ -11,25 +11,7 @@
 #include "contact.h"
 #include "../util/hash_map.h"
 
-#define MIN_DYNAMIC_OBJECTS 64
-#define MAX_ACTIVE_CONTACTS 128
-
-struct collision_scene_element {
-    struct dynamic_object* object;
-};
-
-struct collision_scene {
-    struct collision_scene_element* elements;
-    struct contact* next_free_contact;
-    struct contact* all_contacts;
-    struct hash_map entity_mapping;
-    uint16_t count;
-    uint16_t capacity;
-
-    struct mesh_collider* mesh_collider;
-};
-
-static struct collision_scene g_scene;
+struct collision_scene g_scene;
 
 void collision_scene_reset() {
     free(g_scene.elements);

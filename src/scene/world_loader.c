@@ -206,6 +206,10 @@ struct world* world_load(const char* filename) {
 }
 
 void world_release(struct world* world) {
+    if (!world) {
+        return;
+    }
+
     for (int i = 0; i < world->static_entity_count; ++i) {
         struct static_entity* entity = &world->static_entities[i];
         tmesh_release(&entity->tmesh);

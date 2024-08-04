@@ -3,9 +3,28 @@
 
 #include "dynamic_object.h"
 #include "../collision/mesh_collider.h"
+#include "../util/hash_map.h"
 #include "contact.h"
 
 typedef int collision_id;
+
+#define MIN_DYNAMIC_OBJECTS 64
+#define MAX_ACTIVE_CONTACTS 128
+
+struct collision_scene_element {
+    struct dynamic_object* object;
+};
+
+struct collision_scene {
+    struct collision_scene_element* elements;
+    struct contact* next_free_contact;
+    struct contact* all_contacts;
+    struct hash_map entity_mapping;
+    uint16_t count;
+    uint16_t capacity;
+
+    struct mesh_collider* mesh_collider;
+};
 
 void collision_scene_reset();
 void collision_scene_add(struct dynamic_object* object);

@@ -140,13 +140,13 @@ void mesh_index_calculate_box(struct mesh_index* index, struct Box3D* box, struc
     vector3Sub(&box->max, &index->min, &offset);
     vector3Multiply(&offset, &index->stride_inv, &grid_index);
 
-    min->x = ceilf(grid_index.x);
-    min->y = ceilf(grid_index.y);
-    min->z = ceilf(grid_index.z);
+    max->x = ceilf(grid_index.x);
+    max->y = ceilf(grid_index.y);
+    max->z = ceilf(grid_index.z);
 
-    min->x = MIN(index->block_count.x, min->x);
-    min->y = MIN(index->block_count.x, min->y);
-    min->z = MIN(index->block_count.x, min->z);
+    max->x = MIN(index->block_count.x, max->x);
+    max->y = MIN(index->block_count.y, max->y);
+    max->z = MIN(index->block_count.z, max->z);
 }
 
 void mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* box, triangle_callback callback, void* data) {
@@ -301,6 +301,8 @@ bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
 
         VECTOR3_AS_ARRAY(&next_point)[axis] += VECTOR3_AS_ARRAY(&dir_local)[axis] > 0 ? 1 : -1;
         vector3AddScaled(&leading_point, &dir_local, VECTOR3_AS_ARRAY(&offset_time)[axis], &leading_point);
+
+        // TODO handle out of bounds
         
         mesh_index_swept_determine_ranges(
             axis, &min, &max, &dir_local, &leading_point, &next_point, &box_size

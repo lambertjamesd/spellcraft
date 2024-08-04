@@ -11,6 +11,9 @@ N64_C_AND_CXX_FLAG += -Og
 all: spellcraft.z64
 .PHONY: all
 
+tests: spellcraft_test.z64
+.PHONY: tests
+
 ###
 # fonts
 ###
@@ -128,17 +131,25 @@ build/test_result.txt: $(EXPORT_SOURCE)
 # source code
 ###
 
-SOURCES := $(shell find src/ -type f -name '*.c' | sort)
+SOURCES := $(shell find src/ ! -name '*_test.c' ! -name 'main.c' -type f -name '*.c' | sort)
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
+
+TEST_SOURCES := $(shell find src/ -type f -name '*_test.c' | sort)
+TEST_SOURCE_OBJS := $(TEST_SOURCES:src/%.c=$(BUILD_DIR)/%.o)
+TEST_OBJS := $(SOURCE_OBJS) $(TEST_SOURCE_OBJS)
 
 filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 
 $(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
+$(BUILD_DIR)/spellcraft_test.elf: $(TEST_OBJS)
 
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"
 spellcraft.z64: $(BUILD_DIR)/spellcraft.dfs
+
+spellcraft_test.z64: N64_ROM_TITLE="SpellCraft Test"
+spellcraft_test.z64: $(BUILD_DIR)/spellcraft.dfs
 
 clean:
 	rm -rf $(BUILD_DIR)/* filesystem/ *.z64
