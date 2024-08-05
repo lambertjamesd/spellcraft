@@ -6,6 +6,7 @@
 
 void test_mesh_index_lookup_triangle_indices(struct test_context* t);
 void test_mesh_index_swept_lookup(struct test_context* t);
+void test_collide_object_swept_to_triangle(struct test_context* t);
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(500)
 
@@ -27,6 +28,8 @@ int main() {
 
     test_run(test_mesh_index_lookup_triangle_indices);
     test_run(test_mesh_index_swept_lookup);
+
+    test_run(test_collide_object_swept_to_triangle);
 
     test_report_failures();
 

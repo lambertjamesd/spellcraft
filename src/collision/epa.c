@@ -556,6 +556,10 @@ int epaSolveSwept(struct Simplex* startingSimplex, void* objectA, MinkowsiSum ob
             return 0;
         }
 
+        // used to prevent swept collision from having two objects
+        // slighting overlapping after moving
+        distance -= 0.01f;
+
         result->penetration = 0;
 
         struct Vector3 planePos;

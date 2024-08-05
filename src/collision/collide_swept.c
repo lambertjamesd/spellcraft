@@ -21,13 +21,6 @@ void swept_dynamic_object_minkowski_sum(void* data, struct Vector3* direction, s
     }
 }
 
-struct object_mesh_collide_data {
-    struct Vector3* prev_pos;
-    struct mesh_collider* mesh;
-    struct dynamic_object* object;
-    struct EpaResult hit_result;
-};
-
 void object_mesh_collide_data_init(
     struct object_mesh_collide_data* data,
     struct Vector3* prev_pos,
@@ -47,6 +40,7 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
     vector3Sub(collide_data->prev_pos, collide_data->object->position, &swept.offset);
 
     struct mesh_triangle triangle;
+    triangle.vertices = collide_data->mesh->vertices;
     triangle.triangle = collide_data->mesh->triangles[triangle_index];
 
     struct Simplex simplex;
@@ -129,7 +123,6 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
     )) {
         return false;
     }
-
 
     collide_object_swept_bounce(object, &collide_data, &start_pos);
 
