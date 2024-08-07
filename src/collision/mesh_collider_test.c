@@ -41,7 +41,7 @@ void test_mesh_index_lookup_triangle_indices(struct test_context* t) {
         &info
     );
 
-    test_equali(t, 2, info.collide_count);
+    test_eqi(t, 2, info.collide_count);
 }
 
 void test_mesh_index_swept_lookup(struct test_context* t) {
@@ -61,7 +61,7 @@ void test_mesh_index_swept_lookup(struct test_context* t) {
         &info
     );
 
-    test_equali(t, 2, info.collide_count);
+    test_eqi(t, 2, info.collide_count);
     
     struct test_collide_info lower_info;
     test_collide_info_init(&lower_info);
@@ -77,8 +77,8 @@ void test_mesh_index_swept_lookup(struct test_context* t) {
         &lower_info
     );
 
-    test_equali(t, 6, lower_info.collide_count);
-    test_equali(t, 0, info.colliders & lower_info.colliders);
+    test_eqi(t, 6, lower_info.collide_count);
+    test_eqi(t, 0, info.colliders & lower_info.colliders);
 
     test_collide_info_init(&lower_info);
     lower_info.should_collide = false;
@@ -94,6 +94,6 @@ void test_mesh_index_swept_lookup(struct test_context* t) {
         &lower_info
     );
 
-    test_equali(t, 13, lower_info.collide_count);
-    test_equali(t, 0, !(info.colliders & lower_info.colliders));
+    test_eqi(t, 13, lower_info.collide_count);
+    test_eqi(t, 0, !(info.colliders & lower_info.colliders));
 }

@@ -212,6 +212,36 @@ void collision_scene_collide_dynamic() {
     }
 }
 
+#define MAX_SWEPT_ITERATIONS    5
+
+void collision_scene_collide_single(struct dynamic_object* object, struct Vector3* prev_pos) {
+    for (int i = 0; i < MAX_SWEPT_ITERATIONS; i += 1) {
+        struct Vector3 offset;
+        vector3Sub(object->position, prev_pos, &offset);
+        struct Vector3 bbSize;
+        vector3Sub(&object->bounding_box.max, &object->bounding_box.min, &bbSize);
+        vector3Scale(&bbSize, &bbSize, 0.5f);
+
+        if (fabs(offset.x) > bbSize.x ||
+            fabs(offset.y) > bbSize.y ||
+            fabs(offset.z) > bbSize.z
+        ) {
+            if (!collide_object_to_mesh_swept(object, g_scene.mesh_collider, prev_pos)) {
+                return;
+            }
+        } else {
+            collide_object_to_mesh(object, g_scene.mesh_collider);
+            return;
+        }
+    }
+
+    // too many swept iterations
+    // to prevent tunneling just move 
+    // the object back to the previous known
+    // valid location
+    *object->position = *prev_pos;
+}
+
 void collision_scene_collide() {
     struct Vector3 prev_pos[g_scene.count];
 
@@ -229,23 +259,11 @@ void collision_scene_collide() {
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
 
-        if (g_scene.mesh_collider) {
-            struct Vector3 offset;
-            vector3Sub(element->object->position, &prev_pos[i], &offset);
-            struct Vector3 bbSize;
-            vector3Sub(&element->object->bounding_box.max, &element->object->bounding_box.min, &bbSize);
-            vector3Scale(&bbSize, &bbSize, 0.5f);
-
-            if (fabs(offset.x) > bbSize.x ||
-                fabs(offset.y) > bbSize.y ||
-                fabs(offset.z) > bbSize.z
-            ) {
-                collide_object_to_mesh_swept(element->object, g_scene.mesh_collider, &prev_pos[i]);
-            } else {
-                collide_object_to_mesh(element->object, g_scene.mesh_collider);
-            }
-            
+        if (!g_scene.mesh_collider) {
+            continue;
         }
+
+        collision_scene_collide_single(element->object, &prev_pos[i]);
     }
 
     collision_scene_collide_dynamic();

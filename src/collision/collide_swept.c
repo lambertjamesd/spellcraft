@@ -16,7 +16,7 @@ void swept_dynamic_object_minkowski_sum(void* data, struct Vector3* direction, s
 
     dynamic_object_minkowski_sum(obj->object, direction, output);
 
-    if (vector3Dot(&obj->offset, direction)) {
+    if (vector3Dot(&obj->offset, direction) > 0.0f) {
         vector3Add(output, &obj->offset, output);
     }
 }
@@ -84,17 +84,19 @@ void collide_object_swept_bounce(
     struct Vector3 move_amount_tangent;
     vector3Sub(&move_amount, &move_amount_normal, &move_amount_tangent);
 
-    vector3Scale(&move_amount_normal, &move_amount_normal, object->type->bounce);
+    vector3Scale(&move_amount_normal, &move_amount_normal, -object->type->bounce);
     
     vector3Add(object->position, &move_amount_normal, object->position);
     vector3Add(object->position, &move_amount_tangent, object->position);
 
     // don't include friction on a bounce
-    correct_velocity(object, &collide_data->hit_result, 1.0f, 1.0f, object->type->bounce);
+    correct_velocity(object, &collide_data->hit_result, -1.0f, 1.0f, object->type->bounce);
 
     vector3Sub(collide_data->prev_pos, object->position, &move_amount);
     vector3Add(&move_amount, &object->bounding_box.min, &object->bounding_box.min);
     vector3Add(&move_amount, &object->bounding_box.max, &object->bounding_box.max);
+
+    collide_add_contact(object, &collide_data->hit_result);
 }
 
 bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_collider* mesh, struct Vector3* prev_pos) {
@@ -109,8 +111,8 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
     struct Vector3 offset;
 
     vector3Sub(
-        prev_pos, 
         object->position, 
+        prev_pos, 
         &offset
     );
 

@@ -558,7 +558,7 @@ int epaSolveSwept(struct Simplex* startingSimplex, void* objectA, MinkowsiSum ob
 
         // used to prevent swept collision from having two objects
         // slighting overlapping after moving
-        distance -= 0.01f;
+        distance += 0.001f;
 
         result->penetration = 0;
 

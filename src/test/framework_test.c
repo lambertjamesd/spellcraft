@@ -12,6 +12,8 @@ static int failed_test_count;
 
 static const char* failed_test_names[MAX_NAMED_FAILS];
 
+void test_call_deferred();
+
 void test_run_raw(test_callback callback, const char* name) {
     struct test_context context;
     total_test_count += 1;
@@ -28,14 +30,69 @@ void test_run_raw(test_callback callback, const char* name) {
         callback(&context);
         fprintf(stderr, "TEST PASS %s\n", name);
     }
+    test_call_deferred();
 }
 
-void test_equali_raw(struct test_context* t, int expected, int actual, const char* location) {
+void test_eqi_raw(struct test_context* t, int expected, int actual, const char* location) {
     if (expected == actual) {
         return;
     }
 
     fprintf(stderr, "ASSERTION FAILED expected %d actual %d at %s\n", expected, actual, location);
+    longjmp(t->jump, 1);
+}
+
+void test_neqi_raw(struct test_context* t, int expected, int actual, const char* location) {
+    if (expected != actual) {
+        return;
+    }
+
+    fprintf(stderr, "ASSERTION FAILED expected not equal to %d at %s\n", expected, location);
+    longjmp(t->jump, 1);
+}
+
+void test_ltf_raw(struct test_context* t, float left, float right, const char* location) {
+    if (left < right) {
+        return;
+    }
+
+    fprintf(stderr, "ASSERTION FAILED expected %f < %f at %s\n", left, right, location);
+    longjmp(t->jump, 1);
+}
+
+void test_ltef_raw(struct test_context* t, float left, float right, const char* location) {
+    if (left <= right) {
+        return;
+    }
+
+    fprintf(stderr, "ASSERTION FAILED expected %f <= %f at %s\n", left, right, location);
+    longjmp(t->jump, 1);
+}
+
+void test_gtf_raw(struct test_context* t, float left, float right, const char* location) {
+    if (left > right) {
+        return;
+    }
+
+    fprintf(stderr, "ASSERTION FAILED expected %f > %f at %s\n", left, right, location);
+    longjmp(t->jump, 1);
+}
+
+void test_gtef_raw(struct test_context* t, float left, float right, const char* location) {
+    if (left >= right) {
+        return;
+    }
+
+    fprintf(stderr, "ASSERTION FAILED expected %f >= %f at %s\n", left, right, location);
+    longjmp(t->jump, 1);
+}
+
+void test_near_equalf_raw(struct test_context* t, float expected, float actual, const char* location) {
+    if (fabsf(expected - actual) < 0.000001f) {
+        return;
+    }
+
+    fprintf(stderr, "ASSERTION FAILED expected %f ~= %f at %s\n", expected, actual, location);
     longjmp(t->jump, 1);
 }
 
@@ -63,4 +120,35 @@ void test_load_world(const char* name) {
 
     world_release(current_test_world);
     current_test_world = world_load(name);
+}
+
+struct test_deferred_call_data {
+    test_deferred_call callback;
+    void* data;
+};
+
+#define MAX_DEFERRED_CALLBACKS  64
+
+static struct test_deferred_call_data test_all_deferred_callbacks[MAX_DEFERRED_CALLBACKS];
+static int deferred_callback_count = 0;
+
+void test_defer_call(struct test_context* t, test_deferred_call callback, void* data) {
+    if (deferred_callback_count >= MAX_DEFERRED_CALLBACKS) {
+        fprintf(stderr, "test_defer_call overflow\n");
+        longjmp(t->jump, 1);
+    }
+
+    test_all_deferred_callbacks[deferred_callback_count] = (struct test_deferred_call_data){
+        callback,
+        data
+    };
+    deferred_callback_count += 1;
+}
+
+void test_call_deferred() {
+    while (deferred_callback_count > 0) {
+        deferred_callback_count -= 1;
+        struct test_deferred_call_data* curr = &test_all_deferred_callbacks[deferred_callback_count];
+        curr->callback(curr->data);
+    }
 }

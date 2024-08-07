@@ -10,6 +10,7 @@ void object_mesh_collide_data_init(
 );
 
 bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int triangle_index);
+void collision_scene_return_contacts(struct dynamic_object* object);
 
 static struct mesh_collider single_traingle_mesh = {
     .vertices = (struct Vector3[]){
@@ -37,13 +38,15 @@ static struct dynamic_object_type simple_cube_object = {
         .box = {
             .half_size = {0.05f, 0.05f, 0.05f},
         }
-    }
+    },
+    .bounce = 0.5f,
+    .friction = 0.0f,
 };
 
 void test_collide_object_swept_to_triangle(struct test_context* t) {
     struct object_mesh_collide_data collide_data;
-    struct Vector3 prev_pos = {0.25f, 0.25f, -1.0f};
-    struct Vector3 position = {0.25f, 0.25f, 1.0f};
+    struct Vector3 prev_pos = {0.5f, 0.25f, -1.0f};
+    struct Vector3 position = {0.5f, 0.25f, 1.0f};
 
     struct dynamic_object object;
     dynamic_object_init(1, &object, &simple_cube_object, ~0, &position, NULL);
@@ -52,5 +55,47 @@ void test_collide_object_swept_to_triangle(struct test_context* t) {
 
     bool did_hit = collide_object_swept_to_triangle(&single_traingle_mesh.index, &collide_data, 0);
 
-    test_equali(t, true, did_hit);
+    test_eqi(t, true, did_hit);
+    test_ltf(t, position.z, -simple_cube_object.data.box.half_size.z);
+    test_near_equalf(t, 0.0f, collide_data.hit_result.normal.x);
+    test_near_equalf(t, 0.0f, collide_data.hit_result.normal.y);
+    test_near_equalf(t, -1.0f, collide_data.hit_result.normal.z);
+
+    prev_pos = (struct Vector3){0.5f, 0.75f, -1.0f};
+    position = (struct Vector3){0.5f, 0.75f, 1.0f};
+
+    did_hit = collide_object_swept_to_triangle(&single_traingle_mesh.index, &collide_data, 0);
+    test_eqi(t, false, did_hit);
+}
+
+void test_collide_object_to_mesh_swept(struct test_context* t) {
+    struct Vector3 prev_pos = {0.5f, 0.25f, -1.0f};
+    struct Vector3 position = {0.5f, 0.25f, 1.0f};
+
+    struct dynamic_object object;
+    dynamic_object_init(1, &object, &simple_cube_object, ~0, &position, NULL);
+
+    object.velocity = (struct Vector3){0.0f, 0.0f, 1.0f};
+
+    bool did_hit = collide_object_to_mesh_swept(&object, &single_traingle_mesh, &prev_pos);
+
+    test_eqi(t, true, did_hit);
+    test_ltf(t, position.z, prev_pos.z * simple_cube_object.bounce);
+    test_near_equalf(t, -0.5f, object.velocity.z);
+
+    test_neqi(t, (int)NULL, (int)object.active_contacts);
+
+    test_near_equalf(t, 0.0f, object.active_contacts->normal.x);
+    test_near_equalf(t, 0.0f, object.active_contacts->normal.y);
+    test_near_equalf(t, -1.0f, object.active_contacts->normal.z);
+
+    collision_scene_return_contacts(&object);
+    test_eqi(t, (int)NULL, (int)object.active_contacts);
+
+    prev_pos = (struct Vector3){0.5f, 0.75f, -1.0f};
+    position = (struct Vector3){0.5f, 0.75f, 1.0f};
+
+    did_hit = collide_object_to_mesh_swept(&object, &single_traingle_mesh, &prev_pos);
+    test_eqi(t, false, did_hit);
+    test_eqi(t, (int)NULL, (int)object.active_contacts);
 }
