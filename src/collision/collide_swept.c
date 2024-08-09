@@ -61,7 +61,6 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
         collide_data->object->position,
         &result
     )) {
-        fprintf(stderr, "Failed epa\n");
         return false;
     }
 
@@ -118,8 +117,6 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
         &offset
     );
 
-    fprintf(stderr, "Sweep check\n");
-
     if (!mesh_index_swept_lookup(
         &mesh->index, 
         &object->bounding_box, 
@@ -129,8 +126,6 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
     )) {
         return false;
     }
-
-    fprintf(stderr, "Sweep hit\n");
 
     collide_object_swept_bounce(object, &collide_data, &start_pos);
 

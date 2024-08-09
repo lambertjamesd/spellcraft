@@ -59,7 +59,7 @@ bool mesh_index_merge_indices(
         }
 
         if (b == max_b || (a < max_a && *a <= *b)) {
-            if (*a == *b) {
+            if (b < max_b && *a == *b) {
                 ++b;
             } else {
                 // new index added

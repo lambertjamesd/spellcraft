@@ -4,6 +4,8 @@
 
 #include "collision_scene.h"
 #include "../util/flags.h"
+#include <stdio.h>
+
 
 void correct_velocity(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce) {
     float velocityDot = vector3Dot(&object->velocity, &result->normal);

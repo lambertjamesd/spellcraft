@@ -34,11 +34,11 @@ void dynamic_object_update(struct dynamic_object* object) {
         return;
     }
 
-    vector3AddScaled(object->position, &object->velocity, fixed_time_step * object->time_scalar, object->position);
-
     if (object->has_gravity) {
         object->velocity.y += fixed_time_step * object->time_scalar * GRAVITY_CONSTANT;
     }
+
+    vector3AddScaled(object->position, &object->velocity, fixed_time_step * object->time_scalar, object->position);
 }
 
 struct contact* dynamic_object_nearest_contact(struct dynamic_object* object) {
@@ -122,8 +122,10 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
 
 void dynamic_object_recalc_bb(struct dynamic_object* object) {
     object->type->bounding_box(&object->type->data, object->rotation, &object->bounding_box);
-    vector3Add(&object->bounding_box.min, object->position, &object->bounding_box.min);
-    vector3Add(&object->bounding_box.max, object->position, &object->bounding_box.max);
+    struct Vector3 offset;
+    vector3Add(&object->center, object->position, &offset);
+    vector3Add(&object->bounding_box.min, &offset, &object->bounding_box.min);
+    vector3Add(&object->bounding_box.max, &offset, &object->bounding_box.max);
 }
 
 void dynamic_object_box_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
