@@ -474,13 +474,15 @@ bool epaSolve(struct Simplex* startingSimplex, void* objectA, MinkowsiSum object
     return false;
 }
 
+#define MAX_SWEPT_ITERATIONS    20
+
 void epaSweptFindFace(struct ExpandingSimplex* simplex, struct Vector3* direction, int* startTriangleIndex, int* startFaceEdge) {
     int currentFace = NEXT_FACE(*startFaceEdge);
 
     int i = 0;
     int loopCheck = 3;
 
-    while (loopCheck > 0 && i < MAX_ITERATIONS) {
+    while (loopCheck > 0 && i < MAX_SWEPT_ITERATIONS) {
         int nextFace = NEXT_FACE(currentFace);
 
         struct SimplexTriangle* triangle = &simplex->triangles[*startTriangleIndex];

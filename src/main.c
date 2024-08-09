@@ -120,6 +120,8 @@ bool check_world_load() {
     return false;
 }
 
+#define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(500)
+
 int main(void)
 {
     display_init(RESOLUTION_320x240, DEPTH_32_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
@@ -133,13 +135,10 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    // for (;;) {
-    //     joypad_poll();
-
-    //     if (joypad_get_buttons_pressed(0).start) {
-    //         break;
-    //     }
-    // }
+    
+    // give time for the debugger to connect
+    long long start_time = timer_ticks();
+    while (timer_ticks() - start_time < DEBUG_CONNECT_DELAY);
 
     setup();
 

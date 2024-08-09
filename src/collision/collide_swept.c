@@ -5,6 +5,7 @@
 #include "collide.h"
 #include "gjk.h"
 #include "epa.h"
+#include <stdio.h>
 
 struct swept_dynamic_object {
     struct dynamic_object* object;
@@ -50,7 +51,7 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
 
     struct EpaResult result;
 
-    if (epaSolveSwept(
+    if (!epaSolveSwept(
         &simplex, 
         &triangle, 
         mesh_triangle_minkowski_sum, 
@@ -60,11 +61,12 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
         collide_data->object->position,
         &result
     )) {
-        collide_data->hit_result = result;
-        return true;
+        fprintf(stderr, "Failed epa\n");
+        return false;
     }
 
-    return false;
+    collide_data->hit_result = result;
+    return true;
 }
 
 void collide_object_swept_bounce(
@@ -90,7 +92,7 @@ void collide_object_swept_bounce(
     vector3Add(object->position, &move_amount_tangent, object->position);
 
     // don't include friction on a bounce
-    correct_velocity(object, &collide_data->hit_result, -1.0f, 1.0f, object->type->bounce);
+    correct_velocity(object, &collide_data->hit_result, -1.0f, 0.0f, object->type->bounce);
 
     vector3Sub(object->position, start_pos, &move_amount);
     vector3Add(&move_amount, &object->bounding_box.min, &object->bounding_box.min);
@@ -116,6 +118,8 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
         &offset
     );
 
+    fprintf(stderr, "Sweep check\n");
+
     if (!mesh_index_swept_lookup(
         &mesh->index, 
         &object->bounding_box, 
@@ -125,6 +129,8 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
     )) {
         return false;
     }
+
+    fprintf(stderr, "Sweep hit\n");
 
     collide_object_swept_bounce(object, &collide_data, &start_pos);
 

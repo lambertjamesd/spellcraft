@@ -288,7 +288,7 @@ bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
     uint16_t indices[MAX_INDEX_SET_SIZE];
     int index_count = 0;
     if (mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count)) {
-        return false;
+        return true;
     }
 
     struct Vector3 dir_inv;

@@ -20,8 +20,8 @@ int main() {
     debug_init_isviewer();
     debug_init_usblog();
     
+    // give time for the debugger to connect
     long long start_time = timer_ticks();
-
     while (timer_ticks() - start_time < DEBUG_CONNECT_DELAY);
 
     init_engine();

@@ -63,7 +63,7 @@ void test_collision_scene_collide(struct test_context* t) {
     object->velocity = (struct Vector3){
         80.0f / fixed_time_step,
         -80.0f / fixed_time_step,
-        0.0f
+        1.0f / fixed_time_step
     };
     dynamic_object_recalc_bb(object);
     collision_scene_collide();
@@ -71,4 +71,5 @@ void test_collision_scene_collide(struct test_context* t) {
     test_gtf(t, position.y, 0.0f);
     test_near_equalf(t, 0.0f, object->velocity.x);
     test_near_equalf(t, 0.0f, object->velocity.y);
+    test_gtf(t, object->velocity.z, 0);
 }
