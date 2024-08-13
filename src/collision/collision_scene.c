@@ -264,6 +264,8 @@ void collision_scene_collide() {
         }
 
         collision_scene_collide_single(element->object, &prev_pos[i]);
+
+        element->object->is_out_of_bounds = mesh_index_is_contained(&g_scene.mesh_collider->index, element->object->position);
     }
 
     collision_scene_collide_dynamic();

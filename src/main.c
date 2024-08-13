@@ -81,10 +81,10 @@ void render(surface_t* zbuffer) {
     if (current_game_mode == GAME_MODE_3D || current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
         render_3d();
     } else if (current_game_mode == GAME_MODE_MENU) {
-        surface_t background = *zbuffer;
-        background.flags = FMT_RGBA16;
-        rdpq_set_mode_copy(false);
-        rdpq_tex_blit(&background, 0, 0, NULL);
+        // surface_t background = *zbuffer;
+        // background.flags = FMT_RGBA16;
+        // rdpq_set_mode_copy(false);
+        // rdpq_tex_blit(&background, 0, 0, NULL);
     }
     render_menu();
 }

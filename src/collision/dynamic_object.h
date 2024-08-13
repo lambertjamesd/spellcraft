@@ -50,6 +50,7 @@ struct dynamic_object {
     uint16_t has_gravity: 1;
     uint16_t is_trigger: 1;
     uint16_t is_fixed: 1;
+    uint16_t is_out_of_bounds: 1;
     uint16_t collision_layers;
     struct contact* active_contacts;
 };

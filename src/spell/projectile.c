@@ -9,7 +9,12 @@
 
 #include "assets.h"
 
-#define PROJECTILE_SPEED    10.0f
+static float projectile_speed[] = {
+    [ELEMENT_TYPE_NONE] = 10.0f,
+    [ELEMENT_TYPE_FIRE] = 10.0f,
+    [ELEMENT_TYPE_ICE] = 10.0f,
+    [ELEMENT_TYPE_LIGHTNING] = 100.0f,
+};
 
 static struct dynamic_object_type projectile_collision = {
     .minkowsi_sum = dynamic_object_sphere_minkowski_sum,
@@ -41,7 +46,7 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     render_batch_add_tmesh(batch, spell_assets_get()->projectile_mesh, mtxfp, NULL);
 }
 
-void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options) {
+void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options, enum element_type element) {
     render_scene_add(&projectile->pos, 0.2f, (render_scene_callback)projectile_render, projectile);
 
     projectile->data_source = data_source;
@@ -52,6 +57,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     projectile->has_primary_event = event_options.has_primary_event;
     projectile->has_secondary_event = event_options.has_secondary_event;
     projectile->is_controlled = 0;
+    projectile->element = element;
 
     spell_data_source_retain(data_source);
 
@@ -65,7 +71,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     );
     collision_scene_add(&projectile->dynamic_object);
 
-    vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
+    vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
     projectile->dynamic_object.has_gravity = 0;
 
     if (data_source->flags.controlled) {
@@ -74,6 +80,10 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 }
 
 bool projectile_is_active(struct projectile* projectile) {
+    if (projectile->dynamic_object.is_out_of_bounds) {
+        return false;
+    }
+
     if (projectile->has_primary_event || !projectile->has_secondary_event) {
         return !projectile->has_hit;
     }
@@ -87,7 +97,7 @@ bool projectile_is_active(struct projectile* projectile) {
 
 void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     if (projectile->is_controlled) {
-        vector3Scale(&projectile->data_source->direction, &projectile->dynamic_object.velocity, PROJECTILE_SPEED);
+        vector3Scale(&projectile->data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[projectile->element]);
     }
 
     if (projectile->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {

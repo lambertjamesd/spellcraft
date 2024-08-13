@@ -360,3 +360,11 @@ bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
 
     return false;
 }
+
+bool mesh_index_is_contained(struct mesh_index* index, struct Vector3* point) {
+    struct Vector3 local_position;
+    vector3Sub(point, &index->min, &local_position);
+    vector3Multiply(&local_position, &index->stride_inv, &local_position);
+    return local_position.x >= 0 && local_position.y >= 0 && local_position.z >= 0 &&
+        local_position.x <= index->block_count.x && local_position.y <= index->block_count.y && local_position.z <= index->block_count.z;
+}

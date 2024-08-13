@@ -24,6 +24,7 @@ void dynamic_object_init(
     object->has_gravity = 1;
     object->is_trigger = 0;
     object->is_fixed = 0;
+    object->is_out_of_bounds = 0;
     object->collision_layers = collision_layers;
     object->active_contacts = 0;
     dynamic_object_recalc_bb(object);

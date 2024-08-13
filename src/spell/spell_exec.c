@@ -29,7 +29,7 @@ void spell_slot_init(
     switch ((enum spell_symbol_type)symbol.type) {
         case SPELL_SYMBOL_PROJECTILE:
             slot->type = SPELL_EXEC_SLOT_TYPE_PROJECTILE;
-            projectile_init(&slot->data.projectile, input, event_options);
+            projectile_init(&slot->data.projectile, input, event_options, spell_data_source_determine_element(input));
             break;
         case SPELL_SYMBOL_FIRE:
             if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {

@@ -44,5 +44,6 @@ void mesh_triangle_minkowski_sum(void* data, struct Vector3* direction, struct V
 
 void mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* box, triangle_callback callback, void* data);
 bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* move_amount, triangle_callback callback, void* data);
+bool mesh_index_is_contained(struct mesh_index* index, struct Vector3* point);
 
 #endif
