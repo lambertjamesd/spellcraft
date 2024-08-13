@@ -48,5 +48,18 @@ void test_ring_malloc(struct test_context* t) {
     ring_free(&allocator, first);
     test_eqi(t, 256, ring_get_free_memory(&allocator));
 
+    first = ring_malloc(&allocator, 200);
+    second = ring_malloc(&allocator, 8);
+    void* third = ring_malloc(&allocator, 8);
+    test_neqi(t, (int)NULL, (int)third);
+    ring_free(&allocator, first);
+    test_eqi(t, (int)NULL, (int)ring_malloc(&allocator, 256));
+    first = ring_malloc(&allocator, 200);
+    test_neqi(t, (int)NULL, (int)first);
+    ring_free(&allocator, first);
+    ring_free(&allocator, second);
+    ring_free(&allocator, third);
+    test_eqi(t, 256, ring_get_free_memory(&allocator));
+
     ring_destroy(&allocator);
 }
