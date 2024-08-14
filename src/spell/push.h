@@ -11,8 +11,8 @@
 struct push {
     struct spell_data_source* data_source;
     struct mana_regulator mana_regulator;
-    struct dash_trail dash_trail_left;
-    struct dash_trail dash_trail_right;
+    struct dash_trail* dash_trail_left;
+    struct dash_trail* dash_trail_right;
     uint8_t push_mode;
 };
 

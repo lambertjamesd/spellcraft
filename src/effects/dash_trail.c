@@ -5,15 +5,9 @@
 #include "../time/time.h"
 #include "../math/mathf.h"
 #include "../spell/assets.h"
-
-void dash_trail_init(struct dash_trail* trail, struct Vector3* emit_from, bool flipped) {
-    trail->first_time = 0;
-
-    trail->first_vertex = 0;
-    trail->vertex_count = 0;
-
-    trail->flipped = flipped;
-}
+#include "./effect_allocator.h"
+#include "../time/time.h"
+#include "../render/render_scene.h"
 
 #define INITIAL_V           5.0f
 #define TANGENT_VELOCITY_BOTTOM    1.5f
@@ -97,7 +91,42 @@ void dash_trail_render_callback(void* data, struct render_batch* batch) {
     t3d_tri_sync();
 }
 
-void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, struct render_batch* batch) {
+void dash_trail_update(void* data) {
+    struct dash_trail* trail = (struct dash_trail*)data;
+
+    if (trail->vertex_count == 0) {
+        update_remove(trail);
+        render_scene_remove(trail);
+        effect_free(trail);
+    }
+}
+
+struct dash_trail* dash_trail_new(struct Vector3* emit_from, bool flipped) {
+    struct dash_trail* trail = effect_malloc(sizeof(struct dash_trail));
+
+    if (!trail) {
+        return NULL;
+    }
+
+    trail->first_time = 0;
+
+    trail->first_vertex = 0;
+    trail->vertex_count = 0;
+
+    trail->flipped = flipped;
+
+    trail->emit_from[0] = *emit_from;
+    trail->tangent[0] = gZeroVec;
+
+    render_scene_add(&trail->emit_from[trail->first_vertex], 4.0f, dash_trail_render_callback, trail);
+    update_add(trail, dash_trail_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
+
+    dash_trail_move(trail, emit_from);
+
+    return trail;
+}
+
+void dash_trail_move(struct dash_trail* trail, struct Vector3* emit_from) {
     trail->first_time += render_time_step;
 
     if (trail->first_time >= TIME_SPACING) {
@@ -123,10 +152,4 @@ void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, stru
             trail->vertex_count += 1;
         }
     }
-
-    render_batch_add_callback(batch, spell_assets_get()->dash_trail_material, dash_trail_render_callback, trail);
-}
-
-void dash_trail_destroy(struct dash_trail* trail) {
-    
 }

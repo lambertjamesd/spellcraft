@@ -19,9 +19,8 @@ struct dash_trail {
     uint16_t vertex_count;
 };
 
-void dash_trail_init(struct dash_trail* trail, struct Vector3* emit_from, bool flipped);
-void dash_trail_render(struct dash_trail* trail, struct Vector3* emit_from, struct render_batch* batch);
-
-void dash_trail_destroy(struct dash_trail* trail);
+struct dash_trail* dash_trail_new(struct Vector3* emit_from, bool flipped);
+// NULL indicates the trial is done
+void dash_trail_move(struct dash_trail* trail, struct Vector3* emit_from);
 
 #endif

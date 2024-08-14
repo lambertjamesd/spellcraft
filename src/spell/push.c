@@ -41,9 +41,6 @@ void push_render(struct push* push, struct render_batch* batch) {
     if (!target) {
         return;
     }
-
-    dash_trail_render(&push->dash_trail_right, target->position, batch);
-    dash_trail_render(&push->dash_trail_left, target->position, batch);
 }
 
 void push_init(struct push* push, struct spell_data_source* source, struct spell_event_options event_options, enum element_type push_mode) {
@@ -53,8 +50,8 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
     spell_data_source_retain(source);
     mana_regulator_init(&push->mana_regulator, event_options.burst_mana, 8.0f);
 
-    dash_trail_init(&push->dash_trail_right, &source->position, false);
-    dash_trail_init(&push->dash_trail_left, &source->position, true);
+    push->dash_trail_right = dash_trail_new(&source->position, false);
+    push->dash_trail_left = dash_trail_new(&source->position, true);
 
     render_scene_add(&push->data_source->position, 4.0f, (render_scene_callback)push_render, push);
 }
@@ -62,8 +59,6 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
 void push_destroy(struct push* push) {
     spell_data_source_release(push->data_source);
     render_scene_remove(push);
-    dash_trail_destroy(&push->dash_trail_right);
-    dash_trail_destroy(&push->dash_trail_left);
 }
 
 void push_update(struct push* push, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
@@ -101,4 +96,11 @@ void push_update(struct push* push, struct spell_event_listener* event_listener,
     struct Vector3 targetVelocity;
     vector3Scale(&push->data_source->direction, &targetVelocity, push_strength[push->push_mode] * power_ratio);
     vector3MoveTowards(&target->velocity, &targetVelocity, scaled_time_step * 60.0f * power_ratio, &target->velocity);
+
+    if (push->dash_trail_right) {
+        dash_trail_move(push->dash_trail_right, target->position);
+    }
+    if (push->dash_trail_left) {
+        dash_trail_move(push->dash_trail_left, target->position);
+    }
 }

@@ -15,6 +15,7 @@ typedef int update_id;
 #define UPDATE_PRIORITY_PLAYER  0
 #define UPDATE_PRIORITY_SPELLS  1
 #define UPDATE_PRIORITY_CAMERA  2
+#define UPDATE_PRIORITY_EFFECTS 3
 
 void update_reset();
 void update_add(void* data, update_callback callback, int priority, int mask);

@@ -22,6 +22,7 @@ struct free_block
 };
 
 #define ALIGN_UP(number)    (((number) + 7) & ~7)
+#define ALIGN_DOWN(number)      ((number) & ~7)
 
 #define GET_HEADER_RAW(buffer, offset) (struct chunk_header*)((char*)(buffer) + offset)
 
@@ -43,14 +44,14 @@ void ring_init_block(void* data_start, bool allocated, uint16_t data_size) {
     footer->size = data_size;
 }
 
-void ring_init(struct ring_allocator* allocator, int capacity) {
-    if (capacity < MIN_BLOCK_SZE) {
-        capacity = MIN_BLOCK_SZE;
-    }
+void ring_init_with_buffer(struct ring_allocator* allocator, void* buffer, int buffer_bytes) {
+    void* end = (void*)ALIGN_DOWN((int)((char*)buffer + buffer_bytes));
+    void* actual_start = (void*)ALIGN_UP((int)((char*)buffer));
 
-    int memory_size = ALIGN_UP(HEADER_FOOTER_SIZE) * 2 + ALIGN_UP(capacity);
+    allocator->buffer = actual_start;
 
-    allocator->buffer = malloc(memory_size);
+    int memory_size = (int)end - (int)actual_start;
+    int capacity = memory_size - ALIGN_UP(HEADER_FOOTER_SIZE) * 2;
 
     ring_init_block((char*)allocator->buffer + ALIGN_UP(HEADER_FOOTER_SIZE), false, ALIGN_UP(capacity));
     
@@ -67,6 +68,16 @@ void ring_init(struct ring_allocator* allocator, int capacity) {
     struct chunk_header* end_header = GET_HEADER_RAW(allocator->buffer, memory_size - sizeof(struct chunk_header));
     end_header->allocated = ALLOCATED_BLOCK_ID;
     end_header->size = 0;
+}
+
+void ring_init(struct ring_allocator* allocator, int capacity) {
+    if (capacity < MIN_BLOCK_SZE) {
+        capacity = MIN_BLOCK_SZE;
+    }
+
+    int memory_size = ALIGN_UP(HEADER_FOOTER_SIZE) * 2 + ALIGN_UP(capacity);
+
+    ring_init_with_buffer(allocator, malloc(memory_size), memory_size);
 }
 
 int ring_get_free_memory(struct ring_allocator* allocator) {
@@ -186,6 +197,7 @@ void ring_free(struct ring_allocator* allocator, void* target) {
 
     struct chunk_header* free_header = (struct chunk_header*)target - 1;
     assert(free_header->allocated == ALLOCATED_BLOCK_ID);
+    assert(((struct chunk_header*)((char*)target + free_header->size))->allocated == ALLOCATED_BLOCK_ID);
 
     struct free_block* new_block = target;
 
