@@ -40,6 +40,11 @@ struct collectable_definition {
     uint32_t collectable_sub_type;
 };
 
+struct training_dummy_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+};
+
 struct biter_definition {
     struct Vector3 position;
     struct Vector2 rotation;

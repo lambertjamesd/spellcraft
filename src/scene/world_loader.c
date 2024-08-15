@@ -12,16 +12,18 @@
 #include "../objects/ground_torch.h"
 #include "../objects/collectable.h"
 #include "../enemies/biter.h"
+#include "../objects/training_dummy.h"
 #include "../npc/npc.h"
 
 #include "../collision/collision_scene.h"
 
 static struct entity_definition world_entity_definitions[] = {
-    {"crate", (entity_init)crate_init, (entity_destroy)crate_destroy, sizeof(struct crate), sizeof(struct crate_definition)},
-    {"biter", (entity_init)biter_init, (entity_destroy)biter_destroy, sizeof(struct biter), sizeof(struct biter_definition)},
-    {"ground_torch", (entity_init)ground_torch_init, (entity_destroy)ground_torch_destroy, sizeof(struct ground_torch), sizeof(struct ground_torch_definition)},
-    {"npc", (entity_init)npc_init, (entity_destroy)npc_destroy, sizeof(struct npc), sizeof(struct npc_definition)},
-    {"collectable", (entity_init)collectable_init, (entity_destroy)collectable_destroy, sizeof(struct collectable), sizeof(struct collectable_definition)},
+    ENTITY_DEFINITION(crate),
+    ENTITY_DEFINITION(biter),
+    ENTITY_DEFINITION(ground_torch),
+    ENTITY_DEFINITION(npc),
+    ENTITY_DEFINITION(collectable),
+    ENTITY_DEFINITION(training_dummy),
 };
 
 // WRLD
