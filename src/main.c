@@ -46,8 +46,6 @@ void transform_to_t3d(struct Transform* transform, T3DMat4FP* matrix) {
 }
 
 void render_3d() {
-    // fprintf(stderr, "This is how to talk");
-
     uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
     t3d_frame_start();

@@ -11,9 +11,12 @@ struct dash_trail {
     struct Vector3 emit_from[DASH_PARTICLE_COUNT];
     struct Vector3 tangent[DASH_PARTICLE_COUNT];
 
+    struct Vector3 last_position;
+
     float first_time;
 
     uint16_t flipped: 1;
+    uint16_t active: 1;
 
     uint16_t first_vertex;
     uint16_t vertex_count;

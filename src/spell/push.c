@@ -59,6 +59,13 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
 void push_destroy(struct push* push) {
     spell_data_source_release(push->data_source);
     render_scene_remove(push);
+
+    if (push->dash_trail_right) {
+        dash_trail_move(push->dash_trail_right, NULL);
+    }
+    if (push->dash_trail_left) {
+        dash_trail_move(push->dash_trail_left, NULL);
+    }
 }
 
 void push_update(struct push* push, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
