@@ -2,6 +2,7 @@
 
 #include "../util/hash_map.h"
 #include "../time/time.h"
+#include <stddef.h>
 
 static struct hash_map health_entity_mapping;
 
@@ -30,6 +31,9 @@ void health_init(struct health* health, entity_id id, float max_health) {
     hash_map_set(&health_entity_mapping, id, health);
 
     update_add(health, health_update, 0, UPDATE_LAYER_WORLD);
+
+    health->callback = NULL;
+    health->callback_data = NULL;
 }
 
 void health_destroy(struct health* health) {
@@ -37,7 +41,9 @@ void health_destroy(struct health* health) {
 }
 
 void health_damage(struct health* health, float amount, entity_id source, enum damage_type type) {
-    health->current_health -= amount;
+    if (health->max_health) {
+        health->current_health -= amount;
+    }
 
     if (type & DAMAGE_TYPE_FIRE) {
         health->flaming_timer = 30;
@@ -45,6 +51,10 @@ void health_damage(struct health* health, float amount, entity_id source, enum d
 
     if (type & DAMAGE_TYPE_ICE) {
         health->icy_timer = 30;
+    }
+
+    if (health->callback) {
+        health->callback(health->callback_data, amount, source, type);
     }
 }
 

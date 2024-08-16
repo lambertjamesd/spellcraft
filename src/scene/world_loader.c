@@ -222,6 +222,7 @@ void world_release(struct world* world) {
     update_remove(world);
 
     pause_menu_destroy(&world->pause_menu);
+    hud_destroy(&world->hud);
     player_destroy(&world->player);
     camera_controller_destroy(&world->camera_controller);
 

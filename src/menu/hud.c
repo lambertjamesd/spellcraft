@@ -130,5 +130,5 @@ void hud_init(struct hud* hud, struct player* player) {
 }
 
 void hud_destroy(struct hud* hud) {
-    
+    menu_remove_callback(hud);
 }

@@ -12,12 +12,17 @@ enum damage_type {
     DAMAGE_TYPE_BASH = (1 << 4),
 };
 
+typedef void (*health_damage_callback)(void* data, float amount, entity_id source, enum damage_type type);
+
 struct health {
     entity_id entity_id;
     float max_health;
     float current_health;
     uint16_t flaming_timer;
     uint16_t icy_timer;
+
+    health_damage_callback callback;
+    void* callback_data;
 };
 
 void health_reset();

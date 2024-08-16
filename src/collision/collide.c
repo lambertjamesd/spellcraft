@@ -79,6 +79,10 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         return;
     }
 
+    if (a->collision_group && a->collision_group == b->collision_group) {
+        return;
+    }
+
     if (a->is_trigger && b->is_trigger) {
         return;
     }

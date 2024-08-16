@@ -6,6 +6,7 @@
 #include "../render/defs.h"
 #include "../time/time.h"
 #include "../collision/collision_scene.h"
+#include "../entity/health.h"
 
 #include "assets.h"
 
@@ -69,6 +70,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
         &projectile->pos, 
         NULL
     );
+    projectile->dynamic_object.collision_group = COLLISION_GROUP_PLAYER;
     collision_scene_add(&projectile->dynamic_object);
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
@@ -80,9 +82,9 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 }
 
 bool projectile_is_active(struct projectile* projectile) {
-    if (projectile->dynamic_object.is_out_of_bounds) {
-        return false;
-    }
+    // if (projectile->dynamic_object.is_out_of_bounds) {
+    //     return false;
+    // }
 
     if (projectile->has_primary_event || !projectile->has_secondary_event) {
         return !projectile->has_hit;
@@ -138,6 +140,22 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 hit_source->flags.cast_state = SPELL_CAST_STATE_INSTANT;
                 hit_source->target = first_contact->other_object;
                 spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source, 0.0f);
+            }
+
+            struct health* health = health_get(first_contact->other_object);
+
+            if (health) {
+                enum damage_type damage_type = DAMAGE_TYPE_PROJECTILE;
+
+                if (projectile->element == ELEMENT_TYPE_FIRE) {
+                    damage_type |= DAMAGE_TYPE_FIRE;
+                } else if (projectile->element == ELEMENT_TYPE_ICE) {
+                    damage_type |= DAMAGE_TYPE_ICE;
+                } else if (projectile->element == ELEMENT_TYPE_LIGHTNING) {
+                    damage_type |= DAMAGE_TYPE_LIGHTING;
+                }
+                
+                health_damage(health, 1.0f, projectile->dynamic_object.entity_id, damage_type);
             }
         }
 

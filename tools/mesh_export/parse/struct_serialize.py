@@ -118,7 +118,7 @@ def write_vector2_rotation(file, obj: bpy.types.Object):
 
     final_right = mathutils.Vector([rotated_right.x, 0, rotated_right.z]).normalized()
 
-    file.write(struct.pack(">ff", final_right.x, final_right.z))
+    file.write(struct.pack(">ff", final_right.x, -final_right.z))
 
 
 def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext, field_name = None):

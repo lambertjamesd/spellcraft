@@ -29,6 +29,18 @@ struct spell dash_spell = {
     .symbol_index = SPELL_ICON_DASH,
 };
 
+struct spell_symbol projectile_spell_symbols[] = {
+    {.type = SPELL_SYMBOL_PROJECTILE},
+};
+
+struct spell projectile_spell = {
+    .symbols = projectile_spell_symbols,
+    .cols = 1,
+    .rows = 1,
+
+    .symbol_index = SPELL_ICON_DASH,
+};
+
 struct inventory inventory;
 
 void inventory_init() {
@@ -41,6 +53,7 @@ void inventory_init() {
 
     inventory.spell_slots[0] = &flame_spell;
     inventory.spell_slots[1] = &dash_spell;
+    inventory.spell_slots[2] = &projectile_spell;
 
     for (int i = 0; i < MAX_CUSTOM_SPELLS; i += 1) {
         spell_init(&inventory.custom_spells[i], SPELL_MAX_COLS, SPELL_MAX_ROWS, SPELL_ICON_CUSTOM_0 + i);

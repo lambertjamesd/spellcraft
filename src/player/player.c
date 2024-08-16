@@ -36,18 +36,6 @@ static struct dynamic_object_type player_visual_shape = {
     }
 };
 
-struct spell_symbol projectile_spell_sybols[SPELL_MAX_COLS * SPELL_MAX_ROWS] = {
-    {.reserved = 0, .type = SPELL_SYMBOL_PUSH},
-    {.reserved = 0, .type = SPELL_SYMBOL_PROJECTILE},
-    {.reserved = 0, .type = SPELL_SYMBOL_FIRE},
-};
-
-struct spell projectile_spell = {
-    .symbols = projectile_spell_sybols,
-    .cols = SPELL_MAX_COLS,
-    .rows = SPELL_MAX_ROWS,
-};
-
 void player_get_move_basis(struct Transform* transform, struct Vector3* forward, struct Vector3* right) {
     quatMultVector(&transform->rotation, &gForward, forward);
     quatMultVector(&transform->rotation, &gRight, right);
@@ -237,6 +225,8 @@ void player_init(struct player* player, struct player_definition* definition, st
         &player->transform.position,
         &player->look_direction
     );
+
+    player->collision.collision_group = COLLISION_GROUP_PLAYER;
 
     player->collision.center.y = player_collision.data.capsule.inner_half_height + player_collision.data.capsule.radius;
 

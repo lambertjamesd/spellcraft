@@ -18,6 +18,10 @@ enum collision_layers {
     COLLISION_LAYER_DAMAGE_ENEMY = (1 << 2),
 };
 
+enum collision_group {
+    COLLISION_GROUP_PLAYER = 1,
+};
+
 typedef void (*bounding_box_calculator)(void* data, struct Vector2* rotation, struct Box3D* box);
 
 union dynamic_object_type_data
@@ -52,6 +56,7 @@ struct dynamic_object {
     uint16_t is_fixed: 1;
     uint16_t is_out_of_bounds: 1;
     uint16_t collision_layers;
+    uint16_t collision_group;
     struct contact* active_contacts;
 };
 
