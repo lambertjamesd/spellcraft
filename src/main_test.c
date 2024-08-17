@@ -11,6 +11,7 @@ void test_collide_object_to_mesh_swept(struct test_context* t);
 void test_collision_scene_collide_single(struct test_context* t);
 void test_collision_scene_collide(struct test_context* t);
 void test_ring_malloc(struct test_context* t);
+void test_training_dummy(struct test_context* t);
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(500)
 
@@ -40,6 +41,8 @@ int main() {
     test_run(test_collision_scene_collide);
 
     test_run(test_ring_malloc);
+
+    test_run(test_training_dummy);
 
     test_report_failures();
 

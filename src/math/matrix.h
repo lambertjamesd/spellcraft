@@ -21,5 +21,6 @@ void matrixFromPosition(float matrix[4][4], struct Vector3* position);
 void matrixFromScale(float matrix[4][4], float scale);
 
 void matrixApplyPosition(float matrix[4][4], struct Vector3* position);
+void matrixApplyScale(float matrix[4][4], float scale);
 
 #endif

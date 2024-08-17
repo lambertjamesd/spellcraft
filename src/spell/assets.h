@@ -10,6 +10,8 @@ struct spell_assets {
     struct material* dash_trail_material;
 
     struct tmesh* fire_around_mesh;
+
+    struct tmesh* flame_mesh;
 };
 
 void spell_assets_init();

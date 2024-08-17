@@ -12,6 +12,8 @@ void spell_assets_init() {
     assets.dash_trail_material = material_cache_load("rom:/materials/spell/dash_trail.mat");
 
     assets.fire_around_mesh = tmesh_cache_load("rom:/meshes/spell/flame_around.tmesh");
+
+    assets.flame_mesh = tmesh_cache_load("rom:/meshes/objects/torch_flame.tmesh");
 }
 
 struct spell_assets* spell_assets_get() {

@@ -113,6 +113,14 @@ void matrixApplyPosition(float matrix[4][4], struct Vector3* position) {
     matrix[3][2] = position->z;
 }
 
+void matrixApplyScale(float matrix[4][4], float scale) {
+    for (int row = 0; row < 3; row += 1) {
+        for (int col = 0; col < 3; col += 1) {
+            matrix[row][col] *= scale;
+        }
+    }
+}
+
 void matrixMul(float a[4][4], float b[4][4], float output[4][4]) {
     for (int x = 0; x < 4; ++x) {
         for (int y = 0; y < 4; ++y) {

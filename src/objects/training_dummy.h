@@ -7,6 +7,7 @@
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
 #include "../entity/health.h"
+#include "../effects/burning_effect.h"
 
 struct training_dummy {
     struct Transform transform;
@@ -14,6 +15,7 @@ struct training_dummy {
     struct dynamic_object collision;
     struct health health;
     struct Vector3 angularVelocity;
+    struct burning_effect* burning_effect;
 };
 
 void training_dummy_init(struct training_dummy* dummy, struct training_dummy_definition* definition);

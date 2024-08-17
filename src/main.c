@@ -33,7 +33,7 @@ void setup() {
     init_engine();
     savefile_new();
 
-    current_world = world_load("rom:/worlds/playerhome_livingroom.world");
+    current_world = world_load("rom:/worlds/playerhome_basement.world");
 }
 
 static struct frame_memory_pool frame_memory_pools[2];

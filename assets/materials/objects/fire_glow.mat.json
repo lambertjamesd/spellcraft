@@ -4,7 +4,7 @@
         "alpha": ["0", "0", "0", "PRIM"]
     },
     "primColor": [255, 255, 255, 10],
-    "blendMode": "ADD",
+    "blendMode": "TRANSPARENT",
     "lighting": false,
     "zBuffer": true
 }

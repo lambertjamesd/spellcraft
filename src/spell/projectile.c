@@ -128,9 +128,9 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
     }
 
     if (projectile->dynamic_object.active_contacts && !projectile->has_hit) {
-        if (projectile->has_primary_event) {
-            struct contact* first_contact = projectile->dynamic_object.active_contacts;
+        struct contact* first_contact = projectile->dynamic_object.active_contacts;
 
+        if (projectile->has_primary_event) {
             struct spell_data_source* hit_source = spell_data_source_pool_get(&spell_sources->data_sources);
 
             if (hit_source) {
@@ -141,22 +141,22 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 hit_source->target = first_contact->other_object;
                 spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source, 0.0f);
             }
+        }
 
-            struct health* health = health_get(first_contact->other_object);
+        struct health* health = health_get(first_contact->other_object);
 
-            if (health) {
-                enum damage_type damage_type = DAMAGE_TYPE_PROJECTILE;
+        if (health) {
+            enum damage_type damage_type = DAMAGE_TYPE_PROJECTILE;
 
-                if (projectile->element == ELEMENT_TYPE_FIRE) {
-                    damage_type |= DAMAGE_TYPE_FIRE;
-                } else if (projectile->element == ELEMENT_TYPE_ICE) {
-                    damage_type |= DAMAGE_TYPE_ICE;
-                } else if (projectile->element == ELEMENT_TYPE_LIGHTNING) {
-                    damage_type |= DAMAGE_TYPE_LIGHTING;
-                }
-                
-                health_damage(health, 1.0f, projectile->dynamic_object.entity_id, damage_type);
+            if (projectile->element == ELEMENT_TYPE_FIRE) {
+                damage_type |= DAMAGE_TYPE_FIRE;
+            } else if (projectile->element == ELEMENT_TYPE_ICE) {
+                damage_type |= DAMAGE_TYPE_ICE;
+            } else if (projectile->element == ELEMENT_TYPE_LIGHTNING) {
+                damage_type |= DAMAGE_TYPE_LIGHTING;
             }
+            
+            health_damage(health, 1.0f, projectile->dynamic_object.entity_id, damage_type);
         }
 
         projectile->has_hit = 1;
