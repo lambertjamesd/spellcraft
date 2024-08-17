@@ -175,6 +175,7 @@ class Material():
         self.culling: bool | None = None
         self.z_buffer: bool | None = None
         self.vertex_gamma: float = 0.454545
+        self.uv_gen: str | None = None
 
     def get_image_size(self) -> tuple[int, int]:
         if self.tex0:
@@ -235,6 +236,13 @@ def _optional_boolean(json_data, key, key_path, defaultValue):
 def _check_is_string(value, key_path):
     if not isinstance(value, str):
         raise Exception(f"{key_path} must be a string")
+    
+def _optional_string(json_data, key, key_path, defaultValue):
+    if key in json_data:
+        _check_is_string(json_data[key], f"{key_path}.{key}")
+        return json_data[key]
+    
+    return defaultValue
 
 def _parse_combine_mode_cycle(json_data, key_path):
     color = json_data['color']
@@ -599,5 +607,7 @@ def parse_material(filename: str):
     result.z_buffer = _optional_boolean(json_data, 'zBuffer', 'zBuffer', True)
 
     result.vertex_gamma = _optional_number(json_data, 'vertexGamma', 'vertexGamma', 1)
+
+    result.uv_gen = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
 
     return result

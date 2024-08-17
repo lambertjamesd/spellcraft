@@ -41,6 +41,7 @@ void material_destroy(struct material* material) {
 #define COMMAND_BLEND_COLOR 0x05
 #define COMMAND_FLAGS       0x06
 #define COMMAND_PALETTE     0x07
+#define COMMAND_UV_GEN      0x08
 
 struct text_axis {
     float translate;
@@ -222,6 +223,21 @@ void material_load(struct material* into, FILE* material_file) {
                     fread(&into->palette.size, 2, 1, material_file);
                     into->palette.tlut = malloc(sizeof(uint16_t) * into->palette.size);
                     rdpq_tex_upload_tlut(into->palette.tlut, into->palette.idx, into->palette.size);
+                }
+                break;
+            case COMMAND_UV_GEN:
+                {
+                    uint8_t fn;
+                    fread(&fn, 1, 1, material_file);
+
+                    switch (fn) {
+                        case T3D_VERTEX_FX_NONE:
+                            t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
+                            break;
+                        case T3D_VERTEX_FX_SPHERICAL_UV:
+                            t3d_state_set_vertex_fx(T3D_VERTEX_FX_SPHERICAL_UV, into->tex0.sprite->width, into->tex0.sprite->height);
+                            break;
+                    }
                 }
                 break;
         }

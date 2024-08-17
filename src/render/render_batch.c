@@ -29,11 +29,11 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     return result;
 }
 
-void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature) {
+struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature) {
     struct render_batch_element* element = render_batch_add(batch);
 
     if (!element) {
-        return;
+        return NULL;
     }
 
     element->mesh.block = mesh->block;
@@ -41,6 +41,8 @@ void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DM
     element->mesh.transform = transform;
     element->mesh.armature = armature && armature->bone_count ? armature : NULL;
     element->mesh.tmp_fixed_pose = UncachedAddr(mesh->armature_pose);
+
+    return element;
 }
 
 void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data) {

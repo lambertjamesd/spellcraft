@@ -41,6 +41,9 @@ def determine_material_delta(start: material.Material, end: material.Material) -
     if end.z_buffer != None and (start.z_buffer == None or start.z_buffer != end.z_buffer):
         result.z_buffer = end.z_buffer
 
+    if end.uv_gen != None and (start.uv_gen == None or start.uv_gen != end.uv_gen):
+        result.uv_gen = end.uv_gen
+
     return result
 
 def determine_texture_cost(tex: material.Tex | None) -> float:
@@ -120,3 +123,6 @@ def apply_material_delta(delta: material.Material, into: material.Material):
 
     if delta.z_buffer != None:
         into.z_buffer = delta.z_buffer
+
+    if delta.uv_gen != None:
+        into.uv_gen = delta.uv_gen

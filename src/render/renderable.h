@@ -9,6 +9,7 @@ struct renderable {
     struct Transform* transform;
     struct tmesh* mesh;
     struct armature armature;
+    struct material* force_material;
 };
 
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename);
@@ -18,6 +19,7 @@ struct renderable_single_axis {
     struct TransformSingleAxis* transform;
     struct tmesh* mesh;
     struct armature armature;
+    struct material* force_material;
 };
 
 void renderable_single_axis_init(struct renderable_single_axis* renderable, struct TransformSingleAxis* transform, const char* mesh_filename);

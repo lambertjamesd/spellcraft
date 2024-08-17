@@ -1,10 +1,12 @@
 #include "renderable.h"
 
 #include "../resource/tmesh_cache.h"
+#include <stddef.h>
 
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename) {
     renderable->transform = transform;
     renderable->mesh = tmesh_cache_load(mesh_filename);
+    renderable->force_material = NULL;
     armature_init(&renderable->armature, &renderable->mesh->armature);
 }
 
@@ -16,6 +18,7 @@ void renderable_destroy(struct renderable* renderable) {
 void renderable_single_axis_init(struct renderable_single_axis* renderable, struct TransformSingleAxis* transform, const char* mesh_filename) {
     renderable->transform = transform;
     renderable->mesh = tmesh_cache_load(mesh_filename);
+    renderable->force_material = NULL;
     armature_init(&renderable->armature, &renderable->mesh->armature);
 }
 

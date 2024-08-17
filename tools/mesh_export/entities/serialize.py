@@ -11,6 +11,8 @@ COMMAND_ENV = 3
 COMMAND_PRIM = 4
 COMMAND_BLEND_COLOR = 5
 COMMAND_FLAGS = 6
+COMMAND_PALETTE = 7
+COMMAND_UV_GEN = 8
 
 T3D_FLAG_DEPTH      = 1 << 0
 T3D_FLAG_TEXTURED   = 1 << 1
@@ -144,6 +146,11 @@ ALPHACOMPARE = {
     "NONE": 0,
     "THRESHOLD": 1,
     "NOISE": 3,
+}
+
+UV_GEN = {
+    'none': 0,
+    'spherical': 1,
 }
 
 RDPQ_COMBINER_2PASS = 1 << 63
@@ -347,6 +354,10 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
     if mat.blend_color:
         output.write(COMMAND_BLEND_COLOR.to_bytes(1, 'big'))
         _serialize_color(output, mat.blend_color)
+
+    if mat.uv_gen:
+        output.write(COMMAND_UV_GEN.to_bytes(1, 'big'))
+        output.write(UV_GEN[mat.uv_gen].to_bytes(1, 'big'))
 
     flags = flags_for_material(mat)
 

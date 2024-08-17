@@ -66,7 +66,7 @@ void render_batch_init(struct render_batch* batch, struct Transform* camera_tran
 
 struct render_batch_element* render_batch_add(struct render_batch* batch);
 
-void render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature);
+struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature);
 
 void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data);
 // caller is responsible for populating sprite list

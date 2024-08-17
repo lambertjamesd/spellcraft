@@ -1,0 +1,12 @@
+{
+    "tex0": "../../images/objects/ice_map.png",
+    "combineMode": [{
+        "color": ["PRIM", "0", "TEX0", "0"],
+        "alpha": ["0", "0", "0", "1"]
+    }],
+    "blendMode": "OPAQUE",
+    "primColor": [16, 200, 220, 255],
+    "lighting": false,
+    "zBuffer": true,
+    "uvGen": "spherical"
+}

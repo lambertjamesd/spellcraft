@@ -18,17 +18,17 @@ static struct dynamic_object_type ground_torch_collision_type = {
             .radius = 0.4f,
             .inner_half_height = 0.4f,
         },
-    }
+}
 };
 
 void ground_torch_update(void* data) {
     struct ground_torch* torch = (struct ground_torch*)data;
 
-    if (torch->health.flaming_timer) {
+    if (health_is_burning(&torch->health)) {
         torch->is_lit = 1;
     }
 
-    if (torch->health.icy_timer) {
+    if (health_is_frozen(&torch->health)) {
         torch->is_lit = 0;
     }
 }

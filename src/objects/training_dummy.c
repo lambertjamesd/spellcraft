@@ -3,6 +3,7 @@
 #include "../collision/collision_scene.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
+#include "../spell/assets.h"
 #include <stddef.h>
 
 #define DUMMY_BURN_TIME 7.0f
@@ -18,12 +19,30 @@ static struct dynamic_object_type dummy_collision = {
     }
 };
 
+void training_dummy_check_fire(struct training_dummy* dummy) {
+    if (health_is_burning(&dummy->health)) {
+        if (dummy->burning_effect) {
+            burning_effect_refresh(dummy->burning_effect, DUMMY_BURN_TIME);
+        } else {
+            dummy->burning_effect = burning_effect_new(&dummy->transform.position, 1.5f, DUMMY_BURN_TIME);
+            dummy->burning_effect->position.y += 1.0f;
+        }
+    } else if (dummy->burning_effect) {
+        burning_effect_free(dummy->burning_effect);
+        dummy->burning_effect = NULL;
+    }
+}
+
 void training_dummy_update(void* data) {
     struct training_dummy* dummy = (struct training_dummy*)data;
 
-    if (dummy->burning_effect && !burning_effect_is_active(dummy->burning_effect)) {
-        burning_effect_free(dummy->burning_effect);
-        dummy->burning_effect = NULL;
+    training_dummy_check_fire(dummy);
+
+    if (health_is_frozen(&dummy->health)) {
+        dummy->renderable.force_material = spell_assets_get()->ice_material;
+        return;
+    } else {
+        dummy->renderable.force_material = NULL;
     }
 
     struct Vector3 dummy_up;
@@ -58,24 +77,11 @@ void training_dummy_push_damage_hit(struct training_dummy* dummy, entity_id sour
     vector3AddScaled(&dummy->angularVelocity, &torque, -6.0f, &dummy->angularVelocity);
 }
 
-void training_dummy_fire_damage(struct training_dummy* dummy) {
-    if (dummy->burning_effect) {
-        burning_effect_refresh(dummy->burning_effect, DUMMY_BURN_TIME);
-    } else {
-        dummy->burning_effect = burning_effect_new(&dummy->transform.position, 1.5f, DUMMY_BURN_TIME);
-        dummy->burning_effect->position.y += 1.0f;
-    }
-}
-
 void training_dummy_on_hit(void* data, float amount, entity_id source, enum damage_type type) {
     struct training_dummy* dummy = (struct training_dummy*)data;
 
     if (type & (DAMAGE_TYPE_PROJECTILE | DAMAGE_TYPE_BASH)) {
         training_dummy_push_damage_hit(dummy, source);
-    }
-
-    if (type & DAMAGE_TYPE_FIRE) {
-        training_dummy_fire_damage(dummy);
     }
 }
 

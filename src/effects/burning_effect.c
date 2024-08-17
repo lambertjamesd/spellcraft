@@ -22,7 +22,7 @@ void burning_effect_update(void* data) {
         effect->current_time -= fixed_time_step;
         effect->current_size = mathfMoveTowards(effect->current_size, effect->size, 1.0f * fixed_time_step);
     } else {
-        effect->current_size = mathfMoveTowards(effect->current_size, 0.0f, 0.25f * fixed_time_step);
+        effect->current_size = mathfMoveTowards(effect->current_size, 0.0f, effect->size ? 0.25f * fixed_time_step : 4.0f * fixed_time_step);
     }
 }
 
