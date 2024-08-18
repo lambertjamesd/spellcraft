@@ -283,6 +283,15 @@ def _pack_pos(pos, settings: export_settings.ExportSettings):
         int(pos[2] * settings.fixed_point_scale)
     )
 
+def _pack_rotation(rot):
+    final_rot = rot if rot.w >= 0 else -rot
+    return struct.pack(
+        '>hhh', 
+        round(32767 * final_rot.x),
+        round(32767 * final_rot.y),
+        round(32767 * final_rot.z)
+    )
+
 def _pack_normal(normal):
   x_int = int(round(normal[0] * 15.5))
   y_int = int(round(normal[1] * 15.5))
@@ -468,10 +477,12 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
         name = linkage.name.encode()
         file.write(len(name).to_bytes(1, 'big'))
         file.write(name)
+
         file.write(linkage.bone_index.to_bytes(2, 'big'))
         loc, rot, scale = linkage.transform.decompose()
-        file.write(struct.pack(">fff", loc.x, loc.y, loc.z))
-        file.write(struct.pack(">fff", rot.x, rot.y, rot.z))
+        file.write(_pack_pos(loc, settings))
+        file.write(_pack_rotation(rot))
+        file.write(struct.pack(">h", int(scale.x * 256)))
         
 
     file.write(len(commands).to_bytes(2, 'big'))

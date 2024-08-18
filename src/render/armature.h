@@ -6,6 +6,7 @@
 #include "../math/vector3.h"
 #include "../math/transform.h"
 #include "armature_definition.h"
+#include "../render/frame_alloc.h"
 
 #define NO_BONE_PARENT  0xFF
 
@@ -27,5 +28,7 @@ void armature_destroy(struct armature* armature);
 
 // this wont be needed once instancing is working
 void armature_def_apply(struct armature_definition* definition, T3DMat4FP* pose);
+
+T3DMat4* armature_build_pose(struct armature* armature, struct frame_memory_pool* pool);
 
 #endif

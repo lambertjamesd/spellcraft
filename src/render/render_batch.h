@@ -44,7 +44,9 @@ struct render_batch_element {
         struct {
             rspq_block_t* block;
             T3DMat4FP* transform;
-            struct armature* armature;
+            T3DMat4FP* pose;
+            int bone_count;
+            // this is temporary
             T3DMat4FP* tmp_fixed_pose;
         } mesh;
         struct render_batch_billboard_element billboard;
@@ -76,6 +78,8 @@ struct render_batch_billboard_element* render_batch_add_particles(struct render_
 struct render_batch_billboard_element render_batch_get_sprites(struct render_batch* batch, int count);
 mat4x4* render_batch_get_transform(struct render_batch* batch);
 T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch);
+// !!! This stomps on the input pose so don't attempt to use it after calling this function
+T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count);
 
 void render_batch_finish(struct render_batch* batch, mat4x4 view_proj, T3DViewport* viewport);
 

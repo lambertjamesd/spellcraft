@@ -216,6 +216,7 @@ class ArmatureData:
         self.armature: bpy.types.Armature = obj.data
         self.obj: bpy.types.Object = obj
         self.used_bones: set[str] = set()
+        self.base_transform: mathutils.Matrix = base_transform
 
         self._filtered_bones: dict[str, ArmatureBone] = {}
         self._ordered_bones: list[ArmatureBone] = []
@@ -277,9 +278,13 @@ class ArmatureData:
     def find_bone_linkage(self, obj: bpy.types.Object) -> BoneLinkage:
 
         bone = self.find_bone_data(obj.parent_bone)
-        final_transform = bone.pose_bone.matrix.inverted() @ obj.matrix_world
+        final_transform = bone.pose_bone.matrix.inverted() @ obj.matrix_world @ self.base_transform.inverted()
 
-        return BoneLinkage(obj.data.name, bone.index, final_transform)
+        return BoneLinkage(
+            obj.data.name, 
+            bone.index, 
+            final_transform
+        )
     
     def find_parent_bone(self, bone_name: str):
         curr = self.find_bone_data(bone_name)

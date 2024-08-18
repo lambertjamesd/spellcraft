@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include <memory.h>
 #include <math.h>
+#include "../math/matrix.h"
 
 #define POSITION_SCALE      (1.0f / 256.0f)
 #define QUATERNION_SCALE    (1.0f / 32767.0f)
@@ -92,4 +93,28 @@ void armature_def_apply(struct armature_definition* definition, T3DMat4FP* pose)
     }
 
     data_cache_hit_writeback_invalidate(pose, sizeof(T3DMat4FP) * definition->bone_count);
+}
+
+T3DMat4* armature_build_pose(struct armature* armature, struct frame_memory_pool* pool) {
+    T3DMat4* pose = frame_malloc(pool, sizeof(T3DMat4) * armature->bone_count);
+
+    if (!pose) {
+        return NULL;
+    }
+
+    for(int i = 0; i < armature->bone_count; i++) {
+        int parent_index = armature->parent_linkage[i];
+
+        assert(parent_index == NO_BONE_PARENT || parent_index < i);
+
+        if (parent_index == NO_BONE_PARENT) {
+            transformToMatrix(&armature->pose[i], pose[i].m);
+        } else {
+            mat4x4 tmp;
+            transformToMatrix(&armature->pose[i], tmp);
+            matrixMul(pose[parent_index].m, tmp, pose[i].m);
+        }
+    }
+
+    return pose;
 }

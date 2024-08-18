@@ -12,6 +12,27 @@ enum TMeshCommandType {
     TMESH_COMMAND_BONE,
 };
 
+void tmesh_unpack_pos(struct Vector3* pos, FILE* file) {
+    int16_t read;
+    fread(&read, 2, 1, file);
+    pos->x = read;
+    fread(&read, 2, 1, file);
+    pos->y = read;
+    fread(&read, 2, 1, file);
+    pos->z = read;
+}
+
+void tmesh_unpack_rot(struct Quaternion* rot, FILE* file) {
+    int16_t read;
+    fread(&read, 2, 1, file);
+    rot->x = read * (1.0f / 32767.0f);
+    fread(&read, 2, 1, file);
+    rot->y = read * (1.0f / 32767.0f);
+    fread(&read, 2, 1, file);
+    rot->z = read * (1.0f / 32767.0f);
+    rot->w = sqrtf(1.0f - rot->x * rot->x - rot->y * rot->y - rot->z * rot->z);
+}
+
 void tmesh_load(struct tmesh* tmesh, FILE* file) {
     int header;
 
@@ -90,8 +111,13 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
             linkage->name[str_len] = '\0';
 
             fread(&linkage->bone_index, 2, 1, file);
-            fread(&linkage->position, sizeof(struct Vector3), 1, file);
-            fread(&linkage->rotation, sizeof(struct Vector3), 1, file);
+            tmesh_unpack_pos(&linkage->transform.position, file);
+            tmesh_unpack_rot(&linkage->transform.rotation, file);
+            int16_t scale_packed;
+            fread(&scale_packed, 2, 1, file);
+            linkage->transform.scale.x = scale_packed * (1.0f / 256.0f);
+            linkage->transform.scale.y = linkage->transform.scale.x;
+            linkage->transform.scale.z = linkage->transform.scale.x;
         }
 
         tmesh->linkages[linkage_count].name = NULL;

@@ -6,12 +6,12 @@
 
 #include "material.h"
 #include "armature.h"
+#include "../math/transform.h"
 
 struct armature_linkage {
     char* name;
     uint16_t bone_index;
-    struct Vector3 position;
-    struct Quaternion rotation;
+    struct Transform transform;
 };
 
 struct tmesh {
