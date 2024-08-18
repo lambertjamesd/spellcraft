@@ -7,6 +7,13 @@
 #include "material.h"
 #include "armature.h"
 
+struct armature_linkage {
+    char* name;
+    uint16_t bone_index;
+    struct Vector3 position;
+    struct Quaternion rotation;
+};
+
 struct tmesh {
     struct material* material;
     struct material* transition_materials;
@@ -17,6 +24,8 @@ struct tmesh {
     struct armature_definition armature;
     // this is a single instance for the entire mesh this should be instanced in the future after t3d supports it
     T3DMat4FP *armature_pose;
+
+    struct armature_linkage* linkages;
 };
 
 void tmesh_load(struct tmesh* tmesh, FILE* file);

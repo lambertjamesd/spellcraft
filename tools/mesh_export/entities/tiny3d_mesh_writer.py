@@ -400,7 +400,7 @@ def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_setting
     return current_bone
         
 
-def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.ArmatureData | None, settings: export_settings.ExportSettings, file):
+def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.ArmatureData | None, linkages: list[armature.BoneLinkage], settings: export_settings.ExportSettings, file):
     file.write('T3MS'.encode())
 
     chunks = []
@@ -462,6 +462,17 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
         serialize.serialize_material_file(file, transition[0], transition[1])
 
     armature.write_armature(file, arm, settings)
+
+    file.write(len(linkages).to_bytes(2, 'big'))
+    for linkage in linkages:
+        name = linkage.name.encode()
+        file.write(len(name).to_bytes(1, 'big'))
+        file.write(name)
+        file.write(linkage.bone_index.to_bytes(2, 'big'))
+        loc, rot, scale = linkage.transform.decompose()
+        file.write(struct.pack(">fff", loc.x, loc.y, loc.z))
+        file.write(struct.pack(">fff", rot.x, rot.y, rot.z))
+        
 
     file.write(len(commands).to_bytes(2, 'big'))
 

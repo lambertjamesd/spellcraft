@@ -9,6 +9,12 @@ sys.path.append(os.path.dirname(__file__))
 
 from . import export_settings
 
+class BoneLinkage():
+    def __init__(self, name: str, bone_index: int, transform: mathutils.Matrix):
+        self.name: str = name
+        self.bone_index: int = bone_index
+        self.transform: mathutils.Matrix = transform
+
 class BoneAttributes():
     def __init__(self):
         self.has_pos = False
@@ -267,6 +273,13 @@ class ArmatureData:
 
     def find_bone_data(self, bone_name: str):
         return self._filtered_bones[bone_name]
+    
+    def find_bone_linkage(self, obj: bpy.types.Object) -> BoneLinkage:
+
+        bone = self.find_bone_data(obj.parent_bone)
+        final_transform = bone.pose_bone.matrix.inverted() @ obj.matrix_world
+
+        return BoneLinkage(obj.data.name, bone.index, final_transform)
     
     def find_parent_bone(self, bone_name: str):
         curr = self.find_bone_data(bone_name)
