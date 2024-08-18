@@ -9,6 +9,7 @@
 #include "../time/time.h"
 #include "../objects/collectable.h"
 #include "../entity/interactable.h"
+#include "../resource/tmesh_cache.h"
 
 #define PLAYER_MAX_SPEED    4.2f
 
@@ -205,6 +206,7 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     transformInitIdentity(&player->transform);
     renderable_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.tmesh");
+    player->renderable.attachments[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
 
     player->camera_transform = camera_transform;
 

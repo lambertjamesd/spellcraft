@@ -25,7 +25,8 @@ struct tmesh {
     // this is a single instance for the entire mesh this should be instanced in the future after t3d supports it
     T3DMat4FP *armature_pose;
 
-    struct armature_linkage* linkages;
+    struct armature_linkage* attatchments;
+    uint16_t attatchment_count;
 };
 
 void tmesh_load(struct tmesh* tmesh, FILE* file);

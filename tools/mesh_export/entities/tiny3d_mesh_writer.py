@@ -409,7 +409,7 @@ def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_setting
     return current_bone
         
 
-def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.ArmatureData | None, linkages: list[armature.BoneLinkage], settings: export_settings.ExportSettings, file):
+def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.ArmatureData | None, attatchments: list[armature.BoneLinkage], settings: export_settings.ExportSettings, file):
     file.write('T3MS'.encode())
 
     chunks = []
@@ -472,8 +472,8 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
 
     armature.write_armature(file, arm, settings)
 
-    file.write(len(linkages).to_bytes(2, 'big'))
-    for linkage in linkages:
+    file.write(len(attatchments).to_bytes(2, 'big'))
+    for linkage in attatchments:
         name = linkage.name.encode()
         file.write(len(name).to_bytes(1, 'big'))
         file.write(name)

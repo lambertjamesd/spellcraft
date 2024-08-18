@@ -60,7 +60,7 @@ def process_scene():
         bm.free()
 
     mesh_list = entities.mesh.mesh_list(base_transform)
-    linkages: list[entities.armature.BoneLinkage] = []
+    attatchments: list[entities.armature.BoneLinkage] = []
 
     for obj in bpy.data.objects:
         if obj.type != "MESH":
@@ -68,7 +68,7 @@ def process_scene():
 
         if obj.data.library:
             if obj.parent and obj.parent_bone and arm:
-                linkages.append(arm.find_bone_linkage(obj))
+                attatchments.append(arm.find_bone_linkage(obj))
             
             continue
 
@@ -85,7 +85,7 @@ def process_scene():
         settings.default_material = entities.material_extract.load_material_with_name(meshes[0][0], meshes[0][1].mat)
 
     with open(sys.argv[-1], 'wb') as file:
-        entities.tiny3d_mesh_writer.write_mesh(meshes, arm, linkages, settings, file)
+        entities.tiny3d_mesh_writer.write_mesh(meshes, arm, attatchments, settings, file)
 
     entities.animation.export_animations(replace_extension(sys.argv[-1], '.anim'), arm, settings)
     

@@ -45,7 +45,7 @@ T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count) {
     return (T3DMat4FP*)pose;
 }
 
-struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature) {
+struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature, struct tmesh** attachments) {
     struct render_batch_element* element = render_batch_add(batch);
 
     if (!element) {
@@ -60,6 +60,24 @@ struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, 
 
     if (armature && armature->bone_count) {
         T3DMat4* pose = armature_build_pose(armature, batch->pool);
+
+        if (attachments && mesh->attatchments) {
+            for (int i = 0; i < mesh->attatchment_count; i += 1) {
+                if (!attachments[i]) {
+                    continue;
+                }
+
+                T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
+
+                if (!mtxfp) {
+                    continue;
+                }
+
+                t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)&pose[mesh->attatchments[i].bone_index]);
+                render_batch_add_tmesh(batch, attachments[i], mtxfp, NULL, NULL);
+            }
+        }
+
         element->mesh.bone_count = armature->bone_count;
         element->mesh.pose = render_batch_build_pose(pose, armature->bone_count);
     }

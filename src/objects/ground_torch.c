@@ -49,7 +49,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     matrixFromPosition(mtx, &torch->position);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, torch->base_mesh, mtxfp, NULL);
+    render_batch_add_tmesh(batch, torch->base_mesh, mtxfp, NULL, NULL);
 
     if (!torch->is_lit) {
         return;
@@ -69,7 +69,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     matrixApplyPosition(mtx, &flame_position);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, torch->flame_mesh, mtxfp, NULL);
+    render_batch_add_tmesh(batch, torch->flame_mesh, mtxfp, NULL, NULL);
 }
 
 void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition) {

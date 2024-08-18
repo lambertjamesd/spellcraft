@@ -93,19 +93,17 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
         tmesh->armature_pose = NULL;
     }
 
-    // load linkages
+    // load attatchments
+    fread(&tmesh->attatchment_count, 2, 1, file);
 
-    uint16_t linkage_count;
-    fread(&linkage_count, 2, 1, file);
+    if (tmesh->attatchment_count) {
+        tmesh->attatchments = malloc(sizeof(struct armature_linkage) * tmesh->attatchment_count);
 
-    if (linkage_count) {
-        tmesh->linkages = malloc(sizeof(struct armature_linkage) * (linkage_count + 1));
-
-        for (int i = 0; i < linkage_count; i += 1) {
+        for (int i = 0; i < tmesh->attatchment_count; i += 1) {
             uint8_t str_len;
             fread(&str_len, 1, 1, file);
 
-            struct armature_linkage* linkage = &tmesh->linkages[i];
+            struct armature_linkage* linkage = &tmesh->attatchments[i];
             linkage->name = malloc(str_len + 1);
             fread(linkage->name, 1, str_len, file);
             linkage->name[str_len] = '\0';
@@ -119,10 +117,8 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
             linkage->transform.scale.y = linkage->transform.scale.x;
             linkage->transform.scale.z = linkage->transform.scale.x;
         }
-
-        tmesh->linkages[linkage_count].name = NULL;
     } else {
-        tmesh->linkages = NULL;
+        tmesh->attatchments = NULL;
     }
 
 
@@ -218,12 +214,10 @@ void tmesh_release(struct tmesh* tmesh) {
         free(tmesh->transition_materials);
     }
 
-    if (tmesh->linkages) {
-        struct armature_linkage* linkage = tmesh->linkages;
-        while (linkage->name) {
-            free(linkage->name);
-            ++linkage;
+    if (tmesh->attatchments) {
+        for (int i = 0; i < tmesh->attatchment_count; i += 1) {
+            free(tmesh->attatchments[i].name);
         }
-        free(tmesh->linkages);
+        free(tmesh->attatchments);
     }
 }
