@@ -199,6 +199,14 @@ void player_update(struct player* player) {
     if (pressed.a) {
         player_handle_a_action(player);
     }
+
+    if (pressed.l) {
+        if (player->renderable.attachments[0]) {
+            player->renderable.attachments[0] = NULL;
+        } else {
+            player->renderable.attachments[0] = player->assets.default_staff;
+        }
+    }
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
@@ -206,7 +214,6 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     transformInitIdentity(&player->transform);
     renderable_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.tmesh");
-    player->renderable.attachments[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
 
     player->camera_transform = camera_transform;
 
@@ -252,6 +259,8 @@ void player_init(struct player* player, struct player_definition* definition, st
     animator_init(&player->animator, player->renderable.armature.bone_count);
 
     animator_run_clip(&player->animator, player->animations.idle, 0.0f, true);
+
+    player->assets.default_staff = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
 }
 
 void player_destroy(struct player* player) {

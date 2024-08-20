@@ -27,6 +27,10 @@ struct player_definition {
     struct Vector2 rotation;
 };
 
+struct inventory_assets {
+    struct tmesh* default_staff;
+};
+
 struct player {
     struct Transform transform;
     struct renderable renderable;
@@ -41,6 +45,7 @@ struct player {
     struct animation_set* animation_set;
     struct player_animations animations;
     struct animator animator;
+    struct inventory_assets assets;
 };
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform);

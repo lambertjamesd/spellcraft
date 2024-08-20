@@ -43,6 +43,8 @@ T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count) {
         *((T3DMat4FP*)curr) = tmp;
     }
 
+    data_cache_hit_writeback_invalidate(pose, sizeof(T3DMat4) * bone_count);
+
     return (T3DMat4FP*)pose;
 }
 
@@ -66,7 +68,6 @@ struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, 
         T3DMat4* pose = armature_build_pose(armature, batch->pool);
         element->mesh.bone_count = armature->bone_count;
         element->mesh.pose = render_batch_build_pose(pose, armature->bone_count);
-        data_cache_hit_writeback_invalidate(pose, sizeof(T3DMat4) * armature->bone_count);
 
 
         if (attachments && mesh->attatchments) {
