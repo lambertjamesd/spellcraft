@@ -42,7 +42,7 @@ void fire_around_render(void* data, struct render_batch* batch) {
     matrixApplyPosition(mtx, &scaledPosition);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, spell_assets_get()->fire_around_mesh, mtxfp, NULL, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->fire_around_mesh, mtxfp, 1, NULL, NULL);
 }
 
 void fire_around_init(struct fire_around* fire_around, struct spell_data_source* source, struct spell_event_options event_options) {

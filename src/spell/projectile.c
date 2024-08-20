@@ -44,7 +44,7 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     transformToMatrix(&transform, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, spell_assets_get()->projectile_mesh, mtxfp, NULL, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->projectile_mesh, mtxfp, 1, NULL, NULL);
 }
 
 void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options, enum element_type element) {

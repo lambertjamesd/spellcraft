@@ -33,6 +33,31 @@ void tmesh_unpack_rot(struct Quaternion* rot, FILE* file) {
     rot->w = sqrtf(1.0f - rot->x * rot->x - rot->y * rot->y - rot->z * rot->z);
 }
 
+void tmesh_load_attachment(struct armature_attatchment* attatchment, FILE* file) {
+    uint8_t str_len;
+    fread(&str_len, 1, 1, file);
+
+    attatchment->name = malloc(str_len + 1);
+    fread(attatchment->name, 1, str_len, file);
+    attatchment->name[str_len] = '\0';
+
+    fread(&attatchment->bone_index, 2, 1, file);
+
+    struct Transform transform;
+    tmesh_unpack_pos(&transform.position, file);
+    tmesh_unpack_rot(&transform.rotation, file);
+    int16_t scale_packed;
+    fread(&scale_packed, 2, 1, file);
+    transform.scale.x = scale_packed * (1.0f / 256.0f);
+    transform.scale.y = transform.scale.x;
+    transform.scale.z = transform.scale.x;
+
+    T3DMat4 mtx;
+    transformToMatrix(&transform, mtx.m);
+    t3d_mat4_to_fixed(&attatchment->local_transform, &mtx);
+    data_cache_hit_writeback_invalidate(&attatchment->local_transform, sizeof(T3DMat4FP));
+}
+
 void tmesh_load(struct tmesh* tmesh, FILE* file) {
     int header;
 
@@ -97,25 +122,11 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     fread(&tmesh->attatchment_count, 2, 1, file);
 
     if (tmesh->attatchment_count) {
-        tmesh->attatchments = malloc(sizeof(struct armature_linkage) * tmesh->attatchment_count);
+        tmesh->attatchments = malloc(sizeof(struct armature_attatchment) * tmesh->attatchment_count);
 
         for (int i = 0; i < tmesh->attatchment_count; i += 1) {
-            uint8_t str_len;
-            fread(&str_len, 1, 1, file);
-
-            struct armature_linkage* linkage = &tmesh->attatchments[i];
-            linkage->name = malloc(str_len + 1);
-            fread(linkage->name, 1, str_len, file);
-            linkage->name[str_len] = '\0';
-
-            fread(&linkage->bone_index, 2, 1, file);
-            tmesh_unpack_pos(&linkage->transform.position, file);
-            tmesh_unpack_rot(&linkage->transform.rotation, file);
-            int16_t scale_packed;
-            fread(&scale_packed, 2, 1, file);
-            linkage->transform.scale.x = scale_packed * (1.0f / 256.0f);
-            linkage->transform.scale.y = linkage->transform.scale.x;
-            linkage->transform.scale.z = linkage->transform.scale.x;
+            struct armature_attatchment* attatchment = &tmesh->attatchments[i];
+            tmesh_load_attachment(attatchment, file);
         }
     } else {
         tmesh->attatchments = NULL;

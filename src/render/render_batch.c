@@ -23,6 +23,7 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->type = RENDER_BATCH_MESH;
     result->mesh.block = 0;
     result->mesh.transform = NULL;
+    result->mesh.transform_count = 0;
     result->mesh.pose = NULL;
     result->mesh.tmp_fixed_pose = NULL;
 
@@ -45,21 +46,28 @@ T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count) {
     return (T3DMat4FP*)pose;
 }
 
-struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, T3DMat4FP* transform, struct armature* armature, struct tmesh** attachments) {
+struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, void* transform, int transform_count, struct armature* armature, struct tmesh** attachments) {
     struct render_batch_element* element = render_batch_add(batch);
 
     if (!element) {
         return NULL;
     }
 
+    assert(!transform == !transform_count);
+
     element->mesh.block = mesh->block;
     element->material = mesh->material;
     element->mesh.transform = transform;
+    element->mesh.transform_count = transform_count;
     element->mesh.pose = NULL;
     element->mesh.tmp_fixed_pose = UncachedAddr(mesh->armature_pose);
 
     if (armature && armature->bone_count) {
         T3DMat4* pose = armature_build_pose(armature, batch->pool);
+        element->mesh.bone_count = armature->bone_count;
+        element->mesh.pose = render_batch_build_pose(pose, armature->bone_count);
+        data_cache_hit_writeback_invalidate(pose, sizeof(T3DMat4) * armature->bone_count);
+
 
         if (attachments && mesh->attatchments) {
             for (int i = 0; i < mesh->attatchment_count; i += 1) {
@@ -67,19 +75,31 @@ struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, 
                     continue;
                 }
 
-                T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
+                T3DMat4FP** matrices = frame_malloc(batch->pool, sizeof(T3DMat4FP*) * (transform_count + 2));
 
-                if (!mtxfp) {
+                if (!matrices) {
                     continue;
                 }
 
-                t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)&pose[mesh->attatchments[i].bone_index]);
-                render_batch_add_tmesh(batch, attachments[i], mtxfp, NULL, NULL);
+                int matrix_index = 0;
+
+                if (transform_count > 1) {
+                    for (matrix_index = 0; matrix_index < transform_count; matrix_index += 1) {
+                        matrices[matrix_index] = ((T3DMat4FP**)transform)[matrix_index];
+                    }
+                } else {
+                    matrices[matrix_index++] = transform;
+                }
+
+
+                struct armature_attatchment* linkage = &mesh->attatchments[i];
+
+                matrices[matrix_index++] = &element->mesh.pose[linkage->bone_index];
+                matrices[matrix_index++] = &linkage->local_transform;
+
+                render_batch_add_tmesh(batch, attachments[i], matrices, transform_count + 2, NULL, NULL);
             }
         }
-
-        element->mesh.bone_count = armature->bone_count;
-        element->mesh.pose = render_batch_build_pose(pose, armature->bone_count);
     }
 
     return element;
@@ -257,14 +277,21 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 memcpy(element->mesh.tmp_fixed_pose, element->mesh.pose, sizeof(T3DMat4FP) * element->mesh.bone_count);
             }
 
-            if (element->mesh.transform) {
-                t3d_matrix_push(element->mesh.transform);
+            if (element->mesh.transform_count) {
+                assert(element->mesh.transform);
+                if (element->mesh.transform_count == 1) {
+                    t3d_matrix_push(element->mesh.transform);
+                } else {
+                    for (int mtx_index = 0; mtx_index < element->mesh.transform_count; mtx_index += 1) {
+                        t3d_matrix_push(((T3DMat4FP**)element->mesh.transform)[mtx_index]);
+                    }
+                }
             }
 
             rspq_block_run(element->mesh.block);
 
-            if (element->mesh.transform) {
-                t3d_matrix_pop(1);
+            if (element->mesh.transform_count) {
+                t3d_matrix_pop(element->mesh.transform_count);
             }
         } else if (element->type == RENDER_BATCH_BILLBOARD) {
             for (int sprite_index = 0; sprite_index < element->billboard.sprite_count; ++sprite_index) {

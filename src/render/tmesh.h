@@ -8,10 +8,10 @@
 #include "armature.h"
 #include "../math/transform.h"
 
-struct armature_linkage {
+struct armature_attatchment {
     char* name;
     uint16_t bone_index;
-    struct Transform transform;
+    T3DMat4FP local_transform;
 };
 
 struct tmesh {
@@ -25,7 +25,7 @@ struct tmesh {
     // this is a single instance for the entire mesh this should be instanced in the future after t3d supports it
     T3DMat4FP *armature_pose;
 
-    struct armature_linkage* attatchments;
+    struct armature_attatchment* attatchments;
     uint16_t attatchment_count;
 };
 
