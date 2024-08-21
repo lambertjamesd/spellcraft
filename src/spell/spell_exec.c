@@ -27,7 +27,7 @@ void spell_slot_init(
     event_options.burst_mana = burst_mana;
 
     switch ((enum inventory_item_type)symbol.type) {
-        case SPELL_SYMBOL_PROJECTILE:
+        case SPELL_SYMBOL_EARTH:
             slot->type = SPELL_EXEC_SLOT_TYPE_PROJECTILE;
             projectile_init(&slot->data.projectile, input, event_options, spell_data_source_determine_element(input));
             break;
@@ -35,9 +35,6 @@ void spell_slot_init(
             if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options);
-            } else if (input->flags.around) {
-                slot->type = SPELL_EXEC_SLOT_TYPE_FIRE_AROUND;
-                fire_around_init(&slot->data.fire_around, input, event_options);
             } else {
                 slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
                 fire_init(&slot->data.fire, input, event_options);
@@ -47,7 +44,7 @@ void spell_slot_init(
             slot->type = SPELL_EXEC_SLOT_TYPE_RECAST;
             recast_init(&slot->data.recast, input, event_options, input->flags.reversed ? REACT_MODE_STICKY : RECAST_MODE_RECAST);
             break;
-        case SPELL_SYMBOL_PUSH:
+        case SPELL_SYMBOL_AIR:
             slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
             push_init(&slot->data.push, input, event_options, spell_data_source_determine_element(input));
             break;
@@ -264,16 +261,8 @@ int spell_exec_find_modifier(struct spell_exec* exec) {
 
 static union spell_source_flags symbol_to_modifier[] = {
     [SPELL_SYMBOL_FIRE] = { .flaming = 1 },
-    [SPELL_SYMBOL_PUSH] = { .controlled = 1 },
-    [SPELL_SYMBOL_REVERSE] = { .reversed = 1 },
-    [SPELL_SYMBOL_UP] = { .up = 1 },
-    [SPELL_SYMBOL_TIME_DIALATION] = { .fast = 1 },
-};
-
-static union spell_source_flags reverse_symbol_to_modifier[] = {
-    [SPELL_SYMBOL_FIRE] = { .icy = 1 },
-    [SPELL_SYMBOL_UP] = { .around = 1 },
-    [SPELL_SYMBOL_TIME_DIALATION] = { .slow = 1 },
+    [SPELL_SYMBOL_AIR] = { .controlled = 1 },
+    [SPELL_SYMBOL_ICE] = { .icy = 1 },
 };
 
 void spell_modifier_init(
@@ -287,15 +276,7 @@ void spell_modifier_init(
         // TODO check for sibilings
 
         int type = spell_get_symbol(spell, col, row).type;
-
-        union spell_source_flags reverse_flags = reverse_symbol_to_modifier[type];
-        
-        if (flags.reversed && reverse_flags.all) {
-            flags.reversed = 0;
-            flags.all |= reverse_flags.all;
-        } else {
-            flags.all |= symbol_to_modifier[type].all;
-        }
+        flags.all |= symbol_to_modifier[type].all;
 
         col += 1;
     }

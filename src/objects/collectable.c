@@ -42,7 +42,7 @@ static struct collectable_information collectable_information[] = {
 
 static char* spell_messages[] = {
     [SPELL_SYMBOL_FIRE] = "You found the fire rune!\n\nWith it you can summon fire or imbue fire into chained runes",
-    [SPELL_SYMBOL_PROJECTILE] = "You found the projectile rune!\n\nUse it to damage enemies from afar or even chain into other runes on impact",
+    [SPELL_SYMBOL_EARTH] = "You found the projectile rune!\n\nUse it to damage enemies from afar or even chain into other runes on impact",
 };
 
 void collectable_assets_load() {

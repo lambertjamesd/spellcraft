@@ -18,7 +18,7 @@ struct spell flame_spell = {
 
 struct spell_symbol dash_spell_symbols[] = {
     {.type = SPELL_SYMBOL_FIRE},
-    {.type = SPELL_SYMBOL_PUSH},
+    {.type = SPELL_SYMBOL_AIR},
 };
 
 struct spell dash_spell = {
@@ -30,7 +30,7 @@ struct spell dash_spell = {
 };
 
 struct spell_symbol projectile_spell_symbols[] = {
-    {.type = SPELL_SYMBOL_PROJECTILE},
+    {.type = SPELL_SYMBOL_EARTH},
 };
 
 struct spell projectile_spell = {

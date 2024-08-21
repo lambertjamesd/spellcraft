@@ -60,10 +60,6 @@ void spell_building_render_menu(struct spell_building_menu* menu) {
             source_x, 0,
             source_x + 24, 24
         );
-
-        if (spell_type == SPELL_SYMBOL_REVERSE) {
-            x = 32 + 8;
-        }
     }
 
     rspq_block_run(spell_cursor_material->block);
