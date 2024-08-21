@@ -7,6 +7,7 @@
 #include "../resource/material_cache.h"
 #include "../player/inventory.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../time/time.h"
 
 #include "../menu/dialog_box.h"
 
@@ -90,15 +91,15 @@ void collectable_collected(struct collectable* collectable) {
         cutscene_builder_init(&builder);
 
         inventory_unlock_rune(collectable->collectable_sub_type);
-        cutscene_builder_pause(&builder, true, true);
-        cutscene_builder_show_rune(&builder, collectable->collectable_sub_type, true);
+        cutscene_builder_pause(&builder, true, true, UPDATE_LAYER_WORLD);
+        cutscene_builder_show_item(&builder, collectable->collectable_sub_type, true);
         
         if (message) {
             cutscene_builder_dialog(&builder, message);
         }
 
-        cutscene_builder_show_rune(&builder, collectable->collectable_sub_type, false);
-        cutscene_builder_pause(&builder, false, true);
+        cutscene_builder_show_item(&builder, collectable->collectable_sub_type, false);
+        cutscene_builder_pause(&builder, false, true, UPDATE_LAYER_WORLD);
 
         cutscene_runner_run(
             cutscene_builder_finish(&builder),

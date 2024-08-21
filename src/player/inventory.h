@@ -21,13 +21,14 @@ struct inventory {
     struct spell custom_spells[MAX_CUSTOM_SPELLS];
 
     uint32_t unlocked_spell_symbols;
+    uint32_t unlocked_items;
 };
 
 void inventory_init();
 void inventory_destroy();
 
-bool inventory_has_rune(enum spell_symbol_type type);
-void inventory_unlock_rune(enum spell_symbol_type type);
+bool inventory_has_rune(enum inventory_item_type type);
+void inventory_unlock_rune(enum inventory_item_type type);
 
 struct spell* inventory_get_equipped_spell(unsigned index);
 void inventory_set_equipped_spell(unsigned index, struct spell* spell);

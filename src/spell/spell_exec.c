@@ -26,7 +26,7 @@ void spell_slot_init(
     event_options.has_secondary_event = spell_has_secondary_event(for_spell, curr_col, curr_row);
     event_options.burst_mana = burst_mana;
 
-    switch ((enum spell_symbol_type)symbol.type) {
+    switch ((enum inventory_item_type)symbol.type) {
         case SPELL_SYMBOL_PROJECTILE:
             slot->type = SPELL_EXEC_SLOT_TYPE_PROJECTILE;
             projectile_init(&slot->data.projectile, input, event_options, spell_data_source_determine_element(input));

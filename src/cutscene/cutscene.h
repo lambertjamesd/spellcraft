@@ -8,13 +8,14 @@
 
 enum cutscene_step_type {
     CUTSCENE_STEP_TYPE_DIALOG,
-    CUTSCENE_STEP_TYPE_SHOW_RUNE,
+    CUTSCENE_STEP_TYPE_SHOW_ITEM,
     CUTSCENE_STEP_TYPE_PAUSE,
     CUTSCENE_STEP_TYPE_EXPRESSION,
     CUTSCENE_STEP_TYPE_JUMP_IF_NOT,
     CUTSCENE_STEP_TYPE_JUMP,
     CUTSCENE_STEP_TYPE_SET_LOCAL,
     CUTSCENE_STEP_TYPE_SET_GLOBAL,
+    CUTSCENE_STEP_TYPE_DELAY,
 };
 
 struct cutscene_step;
@@ -39,10 +40,11 @@ union cutscene_step_data {
     struct {
         uint16_t rune;
         uint16_t should_show;
-    } show_rune;
+    } show_item;
     struct {
         uint8_t should_pause;
         uint8_t should_change_game_mode;
+        uint16_t layers;
     } pause;
     struct {
         uint16_t context_size;
@@ -57,6 +59,9 @@ union cutscene_step_data {
         uint16_t data_type;
         uint16_t word_offset;
     } store_variable;
+    struct {
+        float duration;
+    } delay;
 };
 
 struct cutscene_step {
@@ -77,9 +82,10 @@ struct cutscene_builder {
 struct cutscene* cutscene_load(char* filename);
 void cutscene_builder_init(struct cutscene_builder* builder);
 
-void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode);
+void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode, int layers);
 void cutscene_builder_dialog(struct cutscene_builder* builder, char* message);
-void cutscene_builder_show_rune(struct cutscene_builder* builder, enum spell_symbol_type rune, bool should_show);
+void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type rune, bool should_show);
+void cutscene_builder_delay(struct cutscene_builder* builder, float delay);
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder);
 

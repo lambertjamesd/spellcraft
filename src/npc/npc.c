@@ -84,6 +84,7 @@ void npc_destroy(struct npc* npc) {
     renderable_single_axis_destroy(&npc->renderable);
     render_scene_remove(&npc->renderable);
     update_remove(npc);
+    collision_scene_remove(&npc->collider);
     animation_cache_release(npc->animation_set);
     interactable_destroy(&npc->interactable);
     cutscene_free(npc->talk_to_cutscene);

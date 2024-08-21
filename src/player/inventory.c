@@ -66,11 +66,11 @@ void inventory_destroy() {
     }
 }
 
-bool inventory_has_rune(enum spell_symbol_type type) {
+bool inventory_has_rune(enum inventory_item_type type) {
     return true; // HAS_FLAG(inventory.unlocked_spell_symbols, SPELL_SYMBOL_TO_MASK(type)); 
 }
 
-void inventory_unlock_rune(enum spell_symbol_type type) {
+void inventory_unlock_rune(enum inventory_item_type type) {
     SET_FLAG(inventory.unlocked_spell_symbols, SPELL_SYMBOL_TO_MASK(type));
 }
 

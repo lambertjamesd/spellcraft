@@ -16,7 +16,7 @@ enum collectable_type {
     COLLECTABLE_TYPE_SPELL_RUNE,
 };
 
-enum spell_symbol_type {
+enum inventory_item_type {
     SPELL_SYMBOL_BLANK,
     SPELL_SYMBOL_FIRE,
     SPELL_SYMBOL_PROJECTILE,
@@ -30,8 +30,10 @@ enum spell_symbol_type {
     
     SPELL_SYMBOL_PASS_DOWN,
 
-    SPELL_SYBMOL_COUNT,
+    ITEM_TYPE_STAFF_DEFAULT,
 };
+
+#define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT
 
 struct collectable_definition {
     struct Vector3 position;
@@ -43,6 +45,12 @@ struct collectable_definition {
 struct training_dummy_definition {
     struct Vector3 position;
     struct Vector2 rotation;
+};
+
+struct treasure_chest_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    enum inventory_item_type item;
 };
 
 struct biter_definition {

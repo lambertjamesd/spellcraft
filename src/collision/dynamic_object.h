@@ -78,7 +78,7 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
 void dynamic_object_recalc_bb(struct dynamic_object* object);
 
 void dynamic_object_box_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
-void dynamic_object_box_bouding_box(void* data, struct Vector2* rotation, struct Box3D* box);
+void dynamic_object_box_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
 
 void dynamic_object_cone_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 void dynamic_object_cone_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);

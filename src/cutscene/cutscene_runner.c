@@ -9,7 +9,7 @@
 #include "../menu/menu_common.h"
 #include "evaluation_context.h"
 #include "expression_evaluate.h"
-#include "show_rune.h"
+#include "show_item.h"
 #include "../savefile/savefile.h"
 #include <assert.h>
 
@@ -18,6 +18,7 @@
 
 union cutscene_runner_data {
     struct { bool has_shown; } dialog;
+    struct { float time; } delay;
 };
 
 struct cutscene_queue_entry {
@@ -43,7 +44,7 @@ struct cutscene_runner {
     struct cutscene_active_entry active_cutscenes[MAX_CUTSCENE_CALL_DEPTH];
     int16_t current_cutscene;
 
-    struct show_rune show_rune;
+    struct show_item show_item;
 
     union cutscene_runner_data active_step_data;
 };
@@ -58,20 +59,20 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         case CUTSCENE_STEP_TYPE_DIALOG:
             cutscene_runner.active_step_data.dialog.has_shown = false;
             break;
-        case CUTSCENE_STEP_TYPE_SHOW_RUNE:
-            show_rune_start(&cutscene_runner.show_rune, &step->data);
+        case CUTSCENE_STEP_TYPE_SHOW_ITEM:
+            show_item_start(&cutscene_runner.show_item, &step->data);
             break;
         case CUTSCENE_STEP_TYPE_PAUSE:
             if (step->data.pause.should_pause) {
                 if (step->data.pause.should_change_game_mode) {
                     current_game_mode = GAME_MODE_TRANSITION_TO_MENU;
                 }
-                update_pause_layers(UPDATE_LAYER_WORLD);
+                update_pause_layers(step->data.pause.layers);
             } else {
                 if (step->data.pause.should_change_game_mode) {
                     current_game_mode = GAME_MODE_3D;
                 }
-                update_unpause_layers(UPDATE_LAYER_WORLD);
+                update_unpause_layers(step->data.pause.layers);
             }
             break;
         case CUTSCENE_STEP_TYPE_EXPRESSION:
@@ -103,6 +104,10 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             );
             break;
         }
+        case CUTSCENE_STEP_TYPE_DELAY: {
+            cutscene_runner.active_step_data.delay.time = step->data.delay.duration;
+            break;   
+        }
     }
 }
 
@@ -119,8 +124,8 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
                 return !dialog_box_is_active();
             }
             return false;
-        case CUTSCENE_STEP_TYPE_SHOW_RUNE:
-            return show_rune_update(&cutscene_runner.show_rune, &step->data);
+        case CUTSCENE_STEP_TYPE_SHOW_ITEM:
+            return show_item_update(&cutscene_runner.show_item, &step->data);
         case CUTSCENE_STEP_TYPE_JUMP_IF_NOT:
             if (!evaluation_context_pop(&cutscene->context)) {
                 cutscene->current_instruction += step->data.jump.offset;
@@ -129,6 +134,9 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
         case CUTSCENE_STEP_TYPE_JUMP:
             cutscene->current_instruction += step->data.jump.offset;
             return true;
+        case CUTSCENE_STEP_TYPE_DELAY:
+            cutscene_runner.active_step_data.delay.time -= fixed_time_step;
+            return cutscene_runner.active_step_data.delay.time <= 0.0f;
         default:
             return true;
     }
@@ -201,7 +209,7 @@ void cutscene_runner_update(void* data) {
 }
 
 void cutscene_runner_render(void* data) {
-    show_rune_runder(&cutscene_runner.show_rune);
+    show_item_render(&cutscene_runner.show_item);
 }
 
 void cutscene_runner_init() {
@@ -210,7 +218,7 @@ void cutscene_runner_init() {
 
     cutscene_runner.current_cutscene = -1;
 
-    show_init(&cutscene_runner.show_rune);
+    show_item_init(&cutscene_runner.show_item);
     update_add(&cutscene_runner, cutscene_runner_update, 0, UPDATE_LAYER_WORLD | UPDATE_LAYER_DIALOG | UPDATE_LAYER_PAUSE_MENU);
     menu_add_callback(cutscene_runner_render, &cutscene_runner, 0);
 

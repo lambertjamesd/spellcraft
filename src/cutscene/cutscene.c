@@ -4,6 +4,8 @@
 #include <malloc.h>
 #include <assert.h>
 
+#include "../time/time.h"
+
 #define EXPECTED_HEADER 0x4354534E
 
 char* cutscene_load_string(FILE* file) {
@@ -147,7 +149,7 @@ struct cutscene_step* cutscene_builder_next_step(struct cutscene_builder* builde
     return result;
 }
 
-void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode) {
+void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode, int layers) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
 
     *step = (struct cutscene_step){
@@ -156,6 +158,7 @@ void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause,
             .pause = {
                 .should_pause = should_pause,
                 .should_change_game_mode = should_change_game_mode,
+                .layers = layers,
             },
         },
     };
@@ -180,15 +183,28 @@ void cutscene_builder_dialog(struct cutscene_builder* builder, char* message) {
     };
 }
 
-void cutscene_builder_show_rune(struct cutscene_builder* builder, enum spell_symbol_type rune, bool should_show) {
+void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type rune, bool should_show) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
     *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_TYPE_SHOW_RUNE,
+        .type = CUTSCENE_STEP_TYPE_SHOW_ITEM,
         .data = {
-            .show_rune = {
+            .show_item = {
                 .rune = rune,
                 .should_show = should_show,
+            },
+        },
+    };
+}
+
+void cutscene_builder_delay(struct cutscene_builder* builder, float delay) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_TYPE_DELAY,
+        .data = {
+            .delay = {
+                .duration = delay,
             },
         },
     };

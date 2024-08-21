@@ -8,22 +8,26 @@
 #include "../render/render_scene.h"
 #include "../time/time.h"
 
+#include "../enemies/biter.h"
+
+#include "../npc/npc.h"
+
+#include "../objects/collectable.h"
 #include "../objects/crate.h"
 #include "../objects/ground_torch.h"
-#include "../objects/collectable.h"
-#include "../enemies/biter.h"
 #include "../objects/training_dummy.h"
-#include "../npc/npc.h"
+#include "../objects/treasure_chest.h"
 
 #include "../collision/collision_scene.h"
 
 static struct entity_definition world_entity_definitions[] = {
-    ENTITY_DEFINITION(crate),
     ENTITY_DEFINITION(biter),
+    ENTITY_DEFINITION(collectable),
+    ENTITY_DEFINITION(crate),
     ENTITY_DEFINITION(ground_torch),
     ENTITY_DEFINITION(npc),
-    ENTITY_DEFINITION(collectable),
     ENTITY_DEFINITION(training_dummy),
+    ENTITY_DEFINITION(treasure_chest),
 };
 
 // WRLD

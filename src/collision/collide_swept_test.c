@@ -33,7 +33,7 @@ static struct mesh_collider single_traingle_mesh = {
 
 static struct dynamic_object_type simple_cube_object = {
     .minkowsi_sum = dynamic_object_box_minkowski_sum,
-    .bounding_box = dynamic_object_box_bouding_box,
+    .bounding_box = dynamic_object_box_bounding_box,
     .data = {
         .box = {
             .half_size = {0.05f, 0.05f, 0.05f},

@@ -56,6 +56,21 @@ void update_remove(void* data) {
     callback_list_remove(&g_update_state.callbacks, (callback_id)data);
 }
 
+void update_set_layers(void* data, int mask) {
+    struct callback_element* current = callback_list_get(&g_update_state.callbacks, 0);
+
+    for (int i = 0; i < g_update_state.callbacks.count; ++i) {
+        struct update_element* element = callback_element_get_data(current);
+
+        if (element->data == data) {
+            element->mask = mask;
+            return;
+        }
+        
+        current = callback_list_next(&g_update_state.callbacks, current);
+    }
+}
+
 void update_pause_layers(int mask) {
     CLEAR_FLAG(g_update_state.enabled_layers, mask);
 }
