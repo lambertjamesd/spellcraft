@@ -45,7 +45,7 @@ void fire_around_render(void* data, struct render_batch* batch) {
     render_batch_add_tmesh(batch, spell_assets_get()->fire_around_mesh, mtxfp, 1, NULL, NULL);
 }
 
-void fire_around_init(struct fire_around* fire_around, struct spell_data_source* source, struct spell_event_options event_options) {
+void fire_around_init(struct fire_around* fire_around, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element_type) {
     fire_around->position = source->position;
 
     fire_around->data_source = source;
@@ -66,6 +66,7 @@ void fire_around_init(struct fire_around* fire_around, struct spell_data_source*
     collision_scene_add(&fire_around->dynamic_object);
 
     fire_around->end_time = -1;
+    fire_around->element_type = element_type;
 }
 
 void fire_around_destroy(struct fire_around* fire_around) {
@@ -89,5 +90,5 @@ void fire_around_update(struct fire_around* fire_around, struct spell_event_list
 
     fire_around->position = fire_around->data_source->position;
     
-    fire_apply_damage(&fire_around->dynamic_object, fire_determine_damage_type(fire_around->data_source));
+    fire_apply_damage(&fire_around->dynamic_object, fire_determine_damage_type(fire_around->element_type));
 }   

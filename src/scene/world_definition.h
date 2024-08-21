@@ -19,9 +19,9 @@ enum collectable_type {
 enum inventory_item_type {
     SPELL_SYMBOL_BLANK,
     SPELL_SYMBOL_FIRE,
+    SPELL_SYMBOL_ICE,
     SPELL_SYMBOL_EARTH,
     SPELL_SYMBOL_AIR,
-    SPELL_SYMBOL_ICE,
     SPELL_SYMBOL_LIFE,
 
     SPELL_SYMBOL_RECAST,

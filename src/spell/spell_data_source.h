@@ -19,8 +19,9 @@ union spell_source_flags {
     struct {
         uint16_t flaming: 1;
         uint16_t icy: 1;
-        uint16_t reversed: 1;
         uint16_t controlled: 1;
+        uint16_t living: 1;
+        uint16_t reversed: 1;
         uint16_t cast_state: 2;
     };
     uint16_t all;

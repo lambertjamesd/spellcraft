@@ -27,13 +27,14 @@ void explosion_render(struct explosion* explosion, struct render_batch* batch) {
     element->sprites->color.a = alpha;
 }
 
-void explosion_init(struct explosion* explosion, struct spell_data_source* source, struct spell_event_options event_options) {
+void explosion_init(struct explosion* explosion, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element_type) {
     render_scene_add(&explosion->data_source->position, 4.0f, (render_scene_callback)explosion_render, explosion);
 
     explosion->data_source = source;
     spell_data_source_retain(source);
 
     explosion->position = source->position;
+    explosion->element_type = element_type;
 }
 
 void explosion_destroy(struct explosion* explosion) {

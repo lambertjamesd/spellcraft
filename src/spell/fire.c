@@ -55,7 +55,7 @@ void fire_render(struct fire* fire, struct render_batch* batch) {
         particle_count -= particle_offset;
     }
 
-    struct material* material = fire->data_source->flags.reversed ? spell_assets_get()->ice_particle_mesh : spell_assets_get()->fire_particle_mesh;
+    struct material* material = fire->element_type == ELEMENT_TYPE_ICE ? spell_assets_get()->ice_particle_mesh : spell_assets_get()->fire_particle_mesh;
 
     struct render_batch_billboard_element* element = render_batch_add_particles(batch, material, particle_count);
 
@@ -91,7 +91,7 @@ void fire_render(struct fire* fire, struct render_batch* batch) {
     }
 }
 
-void fire_init(struct fire* fire, struct spell_data_source* source, struct spell_event_options event_options) {
+void fire_init(struct fire* fire, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element_type) {
     render_scene_add(&fire->data_source->position, 4.0f, (render_scene_callback)fire_render, fire);
 
     fire->data_source = source;
@@ -123,6 +123,7 @@ void fire_init(struct fire* fire, struct spell_data_source* source, struct spell
         &fire->rotation
     );
     fire->dynamic_object.is_trigger = 1;
+    fire->element_type = element_type;
     collision_scene_add(&fire->dynamic_object);
 }
 
@@ -147,18 +148,17 @@ void fire_apply_damage(struct dynamic_object* dyanmic_object, enum damage_type d
     }
 }
 
-enum damage_type fire_determine_damage_type(struct spell_data_source* source) {
-    if (source->flags.reversed) {
-        if (source->flags.flaming) {
+enum damage_type fire_determine_damage_type(enum element_type element_type) {
+    switch (element_type) {
+        case ELEMENT_TYPE_FIRE:
+            return DAMAGE_TYPE_FIRE;
+        case ELEMENT_TYPE_ICE:
+            return DAMAGE_TYPE_ICE;
+        case ELEMENT_TYPE_LIGHTNING:
             return DAMAGE_TYPE_LIGHTING;
-        }
-
-        return DAMAGE_TYPE_ICE;
-    } else if (source->flags.icy) {
-        return DAMAGE_TYPE_LIGHTING;
+        default:
+            return 0;
     }
-
-    return DAMAGE_TYPE_FIRE;
 }
 
 void fire_update(struct fire* fire, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
@@ -185,5 +185,5 @@ void fire_update(struct fire* fire, struct spell_event_listener* event_listener,
 
     fire_apply_transform(fire);
 
-    fire_apply_damage(&fire->dynamic_object, fire_determine_damage_type(fire->data_source));
+    fire_apply_damage(&fire->dynamic_object, fire_determine_damage_type(fire->element_type));
 }

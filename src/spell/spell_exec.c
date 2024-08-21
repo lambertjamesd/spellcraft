@@ -34,10 +34,19 @@ void spell_slot_init(
         case SPELL_SYMBOL_FIRE:
             if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
-                explosion_init(&slot->data.explosion, input, event_options);
+                explosion_init(&slot->data.explosion, input, event_options, input->flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
             } else {
                 slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
-                fire_init(&slot->data.fire, input, event_options);
+                fire_init(&slot->data.fire, input, event_options, input->flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
+            }
+            break;
+        case SPELL_SYMBOL_ICE:
+            if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
+                slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
+                explosion_init(&slot->data.explosion, input, event_options, input->flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
+            } else {
+                slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
+                fire_init(&slot->data.fire, input, event_options, input->flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
             }
             break;
         case SPELL_SYMBOL_RECAST:
@@ -263,6 +272,7 @@ static union spell_source_flags symbol_to_modifier[] = {
     [SPELL_SYMBOL_FIRE] = { .flaming = 1 },
     [SPELL_SYMBOL_AIR] = { .controlled = 1 },
     [SPELL_SYMBOL_ICE] = { .icy = 1 },
+    [SPELL_SYMBOL_LIFE] = { .living = 1 },
 };
 
 void spell_modifier_init(
