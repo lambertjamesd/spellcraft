@@ -183,14 +183,14 @@ void cutscene_builder_dialog(struct cutscene_builder* builder, char* message) {
     };
 }
 
-void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type rune, bool should_show) {
+void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type item, bool should_show) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
     *step = (struct cutscene_step){
         .type = CUTSCENE_STEP_TYPE_SHOW_ITEM,
         .data = {
             .show_item = {
-                .rune = rune,
+                .item = item,
                 .should_show = should_show,
             },
         },

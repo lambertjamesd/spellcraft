@@ -39,5 +39,6 @@ struct animation_set* animation_set_load(const char* filename);
 void annotation_clip_set_free(struct animation_set* animation_set);
 
 struct animation_clip* animation_set_find_clip(struct animation_set* set, const char* clip_name);
+float animation_clip_get_duration(struct animation_clip* clip);
 
 #endif

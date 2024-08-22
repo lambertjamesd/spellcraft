@@ -66,12 +66,16 @@ void inventory_destroy() {
     }
 }
 
-bool inventory_has_rune(enum inventory_item_type type) {
-    return true; // HAS_FLAG(inventory.unlocked_spell_symbols, SPELL_SYMBOL_TO_MASK(type)); 
+bool inventory_has_item(enum inventory_item_type type) {
+    if (type < SPELL_SYBMOL_COUNT) {
+        return true;
+    }
+    
+    return HAS_FLAG(inventory.unlocked_items, SPELL_SYMBOL_TO_MASK(type)); 
 }
 
-void inventory_unlock_rune(enum inventory_item_type type) {
-    SET_FLAG(inventory.unlocked_spell_symbols, SPELL_SYMBOL_TO_MASK(type));
+void inventory_unlock_item(enum inventory_item_type type) {
+    SET_FLAG(inventory.unlocked_items, SPELL_SYMBOL_TO_MASK(type));
 }
 
 struct spell* inventory_get_equipped_spell(unsigned index) {

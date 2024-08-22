@@ -126,3 +126,7 @@ struct animation_clip* animation_set_find_clip(struct animation_set* set, const 
 
     return NULL;
 }
+
+float animation_clip_get_duration(struct animation_clip* clip) {
+    return (float)clip->frame_count / (float)clip->frames_per_second;
+}

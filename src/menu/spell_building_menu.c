@@ -26,7 +26,7 @@ void spell_building_render_menu(struct spell_building_menu* menu) {
         for (int col = 0; col < SPELL_MAX_COLS; ++col) {
             struct spell_symbol symbol = menu->symbol_grid[row][col];
 
-            if (symbol.type == SPELL_SYMBOL_BLANK) {
+            if (symbol.type == ITEM_TYPE_NONE) {
                 continue;
             }
 
@@ -45,7 +45,7 @@ void spell_building_render_menu(struct spell_building_menu* menu) {
     }
 
     for (int spell_type = SPELL_SYMBOL_FIRE; spell_type < SPELL_SYBMOL_COUNT; spell_type += 1) {
-        if (!inventory_has_rune(spell_type)) {
+        if (!inventory_has_item(spell_type)) {
             continue;
         }
 
@@ -127,7 +127,7 @@ void spell_building_menu_update(struct spell_building_menu* menu) {
     if (pressed.a) {
         int spell_symbol = menu->symbol_cursor_x + menu->symbol_cursor_y * SPELL_SYMBOLS_PER_ROW + SPELL_SYMBOL_FIRE;
 
-        if (spell_symbol >= SPELL_SYMBOL_FIRE && spell_symbol <= SPELL_SYBMOL_COUNT && inventory_has_rune(spell_symbol)) {
+        if (spell_symbol >= SPELL_SYMBOL_FIRE && spell_symbol <= SPELL_SYBMOL_COUNT && inventory_has_item(spell_symbol)) {
             // TODO shift connected symbols below
             for (int i = SPELL_MAX_COLS - 1; i > menu->spell_cursor_x; i -= 1) {
                 menu->symbol_grid[menu->spell_cursor_y][i] = menu->symbol_grid[menu->spell_cursor_y][i - 1];
@@ -141,7 +141,7 @@ void spell_building_menu_update(struct spell_building_menu* menu) {
 
     if (pressed.b && menu->spell_cursor_x > 0) {
         for (int i = menu->spell_cursor_x; i <= SPELL_MAX_COLS; i += 1) {
-            menu->symbol_grid[menu->spell_cursor_y][i - 1].type = i == SPELL_MAX_COLS ? SPELL_SYMBOL_BLANK : menu->symbol_grid[menu->spell_cursor_y][i].type;
+            menu->symbol_grid[menu->spell_cursor_y][i - 1].type = i == SPELL_MAX_COLS ? ITEM_TYPE_NONE : menu->symbol_grid[menu->spell_cursor_y][i].type;
         }
 
         menu->spell_cursor_x -= 1;

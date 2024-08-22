@@ -5,6 +5,8 @@
 #include "../resource/animation_cache.h"
 #include "../time/time.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../cutscene/show_item.h"
+#include "../player/inventory.h"
 
 static struct dynamic_object_type treasure_chest_collision = {
     .minkowsi_sum = dynamic_object_box_minkowski_sum,
@@ -24,6 +26,11 @@ static struct dynamic_object_type treasure_chest_collision = {
 
 void treasure_chest_interact(struct interactable* interactable, entity_id from) {
     struct treasure_chest* treasure_chest = (struct treasure_chest*)interactable->data;
+
+    if (!treasure_chest->item_type) {
+        return;
+    }
+
     animator_run_clip(&treasure_chest->animator, treasure_chest->animations.open, 0.0f, false);
 
     struct cutscene_builder builder;
@@ -31,19 +38,17 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
 
     cutscene_builder_pause(&builder, true, false, UPDATE_LAYER_WORLD);
     cutscene_builder_delay(&builder, 1.0f);
-    cutscene_builder_pause(&builder, true, true, 0);
-    cutscene_builder_show_item(&builder, 1, true);
-    
-    cutscene_builder_dialog(&builder, "You got the staff");
 
-    cutscene_builder_show_item(&builder, 1, false);
-    cutscene_builder_pause(&builder, false, true, UPDATE_LAYER_WORLD);
+    show_item_in_cutscene(&builder, treasure_chest->item_type);
 
     cutscene_runner_run(
         cutscene_builder_finish(&builder),
         cutscene_runner_free_on_finish,
         NULL
     );
+
+    inventory_unlock_item(treasure_chest->item_type);
+    treasure_chest->item_type = ITEM_TYPE_NONE;
 }
 
 void treasure_chest_update(void* data) {
@@ -82,6 +87,11 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
 
     animator_init(&treasure_chest->animator, treasure_chest->renderable.armature.bone_count);
     update_add(treasure_chest, treasure_chest_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
+
+    if (inventory_has_item(definition->item)) {
+        animator_run_clip(&treasure_chest->animator, treasure_chest->animations.open, animation_clip_get_duration(treasure_chest->animations.open), false);
+        treasure_chest->item_type = ITEM_TYPE_NONE;
+    }
 }
 
 void treasure_chest_destroy(struct treasure_chest* treasure_chest) {

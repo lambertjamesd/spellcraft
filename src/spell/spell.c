@@ -28,7 +28,7 @@ struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row) {
     if (col >= spell->cols || row >= spell->rows || col < 0 || row < 0) {
         struct spell_symbol result;
         result.reserved = 0;
-        result.type = SPELL_SYMBOL_BLANK;
+        result.type = ITEM_TYPE_NONE;
         return result;
     }
 
@@ -44,23 +44,23 @@ void spell_set_symbol(struct spell* spell, int col, int row, struct spell_symbol
 }
 
 bool spell_has_primary_event(struct spell* spell, int col, int row) {
-    return spell_get_symbol(spell, col + 1, row).type != SPELL_SYMBOL_BLANK;
+    return spell_get_symbol(spell, col + 1, row).type != ITEM_TYPE_NONE;
 }
 
 bool spell_has_secondary_event(struct spell* spell, int col, int row) {
     struct spell_symbol secondary_event = spell_get_symbol(spell, col + 1, row + 1);
 
-    if (secondary_event.type == SPELL_SYMBOL_BLANK) {
+    if (secondary_event.type == ITEM_TYPE_NONE) {
         return false;
     }
 
     struct spell_symbol sibling_symbol = spell_get_symbol(spell, col, row + 1);
 
-    return sibling_symbol.type == SPELL_SYMBOL_BLANK || sibling_symbol.type == SPELL_SYMBOL_PASS_DOWN;
+    return sibling_symbol.type == ITEM_TYPE_NONE || sibling_symbol.type == SPELL_SYMBOL_PASS_DOWN;
 }
 
 static uint8_t is_modifier_mapping[] = {
-    [SPELL_SYMBOL_BLANK] = 0,
+    [ITEM_TYPE_NONE] = 0,
     [SPELL_SYMBOL_FIRE] = 1,
     [SPELL_SYMBOL_EARTH] = 0,
     [SPELL_SYMBOL_AIR] = 1,

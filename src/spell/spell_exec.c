@@ -163,7 +163,7 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
 
         switch (event->type) {
         case SPELL_EVENT_PRIMARY:
-            if (spell_has_primary_event(slot->for_spell, slot->curr_col, slot->curr_row) != SPELL_SYMBOL_BLANK) {
+            if (spell_has_primary_event(slot->for_spell, slot->curr_col, slot->curr_row) != ITEM_TYPE_NONE) {
                 spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row, event->data_source, event->burst_mana);
             }
             break;

@@ -7,6 +7,7 @@
 #include "../resource/material_cache.h"
 #include "../player/inventory.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../cutscene/show_item.h"
 #include "../time/time.h"
 
 #include "../menu/dialog_box.h"
@@ -38,11 +39,6 @@ static struct collectable_information collectable_information[] = {
     [COLLECTABLE_TYPE_SPELL_RUNE] = {
         .mesh_filename = "rom:/meshes/objects/pickups/scroll.tmesh",
     },
-};
-
-static char* spell_messages[] = {
-    [SPELL_SYMBOL_FIRE] = "You found the fire rune!\n\nWith it you can summon fire or imbue fire into chained runes",
-    [SPELL_SYMBOL_EARTH] = "You found the projectile rune!\n\nUse it to damage enemies from afar or even chain into other runes on impact",
 };
 
 void collectable_assets_load() {
@@ -85,21 +81,11 @@ void collectable_collected(struct collectable* collectable) {
     }
 
     if (collectable->collectable_type == COLLECTABLE_TYPE_SPELL_RUNE) {
-        char* message = spell_messages[collectable->collectable_sub_type];
-
         struct cutscene_builder builder;
         cutscene_builder_init(&builder);
 
-        inventory_unlock_rune(collectable->collectable_sub_type);
-        cutscene_builder_pause(&builder, true, true, UPDATE_LAYER_WORLD);
-        cutscene_builder_show_item(&builder, collectable->collectable_sub_type, true);
-        
-        if (message) {
-            cutscene_builder_dialog(&builder, message);
-        }
-
-        cutscene_builder_show_item(&builder, collectable->collectable_sub_type, false);
-        cutscene_builder_pause(&builder, false, true, UPDATE_LAYER_WORLD);
+        inventory_unlock_item(collectable->collectable_sub_type);
+        show_item_in_cutscene(&builder, collectable->collectable_sub_type);
 
         cutscene_runner_run(
             cutscene_builder_finish(&builder),

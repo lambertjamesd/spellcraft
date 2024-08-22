@@ -17,7 +17,7 @@ enum collectable_type {
 };
 
 enum inventory_item_type {
-    SPELL_SYMBOL_BLANK,
+    ITEM_TYPE_NONE,
     SPELL_SYMBOL_FIRE,
     SPELL_SYMBOL_ICE,
     SPELL_SYMBOL_EARTH,
