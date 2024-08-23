@@ -41,6 +41,13 @@ struct spell projectile_spell = {
     .symbol_index = SPELL_ICON_DASH,
 };
 
+enum inventory_item_type staff_item_types[INV_STAFF_COUNT] = {
+    ITEM_TYPE_STAFF_DEFAULT,
+    ITEM_TYPE_NONE,
+    ITEM_TYPE_NONE,
+    ITEM_TYPE_NONE,
+};
+
 struct inventory inventory;
 
 void inventory_init() {
@@ -58,6 +65,8 @@ void inventory_init() {
     for (int i = 0; i < MAX_CUSTOM_SPELLS; i += 1) {
         spell_init(&inventory.custom_spells[i], SPELL_MAX_COLS, SPELL_MAX_ROWS, SPELL_ICON_CUSTOM_0 + i);
     }
+
+    inventory.equipped_staff = &staff_stats_none;
 }
 
 void inventory_destroy() {
@@ -76,6 +85,21 @@ bool inventory_has_item(enum inventory_item_type type) {
 
 void inventory_unlock_item(enum inventory_item_type type) {
     SET_FLAG(inventory.unlocked_items, SPELL_SYMBOL_TO_MASK(type));
+}
+
+struct staff_stats* inventory_equipped_staff() {
+    return inventory.equipped_staff;
+}
+
+void inventory_equip_staff(enum inventory_item_type type) {
+    for (int i = 0; i < INV_STAFF_COUNT; i += 1) {
+        if (staff_stats[i].item_type == type) {
+            inventory.equipped_staff = &staff_stats[i];
+            return;
+        }
+    }
+
+    inventory.equipped_staff = &staff_stats_none;
 }
 
 struct spell* inventory_get_equipped_spell(unsigned index) {

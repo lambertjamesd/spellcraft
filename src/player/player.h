@@ -28,7 +28,7 @@ struct player_definition {
 };
 
 struct inventory_assets {
-    struct tmesh* default_staff;
+    struct tmesh* staffs[INV_STAFF_COUNT];
 };
 
 struct player {

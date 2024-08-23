@@ -3,10 +3,18 @@
 
 #include <stdint.h>
 #include "../player/inventory.h"
+#include "../render/material.h"
+
+struct inventory_menu_assets {
+    struct material* staff_icons[INV_STAFF_COUNT];
+    struct material* select_cursor;
+    struct material* hover_cursor;
+};
 
 struct inventory_menu {
     uint16_t cursor_x;
     uint16_t cursor_y;
+    struct inventory_menu_assets assets;
 };
 
 void inventory_menu_init(struct inventory_menu* memu);

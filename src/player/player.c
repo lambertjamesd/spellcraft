@@ -115,6 +115,11 @@ void player_handle_a_action(struct player* player) {
     collision_scene_query(&player_visual_shape, &query_center, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_intersect);
 }
 
+void player_check_inventory(struct player* player) {
+    struct staff_stats* staff = inventory_equipped_staff();
+    player->renderable.attachments[0] = staff->item_type == ITEM_TYPE_NONE ? NULL : player->assets.staffs[staff->staff_index];
+}
+
 void player_update(struct player* player) {
     struct Vector3 right;
     struct Vector3 forward;
@@ -200,13 +205,7 @@ void player_update(struct player* player) {
         player_handle_a_action(player);
     }
 
-    if (pressed.l) {
-        if (player->renderable.attachments[0]) {
-            player->renderable.attachments[0] = NULL;
-        } else {
-            player->renderable.attachments[0] = player->assets.default_staff;
-        }
-    }
+    player_check_inventory(player);
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
@@ -260,7 +259,10 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     animator_run_clip(&player->animator, player->animations.idle, 0.0f, true);
 
-    player->assets.default_staff = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
+    player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
+    player->assets.staffs[1] = NULL;
+    player->assets.staffs[2] = NULL;
+    player->assets.staffs[3] = NULL;
 }
 
 void player_destroy(struct player* player) {
