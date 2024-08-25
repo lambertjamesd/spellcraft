@@ -166,6 +166,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
 
 void biter_destroy(struct biter* biter) {
     render_scene_remove(&biter->renderable);
+    renderable_single_axis_destroy(&biter->renderable);
     collision_scene_remove(&biter->dynamic_object);
     collision_scene_remove(&biter->vision);
     health_destroy(&biter->health);

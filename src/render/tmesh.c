@@ -212,6 +212,7 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
 void tmesh_release(struct tmesh* tmesh) {
     rspq_block_free(tmesh->block);
     free(tmesh->vertices);
+    free(tmesh->armature_pose);
 
     if (tmesh->material) {
         material_cache_release(tmesh->material);

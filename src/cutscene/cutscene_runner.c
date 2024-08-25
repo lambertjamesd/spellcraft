@@ -219,6 +219,7 @@ void cutscene_runner_init() {
     cutscene_runner.current_cutscene = -1;
 
     show_item_init(&cutscene_runner.show_item);
+    // update_remove() is never called
     update_add(&cutscene_runner, cutscene_runner_update, 0, UPDATE_LAYER_WORLD | UPDATE_LAYER_DIALOG | UPDATE_LAYER_PAUSE_MENU);
     menu_add_callback(cutscene_runner_render, &cutscene_runner, 0);
 

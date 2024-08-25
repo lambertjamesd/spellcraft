@@ -2,11 +2,32 @@ const fs = require('fs');
 
 const call_pairings = [
     ['malloc', 'free'],
+    ['material_load', 'material_release'],
+    ['material_cache_load', 'material_cache_release'],
+    [
+        ['render_scene_add', 'render_scene_add_renderable', 'render_scene_add_renderable_single_axis'], 
+        'render_scene_remove'
+    ],
+    ['renderable_single_axis_init', 'renderable_single_axis_destroy'],
+    ['renderable_init', 'renderable_destroy'],
+    ['update_add', 'update_remove'],
+    ['collision_scene_add', 'collision_scene_remove'],
+    ['animator_init', 'animator_destroy'],
+    ['animation_cache_load', 'animation_cache_release'],
+    ['spell_exec_init', 'spell_exec_destroy'],
 ];
 
+function populate_parings(mapping, curr, value) {
+    if (Array.isArray(curr)) {
+        curr.forEach((entry) => populate_parings(mapping, entry, value));
+    } else {
+        mapping.set(curr, value);
+    }
+}
+
 const pair_mapping = call_pairings.reduce((result, curr, index) => {
-    result.set(curr[0], {index, offset: 1});
-    result.set(curr[1], {index, offset: -1});
+    populate_parings(result, curr[0], {index, offset: 1});
+    populate_parings(result, curr[1], {index, offset: -1});
     return result;
 }, new Map());
 
@@ -62,6 +83,16 @@ function extract_source(contents, location) {
     return contents.substring(before + 1, after === -1 ? contents.length : after);
 }
 
+function count_occurence(match_locations) {
+    const count = new Map();
+
+    match_locations.forEach((entry) => {
+        count.set(entry.match, (count.get(entry.match) || 0) + 1);
+    });
+
+    return Array.from(count.entries()).map((entry) => `${entry[0]} = ${entry[1]}`).join(', ');
+}
+
 function process_file(filename) {
     return new Promise((resolve) => {
         fs.readFile(filename, 'utf8', (err, data) => {
@@ -79,7 +110,7 @@ function process_file(filename) {
             }
 
             console.error(`file ${filename} has mismatched pairings
-${bad_pairings.map((pairing) => '    pairings\n' + pairing.match_locations.map((match) => {
+${bad_pairings.map((pairing) => '    pairings ' + count_occurence(pairing.match_locations) + '\n' + pairing.match_locations.map((match) => {
     const location = find_line(data, match.index);
     return `        ${match.match} ${filename}:${location.line}\n            ${extract_source(data, match.index)}`
 }).join('\n')).join('\n')}`);
@@ -94,7 +125,7 @@ function process_files(files) {
 }
 
 process_files(process.argv.slice(2)).then((result) => {
-    if (~result) {
+    if (!result) {
         process.exit(1);
     } else {
         console.log('Good to go!');

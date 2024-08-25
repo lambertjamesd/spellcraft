@@ -27,14 +27,21 @@ static char* menu_spell_icon_filename[SPELL_ICON_COUNT] = {
 };
 
 void menu_common_init() {
+    // material_cache_release() never called
     menu_background_material = material_cache_load("rom:/materials/menu/menu_corner.mat");
+    // material_cache_release() never called
     menu_border_material = material_cache_load("rom:/materials/menu/menu_border.mat");
+    // material_cache_release() never called
     menu_icons_material = material_cache_load("rom:/materials/menu/menu_icons.mat");
+    // material_cache_release() never called
     spell_cursor_material = material_cache_load("rom:/materials/menu/menu_cursor.mat");
+    // material_cache_release() never called
     solid_primitive_material = material_cache_load("rom:/materials/menu/solid_primitive.mat");
+    // material_cache_release() never called
     current_spell_icon = material_cache_load("rom:/materials/menu/current_spell_icon.mat");
 
     for (int i = 0; i < SPELL_ICON_COUNT; i += 1) {
+        // material_cache_release() never called
         menu_spell_icons[i] = material_cache_load(menu_spell_icon_filename[i]);
     }
 }

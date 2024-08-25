@@ -83,6 +83,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
 void npc_destroy(struct npc* npc) {
     renderable_single_axis_destroy(&npc->renderable);
     render_scene_remove(&npc->renderable);
+    animator_destroy(&npc->animator);
     update_remove(npc);
     collision_scene_remove(&npc->collider);
     animation_cache_release(npc->animation_set);

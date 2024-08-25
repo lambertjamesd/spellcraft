@@ -48,6 +48,7 @@ void health_init(struct health* health, entity_id id, float max_health) {
 
 void health_destroy(struct health* health) {
     hash_map_delete(&health_entity_mapping, health->entity_id);
+    update_remove(health);
 }
 
 void health_damage(struct health* health, float amount, entity_id source, enum damage_type type) {

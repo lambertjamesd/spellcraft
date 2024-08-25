@@ -69,11 +69,15 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
     }
 }
 
+// removed with render_scene_remove()
 void render_scene_add_renderable(struct renderable* renderable, float radius) {
+    // remove with render_scene_remove()
     render_scene_add(&renderable->transform->position, radius, render_scene_render_renderable, renderable);
 }
 
+// removed with render_scene_remove()
 void render_scene_add_renderable_single_axis(struct renderable_single_axis* renderable, float radius) {
+    // remove with render_scene_remove()
     render_scene_add(&renderable->transform->position, radius, render_scene_render_renderable_single_axis, renderable);
 }
 

@@ -113,7 +113,7 @@ void cutscene_destroy(struct cutscene* cutscene) {
 
         switch (step->type) {
             case CUTSCENE_STEP_TYPE_DIALOG:
-                cutscene_destroy_template_string(&step->data.dialog.message.template);
+                cutscene_destroy_template_string(&step->data.dialog.message);
                 break;
             case CUTSCENE_STEP_TYPE_EXPRESSION:
                 expression_destroy(&step->data.expression.expression);

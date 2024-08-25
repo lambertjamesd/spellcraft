@@ -27,6 +27,7 @@ void resource_cache_reset(struct resource_cache* cache) {
             continue;
         }
 
+        // malloc() 
         free(entry->filename);
     }
 
