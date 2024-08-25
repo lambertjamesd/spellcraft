@@ -8,6 +8,7 @@
 
 void callback_list_reset(struct callback_list* list, int data_size, int min_capcity, data_compare data_compare_callback) {
     free(list->elements);
+    // malloc() pending_elements is done by realloc
     free(list->pending_elements);
     list->elements = NULL;
     memset(list, 0, sizeof(struct callback_list));

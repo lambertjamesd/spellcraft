@@ -36,6 +36,10 @@ void cutscene_load_template_string(struct templated_string* string, FILE* file) 
     string->template = cutscene_load_string(file);
 }
 
+void cutscene_destroy_template_string(struct templated_string* string) {
+    free(string->template);
+}
+
 struct cutscene* cutscene_load(char* filename) {
     FILE* file = asset_fopen(filename, NULL);
 
@@ -109,7 +113,7 @@ void cutscene_destroy(struct cutscene* cutscene) {
 
         switch (step->type) {
             case CUTSCENE_STEP_TYPE_DIALOG:
-                free(step->data.dialog.message.template);
+                cutscene_destroy_template_string(&step->data.dialog.message.template);
                 break;
             case CUTSCENE_STEP_TYPE_EXPRESSION:
                 expression_destroy(&step->data.expression.expression);
@@ -168,6 +172,7 @@ void cutscene_builder_dialog(struct cutscene_builder* builder, char* message) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
 
     char* message_copy = malloc(strlen(message) + 1);
+    // free(message_copy) is done in cutscene_load_template_string
     strcpy(message_copy, message);
 
     *step = (struct cutscene_step){
