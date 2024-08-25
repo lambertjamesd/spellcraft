@@ -107,6 +107,17 @@ void world_load_entity(struct world* world, struct entity_data* entity_data, FIL
     }
 }
 
+void world_destroy_entity(struct entity_data* entity_data) {
+    char* entity = entity_data->entities;
+
+    for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
+        entity_data->definition->destroy(entity);
+        entity += entity_data->definition->entity_size;
+    }
+
+    free(entity_data->entities);
+}
+
 struct world* world_load(const char* filename) {
     FILE* file = asset_fopen(filename, NULL);
 
@@ -187,7 +198,6 @@ struct world* world_load(const char* filename) {
 
     fread(&world->entity_data_count, 2, 1, file);
 
-    // TODO don't leak memory here
     world->entity_data = malloc(sizeof(struct entity_data) * world->entity_data_count);
 
     for (int i = 0; i < world->entity_data_count; i += 1) {
@@ -234,6 +244,11 @@ void world_release(struct world* world) {
 
     collision_scene_remove_static_collision(&world->mesh_collider);
     mesh_collider_release(&world->mesh_collider);
+
+    for (int i = 0; i < world->entity_data_count; i += 1) {
+        world_destroy_entity(&world->entity_data[i]);
+    }
+    free(world->entity_data);
 
     free(world->string_table);
     free(world->loading_zones);

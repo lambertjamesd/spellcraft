@@ -126,6 +126,7 @@ void health_set_callback(struct health* health, health_damage_callback callback,
 }
 
 void training_dummy_destroy(struct training_dummy* dummy) {
+    render_scene_remove(&dummy->renderable);
     renderable_destroy(&dummy->renderable);
     collision_scene_remove(&dummy->collision);
     update_remove(dummy);
