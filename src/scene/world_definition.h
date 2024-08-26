@@ -3,6 +3,7 @@
 
 #include "../math/vector3.h"
 #include "../math/vector2.h"
+#include "../cutscene/expression.h"
 #include <stdint.h>
 
 struct crate_definition {

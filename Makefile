@@ -112,7 +112,7 @@ WORLD_SOURCES := $(shell find assets/worlds -type f -name '*.blend' | sort)
 
 WORLDS := $(WORLD_SOURCES:assets/worlds/%.blend=filesystem/worlds/%.world)
 
-filesystem/worlds/%.world: assets/worlds/%.blend $(EXPORT_SOURCE)
+filesystem/worlds/%.world: assets/worlds/%.blend build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/worlds/%.world=build/assets/worlds/%.world))
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/world.py -- $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)

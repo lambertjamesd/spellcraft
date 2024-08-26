@@ -14,6 +14,9 @@ import entities.mesh_optimizer
 import entities.material_extract
 import parse.struct_parse
 import parse.struct_serialize
+import cutscene.expresion_generator
+import cutscene.parser
+import cutscene.variable_layout
 
 class StaticEntry():
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
@@ -122,6 +125,13 @@ def process_scene():
         definitions = parse.struct_parse.find_structs(file_content)
         enums = parse.struct_parse.find_enums(file_content)
 
+    globals = cutscene.variable_layout.VariableLayout()
+
+    with open('build/assets/scripts/globals.json') as file:
+        globals.deserialize(file)
+
+    variable_context = cutscene.variable_layout.VariableContext(globals, cutscene.variable_layout.VariableLayout())
+
     context = parse.struct_serialize.SerializeContext(enums)
 
     for obj in bpy.data.objects:
@@ -207,6 +217,12 @@ def process_scene():
             
             for entry in item[1]:
                 parse.struct_serialize.write_obj(file, entry.obj, entry.def_type, context)
+
+            for entry in item[1]:
+                condition_text = entry.obj['condition'] if 'condition' in entry.obj else 'true'
+                condition = cutscene.parser.parse_expression(condition_text, entry.obj.name + ".condition")
+                script = cutscene.expresion_generator.generate_script(condition, variable_context, 'int')
+                script.serialize(file)
 
         file.write(struct.pack(">H", len(world.loading_zones)))
 

@@ -476,3 +476,8 @@ def parse(content: str, filename: str) -> Cutscene:
 def parse_type(content: str) -> DataType:
     parse_state = _ParseState(tokenizer.tokenize(content, ''), content, '')
     return _parse_type(parse_state)
+
+def parse_expression(content: str, source: str):
+    parse_state = _ParseState(tokenizer.tokenize(content, source), content, source)
+    return _parse_expression(parse_state)
+

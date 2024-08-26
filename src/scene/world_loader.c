@@ -7,6 +7,9 @@
 #include "../resource/tmesh_cache.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
+#include "../cutscene/cutscene_runner.h"
+#include "../cutscene/evaluation_context.h"
+#include "../cutscene/expression_evaluate.h"
 
 #include "../enemies/biter.h"
 
@@ -66,6 +69,31 @@ void world_apply_types(void* definition, char* string_table, struct type_locatio
     }
 }
 
+#define EXPECTED_CONDITION_HEADER 0x45585052
+
+bool world_load_check_condition(FILE* file) {
+    struct expression expression;
+    int header;
+    fread(&header, 1, 4, file);
+    assert(header == EXPECTED_CONDITION_HEADER);
+    uint16_t byte_size;
+    fread(&byte_size, 1, 2, file);
+    char expression_program[byte_size];
+    expression.expression_program = expression_program;
+    fread(expression.expression_program, 1, byte_size, file);
+
+    struct evaluation_context eval_context;
+    evaluation_context_init(&eval_context, 0);
+
+    expression_evaluate(&eval_context, &expression);
+
+    int result = evaluation_context_pop(&eval_context);
+
+    evaluation_context_destroy(&eval_context);
+
+    return result != 0;
+}
+
 void world_load_entity(struct world* world, struct entity_data* entity_data, FILE* file) {
     uint8_t name_len;
     fread(&name_len, 1, 1, file);
@@ -98,13 +126,20 @@ void world_load_entity(struct world* world, struct entity_data* entity_data, FIL
 
     fread(entity_def_data, definition_size, entity_data->entity_count, file);
 
-    for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
-        world_apply_types(entity_def, world->string_table, type_locations, type_location_count);
-        def->init(entity, entity_def);
+    int final_count = 0;
 
-        entity += def->entity_size;
+    for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
+        if (world_load_check_condition(file)) {
+            world_apply_types(entity_def, world->string_table, type_locations, type_location_count);
+            def->init(entity, entity_def);
+            entity += def->entity_size;
+            final_count += 1;
+        }
+
         entity_def += def->definition_size;
     }
+
+    entity_data->entity_count = final_count;
 }
 
 void world_destroy_entity(struct entity_data* entity_data) {
