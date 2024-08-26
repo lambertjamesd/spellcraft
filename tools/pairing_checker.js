@@ -15,6 +15,9 @@ const call_pairings = [
     ['animator_init', 'animator_destroy'],
     ['animation_cache_load', 'animation_cache_release'],
     ['spell_exec_init', 'spell_exec_destroy'],
+    ['effect_malloc', 'effect_free'],
+    ['rspq_block_end', 'rspq_block_free'],
+    ['health_init', 'health_destroy'],
 ];
 
 function populate_parings(mapping, curr, value) {

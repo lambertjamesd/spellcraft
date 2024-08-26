@@ -130,4 +130,5 @@ void training_dummy_destroy(struct training_dummy* dummy) {
     renderable_destroy(&dummy->renderable);
     collision_scene_remove(&dummy->collision);
     update_remove(dummy);
+    health_destroy(&dummy->health);
 }

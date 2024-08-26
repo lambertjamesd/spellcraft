@@ -103,4 +103,5 @@ void ground_torch_destroy(struct ground_torch* ground_torch) {
     render_scene_remove(ground_torch);
     collision_scene_remove(&ground_torch->dynamic_object);
     update_remove(ground_torch);
+    health_destroy(&ground_torch->health);
 }

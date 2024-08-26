@@ -135,16 +135,13 @@ void callback_list_remove(struct callback_list* list, callback_id id) {
             element = callback_list_next(list, element);
         }
 
-        if (found_at) {
-            found_at->id = 0;
-        }
+        assert(found_at);
+        found_at->id = 0;
 
         return;
     }
 
-    if (!found_at) {
-        return;
-    }
+    assert(found_at);
 
     if (list->flags & CALLBACK_LIST_ENUMERATING) {
         // defer removal to callback_list_end
