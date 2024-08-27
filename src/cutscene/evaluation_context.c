@@ -44,7 +44,8 @@ int evaluation_context_load(void* data, enum data_type data_type, int word_offse
             return ((int32_t*)data)[word_offset];
         case DATA_TYPE_BOOL: {
             uint32_t word = ((uint32_t*)data)[word_offset >> 5];
-            return ((uint32_t)0x80000000 >> (word_offset & 0x1F)) != 0;
+            uint32_t mask = (uint32_t)0x80000000 >> (word_offset & 0x1F);
+            return (mask & word) != 0;
         }
         case DATA_TYPE_ADDRESS:
             return (int)((char*)data + word_offset);
@@ -58,7 +59,7 @@ void evaluation_context_save(void* data, enum data_type data_type, int word_offs
         case DATA_TYPE_NULL:
             break;
         case DATA_TYPE_S8:
-            ((int8_t*)data)[word_offset] = value;;
+            ((int8_t*)data)[word_offset] = value;
             break;
         case DATA_TYPE_S16:
             ((int16_t*)data)[word_offset] = value;

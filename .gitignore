@@ -11,3 +11,6 @@ filesystem/
 *.blend1
 
 *.z64
+
+# generated file
+src/player/inventory_mapping.c

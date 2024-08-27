@@ -73,6 +73,7 @@ struct cutscene* cutscene_load(char* filename) {
                 break;
             case CUTSCENE_STEP_TYPE_PAUSE:
                 fread(&step->data.pause, 1, 2, file);
+                step->data.pause.layers = UPDATE_LAYER_WORLD;
                 break;
             case CUTSCENE_STEP_TYPE_EXPRESSION:
                 expression_load(&step->data.expression.expression, file);

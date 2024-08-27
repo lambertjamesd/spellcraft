@@ -29,6 +29,8 @@ enum inventory_item_type {
     SPELL_SYMBOL_PASS_DOWN,
 
     ITEM_TYPE_STAFF_DEFAULT,
+
+    ITEM_TYPE_COUNT,
 };
 
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT

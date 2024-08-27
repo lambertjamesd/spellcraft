@@ -1,4 +1,12 @@
 
+global has_fire_rune: bool;
+global has_ice_rune: bool;
+global has_earth_rune: bool;
+global has_air_rune: bool;
+global has_life_rune: bool;
+global has_recast_rune: bool;
+global has_staff_default: bool;
+
 global player_name: char[8] = "Carl";
 global intro_played: bool;
 

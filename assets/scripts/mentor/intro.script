@@ -1,20 +1,16 @@
-global player_name: char[8];
-global talk_count: i16;
 
-talk_count = talk_count + 1;
+global has_staff_default: bool;
 
 pause true, true;
 
-if talk_count <= 3 then
-    say "
-        Hello {player_name}!
-
-        You have spoken to me {talk_count} times
-    ";
-elif talk_count == 4 then
-    say "{player_name}, you can stop.";
+if has_staff_default then
+    say "Good, you have found your fathers staff";
 else
-    say "That is enough";
+    say "
+        Hey {player_name}, your fathers old staff is in that chest over there
+    
+        You should go and get it
+    ";
 end
 
 pause false, true;

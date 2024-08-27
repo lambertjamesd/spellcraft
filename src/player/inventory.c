@@ -2,7 +2,10 @@
 
 #include <memory.h>
 #include "../util/flags.h"
+#include "../savefile/savefile.h"
 #include <assert.h>
+
+extern struct global_location inventory_item_locations[ITEM_TYPE_COUNT];
 
 struct spell_symbol flame_spell_symbols[] = {
     {.type = SPELL_SYMBOL_FIRE},
@@ -76,15 +79,31 @@ void inventory_destroy() {
 }
 
 bool inventory_has_item(enum inventory_item_type type) {
+    if (type >= ITEM_TYPE_COUNT) {
+        return false;
+    }
+
     if (type < SPELL_SYBMOL_COUNT) {
         return true;
     }
-    
-    return HAS_FLAG(inventory.unlocked_items, SPELL_SYMBOL_TO_MASK(type)); 
+
+    struct global_location* global = &inventory_item_locations[type];
+
+    assert(global->data_type);
+
+    return evaluation_context_load(savefile_get_globals(), global->data_type, global->word_offset);
 }
 
 void inventory_unlock_item(enum inventory_item_type type) {
-    SET_FLAG(inventory.unlocked_items, SPELL_SYMBOL_TO_MASK(type));
+    if (type >= ITEM_TYPE_COUNT) {
+        return;
+    }
+
+    struct global_location* global = &inventory_item_locations[type];
+
+    assert(global->data_type);
+
+    evaluation_context_save(savefile_get_globals(), global->data_type, global->word_offset, true);
 }
 
 struct staff_stats* inventory_equipped_staff() {

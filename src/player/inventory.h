@@ -3,6 +3,7 @@
 
 #include "../spell/spell.h"
 #include "../scene/world_definition.h"
+#include "../cutscene/evaluation_context.h"
 #include "staff.h"
 
 #define MAX_SPELL_SLOTS 4
@@ -26,8 +27,11 @@ struct inventory {
     struct spell custom_spells[MAX_CUSTOM_SPELLS];
 
     struct staff_stats* equipped_staff;
+};
 
-    uint32_t unlocked_items;
+struct global_location { 
+    uint16_t data_type;
+    uint16_t word_offset;
 };
 
 void inventory_init();

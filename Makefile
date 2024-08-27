@@ -91,9 +91,9 @@ SCRIPTS := $(shell find assets/scripts -type f -name '*.script' | sort)
 
 SCRIPTS_COMPILED := $(SCRIPTS:assets/scripts/%=filesystem/scripts/%)
 
-build/assets/scripts/globals.json build/assets/scripts/globals.dat: tools/mesh_export/globals.py assets/scripts/globals.script
+build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/inventory_mapping.c: tools/mesh_export/globals.py assets/scripts/globals.script
 	@mkdir -p $(dir $@)
-	python3 tools/mesh_export/globals.py build/assets/scripts/globals assets/scripts/globals.script
+	python3 tools/mesh_export/globals.py build/assets/scripts/globals src/player/inventory_mapping.c assets/scripts/globals.script
 
 filesystem/scripts/globals.dat: build/assets/scripts/globals.dat
 	$(MK_ASSET) -o $(dir $@) -w 4 $<
@@ -131,7 +131,7 @@ build/test_result.txt: $(EXPORT_SOURCE)
 # source code
 ###
 
-SOURCES := $(shell find src/ ! -name '*_test.c' ! -name 'main.c' -type f -name '*.c' | sort)
+SOURCES := $(shell find src/ ! -name '*_test.c' ! -name 'main.c' ! -name 'inventory_mapping.c' -type f -name '*.c' | sort) src/player/inventory_mapping.c
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
 
