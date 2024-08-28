@@ -1,7 +1,7 @@
 #ifndef __OBJECTS_TRAINING_DUMMY_H__
 #define __OBJECTS_TRAINING_DUMMY_H__
 
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 
 #include "../math/transform.h"
 #include "../render/renderable.h"

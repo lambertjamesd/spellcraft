@@ -1,5 +1,5 @@
-#ifndef __SCENE_WORLD_H__
-#define __SCENE_WORLD_H__
+#ifndef __SCENE_SCENE_H__
+#define __SCENE_SCENE_H__
 
 #include "../render/render_batch.h"
 #include "../render/camera.h"
@@ -37,10 +37,10 @@ struct static_entity {
 
 struct loading_zone {
     struct Box3D bounding_box;
-    char* world_name;
+    char* scene_name;
 };
 
-struct world {
+struct scene {
     struct static_entity* static_entities;
 
     struct mesh_collider mesh_collider;
@@ -62,15 +62,15 @@ struct world {
     char* string_table;
 };
 
-void world_render(void* data, struct render_batch* batch);
-void world_update(void* data);
+void scene_render(void* data, struct render_batch* batch);
+void scene_update(void* data);
 
-void world_queue_next(char* world_name);
-void world_clear_next();
+void scene_queue_next(char* scene_name);
+void scene_clear_next();
 
-bool world_has_next();
+bool scene_has_next();
 
-char* world_get_next();
-char* world_get_next_entry();
+char* scene_get_next();
+char* scene_get_next_entry();
 
 #endif

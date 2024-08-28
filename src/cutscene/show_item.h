@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "cutscene.h"
 #include "../render/material.h"
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 
 struct show_item {
     struct material* item_material;

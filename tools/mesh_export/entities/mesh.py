@@ -106,7 +106,7 @@ class mesh_data():
                     bone = armature.find_bone_data(bone_name)
                     bone_index = bone.index
 
-                    vertex_transform = bone.matrix_world_inv @ final_transform
+                    vertex_transform = bone.matrix_scene_inv @ final_transform
                     normal_vertex_transform = bone.matrix_normal_inv @ normal_transform
 
             pos = vertex_transform @ mesh.vertices[vtx_index].co

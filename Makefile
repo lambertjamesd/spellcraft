@@ -105,18 +105,18 @@ filesystem/%.script: assets/%.script build/assets/scripts/globals.json $(EXPORT_
 	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
 
 ###
-# worlds
+# scenes
 ###
 
-WORLD_SOURCES := $(shell find assets/worlds -type f -name '*.blend' | sort)
+SCENE_SOURCES := $(shell find assets/scenes -type f -name '*.blend' | sort)
 
-WORLDS := $(WORLD_SOURCES:assets/worlds/%.blend=filesystem/worlds/%.world)
+SCENES := $(SCENE_SOURCES:assets/scenes/%.blend=filesystem/scenes/%.scene)
 
-filesystem/worlds/%.world: assets/worlds/%.blend build/assets/scripts/globals.json $(EXPORT_SOURCE)
+filesystem/scenes/%.scene: assets/scenes/%.blend build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
-	@mkdir -p $(dir $(@:filesystem/worlds/%.world=build/assets/worlds/%.world))
-	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/world.py -- $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
-	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/worlds/%.world=build/assets/worlds/%.world)
+	@mkdir -p $(dir $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene))
+	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene)
+	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene)
 
 ###
 # tests
@@ -139,9 +139,9 @@ TEST_SOURCES := $(shell find src/ -type f -name '*_test.c' | sort)
 TEST_SOURCE_OBJS := $(TEST_SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 TEST_OBJS := $(SOURCE_OBJS) $(TEST_SOURCE_OBJS)
 
-filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
+filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 
-$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(WORLDS) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
+$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 $(BUILD_DIR)/spellcraft_test.elf: $(TEST_OBJS)
 

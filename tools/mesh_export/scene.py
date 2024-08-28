@@ -39,8 +39,8 @@ class LoadingZone():
         self.obj: bpy.types.Object = obj
         self.target: str = target
 
-    def bounding_box(self, world_rotation: mathutils.Matrix) -> tuple[mathutils.Vector, mathutils.Vector]:
-        final_transform = world_rotation @ self.obj.matrix_world
+    def bounding_box(self, scene_rotation: mathutils.Matrix) -> tuple[mathutils.Vector, mathutils.Vector]:
+        final_transform = scene_rotation @ self.obj.matrix_world
         transformed = [final_transform @ mathutils.Vector(vtx) for vtx in self.obj.bound_box]
 
         bb_min = transformed[0]
@@ -60,15 +60,15 @@ class LoadingZone():
 
         return bb_min, bb_max
 
-class World():
+class Scene():
     def __init__(self):
         self.static:list[StaticEntry] = []
         self.objects: list[ObjectEntry] = []
         self.locations: list[LocationEntry] = []
         self.loading_zones: list[LoadingZone] = []
-        self.world_mesh_collider = entities.mesh_collider.MeshCollider()
+        self.scene_mesh_collider = entities.mesh_collider.MeshCollider()
 
-def process_linked_object(world: World, obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo]):
+def process_linked_object(scene: Scene, obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo]):
     type = None
 
     if 'type' in mesh:
@@ -87,13 +87,13 @@ def process_linked_object(world: World, obj: bpy.types.Object, mesh: bpy.types.M
     
     print(f"found object {obj.name} of type {def_type_name}")
     
-    world.objects.append(ObjectEntry(obj, type, definitions[def_type_name]))
+    scene.objects.append(ObjectEntry(obj, type, definitions[def_type_name]))
 
-def write_static(world: World, base_transform: mathutils.Matrix, file):
+def write_static(scene: Scene, base_transform: mathutils.Matrix, file):
     settings = entities.export_settings.ExportSettings()
     mesh_list = entities.mesh.mesh_list(base_transform)
 
-    for entry in world.static:
+    for entry in scene.static:
         mesh_list.append(entry.obj)
 
     meshes = mesh_list.determine_mesh_data()
@@ -114,13 +114,13 @@ def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-1]
 
-    world = World()
+    scene = Scene()
 
     base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
     definitions = {}
     enums = {}
 
-    with open('src/scene/world_definition.h', 'r') as file:
+    with open('src/scene/scene_definition.h', 'r') as file:
         file_content = file.read()
         definitions = parse.struct_parse.find_structs(file_content)
         enums = parse.struct_parse.find_enums(file_content)
@@ -136,15 +136,15 @@ def process_scene():
 
     for obj in bpy.data.objects:
         if 'loading_zone' in obj:
-            world.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
+            scene.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
             continue
 
         if 'entry_point' in obj:
-            world.locations.append(LocationEntry(obj, obj['entry_point']))
+            scene.locations.append(LocationEntry(obj, obj['entry_point']))
             continue
 
         if 'type' in obj or 'type' in obj.data:
-            process_linked_object(world, obj, obj.data, definitions)
+            process_linked_object(scene, obj, obj.data, definitions)
             continue
 
         if obj.type != "MESH":
@@ -155,17 +155,17 @@ def process_scene():
         mesh: bpy.types.Mesh = obj.data
 
         if len(mesh.materials) > 0:
-            world.static.append(StaticEntry(obj, mesh, final_transform))
+            scene.static.append(StaticEntry(obj, mesh, final_transform))
 
         if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH':
-            world.world_mesh_collider.append(mesh, final_transform)
+            scene.scene_mesh_collider.append(mesh, final_transform)
 
     with open(output_filename, 'wb') as file:
         file.write('WRLD'.encode())
 
-        file.write(len(world.locations).to_bytes(1, 'big'))
+        file.write(len(scene.locations).to_bytes(1, 'big'))
 
-        for location in world.locations:
+        for location in scene.locations:
             location_bytes = location.name.encode()
             file.write(len(location_bytes).to_bytes(1, 'big'))
             file.write(location_bytes)
@@ -173,13 +173,13 @@ def process_scene():
             parse.struct_serialize.write_vector3_position(file, location.obj)
             parse.struct_serialize.write_vector2_rotation(file, location.obj)
 
-        write_static(world, base_transform, file)
+        write_static(scene, base_transform, file)
 
-        world.world_mesh_collider.write_out(file)
+        scene.scene_mesh_collider.write_out(file)
 
         grouped: dict[str, list[ObjectEntry]] = {}
 
-        for object in world.objects:
+        for object in scene.objects:
             key = object.name
 
             parse.struct_serialize.layout_strings(object.obj, object.def_type, context, None)
@@ -189,7 +189,7 @@ def process_scene():
             else:
                 grouped[key] = [object]
 
-        for loading_zone in world.loading_zones:
+        for loading_zone in scene.loading_zones:
             context.get_string_offset(loading_zone.target)
 
         context.write_strings(file)
@@ -224,9 +224,9 @@ def process_scene():
                 script = cutscene.expresion_generator.generate_script(condition, variable_context, 'int')
                 script.serialize(file)
 
-        file.write(struct.pack(">H", len(world.loading_zones)))
+        file.write(struct.pack(">H", len(scene.loading_zones)))
 
-        for loading_zone in world.loading_zones:
+        for loading_zone in scene.loading_zones:
             bb_min, bb_max = loading_zone.bounding_box(base_transform)
             print(bb_min, bb_max)
             file.write(struct.pack(">fff", bb_min.x, bb_min.y, bb_min.z))

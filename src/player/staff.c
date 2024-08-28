@@ -1,6 +1,6 @@
 #include "staff.h"
 
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 
 struct staff_stats staff_stats[INV_STAFF_COUNT] = {
     {ITEM_TYPE_STAFF_DEFAULT, 0},

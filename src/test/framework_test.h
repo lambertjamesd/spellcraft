@@ -38,7 +38,7 @@ void test_near_equalf_raw(struct test_context* t, float expected, float actual, 
 
 void test_report_failures();
 
-void test_load_world(const char* name);
+void test_load_scene(const char* name);
 
 typedef void (*test_deferred_call)(void* data);
 

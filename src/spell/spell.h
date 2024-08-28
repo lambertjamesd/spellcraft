@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 
 #define SPELL_MAX_COLS    10
 #define SPELL_MAX_ROWS    4

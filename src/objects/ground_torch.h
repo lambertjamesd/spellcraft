@@ -1,7 +1,7 @@
 #ifndef __OBJECTS_GROUND_TORCH_H__
 #define __OBJECTS_GROUND_TORCH_H__
 
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 #include "../math/transform_single_axis.h"
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"

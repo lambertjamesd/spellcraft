@@ -204,8 +204,8 @@ class ArmatureBone:
             curr = curr.parent
 
         self.matrix_world: mathutils.Matrix = armature_transform @ bone.matrix_local
-        self.matrix_world_inv: mathutils.Matrix = self.matrix_world.inverted()
-        self.matrix_normal_inv = self.matrix_world_inv.to_3x3().inverted().transposed()
+        self.matrix_scene_inv: mathutils.Matrix = self.matrix_world.inverted()
+        self.matrix_normal_inv = self.matrix_scene_inv.to_3x3().inverted().transposed()
 
         self.pose_bone: bpy.types.Bone = pose_bone
 

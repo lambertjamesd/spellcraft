@@ -1,7 +1,7 @@
 #ifndef __NPC_NPC_H__
 #define __NPC_NPC_H__
 
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 #include "../math/transform_single_axis.h"
 #include "../render/renderable.h"
 #include "../render/animator.h"

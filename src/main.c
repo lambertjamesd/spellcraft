@@ -14,7 +14,7 @@
 #include "render/render_scene.h"
 
 #include "render/render_batch.h"
-#include "scene/world_loader.h"
+#include "scene/scene_loader.h"
 #include "objects/crate.h"
 #include "time/game_mode.h"
 #include "render/tmesh.h"
@@ -25,7 +25,7 @@
 
 #define RDPQ_VALIDATE_DETACH_ADDR    0x00800000
 
-struct world* current_world;
+struct scene* current_scene;
 
 void setup() {
     debug_init_isviewer();
@@ -33,7 +33,7 @@ void setup() {
     init_engine();
     savefile_new();
 
-    current_world = world_load("rom:/worlds/playerhome_basement.world");
+    current_scene = scene_load("rom:/scenes/playerhome_basement.scene");
 }
 
 static struct frame_memory_pool frame_memory_pools[2];
@@ -62,7 +62,7 @@ void render_3d() {
     T3DViewport* viewport = frame_malloc(pool, sizeof(T3DViewport));
     *viewport = t3d_viewport_create();
 
-    render_scene_render(&current_world->camera, viewport, &frame_memory_pools[next_frame_memoy_pool]);
+    render_scene_render(&current_scene->camera, viewport, &frame_memory_pools[next_frame_memoy_pool]);
     
     next_frame_memoy_pool ^= 1;
 }
@@ -93,10 +93,10 @@ void on_vi_interrupt() {
     frame_happened = 1;
 }
 
-bool check_world_load() {
+bool check_scene_load() {
     static uint8_t frame_wait = 0;
 
-    if (!world_has_next()) {
+    if (!scene_has_next()) {
         return false;
     }
 
@@ -111,9 +111,9 @@ bool check_world_load() {
         return true;
     }
 
-    world_release(current_world);
-    current_world = world_load(world_get_next());
-    world_clear_next();
+    scene_release(current_scene);
+    current_scene = scene_load(scene_get_next());
+    scene_clear_next();
 
     return false;
 }
@@ -148,7 +148,7 @@ int main(void)
         }
         frame_happened = 0;
 
-        if (check_world_load()) {
+        if (check_scene_load()) {
             continue;
         }
 

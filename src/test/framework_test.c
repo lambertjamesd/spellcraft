@@ -2,8 +2,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "../scene/world.h"
-#include "../scene/world_loader.h"
+#include "../scene/scene.h"
+#include "../scene/scene_loader.h"
 
 #define MAX_NAMED_FAILS 16
 
@@ -108,18 +108,18 @@ void test_report_failures() {
     }
 }
 
-static const char* current_world;
-static struct world* current_test_world;
+static const char* current_scene;
+static struct scene* current_test_scene;
 
-void test_load_world(const char* name) {
-    if (current_world && strcmp(name, current_world) == 0) {
+void test_load_scene(const char* name) {
+    if (current_scene && strcmp(name, current_scene) == 0) {
         return;
     }
 
-    current_world = name;
+    current_scene = name;
 
-    world_release(current_test_world);
-    current_test_world = world_load(name);
+    scene_release(current_test_scene);
+    current_test_scene = scene_load(name);
 }
 
 struct test_deferred_call_data {

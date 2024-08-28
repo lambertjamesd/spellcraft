@@ -2,7 +2,7 @@
 #define __PLAYER_INVENTORY_H__
 
 #include "../spell/spell.h"
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 #include "../cutscene/evaluation_context.h"
 #include "staff.h"
 

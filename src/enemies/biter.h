@@ -1,7 +1,7 @@
 #ifndef __ENEMIES_BITER_H__
 #define __ENEMIES_BITER_H__
 
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"

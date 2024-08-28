@@ -1,4 +1,4 @@
-#include "world_loader.h"
+#include "scene_loader.h"
 
 #include <malloc.h>
 #include <string.h>
@@ -23,7 +23,7 @@
 
 #include "../collision/collision_scene.h"
 
-static struct entity_definition world_entity_definitions[] = {
+static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(biter),
     ENTITY_DEFINITION(collectable),
     ENTITY_DEFINITION(crate),
@@ -36,9 +36,9 @@ static struct entity_definition world_entity_definitions[] = {
 // WRLD
 #define EXPECTED_HEADER 0x57524C44
 
-struct entity_definition* world_find_def(const char* name) {
-   for (int i = 0; i < sizeof(world_entity_definitions) / sizeof(*world_entity_definitions); i += 1) {
-        struct entity_definition* def = &world_entity_definitions[i];
+struct entity_definition* scene_find_def(const char* name) {
+   for (int i = 0; i < sizeof(scene_entity_definitions) / sizeof(*scene_entity_definitions); i += 1) {
+        struct entity_definition* def = &scene_entity_definitions[i];
 
         if (strcmp(name, def->name) == 0) {
             return def;
@@ -57,7 +57,7 @@ enum type_location_types {
     TYPE_LOCATION_STRING,
 };
 
-void world_apply_types(void* definition, char* string_table, struct type_location* type_locations, int type_location_count) {
+void scene_apply_types(void* definition, char* string_table, struct type_location* type_locations, int type_location_count) {
     for (int i = 0; i < type_location_count; i += 1) {
         switch (type_locations[i].type) {
             case TYPE_LOCATION_STRING: {
@@ -71,7 +71,7 @@ void world_apply_types(void* definition, char* string_table, struct type_locatio
 
 #define EXPECTED_CONDITION_HEADER 0x45585052
 
-bool world_load_check_condition(FILE* file) {
+bool scene_load_check_condition(FILE* file) {
     struct expression expression;
     int header;
     fread(&header, 1, 4, file);
@@ -94,14 +94,14 @@ bool world_load_check_condition(FILE* file) {
     return result != 0;
 }
 
-void world_load_entity(struct world* world, struct entity_data* entity_data, FILE* file) {
+void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FILE* file) {
     uint8_t name_len;
     fread(&name_len, 1, 1, file);
     char name[name_len + 1];
     fread(name, 1, name_len, file);
     name[name_len] = '\0';
 
-    struct entity_definition* def = world_find_def(name);
+    struct entity_definition* def = scene_find_def(name);
 
     assert(def);
 
@@ -129,8 +129,8 @@ void world_load_entity(struct world* world, struct entity_data* entity_data, FIL
     int final_count = 0;
 
     for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
-        if (world_load_check_condition(file)) {
-            world_apply_types(entity_def, world->string_table, type_locations, type_location_count);
+        if (scene_load_check_condition(file)) {
+            scene_apply_types(entity_def, scene->string_table, type_locations, type_location_count);
             def->init(entity, entity_def);
             entity += def->entity_size;
             final_count += 1;
@@ -142,7 +142,7 @@ void world_load_entity(struct world* world, struct entity_data* entity_data, FIL
     entity_data->entity_count = final_count;
 }
 
-void world_destroy_entity(struct entity_data* entity_data) {
+void scene_destroy_entity(struct entity_data* entity_data) {
     char* entity = entity_data->entities;
 
     for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
@@ -153,14 +153,14 @@ void world_destroy_entity(struct entity_data* entity_data) {
     free(entity_data->entities);
 }
 
-struct world* world_load(const char* filename) {
+struct scene* scene_load(const char* filename) {
     FILE* file = asset_fopen(filename, NULL);
 
     int header;
     fread(&header, 1, 4, file);
     assert(header == EXPECTED_HEADER);
 
-    struct world* world = malloc(sizeof(struct world));
+    struct scene* scene = malloc(sizeof(struct scene));
 
     struct player_definition player_def;
     player_def.location = gZeroVec;
@@ -193,7 +193,7 @@ struct world* world_load(const char* filename) {
             player_def.rotation = rot;
         }
 
-        if (strcmp(name, world_get_next_entry()) == 0) {
+        if (strcmp(name, scene_get_next_entry()) == 0) {
             player_def.location = pos;
             player_def.rotation = rot;
             found_entry = true;
@@ -201,92 +201,92 @@ struct world* world_load(const char* filename) {
     }
 
     inventory_init();
-    camera_init(&world->camera, 70.0f, 1.0f, 100.0f);
-    player_init(&world->player, &player_def, &world->camera.transform);
-    camera_controller_init(&world->camera_controller, &world->camera, &world->player);
+    camera_init(&scene->camera, 70.0f, 1.0f, 100.0f);
+    player_init(&scene->player, &player_def, &scene->camera.transform);
+    camera_controller_init(&scene->camera_controller, &scene->camera, &scene->player);
 
-    pause_menu_init(&world->pause_menu);
-    hud_init(&world->hud, &world->player);
+    pause_menu_init(&scene->pause_menu);
+    hud_init(&scene->hud, &scene->player);
 
     uint16_t static_count;
     fread(&static_count, 2, 1, file);
 
-    world->static_entities = malloc(sizeof(struct static_entity) * static_count);
-    world->static_entity_count = static_count;
+    scene->static_entities = malloc(sizeof(struct static_entity) * static_count);
+    scene->static_entity_count = static_count;
 
     for (int i = 0; i < static_count; ++i) {
         uint8_t str_len;
         fread(&str_len, 1, 1, file);
 
-        struct static_entity* entity = &world->static_entities[i];
-        tmesh_load(&world->static_entities[i].tmesh, file);
+        struct static_entity* entity = &scene->static_entities[i];
+        tmesh_load(&scene->static_entities[i].tmesh, file);
     }
 
-    mesh_collider_load(&world->mesh_collider, file);
-    collision_scene_use_static_collision(&world->mesh_collider);
+    mesh_collider_load(&scene->mesh_collider, file);
+    collision_scene_use_static_collision(&scene->mesh_collider);
 
     uint16_t strings_length;
     fread(&strings_length, 2, 1, file);
 
-    world->string_table = malloc(strings_length);
-    fread(world->string_table, strings_length, 1, file);
+    scene->string_table = malloc(strings_length);
+    fread(scene->string_table, strings_length, 1, file);
 
-    fread(&world->entity_data_count, 2, 1, file);
+    fread(&scene->entity_data_count, 2, 1, file);
 
-    world->entity_data = malloc(sizeof(struct entity_data) * world->entity_data_count);
+    scene->entity_data = malloc(sizeof(struct entity_data) * scene->entity_data_count);
 
-    for (int i = 0; i < world->entity_data_count; i += 1) {
-        world_load_entity(world, &world->entity_data[i], file);
+    for (int i = 0; i < scene->entity_data_count; i += 1) {
+        scene_load_entity(scene, &scene->entity_data[i], file);
     }
 
-    fread(&world->loading_zone_count, 2, 1, file);
+    fread(&scene->loading_zone_count, 2, 1, file);
 
-    world->loading_zones = malloc(sizeof(struct loading_zone) * world->loading_zone_count);
-    fread(world->loading_zones, sizeof(struct loading_zone), world->loading_zone_count, file);
+    scene->loading_zones = malloc(sizeof(struct loading_zone) * scene->loading_zone_count);
+    fread(scene->loading_zones, sizeof(struct loading_zone), scene->loading_zone_count, file);
 
-    for (int i = 0; i < world->loading_zone_count; i += 1) {
-        world->loading_zones[i].world_name += (int)world->string_table;
+    for (int i = 0; i < scene->loading_zone_count; i += 1) {
+        scene->loading_zones[i].scene_name += (int)scene->string_table;
     }
 
     fclose(file);
 
-    render_scene_add(NULL, 0.0f, world_render, world);
-    update_add(world, world_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD);
+    render_scene_add(NULL, 0.0f, scene_render, scene);
+    update_add(scene, scene_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD);
 
-    return world;
+    return scene;
 }
 
-void world_release(struct world* world) {
-    if (!world) {
+void scene_release(struct scene* scene) {
+    if (!scene) {
         return;
     }
 
-    for (int i = 0; i < world->static_entity_count; ++i) {
-        struct static_entity* entity = &world->static_entities[i];
+    for (int i = 0; i < scene->static_entity_count; ++i) {
+        struct static_entity* entity = &scene->static_entities[i];
         tmesh_release(&entity->tmesh);
     }
-    free(world->static_entities);
+    free(scene->static_entities);
 
-    render_scene_remove(world);
-    update_remove(world);
+    render_scene_remove(scene);
+    update_remove(scene);
 
-    pause_menu_destroy(&world->pause_menu);
-    hud_destroy(&world->hud);
-    player_destroy(&world->player);
-    camera_controller_destroy(&world->camera_controller);
+    pause_menu_destroy(&scene->pause_menu);
+    hud_destroy(&scene->hud);
+    player_destroy(&scene->player);
+    camera_controller_destroy(&scene->camera_controller);
 
     inventory_destroy();
 
-    collision_scene_remove_static_collision(&world->mesh_collider);
-    mesh_collider_release(&world->mesh_collider);
+    collision_scene_remove_static_collision(&scene->mesh_collider);
+    mesh_collider_release(&scene->mesh_collider);
 
-    for (int i = 0; i < world->entity_data_count; i += 1) {
-        world_destroy_entity(&world->entity_data[i]);
+    for (int i = 0; i < scene->entity_data_count; i += 1) {
+        scene_destroy_entity(&scene->entity_data[i]);
     }
-    free(world->entity_data);
+    free(scene->entity_data);
 
-    free(world->string_table);
-    free(world->loading_zones);
+    free(scene->string_table);
+    free(scene->loading_zones);
 
-    free(world);
+    free(scene);
 }

@@ -4,7 +4,7 @@
 #include "../math/transform_single_axis.h"
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 #include "../entity/interactable.h"
 #include "../render/animation_clip.h"
 #include "../render/animator.h"

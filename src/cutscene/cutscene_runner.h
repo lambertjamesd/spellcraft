@@ -2,7 +2,7 @@
 #define __CUTSCENE_CUTSCENE_RUNNER_H__
 
 #include "cutscene.h"
-#include "../scene/world_definition.h"
+#include "../scene/scene_definition.h"
 #include <stdbool.h>
 #include "../entity/entity_id.h"
 

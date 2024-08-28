@@ -26,7 +26,7 @@ bool test_traingle_callback(struct mesh_index* index, void* data, int triangle_i
 }
 
 void test_mesh_index_lookup_triangle_indices(struct test_context* t) {
-    test_load_world("rom:/worlds/testing.world");
+    test_load_scene("rom:/scenes/testing.scene");
 
     struct test_collide_info info;
     test_collide_info_init(&info);
@@ -45,7 +45,7 @@ void test_mesh_index_lookup_triangle_indices(struct test_context* t) {
 }
 
 void test_mesh_index_swept_lookup(struct test_context* t) {
-    test_load_world("rom:/worlds/testing.world");
+    test_load_scene("rom:/scenes/testing.scene");
 
     struct test_collide_info info;
     test_collide_info_init(&info);

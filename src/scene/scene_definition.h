@@ -1,5 +1,5 @@
-#ifndef __SCENE_WORLD_DEFINITION_H__
-#define __SCENE_WORLD_DEFINITION_H__
+#ifndef __SCENE_SCENE_DEFINITION_H__
+#define __SCENE_SCENE_DEFINITION_H__
 
 #include "../math/vector3.h"
 #include "../math/vector2.h"
