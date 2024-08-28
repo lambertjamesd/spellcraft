@@ -33,6 +33,7 @@ class LocationEntry():
     def __init__(self, obj: bpy.types.Object, name: str):
         self.obj: bpy.types.Object = obj
         self.name: str = name
+        self.on_enter: str = obj['on_enter'] if 'on_enter' in obj else ''
 
 class LoadingZone():
     def __init__(self, obj: bpy.types.Object, target: str):
@@ -169,6 +170,10 @@ def process_scene():
             location_bytes = location.name.encode()
             file.write(len(location_bytes).to_bytes(1, 'big'))
             file.write(location_bytes)
+
+            on_enter_bytes = location.on_enter.encode()
+            file.write(len(on_enter_bytes).to_bytes(1, 'big'))
+            file.write(on_enter_bytes)
 
             parse.struct_serialize.write_vector3_position(file, location.obj)
             parse.struct_serialize.write_vector2_rotation(file, location.obj)

@@ -40,6 +40,7 @@ void cutscene_destroy_template_string(struct templated_string* string) {
     free(string->template);
 }
 
+// release with cutscene_free()
 struct cutscene* cutscene_load(char* filename) {
     FILE* file = asset_fopen(filename, NULL);
 
@@ -53,6 +54,7 @@ struct cutscene* cutscene_load(char* filename) {
     uint16_t locals_size;
     fread(&locals_size, 2, 1, file);
     
+    // release with cutscene_free()
     struct cutscene* result = cutscene_new(step_count, locals_size);
 
     if (locals_size) {
@@ -216,7 +218,9 @@ void cutscene_builder_delay(struct cutscene_builder* builder, float delay) {
     };
 }
 
+// release with cutscene_free()
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder) {
+    // release with cutscene_free()
     struct cutscene* result = cutscene_new(builder->step_count, 0);
     memcpy(result->steps, builder->steps, sizeof(struct cutscene_step) * builder->step_count);
     return result;

@@ -255,6 +255,11 @@ bool cutscene_runner_is_running() {
     return cutscene_runner.current_cutscene != -1;
 }
 
-void cutscene_runner_free_on_finish(struct cutscene* cutscene, void* data) {
+void _cutscene_runner_free_on_finish(struct cutscene* cutscene, void* data) {
     cutscene_free(cutscene);
+}
+
+// used to free a cutscene created by cutscene_new() or cutscene_load()
+cutscene_finish_callback cutscene_runner_free_on_finish() {
+    return _cutscene_runner_free_on_finish;
 }

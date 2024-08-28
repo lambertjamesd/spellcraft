@@ -170,6 +170,8 @@ struct scene* scene_load(const char* filename) {
     fread(&location_count, 1, 1, file);
 
     bool found_entry = false;
+
+    struct cutscene* starting_cutscene = NULL;
     
     for (int i = 0; i < location_count; i += 1) {
         uint8_t name_length;
@@ -177,6 +179,12 @@ struct scene* scene_load(const char* filename) {
         char name[name_length + 1];
         fread(name, name_length, 1, file);
         name[name_length] = '\0';
+
+        uint8_t on_enter_length;
+        fread(&on_enter_length, 1, 1, file);
+        char on_enter[on_enter_length + 1];
+        fread(on_enter, on_enter_length, 1, file);
+        on_enter[on_enter_length] = '\0';
 
         struct Vector3 pos;
         struct Vector2 rot;
@@ -197,6 +205,10 @@ struct scene* scene_load(const char* filename) {
             player_def.location = pos;
             player_def.rotation = rot;
             found_entry = true;
+
+            if (on_enter_length) {
+                starting_cutscene = cutscene_load(on_enter);
+            }
         }
     }
 
@@ -252,6 +264,10 @@ struct scene* scene_load(const char* filename) {
 
     render_scene_add(NULL, 0.0f, scene_render, scene);
     update_add(scene, scene_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD);
+
+    if (starting_cutscene) {
+        cutscene_runner_run(starting_cutscene, cutscene_runner_free_on_finish(), NULL);
+    }
 
     return scene;
 }

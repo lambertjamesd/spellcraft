@@ -89,7 +89,7 @@ void collectable_collected(struct collectable* collectable) {
 
         cutscene_runner_run(
             cutscene_builder_finish(&builder),
-            cutscene_runner_free_on_finish,
+            cutscene_runner_free_on_finish(),
             NULL
         );
     }
