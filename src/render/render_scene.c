@@ -33,7 +33,7 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
     }
 
     mat4x4 mtx;
-    transformToMatrix(renderable->transform, mtx);
+    transformToMatrix(renderable->transform.transform, mtx);
     mtx[3][0] *= SCENE_SCALE;
     mtx[3][1] *= SCENE_SCALE;
     mtx[3][2] *= SCENE_SCALE;
@@ -56,7 +56,7 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
     }
 
     mat4x4 mtx;
-    transformSAToMatrix(renderable->transform, mtx);
+    transformSAToMatrix(renderable->transform.transform, mtx);
     mtx[3][0] *= SCENE_SCALE;
     mtx[3][1] *= SCENE_SCALE;
     mtx[3][2] *= SCENE_SCALE;
@@ -73,9 +73,9 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
 void render_scene_add_renderable(struct renderable* renderable, float radius) {
     // remove with render_scene_remove()
     render_scene_add(
-        renderable->transform, 
+        transform_mixed_get_position(&renderable->transform), 
         radius, 
-        renderable->type == RENDERABLE_TYPE_BASIC ? render_scene_render_renderable : render_scene_render_renderable_single_axis, 
+        renderable->type == TRANSFORM_TYPE_BASIC ? render_scene_render_renderable : render_scene_render_renderable_single_axis, 
         renderable
     );
 }

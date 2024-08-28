@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename) {
-    renderable->transform = transform;
+    transform_mixed_init(&renderable->transform, transform);
     renderable->mesh = tmesh_cache_load(mesh_filename);
     renderable->force_material = NULL;
     armature_init(&renderable->armature, &renderable->mesh->armature);
@@ -16,7 +16,7 @@ void renderable_init(struct renderable* renderable, struct Transform* transform,
         renderable->attachments = NULL;
     }
 
-    renderable->type = RENDERABLE_TYPE_BASIC;
+    renderable->type = TRANSFORM_TYPE_BASIC;
 }
 
 void renderable_destroy(struct renderable* renderable) {
@@ -26,7 +26,7 @@ void renderable_destroy(struct renderable* renderable) {
 }
 
 void renderable_single_axis_init(struct renderable* renderable, struct TransformSingleAxis* transform, const char* mesh_filename) {
-    renderable->transform = transform;
+    transform_mixed_init_sa(&renderable->transform, transform);
     renderable->mesh = tmesh_cache_load(mesh_filename);
     renderable->force_material = NULL;
     armature_init(&renderable->armature, &renderable->mesh->armature);
@@ -38,5 +38,5 @@ void renderable_single_axis_init(struct renderable* renderable, struct Transform
         renderable->attachments = NULL;
     }
 
-    renderable->type = RENDERABLE_TYPE_SINGLE_AXIS;
+    renderable->type = TRANSFORM_TYPE_SINGLE_AXIS;
 }

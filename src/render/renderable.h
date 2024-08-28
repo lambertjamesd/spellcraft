@@ -3,20 +3,16 @@
 
 #include "../math/transform.h"
 #include "../math/transform_single_axis.h"
+#include "../math/transform_mixed.h"
 #include "armature.h"
 
-enum renderable_type {
-    RENDERABLE_TYPE_BASIC,
-    RENDERABLE_TYPE_SINGLE_AXIS,
-};
-
 struct renderable {
-    void* transform;
+    struct transform_mixed transform;
     struct tmesh* mesh;
     struct armature armature;
     struct material* force_material;
     struct tmesh** attachments;
-    enum renderable_type type;
+    enum transform_type type;
 };
 
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename);
