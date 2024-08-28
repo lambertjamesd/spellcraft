@@ -15,7 +15,7 @@ struct treasure_animations {
 
 struct treasure_chest {
     struct TransformSingleAxis transform;
-    struct renderable_single_axis renderable;
+    struct renderable renderable;
     struct dynamic_object dynamic_object;
     struct interactable interactable;
     enum inventory_item_type item_type;

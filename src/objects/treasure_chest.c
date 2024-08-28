@@ -62,7 +62,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
     treasure_chest->transform.rotation = definition->rotation;
 
     renderable_single_axis_init(&treasure_chest->renderable, &treasure_chest->transform, "rom:/meshes/objects/treasurechest.tmesh");
-    render_scene_add_renderable_single_axis(&treasure_chest->renderable, 0.8f);
+    render_scene_add_renderable(&treasure_chest->renderable, 0.8f);
 
     entity_id entity_id = entity_id_new();
 
@@ -95,7 +95,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
 }
 
 void treasure_chest_destroy(struct treasure_chest* treasure_chest) {
-    renderable_single_axis_destroy(&treasure_chest->renderable);
+    renderable_destroy(&treasure_chest->renderable);
     render_scene_remove(&treasure_chest->renderable);
     collision_scene_remove(&treasure_chest->dynamic_object);
     animator_destroy(&treasure_chest->animator);

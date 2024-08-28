@@ -10,7 +10,7 @@
 
 struct crate {
     struct TransformSingleAxis transform;
-    struct renderable_single_axis renderable;
+    struct renderable renderable;
     struct dynamic_object dynamic_object;
     struct health health;
 };

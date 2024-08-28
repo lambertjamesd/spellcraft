@@ -47,7 +47,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
     npc->transform.rotation = definiton->rotation;
     renderable_single_axis_init(&npc->renderable, &npc->transform, information->mesh);
 
-    render_scene_add_renderable_single_axis(&npc->renderable, 2.0f);
+    render_scene_add_renderable(&npc->renderable, 2.0f);
 
     update_add(npc, npc_update, 0, UPDATE_LAYER_WORLD);
     animator_init(&npc->animator, npc->renderable.armature.bone_count);
@@ -82,7 +82,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
 
 void npc_destroy(struct npc* npc) {
     render_scene_remove(&npc->renderable);
-    renderable_single_axis_destroy(&npc->renderable);
+    renderable_destroy(&npc->renderable);
     animator_destroy(&npc->animator);
     update_remove(npc);
     collision_scene_remove(&npc->collider);

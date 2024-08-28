@@ -47,7 +47,7 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
 }
 
 void render_scene_render_renderable_single_axis(void* data, struct render_batch* batch) {
-    struct renderable_single_axis* renderable = (struct renderable_single_axis*)data;
+    struct renderable* renderable = (struct renderable*)data;
 
     T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
@@ -72,13 +72,12 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
 // removed with render_scene_remove()
 void render_scene_add_renderable(struct renderable* renderable, float radius) {
     // remove with render_scene_remove()
-    render_scene_add(&renderable->transform->position, radius, render_scene_render_renderable, renderable);
-}
-
-// removed with render_scene_remove()
-void render_scene_add_renderable_single_axis(struct renderable_single_axis* renderable, float radius) {
-    // remove with render_scene_remove()
-    render_scene_add(&renderable->transform->position, radius, render_scene_render_renderable_single_axis, renderable);
+    render_scene_add(
+        renderable->transform, 
+        radius, 
+        renderable->type == RENDERABLE_TYPE_BASIC ? render_scene_render_renderable : render_scene_render_renderable_single_axis, 
+        renderable
+    );
 }
 
 void render_scene_remove(void* data) {

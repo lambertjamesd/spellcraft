@@ -27,7 +27,6 @@ void render_scene_reset();
 
 void render_scene_add(struct Vector3* center, float radius, render_scene_callback callback, void* data);
 void render_scene_add_renderable(struct renderable* renderable, float radius);
-void render_scene_add_renderable_single_axis(struct renderable_single_axis* renderable, float radius);
 void render_scene_remove(void* data);
 
 void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool);

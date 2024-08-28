@@ -38,6 +38,10 @@ class EnumInfo:
     
     def is_defined(self, name: str) -> bool:
         return name in self._values
+    
+    def populate_dict(self, dict: dict[str, int]):
+        for idx, name in enumerate(self._values):
+            dict[name] = idx
 
 class Token:
     def __init__(self, value: str, token_type: str, at: int):

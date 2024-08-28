@@ -22,7 +22,7 @@ struct npc_animations {
 
 struct npc {
     struct TransformSingleAxis transform;
-    struct renderable_single_axis renderable;
+    struct renderable renderable;
 
     struct dynamic_object collider;
 

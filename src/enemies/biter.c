@@ -147,7 +147,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
 
     update_add(biter, (update_callback)biter_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
 
-    render_scene_add_renderable_single_axis(&biter->renderable, 1.73f);
+    render_scene_add_renderable(&biter->renderable, 1.73f);
 
     health_init(&biter->health, id, 10.0f);
 
@@ -166,7 +166,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
 
 void biter_destroy(struct biter* biter) {
     render_scene_remove(&biter->renderable);
-    renderable_single_axis_destroy(&biter->renderable);
+    renderable_destroy(&biter->renderable);
     collision_scene_remove(&biter->dynamic_object);
     collision_scene_remove(&biter->vision);
     health_destroy(&biter->health);

@@ -64,7 +64,7 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
 
     collision_scene_add(&collectable->dynamic_object);
     renderable_single_axis_init(&collectable->renderable, &collectable->transform, type->mesh_filename);
-    render_scene_add_renderable_single_axis(&collectable->renderable, 0.2f);
+    render_scene_add_renderable(&collectable->renderable, 0.2f);
     
     hash_map_set(&collectable_hash_map, collectable->dynamic_object.entity_id, collectable);
 }
@@ -98,7 +98,7 @@ void collectable_collected(struct collectable* collectable) {
 void collectable_destroy(struct collectable* collectable) {
     collision_scene_remove(&collectable->dynamic_object);
     render_scene_remove(&collectable->renderable);
-    renderable_single_axis_destroy(&collectable->renderable);
+    renderable_destroy(&collectable->renderable);
     hash_map_delete(&collectable_hash_map, collectable->dynamic_object.entity_id);
 }
 

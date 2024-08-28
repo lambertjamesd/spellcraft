@@ -1,5 +1,10 @@
+import sys
 
 from . import parser
+
+sys.path.append("..")
+
+import parse.struct_parse
     
 global_constant_values = {
     'true': 1,
@@ -19,6 +24,14 @@ def type_from_pytype(pytype):
 class StaticEvaluator():
     def __init__(self):
         self.literal_value = {}
+        self.enum_values: dict[str, int] = {}
+
+        with open('src/scene/scene_definition.h', 'r') as file:
+            file_content = file.read()
+            enums = parse.struct_parse.find_enums(file_content)
+
+            for value in enums.values():
+                value.populate_dict(self.enum_values)
 
     def _check_for_literals(self, expression):
         if isinstance(expression, parser.Integer):
@@ -74,6 +87,8 @@ class StaticEvaluator():
         if isinstance(expression, parser.Identifier):
             if expression.name.value in global_constant_values:
                 return global_constant_values[expression.name.value]
+            if expression.name.value in self.enum_values:
+                return self.enum_values[expression.name.value]
         
         return None
 

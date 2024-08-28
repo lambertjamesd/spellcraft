@@ -5,11 +5,10 @@ const call_pairings = [
     ['material_load', 'material_release'],
     ['material_cache_load', 'material_cache_release'],
     [
-        ['render_scene_add', 'render_scene_add_renderable', 'render_scene_add_renderable_single_axis'], 
+        ['render_scene_add', 'render_scene_add_renderable', 'render_scene_add_renderable'], 
         'render_scene_remove'
     ],
-    ['renderable_single_axis_init', 'renderable_single_axis_destroy'],
-    ['renderable_init', 'renderable_destroy'],
+    [['renderable_init', 'renderable_single_axis_init'], 'renderable_destroy'],
     ['update_add', 'update_remove'],
     ['collision_scene_add', 'collision_scene_remove'],
     ['animator_init', 'animator_destroy'],

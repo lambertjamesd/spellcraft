@@ -17,7 +17,7 @@ struct biter_animations {
 
 struct biter {
     struct TransformSingleAxis transform;
-    struct renderable_single_axis renderable;
+    struct renderable renderable;
     struct dynamic_object dynamic_object;
     struct dynamic_object vision;
     struct health health;

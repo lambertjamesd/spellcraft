@@ -64,6 +64,8 @@ struct ground_torch_definition {
 };
 
 enum npc_type {
+    NPC_TYPE_PLAYER,
+    NPC_TYPE_SUBJECT,
     NPC_TYPE_MENTOR,
 };
 

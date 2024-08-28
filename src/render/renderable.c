@@ -15,6 +15,8 @@ void renderable_init(struct renderable* renderable, struct Transform* transform,
     } else {
         renderable->attachments = NULL;
     }
+
+    renderable->type = RENDERABLE_TYPE_BASIC;
 }
 
 void renderable_destroy(struct renderable* renderable) {
@@ -23,7 +25,7 @@ void renderable_destroy(struct renderable* renderable) {
     renderable->mesh = NULL;
 }
 
-void renderable_single_axis_init(struct renderable_single_axis* renderable, struct TransformSingleAxis* transform, const char* mesh_filename) {
+void renderable_single_axis_init(struct renderable* renderable, struct TransformSingleAxis* transform, const char* mesh_filename) {
     renderable->transform = transform;
     renderable->mesh = tmesh_cache_load(mesh_filename);
     renderable->force_material = NULL;
@@ -35,10 +37,6 @@ void renderable_single_axis_init(struct renderable_single_axis* renderable, stru
     } else {
         renderable->attachments = NULL;
     }
-}
 
-void renderable_single_axis_destroy(struct renderable_single_axis* renderable) {
-    tmesh_cache_release(renderable->mesh);
-    free(renderable->attachments);
-    renderable->mesh = NULL;
+    renderable->type = RENDERABLE_TYPE_SINGLE_AXIS;
 }

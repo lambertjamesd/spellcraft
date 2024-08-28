@@ -9,7 +9,7 @@
 
 struct collectable {
     struct TransformSingleAxis transform;
-    struct renderable_single_axis renderable;
+    struct renderable renderable;
     struct dynamic_object dynamic_object;
     enum collectable_type collectable_type;
     uint16_t collectable_sub_type;
