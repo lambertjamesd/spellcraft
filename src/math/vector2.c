@@ -145,6 +145,12 @@ void vector2LookDir(struct Vector2* result, struct Vector3* direction) {
     vector2Normalize(result, result);
 }
 
+void vector2ToLookDir(struct Vector2* input, struct Vector3* out) {
+    out->x = -input->y;
+    out->y = 0.0f;
+    out->z = input->x;
+}
+
 void vector3RotatedSpeed(struct Vector2* rotation, struct Vector3* result, float speed) {
     result->x = -rotation->y * speed;
     result->y = 0.0f;
