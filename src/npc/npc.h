@@ -8,6 +8,7 @@
 #include "../collision/dynamic_object.h"
 #include "../entity/interactable.h"
 #include "../cutscene/cutscene.h"
+#include "../cutscene/cutscene_actor.h"
 
 struct npc_information {
     char* mesh;
@@ -16,19 +17,13 @@ struct npc_information {
     float half_height;
 };
 
-struct npc_animations {
-    struct animation_clip* idle;
-};
-
 struct npc {
     struct TransformSingleAxis transform;
     struct renderable renderable;
 
-    struct dynamic_object collider;
+    struct cutscene_actor cutscene_actor;
 
-    struct animation_set* animation_set;
-    struct npc_animations animations;
-    struct animator animator;
+    struct dynamic_object collider;
 
     struct interactable interactable;
 

@@ -11,6 +11,7 @@
 #include "../objects/collectable.h"
 #include "../menu/dialog_box.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../cutscene/cutscene_actor.h"
 
 void init_engine() {
     spell_assets_init();
@@ -24,4 +25,5 @@ void init_engine() {
     collectable_assets_load();
     dialog_box_init();
     cutscene_runner_init();
+    cutscene_actor_reset();
 }

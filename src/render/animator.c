@@ -18,10 +18,15 @@ void animator_init(struct animator* animator, int bone_count) {
     animator->current_time = 0.0f;
     animator->blend_lerp = 0.0f;
     int bone_state_size = ALIGN_UP(sizeof(struct armature_packed_transform) * bone_count + sizeof(uint16_t));
-    animator->bone_state[0] = malloc(bone_state_size);
-    animator->bone_state[1] = malloc(bone_state_size);
-    data_cache_hit_writeback(animator->bone_state[0], bone_state_size);
-    data_cache_hit_writeback(animator->bone_state[1], bone_state_size);
+    if (bone_count) {
+        animator->bone_state[0] = malloc(bone_state_size);
+        animator->bone_state[1] = malloc(bone_state_size);
+        data_cache_hit_writeback(animator->bone_state[0], bone_state_size);
+        data_cache_hit_writeback(animator->bone_state[1], bone_state_size);
+    } else {
+        animator->bone_state[0] = NULL;
+        animator->bone_state[1] = NULL;
+    }
     animator->bone_state_frames[0] = -1;
     animator->bone_state_frames[1] = -1;
     animator->next_frame_state_index = -1;

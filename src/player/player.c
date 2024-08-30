@@ -127,11 +127,17 @@ void player_update(struct player* player) {
     float playback_speed = 1.0f;
     struct animation_clip* next_clip = player_determine_animation(player, &playback_speed);
 
-    if (next_clip != player->animator.current_clip) {
-        animator_run_clip(&player->animator, next_clip, 0.0f, true);
+    if (player->cutscene_actor.state == ACTOR_STATE_IDLE) {
+        player->cutscene_actor.animate_speed = playback_speed;
+        if (next_clip != player->cutscene_actor.animator.current_clip) {
+            animator_run_clip(&player->cutscene_actor.animator, next_clip, 0.0f, true);
+        }
     }
 
-    animator_update(&player->animator, player->renderable.armature.pose, playback_speed * fixed_time_step);
+    if (cutscene_actor_update(&player->cutscene_actor)) {
+        return;
+    }
+
     player_get_move_basis(player->camera_transform, &forward, &right);
 
     joypad_inputs_t input = joypad_get_inputs(0);
@@ -211,6 +217,9 @@ void player_update(struct player* player) {
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
     entity_id entity_id = entity_id_new();
 
+    struct transform_mixed transform;
+    transform_mixed_init(&transform, &player->transform);
+
     transformInitIdentity(&player->transform);
     renderable_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.tmesh");
 
@@ -250,14 +259,18 @@ void player_init(struct player* player, struct player_definition* definition, st
         source->target = entity_id;
     }
 
-    player->animation_set = animation_cache_load("rom:/meshes/characters/apprentice.anim");
-    player->animations.attack = animation_set_find_clip(player->animation_set, "attack1");
-    player->animations.idle = animation_set_find_clip(player->animation_set, "idle");
-    player->animations.run = animation_set_find_clip(player->animation_set, "run");
+    cutscene_actor_init(
+        &player->cutscene_actor,
+        transform,
+        NPC_TYPE_PLAYER,
+        0,
+        &player->renderable.armature,
+        "rom:/meshes/characters/apprentice.anim"
+    );
 
-    animator_init(&player->animator, player->renderable.armature.bone_count);
-
-    animator_run_clip(&player->animator, player->animations.idle, 0.0f, true);
+    player->animations.attack = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1");
+    player->animations.idle = animation_set_find_clip(player->cutscene_actor.animation_set, "idle");
+    player->animations.run = animation_set_find_clip(player->cutscene_actor.animation_set, "run");
 
     player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
     player->assets.staffs[1] = NULL;
@@ -272,6 +285,5 @@ void player_destroy(struct player* player) {
     render_scene_remove(&player->renderable);
     update_remove(player);
     collision_scene_remove(&player->collision);
-    animation_cache_release(player->animation_set);
-    animator_destroy(&player->animator);
+    cutscene_actor_destroy(&player->cutscene_actor);
 }
