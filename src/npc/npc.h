@@ -15,6 +15,7 @@ struct npc_information {
     char* animations;
     struct dynamic_object_type collider;
     float half_height;
+    float eye_level;
 };
 
 struct npc {

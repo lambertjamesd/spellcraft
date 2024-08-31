@@ -26,6 +26,7 @@ void cutscene_actor_init(
     actor->state = ACTOR_STATE_IDLE;
     actor->id.npc_type = npc_type;
     actor->id.index = index;
+    actor->eye_level = 0.0f;
 
     hash_map_set(&cutscene_actor_hash_map, actor->id.unique_id, actor);
 
@@ -44,24 +45,30 @@ void cutscene_actor_reset() {
 }
 
 struct cutscene_actor* cutscene_actor_find(enum npc_type npc_type, int index) {
-    union cutscene_actor_id id;
+    cutscene_actor_id_t id;
     id.npc_type = npc_type;
     id.index = index;
     return hash_map_get(&cutscene_actor_hash_map, id.unique_id);
 }
 
-void cutscene_actor_look_at(struct cutscene_actor* actor, struct Vector3* at) {
+void cutscene_actor_look_at(struct cutscene_actor* actor, struct Vector3* at, float speed) {
     actor->target = *at;
     actor->state = ACTOR_STATE_LOOKING;
+    actor->move_speed = speed;
 }
 
-void cutscene_actor_move_to(struct cutscene_actor* actor, struct Vector3* at) {
+void cutscene_actor_move_to(struct cutscene_actor* actor, struct Vector3* at, float speed) {
     actor->target = *at;
     actor->state = ACTOR_STATE_LOOKING_MOVING;
+    actor->move_speed = speed;
 }
 
 void cutscene_actor_idle(struct cutscene_actor* actor) {
     actor->state = ACTOR_STATE_IDLE;
+}
+
+bool cutscene_actor_is_moving(struct cutscene_actor* actor) {
+    return actor->state == ACTOR_STATE_LOOKING || actor->state == ACTOR_STATE_LOOKING_MOVING || actor->state == ACTOR_STATE_MOVING;
 }
 
 bool cutscene_actor_update(struct cutscene_actor* actor) {

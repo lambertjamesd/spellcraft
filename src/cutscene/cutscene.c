@@ -70,26 +70,36 @@ struct cutscene* cutscene_load(char* filename) {
         step->type = step_type;
 
         switch (step_type) {
-            case CUTSCENE_STEP_TYPE_DIALOG:
+            case CUTSCENE_STEP_DIALOG:
                 cutscene_load_template_string(&step->data.dialog.message, file);
                 break;
-            case CUTSCENE_STEP_TYPE_PAUSE:
+            case CUTSCENE_STEP_PAUSE:
                 fread(&step->data.pause, 1, 2, file);
                 step->data.pause.layers = UPDATE_LAYER_WORLD;
                 break;
-            case CUTSCENE_STEP_TYPE_EXPRESSION:
+            case CUTSCENE_STEP_EXPRESSION:
                 expression_load(&step->data.expression.expression, file);
                 break;
-            case CUTSCENE_STEP_TYPE_JUMP_IF_NOT:
-            case CUTSCENE_STEP_TYPE_JUMP: {
+            case CUTSCENE_STEP_JUMP_IF_NOT:
+            case CUTSCENE_STEP_JUMP: {
                 int16_t offset;
                 fread(&offset, 2, 1, file);
                 step->data.jump.offset = offset;
                 break;
             }
-            case CUTSCENE_STEP_TYPE_SET_LOCAL:
-            case CUTSCENE_STEP_TYPE_SET_GLOBAL:
+            case CUTSCENE_STEP_SET_LOCAL:
+            case CUTSCENE_STEP_SET_GLOBAL:
                 fread(&step->data.store_variable, 4, 1, file);
+                break;
+            case CUTSCENE_STEP_LOOK_AT_NPC:
+            case CUTSCENE_STEP_MOVE_TO_NPC:
+                fread(&step->data.interact_with_npc.subject, 4, 1, file);
+                fread(&step->data.interact_with_npc.target, 4, 1, file);
+                fread(&step->data.interact_with_npc.speed, 4, 1, file);
+                break;
+            case CUTSCENE_STEP_IDLE_NPC:
+                fread(&step->data.interact_with_npc.subject, 4, 1, file);
+                step->data.interact_with_npc.target.unique_id = 0;
                 break;
         }
     }
@@ -115,10 +125,10 @@ void cutscene_destroy(struct cutscene* cutscene) {
         struct cutscene_step* step = &cutscene->steps[i];
 
         switch (step->type) {
-            case CUTSCENE_STEP_TYPE_DIALOG:
+            case CUTSCENE_STEP_DIALOG:
                 cutscene_destroy_template_string(&step->data.dialog.message);
                 break;
-            case CUTSCENE_STEP_TYPE_EXPRESSION:
+            case CUTSCENE_STEP_EXPRESSION:
                 expression_destroy(&step->data.expression.expression);
                 break;
             default:
@@ -160,7 +170,7 @@ void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause,
     struct cutscene_step* step = cutscene_builder_next_step(builder);
 
     *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_TYPE_PAUSE,
+        .type = CUTSCENE_STEP_PAUSE,
         .data = {
             .pause = {
                 .should_pause = should_pause,
@@ -179,7 +189,7 @@ void cutscene_builder_dialog(struct cutscene_builder* builder, char* message) {
     strcpy(message_copy, message);
 
     *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_TYPE_DIALOG,
+        .type = CUTSCENE_STEP_DIALOG,
         .data = {
             .dialog = {
                 .message = {
@@ -195,7 +205,7 @@ void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
     *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_TYPE_SHOW_ITEM,
+        .type = CUTSCENE_STEP_SHOW_ITEM,
         .data = {
             .show_item = {
                 .item = item,
@@ -209,7 +219,7 @@ void cutscene_builder_delay(struct cutscene_builder* builder, float delay) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
     *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_TYPE_DELAY,
+        .type = CUTSCENE_STEP_DELAY,
         .data = {
             .delay = {
                 .duration = delay,

@@ -56,13 +56,13 @@ void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback fi
 void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cutscene_step* step) {
     switch (step->type)
     {
-        case CUTSCENE_STEP_TYPE_DIALOG:
+        case CUTSCENE_STEP_DIALOG:
             cutscene_runner.active_step_data.dialog.has_shown = false;
             break;
-        case CUTSCENE_STEP_TYPE_SHOW_ITEM:
+        case CUTSCENE_STEP_SHOW_ITEM:
             show_item_start(&cutscene_runner.show_item, &step->data);
             break;
-        case CUTSCENE_STEP_TYPE_PAUSE:
+        case CUTSCENE_STEP_PAUSE:
             if (step->data.pause.should_pause) {
                 if (step->data.pause.should_change_game_mode) {
                     current_game_mode = GAME_MODE_TRANSITION_TO_MENU;
@@ -75,14 +75,14 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
                 update_unpause_layers(step->data.pause.layers);
             }
             break;
-        case CUTSCENE_STEP_TYPE_EXPRESSION:
+        case CUTSCENE_STEP_EXPRESSION:
             expression_evaluate(&cutscene->context, &step->data.expression.expression);
             break;
-        case CUTSCENE_STEP_TYPE_JUMP_IF_NOT:
-        case CUTSCENE_STEP_TYPE_JUMP:
+        case CUTSCENE_STEP_JUMP_IF_NOT:
+        case CUTSCENE_STEP_JUMP:
             // logic is done in update step
             break;
-        case CUTSCENE_STEP_TYPE_SET_LOCAL: {
+        case CUTSCENE_STEP_SET_LOCAL: {
             struct evaluation_context* context = &cutscene->context;
 
             evaluation_context_save(
@@ -93,7 +93,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             );
             break;
         }
-        case CUTSCENE_STEP_TYPE_SET_GLOBAL: {
+        case CUTSCENE_STEP_SET_GLOBAL: {
             struct evaluation_context* context = &cutscene->context;
 
             evaluation_context_save(
@@ -104,9 +104,46 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             );
             break;
         }
-        case CUTSCENE_STEP_TYPE_DELAY: {
+        case CUTSCENE_STEP_DELAY: {
             cutscene_runner.active_step_data.delay.time = step->data.delay.duration;
             break;   
+        }
+        case CUTSCENE_STEP_LOOK_AT_NPC:
+        case CUTSCENE_STEP_MOVE_TO_NPC: {
+            cutscene_actor_id_t subject_id = step->data.interact_with_npc.subject;
+            struct cutscene_actor* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
+            if (!subject) {
+                break;
+            }
+
+            cutscene_actor_id_t target_id = step->data.interact_with_npc.target;
+            struct cutscene_actor* target = cutscene_actor_find(target_id.npc_type, target_id.index);
+            if (!target) {
+                break;
+            }
+
+            if (step->type == CUTSCENE_STEP_LOOK_AT_NPC) {
+                cutscene_actor_look_at(
+                    subject,
+                    transform_mixed_get_position(&target->transform),
+                    step->data.interact_with_npc.speed
+                );
+            } else {
+                cutscene_actor_move_to(
+                    subject,
+                    transform_mixed_get_position(&target->transform),
+                    step->data.interact_with_npc.speed
+                );
+            }
+            break;
+        }
+        case CUTSCENE_STEP_IDLE_NPC: {
+            cutscene_actor_id_t subject_id = step->data.interact_with_npc.subject;
+            struct cutscene_actor* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
+            if (!subject) {
+                break;
+            }
+            cutscene_actor_idle(subject);
         }
     }
 }
@@ -114,7 +151,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
 bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct cutscene_step* step) {
     switch (step->type)
     {
-        case CUTSCENE_STEP_TYPE_DIALOG:
+        case CUTSCENE_STEP_DIALOG:
             if (!cutscene_runner.active_step_data.dialog.has_shown && !dialog_box_is_active()) {
                 int args[step->data.dialog.message.nargs];
                 evaluation_context_popn(&cutscene->context, args, step->data.dialog.message.nargs);
@@ -124,19 +161,26 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
                 return !dialog_box_is_active();
             }
             return false;
-        case CUTSCENE_STEP_TYPE_SHOW_ITEM:
+        case CUTSCENE_STEP_SHOW_ITEM:
             return show_item_update(&cutscene_runner.show_item, &step->data);
-        case CUTSCENE_STEP_TYPE_JUMP_IF_NOT:
+        case CUTSCENE_STEP_JUMP_IF_NOT:
             if (!evaluation_context_pop(&cutscene->context)) {
                 cutscene->current_instruction += step->data.jump.offset;
             }
             return true;
-        case CUTSCENE_STEP_TYPE_JUMP:
+        case CUTSCENE_STEP_JUMP:
             cutscene->current_instruction += step->data.jump.offset;
             return true;
-        case CUTSCENE_STEP_TYPE_DELAY:
+        case CUTSCENE_STEP_DELAY:
             cutscene_runner.active_step_data.delay.time -= fixed_time_step;
             return cutscene_runner.active_step_data.delay.time <= 0.0f;
+
+        case CUTSCENE_STEP_LOOK_AT_NPC:
+        case CUTSCENE_STEP_MOVE_TO_NPC: {
+            cutscene_actor_id_t subject_id = step->data.interact_with_npc.subject;
+            struct cutscene_actor* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
+            return !subject || !cutscene_actor_is_moving(subject); 
+        }
         default:
             return true;
     }

@@ -21,6 +21,7 @@ struct npc_information npc_information[] = {
             },
         },
         .half_height = 1.0f,
+        .eye_level = 1.81147f,
     },
 };
 
@@ -49,7 +50,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
 
     render_scene_add_renderable(&npc->renderable, 2.0f);
 
-    update_add(npc, npc_update, 0, UPDATE_LAYER_WORLD);
+    update_add(npc, npc_update, 0, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     struct transform_mixed transform;
     transform_mixed_init_sa(&transform, &npc->transform);
@@ -62,6 +63,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
         &npc->renderable.armature, 
         information->animations
     );
+    npc->cutscene_actor.eye_level = information->eye_level;
 
     dynamic_object_init(
         entity_id,

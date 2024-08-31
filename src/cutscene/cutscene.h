@@ -4,18 +4,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../scene/scene_definition.h"
+#include "cutscene_actor.h"
 #include "expression.h"
 
 enum cutscene_step_type {
-    CUTSCENE_STEP_TYPE_DIALOG,
-    CUTSCENE_STEP_TYPE_SHOW_ITEM,
-    CUTSCENE_STEP_TYPE_PAUSE,
-    CUTSCENE_STEP_TYPE_EXPRESSION,
-    CUTSCENE_STEP_TYPE_JUMP_IF_NOT,
-    CUTSCENE_STEP_TYPE_JUMP,
-    CUTSCENE_STEP_TYPE_SET_LOCAL,
-    CUTSCENE_STEP_TYPE_SET_GLOBAL,
-    CUTSCENE_STEP_TYPE_DELAY,
+    CUTSCENE_STEP_DIALOG,
+    CUTSCENE_STEP_SHOW_ITEM,
+    CUTSCENE_STEP_PAUSE,
+    CUTSCENE_STEP_EXPRESSION,
+    CUTSCENE_STEP_JUMP_IF_NOT,
+    CUTSCENE_STEP_JUMP,
+    CUTSCENE_STEP_SET_LOCAL,
+    CUTSCENE_STEP_SET_GLOBAL,
+    CUTSCENE_STEP_DELAY,
+    CUTSCENE_STEP_LOOK_AT_NPC,
+    CUTSCENE_STEP_MOVE_TO_NPC,
+    CUTSCENE_STEP_IDLE_NPC,
 };
 
 struct cutscene_step;
@@ -62,6 +66,11 @@ union cutscene_step_data {
     struct {
         float duration;
     } delay;
+    struct {
+        union cutscene_actor_id subject;
+        union cutscene_actor_id target;
+        float speed;
+    } interact_with_npc;
 };
 
 struct cutscene_step {

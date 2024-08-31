@@ -134,7 +134,7 @@ void player_update(struct player* player) {
         }
     }
 
-    if (cutscene_actor_update(&player->cutscene_actor)) {
+    if (cutscene_actor_update(&player->cutscene_actor) || !update_has_layer(UPDATE_LAYER_WORLD)) {
         return;
     }
 
@@ -228,7 +228,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->transform.position = definition->location;
 
     render_scene_add_renderable(&player->renderable, 2.0f);
-    update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD);
+    update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     player->look_direction = definition->rotation;
 
@@ -267,6 +267,8 @@ void player_init(struct player* player, struct player_definition* definition, st
         &player->renderable.armature,
         "rom:/meshes/characters/apprentice.anim"
     );
+
+    player->cutscene_actor.eye_level = 1.26273f;
 
     player->animations.attack = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1");
     player->animations.idle = animation_set_find_clip(player->cutscene_actor.animation_set, "idle");

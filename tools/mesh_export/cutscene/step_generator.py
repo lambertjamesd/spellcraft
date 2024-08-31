@@ -7,14 +7,18 @@ from . import expresion_generator
 from . import variable_layout
 from . import static_evaluator
 
-CUTSCENE_STEP_TYPE_DIALOG = 0
-CUTSCENE_STEP_TYPE_SHOW_ITEM = 1
-CUTSCENE_STEP_TYPE_PAUSE = 2
-CUTSCENE_STEP_TYPE_EXPRESSION = 3
-CUTSCENE_STEP_TYPE_JUMP_IF_NOT = 4
-CUTSCENE_STEP_TYPE_JUMP = 5
-CUTSCENE_STEP_TYPE_SET_LOCAL = 6
-CUTSCENE_STEP_TYPE_SET_GLOBAL = 7
+CUTSCENE_STEP_DIALOG = 0
+CUTSCENE_STEP_SHOW_ITEM = 1
+CUTSCENE_STEP_PAUSE = 2
+CUTSCENE_STEP_EXPRESSION = 3
+CUTSCENE_STEP_JUMP_IF_NOT = 4
+CUTSCENE_STEP_JUMP = 5
+CUTSCENE_STEP_SET_LOCAL = 6
+CUTSCENE_STEP_SET_GLOBAL = 7
+CUTSCENE_STEP_DELAY = 8
+CUTSCENE_STEP_LOOK_AT_NPC = 9
+CUTSCENE_STEP_MOVE_TO_NPC = 10
+CUTSCENE_STEP_IDLE_NPC = 11
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -24,11 +28,24 @@ class ParameterType():
 _step_args = {
     "say": [ParameterType("tstr", True)],
     "pause": [ParameterType("bool", True), ParameterType("bool", True)],
+    "delay": [ParameterType("float", True)],
+    "look_at_npc": [ParameterType("int", True), ParameterType("int", True), ParameterType("float", True)],
+    "move_to_npc": [ParameterType("int", True), ParameterType("int", True), ParameterType("float", True)],
+    "idle_npc": [ParameterType("int", True)],
 }
 
 _step_ids = {
-    "say": CUTSCENE_STEP_TYPE_DIALOG,
-    "pause": CUTSCENE_STEP_TYPE_PAUSE,
+    "say": CUTSCENE_STEP_DIALOG,
+    "pause": CUTSCENE_STEP_PAUSE,
+    "delay": CUTSCENE_STEP_DELAY,
+    "look_at_npc": CUTSCENE_STEP_LOOK_AT_NPC,
+    "move_to_npc": CUTSCENE_STEP_MOVE_TO_NPC,
+    "idle_npc": CUTSCENE_STEP_IDLE_NPC,
+}
+
+_steps_that_need_idle = {
+    "look_at_npc",
+    "move_to_npc",
 }
 
 def _encode_string(string: str) -> bytes:
@@ -136,7 +153,7 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
             pre_expression = expression
                 
     if pre_expression:
-        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_TYPE_EXPRESSION, pre_expression.to_bytes()))
+        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_EXPRESSION, pre_expression.to_bytes()))
 
 
     data = io.BytesIO()
@@ -209,9 +226,12 @@ def _validate_step(step, errors: list[str], context: variable_layout.VariableCon
                     errors.append(parameter.at.format_message('expected string for parameter'))
                 continue
             
-            if arg_type.name == 'bool':
+            if arg_type.name == 'bool' or arg_type.name == 'int':
                 if parameter_type != 'int':
                     errors.append(parameter.at.format_message(f'expected int got {parameter_type}'))
+            elif arg_type.name == 'float':
+                if parameter_type != 'float' and parameter_type != 'int':
+                    errors.append(parameter.at.format_message(f'expected float got {parameter_type}'))
             else:
                 raise Exception(f'unknown type {arg_type.name}')
             
@@ -261,9 +281,9 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         expression = expresion_generator.generate_script(step.condition, context)
         if not expression:
             raise Exception(f"Could not generate expression {step.condition}")
-        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_TYPE_EXPRESSION, expression.to_bytes()))
+        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_EXPRESSION, expression.to_bytes()))
 
-        if_step = JumpCutsceneStep(CUTSCENE_STEP_TYPE_JUMP_IF_NOT)
+        if_step = JumpCutsceneStep(CUTSCENE_STEP_JUMP_IF_NOT)
         cutscene.steps.append(if_step)
         size_before = len(cutscene.steps)
         
@@ -273,7 +293,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         if step.else_block:
             # setup the jump that skips over the else block
             # after the end of the if block
-            skip_else = JumpCutsceneStep(CUTSCENE_STEP_TYPE_JUMP)
+            skip_else = JumpCutsceneStep(CUTSCENE_STEP_JUMP)
             cutscene.steps.append(skip_else)
 
             # if there is an else block, skipping the if content should 
@@ -295,9 +315,9 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         expression = expresion_generator.generate_script(step.value, context)
         if not expression:
             raise Exception(f"Could not generate expression {step.value}")
-        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_TYPE_EXPRESSION, expression.to_bytes()))
+        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_EXPRESSION, expression.to_bytes()))
 
-        step_type = CUTSCENE_STEP_TYPE_SET_LOCAL if context.is_local(step.name.value) else CUTSCENE_STEP_TYPE_SET_GLOBAL
+        step_type = CUTSCENE_STEP_SET_LOCAL if context.is_local(step.name.value) else CUTSCENE_STEP_SET_GLOBAL
         var_type = context.get_variable_type(step.name.value)
         bit_offset = context.get_variable_offset(step.name.value)
 
@@ -306,6 +326,22 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
             expresion_generator.generate_variable_address(var_type, bit_offset)
         ))
 
+def _idle_find_effected_actors(statements: list, actors: set):
+    for statement in statements:
+        if isinstance(statement, parser.IfStatement):
+            _idle_find_effected_actors(statement.statements, actors)
+
+        if isinstance(statement, parser.CutsceneStep) and statement.name.value in _steps_that_need_idle:
+            actors.add(static_evaluator.StaticEvaluator().check_for_literals(statement.parameters[0]))
+
+def _idle_effected_actors(cutscene: Cutscene, statements: list):
+    actors = set()
+
+    _idle_find_effected_actors(statements, actors)
+
+    for actor in actors:
+        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, struct.pack('>i', actor)))
+
 def generate_steps(file, statements: list, context: variable_layout.VariableContext):
     cutscene = Cutscene()
 
@@ -313,6 +349,8 @@ def generate_steps(file, statements: list, context: variable_layout.VariableCont
         _generate_step(cutscene, statement, context)
 
     cutscene.add_label('$exit')
+
+    _idle_effected_actors(cutscene, statements)
 
     errors = cutscene.apply_jump_labels()
 

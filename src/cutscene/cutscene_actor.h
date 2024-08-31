@@ -23,12 +23,14 @@ struct cutscene_actor_animations {
 
 union cutscene_actor_id {
     struct {
-        uint16_t npc_type;
         // used to tell apart two npcs of the same type
         uint16_t index;
+        uint16_t npc_type;
     };
     uint32_t unique_id;
 };
+
+typedef union cutscene_actor_id cutscene_actor_id_t; 
 
 struct cutscene_actor {
     struct transform_mixed transform;
@@ -40,7 +42,8 @@ struct cutscene_actor {
     float move_speed;
     float animate_speed;
     enum actor_state state;
-    union cutscene_actor_id id;
+    cutscene_actor_id_t id;
+    float eye_level;
 };
 
 void cutscene_actor_init(struct cutscene_actor* actor, struct transform_mixed transform, enum npc_type npc_type, int index, struct armature* armature, char* animations_path);
@@ -49,9 +52,11 @@ void cutscene_actor_destroy(struct cutscene_actor* actor);
 void cutscene_actor_reset();
 struct cutscene_actor* cutscene_actor_find(enum npc_type npc_type, int index);
 
-void cutscene_actor_look_at(struct cutscene_actor* actor, struct Vector3* at);
-void cutscene_actor_move_to(struct cutscene_actor* actor, struct Vector3* at);
+void cutscene_actor_look_at(struct cutscene_actor* actor, struct Vector3* at, float speed);
+void cutscene_actor_move_to(struct cutscene_actor* actor, struct Vector3* at, float speed);
 void cutscene_actor_idle(struct cutscene_actor* actor);
+
+bool cutscene_actor_is_moving(struct cutscene_actor* actor);
 
 // return true if actor cutscene is active
 bool cutscene_actor_update(struct cutscene_actor* actor);

@@ -208,11 +208,6 @@ type_mapping = {
     'float': 'float',
 }
 
-global_constant_types = {
-    'true': 'int',
-    'false': 'int',
-}
-
 mirrored_operators = {
     '<' : '>',
     '<=' : '>=',
@@ -291,8 +286,12 @@ class TypeChecker():
             return 'error'
         
         if isinstance(expression, parser.Identifier):
-            if expression.name.value in global_constant_types:
-                return global_constant_types[expression.name.value]
+            if expression.name.value in static_evaluator.global_constant_values:
+                constant = static_evaluator.global_constant_values[expression.name.value]
+                if isinstance(constant, int):
+                    return 'int'
+                else:
+                    raise Exception('could not determine type of constant ' + expression.name.value + ' got ' + type(constant))
 
             type_str: str | None = self._context.get_variable_type(expression.name.value)
 

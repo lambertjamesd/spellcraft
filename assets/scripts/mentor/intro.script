@@ -1,7 +1,8 @@
 
 global has_staff_default: bool;
 
-pause true, true;
+pause true, false;
+look_at_npc NPC_TYPE_MENTOR, NPC_TYPE_PLAYER, 1.5;
 
 if has_staff_default then
     say "Good, you have found your fathers staff";
@@ -13,4 +14,4 @@ else
     ";
 end
 
-pause false, true;
+pause false, false;
