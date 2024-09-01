@@ -91,8 +91,8 @@ struct cutscene* cutscene_load(char* filename) {
             case CUTSCENE_STEP_SET_GLOBAL:
                 fread(&step->data.store_variable, 4, 1, file);
                 break;
-            case CUTSCENE_STEP_LOOK_AT_NPC:
-            case CUTSCENE_STEP_MOVE_TO_NPC:
+            case CUTSCENE_STEP_INTERACT_WITH_NPC:
+                fread(&step->data.interact_with_npc.type, 4, 1, file);
                 fread(&step->data.interact_with_npc.subject, 4, 1, file);
                 fread(&step->data.interact_with_npc.target, 4, 1, file);
                 fread(&step->data.interact_with_npc.speed, 4, 1, file);

@@ -108,8 +108,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             cutscene_runner.active_step_data.delay.time = step->data.delay.duration;
             break;   
         }
-        case CUTSCENE_STEP_LOOK_AT_NPC:
-        case CUTSCENE_STEP_MOVE_TO_NPC: {
+        case CUTSCENE_STEP_INTERACT_WITH_NPC: {
             cutscene_actor_id_t subject_id = step->data.interact_with_npc.subject;
             struct cutscene_actor* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
             if (!subject) {
@@ -122,18 +121,25 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
                 break;
             }
 
-            if (step->type == CUTSCENE_STEP_LOOK_AT_NPC) {
-                cutscene_actor_look_at(
-                    subject,
-                    transform_mixed_get_position(&target->transform),
-                    step->data.interact_with_npc.speed
-                );
-            } else {
-                cutscene_actor_move_to(
-                    subject,
-                    transform_mixed_get_position(&target->transform),
-                    step->data.interact_with_npc.speed
-                );
+            switch (step->data.interact_with_npc.type) {
+                case INTERACTION_LOOK_AT_AND_WAIT:
+                case INTERACTION_LOOK_AT:
+                    cutscene_actor_look_at(
+                        subject,
+                        transform_mixed_get_position(&target->transform),
+                        step->data.interact_with_npc.speed
+                    );
+                    break;
+                case INTERACTION_MOVE_TO_AND_WAIT:
+                case INTERACTION_MOVE_TO:
+                    cutscene_actor_move_to(
+                        subject,
+                        transform_mixed_get_position(&target->transform),
+                        step->data.interact_with_npc.speed
+                    );
+                    break;
+                default:
+                    break;
             }
             break;
         }
@@ -175,11 +181,15 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
             cutscene_runner.active_step_data.delay.time -= fixed_time_step;
             return cutscene_runner.active_step_data.delay.time <= 0.0f;
 
-        case CUTSCENE_STEP_LOOK_AT_NPC:
-        case CUTSCENE_STEP_MOVE_TO_NPC: {
-            cutscene_actor_id_t subject_id = step->data.interact_with_npc.subject;
-            struct cutscene_actor* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
-            return !subject || !cutscene_actor_is_moving(subject); 
+        case CUTSCENE_STEP_INTERACT_WITH_NPC: {
+            if (step->data.interact_with_npc.type == INTERACTION_LOOK_AT_AND_WAIT ||
+                step->data.interact_with_npc.type == INTERACTION_MOVE_TO_AND_WAIT) {
+                cutscene_actor_id_t subject_id = step->data.interact_with_npc.subject;
+                struct cutscene_actor* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
+                return !subject || !cutscene_actor_is_moving(subject); 
+            }
+
+            return true;
         }
         default:
             return true;

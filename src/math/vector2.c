@@ -141,12 +141,12 @@ void vector2RandomUnitCircle(struct Vector2* result) {
 
 void vector2LookDir(struct Vector2* result, struct Vector3* direction) {
     result->x = direction->z;
-    result->y = -direction->x;
+    result->y = direction->x;
     vector2Normalize(result, result);
 }
 
 void vector2ToLookDir(struct Vector2* input, struct Vector3* out) {
-    out->x = -input->y;
+    out->x = input->y;
     out->y = 0.0f;
     out->z = input->x;
 }

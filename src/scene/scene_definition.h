@@ -70,6 +70,15 @@ enum npc_type {
     NPC_TYPE_MENTOR,
 };
 
+enum interaction_type {
+    INTERACTION_NONE,
+    INTERACTION_LOOK_AT_AND_WAIT,
+    INTERACTION_MOVE_TO_AND_WAIT,
+    INTERACTION_LOOK_AT,
+    INTERACTION_MOVE_TO,
+    INTERACTION_FINISHED,
+};
+
 struct npc_definition {
     struct Vector3 position;
     struct Vector2 rotation;

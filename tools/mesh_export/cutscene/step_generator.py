@@ -16,9 +16,8 @@ CUTSCENE_STEP_JUMP = 5
 CUTSCENE_STEP_SET_LOCAL = 6
 CUTSCENE_STEP_SET_GLOBAL = 7
 CUTSCENE_STEP_DELAY = 8
-CUTSCENE_STEP_LOOK_AT_NPC = 9
-CUTSCENE_STEP_MOVE_TO_NPC = 10
-CUTSCENE_STEP_IDLE_NPC = 11
+CUTSCENE_STEP_INTERACT_WITH_NPC = 9
+CUTSCENE_STEP_IDLE_NPC = 10
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -29,8 +28,7 @@ _step_args = {
     "say": [ParameterType("tstr", True)],
     "pause": [ParameterType("bool", True), ParameterType("bool", True)],
     "delay": [ParameterType("float", True)],
-    "look_at_npc": [ParameterType("int", True), ParameterType("int", True), ParameterType("float", True)],
-    "move_to_npc": [ParameterType("int", True), ParameterType("int", True), ParameterType("float", True)],
+    "interact_with_npc": [ParameterType("int", True), ParameterType("int", True), ParameterType("int", True), ParameterType("float", True)],
     "idle_npc": [ParameterType("int", True)],
 }
 
@@ -38,14 +36,12 @@ _step_ids = {
     "say": CUTSCENE_STEP_DIALOG,
     "pause": CUTSCENE_STEP_PAUSE,
     "delay": CUTSCENE_STEP_DELAY,
-    "look_at_npc": CUTSCENE_STEP_LOOK_AT_NPC,
-    "move_to_npc": CUTSCENE_STEP_MOVE_TO_NPC,
+    "interact_with_npc": CUTSCENE_STEP_INTERACT_WITH_NPC,
     "idle_npc": CUTSCENE_STEP_IDLE_NPC,
 }
 
 _steps_that_need_idle = {
-    "look_at_npc",
-    "move_to_npc",
+    "interact_with_npc",
 }
 
 def _encode_string(string: str) -> bytes:
@@ -332,7 +328,7 @@ def _idle_find_effected_actors(statements: list, actors: set):
             _idle_find_effected_actors(statement.statements, actors)
 
         if isinstance(statement, parser.CutsceneStep) and statement.name.value in _steps_that_need_idle:
-            actors.add(static_evaluator.StaticEvaluator().check_for_literals(statement.parameters[0]))
+            actors.add(static_evaluator.StaticEvaluator().check_for_literals(statement.parameters[1]))
 
 def _idle_effected_actors(cutscene: Cutscene, statements: list):
     actors = set()

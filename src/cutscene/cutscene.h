@@ -17,8 +17,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_SET_LOCAL,
     CUTSCENE_STEP_SET_GLOBAL,
     CUTSCENE_STEP_DELAY,
-    CUTSCENE_STEP_LOOK_AT_NPC,
-    CUTSCENE_STEP_MOVE_TO_NPC,
+    CUTSCENE_STEP_INTERACT_WITH_NPC,
     CUTSCENE_STEP_IDLE_NPC,
 };
 
@@ -67,6 +66,7 @@ union cutscene_step_data {
         float duration;
     } delay;
     struct {
+        enum interaction_type type;
         union cutscene_actor_id subject;
         union cutscene_actor_id target;
         float speed;
