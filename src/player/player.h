@@ -1,7 +1,7 @@
 #ifndef __SCENE_PLAYER_H__
 #define __SCENE_PLAYER_H__
 
-#include "../math/transform.h"
+#include "../math/transform_single_axis.h"
 #include "../math/vector2.h"
 #include "../render/render_batch.h"
 #include "../render/renderable.h"
@@ -33,10 +33,9 @@ struct inventory_assets {
 };
 
 struct player {
-    struct Transform transform;
+    struct TransformSingleAxis transform;
     struct renderable renderable;
     struct Transform* camera_transform;
-    struct Vector2 look_direction;
     struct dynamic_object collision;
 
     struct spell_data_source player_spell_sources[PLAYER_CAST_SOURCE_COUNT];

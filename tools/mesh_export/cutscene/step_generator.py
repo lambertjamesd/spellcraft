@@ -28,7 +28,7 @@ _step_args = {
     "say": [ParameterType("tstr", True)],
     "pause": [ParameterType("bool", True), ParameterType("bool", True)],
     "delay": [ParameterType("float", True)],
-    "interact_with_npc": [ParameterType("int", True), ParameterType("int", True), ParameterType("int", True), ParameterType("float", True)],
+    "interact_with_npc": [ParameterType("int", True), ParameterType("int", True), ParameterType("int", True)],
     "idle_npc": [ParameterType("int", True)],
 }
 

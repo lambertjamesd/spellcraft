@@ -10,6 +10,7 @@ struct TransformSingleAxis {
     struct Vector2 rotation;
 };
 
+void transformSaInitIdentity(struct TransformSingleAxis* transform);
 void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix);
 
 #endif

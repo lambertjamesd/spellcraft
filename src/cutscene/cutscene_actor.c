@@ -8,6 +8,7 @@ static struct hash_map cutscene_actor_hash_map;
 
 void cutscene_actor_init(
     struct cutscene_actor* actor, 
+    struct cutscene_actor_def* def,
     struct transform_mixed transform, 
     enum npc_type npc_type, 
     int index, 
@@ -21,12 +22,11 @@ void cutscene_actor_init(
     animator_init(&actor->animator, armature ? armature->bone_count : 0);
     actor->armature = armature;
     actor->target = gZeroVec;
-    actor->move_speed = 0.0f;
     actor->animate_speed = 1.0f;
     actor->state = ACTOR_STATE_IDLE;
     actor->id.npc_type = npc_type;
     actor->id.index = index;
-    actor->eye_level = 0.0f;
+    actor->def = def;
 
     hash_map_set(&cutscene_actor_hash_map, actor->id.unique_id, actor);
 
@@ -51,16 +51,14 @@ struct cutscene_actor* cutscene_actor_find(enum npc_type npc_type, int index) {
     return hash_map_get(&cutscene_actor_hash_map, id.unique_id);
 }
 
-void cutscene_actor_look_at(struct cutscene_actor* actor, struct Vector3* at, float speed) {
+void cutscene_actor_look_at(struct cutscene_actor* actor, struct Vector3* at) {
     actor->target = *at;
     actor->state = ACTOR_STATE_LOOKING;
-    actor->move_speed = speed;
 }
 
-void cutscene_actor_move_to(struct cutscene_actor* actor, struct Vector3* at, float speed) {
+void cutscene_actor_move_to(struct cutscene_actor* actor, struct Vector3* at) {
     actor->target = *at;
     actor->state = ACTOR_STATE_LOOKING_MOVING;
-    actor->move_speed = speed;
 }
 
 void cutscene_actor_idle(struct cutscene_actor* actor) {
@@ -84,7 +82,7 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
         if (vector3MoveTowards(
             pos, 
             &actor->target,
-            actor->move_speed * fixed_time_step,
+            actor->def->move_speed * fixed_time_step,
             pos
         )) {
             actor->state = ACTOR_STATE_FINISHED;
@@ -95,7 +93,7 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
         struct Vector3 offset;
         vector3Sub(&actor->target, pos, &offset);
 
-        if (transform_rotate_towards(&actor->transform, &offset, actor->move_speed * fixed_time_step)) {
+        if (transform_rotate_towards(&actor->transform, &offset, actor->def->rotate_speed * fixed_time_step)) {
             actor->state = actor->state == ACTOR_STATE_LOOKING_MOVING ? ACTOR_STATE_MOVING : ACTOR_STATE_FINISHED;
         }
     }

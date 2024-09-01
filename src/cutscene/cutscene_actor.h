@@ -32,6 +32,12 @@ union cutscene_actor_id {
 
 typedef union cutscene_actor_id cutscene_actor_id_t; 
 
+struct cutscene_actor_def {
+    float eye_level;
+    float move_speed;
+    float rotate_speed;
+};
+
 struct cutscene_actor {
     struct transform_mixed transform;
     struct animation_set* animation_set;
@@ -39,21 +45,20 @@ struct cutscene_actor {
     struct animator animator;
     struct armature* armature;
     struct Vector3 target;
-    float move_speed;
     float animate_speed;
     enum actor_state state;
     cutscene_actor_id_t id;
-    float eye_level;
+    struct cutscene_actor_def* def;
 };
 
-void cutscene_actor_init(struct cutscene_actor* actor, struct transform_mixed transform, enum npc_type npc_type, int index, struct armature* armature, char* animations_path);
+void cutscene_actor_init(struct cutscene_actor* actor, struct cutscene_actor_def* def, struct transform_mixed transform, enum npc_type npc_type, int index, struct armature* armature, char* animations_path);
 
 void cutscene_actor_destroy(struct cutscene_actor* actor);
 void cutscene_actor_reset();
 struct cutscene_actor* cutscene_actor_find(enum npc_type npc_type, int index);
 
-void cutscene_actor_look_at(struct cutscene_actor* actor, struct Vector3* at, float speed);
-void cutscene_actor_move_to(struct cutscene_actor* actor, struct Vector3* at, float speed);
+void cutscene_actor_look_at(struct cutscene_actor* actor, struct Vector3* at);
+void cutscene_actor_move_to(struct cutscene_actor* actor, struct Vector3* at);
 void cutscene_actor_idle(struct cutscene_actor* actor);
 
 bool cutscene_actor_is_moving(struct cutscene_actor* actor);

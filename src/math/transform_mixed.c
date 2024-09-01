@@ -47,9 +47,7 @@ bool transform_rotate_towards(struct transform_mixed* transform, struct Vector3*
 
     switch (transform->type) {
         case TRANSFORM_TYPE_BASIC: {
-            struct Vector3 current_forward;
-            vector2ToLookDir(&current_dir, &current_forward);
-            quatLook(&current_forward, &gUp, &((struct Transform*)transform->transform)->rotation);
+            quatAxisComplex(&gUp, &current_dir, &((struct Transform*)transform->transform)->rotation);
             break;
         }
         case TRANSFORM_TYPE_SINGLE_AXIS: {

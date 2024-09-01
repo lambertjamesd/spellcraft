@@ -21,7 +21,11 @@ struct npc_information npc_information[] = {
             },
         },
         .half_height = 1.0f,
-        .eye_level = 1.81147f,
+        .actor = {
+            .eye_level = 1.81147f,
+            .move_speed = 1.0f,
+            .rotate_speed = 2.0f,
+        },
     },
 };
 
@@ -57,13 +61,13 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
 
     cutscene_actor_init(
         &npc->cutscene_actor, 
+        &information->actor,
         transform, 
         definiton->npc_type, 
         0, 
         &npc->renderable.armature, 
         information->animations
     );
-    npc->cutscene_actor.eye_level = information->eye_level;
 
     dynamic_object_init(
         entity_id,

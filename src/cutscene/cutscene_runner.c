@@ -126,16 +126,14 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
                 case INTERACTION_LOOK_AT:
                     cutscene_actor_look_at(
                         subject,
-                        transform_mixed_get_position(&target->transform),
-                        step->data.interact_with_npc.speed
+                        transform_mixed_get_position(&target->transform)
                     );
                     break;
                 case INTERACTION_MOVE_TO_AND_WAIT:
                 case INTERACTION_MOVE_TO:
                     cutscene_actor_move_to(
                         subject,
-                        transform_mixed_get_position(&target->transform),
-                        step->data.interact_with_npc.speed
+                        transform_mixed_get_position(&target->transform)
                     );
                     break;
                 default:

@@ -1,15 +1,18 @@
 #include "camera_controller.h"
 
 #include "../time/time.h"
+#include "../math/transform_single_axis.h"
 
 #define CAMERA_FOLLOW_DISTANCE  3.4f
 #define CAMERA_FOLLOW_HEIGHT    1.6f
 
-void camera_controller_update_position(struct camera_controller* controller, struct Transform* target) {
+void camera_controller_update_position(struct camera_controller* controller, struct TransformSingleAxis* target) {
     struct Vector3 offset;
 
     if (joypad_get_buttons_held(0).z) {
-        quatMultVector(&target->rotation, &gForward, &offset);
+        struct Quaternion quat;
+        quatAxisComplex(&gUp, &target->rotation, &quat);
+        quatMultVector(&quat, &gForward, &offset);
     } else {
         vector3Sub(&target->position, &controller->camera->transform.position, &offset);
 

@@ -95,7 +95,6 @@ struct cutscene* cutscene_load(char* filename) {
                 fread(&step->data.interact_with_npc.type, 4, 1, file);
                 fread(&step->data.interact_with_npc.subject, 4, 1, file);
                 fread(&step->data.interact_with_npc.target, 4, 1, file);
-                fread(&step->data.interact_with_npc.speed, 4, 1, file);
                 break;
             case CUTSCENE_STEP_IDLE_NPC:
                 fread(&step->data.interact_with_npc.subject, 4, 1, file);

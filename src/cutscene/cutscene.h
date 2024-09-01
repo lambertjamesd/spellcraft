@@ -69,7 +69,6 @@ union cutscene_step_data {
         enum interaction_type type;
         union cutscene_actor_id subject;
         union cutscene_actor_id target;
-        float speed;
     } interact_with_npc;
 };
 

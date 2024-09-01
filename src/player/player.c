@@ -37,6 +37,12 @@ static struct dynamic_object_type player_visual_shape = {
     }
 };
 
+static struct cutscene_actor_def player_actor_def = {
+    .eye_level = 1.26273f,
+    .move_speed = 1.0f,
+    .rotate_speed = 2.0f,
+};
+
 void player_get_move_basis(struct Transform* transform, struct Vector3* forward, struct Vector3* right) {
     quatMultVector(&transform->rotation, &gForward, forward);
     quatMultVector(&transform->rotation, &gRight, right);
@@ -108,7 +114,7 @@ void player_handle_a_action(struct player* player) {
 
     struct Vector3 query_center = player->transform.position;
     struct Vector3 query_offset;
-    quatMultVector(&player->transform.rotation, &gForward, &query_offset);
+    vector2ToLookDir(&player->transform.rotation, &query_offset);
     vector3AddScaled(&query_center, &query_offset, 1.0f, &query_center);
     query_center.y += player_visual_shape.data.cylinder.half_height;
     bool did_intersect = false;
@@ -174,13 +180,11 @@ void player_update(struct player* player) {
         directionUnit.x = directionUnit.y;
         directionUnit.y = tmp;
 
-        vector2RotateTowards(&player->look_direction, &directionUnit, &player_max_rotation, &player->look_direction);
+        vector2RotateTowards(&player->transform.rotation, &directionUnit, &player_max_rotation, &player->transform.rotation);
     }
 
-    quatAxisComplex(&gUp, &player->look_direction, &player->transform.rotation);
-
     struct Vector3 castDirection;
-    quatMultVector(&player->transform.rotation, &gForward, &castDirection);
+    vector2ToLookDir(&player->transform.rotation, &castDirection);
 
     for (int i = 0; i < PLAYER_CAST_SOURCE_COUNT; i += 1) {
         struct spell_data_source* source = &player->player_spell_sources[i];
@@ -218,19 +222,18 @@ void player_init(struct player* player, struct player_definition* definition, st
     entity_id entity_id = entity_id_new();
 
     struct transform_mixed transform;
-    transform_mixed_init(&transform, &player->transform);
+    transform_mixed_init_sa(&transform, &player->transform);
 
-    transformInitIdentity(&player->transform);
-    renderable_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.tmesh");
+    transformSaInitIdentity(&player->transform);
+    renderable_single_axis_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.tmesh");
 
     player->camera_transform = camera_transform;
 
     player->transform.position = definition->location;
+    player->transform.rotation = definition->rotation;
 
     render_scene_add_renderable(&player->renderable, 2.0f);
     update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
-
-    player->look_direction = definition->rotation;
 
     vector2ComplexFromAngle(fixed_time_step * 7.0f, &player_max_rotation);
 
@@ -240,7 +243,7 @@ void player_init(struct player* player, struct player_definition* definition, st
         &player_collision,
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
         &player->transform.position,
-        &player->look_direction
+        &player->transform.rotation
     );
 
     player->collision.collision_group = COLLISION_GROUP_PLAYER;
@@ -261,14 +264,13 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     cutscene_actor_init(
         &player->cutscene_actor,
+        &player_actor_def,
         transform,
         NPC_TYPE_PLAYER,
         0,
         &player->renderable.armature,
         "rom:/meshes/characters/apprentice.anim"
     );
-
-    player->cutscene_actor.eye_level = 1.26273f;
 
     player->animations.attack = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1");
     player->animations.idle = animation_set_find_clip(player->cutscene_actor.animation_set, "idle");
