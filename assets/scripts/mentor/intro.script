@@ -2,8 +2,8 @@
 global has_staff_default: bool;
 
 pause true, false;
-interact_with_npc INTERACTION_LOOK_AT, NPC_TYPE_MENTOR, NPC_TYPE_PLAYER;
-interact_with_npc INTERACTION_LOOK_AT, NPC_TYPE_PLAYER, NPC_TYPE_MENTOR;
+interact_with_npc INTERACTION_LOOK_SPACE, NPC_TYPE_PLAYER, NPC_TYPE_MENTOR;
+interact_with_npc INTERACTION_LOOK_WAIT, NPC_TYPE_MENTOR, NPC_TYPE_PLAYER;
 
 if has_staff_default then
     say "Good, you have found your fathers staff";

@@ -10,11 +10,11 @@
 #include <stdbool.h>
 
 enum actor_state {
-    ACTOR_STATE_IDLE,
-    ACTOR_STATE_LOOKING,
-    ACTOR_STATE_MOVING,
-    ACTOR_STATE_LOOKING_MOVING,
-    ACTOR_STATE_FINISHED,
+    ACTOR_STATE_IDLE = 0,
+    ACTOR_STATE_LOOKING = (1 << 0),
+    ACTOR_STATE_MOVING = (1 << 1),
+    ACTOR_STATE_SPACE = (1 << 2),
+    ACTOR_STATE_ACTIVE = (1 << 3),
 };
 
 struct cutscene_actor_animations {
@@ -57,8 +57,7 @@ void cutscene_actor_destroy(struct cutscene_actor* actor);
 void cutscene_actor_reset();
 struct cutscene_actor* cutscene_actor_find(enum npc_type npc_type, int index);
 
-void cutscene_actor_look_at(struct cutscene_actor* actor, struct Vector3* at);
-void cutscene_actor_move_to(struct cutscene_actor* actor, struct Vector3* at);
+void cutscene_actor_interact_with(struct cutscene_actor* actor, enum interaction_type interaction, struct Vector3* at);
 void cutscene_actor_idle(struct cutscene_actor* actor);
 
 bool cutscene_actor_is_moving(struct cutscene_actor* actor);

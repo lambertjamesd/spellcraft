@@ -32,7 +32,7 @@ static struct dynamic_object_type player_visual_shape = {
     .data = {
         .cylinder = {
             .half_height = 0.5f,
-            .radius = 0.5f,
+            .radius = 0.75f,
         }
     }
 };
