@@ -1,0 +1,30 @@
+{
+    "tex0": {
+        "filename": "../../images/spell/lightning.png",
+        "s": {
+            "repeats": 0,
+            "mirror": false
+        },
+        "t": {
+            "repeats": 0,
+            "mirror": false
+        }
+    },
+    "combineMode": [{
+        "color": ["TEX0", "0", "PRIM", "0"],
+        "alpha": ["PRIM", "0", "TEX0", "0"]
+    },{
+        "color": ["1", "0", "COMBINED", "TEX1"],
+        "alpha": ["0", "0", "0", "TEX1"]
+    }],
+    "primColor": [93, 45, 238, 255],
+    "blendMode": {
+        "cyc1": ["IN", "0", "IN", "1"],
+        "cyc2": ["IN", "IN_A", "MEMORY", "INV_MUX_A"],
+        "zMode": "TRANSPARENT",
+        "zWrite": false,
+        "zCompare": true
+    },
+    "culling": false,
+    "zBuffer": true
+}

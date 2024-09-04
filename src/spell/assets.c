@@ -20,6 +20,8 @@ void spell_assets_init() {
     assets.fire_around_mesh = tmesh_cache_load("rom:/meshes/spell/flame_around.tmesh");
 
     assets.flame_mesh = tmesh_cache_load("rom:/meshes/objects/torch_flame.tmesh");
+
+    assets.lightning_mesh = tmesh_cache_load("rom:/meshes/spell/lightning.tmesh");
 }
 
 struct spell_assets* spell_assets_get() {

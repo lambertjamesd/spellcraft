@@ -100,6 +100,9 @@ struct cutscene* cutscene_load(char* filename) {
                 fread(&step->data.interact_with_npc.subject, 4, 1, file);
                 step->data.interact_with_npc.target.unique_id = 0;
                 break;
+            case CUTSCENE_STEP_CAMERA_LOOK_AT_NPC:
+                fread(&step->data.camera_look_at.target, 4, 1, file);
+                break;
         }
     }
 

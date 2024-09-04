@@ -8,6 +8,7 @@
 #include "../menu/menu_rendering.h"
 #include "../menu/menu_common.h"
 #include "../util/flags.h"
+#include "../scene/scene.h"
 #include "evaluation_context.h"
 #include "expression_evaluate.h"
 #include "show_item.h"
@@ -16,6 +17,8 @@
 
 #define MAX_QUEUED_CUTSCENES   4
 #define MAX_CUTSCENE_CALL_DEPTH 6
+
+extern struct scene* current_scene;
 
 union cutscene_runner_data {
     struct { bool has_shown; } dialog;
@@ -137,6 +140,21 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
                 break;
             }
             cutscene_actor_idle(subject);
+            break;
+        }
+        case CUTSCENE_STEP_CAMERA_LOOK_AT_NPC: {
+            cutscene_actor_id_t target_id = step->data.camera_look_at.target;
+            struct cutscene_actor* target = cutscene_actor_find(target_id.npc_type, target_id.index);
+            if (!target) {
+                break;
+            }
+
+            camera_look_at(&current_scene->camera_controller, transform_mixed_get_position(&target->transform));
+            break;
+        }
+        case CUTSCENE_STEP_CAMERA_FOLLOW: {
+            camera_follow_player(&current_scene->camera_controller);
+            break;
         }
     }
 }

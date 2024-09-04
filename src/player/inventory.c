@@ -44,6 +44,20 @@ struct spell projectile_spell = {
     .symbol_index = SPELL_ICON_DASH,
 };
 
+
+struct spell_symbol lightning_spell_symbols[] = {
+    {.type = SPELL_SYMBOL_FIRE},
+    {.type = SPELL_SYMBOL_ICE},
+};
+
+struct spell lightning_spell = {
+    .symbols = lightning_spell_symbols,
+    .cols = 2,
+    .rows = 1,
+
+    .symbol_index = SPELL_ICON_FIRE,
+};
+
 enum inventory_item_type staff_item_types[INV_STAFF_COUNT] = {
     ITEM_TYPE_STAFF_DEFAULT,
     ITEM_TYPE_NONE,
@@ -64,6 +78,7 @@ void inventory_init() {
     inventory.spell_slots[0] = &flame_spell;
     inventory.spell_slots[1] = &dash_spell;
     inventory.spell_slots[2] = &projectile_spell;
+    inventory.spell_slots[3] = &lightning_spell;
 
     for (int i = 0; i < MAX_CUSTOM_SPELLS; i += 1) {
         spell_init(&inventory.custom_spells[i], SPELL_MAX_COLS, SPELL_MAX_ROWS, SPELL_ICON_CUSTOM_0 + i);

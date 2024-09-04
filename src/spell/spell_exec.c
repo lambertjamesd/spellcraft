@@ -36,8 +36,13 @@ void spell_slot_init(
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, input->flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
             } else {
-                slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
-                fire_init(&slot->data.fire, input, event_options, input->flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
+                if (input->flags.icy) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_LIGHTNING;
+                    lightning_init(&slot->data.lightning, input);
+                } else {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
+                    fire_init(&slot->data.fire, input, event_options, ELEMENT_TYPE_FIRE);
+                }
             }
             break;
         case SPELL_SYMBOL_ICE:
@@ -45,8 +50,13 @@ void spell_slot_init(
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, input->flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
             } else {
-                slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
-                fire_init(&slot->data.fire, input, event_options, input->flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
+                if (input->flags.flaming) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_LIGHTNING;
+                    lightning_init(&slot->data.lightning, input);
+                } else {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
+                    fire_init(&slot->data.fire, input, event_options, ELEMENT_TYPE_ICE);
+                }
             }
             break;
         case SPELL_SYMBOL_RECAST:
@@ -93,6 +103,10 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             push_destroy(&slot->data.push);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_LIGHTNING:
+            lightning_destroy(&slot->data.lightning);
+            break;
         default:
             break;
     }
@@ -143,6 +157,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             push_update(&slot->data.push, &event_listener, &exec->spell_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_LIGHTNING:
+            lightning_update(&slot->data.lightning, &event_listener, &exec->spell_sources);
             break;
         default:
             break;
