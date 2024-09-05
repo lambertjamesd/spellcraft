@@ -31,6 +31,7 @@ union dynamic_object_type_data
     struct { struct Vector3 half_size; } box;
     struct { struct Vector3 size; } cone;
     struct { float radius; float half_height; } cylinder;
+    struct { struct Vector2 range; float radius; float half_height; } sweep;
 };
 
 struct dynamic_object_type {
