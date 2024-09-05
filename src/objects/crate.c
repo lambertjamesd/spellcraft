@@ -1,8 +1,9 @@
 #include "crate.h"
 
+#include "../collision/collision_scene.h"
+#include "../collision/shapes/box.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
-#include "../collision/collision_scene.h"
 
 static struct dynamic_object_type crate_collision_type = {
     .minkowsi_sum = dynamic_object_box_minkowski_sum,

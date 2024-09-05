@@ -17,7 +17,7 @@
         "color": ["1", "0", "COMBINED", "TEX1"],
         "alpha": ["0", "0", "0", "TEX1"]
     }],
-    "primColor": [93, 45, 238, 255],
+    "primColor": [50, 24, 127, 255],
     "blendMode": {
         "cyc1": ["IN", "0", "IN", "1"],
         "cyc2": ["IN", "IN_A", "MEMORY", "INV_MUX_A"],

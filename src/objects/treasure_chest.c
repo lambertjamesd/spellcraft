@@ -1,12 +1,13 @@
 #include "treasure_chest.h"
 
 #include "../collision/collision_scene.h"
-#include "../render/render_scene.h"
-#include "../resource/animation_cache.h"
-#include "../time/time.h"
+#include "../collision/shapes/box.h"
 #include "../cutscene/cutscene_runner.h"
 #include "../cutscene/show_item.h"
 #include "../player/inventory.h"
+#include "../render/render_scene.h"
+#include "../resource/animation_cache.h"
+#include "../time/time.h"
 
 static struct dynamic_object_type treasure_chest_collision = {
     .minkowsi_sum = dynamic_object_box_minkowski_sum,

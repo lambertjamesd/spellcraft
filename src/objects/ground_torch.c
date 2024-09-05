@@ -1,11 +1,12 @@
 #include "ground_torch.h"
 
-#include "../render/render_scene.h"
-#include "../time/time.h"
 #include "../collision/collision_scene.h"
+#include "../collision/shapes/capsule.h"
+#include "../render/defs.h"
+#include "../render/render_scene.h"
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
-#include "../render/defs.h"
+#include "../time/time.h"
 #include <memory.h>
 
 #define TORCH_HEIGHT    0.84124f

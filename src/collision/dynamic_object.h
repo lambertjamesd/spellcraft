@@ -77,19 +77,4 @@ bool dynamic_object_is_touching(struct dynamic_object* object, entity_id id);
 void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 void dynamic_object_recalc_bb(struct dynamic_object* object);
 
-void dynamic_object_box_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
-void dynamic_object_box_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
-
-void dynamic_object_cone_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
-void dynamic_object_cone_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
-
-void dynamic_object_sphere_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
-void dynamic_object_sphere_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
-
-void dynamic_object_capsule_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
-void dynamic_object_capsule_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
-
-void dynamic_object_cylinder_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
-void dynamic_object_cylinder_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
-
 #endif

@@ -1,15 +1,17 @@
 #include "player.h"
 
 #include <libdragon.h>
-#include "../resource/animation_cache.h"
-#include "../math/vector2.h"
 
-#include "../render/render_scene.h"
 #include "../collision/collision_scene.h"
-#include "../time/time.h"
-#include "../objects/collectable.h"
+#include "../collision/shapes/capsule.h"
+#include "../collision/shapes/cylinder.h"
 #include "../entity/interactable.h"
+#include "../math/vector2.h"
+#include "../objects/collectable.h"
+#include "../render/render_scene.h"
+#include "../resource/animation_cache.h"
 #include "../resource/tmesh_cache.h"
+#include "../time/time.h"
 
 #define PLAYER_MAX_SPEED    4.2f
 
@@ -61,17 +63,27 @@ void player_get_move_basis(struct Transform* transform, struct Vector3* forward,
     vector3Normalize(right, right);
 }
 
-struct animation_clip* player_determine_animation(struct player* player, float* playback_speed) {
+struct animation_clip* player_determine_animation(struct player* player, float* playback_speed, bool* repeat) {
+    for (int i = 0; i < 4; i += 1) {
+        if (player->player_spell_sources[i].flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
+            *playback_speed = 1.0f;
+            *repeat = false;
+            return player->animations.attack_hold;
+        }
+    }
+
     struct Vector3 horizontal_velocity = player->collision.velocity;
     horizontal_velocity.y = 0.0f;
     float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
 
     if (speed < 0.1f) {
         *playback_speed = 1.0f;
+        *repeat = true;
         return player->animations.idle;
     }
 
     *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
+    *repeat = true;
     return player->animations.run;
 }
 
@@ -131,12 +143,13 @@ void player_update(struct player* player) {
     struct Vector3 forward;
 
     float playback_speed = 1.0f;
-    struct animation_clip* next_clip = player_determine_animation(player, &playback_speed);
+    bool repeat;
+    struct animation_clip* next_clip = player_determine_animation(player, &playback_speed, &repeat);
 
     if (player->cutscene_actor.state == ACTOR_STATE_IDLE) {
         player->cutscene_actor.animate_speed = playback_speed;
         if (next_clip != player->cutscene_actor.animator.current_clip) {
-            animator_run_clip(&player->cutscene_actor.animator, next_clip, 0.0f, true);
+            animator_run_clip(&player->cutscene_actor.animator, next_clip, 0.0f, repeat);
         }
     }
 
@@ -273,6 +286,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     );
 
     player->animations.attack = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1");
+    player->animations.attack_hold = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1_hold");
     player->animations.idle = animation_set_find_clip(player->cutscene_actor.animation_set, "idle");
     player->animations.run = animation_set_find_clip(player->cutscene_actor.animation_set, "run");
 

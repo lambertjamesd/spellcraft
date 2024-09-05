@@ -1,10 +1,11 @@
 #include "npc.h"
 
-#include "../render/render_scene.h"
-#include "../time/time.h"
-#include "../resource/animation_cache.h"
 #include "../collision/collision_scene.h"
+#include "../collision/shapes/capsule.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../render/render_scene.h"
+#include "../resource/animation_cache.h"
+#include "../time/time.h"
 
 struct npc_information npc_information[] = {
     [NPC_TYPE_MENTOR] = {

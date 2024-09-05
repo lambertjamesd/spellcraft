@@ -1,16 +1,16 @@
 #include "collectable.h"
 
-#include "../util/hash_map.h"
 #include "../collision/collision_scene.h"
-#include "../render/render_scene.h"
-#include "../spell/spell.h"
-#include "../resource/material_cache.h"
-#include "../player/inventory.h"
+#include "../collision/shapes/sphere.h"
 #include "../cutscene/cutscene_runner.h"
 #include "../cutscene/show_item.h"
-#include "../time/time.h"
-
 #include "../menu/dialog_box.h"
+#include "../player/inventory.h"
+#include "../render/render_scene.h"
+#include "../resource/material_cache.h"
+#include "../spell/spell.h"
+#include "../time/time.h"
+#include "../util/hash_map.h"
 
 #define COLLECTABLE_RADIUS  0.75f
 

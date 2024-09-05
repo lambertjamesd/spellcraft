@@ -159,6 +159,10 @@ clean-fs:
 	rm -rf filesystem/ $(BUILD_DIR)/spellcraft.dfs
 .PHONY: clean-resource
 
+clean-src:
+	find build -name "*.o" -type f -delete
+	find build -name "*.d" -type f -delete
+
 check-pairings:
 	node tools/pairing_checker.js $(SOURCES) src/main.c
 .PHONY: check-pairings

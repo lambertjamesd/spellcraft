@@ -1,9 +1,10 @@
 #include "training_dummy.h"
 
 #include "../collision/collision_scene.h"
+#include "../collision/shapes/capsule.h"
 #include "../render/render_scene.h"
-#include "../time/time.h"
 #include "../spell/assets.h"
+#include "../time/time.h"
 #include <stddef.h>
 
 #define DUMMY_BURN_TIME 7.0f

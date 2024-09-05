@@ -1,9 +1,11 @@
 #include "biter.h"
 
-#include "../render/render_scene.h"
-#include "../time/time.h"
 #include "../collision/collision_scene.h"
+#include "../collision/shapes/cone.h"
+#include "../collision/shapes/sphere.h"
+#include "../render/render_scene.h"
 #include "../resource/animation_cache.h"
+#include "../time/time.h"
 
 #define VISION_DISTANCE     4.0f
 #define ATTACK_RANGE        1.0f

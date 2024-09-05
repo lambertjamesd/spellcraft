@@ -1,11 +1,12 @@
 #include "fire.h"
 
-#include "../render/render_scene.h"
 #include "assets.h"
-#include "../time/time.h"
-#include "../math/mathf.h"
 #include "../collision/collision_scene.h"
+#include "../collision/shapes/cone.h"
 #include "../entity/health.h"
+#include "../math/mathf.h"
+#include "../render/render_scene.h"
+#include "../time/time.h"
 
 #define CYCLE_TIME  0.08f
 
