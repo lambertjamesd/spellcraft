@@ -45,7 +45,7 @@ void sweep_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box)
         struct Vector2 extent;
         extent.x = i == 0 ? shape_data->sweep.range.x : -shape_data->sweep.range.x;
         extent.y = shape_data->sweep.range.y;
-        vector2ComplexMul(rotation, &shape_data->sweep.range, &extent);
+        vector2ComplexMul(rotation, &extent, &extent);
         box->min.x = MIN(box->min.x, extent.x);
         box->min.z = MIN(box->min.z, extent.y);
 
