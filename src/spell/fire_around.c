@@ -17,8 +17,8 @@
 #define DISAPPEAR_TIME  0.5f
 
 static struct dynamic_object_type fire_around_object_type = {
-    .minkowsi_sum = dynamic_object_cylinder_minkowski_sum,
-    .bounding_box = dynamic_object_cylinder_bounding_box,
+    .minkowsi_sum = cylinder_minkowski_sum,
+    .bounding_box = cylinder_bounding_box,
     .data = { 
         .cylinder = {
             .radius = ATTACK_RADIUS,

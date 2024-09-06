@@ -5,7 +5,7 @@
 
 #define SQRT_1_2   0.707106781f
 
-void dynamic_object_cylinder_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
+void cylinder_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     float abs_x = fabsf(direction->x);
@@ -27,7 +27,7 @@ void dynamic_object_cylinder_minkowski_sum(void* data, struct Vector3* direction
     output->y = direction->y > 0.0f ? shape_data->cylinder.half_height : -shape_data->cylinder.half_height;
 }
 
-void dynamic_object_cylinder_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
+void cylinder_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     box->min.x = -shape_data->cylinder.radius;

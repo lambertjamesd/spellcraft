@@ -19,8 +19,8 @@ struct health {
     entity_id entity_id;
     float max_health;
     float current_health;
-    float burning_timer;
-    float frozen_timer;
+    float status_timer;
+    enum damage_type current_status;
 
     health_damage_callback callback;
     void* callback_data;
@@ -38,5 +38,6 @@ struct health* health_get(entity_id id);
 
 bool health_is_burning(struct health* health);
 bool health_is_frozen(struct health* health);
+bool health_is_shocked(struct health* health);
 
 #endif

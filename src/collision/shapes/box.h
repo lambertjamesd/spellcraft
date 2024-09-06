@@ -5,7 +5,7 @@
 #include "../../math/vector3.h"
 #include "../../math/box3d.h"
 
-void dynamic_object_box_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
-void dynamic_object_box_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
+void box_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
+void box_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
 
 #endif

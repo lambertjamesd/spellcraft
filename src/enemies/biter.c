@@ -15,8 +15,8 @@
 static struct Vector2 biter_max_rotation;
 
 static struct dynamic_object_type biter_collision_type = {
-    .minkowsi_sum = dynamic_object_sphere_minkowski_sum,
-    .bounding_box = dynamic_object_sphere_bounding_box,
+    .minkowsi_sum = sphere_minkowski_sum,
+    .bounding_box = sphere_bounding_box,
     .data = {
         .sphere = {
             .radius = 0.4f,
@@ -26,8 +26,8 @@ static struct dynamic_object_type biter_collision_type = {
 };
 
 static struct dynamic_object_type biter_vision_collision_type = {
-    .minkowsi_sum = dynamic_object_cone_minkowski_sum,
-    .bounding_box = dynamic_object_cone_bounding_box,
+    .minkowsi_sum = cone_minkowski_sum,
+    .bounding_box = cone_bounding_box,
     .data = {
         .sphere = {
             .radius = VISION_DISTANCE,

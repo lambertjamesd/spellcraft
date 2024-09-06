@@ -5,13 +5,14 @@
 #include "../render/render_scene.h"
 #include "../spell/assets.h"
 #include "../time/time.h"
+#include "../math/mathf.h"
 #include <stddef.h>
 
 #define DUMMY_BURN_TIME 7.0f
 
 static struct dynamic_object_type dummy_collision = {
-    .minkowsi_sum = dynamic_object_capsule_minkowski_sum,
-    .bounding_box = dynamic_object_capsule_bounding_box,
+    .minkowsi_sum = capsule_minkowski_sum,
+    .bounding_box = capsule_bounding_box,
     .data = {
         .capsule = {
             .radius = 0.35f,
@@ -39,12 +40,30 @@ void training_dummy_update(void* data) {
 
     training_dummy_check_fire(dummy);
 
-    if (health_is_frozen(&dummy->health)) {
+    if (health_is_shocked(&dummy->health)) {
+        if (dummy->shock_timer == 0) {
+            struct Vector3 prevForward;
+            quatMultVector(&dummy->transform.rotation, &gForward, &prevForward);
+            vector3Negate(&prevForward, &prevForward);
+            
+            struct Vector3 randomUp = (struct Vector3){randomInRangef(-0.5f, 0.5f), 1.0f, randomInRangef(-0.5f, 0.5f)};
+            quatLook(&prevForward, &randomUp, &dummy->transform.rotation);
+
+            dummy->angularVelocity = gZeroVec;
+            dummy->shock_timer = 2;
+        } else {
+            --dummy->shock_timer;
+            dummy->renderable.force_material = (dummy->shock_timer & 1) ? spell_assets_get()->shock_material : NULL;
+        }
+        return;
+    } else if (health_is_frozen(&dummy->health)) {
         dummy->renderable.force_material = spell_assets_get()->ice_material;
         return;
     } else {
         dummy->renderable.force_material = NULL;
+        dummy->shock_timer = 0;
     }
+
 
     struct Vector3 dummy_up;
     quatMultVector(&dummy->transform.rotation, &gUp, &dummy_up);
@@ -107,6 +126,7 @@ void training_dummy_init(struct training_dummy* dummy, struct training_dummy_def
     );
 
     dummy->angularVelocity = gZeroVec;
+    dummy->shock_timer = 0;
 
     dummy->collision.center.y = dummy_collision.data.capsule.inner_half_height + dummy_collision.data.capsule.radius;
 

@@ -3,7 +3,7 @@
 #include "../../math/minmax.h"
 #include "../dynamic_object.h"
 
-void dynamic_object_sweep_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
+void sweep_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     struct Vector2 dir_2d;
@@ -16,7 +16,7 @@ void dynamic_object_sweep_minkowski_sum(void* data, struct Vector3* direction, s
     struct Vector2 arm_check = shape_data->sweep.range;
 
     if (direction->x < 0.0f) {
-        direction->x = -direction->x;
+        arm_check.x = -arm_check.x;
     }
 
     float test = vector2Dot(&dir_2d, &arm_check);
@@ -27,7 +27,6 @@ void dynamic_object_sweep_minkowski_sum(void* data, struct Vector3* direction, s
     }
 
     if (dir_2d.y > distance) {
-        distance = dir_2d.y;
         result_2d = (struct Vector2){0.0f, 1.0f};
     }
 
@@ -36,7 +35,7 @@ void dynamic_object_sweep_minkowski_sum(void* data, struct Vector3* direction, s
     output->z = result_2d.y * shape_data->sweep.radius;
 }
 
-void dynamic_object_sweep_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
+void sweep_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     box->min = (struct Vector3){0.0f, -shape_data->sweep.half_height, 0.0f};

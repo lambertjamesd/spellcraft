@@ -15,8 +15,8 @@
 #define COLLECTABLE_RADIUS  0.75f
 
 static struct dynamic_object_type collectable_collision = {
-    .minkowsi_sum = dynamic_object_sphere_minkowski_sum,
-    .bounding_box = dynamic_object_sphere_bounding_box,
+    .minkowsi_sum = sphere_minkowski_sum,
+    .bounding_box = sphere_bounding_box,
     .data = {
         .sphere = {
             .radius = COLLECTABLE_RADIUS,

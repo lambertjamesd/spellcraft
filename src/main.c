@@ -25,8 +25,6 @@
 
 #define RDPQ_VALIDATE_DETACH_ADDR    0x00800000
 
-struct scene* current_scene;
-
 void setup() {
     debug_init_isviewer();
     // fprintf(stderr, "This is how to talk");

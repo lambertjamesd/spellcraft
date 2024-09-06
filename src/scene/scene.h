@@ -62,6 +62,8 @@ struct scene {
     char* string_table;
 };
 
+extern struct scene* current_scene;
+
 void scene_render(void* data, struct render_batch* batch);
 void scene_update(void* data);
 

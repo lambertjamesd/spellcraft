@@ -20,8 +20,8 @@
 #define TIP_RISE            0.5f
 
 static struct dynamic_object_type fire_object_type = {
-    .minkowsi_sum = dynamic_object_cone_minkowski_sum,
-    .bounding_box = dynamic_object_cone_bounding_box,
+    .minkowsi_sum = cone_minkowski_sum,
+    .bounding_box = cone_bounding_box,
     .data = { 
         .cone = {
             .size = {MAX_RADIUS, MAX_RADIUS, FIRE_LENGTH},

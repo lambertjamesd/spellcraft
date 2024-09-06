@@ -18,8 +18,8 @@
 static struct Vector2 player_max_rotation;
 
 static struct dynamic_object_type player_collision = {
-    .minkowsi_sum = dynamic_object_capsule_minkowski_sum,
-    .bounding_box = dynamic_object_capsule_bounding_box,
+    .minkowsi_sum = capsule_minkowski_sum,
+    .bounding_box = capsule_bounding_box,
     .data = {
         .capsule = {
             .radius = 0.25f,
@@ -29,8 +29,8 @@ static struct dynamic_object_type player_collision = {
 };
 
 static struct dynamic_object_type player_visual_shape = {
-    .minkowsi_sum = dynamic_object_cylinder_minkowski_sum,
-    .bounding_box = dynamic_object_cylinder_bounding_box,
+    .minkowsi_sum = cylinder_minkowski_sum,
+    .bounding_box = cylinder_bounding_box,
     .data = {
         .cylinder = {
             .half_height = 0.5f,
@@ -304,4 +304,6 @@ void player_destroy(struct player* player) {
     update_remove(player);
     collision_scene_remove(&player->collision);
     cutscene_actor_destroy(&player->cutscene_actor);
+
+    tmesh_cache_release(player->assets.staffs[0]);
 }

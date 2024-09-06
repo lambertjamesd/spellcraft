@@ -4,9 +4,9 @@
 #include <math.h>
 #include "sphere.h"
 
-void dynamic_object_capsule_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
+void capsule_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
-    dynamic_object_sphere_minkowski_sum(data, direction, output);
+    sphere_minkowski_sum(data, direction, output);
 
     if (direction->y > 0.0f) {
         output->y += shape_data->capsule.inner_half_height;
@@ -15,7 +15,7 @@ void dynamic_object_capsule_minkowski_sum(void* data, struct Vector3* direction,
     }
 }
 
-void dynamic_object_capsule_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
+void capsule_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     vector3Scale(&gOneVec, &box->max, shape_data->capsule.radius);

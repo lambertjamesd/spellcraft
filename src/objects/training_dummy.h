@@ -16,6 +16,8 @@ struct training_dummy {
     struct health health;
     struct Vector3 angularVelocity;
     struct burning_effect* burning_effect;
+
+    uint16_t shock_timer;
 };
 
 void training_dummy_init(struct training_dummy* dummy, struct training_dummy_definition* definition);

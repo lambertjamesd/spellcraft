@@ -14,19 +14,11 @@ void health_reset() {
 void health_update(void *data) {
     struct health* health = (struct health*)data;
 
-    if (health->frozen_timer) {
-        health->frozen_timer -= fixed_time_step;
+    if (health->status_timer) {
+        health->status_timer -= fixed_time_step;
 
-        if (health->frozen_timer < 0.0f) {
-            health->frozen_timer = 0.0f;
-        }
-    }
-
-    if (health->burning_timer) {
-        health->burning_timer -= fixed_time_step;
-
-        if (health->burning_timer < 0.0f) {
-            health->burning_timer = 0.0f;
+        if (health->status_timer < 0.0f) {
+            health->status_timer = 0.0f;
         }
     }
 }
@@ -35,8 +27,7 @@ void health_init(struct health* health, entity_id id, float max_health) {
     health->entity_id = id;
     health->max_health = max_health;
     health->current_health = max_health;
-    health->frozen_timer = 0.0f;
-    health->burning_timer = 0.0f;
+    health->status_timer = 0.0f;
 
     hash_map_set(&health_entity_mapping, id, health);
 
@@ -57,13 +48,14 @@ void health_damage(struct health* health, float amount, entity_id source, enum d
     }
 
     if (type & DAMAGE_TYPE_FIRE) {
-        health->burning_timer = 7;
-        health->frozen_timer = 0;
-    }
-
-    if (type & DAMAGE_TYPE_ICE) {
-        health->frozen_timer = 7;
-        health->burning_timer = 0;
+        health->status_timer = 7;
+        health->current_status = DAMAGE_TYPE_FIRE;
+    } else if (type & DAMAGE_TYPE_ICE) {
+        health->status_timer = 7;
+        health->current_status = DAMAGE_TYPE_ICE;
+    } else if (type & DAMAGE_TYPE_LIGHTING) {
+        health->status_timer = 3;
+        health->current_status = DAMAGE_TYPE_LIGHTING;
     }
 
     if (health->callback) {
@@ -76,9 +68,13 @@ struct health* health_get(entity_id id) {
 }
 
 bool health_is_burning(struct health* health) {
-    return health->burning_timer > 0.0f;
+    return health->status_timer > 0.0f && health->current_status == DAMAGE_TYPE_FIRE;
 }
 
 bool health_is_frozen(struct health* health) {
-    return health->frozen_timer > 0.0f;
+    return health->status_timer > 0.0f && health->current_status == DAMAGE_TYPE_ICE;
+}
+
+bool health_is_shocked(struct health* health) {
+    return health->status_timer > 0.0f && health->current_status == DAMAGE_TYPE_LIGHTING;
 }

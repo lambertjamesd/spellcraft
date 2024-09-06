@@ -2,6 +2,8 @@
 
 #include "../render/render_batch.h"
 
+struct scene* current_scene;
+
 static char next_scene_name[64];
 static char next_entrance_name[16];
 

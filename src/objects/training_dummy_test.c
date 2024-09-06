@@ -1,12 +1,13 @@
 #include "training_dummy.h"
 #include "../test/framework_test.h"
 #include "../collision/collision_scene.h"
+#include "../collision/shapes/sphere.h"
 
 #include "../time/time.h"
 
 static struct dynamic_object_type test_projectile_collision = {
-    .minkowsi_sum = dynamic_object_sphere_minkowski_sum,
-    .bounding_box = dynamic_object_sphere_bounding_box,
+    .minkowsi_sum = sphere_minkowski_sum,
+    .bounding_box = sphere_bounding_box,
     .data = {
         .sphere = {
             .radius = 0.25f,

@@ -4,7 +4,7 @@
 #include "../../math/minmax.h"
 #include <math.h>
 
-void dynamic_object_cone_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
+void cone_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     output->x = direction->x > 0.0f ? shape_data->cone.size.x : -shape_data->cone.size.x;
@@ -16,7 +16,7 @@ void dynamic_object_cone_minkowski_sum(void* data, struct Vector3* direction, st
     }
 }
 
-void dynamic_object_cone_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
+void cone_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     struct Vector2 corner;

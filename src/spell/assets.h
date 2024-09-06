@@ -10,6 +10,7 @@ struct spell_assets {
     struct material* dash_trail_material;
 
     struct material* ice_material;
+    struct material* shock_material;
 
     struct tmesh* fire_around_mesh;
 

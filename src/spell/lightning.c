@@ -5,8 +5,8 @@
 #include "../entity/health.h"
 
 static struct dynamic_object_type lightning_object_type = {
-    .minkowsi_sum = dynamic_object_sweep_minkowski_sum,
-    .bounding_box = dynamic_object_sweep_bounding_box,
+    .minkowsi_sum = sweep_minkowski_sum,
+    .bounding_box = sweep_bounding_box,
     .data = {
         .sweep = {
             .range = {0.707f, 0.707f},
@@ -65,7 +65,7 @@ void lightning_apply_damage(struct dynamic_object* dyanmic_object) {
             continue;
         }
 
-        health_damage(target_health, 1.0f, dyanmic_object->entity_id, DAMAGE_TYPE_FIRE);
+        health_damage(target_health, 1.0f, dyanmic_object->entity_id, DAMAGE_TYPE_LIGHTING);
     }
 }
 

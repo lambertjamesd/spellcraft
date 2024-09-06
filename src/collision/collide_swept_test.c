@@ -1,5 +1,6 @@
 #include "collide_swept.h"
 #include "../test/framework_test.h"
+#include "./shapes/box.h"
 #include <stddef.h>
 
 void object_mesh_collide_data_init(
@@ -32,8 +33,8 @@ static struct mesh_collider single_traingle_mesh = {
 };
 
 static struct dynamic_object_type simple_cube_object = {
-    .minkowsi_sum = dynamic_object_box_minkowski_sum,
-    .bounding_box = dynamic_object_box_bounding_box,
+    .minkowsi_sum = box_minkowski_sum,
+    .bounding_box = box_bounding_box,
     .data = {
         .box = {
             .half_size = {0.05f, 0.05f, 0.05f},

@@ -3,8 +3,6 @@
 
 unsigned int gRandomSeed = 1;
 
-#define MAX_INT_VALUE   0x7fff
-
 int randomInt() {
     gRandomSeed = gRandomSeed * 22695477 + 1;
     return (gRandomSeed >> 16) & MAX_INT_VALUE;

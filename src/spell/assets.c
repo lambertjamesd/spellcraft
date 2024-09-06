@@ -6,6 +6,7 @@
 static struct spell_assets assets;
 
 void spell_assets_init() {
+    // tmesh_cache_release() never called
     assets.projectile_mesh = tmesh_cache_load("rom:/meshes/spell/projectile.tmesh");
     // material_cache_release() never called
     assets.fire_particle_mesh = material_cache_load("rom:/materials/spell/fire_particle.mat");
@@ -17,10 +18,16 @@ void spell_assets_init() {
     // material_cache_release() never called
     assets.ice_material = material_cache_load("rom:/materials/objects/ice.mat");
 
+    // material_cache_release() never called
+    assets.shock_material = material_cache_load("rom:/materials/objects/shock.mat");
+
+    // tmesh_cache_release() never called
     assets.fire_around_mesh = tmesh_cache_load("rom:/meshes/spell/flame_around.tmesh");
 
+    // tmesh_cache_release() never called
     assets.flame_mesh = tmesh_cache_load("rom:/meshes/objects/torch_flame.tmesh");
 
+    // tmesh_cache_release() never called
     assets.lightning_mesh = tmesh_cache_load("rom:/meshes/spell/lightning.tmesh");
 }
 

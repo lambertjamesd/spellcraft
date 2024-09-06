@@ -12,8 +12,8 @@
 #define TORCH_HEIGHT    0.84124f
 
 static struct dynamic_object_type ground_torch_collision_type = {
-    .minkowsi_sum = dynamic_object_capsule_minkowski_sum,
-    .bounding_box = dynamic_object_capsule_bounding_box,
+    .minkowsi_sum = capsule_minkowski_sum,
+    .bounding_box = capsule_bounding_box,
     .data = {
         .capsule = {
             .radius = 0.4f,
@@ -105,4 +105,7 @@ void ground_torch_destroy(struct ground_torch* ground_torch) {
     collision_scene_remove(&ground_torch->dynamic_object);
     update_remove(ground_torch);
     health_destroy(&ground_torch->health);
+
+    tmesh_cache_release(ground_torch->base_mesh);
+    tmesh_cache_release(ground_torch->flame_mesh);
 }

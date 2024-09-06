@@ -18,6 +18,7 @@ const call_pairings = [
     ['rspq_block_end', 'rspq_block_free'],
     ['health_init', 'health_destroy'],
     [['cutscene_load', 'cutscene_new', 'cutscene_builder_finish'], ['cutscene_free', 'cutscene_runner_free_on_finish']],
+    ['tmesh_cache_load', 'tmesh_cache_release'],
 ];
 
 function populate_parings(mapping, curr, value) {

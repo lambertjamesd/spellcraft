@@ -2,6 +2,8 @@
 #ifndef _MATH_MATHF_H
 #define _MATH_MATHF_H
 
+#define MAX_INT_VALUE   0x7fff
+
 int randomInt();
 int randomInRange(int min, int maxPlusOne);
 float randomInRangef(float min, float max);
