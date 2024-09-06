@@ -45,8 +45,10 @@ void training_dummy_update(void* data) {
             struct Vector3 prevForward;
             quatMultVector(&dummy->transform.rotation, &gForward, &prevForward);
             vector3Negate(&prevForward, &prevForward);
+
+            prevForward.y = randomInRangef(-0.25f, 0.25f);
             
-            struct Vector3 randomUp = (struct Vector3){randomInRangef(-0.5f, 0.5f), 1.0f, randomInRangef(-0.5f, 0.5f)};
+            struct Vector3 randomUp = (struct Vector3){randomInRangef(-0.25f, 0.25f), 1.0f, randomInRangef(-0.25f, 0.25f)};
             quatLook(&prevForward, &randomUp, &dummy->transform.rotation);
 
             dummy->angularVelocity = gZeroVec;
