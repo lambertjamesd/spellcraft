@@ -26,6 +26,7 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->mesh.transform_count = 0;
     result->mesh.pose = NULL;
     result->mesh.tmp_fixed_pose = NULL;
+    result->mesh.color = (color_t){255, 255, 255, 255};
 
     return result;
 }

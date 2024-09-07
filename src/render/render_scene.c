@@ -56,7 +56,7 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
     }
 
     mat4x4 mtx;
-    transformSAToMatrix(renderable->transform.transform, mtx);
+    transformSAToMatrix(renderable->transform.transform, mtx, 1.0f);
     mtx[3][0] *= SCENE_SCALE;
     mtx[3][1] *= SCENE_SCALE;
     mtx[3][2] *= SCENE_SCALE;

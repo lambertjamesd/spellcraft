@@ -50,6 +50,7 @@ struct render_batch_element {
             short transform_count;
             // this is temporary
             T3DMat4FP* tmp_fixed_pose;
+            color_t color;
         } mesh;
         struct render_batch_billboard_element billboard;
         struct {

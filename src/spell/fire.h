@@ -3,6 +3,8 @@
 
 #include "spell_sources.h"
 #include "spell_event.h"
+#include "../math/transform_single_axis.h"
+#include "../effects/scale_in_fade_out.h"
 #include "../collision/dynamic_object.h"
 #include "../entity/health.h"
 #include "elements.h"
@@ -11,14 +13,9 @@
 
 struct fire {
     struct spell_data_source* data_source;
-    struct Vector3 particle_offset[MAX_FIRE_PARTICLE_COUNT];
     struct dynamic_object dynamic_object;
-    struct Vector3 position;
-    struct Vector2 rotation;
-    float cycle_time;
-    float total_time;
-    float end_time;
-    uint16_t index_offset;
+    struct TransformSingleAxis transform;
+    struct scale_in_fade_out* flame_effect;
     uint8_t element_type;
 };
 

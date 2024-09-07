@@ -256,6 +256,8 @@ void collision_scene_collide() {
         dynamic_object_recalc_bb(element->object);
     }
 
+    collision_scene_collide_dynamic();
+
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
 
@@ -267,8 +269,6 @@ void collision_scene_collide() {
 
         element->object->is_out_of_bounds = mesh_index_is_contained(&g_scene.mesh_collider->index, element->object->position);
     }
-
-    collision_scene_collide_dynamic();
 }
 
 struct contact* collision_scene_new_contact() {
