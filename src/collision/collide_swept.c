@@ -51,7 +51,7 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
 
     struct EpaResult result;
 
-    if (!epaSolveSwept(
+    if (epaSolveSwept(
         &simplex, 
         &triangle, 
         mesh_triangle_minkowski_sum, 
@@ -61,11 +61,28 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
         collide_data->object->position,
         &result
     )) {
-        return false;
+        collide_data->hit_result = result;
+        return true;
     }
 
-    collide_data->hit_result = result;
-    return true;
+    struct Vector3 final_pos = *collide_data->object->position;
+    *collide_data->object->position = *collide_data->prev_pos;
+
+    if (epaSolve(
+        &simplex,
+        &triangle,
+        mesh_triangle_minkowski_sum,
+        collide_data->object,
+        dynamic_object_minkowski_sum,
+        &result
+    )) {
+        collide_data->hit_result = result;
+        return true;
+    }
+
+    *collide_data->object->position = final_pos;
+
+    return false;
 }
 
 void collide_object_swept_bounce(
