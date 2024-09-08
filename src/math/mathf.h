@@ -4,6 +4,10 @@
 
 #define MAX_INT_VALUE   0x7fff
 
+#define PI_F    3.141592654f
+
+#define DEG_TO_RAD(angle)   ((angle) * (PI_F / 180.0f))
+
 int randomInt();
 int randomInRange(int min, int maxPlusOne);
 float randomInRangef(float min, float max);

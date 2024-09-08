@@ -2,7 +2,7 @@
 
 #include "assets.h"
 #include "../collision/collision_scene.h"
-#include "../collision/shapes/cone.h"
+#include "../collision/shapes/sweep.h"
 #include "../entity/health.h"
 #include "../math/mathf.h"
 #include "../render/render_scene.h"
@@ -20,20 +20,22 @@
 #define TIP_RISE            0.5f
 
 static struct dynamic_object_type fire_object_type = {
-    .minkowsi_sum = cone_minkowski_sum,
-    .bounding_box = cone_bounding_box,
-    .data = { 
-        .cone = {
-            .size = {MAX_RADIUS, MAX_RADIUS, FIRE_LENGTH},
-        },
-    },
+    .minkowsi_sum = sweep_minkowski_sum,
+    .bounding_box = sweep_bounding_box,
+    .data = {
+        .sweep = {
+            .range = {0.707f, 0.707f},
+            .radius = FIRE_LENGTH,
+            .half_height = 0.25f,
+        }
+    }
 };
 
 void fire_apply_transform(struct fire* fire) {
     fire->transform.position = fire->data_source->position;
 
-    fire->transform.rotation.x = -fire->data_source->direction.z;
-    fire->transform.rotation.y = -fire->data_source->direction.x;
+    fire->transform.rotation.x = fire->data_source->direction.z;
+    fire->transform.rotation.y = fire->data_source->direction.x;
 
     vector2Normalize(&fire->transform.rotation, &fire->transform.rotation);
 }

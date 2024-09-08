@@ -24,7 +24,7 @@ void lightning_apply_transform(struct lightning* lightning) {
     lightning->position = lightning->data_source->position;
 
     lightning->rotation.x = lightning->data_source->direction.z;
-    lightning->rotation.y = -lightning->data_source->direction.x;
+    lightning->rotation.y = lightning->data_source->direction.x;
 
     vector2Normalize(&lightning->rotation, &lightning->rotation);
 }

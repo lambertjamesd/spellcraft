@@ -108,15 +108,15 @@ void test_report_failures() {
     }
 }
 
-static const char* current_scene;
+static const char* current_test_scene_name;
 static struct scene* current_test_scene;
 
 void test_load_scene(const char* name) {
-    if (current_scene && strcmp(name, current_scene) == 0) {
+    if (current_test_scene_name && strcmp(name, current_test_scene_name) == 0) {
         return;
     }
 
-    current_scene = name;
+    current_test_scene_name = name;
 
     scene_release(current_test_scene);
     current_test_scene = scene_load(name);

@@ -196,6 +196,8 @@ void player_update(struct player* player) {
         vector2RotateTowards(&player->transform.rotation, &directionUnit, &player_max_rotation, &player->transform.rotation);
     }
 
+    player->transform.rotation = gUp2;
+
     struct Vector3 castDirection;
     vector2ToLookDir(&player->transform.rotation, &castDirection);
 
