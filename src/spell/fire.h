@@ -24,6 +24,4 @@ void fire_destroy(struct fire* fire);
 
 void fire_update(struct fire* fire, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
-enum damage_type fire_determine_damage_type(enum element_type element_type);
-
 #endif

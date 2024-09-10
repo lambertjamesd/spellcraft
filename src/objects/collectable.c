@@ -55,7 +55,7 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
         entity_id_new(), 
         &collectable->dynamic_object, 
         &collectable_collision, 
-        COLLISION_LAYER_TANGIBLE,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
         &collectable->transform.position, 
         0
     );

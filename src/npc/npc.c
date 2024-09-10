@@ -74,7 +74,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
         entity_id,
         &npc->collider,
         &information->collider,
-        COLLISION_LAYER_TANGIBLE,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
         &npc->transform.position,
         &npc->transform.rotation
     );

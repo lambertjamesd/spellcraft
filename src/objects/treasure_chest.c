@@ -71,7 +71,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
         entity_id, 
         &treasure_chest->dynamic_object, 
         &treasure_chest_collision, 
-        COLLISION_LAYER_TANGIBLE,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
         &treasure_chest->transform.position, 
         0
     );

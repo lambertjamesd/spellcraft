@@ -91,5 +91,5 @@ void fire_around_update(struct fire_around* fire_around, struct spell_event_list
 
     fire_around->position = fire_around->data_source->position;
     
-    health_apply_contact_damage(&fire_around->dynamic_object, 1.0f, fire_determine_damage_type(fire_around->element_type));
+    health_apply_contact_damage(&fire_around->dynamic_object, 1.0f, health_determine_damage_type(fire_around->element_type));
 }   

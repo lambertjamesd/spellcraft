@@ -3,6 +3,8 @@
 #include "../collision/collision_scene.h"
 #include "../time/time.h"
 #include "../render/render_scene.h"
+#include "../entity/health.h"
+#include "../util/flags.h"
 #include "assets.h"
 
 int which_one = 0;
@@ -35,13 +37,12 @@ static float burst_mana_amount[] = {
     [ELEMENT_TYPE_LIGHTNING] = 20.0f,
 };
 
-void push_render(struct push* push, struct render_batch* batch) {
-    struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
-
-    if (!target) {
-        return;
-    }
-}
+static float contact_damage[] = {
+    [ELEMENT_TYPE_NONE] = 0.0f,
+    [ELEMENT_TYPE_FIRE] = 1.0f,
+    [ELEMENT_TYPE_ICE] = 1.0f,
+    [ELEMENT_TYPE_LIGHTNING] = 2.0f,
+};
 
 void push_init(struct push* push, struct spell_data_source* source, struct spell_event_options event_options, enum element_type push_mode) {
     push->data_source = source;
@@ -53,12 +54,26 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
     push->dash_trail_right = dash_trail_new(&source->position, false);
     push->dash_trail_left = dash_trail_new(&source->position, true);
 
-    render_scene_add(&push->data_source->position, 4.0f, (render_scene_callback)push_render, push);
+    struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
+
+    if (target && HAS_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE) && push_mode == ELEMENT_TYPE_LIGHTNING) {
+        push->should_restore_tangible = true;
+        CLEAR_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE);
+    } else {
+        push->should_restore_tangible = false;
+    }
 }
 
 void push_destroy(struct push* push) {
+    if (push->should_restore_tangible) {
+        struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
+
+        if (target) {
+            SET_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE);
+        }
+    }
+    
     spell_data_source_release(push->data_source);
-    render_scene_remove(push);
 
     if (push->dash_trail_right) {
         dash_trail_move(push->dash_trail_right, NULL);
@@ -76,6 +91,10 @@ void push_update(struct push* push, struct spell_event_listener* event_listener,
     if (!target) {
         spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
         return;
+    }
+
+    if (contact_damage[push->push_mode]) {
+        health_apply_contact_damage(target, contact_damage[push->push_mode], health_determine_damage_type(push->push_mode));
     }
 
     if (is_bursty && push->mana_regulator.burst_mana_rate == 0.0f) {

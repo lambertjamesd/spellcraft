@@ -122,7 +122,7 @@ void training_dummy_init(struct training_dummy* dummy, struct training_dummy_def
         entity_id,
         &dummy->collision,
         &dummy_collision,
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,
         &dummy->transform.position,
         NULL
     );

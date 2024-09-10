@@ -254,7 +254,7 @@ void player_init(struct player* player, struct player_definition* definition, st
         entity_id,
         &player->collision,
         &player_collision,
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
         &player->transform.position,
         &player->transform.rotation
     );

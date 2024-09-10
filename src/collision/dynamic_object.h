@@ -14,8 +14,9 @@
 
 enum collision_layers {
     COLLISION_LAYER_TANGIBLE = (1 << 0),
-    COLLISION_LAYER_DAMAGE_PLAYER = (1 << 1),
-    COLLISION_LAYER_DAMAGE_ENEMY = (1 << 2),
+    COLLISION_LAYER_LIGHTING_TANGIBLE = (1 << 1),
+    COLLISION_LAYER_DAMAGE_PLAYER = (1 << 2),
+    COLLISION_LAYER_DAMAGE_ENEMY = (1 << 3),
 };
 
 enum collision_group {

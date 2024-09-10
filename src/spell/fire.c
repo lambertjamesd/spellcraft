@@ -58,27 +58,14 @@ void fire_destroy(struct fire* fire) {
     scale_in_fade_out_stop(fire->flame_effect);
 }
 
-enum damage_type fire_determine_damage_type(enum element_type element_type) {
-    switch (element_type) {
-        case ELEMENT_TYPE_FIRE:
-            return DAMAGE_TYPE_FIRE;
-        case ELEMENT_TYPE_ICE:
-            return DAMAGE_TYPE_ICE;
-        case ELEMENT_TYPE_LIGHTNING:
-            return DAMAGE_TYPE_LIGHTING;
-        default:
-            return 0;
-    }
-}
-
 void fire_update(struct fire* fire, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     if (fire->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
         spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
     }
 
     scale_in_fade_out_set_transform(fire->flame_effect, &fire->transform.position, &fire->transform.rotation);
-    
+
     spell_data_source_apply_transform_sa(fire->data_source, &fire->transform);
 
-    health_apply_contact_damage(&fire->dynamic_object, 1.0f, fire_determine_damage_type(fire->element_type));
+    health_apply_contact_damage(&fire->dynamic_object, 1.0f, health_determine_damage_type(fire->element_type));
 }

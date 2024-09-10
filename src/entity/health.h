@@ -4,6 +4,7 @@
 #include "entity_id.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include "../spell/elements.h"
 
 enum damage_type {
     DAMAGE_TYPE_PROJECTILE = (1 << 0),
@@ -43,5 +44,7 @@ struct health* health_get(entity_id id);
 bool health_is_burning(struct health* health);
 bool health_is_frozen(struct health* health);
 bool health_is_shocked(struct health* health);
+
+enum damage_type health_determine_damage_type(enum element_type element_type);
 
 #endif
