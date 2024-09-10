@@ -3,6 +3,7 @@
 
 #include "../effects/lightning_effect.h"
 #include "../collision/dynamic_object.h"
+#include "../math/transform_single_axis.h"
 #include "spell_sources.h"
 #include "spell_event.h"
 
@@ -10,8 +11,7 @@ struct lightning {
     struct lightning_effect* effect;
     struct spell_data_source* data_source;
     struct dynamic_object dynamic_object;
-    struct Vector3 position;
-    struct Vector2 rotation;
+    struct TransformSingleAxis transform;
 };
 
 void lightning_init(struct lightning* lightning, struct spell_data_source* source);

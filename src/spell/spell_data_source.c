@@ -46,6 +46,15 @@ void spell_data_source_release(struct spell_data_source* data_source) {
     data_source->reference_count -= 1;
 }
 
+void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform) {
+    transform->position = data_source->position;
+
+    transform->rotation.x = data_source->direction.z;
+    transform->rotation.y = data_source->direction.x;
+
+    vector2Normalize(&transform->rotation, &transform->rotation);
+}
+
 enum element_type spell_data_source_determine_element(struct spell_data_source* data_source) {
     if (data_source->flags.flaming) {
         if (data_source->flags.icy) {

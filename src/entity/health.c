@@ -2,6 +2,7 @@
 
 #include "../util/hash_map.h"
 #include "../time/time.h"
+#include "../collision/dynamic_object.h"
 #include <stddef.h>
 
 static struct hash_map health_entity_mapping;
@@ -60,6 +61,21 @@ void health_damage(struct health* health, float amount, entity_id source, enum d
 
     if (health->callback) {
         health->callback(health->callback_data, amount, source, type);
+    }
+}
+
+void health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type) {
+    struct contact* curr = damage_source->active_contacts;
+
+    while (curr) {
+        struct health* target_health = health_get(curr->other_object);
+        curr = curr->next;
+
+        if (!target_health) {
+            continue;
+        }
+
+        health_damage(target_health, amount, damage_source->entity_id, type);
     }
 }
 

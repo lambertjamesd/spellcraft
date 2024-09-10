@@ -31,20 +31,11 @@ static struct dynamic_object_type fire_object_type = {
     }
 };
 
-void fire_apply_transform(struct fire* fire) {
-    fire->transform.position = fire->data_source->position;
-
-    fire->transform.rotation.x = fire->data_source->direction.z;
-    fire->transform.rotation.y = fire->data_source->direction.x;
-
-    vector2Normalize(&fire->transform.rotation, &fire->transform.rotation);
-}
-
 void fire_init(struct fire* fire, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element_type) {
     fire->data_source = source;
     spell_data_source_retain(source);
 
-    fire_apply_transform(fire);
+    spell_data_source_apply_transform_sa(fire->data_source, &fire->transform);
 
     fire->flame_effect = scale_in_fade_out_new(spell_assets_get()->fire_sweep_mesh, &fire->transform.position, &fire->transform.rotation, FIRE_LENGTH);
 
@@ -67,21 +58,6 @@ void fire_destroy(struct fire* fire) {
     scale_in_fade_out_stop(fire->flame_effect);
 }
 
-void fire_apply_damage(struct dynamic_object* dyanmic_object, enum damage_type damage_type) {
-    struct contact* curr = dyanmic_object->active_contacts;
-
-    while (curr) {
-        struct health* target_health = health_get(curr->other_object);
-        curr = curr->next;
-
-        if (!target_health) {
-            continue;
-        }
-
-        health_damage(target_health, 1.0f, dyanmic_object->entity_id, damage_type);
-    }
-}
-
 enum damage_type fire_determine_damage_type(enum element_type element_type) {
     switch (element_type) {
         case ELEMENT_TYPE_FIRE:
@@ -100,9 +76,9 @@ void fire_update(struct fire* fire, struct spell_event_listener* event_listener,
         spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
     }
 
-    fire_apply_transform(fire);
-
     scale_in_fade_out_set_transform(fire->flame_effect, &fire->transform.position, &fire->transform.rotation);
+    
+    spell_data_source_apply_transform_sa(fire->data_source, &fire->transform);
 
-    fire_apply_damage(&fire->dynamic_object, fire_determine_damage_type(fire->element_type));
+    health_apply_contact_damage(&fire->dynamic_object, 1.0f, fire_determine_damage_type(fire->element_type));
 }

@@ -3,6 +3,7 @@
 
 #include "../entity/entity_id.h"
 #include "../math/vector3.h"
+#include "../math/transform_single_axis.h"
 #include "elements.h"
 
 #include <stdint.h>
@@ -52,6 +53,8 @@ struct spell_data_source* spell_data_source_pool_get(struct spell_data_source_po
 
 void spell_data_source_retain(struct spell_data_source* data_source);
 void spell_data_source_release(struct spell_data_source* data_source);
+
+void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform);
 
 enum element_type spell_data_source_determine_element(struct spell_data_source* data_source);
 

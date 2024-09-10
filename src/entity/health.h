@@ -26,6 +26,8 @@ struct health {
     void* callback_data;
 };
 
+struct dynamic_object;
+
 void health_reset();
 
 void health_init(struct health* health, entity_id id, float max_health);
@@ -33,6 +35,8 @@ void health_set_callback(struct health* health, health_damage_callback callback,
 void health_destroy(struct health* health);
 
 void health_damage(struct health* health, float amount, entity_id source, enum damage_type type);
+
+void health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type);
 
 struct health* health_get(entity_id id);
 
