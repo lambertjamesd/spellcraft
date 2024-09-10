@@ -44,14 +44,12 @@ make
 
 ## TODO
 
+- camera logic
+-  do a better job with camera tracking logic
+-  implement automatic camera framing when talking to npc
 - build out puzzle elements
--  texture scrolling
--  transition to using t3d
 -  build out spell system some more
 -  switch
--  collectables
 - build out enemy
-- flesh out spell casting
--  camera and controls during remote control spell
 - spells
--  fire push modifier
+-  spell shape variants
