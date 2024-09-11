@@ -49,6 +49,7 @@ struct dynamic_object {
     struct Vector3* position;
     struct Vector2* rotation;
     struct Vector2* pitch;
+    float scale;
     struct Vector3 center;
     struct Vector3 velocity;
     struct Box3D bounding_box;

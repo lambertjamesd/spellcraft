@@ -40,8 +40,8 @@ void spell_slot_init(
                     slot->type = SPELL_EXEC_SLOT_TYPE_LIGHTNING;
                     lightning_init(&slot->data.lightning, input);
                 } else {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
-                    fire_init(&slot->data.fire, input, event_options, ELEMENT_TYPE_FIRE);
+                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                    element_emitter_init(&slot->data.element_emitter, input, event_options, &fire_definition);
                 }
             }
             break;
@@ -54,8 +54,8 @@ void spell_slot_init(
                     slot->type = SPELL_EXEC_SLOT_TYPE_LIGHTNING;
                     lightning_init(&slot->data.lightning, input);
                 } else {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_FIRE;
-                    fire_init(&slot->data.fire, input, event_options, ELEMENT_TYPE_ICE);
+                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                    element_emitter_init(&slot->data.element_emitter, input, event_options, &ice_definition);
                 }
             }
             break;
@@ -88,8 +88,8 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_PROJECTILE:
             projectile_destroy(&slot->data.projectile);
             break;
-        case SPELL_EXEC_SLOT_TYPE_FIRE:
-            fire_destroy(&slot->data.fire);
+        case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
+            element_emitter_destroy(&slot->data.element_emitter);
             break;
         case SPELL_EXEC_SLOT_TYPE_FIRE_AROUND:
             fire_around_destroy(&slot->data.fire_around);
@@ -143,8 +143,8 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
         case SPELL_EXEC_SLOT_TYPE_PROJECTILE:
             projectile_update(&slot->data.projectile, &event_listener, &exec->spell_sources);
             break;
-        case SPELL_EXEC_SLOT_TYPE_FIRE:
-            fire_update(&slot->data.fire, &event_listener, &exec->spell_sources);
+        case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
+            element_emitter_update(&slot->data.element_emitter, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_FIRE_AROUND:
             fire_around_update(&slot->data.fire_around, &event_listener, &exec->spell_sources);

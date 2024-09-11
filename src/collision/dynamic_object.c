@@ -28,6 +28,7 @@ void dynamic_object_init(
     object->collision_layers = collision_layers;
     object->collision_group = 0;
     object->active_contacts = 0;
+    object->scale = 1.0f;
     dynamic_object_recalc_bb(object);
 }
 
@@ -107,9 +108,9 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
 
     struct Vector3 unpitched_out;
 
-    unpitched_out.x = unrotated_out.x * object->rotation->x + unrotated_out.z * object->rotation->y + object->position->x;
-    unpitched_out.y = unrotated_out.y + object->position->y;
-    unpitched_out.z = unrotated_out.z * object->rotation->x - unrotated_out.x * object->rotation->y + object->position->z;
+    unpitched_out.x = unrotated_out.x * object->rotation->x + unrotated_out.z * object->rotation->y;
+    unpitched_out.y = unrotated_out.y;
+    unpitched_out.z = unrotated_out.z * object->rotation->x - unrotated_out.x * object->rotation->y;
 
     if (object->pitch) {
         output->x = unpitched_out.x;
@@ -120,12 +121,24 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
     }
 
     vector3Add(output, &object->center, output);
+
+    if (object->scale != 1.0f) {
+        vector3Scale(output, output, object->scale);
+    }
+
+    vector3Add(output, object->position, output);
 }
 
 void dynamic_object_recalc_bb(struct dynamic_object* object) {
     object->type->bounding_box(&object->type->data, object->rotation, &object->bounding_box);
     struct Vector3 offset;
-    vector3Add(&object->center, object->position, &offset);
+    if (object->scale != 1.0f) {
+        vector3Scale(&object->bounding_box.min, &object->bounding_box.min, object->scale);
+        vector3Scale(&object->bounding_box.max, &object->bounding_box.max, object->scale);
+        vector3AddScaled(object->position, &object->center, object->scale, &offset);
+    } else {
+        vector3Add(&object->center, object->position, &offset);
+    }
     vector3Add(&object->bounding_box.min, &offset, &object->bounding_box.min);
     vector3Add(&object->bounding_box.max, &offset, &object->bounding_box.max);
 }

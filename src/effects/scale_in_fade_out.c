@@ -49,30 +49,19 @@ void scale_in_fade_out_render(void* data, struct render_batch* batch) {
     element->mesh.color.a = (uint8_t)(255.0f * alpha);
 }
 
-void scale_in_fade_out_free(struct scale_in_fade_out* effect);
-
-void scale_in_fade_out_update(void* data) {
-    struct scale_in_fade_out* effect = (struct scale_in_fade_out*)data;
-
-    if (game_time - effect->end_time > FADE_OUT_TIME) {
-        scale_in_fade_out_free(effect);
-    }
-}
-
 void scale_in_fade_out_free(struct scale_in_fade_out* effect) {
-    update_remove(effect);
     render_scene_remove(effect);
     effect_free(effect);
 }
 
-struct scale_in_fade_out* scale_in_fade_out_new(struct tmesh* mesh, struct Vector3* pos, struct Vector2* rotation, float radius) {
+struct scale_in_fade_out* scale_in_fade_out_new(struct tmesh* mesh, struct Vector3* pos, struct Vector3* direction, float radius) {
     struct scale_in_fade_out* result = effect_malloc(sizeof(struct scale_in_fade_out));
 
     result->start_time = game_time;
     result->end_time = 0.0f;
 
     result->transform.position = *pos;
-    result->transform.rotation = *rotation;
+    vector2LookDir(&result->transform.rotation, direction);
     result->radius = radius;
 
     result->mesh = mesh;
@@ -82,13 +71,16 @@ struct scale_in_fade_out* scale_in_fade_out_new(struct tmesh* mesh, struct Vecto
     return result;
 }
 
-void scale_in_fade_out_set_transform(struct scale_in_fade_out* effect, struct Vector3* pos, struct Vector2* rotation) {
+void scale_in_fade_out_set_transform(struct scale_in_fade_out* effect, struct Vector3* pos, struct Vector3* direction, float radius) {
     effect->transform.position = *pos;
-    effect->transform.rotation = *rotation;
+    vector2LookDir(&effect->transform.rotation, direction);
+    effect->radius = radius;
 }
 
 void scale_in_fade_out_stop(struct scale_in_fade_out* effect) {
     effect->end_time = game_time;
-    // TODO possibly implement a timer callback system
-    update_add(effect, scale_in_fade_out_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
+}
+
+bool scale_in_fade_out_is_running(struct scale_in_fade_out* effect) {
+    return !effect->end_time || game_time - effect->end_time < FADE_OUT_TIME;
 }

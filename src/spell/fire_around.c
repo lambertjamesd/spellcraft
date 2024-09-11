@@ -8,7 +8,7 @@
 #include "../time/time.h"
 #include "assets.h"
 
-#include "fire.h"
+#include "element_emitter.h"
 
 #define ATTACK_RADIUS   2.0f
 #define HALF_HEIGHT     0.5f
