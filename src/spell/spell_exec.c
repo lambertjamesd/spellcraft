@@ -36,9 +36,15 @@ void spell_slot_init(
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, input->flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
             } else {
-                if (input->flags.icy) {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_LIGHTNING;
-                    lightning_init(&slot->data.lightning, input);
+                if (input->flags.icy && input->flags.flaming) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                    element_emitter_init(&slot->data.element_emitter, input, event_options, &lightning_around_definition);
+                } else if (input->flags.icy) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                    element_emitter_init(&slot->data.element_emitter, input, event_options, &lightning_definition);
+                } else if (input->flags.flaming) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                    element_emitter_init(&slot->data.element_emitter, input, event_options, &fire_around_definition);
                 } else {
                     slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
                     element_emitter_init(&slot->data.element_emitter, input, event_options, &fire_definition);
@@ -51,8 +57,8 @@ void spell_slot_init(
                 explosion_init(&slot->data.explosion, input, event_options, input->flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
             } else {
                 if (input->flags.flaming) {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_LIGHTNING;
-                    lightning_init(&slot->data.lightning, input);
+                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                    element_emitter_init(&slot->data.element_emitter, input, event_options, &lightning_definition);
                 } else {
                     slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
                     element_emitter_init(&slot->data.element_emitter, input, event_options, &ice_definition);
@@ -91,9 +97,6 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
             element_emitter_destroy(&slot->data.element_emitter);
             break;
-        case SPELL_EXEC_SLOT_TYPE_FIRE_AROUND:
-            fire_around_destroy(&slot->data.fire_around);
-            break;
         case SPELL_EXEC_SLOT_TYPE_EXPLOSION:
             explosion_destroy(&slot->data.explosion);
             break;
@@ -103,9 +106,6 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             push_destroy(&slot->data.push);
-            break;
-        case SPELL_EXEC_SLOT_TYPE_LIGHTNING:
-            lightning_destroy(&slot->data.lightning);
             break;
         default:
             break;
@@ -146,9 +146,6 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
         case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
             element_emitter_update(&slot->data.element_emitter, &event_listener, &exec->spell_sources);
             break;
-        case SPELL_EXEC_SLOT_TYPE_FIRE_AROUND:
-            fire_around_update(&slot->data.fire_around, &event_listener, &exec->spell_sources);
-            break;
         case SPELL_EXEC_SLOT_TYPE_EXPLOSION:
             explosion_update(&slot->data.explosion, &event_listener, &exec->spell_sources);
             break;
@@ -157,9 +154,6 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             push_update(&slot->data.push, &event_listener, &exec->spell_sources);
-            break;
-        case SPELL_EXEC_SLOT_TYPE_LIGHTNING:
-            lightning_update(&slot->data.lightning, &event_listener, &exec->spell_sources);
             break;
         default:
             break;

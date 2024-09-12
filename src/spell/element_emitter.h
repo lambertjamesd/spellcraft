@@ -12,7 +12,7 @@
 
 typedef void* (*on_effect_start)(struct Vector3* position, struct Vector3* direction, float scale);
 typedef void* (*on_effect_update)(void* effect, struct Vector3* position, struct Vector3* direction, float scale);
-typedef void* (*on_effect_stop)(void* effect);
+typedef void (*on_effect_stop)(void* effect);
 typedef bool (*is_effect_running)(void* effect);
 typedef bool (*effect_free)(void* effect);
 
@@ -39,7 +39,10 @@ struct element_emitter {
 };
 
 extern struct element_emitter_definition fire_definition;
+extern struct element_emitter_definition fire_around_definition;
 extern struct element_emitter_definition ice_definition;
+extern struct element_emitter_definition lightning_definition;
+extern struct element_emitter_definition lightning_around_definition;
 
 void element_emitter_init(struct element_emitter* element_emitter, struct spell_data_source* source, struct spell_event_options event_options, struct element_emitter_definition* effect_definition);
 void element_emitter_destroy(struct element_emitter* element_emitter);

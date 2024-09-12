@@ -27,14 +27,14 @@ struct lightning_effect* lightning_effect_new(struct Vector3* position, struct l
     return result;
 }
 
-void lightning_effect_set_position(struct lightning_effect* effect, struct Vector3* position, struct Vector3* direction) {
+void lightning_effect_set_position(struct lightning_effect* effect, struct Vector3* position, struct Vector3* direction, float radius) {
     effect->last_position = *position;
 
     for (int i = 0; i < 2; i += 2) {
         struct Transform* next_transform = &effect->armature.pose[effect->next_transform];
 
         vector3Scale(position, &next_transform->position, SCENE_SCALE);
-        vector3Scale(&gOneVec, &next_transform->scale, randomInRangef(1.5f, 3.0f));
+        vector3Scale(&gOneVec, &next_transform->scale, randomInRangef(radius * 0.5f, radius));
 
         struct Quaternion look_rotation;
         quatLook(direction, &gUp, &look_rotation);

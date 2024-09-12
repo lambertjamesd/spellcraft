@@ -62,6 +62,7 @@ bool spell_has_secondary_event(struct spell* spell, int col, int row) {
 static uint8_t is_modifier_mapping[] = {
     [ITEM_TYPE_NONE] = 0,
     [SPELL_SYMBOL_FIRE] = 1,
+    [SPELL_SYMBOL_ICE] = 1,
     [SPELL_SYMBOL_EARTH] = 0,
     [SPELL_SYMBOL_AIR] = 1,
     [SPELL_SYMBOL_RECAST] = 0,

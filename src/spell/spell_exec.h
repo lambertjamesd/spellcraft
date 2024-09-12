@@ -10,35 +10,29 @@
 #include "../math/vector3.h"
 #include "projectile.h"
 #include "element_emitter.h"
-#include "fire_around.h"
 #include "explosion.h"
 #include "spell_sources.h"
 #include "recast.h"
 #include "push.h"
 #include "mana_pool.h"
-#include "lightning.h"
 
 typedef uint32_t spell_slot_id;
 
 union spell_exec_data {
     struct projectile projectile;
     struct element_emitter element_emitter;
-    struct fire_around fire_around;
     struct explosion explosion;
     struct recast recast;
     struct push push;
-    struct lightning lightning;
 };
 
 enum spell_exec_slot_type {
     SPELL_EXEC_SLOT_TYPE_EMPTY,
     SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER,
-    SPELL_EXEC_SLOT_TYPE_FIRE_AROUND,
     SPELL_EXEC_SLOT_TYPE_PROJECTILE,
     SPELL_EXEC_SLOT_TYPE_EXPLOSION,
     SPELL_EXEC_SLOT_TYPE_PUSH,
     SPELL_EXEC_SLOT_TYPE_RECAST,
-    SPELL_EXEC_SLOT_TYPE_LIGHTNING,
 };
 
 struct spell_exec_slot {
