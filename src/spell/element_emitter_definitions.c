@@ -35,7 +35,7 @@ bool effect_always_stopped(void*) {
     return false;
 }
 
-struct element_emitter_definition fire_definition = {
+static struct element_emitter_definition fire_definition = {
     .element_type = ELEMENT_TYPE_FIRE,
     .collider_type = {
         .minkowsi_sum = sweep_minkowski_sum,
@@ -58,7 +58,7 @@ struct element_emitter_definition fire_definition = {
     .effect_free = (effect_free)scale_in_fade_out_free,
 };
 
-struct element_emitter_definition fire_around_definition = {
+static struct element_emitter_definition fire_around_definition = {
     .element_type = ELEMENT_TYPE_FIRE,
     .collider_type = {
         .minkowsi_sum = cylinder_minkowski_sum,
@@ -80,7 +80,7 @@ struct element_emitter_definition fire_around_definition = {
     .effect_free = (effect_free)scale_in_fade_out_free,
 };
 
-struct element_emitter_definition ice_definition = {
+static struct element_emitter_definition ice_definition = {
     .element_type = ELEMENT_TYPE_FIRE,
     .collider_type = {
         .minkowsi_sum = sweep_minkowski_sum,
@@ -103,7 +103,7 @@ struct element_emitter_definition ice_definition = {
     .effect_free = (effect_free)scale_in_fade_out_free,
 };
 
-struct element_emitter_definition lightning_definition = {
+static struct element_emitter_definition lightning_definition = {
     .element_type = ELEMENT_TYPE_LIGHTNING,
     .collider_type = {
         .minkowsi_sum = sweep_minkowski_sum,
@@ -126,7 +126,7 @@ struct element_emitter_definition lightning_definition = {
     .effect_free = (effect_free)lightning_effect_free,
 };
 
-struct element_emitter_definition lightning_around_definition = {
+static struct element_emitter_definition lightning_around_definition = {
     .element_type = ELEMENT_TYPE_LIGHTNING,
     .collider_type = {
         .minkowsi_sum = cylinder_minkowski_sum,
@@ -147,3 +147,43 @@ struct element_emitter_definition lightning_around_definition = {
     .is_effect_running = effect_always_stopped,
     .effect_free = (effect_free)lightning_effect_free,
 };
+
+#define ELEMENT_DEF_INDEX(has_air, has_fire, has_ice)   (((has_air) ? 0x4 : 0) + ((has_fire) ? 0x2 : 0) + ((has_ice) ? 0x1 : 0))
+
+static struct element_emitter_definition* fire_definitions[] = {
+    [ELEMENT_DEF_INDEX(0, 0, 0)] = &fire_definition,
+    [ELEMENT_DEF_INDEX(0, 0, 1)] = &lightning_definition,
+    [ELEMENT_DEF_INDEX(0, 1, 0)] = &fire_around_definition,
+    [ELEMENT_DEF_INDEX(0, 1, 1)] = &lightning_around_definition,
+
+    // TODO
+    [ELEMENT_DEF_INDEX(1, 0, 0)] = &fire_definition,
+    [ELEMENT_DEF_INDEX(1, 0, 1)] = &lightning_definition,
+    [ELEMENT_DEF_INDEX(1, 1, 0)] = &fire_around_definition,
+    [ELEMENT_DEF_INDEX(1, 1, 1)] = &lightning_around_definition,
+};
+
+static struct element_emitter_definition* ice_definitions[] = {
+    [ELEMENT_DEF_INDEX(0, 0, 0)] = &ice_definition,
+    // TODO
+    [ELEMENT_DEF_INDEX(0, 0, 1)] = &ice_definition,
+    [ELEMENT_DEF_INDEX(0, 1, 0)] = &lightning_definition,
+    [ELEMENT_DEF_INDEX(0, 1, 1)] = &lightning_around_definition,
+
+    // TODO
+    [ELEMENT_DEF_INDEX(1, 0, 0)] = &ice_definition,
+    [ELEMENT_DEF_INDEX(1, 0, 1)] = &ice_definition,
+    [ELEMENT_DEF_INDEX(1, 1, 0)] = &lightning_definition,
+    [ELEMENT_DEF_INDEX(1, 1, 1)] = &lightning_around_definition,
+};
+
+struct element_emitter_definition* element_emitter_find_def(enum element_type element_type, bool has_air, bool has_fire, bool has_ice) {
+    switch (element_type) {
+        case ELEMENT_TYPE_FIRE:
+            return fire_definitions[ELEMENT_DEF_INDEX(has_air, has_fire, has_ice)];
+        case ELEMENT_TYPE_ICE:
+            return ice_definitions[ELEMENT_DEF_INDEX(has_air, has_fire, has_ice)];
+        default:
+            return NULL;
+    }
+}

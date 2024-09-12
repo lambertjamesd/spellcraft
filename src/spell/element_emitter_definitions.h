@@ -3,10 +3,6 @@
 
 #include "element_emitter.h"
 
-extern struct element_emitter_definition fire_definition;
-extern struct element_emitter_definition fire_around_definition;
-extern struct element_emitter_definition ice_definition;
-extern struct element_emitter_definition lightning_definition;
-extern struct element_emitter_definition lightning_around_definition;
+struct element_emitter_definition* element_emitter_find_def(enum element_type element_type, bool has_air, bool has_fire, bool has_ice);
 
 #endif

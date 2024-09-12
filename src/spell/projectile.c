@@ -77,7 +77,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
     projectile->dynamic_object.has_gravity = 0;
 
-    if (data_source->flags.controlled) {
+    if (data_source->flags.windy) {
         projectile->is_controlled = 1;
     }
 }

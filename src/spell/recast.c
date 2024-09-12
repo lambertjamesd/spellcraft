@@ -76,7 +76,7 @@ void recast_update(struct recast* recast, struct spell_event_listener* event_lis
 
         output->position = recast->original_source->position;
         output->flags = recast->original_source->flags;
-        if (recast->recast_source->flags.controlled) {
+        if (recast->recast_source->flags.windy) {
             output->direction = recast->recast_source->direction;
         } else {
             output->direction = recast->original_source->direction;
@@ -90,7 +90,7 @@ void recast_update(struct recast* recast, struct spell_event_listener* event_lis
     if (recast->output) {
         recast->output->position = recast->original_source->position;
         recast->output->flags = recast->original_source->flags;
-        if (recast->recast_source->flags.controlled) {
+        if (recast->recast_source->flags.windy) {
             recast->output->direction = recast->recast_source->direction;
         } else {
             recast->output->direction = recast->original_source->direction;

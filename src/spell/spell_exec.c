@@ -37,19 +37,9 @@ void spell_slot_init(
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, input->flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
             } else {
-                if (input->flags.icy && input->flags.flaming) {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
-                    element_emitter_init(&slot->data.element_emitter, input, event_options, &lightning_around_definition);
-                } else if (input->flags.icy) {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
-                    element_emitter_init(&slot->data.element_emitter, input, event_options, &lightning_definition);
-                } else if (input->flags.flaming) {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
-                    element_emitter_init(&slot->data.element_emitter, input, event_options, &fire_around_definition);
-                } else {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
-                    element_emitter_init(&slot->data.element_emitter, input, event_options, &fire_definition);
-                }
+                struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, input->flags.windy, input->flags.flaming, input->flags.icy);
+                slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                element_emitter_init(&slot->data.element_emitter, input, event_options, def);
             }
             break;
         case SPELL_SYMBOL_ICE:
@@ -57,13 +47,9 @@ void spell_slot_init(
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, input->flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
             } else {
-                if (input->flags.flaming) {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
-                    element_emitter_init(&slot->data.element_emitter, input, event_options, &lightning_definition);
-                } else {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
-                    element_emitter_init(&slot->data.element_emitter, input, event_options, &ice_definition);
-                }
+                struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, input->flags.windy, input->flags.flaming, input->flags.icy);
+                slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                element_emitter_init(&slot->data.element_emitter, input, event_options, def);
             }
             break;
         case SPELL_SYMBOL_RECAST:
@@ -282,7 +268,7 @@ int spell_exec_find_modifier(struct spell_exec* exec) {
 
 static union spell_source_flags symbol_to_modifier[] = {
     [SPELL_SYMBOL_FIRE] = { .flaming = 1 },
-    [SPELL_SYMBOL_AIR] = { .controlled = 1 },
+    [SPELL_SYMBOL_AIR] = { .windy = 1 },
     [SPELL_SYMBOL_ICE] = { .icy = 1 },
     [SPELL_SYMBOL_LIFE] = { .living = 1 },
 };
