@@ -1,0 +1,12 @@
+#ifndef __SPELL_ELEMENT_EMITTER_DEFINITIONS_H__
+#define __SPELL_ELEMENT_EMITTER_DEFINITIONS_H__
+
+#include "element_emitter.h"
+
+extern struct element_emitter_definition fire_definition;
+extern struct element_emitter_definition fire_around_definition;
+extern struct element_emitter_definition ice_definition;
+extern struct element_emitter_definition lightning_definition;
+extern struct element_emitter_definition lightning_around_definition;
+
+#endif

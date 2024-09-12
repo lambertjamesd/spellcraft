@@ -6,6 +6,7 @@
 #include "../util/sort.h"
 #include "../time/time.h"
 #include "elements.h"
+#include "element_emitter_definitions.h"
 
 void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana);
 

@@ -38,12 +38,6 @@ struct element_emitter {
     bool is_active;
 };
 
-extern struct element_emitter_definition fire_definition;
-extern struct element_emitter_definition fire_around_definition;
-extern struct element_emitter_definition ice_definition;
-extern struct element_emitter_definition lightning_definition;
-extern struct element_emitter_definition lightning_around_definition;
-
 void element_emitter_init(struct element_emitter* element_emitter, struct spell_data_source* source, struct spell_event_options event_options, struct element_emitter_definition* effect_definition);
 void element_emitter_destroy(struct element_emitter* element_emitter);
 
