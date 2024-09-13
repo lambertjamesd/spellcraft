@@ -31,7 +31,7 @@ void pause_menu_transition(struct pause_menu* pause_menu, enum active_menu targe
     switch (pause_menu->active_menu) {
         case ACTIVE_MENU_NONE:
             current_game_mode = GAME_MODE_TRANSITION_TO_MENU;
-            update_pause_layers(UPDATE_LAYER_WORLD | UPDATE_LAYER_DIALOG);
+            update_pause_layers(UPDATE_LAYER_WORLD | UPDATE_LAYER_DIALOG | UPDATE_LAYER_CUTSCENE);
             break;
         case ACTIVE_MENU_SPELL_BUILDING:
             spell_building_menu_hide(&pause_menu->spell_building_menu);
@@ -49,7 +49,7 @@ void pause_menu_transition(struct pause_menu* pause_menu, enum active_menu targe
     switch (target) {
         case ACTIVE_MENU_NONE:
             current_game_mode = GAME_MODE_3D;
-            update_unpause_layers(UPDATE_LAYER_WORLD | UPDATE_LAYER_DIALOG);
+            update_unpause_layers(UPDATE_LAYER_WORLD | UPDATE_LAYER_DIALOG | UPDATE_LAYER_CUTSCENE);
             break;
         case ACTIVE_MENU_SPELL_BUILDING:
             spell_building_menu_show(&pause_menu->spell_building_menu, data);
