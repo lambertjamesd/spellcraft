@@ -1,63 +1,32 @@
 #include "move_towards.h"
 
 #include "../time/time.h"
+#include "../math/mathf.h"
 #include <math.h>
 
 // dP = v*t + 0.5*a*t*t
 // t = v/a
 // stop_distance = 0.5*v*v/a
 
+// sqrtf(stop_distance * a * 2)
+
 void move_towards(
     struct Vector3* position,
-    struct Vector3* velocity,
+    float* speed,
     struct Vector3* target,
     struct move_towards_parameters* parameters
 ) {
-    struct Vector3 offset;
-    struct Vector3 direction;
+    float distance = sqrtf(vector3DistSqrd(position, target));
 
-    vector3Sub(target, position, &offset);
+    float target_speed = parameters->max_speed;
 
-    vector3Normalize(&offset, &direction);
-    
-    float distance = vector3Dot(&offset, &direction);
+    float max_speed_sqr = distance * parameters->max_accel;
 
-    if (vector3MagSqrd(&direction) < 0.00001f) {
-        direction = gRight;
+    if (max_speed_sqr < parameters->max_speed * parameters->max_speed) {
+        target_speed = sqrtf(target_speed);
     }
 
-    float dir_velocity = vector3Dot(&direction, velocity);
+    *speed = mathfMoveTowards(*speed, target_speed, parameters->max_accel * fixed_time_step);
 
-    struct Vector3 tangent_velocity;
-    vector3AddScaled(velocity, &direction, -dir_velocity, &tangent_velocity);
-    vector3MoveTowards(&tangent_velocity, &gZeroVec, parameters->max_accel_tangent * fixed_time_step, &tangent_velocity);
-
-    if (dir_velocity < 0.0f) {
-        dir_velocity += fixed_time_step * parameters->max_accel_dir;
-    } else {
-        float stop_distance = 0.5f * dir_velocity * dir_velocity / parameters->max_accel_dir;
-
-        if (stop_distance < distance) {
-            dir_velocity += fixed_time_step * parameters->max_accel_dir;
-        } else if (distance > 0.00001f) {
-            float accel = 0.5f * dir_velocity * dir_velocity / distance;
-            dir_velocity -= fixed_time_step * accel;
-        }
-    }
-
-    vector3AddScaled(&tangent_velocity, &direction, dir_velocity, velocity);
-
-    float speedSqrd = vector3MagSqrd(velocity);
-
-    if (speedSqrd > parameters->max_speed * parameters->max_speed) {
-        vector3Scale(velocity, velocity, parameters->max_speed / sqrtf(speedSqrd));
-    }
-    vector3AddScaled(position, velocity, fixed_time_step, position);
-
-    vector3Sub(target, position, &offset);
-
-    if (vector3Dot(&offset, &direction) <= 0.0f) {
-        *velocity = gZeroVec;
-        *position = *target;
-    }
+    vector3MoveTowards(position, target, *speed * fixed_time_step, position);
 }

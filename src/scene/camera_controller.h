@@ -22,7 +22,7 @@ struct camera_controller {
     struct camera_cached_calcuations _cache_calcluations;
     float follow_distace;
     struct Vector3 target;
-    struct Vector3 velocity;
+    float speed;
     struct Vector3 look_target;
     enum camera_controller_state state;
 };

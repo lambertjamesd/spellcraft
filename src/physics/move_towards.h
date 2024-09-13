@@ -5,14 +5,13 @@
 
 struct move_towards_parameters {
     float max_speed;
-    float max_accel_tangent;
-    float max_accel_dir;
+    float max_accel;
     float damping;
 };
 
 void move_towards(
     struct Vector3* position,
-    struct Vector3* velocity,
+    float* speed,
     struct Vector3* target,
     struct move_towards_parameters* parameters
 );

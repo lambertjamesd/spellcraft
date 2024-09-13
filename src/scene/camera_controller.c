@@ -10,8 +10,7 @@
 
 static struct move_towards_parameters camera_move_parameters = {
     .max_speed = 100.0f,
-    .max_accel_tangent = 12.0f,
-    .max_accel_dir = 12.0f,
+    .max_accel = 20.0f,
 };
 
 #define ASPECT_RATIO    (4.0f/3.0f)
@@ -98,7 +97,7 @@ void camera_controller_determine_player_move_target(struct camera_controller* co
 }
 
 void camera_controller_update_position(struct camera_controller* controller, struct TransformSingleAxis* target) {
-    move_towards(&controller->camera->transform.position, &controller->velocity, &controller->target, &camera_move_parameters);
+    move_towards(&controller->camera->transform.position, &controller->speed, &controller->target, &camera_move_parameters);
 
     struct Vector3 offset;
     vector3Sub(&controller->player->transform.position, &controller->camera->transform.position, &offset);
@@ -128,7 +127,7 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
 
     controller->camera->transform.position = controller->target;
     controller->camera->transform.scale = gOneVec;
-    controller->velocity = gZeroVec;
+    controller->speed = 0.0f;
     controller->_cache_calcluations.fov = 0.0f;
     quatAxisAngle(&gRight, 0.0f, &controller->camera->transform.rotation);
 
