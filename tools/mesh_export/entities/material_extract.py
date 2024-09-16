@@ -242,18 +242,23 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
         _determine_combiner_from_f3d(mat['f3d_mat']['combiner1']),
         _determine_combiner_from_f3d(mat['f3d_mat']['combiner2']) if is_2_cycle else None,
     )
-    result.blend_mode = material.BlendMode(
-        _determine_blend_from_f3d(rdp_settings, 1),
-        _determine_blend_from_f3d(rdp_settings, 2) if is_2_cycle else None,
-    )
 
     draw_layer = mat['f3d_mat']['draw_layer']
 
-    if draw_layer == 2:
+    if draw_layer == 0 or draw_layer == 1:
+        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.blend_mode.z_mode = 'OPAQUE'
+    elif draw_layer == 2:
+        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
         result.blend_mode.z_mode = 'DECAL'
     elif draw_layer == 3:
+        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
         result.blend_mode.z_mode = 'INTER'
+    elif draw_layer == 4:
+        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.blend_mode.z_mode = 'OPAQUE'
     elif draw_layer == 5 or draw_layer == 6 or draw_layer == 7:
+        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
         result.blend_mode.z_mode = 'TRANSPARENT'
         result.blend_mode.z_write = False
 
