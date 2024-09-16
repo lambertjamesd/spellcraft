@@ -426,9 +426,7 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
     current_material = material.Material()
 
     if settings.default_material_name != None and settings.default_material_name.startswith('materials/'):
-        material_filename = f"assets/{settings.default_material_name}.mat.json"
-        current_material = material.parse_material(material_filename)
-
+        current_material = settings.default_material
         material_romname = f"rom:/{settings.default_material_name}.mat".encode()
         file.write(len(material_romname).to_bytes(1, 'big'))
         file.write(material_romname)

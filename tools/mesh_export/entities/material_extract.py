@@ -3,6 +3,14 @@ import os.path
 import sys
 
 from . import material
+from . import serialize
+
+def _reverse_lookup(mapping: dict, value):
+    for entry in mapping.items():
+        if entry[1] == value:
+            return entry[0]
+
+    raise Exception(f'Could not find value {value} in reverse lookup')
 
 def search_node_input(from_node: bpy.types.Node, input_name: str):
     for input in from_node.inputs:
@@ -170,7 +178,109 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
         result.blend_mode.z_mode = 'DECAL'
         result.blend_mode.z_write = False
 
-def load_material_with_name(material_name: str, bpy_mat: bpy.types.Material):
+def _determine_combiner_from_f3d(combiner) -> material.CombineModeCycle:
+     return material.CombineModeCycle(
+        _reverse_lookup(serialize.COMB_A, combiner['A']),
+        _reverse_lookup(serialize.COMB_B, combiner['B']),
+        _reverse_lookup(serialize.COMB_C, combiner['C']),
+        _reverse_lookup(serialize.COMB_D, combiner['D']),
+        _reverse_lookup(serialize.ACOMB_A, combiner['A_alpha']),
+        _reverse_lookup(serialize.ACOMB_A, combiner['B_alpha']),
+        _reverse_lookup(serialize.ACOMB_MUL, combiner['C_alpha']),
+        _reverse_lookup(serialize.ACOMB_A, combiner['D_alpha']),
+    )
+
+def _determine_blend_from_f3d(rdp_settings, index) -> material.BlendModeCycle:
+    return material.BlendModeCycle(
+        _reverse_lookup(serialize.BLEND_A,rdp_settings[f'blend_p{index}']),
+        _reverse_lookup(serialize.BLEND_B1,rdp_settings[f'blend_a{index}']),
+        _reverse_lookup(serialize.BLEND_A,rdp_settings[f'blend_m{index}']),
+        _reverse_lookup(serialize.BLEND_B1,rdp_settings[f'blend_b{index}']),
+    )
+
+def _determine_color_from_f3d(color) -> material.Color:
+    return material.Color(
+        int(color[0] * 255),
+        int(color[1] * 255),
+        int(color[2] * 255),
+        int(color[3] * 255)
+    )
+
+def _determine_tex_axis_from_f3d(axis, result: material.TexAxis):
+    result.scale_log = axis['shift']
+
+    if 'clamp' in axis and axis['clamp']:
+        result.repeats = 0
+    
+    if 'mirror' in axis and axis['mirror']:
+        result.mirror = True
+
+
+def _determine_tex_from_f3d(tex) -> material.Tex:
+    image = tex['tex']
+
+    if not tex['tex_set'] or not image:
+        return None
+
+    input_filename = sys.argv[1]
+
+    result = material.Tex()
+    result.filename = os.path.normpath(os.path.join(os.path.dirname(input_filename), image.filepath[2:]))
+    _determine_tex_axis_from_f3d(tex['S'], result.s)
+    _determine_tex_axis_from_f3d(tex['T'], result.t)
+
+    return result
+
+
+def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
+    rdp_settings = mat['f3d_mat']['rdp_settings']
+
+    is_2_cycle = rdp_settings['g_mdsft_cycletype'] == 1
+    
+    result: material.Material = material.Material()
+    result.combine_mode = material.CombineMode(
+        _determine_combiner_from_f3d(mat['f3d_mat']['combiner1']),
+        _determine_combiner_from_f3d(mat['f3d_mat']['combiner2']) if is_2_cycle else None,
+    )
+    result.blend_mode = material.BlendMode(
+        _determine_blend_from_f3d(rdp_settings, 1),
+        _determine_blend_from_f3d(rdp_settings, 2) if is_2_cycle else None,
+    )
+
+    draw_layer = mat['f3d_mat']['draw_layer']
+
+    if draw_layer == 2:
+        result.blend_mode.z_mode = 'DECAL'
+    elif draw_layer == 3:
+        result.blend_mode.z_mode = 'INTER'
+    elif draw_layer == 5 or draw_layer == 6 or draw_layer == 7:
+        result.blend_mode.z_mode = 'TRANSPARENT'
+        result.blend_mode.z_write = False
+
+    if mat['f3d_mat']['set_env']:
+        result.env_color = _determine_color_from_f3d(mat['f3d_mat']['env_color'])
+
+    if mat['f3d_mat']['set_prim']:
+        result.env_color = _determine_color_from_f3d(mat['f3d_mat']['prim_color'])
+
+    if mat['f3d_mat']['set_blend']:
+        result.env_color = _determine_color_from_f3d(mat['f3d_mat']['blend_color'])
+
+    if mat['f3d_mat']['set_prim']:
+        result.env_color = _determine_color_from_f3d(mat['f3d_mat']['prim_color'])
+
+    result.tex0 = _determine_tex_from_f3d(mat['f3d_mat']['tex0'])
+    result.tex1 = _determine_tex_from_f3d(mat['f3d_mat']['tex1'])
+
+    if rdp_settings['g_cull_back']:
+        result.culling = True
+    else:
+        result.culling = False
+
+    return result
+
+
+def load_material_with_name(material_name: str, bpy_mat: bpy.types.Material) -> material.Material:
     if not bpy_mat:
         return material.Material()
 
@@ -188,5 +298,7 @@ def load_material_with_name(material_name: str, bpy_mat: bpy.types.Material):
     elif os.path.exists(material_filename):
         material_object = material.parse_material(material_filename)
         return material_object
+    elif 'f3d_mat' in bpy_mat:
+        return determine_material_from_f3d(bpy_mat)
     else:
         raise Exception(f"{material_filename} does not exist")

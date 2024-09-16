@@ -29,6 +29,9 @@ def process_scene():
         if obj.type != "MESH":
             continue
 
+        if not obj.name in bpy.context.view_layer.objects:
+            continue
+
         bpy.context.view_layer.objects.active = obj
 
         for modifier in obj.modifiers:
