@@ -8,12 +8,13 @@
 extern struct global_location inventory_item_locations[ITEM_TYPE_COUNT];
 
 struct spell_symbol flame_spell_symbols[] = {
+    {.type = SPELL_SYMBOL_AIR},
     {.type = SPELL_SYMBOL_FIRE},
 };
 
 struct spell flame_spell = {
     .symbols = flame_spell_symbols,
-    .cols = 1,
+    .cols = 2,
     .rows = 1,
 
     .symbol_index = SPELL_ICON_FIRE,

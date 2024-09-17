@@ -27,6 +27,7 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->mesh.pose = NULL;
     result->mesh.tmp_fixed_pose = NULL;
     result->mesh.color = (color_t){255, 255, 255, 255};
+    result->mesh.use_prim_color = 0;
 
     return result;
 }
@@ -288,6 +289,10 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         t3d_matrix_push(((T3DMat4FP**)element->mesh.transform)[mtx_index]);
                     }
                 }
+            }
+
+            if (element->mesh.use_prim_color) {
+                rdpq_set_prim_color(element->mesh.color);
             }
 
             rspq_block_run(element->mesh.block);

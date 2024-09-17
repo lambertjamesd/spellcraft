@@ -74,10 +74,20 @@ class mesh_data():
                 break
 
         color = None
+        alpha = None
+        any_color = None
 
         for attr in mesh.attributes:
             if attr.data_type == 'BYTE_COLOR' or attr.data_type == 'FLOAT_COLOR':
-                color = attr
+                if attr.name.lower().startswith('col'):
+                    color = attr
+                elif attr.name.lower() == 'alpha':
+                    alpha = attr
+                else:
+                    any_color = attr
+
+        if not color and any_color:
+            color = any_color
 
         for loop_index in range(max_index + 1):
             if not loop_index in used_indices:
@@ -123,12 +133,19 @@ class mesh_data():
             else:
                 self.uv.append([0, 0])
 
+            color_vertex = [1, 1, 1, 1]
+
             if color and color.domain == 'CORNER':
-                self.color.append(color.data[loop_index].color)
+                color_vertex = list(color.data[loop_index].color)
             elif color and color.domain == 'POINT':
-                self.color.append(color.data[vtx_index].color)
-            else:
-                self.color.append([1, 1, 1, 1])
+                color_vertex = list(color.data[vtx_index].color)
+            
+            if alpha and alpha.domain == 'CORNER':
+                color_vertex[3] = color.data[loop_index].color[0]
+            elif alpha and alpha.domain == 'POINT':
+                color_vertex[3] = color.data[vtx_index].color[0]
+
+            self.color.append(color_vertex)
 
             self.bone_indices.append(bone_index)
 

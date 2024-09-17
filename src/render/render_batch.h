@@ -51,6 +51,7 @@ struct render_batch_element {
             // this is temporary
             T3DMat4FP* tmp_fixed_pose;
             color_t color;
+            uint8_t use_prim_color;
         } mesh;
         struct render_batch_billboard_element billboard;
         struct {

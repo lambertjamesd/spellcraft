@@ -314,7 +314,7 @@ def flags_for_material(mat: material.Material) -> int:
     if mat.tex0:
         flags |= T3D_FLAG_TEXTURED
 
-    if mat.combine_mode and mat.combine_mode.uses_shade():
+    if mat.combine_mode and mat.combine_mode.uses('SHADE'):
         flags |= T3D_FLAG_SHADED
 
     return flags

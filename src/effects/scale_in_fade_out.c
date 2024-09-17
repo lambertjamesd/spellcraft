@@ -7,8 +7,8 @@
 
 #include "effect_allocator.h"
 
-#define SCALE_IN_TIME   0.5f
-#define FADE_OUT_TIME   1.0f
+#define SCALE_IN_TIME   0.25f
+#define FADE_OUT_TIME   0.5f
 
 void scale_in_fade_out_render(void* data, struct render_batch* batch) {
     struct scale_in_fade_out* effect = (struct scale_in_fade_out*)data;
@@ -47,6 +47,7 @@ void scale_in_fade_out_render(void* data, struct render_batch* batch) {
     struct render_batch_element* element = render_batch_add_tmesh(batch, effect->mesh, mtxfp, 1, NULL, NULL);
 
     element->mesh.color.a = (uint8_t)(255.0f * alpha);
+    element->mesh.use_prim_color = 1;
 }
 
 void scale_in_fade_out_free(struct scale_in_fade_out* effect) {

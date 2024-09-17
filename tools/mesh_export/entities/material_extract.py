@@ -206,7 +206,7 @@ def _determine_color_from_f3d(color) -> material.Color:
         int(color[3] * 255)
     )
 
-def _determine_tex_axis_from_f3d(axis, result: material.TexAxis):
+def _determine_tex_axis_from_f3d(axis, uv_scroll, result: material.TexAxis):
     result.scale_log = axis['shift']
 
     if 'clamp' in axis and axis['clamp']:
@@ -215,35 +215,43 @@ def _determine_tex_axis_from_f3d(axis, result: material.TexAxis):
     if 'mirror' in axis and axis['mirror']:
         result.mirror = True
 
+    if uv_scroll and uv_scroll['animType'] == 1:
+        result.scroll = uv_scroll['speed'] if 'speed' in uv_scroll else 1
 
-def _determine_tex_from_f3d(tex) -> material.Tex:
+
+def _determine_tex_from_f3d(tex, uv_scroll, base_path: str) -> material.Tex:
     image = tex['tex']
 
     if not tex['tex_set'] or not image:
         return None
 
-    input_filename = sys.argv[1]
-
     result = material.Tex()
-    result.filename = os.path.normpath(os.path.join(os.path.dirname(input_filename), image.filepath[2:]))
-    _determine_tex_axis_from_f3d(tex['S'], result.s)
-    _determine_tex_axis_from_f3d(tex['T'], result.t)
+    result.filename = os.path.normpath(os.path.join(os.path.dirname(base_path), image.filepath[2:]))
+
+    _determine_tex_axis_from_f3d(tex['S'], uv_scroll['x'] if uv_scroll and 'x' in uv_scroll else None, result.s)
+    _determine_tex_axis_from_f3d(tex['T'], uv_scroll['y'] if uv_scroll and 'y' in uv_scroll else None, result.t)
 
     return result
 
 
 def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
-    rdp_settings = mat['f3d_mat']['rdp_settings']
+    f3d_mat = mat['f3d_mat']
+    rdp_settings = f3d_mat['rdp_settings']
 
     is_2_cycle = rdp_settings['g_mdsft_cycletype'] == 1
+
+    base_path = sys.argv[1]
+
+    if mat.library:
+        base_path = os.path.normpath(os.path.join(os.path.dirname(base_path), mat.library.filepath[2:]))
     
     result: material.Material = material.Material()
     result.combine_mode = material.CombineMode(
-        _determine_combiner_from_f3d(mat['f3d_mat']['combiner1']),
-        _determine_combiner_from_f3d(mat['f3d_mat']['combiner2']) if is_2_cycle else None,
+        _determine_combiner_from_f3d(f3d_mat['combiner1']),
+        _determine_combiner_from_f3d(f3d_mat['combiner2']) if is_2_cycle else None,
     )
 
-    draw_layer = mat['f3d_mat']['draw_layer']
+    draw_layer = f3d_mat['draw_layer']['sm64']
 
     if draw_layer == 0 or draw_layer == 1:
         result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
@@ -255,28 +263,27 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
         result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
         result.blend_mode.z_mode = 'INTER'
     elif draw_layer == 4:
-        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
-        result.blend_mode.z_mode = 'OPAQUE'
+        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
+        result.blend_mode.z_mode = 'TRANSPARENT'
+        result.blend_mode.z_write = False
     elif draw_layer == 5 or draw_layer == 6 or draw_layer == 7:
         result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
         result.blend_mode.z_mode = 'TRANSPARENT'
         result.blend_mode.z_write = False
 
-    if mat['f3d_mat']['set_env']:
-        result.env_color = _determine_color_from_f3d(mat['f3d_mat']['env_color'])
+    if f3d_mat['set_env']:
+        result.env_color = _determine_color_from_f3d(f3d_mat['env_color'])
 
-    if mat['f3d_mat']['set_prim']:
-        result.env_color = _determine_color_from_f3d(mat['f3d_mat']['prim_color'])
+    if f3d_mat['set_prim']:
+        result.prim_color = _determine_color_from_f3d(f3d_mat['prim_color'])
 
-    if mat['f3d_mat']['set_blend']:
-        result.env_color = _determine_color_from_f3d(mat['f3d_mat']['blend_color'])
+    if f3d_mat['set_blend']:
+        result.blend_color = _determine_color_from_f3d(f3d_mat['blend_color'])
 
-    if mat['f3d_mat']['set_prim']:
-        result.env_color = _determine_color_from_f3d(mat['f3d_mat']['prim_color'])
-
-    result.tex0 = _determine_tex_from_f3d(mat['f3d_mat']['tex0'])
-    result.tex1 = _determine_tex_from_f3d(mat['f3d_mat']['tex1'])
-
+    uv_anim_0 = f3d_mat['UVanim0'] if 'UVanim0' in f3d_mat else None
+    uv_anim_1 = f3d_mat['UVanim1'] if 'UVanim1' in f3d_mat else None
+    result.tex0 = _determine_tex_from_f3d(f3d_mat['tex0'], uv_anim_0, base_path) if result.combine_mode.uses('TEX0') else None
+    result.tex1 = _determine_tex_from_f3d(f3d_mat['tex1'], uv_anim_1, base_path) if result.combine_mode.uses('TEX1') else None
     if rdp_settings['g_cull_back']:
         result.culling = True
     else:

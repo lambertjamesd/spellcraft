@@ -41,9 +41,9 @@ class CombineModeCycle():
         return self.a == value.a and self.b == value.b and self.c == value.c and self.d == value.d and \
             self.aa == value.aa and self.ab == value.ab and self.ac == value.ac and self.ad == value.ad
 
-    def uses_shade(self):
-        return self.a == 'SHADE' or self.b == 'SHADE' or self.c == 'SHADE' or self.c == 'SHADE_ALPHA' or self.d == 'SHADE' or \
-            self.aa == 'SHADE' or self.ab == 'SHADE' or self.ac == 'SHADE' or self.ad == 'SHADE'
+    def uses(self, attr: str):
+        return self.a == attr or self.b == attr or self.c == attr or self.c == f'{attr}_ALPHA' or self.d == attr or \
+            self.aa == attr or self.ab == attr or self.ac == attr or self.ad == attr
 
 class CombineMode():
     def __init__(self, cyc1: CombineModeCycle, cyc2: CombineModeCycle):
@@ -62,8 +62,14 @@ class CombineMode():
         
         return f"1 cycle {self.cyc1}"
     
-    def uses_shade(self) -> bool:
-        return self.cyc1.uses_shade() or (self.cyc2 and self.cyc2.uses_shade())
+    def uses(self, attr: str) -> bool:
+        if attr == 'TEX1':
+            return self.cyc1.uses(attr) or (self.cyc2 and self.cyc2.uses('TEX0'))
+        if attr == 'TEX0':
+            return self.cyc1.uses(attr)
+
+        return self.cyc1.uses(attr) or (self.cyc2 and self.cyc2.uses(attr))
+
     
 class BlendModeCycle():
     def __init__(self, a1, b1, a2, b2):
