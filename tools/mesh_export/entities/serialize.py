@@ -247,10 +247,15 @@ def _serialize_blend(file, blend: material.BlendMode, force_cyc2: bool):
         if blend.cyc2.needs_read():
             other_flags |= SOM_READ_ENABLE
     elif force_cyc2:
-        a1_2 = BLEND_A['IN']
-        b1_2 = BLEND_B1['0']
-        a2_2 = BLEND_A['IN']
-        b2_2 = BLEND_B2['1']
+        a1_2 = a1
+        b1_2 = b1
+        a2_2 = a2
+        b2_2 = b2
+
+        a1 = BLEND_A['IN']
+        b1 = BLEND_B1['0']
+        a2 = BLEND_A['IN']
+        b2 = BLEND_B2['1']
 
     file.write(struct.pack('>L',
         (a1 << 30) | (b1 << 26) | (a2 << 22) | (b2 << 18) |
@@ -338,8 +343,6 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
         _serialize_combine(output, mat.combine_mode, force_cyc2)
 
     if mat.blend_mode:
-        # TODO check if combine is two cycle and 
-        # modify the blend mode if it is
         output.write(COMMAND_BLEND.to_bytes(1, 'big'))
         _serialize_blend(output, mat.blend_mode, force_cyc2)
     

@@ -47,13 +47,12 @@ struct spell projectile_spell = {
 
 
 struct spell_symbol lightning_spell_symbols[] = {
-    {.type = SPELL_SYMBOL_FIRE},
     {.type = SPELL_SYMBOL_ICE},
 };
 
 struct spell lightning_spell = {
     .symbols = lightning_spell_symbols,
-    .cols = 2,
+    .cols = 1,
     .rows = 1,
 
     .symbol_index = SPELL_ICON_FIRE,

@@ -18,6 +18,10 @@ void* fire_push_effect_start(struct Vector3* pos, struct Vector3* direction, flo
     return scale_in_fade_out_new(spell_assets_get()->fire_push_mesh, pos, direction, radius);
 }
 
+void* ice_effect_start(struct Vector3* pos, struct Vector3* direction, float radius) {
+    return scale_in_fade_out_new(spell_assets_get()->ice_sweep_mesh, pos, direction, radius);
+}
+
 static struct lightning_effect_def lightning_def = {
     .spread = 1.1f,
 };
@@ -107,7 +111,7 @@ static struct element_emitter_definition fire_push_definition = {
 };
 
 static struct element_emitter_definition ice_definition = {
-    .element_type = ELEMENT_TYPE_FIRE,
+    .element_type = ELEMENT_TYPE_ICE,
     .collider_type = {
         .minkowsi_sum = sweep_minkowski_sum,
         .bounding_box = sweep_bounding_box,
@@ -122,7 +126,7 @@ static struct element_emitter_definition ice_definition = {
     .scale = 4.0f,
     .mana_per_second = 1.0f,
     .damage_per_frame = 1.0f,
-    .on_effect_start = fire_effect_start,
+    .on_effect_start = ice_effect_start,
     .on_effect_update = (on_effect_update)scale_in_fade_out_set_transform,
     .on_effect_stop = (on_effect_stop)scale_in_fade_out_stop,
     .is_effect_running = (is_effect_running)scale_in_fade_out_is_running,
