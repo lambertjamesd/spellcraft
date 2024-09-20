@@ -22,6 +22,10 @@ void* ice_effect_start(struct Vector3* pos, struct Vector3* direction, float rad
     return scale_in_fade_out_new(spell_assets_get()->ice_sweep_mesh, pos, direction, radius);
 }
 
+void* ice_push_effect_start(struct Vector3* pos, struct Vector3* direction, float radius) {
+    return scale_in_fade_out_new(spell_assets_get()->ice_push_mesh, pos, direction, radius);
+}
+
 static struct lightning_effect_def lightning_def = {
     .spread = 1.1f,
 };
@@ -133,6 +137,29 @@ static struct element_emitter_definition ice_definition = {
     .effect_free = (effect_free)scale_in_fade_out_free,
 };
 
+static struct element_emitter_definition ice_push_definition = {
+    .element_type = ELEMENT_TYPE_ICE,
+    .collider_type = {
+        .minkowsi_sum = sweep_minkowski_sum,
+        .bounding_box = sweep_bounding_box,
+        .data = {
+            .sweep = {
+                .range = {0.707f, 0.707f},
+                .radius = 1.0f,
+                .half_height = 0.0625f,
+            }
+        }
+    },
+    .scale = 4.0f,
+    .mana_per_second = 1.0f,
+    .damage_per_frame = 1.0f,
+    .on_effect_start = ice_push_effect_start,
+    .on_effect_update = (on_effect_update)scale_in_fade_out_set_transform,
+    .on_effect_stop = (on_effect_stop)scale_in_fade_out_stop,
+    .is_effect_running = (is_effect_running)scale_in_fade_out_is_running,
+    .effect_free = (effect_free)scale_in_fade_out_free,
+};
+
 static struct element_emitter_definition lightning_definition = {
     .element_type = ELEMENT_TYPE_LIGHTNING,
     .collider_type = {
@@ -201,7 +228,7 @@ static struct element_emitter_definition* ice_definitions[] = {
     [ELEMENT_DEF_INDEX(0, 1, 1)] = &lightning_around_definition,
 
     // TODO
-    [ELEMENT_DEF_INDEX(1, 0, 0)] = &ice_definition,
+    [ELEMENT_DEF_INDEX(1, 0, 0)] = &ice_push_definition,
     [ELEMENT_DEF_INDEX(1, 0, 1)] = &ice_definition,
     [ELEMENT_DEF_INDEX(1, 1, 0)] = &lightning_definition,
     [ELEMENT_DEF_INDEX(1, 1, 1)] = &lightning_around_definition,

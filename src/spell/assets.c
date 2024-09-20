@@ -28,7 +28,10 @@ void spell_assets_init() {
     // tmesh_cache_release() never called
     assets.fire_push_mesh = tmesh_cache_load("rom:/meshes/spell/fire.tmesh");
 
+    // tmesh_cache_release() never called
     assets.ice_sweep_mesh = tmesh_cache_load("rom:/meshes/spell/ice_sweep.tmesh");
+    // tmesh_cache_release() never called
+    assets.ice_push_mesh = tmesh_cache_load("rom:/meshes/spell/ice_push.tmesh");
 
     // tmesh_cache_release() never called
     assets.flame_mesh = tmesh_cache_load("rom:/meshes/objects/torch_flame.tmesh");
