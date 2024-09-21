@@ -3,6 +3,7 @@
 
 #include "../math/vector3.h"
 #include "../collision/dynamic_object.h"
+#include "../effects/mesh_animation.h"
 
 #include "spell_sources.h"
 #include "spell_event.h"
@@ -13,6 +14,7 @@ struct projectile {
     struct spell_data_source* data_source;
     struct spell_data_source* data_output;
     struct dynamic_object dynamic_object;
+    struct mesh_animation* start_animation;
     uint16_t has_hit: 1;
     uint16_t has_primary_event: 1;
     uint16_t has_secondary_event: 1;

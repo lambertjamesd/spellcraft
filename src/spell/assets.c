@@ -2,12 +2,20 @@
 
 #include "../resource/tmesh_cache.h"
 #include "../resource/material_cache.h"
+#include "../resource/animation_cache.h"
 
 static struct spell_assets assets;
 
 void spell_assets_init() {
     // tmesh_cache_release() never called
-    assets.projectile_mesh = tmesh_cache_load("rom:/meshes/spell/projectile.tmesh");
+    assets.projectile_mesh = tmesh_cache_load("rom:/meshes/spell/rock.tmesh");
+    // tmesh_cache_release() never called
+    assets.projectile_appear = tmesh_cache_load("rom:/meshes/spell/rock_spawn.tmesh");
+
+    // animation_cache_release() never called
+    struct animation_set* projectile_animations = animation_cache_load("rom:/meshes/spell/rock_spawn.anim");
+    assets.projectile_appear_clip = animation_set_find_clip(projectile_animations, "appear");
+
     // material_cache_release() never called
     assets.fire_particle_mesh = material_cache_load("rom:/materials/spell/fire_particle.mat");
     // material_cache_release() never called

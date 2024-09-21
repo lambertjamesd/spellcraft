@@ -2,9 +2,13 @@
 #define __SPELL_ASSETS_H__
 
 #include "../render/tmesh.h"
+#include "../render/animation_clip.h"
 
 struct spell_assets {
     struct tmesh* projectile_mesh;
+    struct tmesh* projectile_appear;
+    struct animation_clip* projectile_appear_clip;
+    
     struct material* fire_particle_mesh;
     struct material* ice_particle_mesh;
     struct material* dash_trail_material;

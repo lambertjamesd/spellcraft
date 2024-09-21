@@ -49,8 +49,6 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
 }
 
 void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options, enum element_type element) {
-    render_scene_add(&projectile->pos, 0.2f, (render_scene_callback)projectile_render, projectile);
-
     projectile->data_source = data_source;
     projectile->data_output = NULL;
 
@@ -72,7 +70,6 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
         NULL
     );
     projectile->dynamic_object.collision_group = COLLISION_GROUP_PLAYER;
-    collision_scene_add(&projectile->dynamic_object);
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
     projectile->dynamic_object.has_gravity = 0;
@@ -80,6 +77,8 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     if (data_source->flags.windy) {
         projectile->is_controlled = 1;
     }
+
+    projectile->start_animation = mesh_animation_new(&projectile->pos, &gRight2, spell_assets_get()->projectile_appear, spell_assets_get()->projectile_appear_clip);
 }
 
 bool projectile_is_active(struct projectile* projectile) {
@@ -99,6 +98,16 @@ bool projectile_is_active(struct projectile* projectile) {
 }
 
 void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
+    if (projectile->start_animation) {
+        if (mesh_animation_update(projectile->start_animation)) {
+            return;
+        }
+        mesh_animation_free(projectile->start_animation);
+        collision_scene_add(&projectile->dynamic_object);
+        render_scene_add(&projectile->pos, 0.2f, (render_scene_callback)projectile_render, projectile);
+        projectile->start_animation = NULL;
+    }
+
     if (projectile->is_controlled) {
         vector3Scale(&projectile->data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[projectile->element]);
     }
@@ -169,10 +178,15 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
 }
 
 void projectile_destroy(struct projectile* projectile) {
-    render_scene_remove(projectile);
+    if (projectile->start_animation) {
+        mesh_animation_free(projectile->start_animation);
+    } else {
+        collision_scene_remove(&projectile->dynamic_object);
+        render_scene_remove(projectile);
+    }
+
     spell_data_source_release(projectile->data_source);
     if (projectile->data_output) {
         spell_data_source_release(projectile->data_output);
     }
-    collision_scene_remove(&projectile->dynamic_object);
 }
