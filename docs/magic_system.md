@@ -69,3 +69,97 @@ Modifies the direction of the next spell to point up. A reverse up will emit the
 ## Time Dialation
 
 This will speed up the player or can be used to speed up another target. A reverse time dialation will slow down the target.
+
+## Effect Permutations
+
+This table documents what effect each combination has
+
+| Fire | Ice | Air | Life | Terminates | Effect |
+|------|-----|-----|------|------------|--------|
+|      |     |     |      | Fire       | Flame Fan |
+|      |     |     |      | Earth      | Shield    |
+|      |     |     |      | Ice        | Ice Fan   |
+|      |     |     |      | Air        | Dash      |
+|      |     |     |      | Life       | Heal      |
+| X    |     |     |      | Fire       | Flame Circle |
+| X    |     |     |      | Earth      | Fire Sheild  |
+| X    |     |     |      | Ice        | Lightning   |
+| X    |     |     |      | Air        | Fire Dash   |
+| X    |     |     |      | Life       | Burst Heal  |
+|      | X   |     |      | Fire       | Lightning |
+|      | X   |     |      | Earth      | Snowman    |
+|      | X   |     |      | Ice        | Ice Circle   |
+|      | X   |     |      | Air        | Ice Dash      |
+|      | X   |     |      | Life       | Slow Heal     |
+| X    | X   |     |      | Fire       | Lightning Circle |
+| X    | X   |     |      | Earth      | Lightning Sheild    |
+| X    | X   |     |      | Ice        | Lightning Circle   |
+| X    | X   |     |      | Air        | Lightning Dash      |
+| X    | X   |     |      | Life       | Over Heal     |
+|      |     | X   |      | Fire       | Fire Cone |
+|      |     | X   |      | Earth      | Projectile    |
+|      |     | X   |      | Ice        | Ice Cone   |
+|      |     | X   |      | Air        | Push      |
+|      |     | X   |      | Life       | ?  |
+| X    |     | X   |      | Fire       | ? |
+| X    |     | X   |      | Earth      | Rocket Projectile    |
+| X    |     | X   |      | Ice        | Cone Lightning   |
+| X    |     | X   |      | Air        | ?      |
+| X    |     | X   |      | Life       | ?  |
+|      | X   | X   |      | Fire       | Cone Lightning |
+|      | X   | X   |      | Earth      | Snowball    |
+|      | X   | X   |      | Ice        | ?   |
+|      | X   | X   |      | Air        | ?      |
+|      | X   | X   |      | Life       | ?  |
+| X    | X   | X   |      | Fire       | ? |
+| X    | X   | X   |      | Earth      | Lightning Projectile    |
+| X    | X   | X   |      | Ice        | ?   |
+| X    | X   | X   |      | Air        | ?  |
+| X    | X   | X   |      | Life       | ? Zombie? |
+|      |     |     | X    | Fire       | Tracking fire fan |
+|      |     |     | X    | Earth      | Tracking shield    |
+|      |     |     | X    | Ice        | Tracking ice fan   |
+|      |     |     | X    | Air        | ?  |
+|      |     |     | X    | Life       | Heal target  |
+| X    |     |     | X    | Fire       | Tracking fire circle? |
+| X    |     |     | X    | Earth      | Tracking fire shield    |
+| X    |     |     | X    | Ice        | Tracking lightning fan   |
+| X    |     |     | X    | Air        | ?  |
+| X    |     |     | X    | Life       | Heal target  |
+|      | X   |     | X    | Fire       | Tracking lightning fan |
+|      | X   |     | X    | Earth      | Frosty the snowman    |
+|      | X   |     | X    | Ice        | Tracking ice circle?   |
+|      | X   |     | X    | Air        | ?  |
+|      | X   |     | X    | Life       | Slow heal target  |
+| X    | X   |     | X    | Fire       | Tracking lightning circle? |
+| X    | X   |     | X    | Earth      | Tracking lightning sheild?  |
+| X    | X   |     | X    | Ice        | Tracking lightning circle?   |
+| X    | X   |     | X    | Air        | ?  |
+| X    | X   |     | X    | Life       | Over heal target  |
+|      |     | X   | X    | Fire       | Tracking fire cone |
+|      |     | X   | X    | Earth      | Tracking projectile  |
+|      |     | X   | X    | Ice        | Tracking ice cone   |
+|      |     | X   | X    | Air        | Tracking push |
+|      |     | X   | X    | Life       | Life steal from target?  |
+| X    |     | X   | X    | Fire       | Tracking fire circle? |
+| X    |     | X   | X    | Earth      | Tracking rocket projectile  |
+| X    |     | X   | X    | Ice        | Tracking lightning cone   |
+| X    |     | X   | X    | Air        | Tracking fire push? |
+| X    |     | X   | X    | Life       | Burst life steal on target?  |
+|      | X   | X   | X    | Fire       | Tracking lightning cone |
+|      | X   | X   | X    | Earth      | Tracking snowball  |
+|      | X   | X   | X    | Ice        | ?    |
+|      | X   | X   | X    | Air        | ? |
+|      | X   | X   | X    | Life       | Slow life steal on target?  |
+| X    | X   | X   | X    | Fire       | Tracked circle push lightning? |
+| X    | X   | X   | X    | Earth      | Tracking lightning ball  |
+| X    | X   | X   | X    | Ice        | Tracked circle push lightning? |
+| X    | X   | X   | X    | Air        | ? |
+| X    | X   | X   | X    | Life       | ?  |
+
+To figure out
+* What does life -> air do?
+* What does air -> life do? Life steal instead? Is that overpowered?
+* What should a life imbued element circle do (eg fire life fire)
+* What does having an element on a push do?
+* What does adding push to a circle shape do?
