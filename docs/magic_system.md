@@ -116,50 +116,49 @@ This table documents what effect each combination has
 | X    | X   | X   |      | Ice        | ?   |
 | X    | X   | X   |      | Air        | ?  |
 | X    | X   | X   |      | Life       | ? Zombie? |
-|      |     |     | X    | Fire       | Tracking fire fan |
-|      |     |     | X    | Earth      | Tracking shield    |
-|      |     |     | X    | Ice        | Tracking ice fan   |
-|      |     |     | X    | Air        | ?  |
+|      |     |     | X    | Fire       | Fire Sprite |
+|      |     |     | X    | Earth      | Land Mine    |
+|      |     |     | X    | Ice        | Ice Sprite   |
+|      |     |     | X    | Air        | Wind Sprite?  |
 |      |     |     | X    | Life       | Heal target  |
-| X    |     |     | X    | Fire       | Tracking fire circle? |
-| X    |     |     | X    | Earth      | Tracking fire shield    |
-| X    |     |     | X    | Ice        | Tracking lightning fan   |
+| X    |     |     | X    | Fire       | Large Fire Sprite |
+| X    |     |     | X    | Earth      | Fire Land Mine    |
+| X    |     |     | X    | Ice        | Lightning Sprite   |
 | X    |     |     | X    | Air        | ?  |
 | X    |     |     | X    | Life       | Heal target  |
-|      | X   |     | X    | Fire       | Tracking lightning fan |
+|      | X   |     | X    | Fire       | Lightning Sprite |
 |      | X   |     | X    | Earth      | Frosty the snowman    |
-|      | X   |     | X    | Ice        | Tracking ice circle?   |
+|      | X   |     | X    | Ice        | Large Ice Sprite  |
 |      | X   |     | X    | Air        | ?  |
 |      | X   |     | X    | Life       | Slow heal target  |
-| X    | X   |     | X    | Fire       | Tracking lightning circle? |
-| X    | X   |     | X    | Earth      | Tracking lightning sheild?  |
-| X    | X   |     | X    | Ice        | Tracking lightning circle?   |
+| X    | X   |     | X    | Fire       | Large Lightning Sprite |
+| X    | X   |     | X    | Earth      | Lightning mine  |
+| X    | X   |     | X    | Ice        | Large Lightning Sprite   |
 | X    | X   |     | X    | Air        | ?  |
 | X    | X   |     | X    | Life       | Over heal target  |
-|      |     | X   | X    | Fire       | Tracking fire cone |
+|      |     | X   | X    | Fire       | Caster Fire Sprite |
 |      |     | X   | X    | Earth      | Tracking projectile  |
-|      |     | X   | X    | Ice        | Tracking ice cone   |
+|      |     | X   | X    | Ice        | Caster Ice Sprite   |
 |      |     | X   | X    | Air        | Tracking push |
-|      |     | X   | X    | Life       | Life steal from target?  |
-| X    |     | X   | X    | Fire       | Tracking fire circle? |
+|      |     | X   | X    | Life       | ?  |
+| X    |     | X   | X    | Fire       | Large Caster Fire Sprite |
 | X    |     | X   | X    | Earth      | Tracking rocket projectile  |
-| X    |     | X   | X    | Ice        | Tracking lightning cone   |
+| X    |     | X   | X    | Ice        | Caster Lightning Sprite   |
 | X    |     | X   | X    | Air        | Tracking fire push? |
-| X    |     | X   | X    | Life       | Burst life steal on target?  |
-|      | X   | X   | X    | Fire       | Tracking lightning cone |
+| X    |     | X   | X    | Life       | ?  |
+|      | X   | X   | X    | Fire       | Caster Lightning Sprite |
 |      | X   | X   | X    | Earth      | Tracking snowball  |
-|      | X   | X   | X    | Ice        | ?    |
+|      | X   | X   | X    | Ice        | Large Caster Ice Sprite    |
 |      | X   | X   | X    | Air        | ? |
-|      | X   | X   | X    | Life       | Slow life steal on target?  |
-| X    | X   | X   | X    | Fire       | Tracked circle push lightning? |
+|      | X   | X   | X    | Life       | ?  |
+| X    | X   | X   | X    | Fire       | Large Caster Lightning Sprite |
 | X    | X   | X   | X    | Earth      | Tracking lightning ball  |
-| X    | X   | X   | X    | Ice        | Tracked circle push lightning? |
+| X    | X   | X   | X    | Ice        | Large Caster Lightning Sprite |
 | X    | X   | X   | X    | Air        | ? |
 | X    | X   | X   | X    | Life       | ?  |
 
 To figure out
 * What does life -> air do?
 * What does air -> life do? Life steal instead? Is that overpowered?
-* What should a life imbued element circle do (eg fire life fire)
 * What does having an element on a push do?
 * What does adding push to a circle shape do?
