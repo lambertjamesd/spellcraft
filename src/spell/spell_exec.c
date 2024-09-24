@@ -29,8 +29,13 @@ void spell_slot_init(
 
     switch ((enum inventory_item_type)symbol.type) {
         case SPELL_SYMBOL_EARTH:
-            slot->type = SPELL_EXEC_SLOT_TYPE_PROJECTILE;
-            projectile_init(&slot->data.projectile, input, event_options, spell_data_source_determine_element(input));
+            if (input->flags.windy) {
+                slot->type = SPELL_EXEC_SLOT_TYPE_PROJECTILE;
+                projectile_init(&slot->data.projectile, input, event_options, spell_data_source_determine_element(input));
+            } else {
+                slot->type = SPELL_EXEC_SLOT_TYPE_SHEILD;
+                shield_init(&slot->data.shield, input, event_options, spell_data_source_determine_element(input));
+            }
             break;
         case SPELL_SYMBOL_FIRE:
             if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
@@ -81,6 +86,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_PROJECTILE:
             projectile_destroy(&slot->data.projectile);
             break;
+        case SPELL_EXEC_SLOT_TYPE_SHEILD:
+            shield_destroy(&slot->data.shield);
+            break;
         case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
             element_emitter_destroy(&slot->data.element_emitter);
             break;
@@ -129,6 +137,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
     switch (slot->type) {
         case SPELL_EXEC_SLOT_TYPE_PROJECTILE:
             projectile_update(&slot->data.projectile, &event_listener, &exec->spell_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_SHEILD:
+            shield_update(&slot->data.shield, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
             element_emitter_update(&slot->data.element_emitter, &event_listener, &exec->spell_sources);

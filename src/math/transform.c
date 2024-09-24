@@ -1,6 +1,7 @@
 
 #include "transform.h"
 #include <assert.h>
+#include "../render/defs.h"
 
 void transformInitIdentity(struct Transform* in) {
     in->position = gZeroVec;
@@ -18,6 +19,12 @@ void transformToMatrix(struct Transform* in, float mtx[4][4]) {
     mtx[3][0] = in->position.x;
     mtx[3][1] = in->position.y;
     mtx[3][2] = in->position.z;
+}
+
+void transformApplySceneScale(float mtx[4][4]) {
+    mtx[3][0] *= SCENE_SCALE;
+    mtx[3][1] *= SCENE_SCALE;
+    mtx[3][2] *= SCENE_SCALE;
 }
 
 void transformInvert(struct Transform* in, struct Transform* out) {

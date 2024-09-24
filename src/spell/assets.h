@@ -8,6 +8,7 @@ struct spell_assets {
     struct tmesh* projectile_mesh;
     struct tmesh* projectile_appear;
     struct animation_clip* projectile_appear_clip;
+    struct tmesh* sheild_mesh;
     
     struct material* fire_particle_mesh;
     struct material* ice_particle_mesh;
