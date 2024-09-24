@@ -1,7 +1,10 @@
 #include "shield.h"
 
 #include "assets.h"
+#include "../time/time.h"
 #include "../render/render_scene.h"
+
+#define MAX_SHEILD_LIFETIME 7.0f
 
 void shield_render(void* data, struct render_batch* batch) {
     struct shield* shield = (struct shield*)data;
@@ -38,6 +41,7 @@ void shield_init(struct shield* shield, struct spell_data_source* source, struct
     shield->transform.scale = gOneVec;
     // TODO get rom target object
     shield->hold_radius = 0.5f;
+    shield->lifetime = MAX_SHEILD_LIFETIME;
 
     shield->start_animation = mesh_animation_new(
         &shield->transform.position, 
@@ -51,7 +55,7 @@ void shield_destroy(struct shield* shield) {
     if (shield->start_animation) {
         mesh_animation_free(shield->start_animation);
     } else {
-        render_scene_remove(shield->start_animation);
+        render_scene_remove(shield);
     }
     spell_data_source_release(shield->data_source);
 }
@@ -67,5 +71,11 @@ void shield_update(struct shield* shield, struct spell_event_listener* event_lis
         mesh_animation_free(shield->start_animation);
         render_scene_add(&shield->transform.position, 1.0f, shield_render, shield);
         shield->start_animation = NULL;
+    }
+
+    shield->lifetime -= fixed_time_step;
+
+    if (shield->lifetime < 0.0f) {
+        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
     }
 }

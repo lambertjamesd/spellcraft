@@ -16,6 +16,7 @@ struct shield {
     struct health health;
     float parry_timer;
     float hold_radius;
+    float lifetime;
 };
 
 void shield_init(struct shield* shield, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element);
