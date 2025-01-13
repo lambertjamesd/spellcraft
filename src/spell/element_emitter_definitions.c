@@ -5,6 +5,7 @@
 #include "../effects/scale_in_fade_out.h"
 #include "../collision/shapes/sweep.h"
 #include "../collision/shapes/cylinder.h"
+#include "../collision/shapes/cone.h"
 
 void* fire_effect_start(struct Vector3* pos, struct Vector3* direction, float radius) {
     return scale_in_fade_out_new(spell_assets_get()->fire_sweep_mesh, pos, direction, radius);
@@ -95,12 +96,11 @@ static struct element_emitter_definition fire_around_definition = {
 static struct element_emitter_definition fire_push_definition = {
     .element_type = ELEMENT_TYPE_FIRE,
     .collider_type = {
-        .minkowsi_sum = cylinder_minkowski_sum,
-        .bounding_box = cylinder_bounding_box,
+        .minkowsi_sum = cone_minkowski_sum,
+        .bounding_box = cone_bounding_box,
         .data = {
-            .cylinder = {
-                .radius = 1.0f,
-                .half_height = 0.0625f,
+            .cone = {
+                .size = {0.3f, 0.3f, 1.0f},
             }
         }
     },

@@ -149,6 +149,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
                 hit_source->flags = projectile->data_source->flags;
                 hit_source->flags.cast_state = SPELL_CAST_STATE_INSTANT;
                 hit_source->target = first_contact->other_object;
+                vector3AddScaled(&hit_source->position, &hit_source->direction, projectile_collision.data.sphere.radius, &hit_source->position);
                 spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, hit_source, 0.0f);
             }
         }

@@ -53,3 +53,6 @@ make
 - build out enemy
 - spells
 -  spell shape variants
+-  shield
+-  sprite
+-  tracking projectile
