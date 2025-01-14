@@ -12,5 +12,7 @@ filesystem/
 
 *.z64
 
+tools/mesh_export.zip
+
 # generated file
 src/player/inventory_mapping.c

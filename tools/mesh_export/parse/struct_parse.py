@@ -306,11 +306,11 @@ def find_end_curly(file_string: str, starting_at: int):
     return -1
 
 def find_enums(file_string: str) -> dict[str, EnumInfo]:
-    result: dict[str, StructureInfo] = {}
+    result: dict[str, EnumInfo] = {}
     
     current_position = file_string.find('enum ')
 
-    result: dict[str, StructureInfo] = {}
+    result: dict[str, EnumInfo] = {}
 
     while current_position != -1:
         # only look for enums definitons
