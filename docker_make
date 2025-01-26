@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker run -v ./:/spellcraft --user $UID -it --rm dockerhub.lambertjamesd.com/spellcraft make $@

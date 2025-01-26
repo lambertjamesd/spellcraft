@@ -40,11 +40,11 @@ RUN cd /opt &&\
 
 # Install Blender
 ENV BLENDER_4=/opt/blender/blender
-RUN wget https://ftp.nluug.nl/pub/graphics/blender/release/Blender4.1/blender-4.1.1-linux-x64.tar.xz
+RUN wget https://ftp.nluug.nl/pub/graphics/blender/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz
 RUN apt-get install xz-utils -y &&\
-    tar -xvf blender-4.1.1-linux-x64.tar.xz &&\
-    mv blender-4.1.1-linux-x64 /opt/blender &&\
-    rm blender-4.1.1-linux-x64.tar.xz
+    tar -xvf blender-4.3.2-linux-x64.tar.xz &&\
+    mv blender-4.3.2-linux-x64 /opt/blender &&\
+    rm blender-4.3.2-linux-x64.tar.xz
 
 # Install Blender Dependencies
 RUN apt-get install -y \
