@@ -35,6 +35,36 @@ struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row) {
     return spell->symbols[col + row * spell->cols];
 }
 
+union spell_modifier_flags spell_get_modifiers(struct spell* spell, int col, int row) {
+    union spell_modifier_flags result = { .all = 0 };
+    do {
+        ++col;
+        struct spell_symbol symbol = spell_get_symbol(spell, col, row);
+
+        switch (symbol.type) {
+            case SPELL_SYMBOL_FIRE:
+                result.flaming = 1;
+                break;
+            case SPELL_SYMBOL_ICE:
+                result.icy = 1;
+                break;
+            case SPELL_SYMBOL_EARTH:
+                result.earthy = 1;
+                break;
+            case SPELL_SYMBOL_AIR:
+                result.windy = 1;
+                break;
+            case SPELL_SYMBOL_LIFE:
+                result.living = 1;
+                break;
+            default:
+                return result;
+        };
+    } while (col < spell->cols);
+
+    return result;
+}
+
 void spell_set_symbol(struct spell* spell, int col, int row, struct spell_symbol value) {
     if (col >= spell->cols || row >= spell->rows || col < 0 || row < 0) {
         return;
@@ -44,33 +74,35 @@ void spell_set_symbol(struct spell* spell, int col, int row, struct spell_symbol
 }
 
 bool spell_has_primary_event(struct spell* spell, int col, int row) {
-    return spell_get_symbol(spell, col + 1, row).type != ITEM_TYPE_NONE;
+    if (spell_get_symbol(spell, col, row).type == SPELL_SYMBOL_BREAK) {
+        return true;
+    }
+
+    do {
+        ++col;
+        if (spell_get_symbol(spell, col, row).type == SPELL_SYMBOL_BREAK) {
+            return true;
+        }
+    } while (col < spell->cols);
+
+    return false;
 }
 
 bool spell_has_secondary_event(struct spell* spell, int col, int row) {
-    struct spell_symbol secondary_event = spell_get_symbol(spell, col + 1, row + 1);
-
-    if (secondary_event.type == ITEM_TYPE_NONE) {
-        return false;
-    }
-
-    struct spell_symbol sibling_symbol = spell_get_symbol(spell, col, row + 1);
-
-    return sibling_symbol.type == ITEM_TYPE_NONE || sibling_symbol.type == SPELL_SYMBOL_PASS_DOWN;
+    return false;
 }
 
-static uint8_t is_modifier_mapping[] = {
-    [ITEM_TYPE_NONE] = 0,
-    [SPELL_SYMBOL_FIRE] = 1,
-    [SPELL_SYMBOL_ICE] = 1,
-    [SPELL_SYMBOL_EARTH] = 0,
-    [SPELL_SYMBOL_AIR] = 1,
-    [SPELL_SYMBOL_RECAST] = 0,
-    [SPELL_SYMBOL_LIFE] = 0,
-    
-    [SPELL_SYMBOL_PASS_DOWN] = 0,
-};
+int spell_get_primary_event(struct spell* spell, int col, int row) {
+    if (spell_get_symbol(spell, col, row).type == SPELL_SYMBOL_BREAK) {
+        return col + 1;
+    }
 
-bool spell_is_modifier(struct spell* spell, int col, int row) {
-    return is_modifier_mapping[spell_get_symbol(spell, col, row).type] && spell_has_primary_event(spell, col, row);
+    do {
+        ++col;
+        if (spell_get_symbol(spell, col, row).type == SPELL_SYMBOL_BREAK) {
+            return col + 1 < spell->cols ? col + 1 : -1;
+        }
+    } while (col < spell->cols);
+
+    return -1;
 }

@@ -48,7 +48,7 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     render_batch_add_tmesh(batch, spell_assets_get()->projectile_mesh, mtxfp, 1, NULL, NULL);
 }
 
-void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, struct spell_event_options event_options, enum element_type element) {
+void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, union spell_modifier_flags modifiers, struct spell_event_options event_options, enum element_type element) {
     projectile->data_source = data_source;
     projectile->data_output = NULL;
 
@@ -74,7 +74,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
     projectile->dynamic_object.has_gravity = 0;
 
-    if (data_source->flags.windy) {
+    if (modifiers.windy) {
         projectile->is_controlled = 1;
     }
 

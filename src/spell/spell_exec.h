@@ -46,6 +46,7 @@ struct spell_exec_slot {
     struct spell* for_spell;
     uint8_t curr_col;
     uint8_t curr_row;
+    uint8_t symbol_count;
     uint8_t button_index;
     enum spell_exec_slot_type type;
     union spell_exec_data data;

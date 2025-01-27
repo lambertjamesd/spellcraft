@@ -14,6 +14,7 @@ void spell_slot_init(
     struct spell_exec_slot* slot, 
     int button_index,
     struct spell_data_source* input,
+    union spell_modifier_flags modifier_flags,
     float burst_mana,
     struct spell* for_spell,
     uint8_t curr_col,
@@ -29,9 +30,9 @@ void spell_slot_init(
 
     switch ((enum inventory_item_type)symbol.type) {
         case SPELL_SYMBOL_EARTH:
-            if (input->flags.windy) {
+            if (modifier_flags.windy) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_PROJECTILE;
-                projectile_init(&slot->data.projectile, input, event_options, spell_data_source_determine_element(input));
+                projectile_init(&slot->data.projectile, input, modifier_flags, event_options, spell_data_source_determine_element(input));
             } else {
                 slot->type = SPELL_EXEC_SLOT_TYPE_SHEILD;
                 shield_init(&slot->data.shield, input, event_options, spell_data_source_determine_element(input));
@@ -40,9 +41,9 @@ void spell_slot_init(
         case SPELL_SYMBOL_FIRE:
             if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
-                explosion_init(&slot->data.explosion, input, event_options, input->flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
+                explosion_init(&slot->data.explosion, input, event_options, modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
             } else {
-                struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, input->flags.windy, input->flags.flaming, input->flags.icy);
+                struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
                 element_emitter_init(&slot->data.element_emitter, input, event_options, def);
             }
@@ -50,16 +51,16 @@ void spell_slot_init(
         case SPELL_SYMBOL_ICE:
             if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
-                explosion_init(&slot->data.explosion, input, event_options, input->flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
+                explosion_init(&slot->data.explosion, input, event_options, modifier_flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
             } else {
-                struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, input->flags.windy, input->flags.flaming, input->flags.icy);
+                struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
                 element_emitter_init(&slot->data.element_emitter, input, event_options, def);
             }
             break;
-        case SPELL_SYMBOL_RECAST:
+        case SPELL_SYMBOL_BREAK:
             slot->type = SPELL_EXEC_SLOT_TYPE_RECAST;
-            recast_init(&slot->data.recast, input, event_options, input->flags.reversed ? REACT_MODE_STICKY : RECAST_MODE_RECAST);
+            recast_init(&slot->data.recast, input, event_options, RECAST_MODE_RECAST);
             break;
         case SPELL_SYMBOL_AIR:
             slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
@@ -170,10 +171,13 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
 
         switch (event->type) {
         case SPELL_EVENT_PRIMARY:
-            if (spell_has_primary_event(slot->for_spell, slot->curr_col, slot->curr_row) != ITEM_TYPE_NONE) {
-                spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row, event->data_source, event->burst_mana);
+        {
+            int event_start = spell_get_primary_event(slot->for_spell, slot->curr_col, slot->curr_row);
+            if (event_start != -1) {
+                spell_exec_step(exec, slot->button_index, slot->for_spell, event_start, slot->curr_row, event->data_source, event->burst_mana);
             }
             break;
+        }
         case SPELL_EVENT_SECONDARY:
             if (spell_has_secondary_event(slot->for_spell, slot->curr_col, slot->curr_row))  {
                 spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row + 1, event->data_source, event->burst_mana);
@@ -275,50 +279,15 @@ int spell_exec_find_modifier(struct spell_exec* exec) {
     return result;
 }
 
-static union spell_source_flags symbol_to_modifier[] = {
-    [SPELL_SYMBOL_FIRE] = { .flaming = 1 },
-    [SPELL_SYMBOL_AIR] = { .windy = 1 },
-    [SPELL_SYMBOL_ICE] = { .icy = 1 },
-    [SPELL_SYMBOL_LIFE] = { .living = 1 },
-};
-
 void spell_modifier_init(
     struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana
 ) {
-    union spell_source_flags flags;
-
-    flags.all = 0;
-
-    while (spell_is_modifier(spell, col, row)) {
-        // TODO check for sibilings
-
-        int type = spell_get_symbol(spell, col, row).type;
-        flags.all |= symbol_to_modifier[type].all;
-
-        col += 1;
-    }
-
-    int index = spell_exec_find_modifier(exec);
-    struct spell_source_modifier* modifier = &exec->modifiers[index];
-
-    struct spell_data_source* output = spell_data_source_pool_get(&exec->spell_sources.data_sources);
-
-    spell_slot_id id = exec->next_id;
-    exec->next_id += 1;
-
-    spell_source_modifier_init(modifier, data_source, output, flags);
-    exec->modifier_ids[index] = id;
-
-    spell_exec_step(exec, button_index, spell, col, row, output, burst_mana);
+    union spell_modifier_flags result = { .all = 0 };
+    return result;
 }
 
 void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana) {
     if (!data_source) {
-        return;
-    }
-
-    if (spell_is_modifier(spell, col, row)) {
-        spell_modifier_init(exec, button_index, spell, col, row, data_source, burst_mana);
         return;
     }
 
@@ -335,6 +304,7 @@ void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* sp
         slot,
         button_index,
         data_source,
+        spell_get_modifiers(spell, col, row),
         burst_mana,
         spell,
         col,

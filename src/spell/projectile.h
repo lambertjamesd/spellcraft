@@ -8,6 +8,7 @@
 #include "spell_sources.h"
 #include "spell_event.h"
 #include "elements.h"
+#include "spell.h"
 
 struct projectile {
     struct Vector3 pos;
@@ -22,7 +23,7 @@ struct projectile {
     uint16_t element: 2;
 };
 
-void projectile_init(struct projectile* projectile, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element);
+void projectile_init(struct projectile* projectile, struct spell_data_source* source, union spell_modifier_flags modifiers, struct spell_event_options event_options, enum element_type element);
 void projectile_destroy(struct projectile* projectile);
 
 bool projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);

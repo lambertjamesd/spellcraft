@@ -35,15 +35,28 @@ struct spell {
     uint8_t symbol_index;
 };
 
+union spell_modifier_flags {
+    struct {
+        uint16_t flaming: 1;
+        uint16_t icy: 1;
+        uint16_t windy: 1;
+        uint16_t living: 1;
+        uint16_t earthy: 1;
+    };
+    uint16_t all;
+};
+
 void spell_init(struct spell* spell, uint8_t cols, uint8_t rows, int icon);
 void spell_destroy(struct spell* spell);
 
 struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row);
+union spell_modifier_flags spell_get_modifiers(struct spell* spell, int col, int row);
 
 void spell_set_symbol(struct spell* spell, int col, int row, struct spell_symbol value);
 
 bool spell_has_primary_event(struct spell* spell, int col, int row);
 bool spell_has_secondary_event(struct spell* spell, int col, int row);
-bool spell_is_modifier(struct spell* spell, int col, int row);
+
+int spell_get_primary_event(struct spell* spell, int col, int row);
 
 #endif
