@@ -27,6 +27,7 @@ enum inventory_item_type {
 
     SPELL_SYMBOL_RECAST,
     SPELL_SYMBOL_PASS_DOWN,
+    SPELL_SYBMOL_BREAK,
 
     ITEM_TYPE_STAFF_DEFAULT,
 

@@ -26,6 +26,9 @@ void living_sprite_render(void* data, struct render_batch* batch) {
 }
 
 void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_source* source, struct spell_event_options event_options) {
+    vector3AddScaled(&source->position, &source->direction, 0.5f, &living_sprite->transform.position);
+    living_sprite->transform.rotation = gRight2;
+
     render_scene_add(&living_sprite->transform.position, 0.5f, living_sprite_render, living_sprite);
 }
 
@@ -34,5 +37,5 @@ void living_sprite_update(struct living_sprite* living_sprite, struct spell_even
 }
 
 void living_sprite_destroy(struct living_sprite* living_sprite) {
-
+    render_scene_remove(living_sprite);
 }
