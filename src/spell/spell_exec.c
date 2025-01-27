@@ -32,10 +32,10 @@ void spell_slot_init(
         case SPELL_SYMBOL_EARTH:
             if (modifier_flags.windy) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_PROJECTILE;
-                projectile_init(&slot->data.projectile, input, modifier_flags, event_options, spell_data_source_determine_element(input));
+                projectile_init(&slot->data.projectile, input, modifier_flags, event_options, spell_data_source_determine_element(modifier_flags));
             } else {
                 slot->type = SPELL_EXEC_SLOT_TYPE_SHEILD;
-                shield_init(&slot->data.shield, input, event_options, spell_data_source_determine_element(input));
+                shield_init(&slot->data.shield, input, event_options, spell_data_source_determine_element(modifier_flags));
             }
             break;
         case SPELL_SYMBOL_FIRE:
@@ -64,7 +64,7 @@ void spell_slot_init(
             break;
         case SPELL_SYMBOL_AIR:
             slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
-            push_init(&slot->data.push, input, event_options, spell_data_source_determine_element(input));
+            push_init(&slot->data.push, input, event_options, spell_data_source_determine_element(modifier_flags));
             break;
         default:
             assert(false);
@@ -276,13 +276,6 @@ int spell_exec_find_modifier(struct spell_exec* exec) {
 
     spell_source_modifier_destroy(exec, result);
 
-    return result;
-}
-
-void spell_modifier_init(
-    struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana
-) {
-    union spell_modifier_flags result = { .all = 0 };
     return result;
 }
 

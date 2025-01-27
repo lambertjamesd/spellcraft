@@ -5,6 +5,7 @@
 #include "../math/vector3.h"
 #include "../math/transform_single_axis.h"
 #include "elements.h"
+#include "spell.h"
 
 #include <stdint.h>
 
@@ -51,6 +52,6 @@ void spell_data_source_release(struct spell_data_source* data_source);
 
 void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform);
 
-enum element_type spell_data_source_determine_element(struct spell_data_source* data_source);
+enum element_type spell_data_source_determine_element(union spell_modifier_flags flags);
 
 #endif

@@ -55,16 +55,16 @@ void spell_data_source_apply_transform_sa(struct spell_data_source* data_source,
     vector2Normalize(&transform->rotation, &transform->rotation);
 }
 
-enum element_type spell_data_source_determine_element(struct spell_data_source* data_source) {
-    if (data_source->flags.flaming) {
-        if (data_source->flags.icy) {
+enum element_type spell_data_source_determine_element(union spell_modifier_flags flags) {
+    if (flags.flaming) {
+        if (flags.icy) {
             return ELEMENT_TYPE_LIGHTNING;
         }
 
         return ELEMENT_TYPE_FIRE;
     }
 
-    if (data_source->flags.icy) {
+    if (flags.icy) {
         return ELEMENT_TYPE_ICE;
     }
 
