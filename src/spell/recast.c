@@ -28,13 +28,12 @@ void recast_recast(struct recast* recast, struct spell_data_source* recast_sourc
     spell_data_source_retain(recast->recast_source);
 }
 
-void recast_update_end_cast(struct recast* recast, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
+bool recast_update_end_cast(struct recast* recast, struct spell_event_listener* event_listener, struct spell_data_source_pool* pool) {
     if (!recast->output) {
         struct spell_data_source* output = spell_data_source_pool_get(pool);
         
         if (!output) {
-            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
-            return;
+            return false;
         }
 
         spell_data_source_retain(output);
@@ -53,22 +52,22 @@ void recast_update_end_cast(struct recast* recast, struct spell_event_listener* 
     
     if (recast->recast_source) {
         recast->output->flags.cast_state = SPELL_CAST_STATE_INACTIVE;
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
+        return false;
     }
+
+    return true;
 }
 
-void recast_update(struct recast* recast, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
+bool recast_update(struct recast* recast, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     if (recast->mode == REACT_MODE_STICKY) {
-        recast_update_end_cast(recast, event_listener, &spell_sources->data_sources);
-        return;
+        return recast_update_end_cast(recast, event_listener, &spell_sources->data_sources);
     }
 
     if (recast->recast_source && !recast->output) {
         struct spell_data_source* output = spell_data_source_pool_get(&spell_sources->data_sources);
 
         if (!output) {
-            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
-            return;
+            return false;
         }
 
         spell_data_source_retain(output);
@@ -98,7 +97,9 @@ void recast_update(struct recast* recast, struct spell_event_listener* event_lis
         recast->output->flags.cast_state = recast->recast_source->flags.cast_state;
 
         if (recast->recast_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
-            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
+            return false;
         }
     }
+
+    return true;
 }

@@ -21,6 +21,6 @@ struct shield {
 
 void shield_init(struct shield* shield, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element);
 void shield_destroy(struct shield* shield);
-void shield_update(struct shield* shield, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
+bool shield_update(struct shield* shield, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
 #endif

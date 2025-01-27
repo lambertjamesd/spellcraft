@@ -97,10 +97,10 @@ bool projectile_is_active(struct projectile* projectile) {
     return projectile->data_output->reference_count > 1;
 }
 
-void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
+bool projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     if (projectile->start_animation) {
         if (mesh_animation_update(projectile->start_animation)) {
-            return;
+            return true;
         }
         mesh_animation_free(projectile->start_animation);
         collision_scene_add(&projectile->dynamic_object);
@@ -173,9 +173,7 @@ void projectile_update(struct projectile* projectile, struct spell_event_listene
         projectile->has_hit = 1;
     }
 
-    if (!projectile_is_active(projectile)) {
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
-    }
+    return projectile_is_active(projectile);
 }
 
 void projectile_destroy(struct projectile* projectile) {

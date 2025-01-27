@@ -9,7 +9,6 @@
 enum spell_event_type {
     SPELL_EVENT_PRIMARY,
     SPELL_EVENT_SECONDARY,
-    SPELL_EVENT_DESTROY,
 };
 
 struct spell_event {

@@ -43,7 +43,7 @@ void element_emitter_destroy(struct element_emitter* element_emitter) {
     }
 }
 
-void element_emitter_update(struct element_emitter* element_emitter, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
+bool element_emitter_update(struct element_emitter* element_emitter, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     if (element_emitter->is_active && element_emitter->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
         element_emitter->effect_definition->on_effect_stop(
             element_emitter->effect
@@ -67,8 +67,6 @@ void element_emitter_update(struct element_emitter* element_emitter, struct spel
             health_determine_damage_type(element_emitter->effect_definition->element_type)
         );
     } 
-    
-    if (!element_emitter->is_active && !element_emitter->effect_definition->is_effect_running(element_emitter->effect)) {
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
-    }
+
+    return element_emitter->is_active || element_emitter->effect_definition->is_effect_running(element_emitter->effect);
 }

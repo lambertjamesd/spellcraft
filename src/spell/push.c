@@ -83,14 +83,13 @@ void push_destroy(struct push* push) {
     }
 }
 
-void push_update(struct push* push, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
+bool push_update(struct push* push, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
 
     bool is_bursty = is_burst_dash[push->push_mode] || push->data_source->flags.cast_state == SPELL_CAST_STATE_INSTANT;
 
     if (!target) {
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
-        return;
+        return false;
     }
 
     if (contact_damage[push->push_mode]) {
@@ -101,8 +100,7 @@ void push_update(struct push* push, struct spell_event_listener* event_listener,
         float burst_mana = mana_pool_request(&spell_sources->mana_pool, burst_mana_amount[push->push_mode]);
 
         if (!burst_mana) {
-            spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
-            return;
+            return false;
         }
 
         mana_regulator_init(&push->mana_regulator, burst_mana, 16.0f);
@@ -115,8 +113,7 @@ void push_update(struct push* push, struct spell_event_listener* event_listener,
     ) * scaled_time_step_inv * (1.0f / mana_per_second[push->push_mode]);
 
     if (power_ratio == 0.0f) {
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, 0, 0.0f);
-        return;
+        return false;
     }
 
     struct Vector3 targetVelocity;
@@ -129,4 +126,6 @@ void push_update(struct push* push, struct spell_event_listener* event_listener,
     if (push->dash_trail_left) {
         dash_trail_move(push->dash_trail_left, target->position);
     }
+
+    return true;
 }

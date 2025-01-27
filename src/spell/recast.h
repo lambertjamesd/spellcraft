@@ -3,6 +3,7 @@
 
 #include "spell_sources.h"
 #include "spell_event.h"
+#include <stdbool.h>
 
 enum recast_mode {
     RECAST_MODE_RECAST,
@@ -22,6 +23,6 @@ void recast_init(struct recast* recast, struct spell_data_source* source, struct
 void recast_destroy(struct recast* recast);
 
 void recast_recast(struct recast* recast, struct spell_data_source* recast_source, float burst_mana);
-void recast_update(struct recast* recast, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
+bool recast_update(struct recast* recast, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
 #endif

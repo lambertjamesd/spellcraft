@@ -20,7 +20,7 @@ struct push {
 void push_init(struct push* push, struct spell_data_source* source, struct spell_event_options event_options, enum element_type push_mode);
 void push_destroy(struct push* push);
 
-void push_update(struct push* push, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
+bool push_update(struct push* push, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
 
 #endif

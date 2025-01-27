@@ -8,16 +8,6 @@ void spell_event_listener_add(struct spell_event_listener* listener, enum spell_
     spell_data_source_retain(data_source);
 
     if (listener->event_count == MAX_EVENT_COUNT) {
-        struct spell_event* last_event = &listener->events[MAX_EVENT_COUNT - 1];
-        
-        if (type == SPELL_EVENT_DESTROY) {
-            spell_data_source_release(last_event->data_source);
-
-            // destroy events have priority
-            last_event->data_source = data_source;
-            last_event->type = SPELL_EVENT_DESTROY;
-            last_event->burst_mana = burst_mana;
-        }
         return;
     }
 

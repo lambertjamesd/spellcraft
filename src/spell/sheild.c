@@ -60,13 +60,13 @@ void shield_destroy(struct shield* shield) {
     spell_data_source_release(shield->data_source);
 }
 
-void shield_update(struct shield* shield, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
+bool shield_update(struct shield* shield, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     shield_update_transform(shield);
 
     if (shield->start_animation) {
         if (mesh_animation_update(shield->start_animation)) {
             shield->start_animation->transform.position = shield->transform.position;
-            return;
+            return true;
         }
         mesh_animation_free(shield->start_animation);
         render_scene_add(&shield->transform.position, 1.0f, shield_render, shield);
@@ -75,7 +75,5 @@ void shield_update(struct shield* shield, struct spell_event_listener* event_lis
 
     shield->lifetime -= fixed_time_step;
 
-    if (shield->lifetime < 0.0f) {
-        spell_event_listener_add(event_listener, SPELL_EVENT_DESTROY, NULL, 0.0f);
-    }
+    return shield->lifetime >= 0.0f;
 }

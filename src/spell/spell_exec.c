@@ -134,36 +134,34 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
     struct spell_event_listener event_listener;
     spell_event_listener_init(&event_listener);
 
+    bool isActive = false;
+
     switch (slot->type) {
         case SPELL_EXEC_SLOT_TYPE_PROJECTILE:
-            projectile_update(&slot->data.projectile, &event_listener, &exec->spell_sources);
+            isActive = projectile_update(&slot->data.projectile, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_SHEILD:
-            shield_update(&slot->data.shield, &event_listener, &exec->spell_sources);
+            isActive = shield_update(&slot->data.shield, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
-            element_emitter_update(&slot->data.element_emitter, &event_listener, &exec->spell_sources);
+            isActive = element_emitter_update(&slot->data.element_emitter, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_EXPLOSION:
-            explosion_update(&slot->data.explosion, &event_listener, &exec->spell_sources);
+            isActive = explosion_update(&slot->data.explosion, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_RECAST:
-            recast_update(&slot->data.recast, &event_listener, &exec->spell_sources);
+            isActive = recast_update(&slot->data.recast, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
-            push_update(&slot->data.push, &event_listener, &exec->spell_sources);
+            isActive = push_update(&slot->data.push, &event_listener, &exec->spell_sources);
             break;
         default:
             break;
     }
 
-    // handle destroy event first 
-    for (int i = 0; i < event_listener.event_count; ++i) {
-        if (event_listener.events[i].type == SPELL_EVENT_DESTROY) {
-            spell_slot_destroy(exec, spell_slot_index);
-            exec->ids[spell_slot_index] = 0;
-            break;
-        }
+    if (!isActive) {
+        spell_slot_destroy(exec, spell_slot_index);
+        exec->ids[spell_slot_index] = 0;
     }
 
     // then handle the remaining events

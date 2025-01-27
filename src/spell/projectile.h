@@ -25,6 +25,6 @@ struct projectile {
 void projectile_init(struct projectile* projectile, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element);
 void projectile_destroy(struct projectile* projectile);
 
-void projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
+bool projectile_update(struct projectile* projectile, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
 #endif

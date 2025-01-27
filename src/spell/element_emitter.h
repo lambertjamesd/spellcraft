@@ -41,6 +41,6 @@ struct element_emitter {
 void element_emitter_init(struct element_emitter* element_emitter, struct spell_data_source* source, struct spell_event_options event_options, struct element_emitter_definition* effect_definition);
 void element_emitter_destroy(struct element_emitter* element_emitter);
 
-void element_emitter_update(struct element_emitter* element_emitter, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
+bool element_emitter_update(struct element_emitter* element_emitter, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
 #endif
