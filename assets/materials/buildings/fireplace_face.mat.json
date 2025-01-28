@@ -1,5 +1,15 @@
 {
-    "tex0": "../../images/buildings/fireplace_face.png",
+    "tex0":	{
+        "filename": "../../images/buildings/fireplace_face.png",
+        "s": {
+            "mirror": true,
+            "repeats": 1
+        },
+        "t": {
+            "mirror": true,
+            "repeats": 1
+        }
+	},
     "combineMode": [{
         "color": ["TEX0", "0", "SHADE", "0"],
         "alpha": ["0", "0", "0", "1"]

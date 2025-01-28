@@ -1,11 +1,11 @@
 {
-    "tex0": "../../images/buildings/fireplace_metal.png",
+    "tex1": "../../images/buildings/fireplace_metal.png",
     "combineMode": [{
-        "color": ["TEX0", "0", "SHADE", "0"],
-        "alpha": ["0", "0", "0", "1"]
+        "color": ["TEX1", "0", "SHADE", "0"],
+        "alpha": ["0", "0", "0", "0"]
     }, {
         "color": ["1", "0", "COMBINED", "COMBINED"],
-        "alpha": ["0", "0", "0", "TEX0"]
+        "alpha": ["0", "0", "0", "1"]
     }],
     "blendMode": "ALPHA_CLIP",
     "lighting": false,

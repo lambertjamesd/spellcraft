@@ -1,5 +1,15 @@
 {
-    "tex0": "../../images/buildings/banner_green.png",
+    "tex0":	{
+        "filename": "../../images/buildings/banner_green.png",
+        "s": {
+            "mirror": true,
+            "repeats": 2
+        },
+        "t": {
+            "mirror": true,
+            "repeats": 2
+        }
+	},
     "combineMode": [{
         "color": ["TEX0", "0", "SHADE", "0"],
         "alpha": ["0", "0", "0", "1"]
