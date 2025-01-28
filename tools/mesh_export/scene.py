@@ -151,6 +151,9 @@ def process_scene():
         if obj.type != "MESH":
             continue
 
+        if obj.name.startswith('fast64_f3d_material_library_'):
+            continue
+
         final_transform = base_transform @ obj.matrix_world
 
         mesh: bpy.types.Mesh = obj.data
@@ -233,7 +236,6 @@ def process_scene():
 
         for loading_zone in scene.loading_zones:
             bb_min, bb_max = loading_zone.bounding_box(base_transform)
-            print(bb_min, bb_max)
             file.write(struct.pack(">fff", bb_min.x, bb_min.y, bb_min.z))
             file.write(struct.pack(">fff", bb_max.x, bb_max.y, bb_max.z))
             file.write(struct.pack(">I", context.get_string_offset(loading_zone.target)))

@@ -177,8 +177,8 @@ def pack_vertex(vertex, uv, color, normal, bone_index, gamma = 1):
     if uv:
         result = result + struct.pack(
             ">hh",
-            round(uv[0] * 256),
-            round((1 - uv[1]) * 256)
+            round(uv[0] * 256) % 32768,
+            round((1 - uv[1]) * 256) % 32768
         )
 
     if color:
