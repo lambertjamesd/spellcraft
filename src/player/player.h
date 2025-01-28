@@ -12,6 +12,7 @@
 
 #include "../spell/projectile.h"
 #include "../spell/spell_exec.h"
+#include "../spell/live_cast.h"
 
 #include "inventory.h"
 
@@ -42,6 +43,7 @@ struct player {
     struct spell_data_source player_spell_sources[PLAYER_CAST_SOURCE_COUNT];
     
     struct spell_exec spell_exec;
+    struct live_cast live_cast;
 
     struct player_animations animations;
     struct inventory_assets assets;

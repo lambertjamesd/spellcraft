@@ -377,6 +377,16 @@ bool spell_exec_charge(struct spell_exec* exec) {
     return false;
 }
 
+bool spell_exec_is_used(struct spell_exec* exec, struct spell* spell) {
+    for (int i = 0; i < MAX_SPELL_EXECUTORS; i += 1) {
+        if (exec->slots[i].for_spell == spell) {
+            return true;
+        }
+    }
+
+    return true;
+}
+
 #define GET_ID_FROM_INDEX(exec, idx) (int)(((idx) & 0x8000) ? (exec)->modifier_ids[(idx) & 0x7FFF] : (exec)->ids[idx])
 #define DEFINE_MODIFIER_IDX(idx) ((idx) | 0x8000)
 #define IS_MODIFIER_ID(idx) ((idx) & 0x8000)
