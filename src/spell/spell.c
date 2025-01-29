@@ -9,6 +9,7 @@ void spell_init(struct spell* spell, uint8_t cols, uint8_t rows, int icon) {
     spell->rows = rows;
     spell->cols = cols;
     spell->symbol_index = icon;
+    memset(spell->symbols, 0, sizeof(struct spell_symbol) * cell_count);
 
     struct spell_symbol* curr = spell->symbols;
 

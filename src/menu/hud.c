@@ -4,6 +4,7 @@
 #include "../resource/material_cache.h"
 #include "menu_common.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../spell/spell_render.h"
 
 #define SPELL_SLOT_LOCATION_X   232
 #define SPELL_SLOT_LOCATION_Y   152
@@ -122,6 +123,8 @@ void hud_render(void *data) {
             0, 0
         );
     }
+
+    spell_render(&hud->player->live_cast.pending_spell, 30, 30);
 }
 
 void hud_init(struct hud* hud, struct player* player) {

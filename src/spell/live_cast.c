@@ -39,6 +39,7 @@ struct spell* live_cast_extract_active_spell(struct live_cast* live_cast) {
     spell->next = live_cast->active_spells;
     live_cast->active_spells = spell;
 
+    spell_set_symbol(&live_cast->pending_spell, 0, 0, (struct spell_symbol){});
     live_cast->current_spell_output = 0;
 
     return &spell->spell;
@@ -52,6 +53,7 @@ void live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_ty
     spell_set_symbol(&live_cast->pending_spell, live_cast->current_spell_output, 0, (struct spell_symbol){
         .type = symbol_type,
     });
+    spell_set_symbol(&live_cast->pending_spell, live_cast->current_spell_output + 1, 0, (struct spell_symbol){});
     live_cast->current_spell_output += 1;
 }
 

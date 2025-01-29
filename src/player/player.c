@@ -212,7 +212,8 @@ void player_update(struct player* player) {
     //     }
     // }
 
-    struct spell_data_source* source = &player->player_spell_sources[0];
+    // A cast slot
+    struct spell_data_source* source = &player->player_spell_sources[4];
 
     source->direction = castDirection;
     source->position = player->transform.position;
@@ -220,14 +221,14 @@ void player_update(struct player* player) {
     source->flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
 
     if (live_cast_has_pending_spell(&player->live_cast) && pressed.a) {
-        spell_exec_start(&player->spell_exec, 0, live_cast_extract_active_spell(&player->live_cast), source);
+        spell_exec_start(&player->spell_exec, 4, live_cast_extract_active_spell(&player->live_cast), source);
     }
 
     if (pressed.b) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_LIFE);
     } else if (pressed.c_up) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_AIR);
-    } else if (pressed.c_up) {
+    } else if (pressed.c_down) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_EARTH);
     } else if (pressed.c_right) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_FIRE);

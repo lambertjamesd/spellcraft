@@ -16,7 +16,7 @@
 
 #include "inventory.h"
 
-#define PLAYER_CAST_SOURCE_COUNT    4
+#define PLAYER_CAST_SOURCE_COUNT    5
 
 struct player_animations {
     struct animation_clip* idle;
