@@ -3,6 +3,9 @@
     "combineMode": [{
         "color": ["SHADE", "0", "TEX0", "0"],
         "alpha": ["0", "0", "0", "1"]
+	}, {
+        "color": ["COMBINED", "SHADE", "SHADE_ALPHA", "SHADE"],
+        "alpha": ["0", "0", "0", "1"]
     }],
     "blendMode": "OPAQUE",
     "lighting": false,

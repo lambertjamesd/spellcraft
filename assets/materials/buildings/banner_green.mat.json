@@ -2,12 +2,10 @@
     "tex0":	{
         "filename": "../../images/buildings/banner_green.png",
         "s": {
-            "mirror": true,
-            "repeats": 2
+            "mirror": true
         },
         "t": {
-            "mirror": true,
-            "repeats": 2
+            "mirror": true
         }
 	},
     "combineMode": [{

@@ -9,7 +9,10 @@
         }
     },
     "combineMode": [{
-        "color": ["0", "0", "0", "TEX0"],
+        "color": ["TEX0", "0", "SHADE", "0"],
+        "alpha": ["0", "0", "0", "1"]
+		}, {
+        "color": ["1", "0", "COMBINED", "COMBINED"],
         "alpha": ["0", "0", "0", "1"]
     }],
     "blendMode": "OPAQUE",

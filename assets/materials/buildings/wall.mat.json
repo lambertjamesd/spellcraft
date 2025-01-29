@@ -1,7 +1,10 @@
 {
     "tex0": "../../images/buildings/wall.png",
     "combineMode": [{
-        "color": ["TEX0", "0", "SHADE", "0"],
+        "color": ["SHADE", "0", "TEX0", "0"],
+        "alpha": ["0", "0", "0", "1"]
+	}, {
+        "color": ["COMBINED", "SHADE", "SHADE_ALPHA", "SHADE"],
         "alpha": ["0", "0", "0", "1"]
     }],
     "blendMode": "OPAQUE",
