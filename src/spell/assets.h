@@ -28,6 +28,7 @@ struct spell_assets {
     struct tmesh* lightning_mesh;
     
     struct material* spell_symbols;
+    struct material* casting_border;
 };
 
 void spell_assets_init();

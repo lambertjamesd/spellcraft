@@ -51,6 +51,9 @@ void spell_assets_init() {
 
     // material_cache_release() never called
     assets.spell_symbols = material_cache_load("rom:/materials/spell/symbols.mat");
+
+    // material_cache_release() never called
+    assets.casting_border = material_cache_load("rom:/materials/spell/casting_border.mat");
 }
 
 struct spell_assets* spell_assets_get() {

@@ -44,6 +44,9 @@ make
 
 ## TODO
 
+- fix globals.dat build issues
+- migrate to materials in blender
+- render live cast spell
 - camera logic
 -  do a better job with camera tracking logic
 -  implement automatic camera framing when talking to npc

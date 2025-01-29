@@ -14,7 +14,10 @@ if __name__ == "__main__":
         if not 'f3d_mat' in material or not 'rdp_settings' in material['f3d_mat']:
             continue
         
-        output_filename = os.path.join(output_directory, material.name) + '.mat'
+        if output_directory.endswith('.mat'):
+            output_filename= output_directory
+        else:
+            output_filename = os.path.join(output_directory, material.name) + '.mat'
 
         print(f'Writing material to {output_filename}')
         result = entities.material_extract.determine_material_from_f3d(material)

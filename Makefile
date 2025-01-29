@@ -67,8 +67,9 @@ filesystem/meshes/%.tmesh filesystem/meshes/%.anim: assets/meshes/%.blend $(EXPO
 ###
 
 MATERIAL_SOURCES := $(shell find assets/ -type f -name '*.mat.json' | sort)
+MATERIAL_BLENDER_SOURCES := $(shell find assets/ -type f -name '*.mat.blend' | sort)
 
-MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat)
+MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat) $(MATERIAL_SOURCES:assets/%.mat.blend=filesystem/%.mat)
 
 filesystem/%.mat: assets/%.mat.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
@@ -81,6 +82,9 @@ filesystem/materials/material_source: assets/materials/material_source.blend too
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/material_fast64.py -- filesystem
 	touch $@
 
+filesystem/%.mat: assets/%.mat.blend $(EXPORT_SOURCE)
+	@mkdir -p $(dir $@)
+	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/material_fast64.py -- $@
 
 ###
 # material_builder
