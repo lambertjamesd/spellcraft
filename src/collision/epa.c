@@ -461,7 +461,7 @@ bool epaSolve(struct Simplex* startingSimplex, void* objectA, MinkowsiSum object
         expandingSimplexExpand(&simplex, nextIndex, simplex.triangleHeap[0]);
     }
 
-    if (closestFace) {
+    if (closestFace && vector3MagSqrd(&closestFace->normal) > 0.5f) {
         result->normal = closestFace->normal;
         result->penetration = -projection;
         struct Vector3 planePos;

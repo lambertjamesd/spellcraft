@@ -24,7 +24,7 @@ bool live_cast_has_pending_spell(struct live_cast* live_cast);
 
 struct spell* live_cast_extract_active_spell(struct live_cast* live_cast);
 
-void live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_type symbol_type);
+bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_type symbol_type);
 
 void live_cast_cleanup_unused_spells(struct live_cast* live_cast, struct spell_exec* spell_exec);
 

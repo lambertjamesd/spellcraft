@@ -107,3 +107,8 @@ int spell_get_primary_event(struct spell* spell, int col, int row) {
 
     return -1;
 }
+
+
+bool spell_is_rune(int index) {
+    return index >= SPELL_SYMBOL_FIRE && index <= SPELL_SYMBOL_LIFE;
+}

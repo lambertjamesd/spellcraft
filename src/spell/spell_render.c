@@ -19,6 +19,17 @@ void spell_render_border(struct spell* spell, int left, int top) {
         }
 
         if (type == SPELL_SYMBOL_BREAK) {
+            if (block_offset == 0) {
+                rdpq_texture_rectangle_scaled(
+                    TILE0,
+                    x, top,
+                    x + 28, top + 32,
+                    0, 0,
+                    28, 32
+                );
+                x += 28;
+            }
+
             block_offset = 0;
             continue;
         }
@@ -73,7 +84,7 @@ void spell_render(struct spell* spell, int left, int top) {
     rspq_block_run(spell_assets_get()->spell_symbols->block);
 
     int x = left + 4;
-    bool is_modifier = false;
+    int block_offset = 0;
 
     for (int col = 0; col < spell->cols; col += 1) {
         int type = spell->symbols[col].type;
@@ -82,21 +93,32 @@ void spell_render(struct spell* spell, int left, int top) {
             break;
         }
 
-        if (type == SPELL_SYMBOL_BREAK) {
-            is_modifier = false;
+        int size;
+        int source_x;
+
+        if (type == SPELL_SYMBOL_BREAK && block_offset) {
+            if (block_offset > 1) {
+                x += 8;
+            } else {
+                x += 4;
+            }
+            
+            block_offset = 0;
 
             rdpq_sync_pipe();
             rdpq_set_prim_color((color_t){.r = 255, .g = 255, .b = 255, .a = 255});
 
-            x += 8;
             continue;
+        } else if (type == SPELL_SYMBOL_BREAK) {
+            size = 24;
+            source_x = 216;
+        } else {
+            size = block_offset ? 16 : 24;
+            source_x = (type - 1) * size + (block_offset ? 120 : 0);
         }
 
-        int size = is_modifier ? 16 : 24;
-
-        int source_x = (type - 1) * size + (is_modifier ? 120 : 0);
-        int symbol_left = is_modifier ? x : x - 1;
-        int symbol_top = is_modifier ? top + 12 : top + 4;
+        int symbol_left = block_offset ? x : x - 1;
+        int symbol_top = block_offset ? top + 12 : top + 4;
 
         rdpq_texture_rectangle_scaled(
             TILE0,
@@ -108,10 +130,13 @@ void spell_render(struct spell* spell, int left, int top) {
 
         x += size;
 
-        if (!is_modifier) {
+        if (block_offset == 0) {
             rdpq_sync_pipe();
             rdpq_set_prim_color((color_t){.r = 0, .g = 0, .b = 0, .a = 255});
-            is_modifier = true;
+        }
+        
+        if (type != SPELL_SYMBOL_BREAK) {
+            block_offset += 1;
         }
     }
 }

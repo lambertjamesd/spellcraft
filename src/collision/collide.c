@@ -120,7 +120,9 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
 
     struct EpaResult result;
 
-    epaSolve(&simplex, a, dynamic_object_minkowski_sum, b, dynamic_object_minkowski_sum, &result);
+    if (!epaSolve(&simplex, a, dynamic_object_minkowski_sum, b, dynamic_object_minkowski_sum, &result)) {
+        return;
+    }
 
     float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
     float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;

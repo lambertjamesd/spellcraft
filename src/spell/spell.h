@@ -59,4 +59,6 @@ bool spell_has_secondary_event(struct spell* spell, int col, int row);
 
 int spell_get_primary_event(struct spell* spell, int col, int row);
 
+bool spell_is_rune(int index);
+
 #endif
