@@ -3,6 +3,10 @@
 
 #include "spell.h"
 
-void spell_render(struct spell* spell, int x, int y);
+struct spell_render_animation {
+    float last_symbol_time;
+};
+
+void spell_render(struct spell* spell, int x, int y, struct spell_render_animation* animation);
 
 #endif

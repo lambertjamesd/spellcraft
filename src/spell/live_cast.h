@@ -5,6 +5,7 @@
 #include "spell.h"
 #include "spell_exec.h"
 #include "../scene/scene_definition.h"
+#include "../spell/spell_render.h"
 
 struct active_spell {
     struct spell spell;
@@ -15,6 +16,7 @@ struct live_cast {
     struct spell pending_spell;
     uint8_t current_spell_output;
     struct active_spell* active_spells;
+    struct spell_render_animation spell_animation;
 };
 
 void live_cast_init(struct live_cast* live_cast);
@@ -27,5 +29,7 @@ struct spell* live_cast_extract_active_spell(struct live_cast* live_cast);
 bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_type symbol_type);
 
 void live_cast_cleanup_unused_spells(struct live_cast* live_cast, struct spell_exec* spell_exec);
+
+void live_cast_render_preview(struct live_cast* live_cast);
 
 #endif

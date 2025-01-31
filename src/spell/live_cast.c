@@ -1,6 +1,7 @@
 #include "live_cast.h"
 
 #include <malloc.h>
+#include "../time/time.h"
 
 #define MAX_COLS    32
 
@@ -8,6 +9,7 @@ void live_cast_init(struct live_cast* live_cast) {
     spell_init(&live_cast->pending_spell, MAX_COLS, 1, 0);
     live_cast->current_spell_output = 0;
     live_cast->active_spells = NULL;
+    live_cast->spell_animation.last_symbol_time = 0.0f;
 }
 
 void live_cast_destroy(struct live_cast* live_cast) {
@@ -76,6 +78,7 @@ bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_ty
     });
     spell_set_symbol(&live_cast->pending_spell, live_cast->current_spell_output + 1, 0, (struct spell_symbol){});
     live_cast->current_spell_output += 1;
+    live_cast->spell_animation.last_symbol_time = game_time;
     return true;
 }
 
@@ -101,4 +104,8 @@ void live_cast_cleanup_unused_spells(struct live_cast* live_cast, struct spell_e
             }
         }
     }
+}
+
+void live_cast_render_preview(struct live_cast* live_cast) {
+    spell_render(&live_cast->pending_spell, 30, 30, &live_cast->spell_animation);
 }
