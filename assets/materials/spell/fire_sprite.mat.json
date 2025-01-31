@@ -1,0 +1,16 @@
+{
+    "tex0": {
+        "filename": "../../images/objects/fire32bit.png",
+        "t": {
+            "scroll": 0.9
+        }
+    },
+    "combineMode": [{
+        "color": ["TEX0", "0", "SHADE", "0"],
+        "alpha": ["TEX0", "0", "SHADE", "0"]
+    }],
+    "primColor": [255, 255, 255, 255],
+    "blendMode": "TRANSPARENT",
+    "lighting": false,
+    "zBuffer": true
+}

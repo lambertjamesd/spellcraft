@@ -29,6 +29,8 @@ struct spell_assets {
     
     struct material* spell_symbols;
     struct material* casting_border;
+
+    struct tmesh* fire_sprite;
 };
 
 void spell_assets_init();

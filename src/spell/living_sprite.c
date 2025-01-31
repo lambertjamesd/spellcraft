@@ -22,7 +22,7 @@ void living_sprite_render(void* data, struct render_batch* batch) {
     matrixApplyScale(mtx, 1.0f);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, spell_assets_get()->flame_mesh, mtxfp, 1, NULL, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->fire_sprite, mtxfp, 1, NULL, NULL);
 }
 
 void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_source* source, struct spell_event_options event_options) {
@@ -32,8 +32,8 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
     render_scene_add(&living_sprite->transform.position, 0.5f, living_sprite_render, living_sprite);
 }
 
-void living_sprite_update(struct living_sprite* living_sprite, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
-
+bool living_sprite_update(struct living_sprite* living_sprite, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
+    return true;
 }
 
 void living_sprite_destroy(struct living_sprite* living_sprite) {

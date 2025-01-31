@@ -39,7 +39,10 @@ void spell_slot_init(
             }
             break;
         case SPELL_SYMBOL_FIRE:
-            if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
+            if (modifier_flags.living) {
+                slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
+                living_sprite_init(&slot->data.living_sprite, input, event_options);
+            } else if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
             } else {
@@ -103,6 +106,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             push_destroy(&slot->data.push);
             break;
+        case SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE:
+            living_sprite_destroy(&slot->data.living_sprite);
+            break;
         default:
             break;
     }
@@ -155,6 +161,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             isActive = push_update(&slot->data.push, &event_listener, &exec->spell_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE:
+            isActive = living_sprite_update(&slot->data.living_sprite, &event_listener, &exec->spell_sources);
             break;
         default:
             break;
