@@ -3,12 +3,28 @@
 #include <stdbool.h>
 #include "assets.h"
 
-void spell_render_border(struct spell* spell, int left, int top) {
-    rspq_block_run(spell_assets_get()->casting_border->block);
-    rdpq_set_prim_color((color_t){.r = 255, .g = 255, .b = 255, .a = 255});
+#define MAX_MODIFIER_COUNT  4
 
-    int x = left;
-    int block_offset = 0;
+#define MAX_BLOCKS  16
+
+#define PRIMARY_WIDTH       28
+#define MODIFIER_WIDTH      16
+#define LAST_MODIFIER_WIDTH 20
+
+struct spell_block {
+    uint16_t x_offset;
+    uint8_t modfiier_count;
+    uint8_t primary_rune;
+    uint8_t modifier_runes[MAX_MODIFIER_COUNT];  
+};
+
+int spell_block_layout(struct spell_block* spell_blocks, struct spell* spell) {
+    int x = 0;
+
+    struct spell_block* current_block = spell_blocks;
+    current_block->x_offset = x;
+    current_block->modfiier_count = 0;
+    current_block->primary_rune = 0;
 
     for (int col = 0; col < spell->cols; col += 1) {
         int type = spell->symbols[col].type;
@@ -18,125 +34,139 @@ void spell_render_border(struct spell* spell, int left, int top) {
             break;
         }
 
-        if (type == SPELL_SYMBOL_BREAK) {
-            if (block_offset == 0) {
-                rdpq_texture_rectangle_scaled(
-                    TILE0,
-                    x, top,
-                    x + 28, top + 32,
-                    0, 0,
-                    28, 32
-                );
-                x += 28;
+        if (spell_is_rune(type)) {
+            if (current_block->primary_rune) {
+                if (current_block->modfiier_count < MAX_MODIFIER_COUNT) {
+                    current_block->modifier_runes[current_block->modfiier_count] = type;
+                    ++current_block->modfiier_count;
+                }
+            } else {
+                current_block->primary_rune = type;
+            }
+        } else if (type == SPELL_SYMBOL_BREAK) {
+            if (current_block->primary_rune == 0) {
+                current_block->primary_rune = SPELL_SYMBOL_RECAST;
             }
 
-            block_offset = 0;
-            continue;
-        }
+            x += PRIMARY_WIDTH;
+        
+            if (current_block->modfiier_count) {
+                x += current_block->modfiier_count * MODIFIER_WIDTH + (LAST_MODIFIER_WIDTH - MODIFIER_WIDTH);
+            }
 
-        if (block_offset == 0) {
-            rdpq_texture_rectangle_scaled(
-                TILE0,
-                x, top,
-                x + 28, top + 32,
-                0, 0,
-                28, 32
-            );
-            x += 28;
-        } else if (next_type != SPELL_SYMBOL_BREAK && next_type != 0) {
-            rdpq_texture_rectangle_scaled(
-                TILE0,
-                x, top,
-                x + 16, top + 32,
-                28, 0,
-                44, 32
-            );
-            x += 16;
-        } else {
-            rdpq_texture_rectangle_scaled(
-                TILE0,
-                x, top,
-                x + 20, top + 32,
-                44, 0,
-                64, 32
-            );
-            x += 20;
-        }
+            ++current_block;
 
-        block_offset += 1;
+            current_block->x_offset = x;
+            current_block->modfiier_count = 0;
+            current_block->primary_rune = 0;
+        }
     }
 
-    if (block_offset == 1) {
+    // show available space for last rune block
+    for (int i = current_block->modfiier_count; i < MAX_MODIFIER_COUNT; i += 1) {
+        current_block->modifier_runes[i] = 0;
+    }
+
+    current_block->modfiier_count = MAX_MODIFIER_COUNT;
+
+    ++current_block;
+
+    return current_block - spell_blocks;
+}
+
+void spell_render_border(struct spell_block* spell_blocks, int block_count, int left, int top) {
+    rspq_block_run(spell_assets_get()->casting_border->block);
+    rdpq_set_prim_color((color_t){.r = 255, .g = 255, .b = 255, .a = 255});
+
+    for (int index = 0; index < block_count; index += 1) {
+        struct spell_block* current_block = &spell_blocks[index];
+        int x = current_block->x_offset + left;
+        
         rdpq_texture_rectangle_scaled(
             TILE0,
             x, top,
-            x + 20, top + 32,
-            44, 0,
-            64, 32
+            x + PRIMARY_WIDTH, top + 32,
+            0, 0,
+            PRIMARY_WIDTH, 32
         );
-        x += 20;
+        x += PRIMARY_WIDTH;
+
+        if (!current_block->modfiier_count) {
+            continue;
+        }
+
+        for (int i = 0; i < current_block->modfiier_count - 1; i += 1) {
+            rdpq_texture_rectangle_scaled(
+                TILE0,
+                x, top,
+                x + MODIFIER_WIDTH, top + 32,
+                PRIMARY_WIDTH, 0,
+                PRIMARY_WIDTH + MODIFIER_WIDTH, 32
+            );
+            x += MODIFIER_WIDTH;
+        }
+
+        rdpq_texture_rectangle_scaled(
+            TILE0,
+            x, top,
+            x + LAST_MODIFIER_WIDTH, top + 32,
+            PRIMARY_WIDTH + MODIFIER_WIDTH, 0,
+            PRIMARY_WIDTH + MODIFIER_WIDTH + LAST_MODIFIER_WIDTH, 32
+        );
+        x += LAST_MODIFIER_WIDTH;
     }
 }
 
 void spell_render(struct spell* spell, int left, int top) {
-    spell_render_border(spell, left, top);
+    struct spell_block spell_blocks[MAX_BLOCKS];
+    int block_count = spell_block_layout(spell_blocks, spell);
+
+    spell_render_border(spell_blocks, block_count, left, top);
 
     rspq_block_run(spell_assets_get()->spell_symbols->block);
 
-    int x = left + 4;
-    int block_offset = 0;
+    for (int index = 0; index < block_count; index += 1) {
+        struct spell_block* current_block = &spell_blocks[index];
+        int x = current_block->x_offset + left;
 
-    for (int col = 0; col < spell->cols; col += 1) {
-        int type = spell->symbols[col].type;
-
-        if (type == 0) {
-            break;
-        }
-
-        int size;
-        int source_x;
-
-        if (type == SPELL_SYMBOL_BREAK && block_offset) {
-            if (block_offset > 1) {
-                x += 8;
-            } else {
-                x += 4;
-            }
-            
-            block_offset = 0;
-
-            rdpq_sync_pipe();
-            rdpq_set_prim_color((color_t){.r = 255, .g = 255, .b = 255, .a = 255});
-
+        if (!current_block->primary_rune) {
             continue;
-        } else if (type == SPELL_SYMBOL_BREAK) {
-            size = 24;
-            source_x = 216;
-        } else {
-            size = block_offset ? 16 : 24;
-            source_x = (type - 1) * size + (block_offset ? 120 : 0);
         }
 
-        int symbol_left = block_offset ? x : x - 1;
-        int symbol_top = block_offset ? top + 12 : top + 4;
+        int source_x = current_block->primary_rune == SPELL_SYMBOL_RECAST ? 216 : (current_block->primary_rune - 1) * 24;
 
         rdpq_texture_rectangle_scaled(
             TILE0,
-            symbol_left, symbol_top,
-            symbol_left + size, symbol_top + size,
+            x + 2, top + 4,
+            x + 2 + 24, top + 4 + 24,
             source_x, 0,
-            source_x + size, size
+            source_x + 24, 24
         );
+    }
 
-        x += size;
+    rdpq_sync_pipe();
+    rdpq_set_prim_color((color_t){.r = 0, .g = 0, .b = 0, .a = 255});
 
-        if (block_offset == 0) {
-            rdpq_sync_pipe();
-            rdpq_set_prim_color((color_t){.r = 0, .g = 0, .b = 0, .a = 255});
-        }
-        
-        if (type != SPELL_SYMBOL_BREAK) {
-            block_offset += 1;
+    for (int index = 0; index < block_count; index += 1) {
+        struct spell_block* current_block = &spell_blocks[index];
+        int x = current_block->x_offset + left + PRIMARY_WIDTH;
+
+        for (int modifier = 0; modifier < current_block->modfiier_count; modifier += 1) {
+            int type = current_block->modifier_runes[modifier];
+
+            if (type == 0) {
+                break;
+            }
+
+            int source_x = 120 + MODIFIER_WIDTH * (type - 1);
+            rdpq_texture_rectangle_scaled(
+                TILE0,
+                x, top + 12,
+                x + 16, top + 12 + 16,
+                source_x, 0,
+                source_x + MODIFIER_WIDTH, MODIFIER_WIDTH
+            );
+            x += MODIFIER_WIDTH;
         }
     }
 }

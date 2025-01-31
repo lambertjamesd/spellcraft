@@ -124,7 +124,9 @@ void hud_render(void *data) {
         );
     }
 
-    spell_render(&hud->player->live_cast.pending_spell, 30, 30);
+    if (hud->player->live_cast.current_spell_output) {
+        spell_render(&hud->player->live_cast.pending_spell, 30, 30);
+    }
 }
 
 void hud_init(struct hud* hud, struct player* player) {

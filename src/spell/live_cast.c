@@ -50,6 +50,13 @@ bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_ty
         return false;
     }
 
+    if (live_cast->current_spell_output > 1 && 
+        symbol_type == SPELL_SYMBOL_BREAK &&
+        spell_get_symbol(&live_cast->pending_spell, live_cast->current_spell_output - 1, 0).type == SPELL_SYMBOL_BREAK &&
+        spell_get_symbol(&live_cast->pending_spell, live_cast->current_spell_output - 2, 0).type == SPELL_SYMBOL_BREAK) {
+        return false;
+    }
+
     for (int prev = live_cast->current_spell_output - 1; prev >= 0; prev -= 1) {
         struct spell_symbol curr_symbol = spell_get_symbol(&live_cast->pending_spell, prev, 0);
         struct spell_symbol prev_symbol = spell_get_symbol(&live_cast->pending_spell, prev - 1, 0);
@@ -57,11 +64,6 @@ bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_ty
         if (curr_symbol.type == symbol_type) {
             if (spell_is_rune(symbol_type) && spell_is_rune(prev_symbol.type)) {
                 // modifier already applied
-                return false;
-            }
-
-            if (symbol_type == SPELL_SYMBOL_BREAK && prev_symbol.type == SPELL_SYMBOL_BREAK) {
-                // more than 2 breaks in a row
                 return false;
             }
         } else if (curr_symbol.type == SPELL_SYMBOL_BREAK) {
