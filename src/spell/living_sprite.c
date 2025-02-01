@@ -13,13 +13,11 @@ void living_sprite_render(void* data, struct render_batch* batch) {
         return;
     }
 
-    struct Vector3 position;
-    vector3Scale(&living_sprite->transform.position, &position, SCENE_SCALE);
-
     mat4x4 mtx;
-    memcpy(mtx, &batch->camera_matrix, sizeof(mat4x4));
-    matrixApplyPosition(mtx, &position);
-    matrixApplyScale(mtx, 1.0f);
+    transformSAToMatrix(&living_sprite->transform, mtx, 1.0f);
+    mtx[3][0] *= SCENE_SCALE;
+    mtx[3][1] *= SCENE_SCALE;
+    mtx[3][2] *= SCENE_SCALE;
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     render_batch_add_tmesh(batch, spell_assets_get()->fire_sprite, mtxfp, 1, NULL, NULL);

@@ -65,6 +65,8 @@ def process_scene():
     mesh_list = entities.mesh.mesh_list(base_transform)
     attatchments: list[entities.armature.BoneLinkage] = []
 
+    use_scene = None
+
     for obj in bpy.data.objects:
         if obj.type != "MESH":
             continue
@@ -76,6 +78,7 @@ def process_scene():
             continue
 
         mesh_list.append(obj)
+        use_scene = obj.users_scene[0]
 
     settings = entities.export_settings.ExportSettings()
 
@@ -83,7 +86,11 @@ def process_scene():
 
     meshes = list(map(lambda x: (x[0], entities.mesh_optimizer.remove_duplicates(x[1])), meshes))
 
-    if len(meshes) == 1 and meshes[0][0].startswith('materials/'):
+    if 'default_material' in use_scene and use_scene['default_material']:
+        default_material = use_scene['default_material']
+        settings.default_material_name = default_material.name
+        settings.default_material = entities.material_extract.load_material_with_name(default_material.name, default_material)
+    elif len(meshes) == 1 and meshes[0][0].startswith('materials/'):
         settings.default_material_name = meshes[0][0]
         settings.default_material = entities.material_extract.load_material_with_name(meshes[0][0], meshes[0][1].mat)
 

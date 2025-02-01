@@ -408,6 +408,17 @@ def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_setting
 
     return current_bone
         
+def _transition_material(current_material: material.Material, target_material: material.Material, commands: list, material_transitions: list):
+    delta = material_delta.determine_material_delta(current_material, target_material)
+
+    if not delta.is_empty():
+        commands.append(_build_material_command(len(material_transitions)))
+        material_delta.apply_material_delta(delta, current_material)
+
+        curr_copy = material.Material()
+        material_delta.apply_material_delta(current_material, curr_copy)
+        material_transitions.append((delta, curr_copy))
+
 
 def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.ArmatureData | None, attatchments: list[armature.BoneLinkage], settings: export_settings.ExportSettings, file):
     file.write('T3MS'.encode())
@@ -426,7 +437,6 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
     current_material = material.Material()
 
     if settings.default_material_name != None and settings.default_material_name.startswith('materials/'):
-        current_material = settings.default_material
         material_romname = f"rom:/{settings.default_material_name}.mat".encode()
         file.write(len(material_romname).to_bytes(1, 'big'))
         file.write(material_romname)
@@ -447,17 +457,12 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
         #     bones = arm.get_filtered_bones()
         #     print([bones[index].name for index in list(chunk.used_bones)])
 
-        delta = material_delta.determine_material_delta(current_material, chunk.material)
-
-        if not delta.is_empty():
-            commands.append(_build_material_command(len(material_transitions)))
-            material_delta.apply_material_delta(delta, current_material)
-
-            curr_copy = material.Material()
-            material_delta.apply_material_delta(current_material, curr_copy)
-            material_transitions.append((delta, curr_copy))
+        _transition_material(current_material, chunk.material, commands, material_transitions)
 
         current_bone = _write_mesh_chunk(chunk, settings, commands, vertices, current_bone)
+
+    if settings.default_material_name != None and settings.default_material_name.startswith('materials/'):
+        _transition_material(current_material, settings.default_material, commands, material_transitions)
 
     file.write(len(vertices).to_bytes(2, 'big'))
 
