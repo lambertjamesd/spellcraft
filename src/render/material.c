@@ -142,6 +142,8 @@ void material_load(struct material* into, FILE* material_file) {
 
     rdpq_mode_begin();
 
+    rdpq_mode_filter(FILTER_BILINEAR);
+
     while (has_more) {
         uint8_t nextCommand;
         fread(&nextCommand, 1, 1, material_file);

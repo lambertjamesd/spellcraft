@@ -129,8 +129,8 @@ class Tex():
         self.filename: str | None = None
         self.tmem_addr = 0
         self.palette = 0
-        self.min_filter = "nearest"
-        self.mag_filter = "nearest"
+        self.min_filter = "linear"
+        self.mag_filter = "linear"
         self.s = TexAxis()
         self.t = TexAxis()
         self.sequenceLength: int = 0
