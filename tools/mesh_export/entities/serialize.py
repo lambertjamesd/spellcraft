@@ -356,11 +356,11 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
 
         final_blend_mode = mat.blend_mode
 
-        # if mat.fog:
-        #     final_blend_mode = mat.blend_mode.enable_fog()
+        if mat.fog and mat.fog.enabled:
+            final_blend_mode = mat.blend_mode.enable_fog()
 
         _serialize_blend(output, final_blend_mode, force_cyc2)
-    elif mat.fog:
+    elif mat.fog and mat.fog.enabled:
         fog_blend_mode = material.BlendMode(
             material.BlendModeCycle(
                 'IN',
