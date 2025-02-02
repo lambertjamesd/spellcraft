@@ -89,6 +89,9 @@ class BlendModeCycle():
     
     def __str__(self):
         return f"({self.a1} {self.b1} {self.a2} {self.b2})"
+    
+    def copy(self):
+        return BlendModeCycle(self.a1, self.b1, self.a2, self.b2)
 
 class BlendMode():
     def __init__(self, cyc1: BlendModeCycle, cyc2: BlendModeCycle):
@@ -111,6 +114,31 @@ class BlendMode():
             return f"2 cycle {self.cyc1} {self.cyc2}"
         
         return f"1 cycle {self.cyc1}"
+    
+    def copy(self):
+        result = BlendMode(
+            self.cyc1 and self.cyc1.copy() or None,
+            self.cyc2 and self.cyc2.copy() or None
+        )
+
+        result.alpha_compare = self.alpha_compare
+        result.z_mode = self.z_mode
+        result.z_write = self.z_write
+        result.z_compare = self.z_compare
+
+        return result
+    
+    def enable_fog(self):
+        result = self.copy()
+
+        result.cyc1 = BlendModeCycle(
+            'IN',
+            'SHADE_A',
+            'FOG',
+            'INV_MUX_A'
+        )
+
+        return result
     
 class Palette():
     def __init__(self):
@@ -167,6 +195,27 @@ class Tex():
             return self.filename
         
         return "NULL"
+    
+class Fog():
+    def __init__(self):
+        self.enabled: bool = False
+        self.use_global: bool = False
+        self.fog_color: Color | None = None
+        self.min_distance: float = 0
+        self.max_distance: float = 0
+
+    def __eq__(self, value: object) -> bool:
+        if not value or not isinstance(value, Fog):
+            return False
+        
+        return self.enabled == value.enabled and \
+            self.use_global == value.use_global and \
+            self.fog_color == value.fog_color and \
+            self.min_distance == value.min_distance and \
+            self.max_distance == value.max_distance
+    
+    def __str__(self):
+        return f"enabled {str(self.enabled)} use_global {str(self.use_global)} {str(self.fog_color)} min {str(self.min_distance)} max {str(self.max_distance)}"
 
 class Material():
     def __init__(self):
@@ -182,6 +231,7 @@ class Material():
         self.z_buffer: bool | None = None
         self.vertex_gamma: float = 0.454545
         self.uv_gen: str | None = None
+        self.fog: Fog | None = None
 
     def get_image_size(self) -> tuple[int, int]:
         if self.tex0:
@@ -205,6 +255,7 @@ class Material():
     lighting = {self.lighting}
     tex0 = {self.tex0}
     tex1 = {self.tex1}
+    fog = {self.fog}
 """
 
 def _check_is_enum(value, key_path, enum_list):
@@ -615,5 +666,7 @@ def parse_material(filename: str):
     result.vertex_gamma = _optional_number(json_data, 'vertexGamma', 'vertexGamma', 1)
 
     result.uv_gen = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
+
+    result.fog = Fog()
 
     return result

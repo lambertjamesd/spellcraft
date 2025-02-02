@@ -42,6 +42,9 @@ void material_destroy(struct material* material) {
 #define COMMAND_FLAGS       0x06
 #define COMMAND_PALETTE     0x07
 #define COMMAND_UV_GEN      0x08
+#define COMMAND_FOG         0x09
+#define COMMAND_FOG_COLOR   0x0A
+#define COMMAND_FOG_RANGE   0x0B
 
 struct text_axis {
     float translate;
@@ -240,6 +243,29 @@ void material_load(struct material* into, FILE* material_file) {
                             t3d_state_set_vertex_fx(T3D_VERTEX_FX_SPHERICAL_UV, into->tex0.sprite->width, into->tex0.sprite->height);
                             break;
                     }
+                }
+                break;
+            case COMMAND_FOG:
+                {
+                    uint8_t enabled;
+                    fread(&enabled, 1, 1, material_file);
+                    t3d_fog_set_enabled(enabled);
+                }
+                break;
+            case COMMAND_FOG_COLOR:
+                {   
+                    color_t color;
+                    fread(&color, sizeof(color_t), 1, material_file);
+                    rdpq_set_fog_color(color);
+                }
+                break;
+            case COMMAND_FOG_RANGE:
+                {
+                    uint16_t min;
+                    uint16_t max;
+                    fread(&min, sizeof(min), 1, material_file);
+                    fread(&max, sizeof(max), 1, material_file);
+                    t3d_fog_set_range(min, max);
                 }
                 break;
         }

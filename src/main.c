@@ -31,7 +31,7 @@ void setup() {
     init_engine();
     savefile_new();
 
-    current_scene = scene_load("rom:/scenes/playerhome_livingroom.scene");
+    current_scene = scene_load("rom:/scenes/test.scene");
 }
 
 static struct frame_memory_pool frame_memory_pools[2];

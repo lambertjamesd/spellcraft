@@ -289,6 +289,13 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     else:
         result.culling = False
 
+    result.fog = material.Fog()
+    result.fog.enabled = f3d_mat['set_fog'] and True or False
+    result.fog.use_global = f3d_mat['use_global_fog'] and True or False
+    result.fog.fog_color = _determine_color_from_f3d(f3d_mat['fog_color'])
+    result.fog.min_distance = f3d_mat['fog_position'][0] * 0.1
+    result.fog.max_distance = f3d_mat['fog_position'][1] * 0.1
+
     return result
 
 def material_can_extract(bpy_mat: bpy.types.Material) -> bool:

@@ -11,6 +11,25 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
     # TODO check for palette changes
     return None
 
+def determine_fog_delta(start: material.Fog | None, end: material.Fog | None) -> material.Fog | None:
+    if not start or not end:
+        return end
+
+    if start.enabled == end.enabled:
+        return None
+
+    result = material.Fog()
+
+    result.enabled = end.enabled
+    result.use_global = end.use_global
+    if not result.use_global:
+        if start.fog_color != end.fog_color:
+            result.fog_color = end.fog_color
+        result.min_distance = end.min_distance
+        result.max_distance = end.max_distance
+
+    return result
+
 def determine_material_delta(start: material.Material, end: material.Material) -> material.Material:
     result = material.Material()
 
@@ -43,6 +62,8 @@ def determine_material_delta(start: material.Material, end: material.Material) -
 
     if end.uv_gen != None and (start.uv_gen == None or start.uv_gen != end.uv_gen):
         result.uv_gen = end.uv_gen
+
+    result.fog = determine_fog_delta(start.fog, end.fog)
 
     return result
 
@@ -91,6 +112,11 @@ def determine_material_cost(mat: material.Material) -> float:
     if mat.culling != None or mat.z_buffer:
         result += CHANGE_MODE
 
+    if mat.fog:
+        result += CHANGE_MODE
+        if mat.fog.fog_color:
+            result += COLOR_CHANGE_TIME
+
     return result
 
 def apply_material_delta(delta: material.Material, into: material.Material):
@@ -126,3 +152,6 @@ def apply_material_delta(delta: material.Material, into: material.Material):
 
     if delta.uv_gen != None:
         into.uv_gen = delta.uv_gen
+
+    if delta.fog != None:
+        into.fog = delta.fog

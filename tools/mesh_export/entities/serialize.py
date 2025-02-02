@@ -13,6 +13,9 @@ COMMAND_BLEND_COLOR = 5
 COMMAND_FLAGS = 6
 COMMAND_PALETTE = 7
 COMMAND_UV_GEN = 8
+COMMAND_FOG = 9
+COMMAND_FOG_COLOR = 10
+COMMAND_FOG_RANGE = 11
 
 T3D_FLAG_DEPTH      = 1 << 0
 T3D_FLAG_TEXTURED   = 1 << 1
@@ -322,6 +325,9 @@ def flags_for_material(mat: material.Material) -> int:
     if mat.combine_mode and mat.combine_mode.uses('SHADE'):
         flags |= T3D_FLAG_SHADED
 
+    if mat.fog and mat.fog.enabled:
+        flags |= T3D_FLAG_SHADED
+
     return flags
 
 def serialize_material_file(output, mat: material.Material, current_state: material.Material | None = None):
@@ -337,6 +343,9 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
 
     if mat.blend_mode and mat.blend_mode.cyc2:
         force_cyc2 = True
+
+    if mat.fog:
+        force_cyc2 = True
     
     if mat.combine_mode:
         output.write(COMMAND_COMBINE.to_bytes(1, 'big'))
@@ -344,7 +353,24 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
 
     if mat.blend_mode:
         output.write(COMMAND_BLEND.to_bytes(1, 'big'))
-        _serialize_blend(output, mat.blend_mode, force_cyc2)
+
+        final_blend_mode = mat.blend_mode
+
+        if mat.fog:
+            final_blend_mode = mat.blend_mode.enable_fog()
+
+        _serialize_blend(output, final_blend_mode, force_cyc2)
+    elif mat.fog:
+        fog_blend_mode = material.BlendMode(
+            material.BlendModeCycle(
+                'IN',
+                'SHADE_A',
+                'FOG',
+                'INV_MUX_A'
+            ),
+            None
+        )
+        _serialize_blend(output, fog_blend_mode, True)
     
     if mat.env_color:
         output.write(COMMAND_ENV.to_bytes(1, 'big'))
@@ -361,6 +387,19 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
     if mat.uv_gen:
         output.write(COMMAND_UV_GEN.to_bytes(1, 'big'))
         output.write(UV_GEN[mat.uv_gen].to_bytes(1, 'big'))
+
+    if mat.fog:
+        output.write(COMMAND_FOG.to_bytes(1, 'big'))
+        output.write((mat.fog.enabled and 1 or 0).to_bytes(1, 'big'))
+
+        if not mat.fog.use_global:
+            if mat.fog.fog_color:
+                output.write(COMMAND_FOG_COLOR.to_bytes(1, 'big'))
+                _serialize_color(output, mat.fog.fog_color)
+
+            output.write(COMMAND_FOG_RANGE.to_bytes(1, 'big'))
+            output.write(int(mat.fog.min_distance * 64).to_bytes(2, 'big'))
+            output.write(int(mat.fog.max_distance * 64).to_bytes(2, 'big'))
 
     flags = flags_for_material(mat)
 
