@@ -436,10 +436,10 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
 
     current_material = material.Material()
 
-    if settings.default_material_name != None and settings.default_material_name.startswith('materials/'):
-        material_romname = f"rom:/{settings.default_material_name}.mat".encode()
-        file.write(len(material_romname).to_bytes(1, 'big'))
-        file.write(material_romname)
+    if settings.default_material_name:
+        material_romname_encoded = settings.default_material_name.encode()
+        file.write(len(material_romname_encoded).to_bytes(1, 'big'))
+        file.write(material_romname_encoded)
     else:
         # no material specified
         print("invalid material name settings.default_material_name ", settings.default_material_name)
@@ -461,7 +461,7 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
 
         current_bone = _write_mesh_chunk(chunk, settings, commands, vertices, current_bone)
 
-    if settings.default_material_name != None and settings.default_material_name.startswith('materials/'):
+    if settings.default_material_name:
         _transition_material(current_material, settings.default_material, commands, material_transitions)
 
     file.write(len(vertices).to_bytes(2, 'big'))

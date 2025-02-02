@@ -221,23 +221,20 @@ def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
         material_name = mesh_pair[0]
         mesh: mesh_data = mesh_pair[1]
 
-        material_filename = f"assets/{material_name}.mat.json"
+        material_romname = material_extract.material_romname(mesh.mat)
         material_object = material_extract.load_material_with_name(material_name, mesh.mat)
 
-        if not material_name.startswith('materials/'):
+        if material_romname:
+            material_romname_encoded = material_romname.encode()
+            file.write(len(material_romname_encoded).to_bytes(1, 'big'))
+            file.write(material_romname_encoded)
+        else:
             print(f"embedding material {material_name}")
 
             # signal an embedded material
             file.write((0).to_bytes(1, 'big'))
 
             serialize.serialize_material_file(file, material_object)
-
-        elif os.path.exists(material_filename):
-            material_romname = f"rom:/{material_name}.mat".encode()
-            file.write(len(material_romname).to_bytes(1, 'big'))
-            file.write(material_romname)
-        else:
-            raise Exception(f"{material_filename} does not exist")
     
         needs_uv = bool(material_object.tex0)
         needs_normal = bool(material_object.lighting)

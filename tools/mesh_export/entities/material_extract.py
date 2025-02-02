@@ -291,6 +291,25 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
 
     return result
 
+def material_can_extract(bpy_mat: bpy.types.Material) -> bool:
+    return bpy_mat.name.startswith('materials/') or 'f3d_mat' in bpy_mat
+
+def material_romname(bpy_mat: bpy.types.Material) -> bool:
+    if bpy_mat.name.startswith('materials/'):
+        material_filename = f"assets/{bpy_mat.name}.mat.json"
+
+        if os.path.exists(material_filename):
+            return f"rom:/{bpy_mat.name}.mat"
+        else:
+            raise Exception(f"{material_filename} does not exist")
+        
+    if bpy_mat.library:
+        input_filename = sys.argv[1]
+        image_path = os.path.normpath(os.path.join(os.path.dirname(input_filename), bpy_mat.library.filepath[2:]))
+        return 'rom:/' + image_path[len('assets/'):-len('.blend')]
+    
+    return None
+        
 
 def load_material_with_name(material_name: str, bpy_mat: bpy.types.Material) -> material.Material:
     if not bpy_mat:
@@ -298,7 +317,12 @@ def load_material_with_name(material_name: str, bpy_mat: bpy.types.Material) -> 
 
     material_filename = f"assets/{material_name}.mat.json"
 
-    if not material_name.startswith('materials/'):
+    if os.path.exists(material_filename):
+        material_object = material.parse_material(material_filename)
+        return material_object
+    elif 'f3d_mat' in bpy_mat:
+        return determine_material_from_f3d(bpy_mat)
+    elif not material_name.startswith('materials/'):
         # embedded material
         material_object = material.Material()
 
@@ -306,11 +330,5 @@ def load_material_with_name(material_name: str, bpy_mat: bpy.types.Material) -> 
             determine_material_from_nodes(bpy_mat, material_object)
 
         return material_object
-
-    elif os.path.exists(material_filename):
-        material_object = material.parse_material(material_filename)
-        return material_object
-    elif 'f3d_mat' in bpy_mat:
-        return determine_material_from_f3d(bpy_mat)
     else:
         raise Exception(f"{material_filename} does not exist")

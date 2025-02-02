@@ -69,7 +69,7 @@ filesystem/meshes/%.tmesh filesystem/meshes/%.anim: assets/meshes/%.blend $(EXPO
 MATERIAL_SOURCES := $(shell find assets/ -type f -name '*.mat.json' | sort)
 MATERIAL_BLENDER_SOURCES := $(shell find assets/ -type f -name '*.mat.blend' | sort)
 
-MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat) $(MATERIAL_SOURCES:assets/%.mat.blend=filesystem/%.mat)
+MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat) $(MATERIAL_BLENDER_SOURCES:assets/%.mat.blend=filesystem/%.mat)
 
 filesystem/%.mat: assets/%.mat.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
@@ -77,14 +77,12 @@ filesystem/%.mat: assets/%.mat.json $(EXPORT_SOURCE)
 	python3 tools/mesh_export/material.py --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
 	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
 
-filesystem/materials/material_source: assets/materials/material_source.blend tools/mesh_export/material_fast64.py tools/mesh_export/entities/material_extract.py tools/mesh_export/entities/serialize.py tools/mesh_export/entities/material.py
-	@mkdir -p $(dir $@)
-	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/material_fast64.py -- filesystem
-	touch $@
-
 filesystem/%.mat: assets/%.mat.blend $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/material_fast64.py -- $@
+
+list_materials: $(MATERIALS)
+	echo $(MATERIALS)
 
 ###
 # material_builder
@@ -149,9 +147,9 @@ TEST_SOURCES := $(shell find src/ -type f -name '*_test.c' | sort)
 TEST_SOURCE_OBJS := $(TEST_SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 TEST_OBJS := $(SOURCE_OBJS) $(TEST_SOURCE_OBJS)
 
-filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat filesystem/materials/material_source
+filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 
-$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat filesystem/materials/material_source
+$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 $(BUILD_DIR)/spellcraft_test.elf: $(TEST_OBJS)
 
