@@ -183,16 +183,7 @@ void player_update(struct player* player) {
 
     if (magSqrd > 0.01f) {
         struct Vector2 directionUnit;
-
-        directionUnit.x = directionScene.x;
-        directionUnit.y = directionScene.z;
-
-        vector2Normalize(&directionUnit, &directionUnit);
-
-        float tmp = directionUnit.x;
-        directionUnit.x = directionUnit.y;
-        directionUnit.y = tmp;
-
+        vector2LookDir(&directionUnit, &directionScene);
         vector2RotateTowards(&player->transform.rotation, &directionUnit, &player_max_rotation, &player->transform.rotation);
     }
 

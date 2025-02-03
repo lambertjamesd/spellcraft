@@ -44,6 +44,7 @@ struct health* health_get(entity_id id);
 bool health_is_burning(struct health* health);
 bool health_is_frozen(struct health* health);
 bool health_is_shocked(struct health* health);
+bool health_is_alive(struct health* health);
 
 enum damage_type health_determine_damage_type(enum element_type element_type);
 

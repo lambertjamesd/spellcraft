@@ -7,12 +7,16 @@
 #include "spell_event.h"
 #include "spell_data_source.h"
 #include "spell_sources.h"
+#include "../entity/health.h"
 #include <stdbool.h>
 
 struct living_sprite {
     struct TransformSingleAxis transform;
     struct dynamic_object collider;
+    struct dynamic_object vision;
     entity_id target;
+    struct health health;
+    bool is_attacking;
 };
 
 void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_source* source, struct spell_event_options event_options);

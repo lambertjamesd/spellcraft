@@ -38,6 +38,7 @@ void element_emitter_destroy(struct element_emitter* element_emitter) {
     collision_scene_remove(&element_emitter->dynamic_object);
 
     if (element_emitter->effect) {
+        // not paired with effect_malloc()
         element_emitter->effect_definition->effect_free(element_emitter->effect);
         element_emitter->effect = NULL;
     }

@@ -95,6 +95,10 @@ bool health_is_shocked(struct health* health) {
     return health->status_timer > 0.0f && health->current_status == DAMAGE_TYPE_LIGHTING;
 }
 
+bool health_is_alive(struct health* health) {
+    return health->current_health > 0.0f;
+}
+
 static enum damage_type element_to_damage_type[] = {
     [ELEMENT_TYPE_FIRE] = DAMAGE_TYPE_FIRE,
     [ELEMENT_TYPE_ICE] = DAMAGE_TYPE_ICE,

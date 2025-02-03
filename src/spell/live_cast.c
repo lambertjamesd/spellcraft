@@ -12,6 +12,11 @@ void live_cast_init(struct live_cast* live_cast) {
     live_cast->spell_animation.last_symbol_time = 0.0f;
 }
 
+void active_spell_free(struct active_spell* active_spell) {
+    spell_destroy(&active_spell->spell);
+    free(active_spell);
+}
+
 void live_cast_destroy(struct live_cast* live_cast) {
     spell_destroy(&live_cast->pending_spell);
 
@@ -19,8 +24,7 @@ void live_cast_destroy(struct live_cast* live_cast) {
 
     while (curr) {
         struct active_spell* next = curr->next;
-        spell_destroy(&curr->spell);
-        free(curr);
+        active_spell_free(curr);
         curr = next;
     }
     live_cast->active_spells = NULL;
@@ -92,8 +96,7 @@ void live_cast_cleanup_unused_spells(struct live_cast* live_cast, struct spell_e
             curr = curr->next;
         } else {
             struct active_spell* next = curr->next;
-            spell_destroy(&curr->spell);
-            free(curr);
+            active_spell_free(curr);
 
             curr = next;
 
