@@ -69,6 +69,10 @@ void spell_slot_init(
             slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
             push_init(&slot->data.push, input, event_options, spell_data_source_determine_element(modifier_flags));
             break;
+        case SPELL_SYMBOL_LIFE:
+            slot->type = SPELL_EXEC_SLOT_TYPE_HEAL;
+            spell_heal_init(&slot->data.heal, input, event_options);
+            break;
         default:
             assert(false);
             slot->type = SPELL_EXEC_SLOT_TYPE_EMPTY;
@@ -108,6 +112,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE:
             living_sprite_destroy(&slot->data.living_sprite);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_HEAL:
+            spell_heal_destroy(&slot->data.heal);
             break;
         default:
             break;
@@ -164,6 +171,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE:
             isActive = living_sprite_update(&slot->data.living_sprite, &event_listener, &exec->spell_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_HEAL:
+            isActive = spell_heal_update(&slot->data.heal, &event_listener, &exec->spell_sources);
             break;
         default:
             break;

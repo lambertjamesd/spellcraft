@@ -17,6 +17,7 @@
 #include "shield.h"
 #include "spell_sources.h"
 #include "living_sprite.h"
+#include "heal.h"
 
 typedef uint32_t spell_slot_id;
 
@@ -28,6 +29,7 @@ union spell_exec_data {
     struct recast recast;
     struct push push;
     struct living_sprite living_sprite;
+    struct spell_heal heal;
 };
 
 enum spell_exec_slot_type {
@@ -39,6 +41,7 @@ enum spell_exec_slot_type {
     SPELL_EXEC_SLOT_TYPE_PUSH,
     SPELL_EXEC_SLOT_TYPE_RECAST,
     SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE,
+    SPELL_EXEC_SLOT_TYPE_HEAL,
 };
 
 struct spell_exec_slot {
