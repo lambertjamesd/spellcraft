@@ -7,6 +7,7 @@
 #include "../time/time.h"
 #include "elements.h"
 #include "element_emitter_definitions.h"
+#include "living_sprite_definitions.h"
 
 void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana);
 
@@ -40,8 +41,9 @@ void spell_slot_init(
             break;
         case SPELL_SYMBOL_FIRE:
             if (modifier_flags.living) {
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_FIRE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
-                living_sprite_init(&slot->data.living_sprite, input, event_options);
+                living_sprite_init(&slot->data.living_sprite, input, event_options, def);
             } else if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
@@ -52,7 +54,11 @@ void spell_slot_init(
             }
             break;
         case SPELL_SYMBOL_ICE:
-            if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
+            if (modifier_flags.living) {
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_ICE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+                slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
+                living_sprite_init(&slot->data.living_sprite, input, event_options, def);
+            } else if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, modifier_flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
             } else {

@@ -38,26 +38,7 @@ static struct dynamic_object_type living_sprite_vision = {
     },
 };
 
-void living_sprite_render(void* data, struct render_batch* batch) {
-    struct living_sprite* living_sprite = (struct living_sprite*)data;
-
-    T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
-
-    if (!mtxfp) {
-        return;
-    }
-
-    mat4x4 mtx;
-    transformSAToMatrix(&living_sprite->transform, mtx, 1.0f);
-    mtx[3][0] *= SCENE_SCALE;
-    mtx[3][1] *= SCENE_SCALE;
-    mtx[3][2] *= SCENE_SCALE;
-    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
-
-    render_batch_add_tmesh(batch, spell_assets_get()->fire_sprite, mtxfp, 1, NULL, NULL);
-}
-
-void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_source* source, struct spell_event_options event_options) {
+void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_source* source, struct spell_event_options event_options, struct living_sprite_definition* definition) {
     entity_id entity_id = entity_id_new();
 
     vector3AddScaled(&source->position, &source->direction, 0.5f, &living_sprite->transform.position);
@@ -65,7 +46,9 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
 
     living_sprite->target = source->target;
 
-    render_scene_add(&living_sprite->transform.position, 0.5f, living_sprite_render, living_sprite);
+    renderable_single_axis_init(&living_sprite->renderable, &living_sprite->transform, definition->model_file);
+
+    render_scene_add_renderable(&living_sprite->renderable, 0.5f);
 
     dynamic_object_init(
         entity_id,
@@ -98,6 +81,7 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
     vector2ComplexFromAngle(fixed_time_step * 2.0f, &sprite_max_rotation);
 
     living_sprite->is_attacking = false;
+    living_sprite->definition = definition;
 }
 
 void living_sprite_follow_target(struct living_sprite* living_sprite) {
@@ -145,7 +129,7 @@ void living_sprite_follow_target(struct living_sprite* living_sprite) {
 void living_sprite_check_targets(struct living_sprite* living_sprite) {
     if (living_sprite->is_attacking) {
         if (dynamic_object_is_touching(&living_sprite->collider, living_sprite->target)) {
-            health_damage_id(living_sprite->target, 10.0f, living_sprite->collider.entity_id, DAMAGE_TYPE_FIRE);
+            health_damage_id(living_sprite->target, living_sprite->definition->damage, living_sprite->collider.entity_id, living_sprite->definition->element_type);
             living_sprite->health.current_health = 0.0f;
         }
         return;
@@ -173,7 +157,8 @@ bool living_sprite_update(struct living_sprite* living_sprite, struct spell_even
 }
 
 void living_sprite_destroy(struct living_sprite* living_sprite) {
-    render_scene_remove(living_sprite);
+    renderable_destroy(&living_sprite->renderable);
+    render_scene_remove(&living_sprite->renderable);
     health_destroy(&living_sprite->health);
     collision_scene_remove(&living_sprite->collider);
     collision_scene_remove(&living_sprite->vision);
