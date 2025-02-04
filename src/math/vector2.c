@@ -152,7 +152,7 @@ void vector2ToLookDir(struct Vector2* input, struct Vector3* out) {
 }
 
 void vector3RotatedSpeed(struct Vector2* rotation, struct Vector3* result, float speed) {
-    result->x = -rotation->y * speed;
+    result->x = rotation->y * speed;
     result->y = 0.0f;
     result->z = rotation->x * speed;
 }
