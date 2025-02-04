@@ -9,7 +9,7 @@
 #include "assets.h"
 
 #define MIN_FOLLOW_DISTANCE 2.0f
-#define TARGET_SPEED        8.0f
+#define TARGET_SPEED        12.0f
 #define ACCELERATION        20.0f
 
 static struct Vector2 sprite_max_rotation;
@@ -32,7 +32,7 @@ static struct dynamic_object_type living_sprite_vision = {
     .bounding_box = cylinder_bounding_box,
     .data = {
         .cylinder = {
-            .radius = 4.0f,
+            .radius = 6.0f,
             .half_height = 2.0f,
         }
     },
@@ -144,6 +144,10 @@ void living_sprite_follow_target(struct living_sprite* living_sprite) {
 
 void living_sprite_check_targets(struct living_sprite* living_sprite) {
     if (living_sprite->is_attacking) {
+        if (dynamic_object_is_touching(&living_sprite->collider, living_sprite->target)) {
+            health_damage_id(living_sprite->target, 10.0f, living_sprite->collider.entity_id, DAMAGE_TYPE_FIRE);
+            living_sprite->health.current_health = 0.0f;
+        }
         return;
     }
     
@@ -159,6 +163,7 @@ void living_sprite_check_targets(struct living_sprite* living_sprite) {
 
 bool living_sprite_update(struct living_sprite* living_sprite, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     living_sprite_follow_target(living_sprite);
+    living_sprite_check_targets(living_sprite);
 
     if (health_is_frozen(&living_sprite->health)) {
         living_sprite->health.current_health = 0.0f;
