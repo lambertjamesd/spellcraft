@@ -285,6 +285,7 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     spell_exec_init(&player->spell_exec);
     live_cast_init(&player->live_cast);
+    health_init(&player->health, entity_id, 100.0f);
 
     for (int i = 0; i < PLAYER_CAST_SOURCE_COUNT; i += 1) {
         struct spell_data_source* source = &player->player_spell_sources[i];
@@ -319,6 +320,7 @@ void player_destroy(struct player* player) {
     renderable_destroy(&player->renderable);
     spell_exec_destroy(&player->spell_exec);
     live_cast_destroy(&player->live_cast);
+    health_destroy(&player->health);
 
     render_scene_remove(&player->renderable);
     update_remove(player);

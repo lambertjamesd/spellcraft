@@ -13,6 +13,7 @@
 #include "../spell/projectile.h"
 #include "../spell/spell_exec.h"
 #include "../spell/live_cast.h"
+#include "../entity/health.h"
 
 #include "inventory.h"
 
@@ -39,6 +40,7 @@ struct player {
     struct renderable renderable;
     struct Transform* camera_transform;
     struct dynamic_object collision;
+    struct health health;
 
     struct spell_data_source player_spell_sources[PLAYER_CAST_SOURCE_COUNT];
     

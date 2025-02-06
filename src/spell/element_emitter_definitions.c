@@ -234,12 +234,12 @@ static struct element_emitter_definition* ice_definitions[] = {
     [ELEMENT_DEF_INDEX(1, 1, 1)] = &lightning_around_definition,
 };
 
-struct element_emitter_definition* element_emitter_find_def(enum element_type element_type, bool has_air, bool has_fire, bool has_ice) {
+struct element_emitter_definition* element_emitter_find_def(enum element_type element_type, bool has_earth, bool has_air, bool has_fire, bool has_ice) {
     switch (element_type) {
         case ELEMENT_TYPE_FIRE:
-            return fire_definitions[ELEMENT_DEF_INDEX(has_air, has_fire, has_ice)];
+            return fire_definitions[ELEMENT_DEF_INDEX(has_air, has_earth, has_ice)];
         case ELEMENT_TYPE_ICE:
-            return ice_definitions[ELEMENT_DEF_INDEX(has_air, has_fire, has_ice)];
+            return ice_definitions[ELEMENT_DEF_INDEX(has_air, has_fire, has_earth)];
         default:
             return NULL;
     }
