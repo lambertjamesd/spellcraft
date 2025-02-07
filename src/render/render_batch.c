@@ -234,6 +234,14 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
     bool z_write = true;
     bool z_read = true;
 
+    T3DMat4FP* default_mtx = render_batch_get_transformfp(batch);
+
+    if (default_mtx) {
+        mat4x4 scaleMtx;
+        matrixFromScale(scaleMtx, 1.0f / SCENE_SCALE);
+        t3d_mat4_to_fixed_3x4(default_mtx, (T3DMat4*)scaleMtx);
+    }
+
     for (int i = 0; i < batch->element_count; ++i) {
         int index = order[i];
         struct render_batch_element* element = &batch->elements[index];
@@ -289,6 +297,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         t3d_matrix_push(((T3DMat4FP**)element->mesh.transform)[mtx_index]);
                     }
                 }
+            } else if (default_mtx) {
+                t3d_matrix_push(default_mtx);
             }
 
             if (element->mesh.use_prim_color) {
@@ -299,6 +309,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
             if (element->mesh.transform_count) {
                 t3d_matrix_pop(element->mesh.transform_count);
+            } else if (default_mtx) {
+                t3d_matrix_pop(1);
             }
         } else if (element->type == RENDER_BATCH_BILLBOARD) {
             for (int sprite_index = 0; sprite_index < element->billboard.sprite_count; ++sprite_index) {

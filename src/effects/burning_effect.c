@@ -28,9 +28,6 @@ void burning_effect_update(void* data) {
 
 void burning_effect_render(void* data, struct render_batch* batch) {
     struct burning_effect* effect = (struct burning_effect*)data;
-
-    struct Vector3 flame_position = effect->position;
-    vector3Scale(&flame_position, &flame_position, SCENE_SCALE);
         
     T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
@@ -40,8 +37,8 @@ void burning_effect_render(void* data, struct render_batch* batch) {
 
     mat4x4 mtx;
     memcpy(mtx, &batch->camera_matrix, sizeof(mat4x4));
-    matrixApplyPosition(mtx, &flame_position);
-    matrixApplyScale(mtx, effect->current_size);
+    matrixApplyPosition(mtx, &effect->position);
+    matrixApplyScale(mtx, effect->current_size * (1.0f / SCENE_SCALE));
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     render_batch_add_tmesh(batch, spell_assets_get()->flame_mesh, mtxfp, 1, NULL, NULL);

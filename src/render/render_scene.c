@@ -34,9 +34,11 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
 
     mat4x4 mtx;
     transformToMatrix(renderable->transform.transform, mtx);
-    mtx[3][0] *= SCENE_SCALE;
-    mtx[3][1] *= SCENE_SCALE;
-    mtx[3][2] *= SCENE_SCALE;
+    for (int y = 0; y < 3; y += 1) {
+        for (int x = 0; x < 3; x += 1) {
+            mtx[y][x] *= (1.0f / SCENE_SCALE);
+        }
+    }
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     struct render_batch_element* element = render_batch_add_tmesh(batch, renderable->mesh, mtxfp, 1, &renderable->armature, renderable->attachments);
@@ -56,10 +58,7 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
     }
 
     mat4x4 mtx;
-    transformSAToMatrix(renderable->transform.transform, mtx, 1.0f);
-    mtx[3][0] *= SCENE_SCALE;
-    mtx[3][1] *= SCENE_SCALE;
-    mtx[3][2] *= SCENE_SCALE;
+    transformSAToMatrix(renderable->transform.transform, mtx, 1.0f / SCENE_SCALE);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     struct render_batch_element* element = render_batch_add_tmesh(batch, renderable->mesh, mtxfp, 1, &renderable->armature, renderable->attachments);

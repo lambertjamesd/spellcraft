@@ -39,9 +39,9 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
 
     mat4x4 mtx;
     struct Transform transform;
-    vector3Scale(&projectile->pos, &transform.position, SCENE_SCALE);
+    transform.position = projectile->pos;
     quatIdent(&transform.rotation);
-    transform.scale = gOneVec;
+    vector3Scale(&gOneVec, &transform.scale, 1.0f / 64.0f);
     transformToMatrix(&transform, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 

@@ -22,9 +22,11 @@ void transformToMatrix(struct Transform* in, float mtx[4][4]) {
 }
 
 void transformApplySceneScale(float mtx[4][4]) {
-    mtx[3][0] *= SCENE_SCALE;
-    mtx[3][1] *= SCENE_SCALE;
-    mtx[3][2] *= SCENE_SCALE;
+    for (int y = 0; y < 3; y += 1) {
+        for (int x = 0; x < 3; x += 1) {
+            mtx[y][x] *= (1.0f / SCENE_SCALE);
+        }
+    }
 }
 
 void transformInvert(struct Transform* in, struct Transform* out) {

@@ -31,8 +31,10 @@ void camera_apply(struct Camera* camera, T3DViewport* viewport, struct ClippingP
     float tan_fov = tanf(camera->fov * (0.5f * 3.14159f / 180.0f));
     float aspect_ratio = (float)viewport->size[0] / (float)viewport->size[1];
 
-    float near = camera->near * SCENE_SCALE;
-    float far = camera->far * SCENE_SCALE;
+    // float near = camera->near * SCENE_SCALE;
+    // float far = camera->far * SCENE_SCALE;
+    float near = camera->near;
+    float far = camera->far;
 
     matrixPerspective(
         viewport->matProj.m, 
@@ -47,7 +49,7 @@ void camera_apply(struct Camera* camera, T3DViewport* viewport, struct ClippingP
 
     struct Transform inverse;
     transformInvert(&camera->transform, &inverse);
-    vector3Scale(&inverse.position, &inverse.position, SCENE_SCALE);
+    // vector3Scale(&inverse.position, &inverse.position, SCENE_SCALE);
     transformToMatrix(&inverse, viewport->matCamera.m);
     viewport->_isCamProjDirty = true;
     

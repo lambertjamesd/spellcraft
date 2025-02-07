@@ -45,9 +45,8 @@ void ground_torch_render(void* data, struct render_batch* batch) {
 
     mat4x4 mtx;
 
-    struct Vector3 scaledPos;
-    vector3Scale(&torch->position, &scaledPos, SCENE_SCALE);
-    matrixFromPosition(mtx, &torch->position);
+    matrixFromScale(mtx, 1.0f / SCENE_SCALE);
+    matrixApplyPosition(mtx, &torch->position);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     render_batch_add_tmesh(batch, torch->base_mesh, mtxfp, 1, NULL, NULL);
@@ -55,10 +54,6 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     if (!torch->is_lit) {
         return;
     }
-
-    struct Vector3 flame_position = torch->position;
-    flame_position.y += TORCH_HEIGHT;
-    vector3Scale(&flame_position, &flame_position, SCENE_SCALE);
         
     mtxfp = render_batch_get_transformfp(batch);
 
@@ -66,8 +61,8 @@ void ground_torch_render(void* data, struct render_batch* batch) {
         return;
     }
 
+    mtx[3][1] += TORCH_HEIGHT;
     memcpy(mtx, &batch->camera_matrix, sizeof(mat4x4));
-    matrixApplyPosition(mtx, &flame_position);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     render_batch_add_tmesh(batch, torch->flame_mesh, mtxfp, 1, NULL, NULL);

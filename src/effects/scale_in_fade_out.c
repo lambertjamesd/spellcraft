@@ -38,10 +38,7 @@ void scale_in_fade_out_render(void* data, struct render_batch* batch) {
     }
 
     mat4x4 mtx;
-    transformSAToMatrix(&effect->transform, mtx, effect->radius * scale);
-    mtx[3][0] *= SCENE_SCALE;
-    mtx[3][1] *= SCENE_SCALE;
-    mtx[3][2] *= SCENE_SCALE;
+    transformSAToMatrix(&effect->transform, mtx, effect->radius * scale * (1.0f / SCENE_SCALE));
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     struct render_batch_element* element = render_batch_add_tmesh(batch, effect->mesh, mtxfp, 1, NULL, NULL);
