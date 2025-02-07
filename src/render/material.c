@@ -2,6 +2,7 @@
 
 #include <t3d/t3d.h>
 #include "../resource/sprite_cache.h"
+#include "../render/defs.h"
 
 void material_init(struct material* material) {
     material->block = 0;
@@ -265,7 +266,7 @@ void material_load(struct material* into, FILE* material_file) {
                     uint16_t max;
                     fread(&min, sizeof(min), 1, material_file);
                     fread(&max, sizeof(max), 1, material_file);
-                    t3d_fog_set_range(min, max);
+                    t3d_fog_set_range(min * (1.0f / SCENE_SCALE), max * (1.0f / SCENE_SCALE));
                 }
                 break;
         }
