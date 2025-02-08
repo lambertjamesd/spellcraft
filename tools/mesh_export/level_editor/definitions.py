@@ -2,6 +2,7 @@
 import bpy
 from bpy.path import abspath
 import os.path
+import json
 from ..parse.struct_parse import find_structs, find_enums
 
 class Definitions:
@@ -11,6 +12,7 @@ class Definitions:
         self.loaded_path = None
         self.materials = []
         self.repo_path = None
+        self.objects = None
 
     def _search_blend_files(self, start_path):
         result = []
@@ -27,8 +29,6 @@ class Definitions:
                     continue
 
                 relative_path = os.path.relpath(abs_path, curr_path)
-
-                print(abs_path, relative_path)
 
                 result.append(relative_path)
 
@@ -50,6 +50,9 @@ class Definitions:
         if not repo_path:
             print("No repo path found")
             return
+        
+        with open(os.path.join(repo_path, "assets/game_objects.json"), "r") as file:
+            self.objects = json.load(file)
 
         print("Found repo path at " + str(repo_path))
 
@@ -72,10 +75,8 @@ class Definitions:
 
         for sibling in siblings:
             with bpy.data.libraries.load("//" + sibling) as (data_from, data_to):
-                print(data_from)
+                print(data_from.objects)
 
-        print("found siblings", siblings)
-        print("found materials", self.materials)
 
     def _find_repo_path(self):
         curr = abspath("//")
@@ -114,5 +115,9 @@ class Definitions:
     def get_repo_path(self):
         self.load()
         return self.repo_path
+    
+    def get_objects_list(self):
+        self.load()
+        return self.objects["objects"]
 
 object_definitions = Definitions()

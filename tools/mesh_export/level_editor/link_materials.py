@@ -35,33 +35,13 @@ class LinkMaterialOperator(bpy.types.Operator):
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
 
-
-class LinkMaterial(bpy.types.Panel):
-    """Link a f3d material"""
-    bl_label = "Quick link material"
-    bl_idname = "material.link_material_panel"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "material"
-    bl_options = {"HIDE_HEADER"}
-
-    def draw(self, context):
-        material = context.material
-        if material is None:
-            return
-        
-        col = self.layout.column().box()
-        col.box().label(text="Quick link material")
-
 def menu_function(self, context):
     self.layout.operator(LinkMaterialOperator.bl_idname, text="Quick link material")
 
 def register():
-    bpy.utils.register_class(LinkMaterial)
     bpy.utils.register_class(LinkMaterialOperator)
-    bpy.types.VIEW3D_MT_view.append(menu_function)
+    bpy.types.TOPBAR_MT_file.append(menu_function)
 
 def unregister():
-    bpy.utils.unregister_class(LinkMaterial)
     bpy.utils.unregister_class(LinkMaterialOperator)
-    bpy.types.VIEW3D_MT_view.remove(menu_function)
+    bpy.types.TOPBAR_MT_file.remove(menu_function)

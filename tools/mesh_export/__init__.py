@@ -11,6 +11,7 @@ import bpy
 from bpy.types import Panel, Mesh
 from .level_editor import definitions
 from .level_editor import link_materials
+from .level_editor import game_object
 
 class GameObjectPropertiesPanel(Panel):
     bl_label = "Game object properties"
@@ -40,10 +41,12 @@ class GameObjectPropertiesPanel(Panel):
 def register():
     bpy.utils.register_class(GameObjectPropertiesPanel)
     link_materials.register()
+    game_object.register()
 
 def unregister():
     bpy.utils.unregister_class(GameObjectPropertiesPanel)
     link_materials.unregister()
+    game_object.unregister()
 
 if __name__ == "__main__":
     register()

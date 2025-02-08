@@ -62,6 +62,9 @@ filesystem/meshes/%.tmesh filesystem/meshes/%.anim: assets/meshes/%.blend $(EXPO
 	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)
 	-cp $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.anim) $(@:%.tmesh=%.anim)
 
+assets/game_objects.json: tools/mesh_export/rebuild_prefabs.py $(MESH_SOURCES)
+	$(BLENDER_4) --background --python-exit-code 1 --python tools/mesh_export/rebuild_prefabs.py -- assets/game_objects.json
+
 ###
 # materials
 ###
