@@ -3,42 +3,50 @@
         {
             "name": "characters_mentor",
             "description": "",
-            "mesh": "meshes/characters/mentor.blend#mentor"
+            "mesh": "meshes/characters/mentor.blend#mentor",
+            "type": "npc"
         },
         {
             "name": "enemies_enemy1",
             "description": "",
-            "mesh": "meshes/enemies/enemy1.blend#enemy1"
+            "mesh": "meshes/enemies/enemy1.blend#enemy1",
+            "type": "biter"
         },
         {
             "name": "objects_crate",
             "description": "",
-            "mesh": "meshes/objects/crate.blend#@crate"
+            "mesh": "meshes/objects/crate.blend#@crate",
+            "type": "crate"
         },
         {
             "name": "objects_pickups_heart",
             "description": "",
-            "mesh": "meshes/objects/pickups/heart.blend#heart"
+            "mesh": "meshes/objects/pickups/heart.blend#heart",
+            "type": "collectable"
         },
         {
             "name": "objects_pickups_scroll",
             "description": "",
-            "mesh": "meshes/objects/pickups/scroll.blend#scroll"
+            "mesh": "meshes/objects/pickups/scroll.blend#scroll",
+            "type": "collectable"
         },
         {
             "name": "objects_torch",
             "description": "",
-            "mesh": "meshes/objects/torch.blend#groundtorch"
+            "mesh": "meshes/objects/torch.blend#groundtorch",
+            "type": "ground_torch"
         },
         {
             "name": "objects_training_dummy",
             "description": "An indestructable training dummy",
-            "mesh": "meshes/objects/training_dummy.blend#trainingdummy_mesh"
+            "mesh": "meshes/objects/training_dummy.blend#trainingdummy_mesh",
+            "type": "training_dummy"
         },
         {
             "name": "objects_treasurechest",
             "description": "",
-            "mesh": "meshes/objects/treasurechest.blend#TreasureChest"
+            "mesh": "meshes/objects/treasurechest.blend#TreasureChest",
+            "type": "treasure_chest"
         }
     ]
 }

@@ -34,10 +34,11 @@ for mesh in bpy.data.meshes:
     short_path = os.path.relpath(mesh.library.filepath, base_path)
     relative_path = os.path.join("meshes", short_path) + "#" + mesh.name
 
-    has_existing = len(list(filter(lambda x: x["mesh"] == relative_path, object_list)))
+    existing_entry = next(filter(lambda x: x["mesh"] == relative_path, object_list), None)
 
-    if has_existing:
+    if existing_entry:
         print("already has ", relative_path)
+        existing_entry['type'] = mesh['type']
         continue
 
     print("adding new ", relative_path)
@@ -45,6 +46,7 @@ for mesh in bpy.data.meshes:
         "name": short_path.removesuffix(".blend").replace("/", "_"),
         "description": "",
         "mesh": relative_path,
+        "id": mesh['type'],
     })
 
 object_list.sort(key=lambda x: x["name"])

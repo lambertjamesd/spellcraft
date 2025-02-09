@@ -14,6 +14,8 @@ class Definitions:
         self.repo_path = None
         self.objects = None
 
+        self._objects_for_library_path = {}
+
     def _search_blend_files(self, start_path):
         result = []
         curr_path = abspath("//")
@@ -37,10 +39,11 @@ class Definitions:
 
     def load(self):
         current_path = bpy.data.filepath
-        repo_path = self._find_repo_path()
 
         if current_path == self.loaded_path:
             return
+        
+        repo_path = self._find_repo_path()
 
         print("reloading from ", self.loaded_path, " to ", current_path)
 
@@ -50,9 +53,22 @@ class Definitions:
         if not repo_path:
             print("No repo path found")
             return
+
+        self._objects_for_library_path = {}
         
         with open(os.path.join(repo_path, "assets/game_objects.json"), "r") as file:
             self.objects = json.load(file)
+
+        for obj in self.objects["objects"]:
+            library_path_parts = obj['mesh'].split('#', 1)
+
+            library_path = os.path.join(repo_path, "assets", library_path_parts[0])
+            relative_path = '//' + os.path.relpath(library_path, os.path.dirname(bpy.data.filepath))
+            obj['library'] = relative_path
+            obj['mesh_name'] = library_path_parts[1]
+
+            self._objects_for_library_path[relative_path] = obj
+
 
         print("Found repo path at " + str(repo_path))
 
@@ -73,9 +89,10 @@ class Definitions:
 
         self.materials = list(filter(lambda x: x.endswith('.mat.blend'), self._search_blend_files(os.path.join(repo_path, 'assets/materials'))))
 
-        for sibling in siblings:
-            with bpy.data.libraries.load("//" + sibling) as (data_from, data_to):
-                print(data_from.objects)
+        # TODO search for target locations
+        # for sibling in siblings:
+        #     with bpy.data.libraries.load("//" + sibling) as (data_from, data_to):
+        #         print(data_from.objects)
 
 
     def _find_repo_path(self):
@@ -119,5 +136,27 @@ class Definitions:
     def get_objects_list(self):
         self.load()
         return self.objects["objects"]
+
+    def get_object_for_library_path(self, path):
+        self.load()
+
+        if not path.startswith('//'):
+            path = '//' + os.path.relpath(path, os.path.dirname(bpy.data.filepath))
+
+        if path in self._objects_for_library_path:
+            return self._objects_for_library_path[path]
+
+        return None
+    
+    def get_struct_info(self, type):
+        self.load()
+
+        key = type + '_definition'
+
+        if key in self.definitions:
+            return self.definitions[key]
+        
+        return None
+
 
 object_definitions = Definitions()

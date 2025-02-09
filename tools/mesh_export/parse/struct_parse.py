@@ -36,6 +36,11 @@ class EnumInfo:
     def str_to_int(self, value: str):
         return self._values.index(value)
     
+    def int_to_str(self, value: int):
+        if value < 0 or value >= len(self._values):
+            return None
+        return self._values[value]
+    
     def is_defined(self, name: str) -> bool:
         return name in self._values
     

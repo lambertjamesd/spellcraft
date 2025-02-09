@@ -5,6 +5,7 @@
 #include "../math/vector2.h"
 #include "../cutscene/expression.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 struct crate_definition {
     struct Vector3 position;
@@ -61,7 +62,7 @@ struct biter_definition {
 
 struct ground_torch_definition {
     struct Vector3 position;
-    uint32_t is_lit;
+    bool is_lit;
 };
 
 enum npc_type {
