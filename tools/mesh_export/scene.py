@@ -215,7 +215,7 @@ def process_scene():
             type_locations: list[parse.struct_serialize.TypeLocation] = []
 
             file.write(len(item[1]).to_bytes(2, 'big'))
-            struct_size, struct_alignment = parse.struct_serialize.obj_gather_types(item[1][0].def_type, type_locations, context)
+            struct_size = parse.struct_serialize.obj_gather_types(item[1][0].def_type, type_locations, context)
             file.write(struct_size.to_bytes(2, 'big'))
 
             file.write(struct.pack(">B", len(type_locations)))

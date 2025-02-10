@@ -13,6 +13,7 @@ class Definitions:
         self.materials = []
         self.repo_path = None
         self.objects = None
+        self.scripts = []
 
         self._objects_for_library_path = {}
 
@@ -33,6 +34,26 @@ class Definitions:
                 relative_path = os.path.relpath(abs_path, curr_path)
 
                 result.append(relative_path)
+
+        return result
+
+
+    def _search_scripts(self, start_path):
+        result = []
+
+        for dirpath, dirnames, filenames in os.walk(start_path):
+            for filename in filenames:
+                if not filename.endswith('.script'):
+                    continue
+
+                abs_path = os.path.join(dirpath, filename)
+
+                if abs_path == bpy.data.filepath:
+                    continue
+
+                relative_path = os.path.relpath(abs_path, start_path)
+
+                result.append(f"rom:/{relative_path}")
 
         return result
 
@@ -89,9 +110,11 @@ class Definitions:
 
         self.materials = list(filter(lambda x: x.endswith('.mat.blend'), self._search_blend_files(os.path.join(repo_path, 'assets/materials'))))
 
+        self.scripts = self._search_scripts(os.path.join(repo_path, 'assets'))
+
         # TODO search for target locations
         # for sibling in siblings:
-        #     with bpy.data.libraries.load("//" + sibling) as (data_from, data_to):
+        #     with bpy.data.libraries.load("//" + sibling, link=True) as (data_from, data_to):
         #         print(data_from.objects)
 
 
@@ -157,6 +180,18 @@ class Definitions:
             return self.definitions[key]
         
         return None
+    
+    def get_enum(self, enum_name):
+        self.load()
+
+        if enum_name in self.enums:
+            return self.enums[enum_name]
+        
+        return None
+    
+    def get_scripts(self):
+        self.load()
+        return self.scripts
 
 
 object_definitions = Definitions()

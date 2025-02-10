@@ -35,13 +35,15 @@ enum inventory_item_type {
     ITEM_TYPE_COUNT,
 };
 
+typedef uint32_t collectable_sub_type;
+
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT
 
 struct collectable_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     enum collectable_type collectable_type;
-    uint32_t collectable_sub_type;
+    collectable_sub_type collectable_sub_type;
 };
 
 struct training_dummy_definition {
@@ -93,11 +95,13 @@ enum interaction_type {
     INTERACTION_LOOK_MOVE_SPACE_WAIT,
 };
 
+typedef char* script_location;
+
 struct npc_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     enum npc_type npc_type;
-    char* dialog;
+    script_location dialog;
 };
 
 #endif

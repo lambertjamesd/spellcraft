@@ -3,6 +3,64 @@ from .definitions import object_definitions
 import os
 from ..parse import struct_parse
 
+def _get_item_types(self, context):
+    return list(map(lambda x: (x, x, ''), object_definitions.get_enum('enum inventory_item_type').all_values()))
+
+def _get_scripts(self, context):
+    return list(map(lambda x: (x, x, ''), object_definitions.get_scripts()))
+
+class NODE_OT_game_object_item_type(bpy.types.Operator):
+    """Set custom property"""
+    bl_idname = "node.game_object_item_type"
+    bl_label = "Set custom property"
+    bl_description = "Sets a custom property on a game object"
+    bl_property = "selected_item"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    selected_item: bpy.props.EnumProperty(items=_get_item_types)
+    name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        context.object[self.name] = self.selected_item
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
+    
+class NODE_OT_game_object_scripts(bpy.types.Operator):
+    """Set custom property"""
+    bl_idname = "node.game_object_script"
+    bl_label = "Set script property"
+    bl_description = "Sets a script property on a game object"
+    bl_property = "selected_item"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    selected_item: bpy.props.EnumProperty(items=_get_scripts)
+    name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        context.object[self.name] = self.selected_item
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
+    
+_enum_mapping = {
+    'collectable_sub_type': NODE_OT_game_object_item_type.bl_idname,
+    'enum inventory_item_type': NODE_OT_game_object_item_type.bl_idname,
+    'script_location': NODE_OT_game_object_scripts.bl_idname,
+}
+
 def _get_obj_def(current_object):
     if not current_object:
         return None
@@ -35,12 +93,15 @@ def _init_default_properties(target):
             if not attr.name in target:
                 default_value = ''
                 if attr.data_type in object_definitions.enums:
-                    print('getting default for ', attr.data_type)
-                    print(object_definitions.enums[attr.data_type])
                     default_value = object_definitions.enums[attr.data_type].int_to_str(0)
 
                 target[attr.name] = default_value
-                print('default_value', default_value)
+        elif attr.data_type == 'collectable_sub_type':
+            if not attr.name in target:
+                target[attr.name] = 'ITEM_TYPE_NONE'
+        elif attr.data_type == 'script_location':
+            if not attr.name in target:
+                target[attr.name] = ''
         else:
             print('could not generate default for ' + attr.data_type)
             continue
@@ -51,6 +112,7 @@ class NODE_OT_game_object_init(bpy.types.Operator):
     bl_idname = "node.game_object_init"
     bl_label = "Initialize game object properties"
     bl_description = "Sets up a game object's properties"
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         if not context.object:
@@ -59,17 +121,14 @@ class NODE_OT_game_object_init(bpy.types.Operator):
         _init_default_properties(context.object)
 
         return {'FINISHED'}
-
-
-
     
 class GameObjectPanel(bpy.types.Panel):
     bl_idname='GO_PT_game_object'
     bl_label='Game object'
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Game Object"
-
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+    bl_options = {"HIDE_HEADER"}
 
     @classmethod
     def poll(cls, context):
@@ -85,7 +144,8 @@ class GameObjectPanel(bpy.types.Panel):
             return
         
         layout = self.layout
-        layout.label(text=obj_def['name'])
+        col = layout.column()
+        col.box().label(text=obj_def['name'])
         target = context.object
 
         is_mising_props = False
@@ -95,11 +155,30 @@ class GameObjectPanel(bpy.types.Panel):
                 attr.name == 'rotation':
                 continue
 
+            if attr.name in target.data:
+                row = col.row()
+                row.label(text=attr.name)
+                row.label(text=target.data[attr.name])
+                continue
+
             if not attr.name in target:
+                row = col.row()
+                row.label(text=attr.name)
+                row.label(text='missing')
                 is_mising_props = True
                 continue
 
-            layout.prop(target, f'["{attr.name}"]')
+            attr_name = f'["{attr.name}"]'
+
+            if attr.data_type in _enum_mapping:
+                row = col.row()
+                row.label(text=attr.name)
+                operator = row.operator(_enum_mapping[attr.data_type], text=target[attr.name])
+                operator.name = attr.name
+            else:
+                row = col.row()
+                row.label(text=attr.name)
+                row.prop(target, attr_name, text='')
 
         if is_mising_props:
             layout.operator('node.game_object_init', text='Add missing properties')
@@ -109,6 +188,7 @@ class NODE_OT_game_object_add(bpy.types.Operator):
     bl_idname = "node.game_object_add"
     bl_label = "Add a game object"
     bl_description = "Add a game object"
+    bl_options = {'REGISTER', 'UNDO'}
 
     name: bpy.props.StringProperty()
     filepath: bpy.props.StringProperty(
@@ -130,7 +210,7 @@ class NODE_OT_game_object_add(bpy.types.Operator):
         if result:
             return result
 
-        with bpy.data.libraries.load(relative_path, link=True) as (data_from, data_to):
+        with bpy.data.libraries.load(relative_path, link=True, relative=True) as (data_from, data_to):
             data_to.meshes = [mesh_name]
 
         return self.search_for_mesh(absolute_path, relative_path, mesh_name)
@@ -179,9 +259,10 @@ def menu_function(self, context):
 class CreateGameObjectPanel(bpy.types.Panel):
     bl_idname = "GO_PT_create_game_object"
     bl_label = "Create game object"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Game Object"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+    bl_options = {"HIDE_HEADER"}
 
     @classmethod
     def poll(cls, context):
@@ -191,18 +272,24 @@ class CreateGameObjectPanel(bpy.types.Panel):
         col = self.layout.column()
         col.menu(NODE_MT_game_object_add.__name__, text="Create game object")
 
+_classes = [
+    NODE_OT_game_object_item_type,
+    NODE_OT_game_object_scripts,
+    NODE_MT_game_object_add,
+    NODE_OT_game_object_add,
+    NODE_OT_game_object_init,
+    GameObjectPanel,
+    CreateGameObjectPanel,
+]
+
 def register():
-    bpy.utils.register_class(NODE_MT_game_object_add)
-    bpy.utils.register_class(NODE_OT_game_object_add)
-    bpy.utils.register_class(NODE_OT_game_object_init)
-    bpy.utils.register_class(GameObjectPanel)
-    bpy.utils.register_class(CreateGameObjectPanel)
+    for cls in _classes:
+        bpy.utils.register_class(cls)
+        
     bpy.types.TOPBAR_MT_file.append(menu_function)
 
 def unregister():
-    bpy.utils.unregister_class(NODE_MT_game_object_add)
-    bpy.utils.unregister_class(NODE_OT_game_object_add)
-    bpy.utils.unregister_class(NODE_OT_game_object_init)
-    bpy.utils.unregister_class(GameObjectPanel)
-    bpy.utils.unregister_class(CreateGameObjectPanel)
+    for cls in _classes:
+        bpy.utils.unregister_class(cls)
+    
     bpy.types.TOPBAR_MT_file.remove(menu_function)

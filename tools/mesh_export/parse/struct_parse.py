@@ -11,6 +11,7 @@ class StructureInfo:
     def __init__(self, name: str, children: list[StructureAttribute]):
         self.name: str = name
         self.children: list[StructureAttribute] = children
+        self.align = 0
 
     def __str__(self):
         result: list[str] = []
@@ -40,6 +41,9 @@ class EnumInfo:
         if value < 0 or value >= len(self._values):
             return None
         return self._values[value]
+    
+    def all_values(self) -> list[str]:
+        return self._values
     
     def is_defined(self, name: str) -> bool:
         return name in self._values

@@ -52,6 +52,8 @@ fixed_sizes = {
     'struct Vector3': 12,
     'struct Vector2': 8,
     'struct Quaternion': 16,
+    'collectable_sub_type': 4,
+    'bool': 1,
 }
 
 fixed_alignments = {
@@ -68,6 +70,8 @@ fixed_alignments = {
     'struct Vector3': 4,
     'struct Vector2': 4,
     'struct Quaternion': 4,
+    'collectable_sub_type': 4,
+    'bool': 1,
 }
 
 struct_formats = {
@@ -81,7 +85,16 @@ struct_formats = {
     'int32_t': 'i',
     'int16_t': 'h',
     'int8_t': 'b',
+    'collectable_sub_type': 'I',
+    'bool': 'B',
 }
+
+_string_aliases = {
+    'script_location',
+}
+
+def _is_string_type(definition):
+    return isinstance(definition, struct_parse.PointerType) and definition.sub_type == 'char' or definition in _string_aliases
 
 coordinate_convert = mathutils.Matrix.Rotation(math.pi * 0.5, 4, 'X')
 coordinate_convert_invert = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
@@ -99,9 +112,8 @@ def _get_transform(obj: bpy.types.Object) -> mathutils.Matrix:
     return coordinate_convert_invert @ obj.matrix_world @ coordinate_convert
 
 def layout_strings(obj: bpy.types.Object, definition, context: SerializeContext, field_name = None):
-    if isinstance(definition, struct_parse.PointerType):
-        if definition.sub_type == 'char':
-            context.get_string_offset(str(_get_value(obj, field_name, "")))
+    if _is_string_type(definition):
+        context.get_string_offset(str(_get_value(obj, field_name, "")))
 
     if isinstance(definition, struct_parse.StructureInfo):
         for child in definition.children:
@@ -120,21 +132,66 @@ def write_vector2_rotation(file, obj: bpy.types.Object):
 
     file.write(struct.pack(">ff", final_right.x, -final_right.z))
 
+def _apply_alignment(current_offset: int, alignment: int) -> int:
+    return (current_offset + alignment - 1) & ~(alignment - 1)
 
-def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext, field_name = None):
+def obj_determine_alignment(definition, context: SerializeContext) -> int:
+    if _is_string_type(definition):
+        return 4
+    
+    if isinstance(definition, str):
+        if definition in context.enums:
+            return 4
+        if definition in fixed_alignments:
+            return fixed_alignments[definition]
+        raise Exception(f"{definition} doesn't have a known alignment")
+    
+    if isinstance(definition, struct_parse.PointerType):
+        return 4
+    
+    if isinstance(definition, struct_parse.StructureInfo):
+        if definition.align:
+            return definition.align
+
+        struct_alignment = 1
+        for child in definition.children:
+            struct_alignment = max(struct_alignment, obj_determine_alignment(child.data_type, context))
+        definition.align = struct_alignment
+        return struct_alignment
+    
+    raise Exception(f'Unknown type {definition}')
+
+def _write_padding(file, offset: int, definition, context: SerializeContext) -> int:
+    new_offset = _apply_alignment(offset, obj_determine_alignment(definition, context))
+
+    if new_offset == offset:
+        return offset
+
+    for i in range(new_offset - offset):
+        file.write(struct.pack('>B', 0))
+    
+    return new_offset
+
+def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext, field_name = None, offset: int = 0) -> int:
+    offset = _write_padding(file, offset, definition, context)
+
+    if _is_string_type(definition):
+        file.write(struct.pack(">I", context.get_string_offset(str(_get_value(obj, field_name, "")))))
+        return offset + 4
+    
     if isinstance(definition, str):
         if definition == 'struct Vector3':
             if field_name == 'position':
                 write_vector3_position(file, obj)
-                return
+                return offset + 12
         if definition == 'struct Vector2':
             if field_name == 'rotation':
                 write_vector2_rotation(file, obj)
-                return
+                return offset + 8
         if definition == 'float':
             value = _get_value(obj, field_name, 0)
             file.write(struct.pack(">f", value))
-            return
+            return offset + 4
         if definition in struct_formats:
             value = _get_value(obj, field_name, 0)
 
@@ -148,7 +205,7 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
                 value = context.search_enums(value)
 
             file.write(struct.pack(">" + struct_formats[definition], value))
-            return
+            return offset + fixed_sizes[definition]
         if definition in context.enums:
             value = _get_value(obj, field_name, None)
 
@@ -158,20 +215,17 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
                 value = context.enums[definition].str_to_int(value)
 
             file.write(struct.pack(">I", value))
-            return
+            return offset + 4
          
-        raise Exception(f"unknown field type '{definition}' {field_name}")
-    
-    if isinstance(definition, struct_parse.PointerType):
-        if definition.sub_type == 'char':
-            file.write(struct.pack(">I", context.get_string_offset(str(_get_value(obj, field_name, "")))))
-            return
-        
         raise Exception(f"unknown field type '{definition}' {field_name}")
     
     if isinstance(definition, struct_parse.StructureInfo):
         for child in definition.children:
-            write_obj(file, obj, child.data_type, context, child.name)
+            offset = write_obj(file, obj, child.data_type, context, child.name, offset)
+
+    if field_name == None:
+        # add end of struct padding
+        _write_padding(file, offset, definition, context)
 
 TYPE_ID_STR = 0
 
@@ -180,36 +234,33 @@ class TypeLocation():
         self.type_id: int = type_id
         self.offset: int = offset
 
-def _apply_alignment(current_offset: int, alignment: int) -> int:
-    return (current_offset + alignment - 1) & ~(alignment - 1)
+def _obj_gather_types(definition, type_locations: list[TypeLocation], context: SerializeContext, current_offset: int) -> int:
+    current_offset = _apply_alignment(current_offset, obj_determine_alignment(definition, context))
 
-def obj_gather_types(definition, type_locations: list[TypeLocation], context: SerializeContext, current_offset: int = 0) -> tuple[int, int]:
+    if _is_string_type(definition):
+        type_locations.append(TypeLocation(TYPE_ID_STR, current_offset))
+        return current_offset + 4
+    
     if isinstance(definition, str):
         if definition in context.enums:
-            return _apply_alignment(current_offset, 4) + 4, 4
+            return current_offset + 4
 
         if not definition in fixed_sizes:
             raise Exception(f"{definition} is not a known size")
-        
-        alignment = fixed_alignments[definition]
 
-        return _apply_alignment(current_offset, alignment) + fixed_sizes[definition], alignment
+        return current_offset + fixed_sizes[definition]
     
     if isinstance(definition, struct_parse.PointerType):
-        location = _apply_alignment(current_offset, 4)
-
-        if definition.sub_type == 'char':
-            type_locations.append(TypeLocation(TYPE_ID_STR, location))
-
-        return location + 4, 4
+        return current_offset + 4, 4
     
     if isinstance(definition, struct_parse.StructureInfo):
-        struct_alignment = 1
-
         for child in definition.children:
-            current_offset, sub_alignment = obj_gather_types(child.data_type, type_locations, context, current_offset = current_offset)
-            struct_alignment = max(struct_alignment, sub_alignment)
+            current_offset = _obj_gather_types(child.data_type, type_locations, context, current_offset = current_offset)
 
-        return _apply_alignment(current_offset, struct_alignment), struct_alignment
+        return current_offset
     
     raise Exception(f'Unknown type {definition}')
+
+def obj_gather_types(definition, type_locations: list[TypeLocation], context: SerializeContext) -> int:
+    result = _obj_gather_types(definition, type_locations, context, 0)
+    return _apply_alignment(result, obj_determine_alignment(definition, context))

@@ -27,7 +27,7 @@ class LinkMaterialOperator(bpy.types.Operator):
     )
 
     def execute(self, context):
-        with bpy.data.libraries.load("//" + self.material_filename, link=True) as (data_from, data_to):
+        with bpy.data.libraries.load("//" + self.material_filename, link=True, relative=True) as (data_from, data_to):
             data_to.materials = data_from.materials
         return {'FINISHED'}
 
