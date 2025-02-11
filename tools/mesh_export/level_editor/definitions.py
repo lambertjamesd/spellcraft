@@ -4,6 +4,7 @@ from bpy.path import abspath
 import os.path
 import json
 from ..parse.struct_parse import find_structs, find_enums
+from ..entities import entry_point
 
 class Definitions:
     def __init__(self):
@@ -14,6 +15,7 @@ class Definitions:
         self.repo_path = None
         self.objects = None
         self.scripts = []
+        self.entry_points = []
 
         self._objects_for_library_path = {}
 
@@ -57,6 +59,25 @@ class Definitions:
 
         return result
 
+    def _search_entry_points(self, start_path):
+        siblings = self._search_blend_files(start_path)
+
+        result = []
+        base_path = abspath('//')
+
+        for sibling in siblings:
+            relative_path = os.path.relpath(os.path.join(base_path, sibling), start_path).replace('.blend', '.scene')
+
+            with bpy.data.libraries.load("//" + sibling, link=True) as (data_from, data_to):
+                for obj_name in data_from.objects:
+                    if not obj_name.startswith(entry_point.ENTRY_PREFIX):
+                        continue
+                    
+                    result.append(f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}")
+
+        result.sort()
+
+        return result
 
     def load(self):
         current_path = bpy.data.filepath
@@ -105,17 +126,11 @@ class Definitions:
 
             print("Found definitions " , self.definitions.keys())
 
-        siblings = []
-        siblings = self._search_blend_files(os.path.join(repo_path, 'assets/scenes'))
-
         self.materials = list(filter(lambda x: x.endswith('.mat.blend'), self._search_blend_files(os.path.join(repo_path, 'assets/materials'))))
 
         self.scripts = self._search_scripts(os.path.join(repo_path, 'assets'))
-
-        # TODO search for target locations
-        # for sibling in siblings:
-        #     with bpy.data.libraries.load("//" + sibling, link=True) as (data_from, data_to):
-        #         print(data_from.objects)
+        self.entry_points = self._search_entry_points(os.path.join(repo_path, 'assets'))
+        print(self.entry_points)
 
 
     def _find_repo_path(self):
@@ -192,6 +207,10 @@ class Definitions:
     def get_scripts(self):
         self.load()
         return self.scripts
+    
+    def get_entry_points(self):
+        self.load()
+        return self.entry_points
 
 
 object_definitions = Definitions()

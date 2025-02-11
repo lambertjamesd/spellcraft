@@ -9,6 +9,9 @@ def _get_item_types(self, context):
 def _get_scripts(self, context):
     return list(map(lambda x: (x, x, ''), object_definitions.get_scripts()))
 
+def _get_entry_points(self, context):
+    return list(map(lambda x: (x, x[len('rom:/scenes/'):], ''), object_definitions.get_entry_points()))
+
 class NODE_OT_game_object_item_type(bpy.types.Operator):
     """Set custom property"""
     bl_idname = "node.game_object_item_type"
@@ -72,6 +75,28 @@ class NODE_OT_game_objects_clear_script(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class NODE_OT_game_object_entry_points(bpy.types.Operator):
+    """Set custom property"""
+    bl_idname = "node.game_object_entry_points"
+    bl_label = "Set entry point property"
+    bl_description = "Sets an entry point property on a game object"
+    bl_property = "selected_item"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    selected_item: bpy.props.EnumProperty(items=_get_entry_points)
+    name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        context.object[self.name] = self.selected_item
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
     
 _enum_mapping = {
     'collectable_sub_type': NODE_OT_game_object_item_type.bl_idname,
@@ -140,6 +165,26 @@ class NODE_OT_game_object_init(bpy.types.Operator):
 
         return {'FINISHED'}
     
+class LoadingZonePanel(bpy.types.Panel):
+    bl_idname='GO_PT_loading_zone'
+    bl_label='Loading point'
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+    bl_options = {"HIDE_HEADER"}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.object and 'loading_zone' in context.object
+    
+    def draw(self, context):
+        target = context.object
+
+        self.layout.label(text='Loading zone')
+        operator = self.layout.operator(NODE_OT_game_object_entry_points.bl_idname, text=target['loading_zone'])
+        operator.name = 'loading_zone'
+
+
 class EntryPointPanel(bpy.types.Panel):
     bl_idname='GO_PT_entry_point'
     bl_label='Entry point'
@@ -330,9 +375,11 @@ _classes = [
     NODE_OT_game_object_item_type,
     NODE_OT_game_object_scripts,
     NODE_OT_game_objects_clear_script,
+    NODE_OT_game_object_entry_points,
     NODE_MT_game_object_add,
     NODE_OT_game_object_add,
     NODE_OT_game_object_init,
+    LoadingZonePanel,
     GameObjectPanel,
     EntryPointPanel,
     CreateGameObjectPanel,
