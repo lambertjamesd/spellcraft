@@ -118,28 +118,28 @@ Modifier shorthand
 | Fire    |           | Shoot flames                     | On kill        |
 | Fire    | I         | Shoot lightning                  | On kill        |
 | Fire    | I A       | Lightning dash                   | On dash through        |
-| Fire    | I A E     | Spin lightning sword             | On kill        |
+| Fire    | I A E     | AOE Lightning dash               | On dash end        |
 | Fire    | I A E L   | Shoot AEO lightning sprite       | On sprite attack  |
 | Fire    | I A L     | Shoot lightning sprite           | On sprite attack |
 | Fire    | I E       | Lightning explosion              | On kill |
 | Fire    | I E L     | AEO lightning sprite             | On sprite attack |
 | Fire    | I L       | Lightning sprite                 | On sprite attack |
 | Fire    | A         | Fire dash                        | On impact |
-| Fire    | A E       | Spin fire sword or aeo fire dash | On kill |
+| Fire    | A E       | Aeo fire dash                    | On dash end |
 | Fire    | A E L     | Shoot AEO fire sprite            | On sprite attack |
 | Fire    | A L       | Shoots a fire sprite             | On sprite attack |
 | Fire    | E         | AEO explosion                    | On kill |
 | Fire    | E L       | AEO fire sprite                  | On sprite attack  |
 | Fire    | L         | Fire sprite                      | On sprite attack |
 | Ice     |           | Shoot ice                        | On ice shatter |
-| Ice     | F         | Shoot lightning (maybe water)    | On kill        |
-| Ice     | F A       | Lightning dash                   | On dash through        |
-| Ice     | F A E     | Spin lightning sword             | On kill |
-| Ice     | F A E L   | Shoot AEO lightning sprite       | On sprite attack |
-| Ice     | F A L     | Shoot lightning sprite           | On sprite attack |
-| Ice     | F E       | Lightning explosion              | On kill |
-| Ice     | F E L     | AEO lightning sprite             | On sprite attack |
-| Ice     | F L       | Lightning sprite                 | On sprite attack |
+| Ice     | F         | Shoot water                      | On contact        |
+| Ice     | F A       | Water dash                       | On dash through        |
+| Ice     | F A E     | AEO water dash                   | On contact |
+| Ice     | F A E L   | Shoot AEO water sprite           | On sprite attack |
+| Ice     | F A L     | Shoot water sprite               | On sprite attack |
+| Ice     | F E       | Water explosion                  | On contact |
+| Ice     | F E L     | AEO water sprite                 | On sprite attack |
+| Ice     | F L       | Water sprite                     | On sprite attack |
 | Ice     | A         | Ice dash                         | On impact |
 | Ice     | A E       | Spin ice sword or aeo ice dash   | On ice shatter |
 | Ice     | A E L     | Shoot AEO ice sprite             | On ice shatter |
