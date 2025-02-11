@@ -57,8 +57,7 @@ If you want a mesh to only have a collider, then remove all materials for the me
 
 ### Entry Points
 
-If you mark an object with a custom string property named `entry_point` that object wont be exported but will instead
-become a location that the player can enter the scene from. The value of the property is the name of this entry point.
+If a game object's name start with `entry#` it will be considered an entry point into a scene.
 The entry point named `default` will be used if no other entry point is specified.
 
 ### Loading Zones
@@ -93,3 +92,19 @@ The value should one of the names from the `enum inventory_item_type` such as `S
 
 By having custom properties that don't change for an object type on the mesh, it makes it easy to link these dynamic
 objects into scenes and lets blender operate somewhat as a scene editor.
+
+## Level Editor
+
+The folder `tools/mesh_export` can be used as a blender plugin. To use it, zip the folder then install it blender by selecting `Edit -> Preferences` then choose `Add-ons -> Install from Disk` and choose the zip file. 
+
+This will add a few tools in the objects tab. You can edit game object's properties, for example, the treasure chest object will let you choose which item it contains.
+
+![edit game object](./images/edit-game-object.png)
+
+If you select an entry point you can add an `on entry` script that is run when the player enters through this entry point.
+
+![edit entry point](./images/edit-entry-point.png)
+
+If you select a loading zone, you can select which entry point it points to
+
+![edit loading zone](./images/edit-loading-zone.png)
