@@ -12,6 +12,7 @@ import entities.mesh_collider
 import entities.tiny3d_mesh_writer
 import entities.mesh_optimizer
 import entities.material_extract
+import entities.entry_point
 import parse.struct_parse
 import parse.struct_serialize
 import cutscene.expresion_generator
@@ -140,8 +141,8 @@ def process_scene():
             scene.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
             continue
 
-        if 'entry_point' in obj:
-            scene.locations.append(LocationEntry(obj, obj['entry_point']))
+        if entities.entry_point.is_entry_point(obj):
+            scene.locations.append(LocationEntry(obj, entities.entry_point.get_entry_point(obj)))
             continue
 
         if 'type' in obj or 'type' in obj.data:

@@ -1,7 +1,7 @@
 import bpy
 from .definitions import object_definitions
 import os
-from ..parse import struct_parse
+from ..entities import entry_point
 
 def _get_item_types(self, context):
     return list(map(lambda x: (x, x, ''), object_definitions.get_enum('enum inventory_item_type').all_values()))
@@ -54,6 +54,24 @@ class NODE_OT_game_object_scripts(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
+
+class NODE_OT_game_objects_clear_script(bpy.types.Operator):
+    """Set custom property"""
+    bl_idname = "node.game_object_clear_script"
+    bl_label = "Clear script property"
+    bl_description = "Clears a script property on a game object"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        del context.object[self.name]
+
+        return {'FINISHED'}
+
     
 _enum_mapping = {
     'collectable_sub_type': NODE_OT_game_object_item_type.bl_idname,
@@ -121,6 +139,42 @@ class NODE_OT_game_object_init(bpy.types.Operator):
         _init_default_properties(context.object)
 
         return {'FINISHED'}
+    
+class EntryPointPanel(bpy.types.Panel):
+    bl_idname='GO_PT_entry_point'
+    bl_label='Entry point'
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+    bl_options = {"HIDE_HEADER"}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.object and entry_point.is_entry_point(context.object)
+    
+    def draw(self, context):
+        target = context.object
+
+        if target.name.startswith(entry_point.ENTRY_PREFIX):
+            row = self.layout.row()
+            row.label(text='Entry point')
+            row.label(text=target.name[len(entry_point.ENTRY_PREFIX):])
+        elif 'entry_point' in object:
+            row = self.layout.row()
+            row.label(text='Entry point')
+            row.prop(target, '["entry_point"]', text='')
+
+        if 'on_enter' in target:
+            row = self.layout.row()
+            row.label(text='On enter')
+            operator = row.operator(NODE_OT_game_object_scripts.bl_idname, text=target['on_enter'])
+            operator.name = 'on_enter'
+            operator = row.operator(NODE_OT_game_objects_clear_script.bl_idname, text='', icon='X')
+            operator.name = 'on_enter'
+        else:
+            operator = self.layout.operator(NODE_OT_game_object_scripts.bl_idname, text='Add on enter script')
+            operator.name = 'on_enter'
+
     
 class GameObjectPanel(bpy.types.Panel):
     bl_idname='GO_PT_game_object'
@@ -275,10 +329,12 @@ class CreateGameObjectPanel(bpy.types.Panel):
 _classes = [
     NODE_OT_game_object_item_type,
     NODE_OT_game_object_scripts,
+    NODE_OT_game_objects_clear_script,
     NODE_MT_game_object_add,
     NODE_OT_game_object_add,
     NODE_OT_game_object_init,
     GameObjectPanel,
+    EntryPointPanel,
     CreateGameObjectPanel,
 ]
 
