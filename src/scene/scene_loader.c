@@ -109,7 +109,6 @@ void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FIL
     fread(&entity_data->entity_count, 2, 1, file);
     uint16_t definition_size;
     fread(&definition_size, 2, 1, file);
-    fprintf(stderr, "%s, %d == %d\n", name, definition_size, def->definition_size);
     assert(definition_size == def->definition_size);
 
     uint8_t type_location_count;
