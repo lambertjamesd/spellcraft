@@ -108,3 +108,7 @@ If you select an entry point you can add an `on entry` script that is run when t
 If you select a loading zone, you can select which entry point it points to
 
 ![edit loading zone](./images/edit-loading-zone.png)
+
+Quick linking of materials. If you goto `File -> Quick link material` you can select a material in the material folder to link to this blend file for use in the model. It only works with materials defined in `.mat.blend` files. You can use the quick action menu by pressing spacebar(blender 2.7) F3(later blender bindings) and typing `quick link material`.
+
+You can also add game objects by either clicking the `Create game object` button in the objects panel or by searching for the object you want to add in the quick actions menu (spacebar or F3). This will add the game object where the current is currently located
