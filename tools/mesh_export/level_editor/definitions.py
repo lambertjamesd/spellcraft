@@ -75,6 +75,14 @@ class Definitions:
                     
                     result.append(f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}")
 
+        relative_path = os.path.relpath(bpy.data.filepath, start_path).replace('.blend', '.scene')
+
+        for obj_name in bpy.data.objects.keys():
+            if not obj_name.startswith(entry_point.ENTRY_PREFIX):
+                continue
+            result.append(f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}")
+
+
         result.sort()
 
         return result
@@ -130,7 +138,6 @@ class Definitions:
 
         self.scripts = self._search_scripts(os.path.join(repo_path, 'assets'))
         self.entry_points = self._search_entry_points(os.path.join(repo_path, 'assets'))
-        print(self.entry_points)
 
 
     def _find_repo_path(self):

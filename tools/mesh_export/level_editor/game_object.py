@@ -2,6 +2,8 @@ import bpy
 from .definitions import object_definitions
 import os
 from ..entities import entry_point
+import bmesh
+import mathutils
 
 def _get_item_types(self, context):
     return list(map(lambda x: (x, x, ''), object_definitions.get_enum('enum inventory_item_type').all_values()))
@@ -332,6 +334,50 @@ class NODE_OT_game_object_add(bpy.types.Operator):
         bpy.context.view_layer.objects.active = object
 
         return {'FINISHED'}
+    
+class NODE_OT_game_object_add_entry_point(bpy.types.Operator):
+    """Add a game object"""
+    bl_idname = "node.game_object_add_entry_point"
+    bl_label = "Add an entry point"
+    bl_description = "Add an entry point"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        object = bpy.data.objects.new('entry#new entry point', None)
+
+        object.location = context.scene.cursor.location
+        bpy.context.collection.objects.link(object)
+        object.select_set(True)
+        bpy.context.view_layer.objects.active = object
+
+        return {'FINISHED'}
+    
+class NODE_OT_game_object_add_loading_zone(bpy.types.Operator):
+    """Add a game object"""
+    bl_idname = "node.game_object_add_loading_zone"
+    bl_label = "Add a loading zone"
+    bl_description = "Add a loading zone"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bm = bmesh.new()
+        bmesh.ops.create_cube(bm, size=1)
+
+        mesh = bpy.data.meshes.new('loading zone')
+        bm.to_mesh(mesh)
+        mesh.update()
+        bm.free()
+
+        object = bpy.data.objects.new('loading zone', mesh)
+
+        object.location = context.scene.cursor.location + mathutils.Vector((0, 0, 1))
+        object['loading_zone'] = ''
+        bpy.context.collection.objects.link(object)
+        object.select_set(True)
+        bpy.context.view_layer.objects.active = object
+
+        return {'FINISHED'}
+
 
 class NODE_MT_game_object_add(bpy.types.Menu):
     bl_label = "Game Object"
@@ -358,10 +404,9 @@ def menu_function(self, context):
 class CreateGameObjectPanel(bpy.types.Panel):
     bl_idname = "GO_PT_create_game_object"
     bl_label = "Create game object"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "object"
-    bl_options = {"HIDE_HEADER"}
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Game Object"
 
     @classmethod
     def poll(cls, context):
@@ -370,6 +415,8 @@ class CreateGameObjectPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column()
         col.menu(NODE_MT_game_object_add.__name__, text="Create game object")
+        col.operator(NODE_OT_game_object_add_entry_point.bl_idname, text="Add entry point")
+        col.operator(NODE_OT_game_object_add_loading_zone.bl_idname, text="Add loading zone")
 
 _classes = [
     NODE_OT_game_object_item_type,
@@ -378,6 +425,8 @@ _classes = [
     NODE_OT_game_object_entry_points,
     NODE_MT_game_object_add,
     NODE_OT_game_object_add,
+    NODE_OT_game_object_add_entry_point,
+    NODE_OT_game_object_add_loading_zone,
     NODE_OT_game_object_init,
     LoadingZonePanel,
     GameObjectPanel,
