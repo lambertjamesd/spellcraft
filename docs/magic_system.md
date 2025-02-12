@@ -117,15 +117,15 @@ Modifier shorthand
 |---------|-----------|----------------------------------|---------|
 | Fire    |           | Shoot flames                     | On kill        |
 | Fire    | I         | Shoot lightning                  | On kill        |
-| Fire    | I A       | Lightning dash                   | On dash through        |
-| Fire    | I A E     | AOE Lightning dash               | On dash end        |
+| Fire    | I A       | Lightning dash (teleport)        | On dash through        |
+| Fire    | I A E     | Teleport to ground               | On impact        |
 | Fire    | I A E L   | Shoot AEO lightning sprite       | On sprite attack  |
 | Fire    | I A L     | Shoot lightning sprite           | On sprite attack |
 | Fire    | I E       | Lightning explosion              | On kill |
 | Fire    | I E L     | AEO lightning sprite             | On sprite attack |
 | Fire    | I L       | Lightning sprite                 | On sprite attack |
 | Fire    | A         | Fire dash                        | On impact |
-| Fire    | A E       | Aeo fire dash                    | On dash end |
+| Fire    | A E       | Rocket jump                      |  |
 | Fire    | A E L     | Shoot AEO fire sprite            | On sprite attack |
 | Fire    | A L       | Shoots a fire sprite             | On sprite attack |
 | Fire    | E         | AEO explosion                    | On kill |

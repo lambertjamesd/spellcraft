@@ -22,6 +22,8 @@
 struct player_animations {
     struct animation_clip* idle;
     struct animation_clip* run;
+    struct animation_clip* walk;
+    struct animation_clip* dash;
     struct animation_clip* attack;
     struct animation_clip* attack_hold;
 };

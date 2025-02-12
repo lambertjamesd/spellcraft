@@ -15,6 +15,11 @@
 
 #define PLAYER_MAX_SPEED    4.2f
 
+#define PLAYER_DASH_THRESHOLD 4.7f
+#define PLAYER_RUN_THRESHOLD 1.4f
+#define PLAYER_RUN_ANIM_SPEED   4.2f
+#define PLAYER_WALK_ANIM_SPEED   0.64f
+
 static struct Vector2 player_max_rotation;
 
 static struct dynamic_object_type player_collision = {
@@ -25,7 +30,9 @@ static struct dynamic_object_type player_collision = {
             .radius = 0.25f,
             .inner_half_height = 0.5f,
         }
-    }
+    },
+    // about a 40 degree slope
+    .max_stable_slope = 0.219131191f,
 };
 
 static struct dynamic_object_type player_visual_shape = {
@@ -76,15 +83,27 @@ struct animation_clip* player_determine_animation(struct player* player, float* 
     horizontal_velocity.y = 0.0f;
     float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
 
-    if (speed < 0.1f) {
+    if (speed < 0.2f) {
         *playback_speed = 1.0f;
         *repeat = true;
         return player->animations.idle;
     }
 
+    if (speed < PLAYER_RUN_THRESHOLD) {
+        *playback_speed = speed * (1.0f / PLAYER_WALK_ANIM_SPEED);
+        *repeat = true;
+        return player->animations.walk;
+    }
+
+    if (speed < PLAYER_DASH_THRESHOLD) {
+        *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
+        *repeat = true;
+        return player->animations.run;
+    }
+
     *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
     *repeat = true;
-    return player->animations.run;
+    return player->animations.dash;
 }
 
 bool player_cast_state(joypad_buttons_t buttons, int button_index) {
@@ -138,9 +157,88 @@ void player_check_inventory(struct player* player) {
     player->renderable.attachments[0] = staff->item_type == ITEM_TYPE_NONE ? NULL : player->assets.staffs[staff->staff_index];
 }
 
-void player_update(struct player* player) {
+struct Vector3* player_get_ground(struct player* player) {
+    struct contact* contact = player->collision.active_contacts;
+
+    struct Vector3* result = NULL;
+
+    while (contact) {
+        if (contact->normal.y > 0.001f && (!result || contact->normal.y > result->y)) {
+            result = &contact->normal;
+        }
+
+        contact = contact->next;
+    }
+
+    return result;
+}
+
+void player_handle_ground_movement(struct player* player, struct Vector3* ground_normal, struct Vector3* target_direction) {
+    if (dynamic_object_should_slide(player_collision.max_stable_slope, ground_normal->y)) {
+        // TODO handle sliding logic
+        return;
+    }
+
+    if (vector3MagSqrd(target_direction) < 0.001f) {
+        player->collision.velocity = gZeroVec;
+    } else {
+        struct Vector3 projected_target_direction;
+        vector3ProjectPlane(target_direction, ground_normal, &projected_target_direction);
+
+        struct Vector3 normalized_direction;
+        vector3Normalize(target_direction, &normalized_direction);
+        struct Vector3 projected_normalized;
+        vector3ProjectPlane(&normalized_direction, ground_normal, &projected_normalized);
+
+        vector3Scale(&projected_target_direction, &projected_target_direction, 1.0f / sqrtf(vector3MagSqrd(&projected_normalized)));
+
+        vector3Scale(&projected_target_direction, &player->collision.velocity, PLAYER_MAX_SPEED);
+    }
+}
+
+void player_handle_air_movement(struct player* player, struct Vector3* target_direction) {
+    float prev_y = player->collision.velocity.y;
+    vector3Scale(target_direction, &player->collision.velocity, PLAYER_MAX_SPEED);
+    player->collision.velocity.y = prev_y;
+}
+
+void player_handle_movement(struct player* player, joypad_inputs_t* input) {
     struct Vector3 right;
     struct Vector3 forward;
+
+    player_get_move_basis(player->camera_transform, &forward, &right);
+
+    struct Vector2 direction;
+
+    direction.x = input->stick_x * (1.0f / 80.0f);
+    direction.y = -input->stick_y * (1.0f / 80.0f);
+
+    float magSqrd = vector2MagSqr(&direction);
+
+    if (magSqrd > 1.0f) {
+        vector2Scale(&direction, 1.0f / sqrtf(magSqrd), &direction);
+    }
+
+    struct Vector3 target_direction;
+    vector3Scale(&right, &target_direction, direction.x);
+    vector3AddScaled(&target_direction, &forward, direction.y, &target_direction);
+
+    struct Vector3* ground_normal = player_get_ground(player);
+
+    if (ground_normal) {
+        player_handle_ground_movement(player, ground_normal, &target_direction);
+    } else {
+        player_handle_air_movement(player, &target_direction);
+    }
+
+    if (magSqrd > 0.01f) {
+        struct Vector2 directionUnit;
+        vector2LookDir(&directionUnit, &target_direction);
+        vector2RotateTowards(&player->transform.rotation, &directionUnit, &player_max_rotation, &player->transform.rotation);
+    }
+}
+
+void player_update(struct player* player) {
 
     float playback_speed = 1.0f;
     bool repeat;
@@ -157,35 +255,10 @@ void player_update(struct player* player) {
         return;
     }
 
-    player_get_move_basis(player->camera_transform, &forward, &right);
-
     joypad_inputs_t input = joypad_get_inputs(0);
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
-    struct Vector2 direction;
-
-    direction.x = input.stick_x * (1.0f / 80.0f);
-    direction.y = -input.stick_y * (1.0f / 80.0f);
-
-    float magSqrd = vector2MagSqr(&direction);
-
-    if (magSqrd > 1.0f) {
-        vector2Scale(&direction, 1.0f / sqrtf(magSqrd), &direction);
-    }
-
-    struct Vector3 directionScene;
-    vector3Scale(&right, &directionScene, direction.x);
-    vector3AddScaled(&directionScene, &forward, direction.y, &directionScene);
-
-    float prev_y = player->collision.velocity.y;
-    vector3Scale(&directionScene, &player->collision.velocity, PLAYER_MAX_SPEED);
-    player->collision.velocity.y = prev_y;
-
-    if (magSqrd > 0.01f) {
-        struct Vector2 directionUnit;
-        vector2LookDir(&directionUnit, &directionScene);
-        vector2RotateTowards(&player->transform.rotation, &directionUnit, &player_max_rotation, &player->transform.rotation);
-    }
+    player_handle_movement(player, &input);
 
     struct Vector3 castDirection;
     vector2ToLookDir(&player->transform.rotation, &castDirection);
@@ -309,6 +382,8 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->animations.attack_hold = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1_hold");
     player->animations.idle = animation_set_find_clip(player->cutscene_actor.animation_set, "idle");
     player->animations.run = animation_set_find_clip(player->cutscene_actor.animation_set, "run");
+    player->animations.walk = animation_set_find_clip(player->cutscene_actor.animation_set, "walk");
+    player->animations.dash = animation_set_find_clip(player->cutscene_actor.animation_set, "dash");
 
     player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
     player->assets.staffs[1] = NULL;

@@ -142,3 +142,7 @@ void dynamic_object_recalc_bb(struct dynamic_object* object) {
     vector3Add(&object->bounding_box.min, &offset, &object->bounding_box.min);
     vector3Add(&object->bounding_box.max, &offset, &object->bounding_box.max);
 }
+
+bool dynamic_object_should_slide(float max_stable_slope, float normal_y) {
+    return normal_y <= 1.0f - max_stable_slope;
+}

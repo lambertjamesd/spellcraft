@@ -41,6 +41,9 @@ struct dynamic_object_type {
     union dynamic_object_type_data data;
     float bounce;
     float friction;
+    // 0 wont be stable on any slope, 1 will stick to anything not facing downward
+    // or 1 - cos(slope angle)
+    float max_stable_slope;
 };
 
 struct dynamic_object {
@@ -79,5 +82,7 @@ bool dynamic_object_is_touching(struct dynamic_object* object, entity_id id);
 
 void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 void dynamic_object_recalc_bb(struct dynamic_object* object);
+
+bool dynamic_object_should_slide(float max_stable_slope, float normal_y);
 
 #endif

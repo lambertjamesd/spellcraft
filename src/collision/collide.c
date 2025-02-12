@@ -25,9 +25,21 @@ void correct_overlap(struct dynamic_object* object, struct EpaResult* result, fl
         return;
     }
 
-    vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
+    float slope_amount = ratio > 0.0f ? -result->normal.y : result->normal.y;
 
-    correct_velocity(object, result, ratio, friction, bounce);
+    if (dynamic_object_should_slide(object->type->max_stable_slope, slope_amount)) {
+        vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
+        correct_velocity(object, result, ratio, friction, bounce);
+    } else {
+        float offset = result->penetration / slope_amount;
+        if (ratio > 0.0f) {
+            object->position->y += offset;
+        } else {
+            object->position->y -= offset;
+        }
+        object->velocity.y = 0.0f;
+    }
+
 }
 
 struct object_mesh_collide_data {
