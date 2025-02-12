@@ -51,20 +51,18 @@ bool effect_always_stopped(void*) {
 static struct element_emitter_definition fire_definition = {
     .element_type = ELEMENT_TYPE_FIRE,
     .collider_type = {
-        .minkowsi_sum = sweep_minkowski_sum,
-        .bounding_box = sweep_bounding_box,
+        .minkowsi_sum = cone_minkowski_sum,
+        .bounding_box = cone_bounding_box,
         .data = {
-            .sweep = {
-                .range = {0.707f, 0.707f},
-                .radius = 1.0f,
-                .half_height = 0.0625f,
+            .cone = {
+                .size = {0.3f, 0.3f, 1.0f},
             }
         }
     },
     .scale = 4.0f,
     .mana_per_second = 1.0f,
     .damage_per_frame = 1.0f,
-    .on_effect_start = fire_effect_start,
+    .on_effect_start = fire_push_effect_start,
     .on_effect_update = (on_effect_update)scale_in_fade_out_set_transform,
     .on_effect_stop = (on_effect_stop)scale_in_fade_out_stop,
     .is_effect_running = (is_effect_running)scale_in_fade_out_is_running,

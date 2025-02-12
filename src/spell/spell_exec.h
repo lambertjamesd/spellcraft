@@ -18,6 +18,7 @@
 #include "spell_sources.h"
 #include "living_sprite.h"
 #include "heal.h"
+#include "teleport.h"
 
 typedef uint32_t spell_slot_id;
 
@@ -30,6 +31,7 @@ union spell_exec_data {
     struct push push;
     struct living_sprite living_sprite;
     struct spell_heal heal;
+    struct teleport teleport;
 };
 
 enum spell_exec_slot_type {
@@ -42,6 +44,7 @@ enum spell_exec_slot_type {
     SPELL_EXEC_SLOT_TYPE_RECAST,
     SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE,
     SPELL_EXEC_SLOT_TYPE_HEAL,
+    SPELL_EXEC_SLOT_TYPE_TELEPORT,
 };
 
 struct spell_exec_slot {

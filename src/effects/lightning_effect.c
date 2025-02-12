@@ -33,8 +33,8 @@ void lightning_effect_set_position(struct lightning_effect* effect, struct Vecto
     for (int i = 0; i < 2; i += 2) {
         struct Transform* next_transform = &effect->armature.pose[effect->next_transform];
 
-        next_transform->position = *position;
-        vector3Scale(&gOneVec, &next_transform->scale, randomInRangef(radius * 0.5f, radius) * (1.0f / SCENE_SCALE));
+        vector3Scale(position, &next_transform->position, SCENE_SCALE);
+        vector3Scale(&gOneVec, &next_transform->scale, randomInRangef(radius * 0.5f, radius));
 
         struct Quaternion look_rotation;
         quatLook(direction, &gUp, &look_rotation);
@@ -49,8 +49,6 @@ void lightning_effect_set_position(struct lightning_effect* effect, struct Vecto
         quatMultiply(&look_offset, &roll_rotation, &combined_rotation);
 
         quatMultiply(&look_rotation, &combined_rotation, &next_transform->rotation);
-
-
 
         effect->next_transform += 1;
 

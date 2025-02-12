@@ -118,7 +118,7 @@ Modifier shorthand
 | Fire    |           | Shoot flames                     | On kill        |
 | Fire    | I         | Shoot lightning                  | On kill        |
 | Fire    | I A       | Lightning dash (teleport)        | On dash through        |
-| Fire    | I A E     | Teleport to ground               | On impact        |
+| Fire    | I A E     | Teleport up and down             | On impact        |
 | Fire    | I A E L   | Shoot AEO lightning sprite       | On sprite attack  |
 | Fire    | I A L     | Shoot lightning sprite           | On sprite attack |
 | Fire    | I E       | Lightning explosion              | On kill |

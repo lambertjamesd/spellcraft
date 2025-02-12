@@ -45,6 +45,7 @@ void element_emitter_destroy(struct element_emitter* element_emitter) {
 }
 
 bool element_emitter_update(struct element_emitter* element_emitter, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
+    fprintf(stderr, "%d\n", element_emitter->is_active);
     if (element_emitter->is_active && element_emitter->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
         element_emitter->effect_definition->on_effect_stop(
             element_emitter->effect

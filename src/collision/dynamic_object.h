@@ -85,4 +85,6 @@ void dynamic_object_recalc_bb(struct dynamic_object* object);
 
 bool dynamic_object_should_slide(float max_stable_slope, float normal_y);
 
+bool dynamic_object_is_grounded(struct dynamic_object* object);
+
 #endif

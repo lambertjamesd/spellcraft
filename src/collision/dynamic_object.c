@@ -146,3 +146,17 @@ void dynamic_object_recalc_bb(struct dynamic_object* object) {
 bool dynamic_object_should_slide(float max_stable_slope, float normal_y) {
     return normal_y <= 1.0f - max_stable_slope;
 }
+
+bool dynamic_object_is_grounded(struct dynamic_object* object) {
+    struct contact* curr = object->active_contacts;
+
+    while (curr) {
+        if (curr->normal.y > 0.3f) {
+            return true;
+        }
+        
+        curr = curr->next;
+    }
+
+    return false;
+}

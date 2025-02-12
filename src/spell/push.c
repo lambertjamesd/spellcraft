@@ -127,5 +127,5 @@ bool push_update(struct push* push, struct spell_event_listener* event_listener,
         dash_trail_move(push->dash_trail_left, target->position);
     }
 
-    return true;
+    return push->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE;
 }

@@ -44,6 +44,9 @@ void spell_slot_init(
                 struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_FIRE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
+            } else if (modifier_flags.icy && modifier_flags.windy) {
+                slot->type = SPELL_EXEC_SLOT_TYPE_TELEPORT;
+                teleport_init(&slot->data.teleport, input, event_options, modifier_flags.earthy ? TELEPORT_DIR_UP_DOWN : TELEPORT_DIR_SIDE);
             } else if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
@@ -122,6 +125,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_HEAL:
             spell_heal_destroy(&slot->data.heal);
             break;
+        case SPELL_EXEC_SLOT_TYPE_TELEPORT:
+            teleport_destroy(&slot->data.teleport);
+            break;
         default:
             break;
     }
@@ -180,6 +186,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_HEAL:
             isActive = spell_heal_update(&slot->data.heal, &event_listener, &exec->spell_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_TELEPORT:
+            isActive = teleport_update(&slot->data.teleport, &event_listener, &exec->spell_sources);
             break;
         default:
             break;

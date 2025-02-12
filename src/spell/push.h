@@ -22,5 +22,4 @@ void push_destroy(struct push* push);
 
 bool push_update(struct push* push, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
-
 #endif
