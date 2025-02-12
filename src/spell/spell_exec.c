@@ -27,6 +27,7 @@ void spell_slot_init(
 
     event_options.has_primary_event = spell_has_primary_event(for_spell, curr_col, curr_row);
     event_options.has_secondary_event = spell_has_secondary_event(for_spell, curr_col, curr_row);
+    event_options.modifiers = modifier_flags;
     event_options.burst_mana = burst_mana;
 
     switch ((enum inventory_item_type)symbol.type) {

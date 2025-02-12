@@ -12,6 +12,9 @@
 #define TARGET_SPEED        12.0f
 #define ACCELERATION        20.0f
 
+#define LAUNCH_VELOCITY     6.0f
+#define LAUNCH_Y_VELOCITY   5.0f
+
 static struct Vector2 sprite_max_rotation;
 
 static struct dynamic_object_type living_sprite_collision = {
@@ -82,6 +85,12 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
 
     living_sprite->is_attacking = false;
     living_sprite->definition = definition;
+
+    if (event_options.modifiers.windy) {
+        vector3Scale(&source->direction, &living_sprite->collider.velocity, LAUNCH_VELOCITY);
+        living_sprite->collider.velocity.y = LAUNCH_Y_VELOCITY;
+        living_sprite->target = 0;
+    }
 }
 
 void living_sprite_follow_target(struct living_sprite* living_sprite) {

@@ -34,8 +34,9 @@ struct spell_data_source {
 };
 
 struct spell_event_options {
-    uint32_t has_primary_event: 1;
-    uint32_t has_secondary_event: 1;
+    uint16_t has_primary_event: 1;
+    uint16_t has_secondary_event: 1;
+    union spell_modifier_flags modifiers;
     float burst_mana;
 };
 
