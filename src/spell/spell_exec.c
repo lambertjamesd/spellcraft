@@ -45,9 +45,14 @@ void spell_slot_init(
                 struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_FIRE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
-            } else if (modifier_flags.icy && modifier_flags.windy) {
-                slot->type = SPELL_EXEC_SLOT_TYPE_TELEPORT;
-                teleport_init(&slot->data.teleport, input, event_options, modifier_flags.earthy ? TELEPORT_DIR_UP_DOWN : TELEPORT_DIR_SIDE);
+            } else if (modifier_flags.windy) {
+                if (modifier_flags.icy) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_TELEPORT;
+                    teleport_init(&slot->data.teleport, input, event_options, modifier_flags.earthy ? TELEPORT_DIR_UP_DOWN : TELEPORT_DIR_SIDE);
+                } else {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
+                    push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_FIRE);
+                }
             } else if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);

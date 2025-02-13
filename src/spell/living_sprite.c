@@ -26,7 +26,7 @@ static struct dynamic_object_type living_sprite_collision = {
             .inner_half_height = 0.1f,
         }
     },
-    .friction = 0.5f,
+    .friction = 0.2f,
     .bounce = 0.5f,
 };
 
