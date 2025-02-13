@@ -50,19 +50,23 @@ class _mesh_pending_data():
     def determine_needed_vertex_count(self, triangle: int, current_indices: set[int], has_unused_vertex: set[int]) -> int:
         result: int = 0
 
+        has_unused_vertex_copy = set(has_unused_vertex)
+
         for vertex_index in triangle_vertices(self.data, triangle):
             if vertex_index in current_indices:
                 continue
 
             bone_index = self.data.bone_indices[vertex_index]
 
-            if bone_index in has_unused_vertex:
+            if bone_index in has_unused_vertex_copy:
                 # a space is already available 
+                has_unused_vertex_copy.remove(bone_index)
                 continue
 
             # 2 slots are needed since all vertices come in batches of 2
             # this is a constraint set by tiny3d
             result += 2
+            has_unused_vertex_copy.add(bone_index)
 
         return result
 

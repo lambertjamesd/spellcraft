@@ -6,6 +6,7 @@
 #include "../collision/shapes/sweep.h"
 #include "../collision/shapes/cylinder.h"
 #include "../collision/shapes/cone.h"
+#include "../collision/shapes/sphere.h"
 
 void* fire_effect_start(struct Vector3* pos, struct Vector3* direction, float radius) {
     return scale_in_fade_out_new(spell_assets_get()->fire_sweep_mesh, pos, direction, radius);
@@ -40,7 +41,7 @@ static struct lightning_effect_def lightning_around_def = {
 };
 
 void* lightning_around_effect_start(struct Vector3* pos, struct Vector3* direction, float radius) {
-    return lightning_effect_new(pos, &lightning_around_def);
+    return scale_in_fade_out_new(spell_assets_get()->lightning_around_mesh, pos, direction, radius);
 }
 
 void effect_nop_stop(void*) {};
@@ -184,23 +185,22 @@ static struct element_emitter_definition lightning_definition = {
 static struct element_emitter_definition lightning_around_definition = {
     .element_type = ELEMENT_TYPE_LIGHTNING,
     .collider_type = {
-        .minkowsi_sum = cylinder_minkowski_sum,
-        .bounding_box = cylinder_bounding_box,
+        .minkowsi_sum = sphere_minkowski_sum,
+        .bounding_box = sphere_bounding_box,
         .data = {
-            .cylinder = {
-                .radius = 1.0f,
-                .half_height = 0.0625f,
+            .sphere = {
+                .radius = 1.3f,
             }
         }
     },
-    .scale = 4.0f,
+    .scale = 2.0f,
     .mana_per_second = 1.0f,
     .damage_per_frame = 1.0f,
     .on_effect_start = lightning_around_effect_start,
-    .on_effect_update = (on_effect_update)lightning_effect_set_position,
-    .on_effect_stop = effect_nop_stop,
-    .is_effect_running = effect_always_stopped,
-    .effect_free = (effect_free)lightning_effect_free,
+    .on_effect_update = (on_effect_update)scale_in_fade_out_set_transform,
+    .on_effect_stop = (on_effect_stop)scale_in_fade_out_stop,
+    .is_effect_running = (is_effect_running)scale_in_fade_out_is_running,
+    .effect_free = (effect_free)scale_in_fade_out_free,
 };
 
 #define ELEMENT_DEF_INDEX(has_air, has_fire, has_ice)   (((has_air) ? 0x4 : 0) + ((has_fire) ? 0x2 : 0) + ((has_ice) ? 0x1 : 0))

@@ -25,6 +25,7 @@ struct spell_assets {
     struct tmesh* ice_push_mesh;
 
     struct tmesh* flame_mesh;
+    struct tmesh* lightning_around_mesh;
     struct tmesh* lightning_mesh;
     
     struct material* spell_symbols;

@@ -47,6 +47,8 @@ void spell_assets_init() {
     assets.flame_mesh = tmesh_cache_load("rom:/meshes/objects/torch_flame.tmesh");
 
     // tmesh_cache_release() never called
+    assets.lightning_around_mesh = tmesh_cache_load("rom:/meshes/spell/lightning_ball.tmesh");
+    // tmesh_cache_release() never called
     assets.lightning_mesh = tmesh_cache_load("rom:/meshes/spell/lightning.tmesh");
 
     // material_cache_release() never called

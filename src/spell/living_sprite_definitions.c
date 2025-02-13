@@ -20,7 +20,7 @@ static struct living_sprite_definition sprite_definitions[] = {
         .model_file = "rom:/meshes/spell/fire_sprite.tmesh",
     },
     [ELEMENT_TYPE_ICE] = {
-        .element_type = ELEMENT_TYPE_FIRE,
+        .element_type = ELEMENT_TYPE_ICE,
         .collider_type = {
             .minkowsi_sum = capsule_minkowski_sum,
             .bounding_box = capsule_bounding_box,
@@ -37,7 +37,7 @@ static struct living_sprite_definition sprite_definitions[] = {
         .model_file = "rom:/meshes/spell/ice_sprite.tmesh",
     },
     [ELEMENT_TYPE_LIGHTNING] = {
-        .element_type = ELEMENT_TYPE_FIRE,
+        .element_type = ELEMENT_TYPE_LIGHTNING,
         .collider_type = {
             .minkowsi_sum = capsule_minkowski_sum,
             .bounding_box = capsule_bounding_box,

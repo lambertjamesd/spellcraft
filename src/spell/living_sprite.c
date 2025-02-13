@@ -138,7 +138,12 @@ void living_sprite_follow_target(struct living_sprite* living_sprite) {
 void living_sprite_check_targets(struct living_sprite* living_sprite) {
     if (living_sprite->is_attacking) {
         if (dynamic_object_is_touching(&living_sprite->collider, living_sprite->target)) {
-            health_damage_id(living_sprite->target, living_sprite->definition->damage, living_sprite->collider.entity_id, living_sprite->definition->element_type);
+            health_damage_id(
+                living_sprite->target, 
+                living_sprite->definition->damage, 
+                living_sprite->collider.entity_id, 
+                health_determine_damage_type(living_sprite->definition->element_type)
+            );
             living_sprite->health.current_health = 0.0f;
         }
         return;
