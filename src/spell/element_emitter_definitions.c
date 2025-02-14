@@ -73,16 +73,15 @@ static struct element_emitter_definition fire_definition = {
 static struct element_emitter_definition fire_around_definition = {
     .element_type = ELEMENT_TYPE_FIRE,
     .collider_type = {
-        .minkowsi_sum = cylinder_minkowski_sum,
-        .bounding_box = cylinder_bounding_box,
+        .minkowsi_sum = sphere_minkowski_sum,
+        .bounding_box = sphere_bounding_box,
         .data = {
-            .cylinder = {
-                .radius = 1.0f,
-                .half_height = 0.0625f,
+            .sphere = {
+                .radius = 1.3f,
             }
         }
     },
-    .scale = 4.0f,
+    .scale = 2.0f,
     .mana_per_second = 1.0f,
     .damage_per_frame = 1.0f,
     .on_effect_start = fire_around_effect_start,

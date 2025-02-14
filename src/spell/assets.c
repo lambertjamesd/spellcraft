@@ -32,7 +32,7 @@ void spell_assets_init() {
     assets.shock_material = material_cache_load("rom:/materials/objects/shock.mat");
 
     // tmesh_cache_release() never called
-    assets.fire_around_mesh = tmesh_cache_load("rom:/meshes/spell/flame_around.tmesh");
+    assets.fire_around_mesh = tmesh_cache_load("rom:/meshes/spell/fire_sphere.tmesh");
     // tmesh_cache_release() never called
     assets.fire_sweep_mesh = tmesh_cache_load("rom:/meshes/spell/flame_sweep.tmesh");
     // tmesh_cache_release() never called
