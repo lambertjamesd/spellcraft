@@ -105,7 +105,7 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, file):
 
     for mesh in meshes:
         # this signals the mesh should be embedded
-        file.write((0).to_bytes(1, 'big'))
+        file.write(b'\0')
 
         settings.default_material_name = entities.material_extract.material_romname(mesh[1].mat)
         settings.default_material = entities.material_extract.load_material_with_name(mesh[0], mesh[1].mat)

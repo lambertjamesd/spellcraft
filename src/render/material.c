@@ -78,12 +78,15 @@ static GLenum material_filter_modes[] = {
 };
 
 void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture) {
-    uint8_t filename_len;
-    fread(&filename_len, 1, 1, file);
+    uint8_t texture_enabled;
+    fread(&texture_enabled, 1, 1, file);
 
-    if (filename_len == 0) {
+    if (!texture_enabled) {
         return;
     }
+
+    uint8_t filename_len;
+    fread(&filename_len, 1, 1, file);
 
     char filename[filename_len + 1];
     fread(filename, 1, filename_len, file);

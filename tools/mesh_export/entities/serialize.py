@@ -284,35 +284,41 @@ def _serialize_tex_axis(file, axis):
     file.write(repeats.to_bytes(2, 'big'))
 
 def _serialize_tex(file, tex: material.Tex, prev_tex: material.Tex = None):
-    if tex and tex.filename:
-        should_reuse = prev_tex and tex.does_share_image_data(prev_tex)
+    if not tex:
+        file.write(b'\0')
+        return
+    
+    file.write(b'\x01')
+    
+    should_reuse = prev_tex and tex.does_share_image_data(prev_tex)
 
-        if should_reuse:
-            _serialze_string(file, "reuse")
-        else:
-            _serialze_string(file, tex.rom_filename())
-        file.write(tex.tmem_addr.to_bytes(2, 'big'))
-        if should_reuse:
-            file.write((tex.palette + 16).to_bytes(1, 'big'))
-        else:
-            file.write(tex.palette.to_bytes(1, 'big'))
-            
-        _serialize_tex_axis(file, tex.s)
-        _serialize_tex_axis(file, tex.t)
-
-        file.write(struct.pack('>ff', tex.s.scroll, -tex.t.scroll))
-
-        if tex.mag_filter == 'nearest':
-            file.write((0).to_bytes(1, 'big'))
-        else:
-            file.write((1).to_bytes(1, 'big'))
-
-        if tex.min_filter == 'nearest':
-            file.write((0).to_bytes(1, 'big'))
-        else:
-            file.write((1).to_bytes(1, 'big'))
+    if should_reuse:
+        _serialze_string(file, "reuse")
+    elif len(tex.filename):
+        _serialze_string(file, tex.rom_filename())
     else:
-        file.write((0).to_bytes(1, 'big'))
+        file.write(b'\0')
+
+    file.write(tex.tmem_addr.to_bytes(2, 'big'))
+    if should_reuse:
+        file.write((tex.palette + 1).to_bytes(1, 'big'))
+    else:
+        file.write(tex.palette.to_bytes(1, 'big'))
+        
+    _serialize_tex_axis(file, tex.s)
+    _serialize_tex_axis(file, tex.t)
+
+    file.write(struct.pack('>ff', tex.s.scroll, -tex.t.scroll))
+
+    if tex.mag_filter == 'nearest':
+        file.write(b'\0')
+    else:
+        file.write(b'\x01')
+
+    if tex.min_filter == 'nearest':
+        file.write(b'\0')
+    else:
+        file.write(b'\x01')
 
 def _serialize_palette(file, palette: list, palette_offset: int):
     file.write(COMMAND_PALETTE.to_bytes(1, 'big'))

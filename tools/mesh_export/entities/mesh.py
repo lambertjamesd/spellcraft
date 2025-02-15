@@ -232,7 +232,7 @@ def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
             print(f"embedding material {material_name}")
 
             # signal an embedded material
-            file.write((0).to_bytes(1, 'big'))
+            file.write(b'\0')
 
             serialize.serialize_material_file(file, material_object)
     

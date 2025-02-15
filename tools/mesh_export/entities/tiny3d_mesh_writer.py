@@ -447,7 +447,7 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
     else:
         # no material specified
         print("invalid material name settings.default_material_name ", settings.default_material_name)
-        file.write((0).to_bytes(1, 'big'))
+        file.write(b'\0')
 
     material_delta.apply_material_delta(settings.default_material, current_material)
 

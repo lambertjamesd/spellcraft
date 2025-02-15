@@ -79,14 +79,14 @@ def export_animations(arm: entities.armature.ArmatureData | None, settings: enti
         for anim in animations:
             name_bytes = anim.name.encode()
             file.write(name_bytes)
-            file.write((0).to_bytes(1, 'big'))
+            file.write(b'\0')
 
         for anim_idx, anim in enumerate(packed_animations):
             # align to 2 bytes
             current_size = file.tell()
 
             if current_size & 1:
-                file.write((0).to_bytes(1, 'big'))
+                file.write(b'\0')
                 
             anim.write_to_file(file, attributes_for_anim[anim_idx])
 
