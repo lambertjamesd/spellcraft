@@ -5,10 +5,20 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
     if not start or not end:
         return end
     
+    if start.does_share_image_data(end):
+        start_palette = start.get_palette()
+        end_palette = end.get_palette()
+
+        if start_palette == end_palette:
+            return None
+
+        result = material.Tex()
+        result.set_palette(end.get_palette())
+        return result
+    
     if start.filename != end.filename:
         return end
     
-    # TODO check for palette changes
     return None
 
 def determine_fog_delta(start: material.Fog | None, end: material.Fog | None) -> material.Fog | None:
@@ -72,10 +82,13 @@ def determine_texture_cost(tex: material.Tex | None) -> float:
         return 0
 
     result = 2
+    palette = tex.get_palette()
 
     if tex.filename:
-        # todo, actually measure the texture size
-        result += 2048 * 0.0072
+        image_size = tex.get_image_size()
+        result += image_size[0] * image_size[1] * 0.0072
+    elif palette:
+        result += len(palette) * 0.0072
     
     return 0
 
@@ -119,6 +132,17 @@ def determine_material_cost(mat: material.Material) -> float:
 
     return result
 
+def apply_tex_delta(delta: material.Tex, into: material.Tex | None) -> material.Tex:
+    if not into:
+        return delta
+    
+    if delta.has_only_palette():
+        result = into.copy()
+        result.set_palette(delta.get_palette())
+        return result
+    
+    return delta
+
 def apply_material_delta(delta: material.Material, into: material.Material):
     if delta.combine_mode != None:
         into.combine_mode = delta.combine_mode
@@ -139,10 +163,10 @@ def apply_material_delta(delta: material.Material, into: material.Material):
         into.lighting = delta.lighting
 
     if delta.tex0 != None:
-        into.tex0 = delta.tex0
+        into.tex0 = apply_tex_delta(delta.tex0, into.tex0)
 
     if delta.tex1 != None:
-        into.tex1 = delta.tex1
+        into.tex1 = apply_tex_delta(delta.tex1, into.tex1)
 
     if delta.culling != None:
         into.culling = delta.culling

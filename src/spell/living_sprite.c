@@ -90,6 +90,8 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
         vector3Scale(&source->direction, &living_sprite->collider.velocity, LAUNCH_VELOCITY);
         living_sprite->collider.velocity.y = LAUNCH_Y_VELOCITY;
         living_sprite->target = 0;
+    } else if (event_options.modifiers.earthy) {
+        living_sprite->target = 0;
     }
 }
 

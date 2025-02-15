@@ -274,7 +274,7 @@ def _serialze_string(file, text):
 
 def _serialize_tex_axis(file, axis):
     file.write(int(axis.translate * 32).to_bytes(2, 'big'))
-    file.write(int(axis.scale_log).to_bytes(1, 'big'))
+    file.write(int(axis.scale_log & 0xFF).to_bytes(1, 'big'))
 
     repeats = int(axis.repeats)
 
@@ -283,11 +283,20 @@ def _serialize_tex_axis(file, axis):
 
     file.write(repeats.to_bytes(2, 'big'))
 
-def _serialize_tex(file, tex: material.Tex):
-    if tex:
-        _serialze_string(file, tex.rom_filename())
+def _serialize_tex(file, tex: material.Tex, prev_tex: material.Tex = None):
+    if tex and tex.filename:
+        should_reuse = prev_tex and tex.does_share_image_data(prev_tex)
+
+        if should_reuse:
+            _serialze_string(file, "reuse")
+        else:
+            _serialze_string(file, tex.rom_filename())
         file.write(tex.tmem_addr.to_bytes(2, 'big'))
-        file.write(tex.palette.to_bytes(1, 'big'))
+        if should_reuse:
+            file.write((tex.palette + 16).to_bytes(1, 'big'))
+        else:
+            file.write(tex.palette.to_bytes(1, 'big'))
+            
         _serialize_tex_axis(file, tex.s)
         _serialize_tex_axis(file, tex.t)
 
@@ -304,6 +313,13 @@ def _serialize_tex(file, tex: material.Tex):
             file.write((1).to_bytes(1, 'big'))
     else:
         file.write((0).to_bytes(1, 'big'))
+
+def _serialize_palette(file, palette: list, palette_offset: int):
+    file.write(COMMAND_PALETTE.to_bytes(1, 'big'))
+    file.write(palette_offset.to_bytes(2, 'big'))
+    file.write(len(palette).to_bytes(2, 'big'))
+    for color in palette:
+        file.write(color.to_bytes(2, 'big'))
 
 def flags_for_material(mat: material.Material) -> int:
     flags = 0
@@ -334,7 +350,7 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
     output.write('MATR'.encode())
 
     _serialize_tex(output, mat.tex0)
-    _serialize_tex(output, mat.tex1)
+    _serialize_tex(output, mat.tex1, mat.tex0)
 
     force_cyc2 = False
 
@@ -383,6 +399,12 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
     if mat.blend_color:
         output.write(COMMAND_BLEND_COLOR.to_bytes(1, 'big'))
         _serialize_color(output, mat.blend_color)
+
+    if mat.tex0 and mat.tex1 and mat.tex0.does_share_image_data(mat.tex1):
+        _serialize_palette(output, mat.tex1.get_palette(), 16)
+
+    if mat.tex0 and mat.tex0.has_only_palette():
+        _serialize_palette(output, mat.tex0.get_palette(), 0)
 
     if mat.uv_gen:
         output.write(COMMAND_UV_GEN.to_bytes(1, 'big'))

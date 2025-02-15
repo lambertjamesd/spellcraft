@@ -8,8 +8,10 @@ void material_init(struct material* material) {
     material->block = 0;
 
     material->tex0.sprite = NULL;
+    material->tex0.reuse_prev_texture = false;
 
     material->tex1.sprite = NULL;
+    material->tex1.reuse_prev_texture = false;
 
     material->sort_priority = SORT_PRIORITY_OPAQUE;
 
@@ -100,7 +102,11 @@ void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture
     fread(&tex->scroll_x, sizeof(float), 1, file);
     fread(&tex->scroll_y, sizeof(float), 1, file);
 
-    tex->sprite = sprite_cache_load(filename);
+    if (strcmp(filename, "reuse") == 0) {
+        tex->reuse_prev_texture = true;
+    } else {
+        tex->sprite = sprite_cache_load(filename);
+    }
 
     uint8_t mag_filter;
     fread(&mag_filter, 1, 1, file);
@@ -138,6 +144,32 @@ void material_load(struct material* into, FILE* material_file) {
 
     if (into->tex1.sprite) {
         rdpq_sprite_upload(TILE1, into->tex1.sprite, &into->tex1.params);
+    } else if (into->tex1.reuse_prev_texture) {
+        int pitch_shift = into->tex0.sprite->format == FMT_RGBA32 ? 1 : 0;
+        rdpq_tileparms_t tile_params;
+        tile_params.palette = 1;
+        tile_params.s.clamp = false;
+        tile_params.s.mirror = false;
+        tile_params.s.mask = 6;
+        tile_params.s.shift = -1;
+        
+        tile_params.t.clamp = false;
+        tile_params.t.mirror = false;
+        tile_params.t.mask = 6;
+        tile_params.t.shift = -1;
+        rdpq_set_tile(
+            TILE1, 
+            into->tex0.sprite->format, 
+            into->tex0.params.tmem_addr, 
+            ((TEX_FORMAT_PIX2BYTES(into->tex0.sprite->format, into->tex0.sprite->width) >> pitch_shift) + 0x7) & ~0x7, 
+            &tile_params
+        );
+
+        // s0 = s0*4 + tload->rect.s0fx;
+        // t0 = t0*4 + tload->rect.t0fx;
+        // s1 = s1*4 + tload->rect.s1fx;
+        // t1 = t1*4 + tload->rect.t1fx;
+        rdpq_set_tile_size_fx(TILE1, 0, 0, 64 << 2, 64 << 2);
     }
 
     if (autoLayoutTMem) {
@@ -228,6 +260,7 @@ void material_load(struct material* into, FILE* material_file) {
                     fread(&into->palette.idx, 2, 1, material_file);
                     fread(&into->palette.size, 2, 1, material_file);
                     into->palette.tlut = malloc(sizeof(uint16_t) * into->palette.size);
+                    fread(into->palette.tlut, sizeof(uint16_t), into->palette.size, material_file);
                     rdpq_tex_upload_tlut(into->palette.tlut, into->palette.idx, into->palette.size);
                 }
                 break;

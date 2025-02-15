@@ -2,6 +2,56 @@ import json
 import os.path
 import numbers
 import struct
+import re
+
+def parse_png_palette_and_transparency(filename):
+    with open(filename, 'rb') as f:
+        data = f.read()
+    
+    if data[:8] != b'\x89PNG\r\n\x1a\n':
+        return (None, None)
+    
+    index = 8  # Skip PNG signature
+    palette = []
+    transparency = []
+    
+    while index < len(data):
+        chunk_length = struct.unpack('>I', data[index:index+4])[0]
+        chunk_type = data[index+4:index+8].decode('ascii')
+        chunk_data = data[index+8:index+8+chunk_length]
+        
+        if chunk_type == 'PLTE':
+            # Palette contains RGB triplets
+            palette = [chunk_data[i:i+3] for i in range(0, len(chunk_data), 3)]
+        elif chunk_type == 'tRNS':
+            transparency = list(chunk_data)
+        
+        index += 8 + chunk_length + 4  # Move to next chunk (including CRC)
+    
+    return palette, transparency
+
+def get_palette_from_png(filename):
+    palette, transparency = parse_png_palette_and_transparency(filename)
+
+    if not palette:
+        return None
+    
+    result = []
+
+    for index, entry in enumerate(palette):
+        r = entry[0]
+        g = entry[1]
+        b = entry[2]
+        a = transparency[index] if index < len(transparency) else 255
+
+        r5 = (r >> 3) & 0x1F  # 5 bits
+        g5 = (g >> 3) & 0x1F  # 5 bits
+        b5 = (b >> 3) & 0x1F  # 5 bits
+        a1 = (a >> 7) & 0x01  # 1 bit
+        
+        result.append((r5 << 11) | (g5 << 6) | (b5 << 1) | a1)
+
+    return result
 
 class Color():
     def __init__(self, r, g, b, a):
@@ -162,8 +212,62 @@ class Tex():
         self.s = TexAxis()
         self.t = TexAxis()
         self.sequenceLength: int = 0
+        self.palette_data = None
 
         self._size: tuple[int, int] | None = None
+        self._need_to_load_palette = True
+
+    def copy(self):
+        result = Tex()
+        result.filename = self.filename
+        result.tmem_addr = self.tmem_addr
+        result.palette = self.palette
+        result.min_filter = self.min_filter
+        result.mag_filter = self.mag_filter
+        result.s = self.s
+        result.t = self.t
+        result.sequenceLength = self.sequenceLength
+        result.palette_data = self.palette_data
+        result._size = self._size
+        result._need_to_load_palette = self._need_to_load_palette
+        return result
+
+    def get_palette_group(self):
+        if not self.filename:
+            return None
+
+        result = re.fullmatch("(.*_)palette\\d+\\.png", self.filename)
+
+        if not result:
+            return result
+        
+        return result.group(1)
+
+    def does_share_image_data(self, other):
+        self_palette_info = self.get_palette_group()
+        other_palette_info = other.get_palette_group()
+        return bool(self_palette_info) and self_palette_info == other_palette_info
+    
+    def get_palette(self):
+        if not self._need_to_load_palette:
+            return self.palette_data
+        
+        self._need_to_load_palette = False
+        
+        if not self.filename:
+            return None
+        
+        self.palette_data = get_palette_from_png(self.filename)
+
+        return self.palette_data
+    
+    def set_palette(self, value):
+        self._need_to_load_palette = False
+        self.palette_data = value
+    
+    def has_only_palette(self):
+        palette = self.get_palette()
+        return bool(palette) and not self.filename
 
     def rom_filename(self) -> str:
         return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
@@ -193,6 +297,11 @@ class Tex():
     def __str__(self):
         if self.filename:
             return self.filename
+        
+        palette = self.get_palette()
+
+        if palette:
+            return f"palette({len(palette)})"
         
         return "NULL"
     
