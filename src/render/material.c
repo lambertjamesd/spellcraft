@@ -118,6 +118,17 @@ void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture
     }
 }
 
+int material_size_to_clamp(int size) {
+    int clamp = 0;
+
+    while (size) {
+        clamp += 1;
+        size >>= 1;
+    }
+
+    return clamp;
+}
+
 void material_load(struct material* into, FILE* material_file) {
     int header;
     fread(&header, 1, 4, material_file);
@@ -148,15 +159,15 @@ void material_load(struct material* into, FILE* material_file) {
         int pitch_shift = into->tex0.sprite->format == FMT_RGBA32 ? 1 : 0;
         rdpq_tileparms_t tile_params;
         tile_params.palette = 1;
-        tile_params.s.clamp = false;
-        tile_params.s.mirror = false;
-        tile_params.s.mask = 6;
-        tile_params.s.shift = -1;
+        tile_params.s.clamp = !into->tex1.params.s.repeats;
+        tile_params.s.mirror = into->tex1.params.s.mirror;
+        tile_params.s.mask = material_size_to_clamp(into->tex0.sprite->width);
+        tile_params.s.shift = into->tex1.params.s.scale_log;
         
-        tile_params.t.clamp = false;
-        tile_params.t.mirror = false;
-        tile_params.t.mask = 6;
-        tile_params.t.shift = -1;
+        tile_params.t.clamp = !into->tex1.params.t.repeats;
+        tile_params.t.mirror = into->tex1.params.t.repeats;
+        tile_params.t.mask = material_size_to_clamp(into->tex0.sprite->height);
+        tile_params.t.shift = into->tex1.params.t.scale_log;
         rdpq_set_tile(
             TILE1, 
             into->tex0.sprite->format, 
@@ -165,11 +176,7 @@ void material_load(struct material* into, FILE* material_file) {
             &tile_params
         );
 
-        // s0 = s0*4 + tload->rect.s0fx;
-        // t0 = t0*4 + tload->rect.t0fx;
-        // s1 = s1*4 + tload->rect.s1fx;
-        // t1 = t1*4 + tload->rect.t1fx;
-        rdpq_set_tile_size_fx(TILE1, 0, 0, 64 << 2, 64 << 2);
+        rdpq_set_tile_size_fx(TILE1, 0, 0, into->tex0.sprite->width << 2, into->tex0.sprite->height << 2);
     }
 
     if (autoLayoutTMem) {
