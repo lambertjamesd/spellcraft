@@ -8,10 +8,10 @@ void material_init(struct material* material) {
     material->block = 0;
 
     material->tex0.sprite = NULL;
-    material->tex0.reuse_prev_texture = false;
+    material->tex0.texture_enabled = false;
 
     material->tex1.sprite = NULL;
-    material->tex1.reuse_prev_texture = false;
+    material->tex1.texture_enabled = false;
 
     material->sort_priority = SORT_PRIORITY_OPAQUE;
 
@@ -49,27 +49,15 @@ void material_destroy(struct material* material) {
 #define COMMAND_FOG_COLOR   0x0A
 #define COMMAND_FOG_RANGE   0x0B
 
-struct text_axis {
-    float translate;
-    int scale_log;
-    float repeats;
-    bool mirror;
+struct tile_axis {
+    bool     clamp;
+    bool     mirror;
+    uint8_t  mask;
+    int8_t   shift;	
 };
 
-void material_load_tex_axis(struct text_axis* axis, FILE* file) {
-    int16_t translate;
-    fread(&translate, 2, 1, file);
-    axis->translate = translate * (1.0f / 32.0f);
-
-    int8_t scale_log;
-    fread(&scale_log, 1, 1, file);
-    axis->scale_log = scale_log;
-
-    uint16_t repeats;
-    fread(&repeats, 2, 1, file);
-    axis->repeats = repeats & 0x7FFF;
-
-    axis->mirror = (repeats & 0x8000) != 0;
+void material_load_tex_axis(struct tile_axis* axis, FILE* file) {
+    fread(axis, sizeof(struct tile_axis), 1, file);
 }
 
 static GLenum material_filter_modes[] = {
@@ -82,8 +70,10 @@ void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture
     fread(&texture_enabled, 1, 1, file);
 
     if (!texture_enabled) {
+        tex->texture_enabled = false;
         return;
     }
+    tex->texture_enabled = true;
 
     uint8_t filename_len;
     fread(&filename_len, 1, 1, file);
@@ -94,21 +84,18 @@ void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture
 
     uint16_t tmem_addr;
     fread(&tmem_addr, 2, 1, file);
-    tex->params.tmem_addr = tmem_addr;
-    uint8_t palette;
-    fread(&palette, 1, 1, file);
-    tex->params.palette = palette;
-
+    tex->tmem_addr = tmem_addr;
+    fread(&tex->params.palette, 1, 1, file);
     material_load_tex_axis((struct text_axis*)&tex->params.s, file);
     material_load_tex_axis((struct text_axis*)&tex->params.t, file);
 
     fread(&tex->scroll_x, sizeof(float), 1, file);
     fread(&tex->scroll_y, sizeof(float), 1, file);
 
-    if (strcmp(filename, "reuse") == 0) {
-        tex->reuse_prev_texture = true;
-    } else {
+    if (filename_len) {
         tex->sprite = sprite_cache_load(filename);
+    } else {
+        tex->sprite = NULL;
     }
 
     uint8_t mag_filter;
@@ -132,6 +119,42 @@ int material_size_to_clamp(int size) {
     return clamp;
 }
 
+void material_upload_tex(rdpq_tile_t tile, struct material_tex* tex) {
+    // rdpq_sprite_upload(TILE0, tex->tex, &into->tex0.params);
+    surface_t surf = sprite_get_pixels(tex->sprite);
+    rdpq_tex_upload(tile, &surf, &tex->params);
+    rdpq_tlut_t tlut_mode = rdpq_tlut_from_format(tex->sprite->format);
+    rdpq_mode_tlut(tlut_mode);
+    if (tlut_mode != TLUT_NONE) {
+        uint16_t *pal = sprite_get_palette(tex->sprite);
+        if (pal) rdpq_tex_upload_tlut(pal, tex->params.palette*16, tex->sprite->format == FMT_CI4 ? 16 : 256);
+    }
+}
+
+// void material_use_tex(rdpq_tile_t tile, struct material_tex* tex) {
+//     int pitch_shift = into->tex0.sprite->format == FMT_RGBA32 ? 1 : 0;
+//     rdpq_tileparms_t tile_params;
+//     tile_params.palette = 1;
+//     tile_params.s.clamp = !into->tex1.params.s.repeats;
+//     tile_params.s.mirror = into->tex1.params.s.mirror;
+//     tile_params.s.mask = material_size_to_clamp(into->tex0.sprite->width);
+//     tile_params.s.shift = into->tex1.params.s.scale_log;
+    
+//     tile_params.t.clamp = !into->tex1.params.t.repeats;
+//     tile_params.t.mirror = into->tex1.params.t.repeats;
+//     tile_params.t.mask = material_size_to_clamp(into->tex0.sprite->height);
+//     tile_params.t.shift = into->tex1.params.t.scale_log;
+//     rdpq_set_tile(
+//         TILE1, 
+//         into->tex0.sprite->format, 
+//         into->tex0.params.tmem_addr, 
+//         ((TEX_FORMAT_PIX2BYTES(into->tex0.sprite->format, into->tex0.sprite->width) >> pitch_shift) + 0x7) & ~0x7, 
+//         &tile_params
+//     );
+
+//     rdpq_set_tile_size_fx(TILE1, 0, 0, into->tex0.sprite->width << 2, into->tex0.sprite->height << 2);
+// }
+
 void material_load(struct material* into, FILE* material_file) {
     int header;
     fread(&header, 1, 4, material_file);
@@ -146,19 +169,13 @@ void material_load(struct material* into, FILE* material_file) {
 
     rspq_block_begin();
 
-    bool autoLayoutTMem = into->tex1.sprite != 0 && into->tex1.params.tmem_addr == 0;
-
-    if (autoLayoutTMem) {
-        rdpq_tex_multi_begin();
-    }
-
     if (into->tex0.sprite) {
-        rdpq_sprite_upload(TILE0, into->tex0.sprite, &into->tex0.params);
+        material_upload_tex(TILE0, &into->tex0);
     }
 
     if (into->tex1.sprite) {
-        rdpq_sprite_upload(TILE1, into->tex1.sprite, &into->tex1.params);
-    } else if (into->tex1.reuse_prev_texture) {
+        material_upload_tex(TILE1, &into->tex1);
+    } else if (into->tex1.texture_enabled) {
         int pitch_shift = into->tex0.sprite->format == FMT_RGBA32 ? 1 : 0;
         rdpq_tileparms_t tile_params;
         tile_params.palette = 1;
@@ -184,10 +201,6 @@ void material_load(struct material* into, FILE* material_file) {
             0, 0, 
             (into->tex0.sprite->width << 2), (into->tex0.sprite->height << 2)
         );
-    }
-
-    if (autoLayoutTMem) {
-        rdpq_tex_multi_end();
     }
 
     rdpq_mode_begin();

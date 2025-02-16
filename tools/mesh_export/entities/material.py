@@ -196,9 +196,10 @@ class Palette():
     
 class TexAxis():
     def __init__(self):
-        self.translate = 0
-        self.scale_log = 0
-        self.repeats = 2048
+        self.min = 0 # were translate
+        self.max = 0
+        self.shift = 0 # scale_log
+        self.clamp = True # was repeats
         self.mirror = False
         self.scroll = 0
     

@@ -289,21 +289,14 @@ def _serialize_tex(file, tex: material.Tex, prev_tex: material.Tex = None):
         return
     
     file.write(b'\x01')
-    
-    should_reuse = prev_tex and tex.does_share_image_data(prev_tex)
 
-    if should_reuse:
-        _serialze_string(file, "reuse")
-    elif len(tex.filename):
+    if len(tex.filename):
         _serialze_string(file, tex.rom_filename())
     else:
         file.write(b'\0')
 
     file.write(tex.tmem_addr.to_bytes(2, 'big'))
-    if should_reuse:
-        file.write((tex.palette + 1).to_bytes(1, 'big'))
-    else:
-        file.write(tex.palette.to_bytes(1, 'big'))
+    file.write(tex.palette.to_bytes(1, 'big'))
         
     _serialize_tex_axis(file, tex.s)
     _serialize_tex_axis(file, tex.t)

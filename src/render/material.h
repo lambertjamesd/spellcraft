@@ -10,10 +10,12 @@
 #define SORT_PRIORITY_TRANSPARENT   200
 
 struct material_tex {
+    bool texture_enabled;
     sprite_t* sprite;
-    rdpq_texparms_t params;
+    rdpq_tileparms_t params;
+    uint16_t s0, t0, s1, t1;
+    uint16_t tmem_addr;
     float scroll_x, scroll_y;
-    bool reuse_prev_texture;
     // rdpq_set_lookup_address
     // surface_make_placeholder_linear
     // sprite_t** frames;
