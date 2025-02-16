@@ -176,7 +176,11 @@ void material_load(struct material* into, FILE* material_file) {
             &tile_params
         );
 
-        rdpq_set_tile_size_fx(TILE1, 0, 0, into->tex0.sprite->width << 2, into->tex0.sprite->height << 2);
+        rdpq_set_tile_size_fx(
+            TILE1, 
+            0, 0, 
+            (into->tex0.sprite->width << 2), (into->tex0.sprite->height << 2)
+        );
     }
 
     if (autoLayoutTMem) {

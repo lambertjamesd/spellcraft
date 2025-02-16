@@ -141,9 +141,9 @@ class mesh_data():
                 color_vertex = list(color.data[vtx_index].color)
             
             if alpha and alpha.domain == 'CORNER':
-                color_vertex[3] = color.data[loop_index].color[0]
+                color_vertex[3] = alpha.data[loop_index].color[0]
             elif alpha and alpha.domain == 'POINT':
-                color_vertex[3] = color.data[vtx_index].color[0]
+                color_vertex[3] = alpha.data[vtx_index].color[0]
 
             self.color.append(color_vertex)
 
