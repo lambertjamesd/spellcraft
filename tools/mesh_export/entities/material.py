@@ -248,6 +248,20 @@ class TexAxis():
         self.mask = 0 # was repeats
         self.mirror = False
         self.scroll = 0
+
+_fmt_bit_size = {
+    'FMT_NONE': 0,
+    'FMT_RGBA16': 16,
+    'FMT_RGBA32': 32,
+    'FMT_YUV16': 16,
+    'FMT_CI4': 4,
+    'FMT_CI8': 8,
+    'FMT_IA4': 4,
+    'FMT_IA8': 8,
+    'FMT_IA16': 16,
+    'FMT_I4': 4,
+    'FMT_I8': 8,
+}
     
 class Tex():
     def __init__(self):
@@ -311,13 +325,15 @@ class Tex():
         other_palette_info = other.get_palette_group()
         return bool(self_palette_info) and self_palette_info == other_palette_info
     
-    
     def has_only_palette(self):
         return bool(self.palette_data) and not self.filename
 
     def rom_filename(self) -> str:
         return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
         
+    def byte_size(self) -> int:
+        return _fmt_bit_size[self.fmt] * self.width * self.height // 8
+
     def __str__(self):
         if self.filename:
             return self.filename
@@ -360,8 +376,7 @@ class Material():
         self.lighting: bool | None = None
         self.tex0: Tex | None = None
         self.tex1: Tex | None = None
-        self.palette: list[int] = []
-        self.palette_start_index: int = 0
+        self.palette: int = 0
         self.culling: bool | None = None
         self.z_buffer: bool | None = None
         self.vertex_gamma: float = 0.454545
@@ -373,6 +388,39 @@ class Material():
             return (self.tex0.width, self.tex0.height)
         
         return 128, 128
+    
+    def get_palette_data(self) -> list[int] | None:
+        if not self.tex0 and not self.tex1:
+            return None, 0
+        
+        if self.tex0 and not self.tex1:
+            return self.tex0.palette_data, self.palette * 16
+        
+        if self.tex1 and not self.tex0:
+            return self.tex1.palette_data, self.palette * 16
+        
+        result = []
+
+        for tex in [self.tex0, self.tex1]:
+            palette_data = tex.palette_data
+
+            if not palette_data:
+                continue
+
+            index_start = tex.palette * 16
+
+            while len(result) < index_start + len(palette_data):
+                result.append(None)
+
+            for idx, value in enumerate(palette_data):
+                result[index_start + idx] = value
+
+        index_start = 0
+
+        while index_start < len(result) and result[index_start] == None:
+            index_start += 1
+
+        return list(map(lambda x: x or 0, result[index_start:])), index_start
 
     def is_empty(self):
         return self.combine_mode == None and self.blend_color == None and self.env_color == None and self.prim_color == None and \
@@ -791,6 +839,8 @@ def _parse_tex(json_data, key_path, relative_to):
 
     return result
 
+def _align_memory(value:int) -> int:
+    return (value + 7) & ~7
 
 def parse_material(filename: str):
     if not os.path.exists(filename):
@@ -803,6 +853,14 @@ def parse_material(filename: str):
 
     result.tex0 = _parse_tex(json_data['tex0'], 'tex0', filename) if 'tex0' in json_data else None
     result.tex1 = _parse_tex(json_data['tex1'], 'tex1', filename) if 'tex1' in json_data else None
+
+    if result.tex0 and result.tex1:
+        if result.tex0.does_share_image_data(result.tex1):
+            result.tex1.filename = result.tex0
+        else:
+            result.tex1.tmem_addr += _align_memory(result.tex0.byte_size())
+        if result.tex0.palette_data:
+            result.tex1.palette = 1
 
     _parse_combine_mode(result, json_data)
     _parse_blend_mode(result, json_data)

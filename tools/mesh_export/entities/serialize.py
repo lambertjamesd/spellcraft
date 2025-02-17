@@ -404,11 +404,10 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
         output.write(COMMAND_BLEND_COLOR.to_bytes(1, 'big'))
         _serialize_color(output, mat.blend_color)
 
-    if mat.tex0 and mat.tex1 and mat.tex0.does_share_image_data(mat.tex1):
-        _serialize_palette(output, mat.tex1.palette_data, 16)
+    palette_data, palette_offset = mat.get_palette_data()
 
-    if mat.tex0 and mat.tex0.has_only_palette():
-        _serialize_palette(output, mat.tex0.palette_data, 0)
+    if palette_data:
+        _serialize_palette(output, palette_data, palette_offset)
 
     if mat.uv_gen:
         output.write(COMMAND_UV_GEN.to_bytes(1, 'big'))

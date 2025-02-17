@@ -102,15 +102,25 @@ int material_size_to_clamp(int size) {
 }
 
 void material_upload_tex(rdpq_tile_t tile, struct material_tex* tex) {
-    // rdpq_sprite_upload(TILE0, tex->tex, &into->tex0.params);
     surface_t surf = sprite_get_pixels(tex->sprite);
     rdpq_texparms_t tex_parms = {
         .palette = tex->params.palette,
         .tmem_addr = tex->tmem_addr,
+        .s = {
+            .mirror = tex->params.s.mirror,
+            .scale_log = tex->params.s.shift,
+            .translate = 0,
+            .repeats = 1,
+        },
+        .s = {
+            .mirror = tex->params.t.mirror,
+            .scale_log = tex->params.t.shift,
+            .translate = 0,
+            .repeats = 1,
+        },
     };
+    // rdpq_sprite_upload(tile, tex->sprite, &tex_parms);
     rdpq_tex_upload(tile, &surf, &tex_parms);
-    rdpq_tlut_t tlut_mode = rdpq_tlut_from_format(tex->sprite->format);
-    rdpq_mode_tlut(tlut_mode);
 }
 
 void material_use_tex(rdpq_tile_t tile, struct material_tex* tex) {
@@ -158,6 +168,8 @@ void material_load(struct material* into, FILE* material_file) {
     rdpq_mode_begin();
 
     rdpq_mode_filter(FILTER_BILINEAR);
+
+    bool has_palette = false;
 
     while (has_more) {
         uint8_t nextCommand;
@@ -240,7 +252,10 @@ void material_load(struct material* into, FILE* material_file) {
                     fread(&into->palette.size, 2, 1, material_file);
                     into->palette.tlut = malloc(sizeof(uint16_t) * into->palette.size);
                     fread(into->palette.tlut, sizeof(uint16_t), into->palette.size, material_file);
+                    data_cache_index_writeback_invalidate(into->palette.tlut, sizeof(uint16_t) * into->palette.size);
                     rdpq_tex_upload_tlut(into->palette.tlut, into->palette.idx, into->palette.size);
+                    rdpq_mode_tlut(TLUT_RGBA16);
+                    has_palette = true;
                 }
                 break;
             case COMMAND_UV_GEN:
@@ -282,6 +297,10 @@ void material_load(struct material* into, FILE* material_file) {
                 }
                 break;
         }
+    }
+
+    if (!has_palette) {
+        rdpq_mode_tlut(TLUT_NONE);
     }
 
     rdpq_mode_end();
