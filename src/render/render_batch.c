@@ -168,7 +168,7 @@ int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, u
 }
 
 void render_batch_check_texture_scroll(int tile, struct material_tex* tex) {
-    if (!tex->sprite || (!tex->scroll_x && !tex->scroll_y)) {
+    if (!tex->texture_enabled || (!tex->scroll_x && !tex->scroll_y)) {
         return;
     }
 
@@ -188,9 +188,8 @@ void render_batch_check_texture_scroll(int tile, struct material_tex* tex) {
 
     rdpq_set_tile_size_fx(
         tile, 
-        x_offset, y_offset, 
-        x_offset + w, 
-        y_offset + h
+        x_offset + tex->s0, y_offset + tex->s1, 
+        x_offset + tex->s1, y_offset + tex->t1
     );
 }
 

@@ -156,6 +156,20 @@ UV_GEN = {
     'spherical': 1,
 }
 
+TEX_FMT = {
+    'FMT_NONE': 0,
+    'FMT_RGBA16': 2,
+    'FMT_RGBA32': 3,
+    'FMT_YUV16': 6,
+    'FMT_CI4': 8,
+    'FMT_CI8': 9,
+    'FMT_IA4': 12,
+    'FMT_IA8': 13,
+    'FMT_IA16': 14,
+    'FMT_I4': 16,
+    'FMT_I8': 17,
+}
+
 RDPQ_COMBINER_2PASS = 1 << 63
 
 def _serialize_combine(file, combine: material.CombineMode, force_cyc2: bool):
@@ -272,16 +286,11 @@ def _serialze_string(file, text):
     file.write(len(encoded_text).to_bytes(1, 'big'))
     file.write(encoded_text)
 
-def _serialize_tex_axis(file, axis):
-    file.write(int(axis.translate * 32).to_bytes(2, 'big'))
-    file.write(int(axis.scale_log & 0xFF).to_bytes(1, 'big'))
-
-    repeats = int(axis.repeats)
-
-    if axis.mirror:
-        repeats |= (1 << 15)
-
-    file.write(repeats.to_bytes(2, 'big'))
+def _serialize_tex_axis(file, axis: material.TexAxis):
+    file.write(b'\x01' if axis.clamp else b'\x00')
+    file.write(b'\x01' if axis.mirror else b'\x00')
+    file.write(int(axis.mask & 0xFF).to_bytes(1, 'big'))
+    file.write(int(axis.shift & 0xFF).to_bytes(1, 'big'))
 
 def _serialize_tex(file, tex: material.Tex, prev_tex: material.Tex = None):
     if not tex:
@@ -294,24 +303,20 @@ def _serialize_tex(file, tex: material.Tex, prev_tex: material.Tex = None):
         _serialze_string(file, tex.rom_filename())
     else:
         file.write(b'\0')
-
-    file.write(tex.tmem_addr.to_bytes(2, 'big'))
-    file.write(tex.palette.to_bytes(1, 'big'))
         
+    file.write(tex.palette.to_bytes(1, 'big'))
     _serialize_tex_axis(file, tex.s)
     _serialize_tex_axis(file, tex.t)
 
+    file.write(tex.tmem_addr.to_bytes(2, 'big'))
+    file.write(TEX_FMT[tex.fmt].to_bytes(2, 'big'))
+
+    file.write(tex.s.min.to_bytes(2, 'big'))
+    file.write(tex.t.min.to_bytes(2, 'big'))
+    file.write(tex.s.max.to_bytes(2, 'big'))
+    file.write(tex.t.max.to_bytes(2, 'big'))
+
     file.write(struct.pack('>ff', tex.s.scroll, -tex.t.scroll))
-
-    if tex.mag_filter == 'nearest':
-        file.write(b'\0')
-    else:
-        file.write(b'\x01')
-
-    if tex.min_filter == 'nearest':
-        file.write(b'\0')
-    else:
-        file.write(b'\x01')
 
 def _serialize_palette(file, palette: list, palette_offset: int):
     file.write(COMMAND_PALETTE.to_bytes(1, 'big'))
@@ -400,10 +405,10 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
         _serialize_color(output, mat.blend_color)
 
     if mat.tex0 and mat.tex1 and mat.tex0.does_share_image_data(mat.tex1):
-        _serialize_palette(output, mat.tex1.get_palette(), 16)
+        _serialize_palette(output, mat.tex1.palette_data, 16)
 
     if mat.tex0 and mat.tex0.has_only_palette():
-        _serialize_palette(output, mat.tex0.get_palette(), 0)
+        _serialize_palette(output, mat.tex0.palette_data, 0)
 
     if mat.uv_gen:
         output.write(COMMAND_UV_GEN.to_bytes(1, 'big'))

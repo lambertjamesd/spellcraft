@@ -3,55 +3,100 @@ import os.path
 import numbers
 import struct
 import re
+import json
 
-def parse_png_palette_and_transparency(filename):
-    with open(filename, 'rb') as f:
-        data = f.read()
-    
-    if data[:8] != b'\x89PNG\r\n\x1a\n':
-        return (None, None)
-    
-    index = 8  # Skip PNG signature
-    palette = []
-    transparency = []
-    
-    while index < len(data):
-        chunk_length = struct.unpack('>I', data[index:index+4])[0]
-        chunk_type = data[index+4:index+8].decode('ascii')
-        chunk_data = data[index+8:index+8+chunk_length]
+class PngMetadata():
+    def __init__(self, filename):
+        self.palette: list[int] = None
+        self.width: int = 0
+        self.height: int = 0
+        self.fmt: str = 'FMT_NONE'
+
+        self._parse_data(filename)
+
+    def _parse_data(self, filename):
+        with open(filename, 'rb') as f:
+            data = f.read()
         
-        if chunk_type == 'PLTE':
-            # Palette contains RGB triplets
-            palette = [chunk_data[i:i+3] for i in range(0, len(chunk_data), 3)]
-        elif chunk_type == 'tRNS':
-            transparency = list(chunk_data)
+        if data[:8] != b'\x89PNG\r\n\x1a\n':
+            return
         
-        index += 8 + chunk_length + 4  # Move to next chunk (including CRC)
-    
-    return palette, transparency
-
-def get_palette_from_png(filename):
-    palette, transparency = parse_png_palette_and_transparency(filename)
-
-    if not palette:
-        return None
-    
-    result = []
-
-    for index, entry in enumerate(palette):
-        r = entry[0]
-        g = entry[1]
-        b = entry[2]
-        a = transparency[index] if index < len(transparency) else 255
-
-        r5 = (r >> 3) & 0x1F  # 5 bits
-        g5 = (g >> 3) & 0x1F  # 5 bits
-        b5 = (b >> 3) & 0x1F  # 5 bits
-        a1 = (a >> 7) & 0x01  # 1 bit
+        index = 8  # Skip PNG signature
+        palette = []
+        transparency = []
         
-        result.append((r5 << 11) | (g5 << 6) | (b5 << 1) | a1)
+        while index < len(data):
+            chunk_length = struct.unpack('>I', data[index:index+4])[0]
+            chunk_type = data[index+4:index+8].decode('ascii')
+            chunk_data = data[index+8:index+8+chunk_length]
+            
+            if chunk_type == 'PLTE':
+                # Palette contains RGB triplets
+                palette = [chunk_data[i:i+3] for i in range(0, len(chunk_data), 3)]
+            elif chunk_type == 'tRNS':
+                transparency = list(chunk_data)
+            elif chunk_type == 'IHDR':
+                self.width = struct.unpack('>I', chunk_data[0:4])[0]
+                self.height = struct.unpack('>I', chunk_data[4:8])[0]
+                self.fmt = self._get_meta_format(filename) or self._get_format_from_png(chunk_data[9], chunk_data[10])
+            
+            index += 8 + chunk_length + 4  # Move to next chunk (including CRC)
+        
+        self.palette = self._get_palette_from_png(palette, transparency)
 
-    return result
+    def _get_palette_from_png(self, palette, transparency):
+        if not palette or len(palette) == 0:
+            return None
+        
+        result = []
+
+        for index, entry in enumerate(palette):
+            r = entry[0]
+            g = entry[1]
+            b = entry[2]
+            a = transparency[index] if index < len(transparency) else 255
+
+            r5 = (r >> 3) & 0x1F  # 5 bits
+            g5 = (g >> 3) & 0x1F  # 5 bits
+            b5 = (b >> 3) & 0x1F  # 5 bits
+            a1 = (a >> 7) & 0x01  # 1 bit
+            
+            result.append((r5 << 11) | (g5 << 6) | (b5 << 1) | a1)
+
+        return result
+
+    # Color    Allowed    Interpretation
+    # Type    Bit Depths
+    # 0       1,2,4,8,16  Each pixel is a grayscale sample.
+    # 2       8,16        Each pixel is an R,G,B triple.
+    # 3       1,2,4,8     Each pixel is a palette index;
+    #                     a PLTE chunk must appear.
+    # 4       8,16        Each pixel is a grayscale sample,
+    #                     followed by an alpha sample.
+    # 6       8,16        Each pixel is an R,G,B triple,
+    #                     followed by an alpha sample.
+
+    def _get_format_from_png(self, bit_depth, color_type):
+        if color_type == 0:
+            return 'FMT_I4' if bit_depth <= 4 else 'FMT_I8'
+        if color_type == 2:
+            return 'FMT_RGBA16'
+        if color_type == 3:
+            return 'FMT_CI4' if bit_depth <= 4 else 'FMT_CI8'
+        if color_type == 4:
+            return 'FMT_IA16'
+        if color_type == 6:
+            return 'FMT_RGBA16'
+        
+        return 'FMT_RGBA16'
+
+    def _get_meta_format(self, filename):
+        json_filename = filename.replace('.png', '.json')
+        if not os.path.isfile(json_filename):
+            return None
+        with open(json_filename, 'r') as file:
+            metadata = json.load(file)
+        return 'FMT_' + metadata['format']
 
 class Color():
     def __init__(self, r, g, b, a):
@@ -199,7 +244,8 @@ class TexAxis():
         self.min = 0 # were translate
         self.max = 0
         self.shift = 0 # scale_log
-        self.clamp = True # was repeats
+        self.clamp = False # was repeats
+        self.mask = 0 # was repeats
         self.mirror = False
         self.scroll = 0
     
@@ -212,11 +258,13 @@ class Tex():
         self.mag_filter = "linear"
         self.s = TexAxis()
         self.t = TexAxis()
-        self.sequenceLength: int = 0
+        self.sequence_length: int = 0
         self.palette_data = None
+        self.fmt = 'FMT_NONE'
+        self.width = 128
+        self.height = 128
 
-        self._size: tuple[int, int] | None = None
-        self._need_to_load_palette = True
+        self._png_metadata: PngMetadata | None = None
 
     def copy(self):
         result = Tex()
@@ -227,11 +275,25 @@ class Tex():
         result.mag_filter = self.mag_filter
         result.s = self.s
         result.t = self.t
-        result.sequenceLength = self.sequenceLength
+        result.sequence_length = self.sequence_length
         result.palette_data = self.palette_data
-        result._size = self._size
-        result._need_to_load_palette = self._need_to_load_palette
+        result.fmt = self.fmt
+        result.width = self.width
+        result.height = self.height
+        result._png_metadata = self._png_metadata
         return result
+    
+    def set_filename(self, filename):
+        self.filename = filename
+
+        if not filename:
+            self._png_metadata = None
+
+        self._png_metadata = PngMetadata(filename)
+        self.fmt = self._png_metadata.fmt
+        self.width = self._png_metadata.width
+        self.height = self._png_metadata.height
+        self.palette_data = self._png_metadata.palette
 
     def get_palette_group(self):
         if not self.filename:
@@ -249,57 +311,18 @@ class Tex():
         other_palette_info = other.get_palette_group()
         return bool(self_palette_info) and self_palette_info == other_palette_info
     
-    def get_palette(self):
-        if not self._need_to_load_palette:
-            return self.palette_data
-        
-        self._need_to_load_palette = False
-        
-        if not self.filename:
-            return None
-        
-        self.palette_data = get_palette_from_png(self.filename)
-
-        return self.palette_data
-    
-    def set_palette(self, value):
-        self._need_to_load_palette = False
-        self.palette_data = value
     
     def has_only_palette(self):
-        palette = self.get_palette()
-        return bool(palette) and not self.filename
+        return bool(self.palette_data) and not self.filename
 
     def rom_filename(self) -> str:
         return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
-
-    def get_image_size(self) -> tuple[int, int]:
-        if self._size:
-            return self._size
-
-        if not self.filename:
-            return (128, 128)
-
-        if self.filename.endswith('.png'):
-            with open(self.filename, 'rb') as file:
-                file.seek(16, 0)
-                # the png specification states the header
-                # should be the first chunk so the iamge
-                # size should always be at this location
-                w, = struct.unpack('>I', file.read(4))
-                h, = struct.unpack('>I', file.read(4))
-
-                self._size = (w, h)
-
-                return self._size
-            
-        raise Exception(f"{self.filename} is not a supported file type")
         
     def __str__(self):
         if self.filename:
             return self.filename
         
-        palette = self.get_palette()
+        palette = self.palette_data
 
         if palette:
             return f"palette({len(palette)})"
@@ -337,6 +360,8 @@ class Material():
         self.lighting: bool | None = None
         self.tex0: Tex | None = None
         self.tex1: Tex | None = None
+        self.palette: list[int] = []
+        self.palette_start_index: int = 0
         self.culling: bool | None = None
         self.z_buffer: bool | None = None
         self.vertex_gamma: float = 0.454545
@@ -345,7 +370,7 @@ class Material():
 
     def get_image_size(self) -> tuple[int, int]:
         if self.tex0:
-            return self.tex0.get_image_size()
+            return (self.tex0.width, self.tex0.height)
         
         return 128, 128
 
@@ -690,12 +715,43 @@ def _parse_color(json_data, key_path):
 
     return Color(json_data[0], json_data[1], json_data[2], json_data[3])
 
-def _parse_tex_axis(json_data, into: TexAxis, key_path):
-    into.translate = _optional_number(json_data, 'translate', key_path, into.translate)
-    into.scale_log = _optional_number(json_data, 'scale_log', key_path, into.scale_log)
-    into.repeats = _optional_number(json_data, 'repeats', key_path, into.repeats)
+def log_pow_2(value) -> int:
+    result = 0
+    while value > 0:
+        result += 1
+        value >>= 1
+    return result
+
+def _parse_tex_axis(json_data, image_size, into: TexAxis, key_path):
+    into.min = 0
+    into.max = image_size << 2
+    into.shift = _optional_number(json_data, 'shift', key_path, into.shift)
+    repeats = _optional_number(json_data, 'repeats', key_path, 2048)
+
+    if repeats:
+        into.mask = log_pow_2(image_size * repeats)
+        into.clamp = False
+    else:
+        into.mask = log_pow_2(image_size)
+        into.clamp = True
+
     into.mirror = _optional_boolean(json_data, 'mirror', key_path, False)
     into.scroll = _optional_number(json_data, 'scroll', key_path, into.scroll)
+
+def _resolve_tex(filename: str, relative_to: str) -> str:
+    combined_path = os.path.join(os.path.dirname(relative_to), filename)
+    combined_path = os.path.normpath(combined_path)
+
+    if not os.path.exists(combined_path):
+        raise Exception(f"The image file {combined_path} does not exist")
+    
+    if not combined_path.startswith('assets'):
+        raise Exception(f"The image {combined_path} must be in the assets folder")
+    
+    if not combined_path.endswith('.png'):
+        raise Exception(f"The image {combined_path} must be a png file")
+    
+    return combined_path
 
 def _parse_tex(json_data, key_path, relative_to):
     if not json_data:
@@ -704,13 +760,13 @@ def _parse_tex(json_data, key_path, relative_to):
     result = Tex()
 
     if isinstance(json_data, str):
-        result.filename = json_data
+        result.set_filename(_resolve_tex(json_data, relative_to))
     else:
         if not 'filename' in json_data:
             raise Exception(f"{key_path}.filename must be defined")
         
         _check_is_string(json_data['filename'], f"{key_path}.filename")
-        result.filename = json_data['filename']
+        result.set_filename(_resolve_tex(json_data['filename'], relative_to))
 
         if 'tmemAddr' in json_data:
             _check_is_int(json_data['tmemAddr'], f"{key_path}.tmemAddr", 0, 4096)
@@ -725,27 +781,13 @@ def _parse_tex(json_data, key_path, relative_to):
             result.tmem_addr = json_data['magFilter']
 
         if 's' in json_data:
-            _parse_tex_axis(json_data['s'], result.s, f"{key_path}.s")
+            _parse_tex_axis(json_data['s'], result.width, result.s, f"{key_path}.s")
 
         if 't' in json_data:
-            _parse_tex_axis(json_data['t'], result.t, f"{key_path}.t")
+            _parse_tex_axis(json_data['t'], result.height, result.t, f"{key_path}.t")
 
         if 'sequenceLength' in json_data:
             result.sequence_length = _check_is_int(json_data['sequenceLength'], f"{key_path}.sequenceLength", 0, 64)
-
-    combined_path = os.path.join(os.path.dirname(relative_to), result.filename)
-    combined_path = os.path.normpath(combined_path)
-
-    if not os.path.exists(combined_path):
-        raise Exception(f"The image file {combined_path} does not exist")
-    
-    if not combined_path.startswith('assets'):
-        raise Exception(f"The image {combined_path} must be in the assets folder")
-    
-    if not combined_path.endswith('.png'):
-        raise Exception(f"The image {combined_path} must be a png file")
-    
-    result.filename = combined_path
 
     return result
 

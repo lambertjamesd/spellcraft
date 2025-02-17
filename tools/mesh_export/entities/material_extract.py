@@ -114,7 +114,7 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
         image_path = os.path.normpath(os.path.join(os.path.dirname(input_filename), color_node.image.filepath[2:]))
 
         result.tex0 = material.Tex()
-        result.tex0.filename = image_path
+        result.tex0.set_filename(image_path)
 
         if color_node.interpolation == 'Nearest':
             result.tex0.min_filter = 'nearest'
@@ -124,19 +124,19 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
             result.tex0.mag_filter = 'linear'
 
         if color_node.extension == 'REPEAT':
-            result.tex0.s.repeats = 2048
+            result.tex0.s.clamp = False
             result.tex0.s.mirror = False
-            result.tex0.t.repeats = 2048
+            result.tex0.t.clamp = False
             result.tex0.t.mirror = False
         elif color_node.extension == 'MIRROR':
-            result.tex0.s.repeats = 2048
+            result.tex0.s.clamp = False
             result.tex0.s.mirror = True
-            result.tex0.t.repeats = 2048
+            result.tex0.t.clamp = False
             result.tex0.t.mirror = True
         else:
-            result.tex0.s.repeats = 1
+            result.tex0.s.clamp = True
             result.tex0.s.mirror = False
-            result.tex0.t.repeats = 1
+            result.tex0.t.clamp = True
             result.tex0.t.mirror = False
 
     if result.lighting:
@@ -206,17 +206,22 @@ def _determine_color_from_f3d(color) -> material.Color:
         int(color[3] * 255)
     )
 
-def _determine_tex_axis_from_f3d(axis, uv_scroll, result: material.TexAxis):
-    result.scale_log = axis['shift']
+def _determine_tex_axis_from_f3d(axis, image_size, uv_scroll, result: material.TexAxis):
+    result.shift = axis['shift']
 
+    result.mask = material.log_pow_2(image_size)
     if 'clamp' in axis and axis['clamp']:
-        result.repeats = 0
+        result.clamp = True
     
     if 'mirror' in axis and axis['mirror']:
         result.mirror = True
+        result.mask = material.log_pow_2(image_size * 2)
 
     if uv_scroll and uv_scroll['animType'] == 1:
         result.scroll = uv_scroll['speed'] if 'speed' in uv_scroll else 1
+
+    result.min = 0
+    result.max = image_size << 2
 
 
 def _determine_tex_from_f3d(tex, uv_scroll, base_path: str) -> material.Tex:
@@ -226,10 +231,10 @@ def _determine_tex_from_f3d(tex, uv_scroll, base_path: str) -> material.Tex:
         return None
 
     result = material.Tex()
-    result.filename = os.path.normpath(os.path.join(os.path.dirname(base_path), image.filepath[2:]))
+    result.set_filename(os.path.normpath(os.path.join(os.path.dirname(base_path), image.filepath[2:])))
 
-    _determine_tex_axis_from_f3d(tex['S'], uv_scroll['x'] if uv_scroll and 'x' in uv_scroll else None, result.s)
-    _determine_tex_axis_from_f3d(tex['T'], uv_scroll['y'] if uv_scroll and 'y' in uv_scroll else None, result.t)
+    _determine_tex_axis_from_f3d(tex['S'], result.width, uv_scroll['x'] if uv_scroll and 'x' in uv_scroll else None, result.s)
+    _determine_tex_axis_from_f3d(tex['T'], result.height, uv_scroll['y'] if uv_scroll and 'y' in uv_scroll else None, result.t)
 
     return result
 

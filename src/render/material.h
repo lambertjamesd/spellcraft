@@ -15,6 +15,8 @@ struct material_tex {
     rdpq_tileparms_t params;
     uint16_t s0, t0, s1, t1;
     uint16_t tmem_addr;
+    uint16_t fmt;
+    uint16_t width, height;
     float scroll_x, scroll_y;
     // rdpq_set_lookup_address
     // surface_make_placeholder_linear

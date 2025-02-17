@@ -6,14 +6,14 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
         return end
     
     if start.does_share_image_data(end):
-        start_palette = start.get_palette()
-        end_palette = end.get_palette()
+        start_palette = start.palette_data
+        end_palette = end.palette_data
 
         if start_palette == end_palette:
             return None
 
         result = material.Tex()
-        result.set_palette(end.get_palette())
+        result.palette_data = end.palette_data
         return result
     
     if start.filename != end.filename:
@@ -82,13 +82,11 @@ def determine_texture_cost(tex: material.Tex | None) -> float:
         return 0
 
     result = 2
-    palette = tex.get_palette()
 
     if tex.filename:
-        image_size = tex.get_image_size()
-        result += image_size[0] * image_size[1] * 0.0072
-    elif palette:
-        result += len(palette) * 0.0072
+        result += tex.width * tex.height * 0.0072
+    elif tex.palette_data:
+        result += len(tex.palette_data) * 0.0072
     
     return 0
 
@@ -138,7 +136,7 @@ def apply_tex_delta(delta: material.Tex, into: material.Tex | None) -> material.
     
     if delta.has_only_palette():
         result = into.copy()
-        result.set_palette(delta.get_palette())
+        result.palette_data = delta.palette_data
         return result
     
     return delta

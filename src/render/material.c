@@ -49,23 +49,12 @@ void material_destroy(struct material* material) {
 #define COMMAND_FOG_COLOR   0x0A
 #define COMMAND_FOG_RANGE   0x0B
 
-struct tile_axis {
-    bool     clamp;
-    bool     mirror;
-    uint8_t  mask;
-    int8_t   shift;	
-};
-
-void material_load_tex_axis(struct tile_axis* axis, FILE* file) {
-    fread(axis, sizeof(struct tile_axis), 1, file);
-}
-
 static GLenum material_filter_modes[] = {
     GL_NEAREST,
     GL_LINEAR,
 };
 
-void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture) {
+void material_load_tex(struct material_tex* tex, FILE* file) {
     uint8_t texture_enabled;
     fread(&texture_enabled, 1, 1, file);
 
@@ -82,12 +71,14 @@ void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture
     fread(filename, 1, filename_len, file);
     filename[filename_len] = '\0';
 
-    uint16_t tmem_addr;
-    fread(&tmem_addr, 2, 1, file);
-    tex->tmem_addr = tmem_addr;
-    fread(&tex->params.palette, 1, 1, file);
-    material_load_tex_axis((struct text_axis*)&tex->params.s, file);
-    material_load_tex_axis((struct text_axis*)&tex->params.t, file);
+    fread(&tex->params, sizeof(rdpq_tileparms_t), 1, file);
+
+    fread(&tex->tmem_addr, 2, 1, file);
+    fread(&tex->fmt, 2, 1, file);
+    fread(&tex->s0, 2, 1, file);
+    fread(&tex->t0, 2, 1, file);
+    fread(&tex->s1, 2, 1, file);
+    fread(&tex->t1, 2, 1, file);
 
     fread(&tex->scroll_x, sizeof(float), 1, file);
     fread(&tex->scroll_y, sizeof(float), 1, file);
@@ -96,15 +87,6 @@ void material_load_tex(struct material_tex* tex, FILE* file, bool create_texture
         tex->sprite = sprite_cache_load(filename);
     } else {
         tex->sprite = NULL;
-    }
-
-    uint8_t mag_filter;
-    fread(&mag_filter, 1, 1, file);
-    uint8_t min_filter;
-    fread(&min_filter, 1, 1, file);
-
-    if (!create_texture) {
-        return;
     }
 }
 
@@ -122,38 +104,27 @@ int material_size_to_clamp(int size) {
 void material_upload_tex(rdpq_tile_t tile, struct material_tex* tex) {
     // rdpq_sprite_upload(TILE0, tex->tex, &into->tex0.params);
     surface_t surf = sprite_get_pixels(tex->sprite);
-    rdpq_tex_upload(tile, &surf, &tex->params);
+    rdpq_texparms_t tex_parms = {
+        .palette = tex->params.palette,
+        .tmem_addr = tex->tmem_addr,
+    };
+    rdpq_tex_upload(tile, &surf, &tex_parms);
     rdpq_tlut_t tlut_mode = rdpq_tlut_from_format(tex->sprite->format);
     rdpq_mode_tlut(tlut_mode);
-    if (tlut_mode != TLUT_NONE) {
-        uint16_t *pal = sprite_get_palette(tex->sprite);
-        if (pal) rdpq_tex_upload_tlut(pal, tex->params.palette*16, tex->sprite->format == FMT_CI4 ? 16 : 256);
-    }
 }
 
-// void material_use_tex(rdpq_tile_t tile, struct material_tex* tex) {
-//     int pitch_shift = into->tex0.sprite->format == FMT_RGBA32 ? 1 : 0;
-//     rdpq_tileparms_t tile_params;
-//     tile_params.palette = 1;
-//     tile_params.s.clamp = !into->tex1.params.s.repeats;
-//     tile_params.s.mirror = into->tex1.params.s.mirror;
-//     tile_params.s.mask = material_size_to_clamp(into->tex0.sprite->width);
-//     tile_params.s.shift = into->tex1.params.s.scale_log;
-    
-//     tile_params.t.clamp = !into->tex1.params.t.repeats;
-//     tile_params.t.mirror = into->tex1.params.t.repeats;
-//     tile_params.t.mask = material_size_to_clamp(into->tex0.sprite->height);
-//     tile_params.t.shift = into->tex1.params.t.scale_log;
-//     rdpq_set_tile(
-//         TILE1, 
-//         into->tex0.sprite->format, 
-//         into->tex0.params.tmem_addr, 
-//         ((TEX_FORMAT_PIX2BYTES(into->tex0.sprite->format, into->tex0.sprite->width) >> pitch_shift) + 0x7) & ~0x7, 
-//         &tile_params
-//     );
+void material_use_tex(rdpq_tile_t tile, struct material_tex* tex) {
+    int pitch_shift = tex->fmt == FMT_RGBA32 ? 1 : 0;
+    rdpq_set_tile(
+        TILE1, 
+        tex->fmt, 
+        tex->tmem_addr, 
+        ((TEX_FORMAT_PIX2BYTES(tex->fmt, tex->width) >> pitch_shift) + 0x7) & ~0x7, 
+        &tex->params
+    );
 
-//     rdpq_set_tile_size_fx(TILE1, 0, 0, into->tex0.sprite->width << 2, into->tex0.sprite->height << 2);
-// }
+    rdpq_set_tile_size_fx(TILE1, tex->s0, tex->t0, tex->s1, tex->t1);
+}
 
 void material_load(struct material* into, FILE* material_file) {
     int header;
@@ -164,43 +135,24 @@ void material_load(struct material* into, FILE* material_file) {
 
     material_init(into);
 
-    material_load_tex(&into->tex0, material_file, true);
-    material_load_tex(&into->tex1, material_file, true);
+    material_load_tex(&into->tex0, material_file);
+    material_load_tex(&into->tex1, material_file);
 
     rspq_block_begin();
 
-    if (into->tex0.sprite) {
-        material_upload_tex(TILE0, &into->tex0);
+    if (into->tex0.texture_enabled) {
+        if (into->tex0.sprite) {
+            material_upload_tex(TILE0, &into->tex0);
+        }
+
+        material_use_tex(TILE0, &into->tex0);
     }
+    if (into->tex1.texture_enabled) {
+        if (into->tex1.sprite) {
+            material_upload_tex(TILE1, &into->tex1);
+        }
 
-    if (into->tex1.sprite) {
-        material_upload_tex(TILE1, &into->tex1);
-    } else if (into->tex1.texture_enabled) {
-        int pitch_shift = into->tex0.sprite->format == FMT_RGBA32 ? 1 : 0;
-        rdpq_tileparms_t tile_params;
-        tile_params.palette = 1;
-        tile_params.s.clamp = !into->tex1.params.s.repeats;
-        tile_params.s.mirror = into->tex1.params.s.mirror;
-        tile_params.s.mask = material_size_to_clamp(into->tex0.sprite->width);
-        tile_params.s.shift = into->tex1.params.s.scale_log;
-        
-        tile_params.t.clamp = !into->tex1.params.t.repeats;
-        tile_params.t.mirror = into->tex1.params.t.repeats;
-        tile_params.t.mask = material_size_to_clamp(into->tex0.sprite->height);
-        tile_params.t.shift = into->tex1.params.t.scale_log;
-        rdpq_set_tile(
-            TILE1, 
-            into->tex0.sprite->format, 
-            into->tex0.params.tmem_addr, 
-            ((TEX_FORMAT_PIX2BYTES(into->tex0.sprite->format, into->tex0.sprite->width) >> pitch_shift) + 0x7) & ~0x7, 
-            &tile_params
-        );
-
-        rdpq_set_tile_size_fx(
-            TILE1, 
-            0, 0, 
-            (into->tex0.sprite->width << 2), (into->tex0.sprite->height << 2)
-        );
+        material_use_tex(TILE1, &into->tex1);
     }
 
     rdpq_mode_begin();
