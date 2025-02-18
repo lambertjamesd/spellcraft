@@ -299,7 +299,7 @@ def _serialize_tex(file, tex: material.Tex, prev_tex: material.Tex = None):
     
     file.write(b'\x01')
 
-    if len(tex.filename):
+    if tex.filename and len(tex.filename):
         _serialze_string(file, tex.rom_filename())
     else:
         file.write(b'\0')
@@ -315,6 +315,9 @@ def _serialize_tex(file, tex: material.Tex, prev_tex: material.Tex = None):
     file.write(tex.t.min.to_bytes(2, 'big'))
     file.write(tex.s.max.to_bytes(2, 'big'))
     file.write(tex.t.max.to_bytes(2, 'big'))
+
+    file.write(tex.width.to_bytes(2, 'big'))
+    file.write(tex.height.to_bytes(2, 'big'))
 
     file.write(struct.pack('>ff', tex.s.scroll, -tex.t.scroll))
 

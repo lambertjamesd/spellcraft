@@ -38,7 +38,7 @@ class PngMetadata():
             elif chunk_type == 'IHDR':
                 self.width = struct.unpack('>I', chunk_data[0:4])[0]
                 self.height = struct.unpack('>I', chunk_data[4:8])[0]
-                self.fmt = self._get_meta_format(filename) or self._get_format_from_png(chunk_data[9], chunk_data[10])
+                self.fmt = self._get_meta_format(filename) or self._get_format_from_png(chunk_data[8], chunk_data[9])
             
             index += 8 + chunk_length + 4  # Move to next chunk (including CRC)
         
@@ -335,15 +335,7 @@ class Tex():
         return _fmt_bit_size[self.fmt] * self.width * self.height // 8
 
     def __str__(self):
-        if self.filename:
-            return self.filename
-        
-        palette = self.palette_data
-
-        if palette:
-            return f"palette({len(palette)})"
-        
-        return "NULL"
+        return f"{self.filename} palette({len(self.palette_data) if self.palette_data else 0}) fmt={self.fmt}"
     
 class Fog():
     def __init__(self):
@@ -382,6 +374,15 @@ class Material():
         self.vertex_gamma: float = 0.454545
         self.uv_gen: str | None = None
         self.fog: Fog | None = None
+
+    def layout_textures(self):
+        if self.tex0 and self.tex1:
+            if self.tex0.does_share_image_data(self.tex1):
+                self.tex1.filename = None
+            else:
+                self.tex1.tmem_addr += _align_memory(self.tex0.byte_size())
+            if self.tex0.palette_data and len(self.tex0.palette_data):
+                self.tex1.palette = 1
 
     def get_image_size(self) -> tuple[int, int]:
         if self.tex0:
@@ -854,13 +855,7 @@ def parse_material(filename: str):
     result.tex0 = _parse_tex(json_data['tex0'], 'tex0', filename) if 'tex0' in json_data else None
     result.tex1 = _parse_tex(json_data['tex1'], 'tex1', filename) if 'tex1' in json_data else None
 
-    if result.tex0 and result.tex1:
-        if result.tex0.does_share_image_data(result.tex1):
-            result.tex1.filename = result.tex0
-        else:
-            result.tex1.tmem_addr += _align_memory(result.tex0.byte_size())
-        if result.tex0.palette_data:
-            result.tex1.palette = 1
+    result.layout_textures()
 
     _parse_combine_mode(result, json_data)
     _parse_blend_mode(result, json_data)

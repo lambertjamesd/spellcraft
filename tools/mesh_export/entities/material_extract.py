@@ -289,6 +289,8 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     uv_anim_1 = f3d_mat['UVanim1'] if 'UVanim1' in f3d_mat else None
     result.tex0 = _determine_tex_from_f3d(f3d_mat['tex0'], uv_anim_0, base_path) if result.combine_mode.uses('TEX0') else None
     result.tex1 = _determine_tex_from_f3d(f3d_mat['tex1'], uv_anim_1, base_path) if result.combine_mode.uses('TEX1') else None
+    result.layout_textures()
+
     if rdp_settings['g_cull_back']:
         result.culling = True
     else:

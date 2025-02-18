@@ -5,20 +5,14 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
     if not start or not end:
         return end
     
-    if start.does_share_image_data(end):
-        start_palette = start.palette_data
-        end_palette = end.palette_data
+    result = end.copy()
 
-        if start_palette == end_palette:
-            return None
+    if start.filename == end.filename:
+        result.filename = None
 
-        result = material.Tex()
-        result.palette_data = end.palette_data
-        return result
-    
-    if start.filename != end.filename:
-        return end
-    
+    if start.palette_data == end.palette_data:
+        result.palette_data = None
+
     return None
 
 def determine_fog_delta(start: material.Fog | None, end: material.Fog | None) -> material.Fog | None:
@@ -84,9 +78,9 @@ def determine_texture_cost(tex: material.Tex | None) -> float:
     result = 2
 
     if tex.filename:
-        result += tex.width * tex.height * 0.0072
+        result += tex.byte_size() * 0.0072
     elif tex.palette_data:
-        result += len(tex.palette_data) * 0.0072
+        result += len(tex.palette_data) * 2 * 0.0072
     
     return 0
 
@@ -134,12 +128,26 @@ def apply_tex_delta(delta: material.Tex, into: material.Tex | None) -> material.
     if not into:
         return delta
     
-    if delta.has_only_palette():
-        result = into.copy()
-        result.palette_data = delta.palette_data
-        return result
+    result = into.copy()
     
-    return delta
+    if delta.filename:
+        result.filename = delta.filename
+
+    if delta.palette_data:
+        result.palette_data = delta.palette_data
+
+    result.tmem_addr = delta.tmem_addr
+    result.palette = delta.palette
+    result.min_filter = delta.min_filter
+    result.mag_filter = delta.mag_filter
+    result.s = delta.s
+    result.t = delta.t
+    result.sequence_length = delta.sequence_length
+    result.fmt = delta.fmt
+    result.width = delta.width
+    result.height = delta.height
+    
+    return result
 
 def apply_material_delta(delta: material.Material, into: material.Material):
     if delta.combine_mode != None:
