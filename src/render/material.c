@@ -117,14 +117,14 @@ void material_upload_tex(rdpq_tile_t tile, struct material_tex* tex) {
 void material_use_tex(rdpq_tile_t tile, struct material_tex* tex) {
     int pitch_shift = tex->fmt == FMT_RGBA32 ? 1 : 0;
     rdpq_set_tile(
-        TILE1, 
+        tile, 
         tex->fmt, 
         tex->tmem_addr, 
         ((TEX_FORMAT_PIX2BYTES(tex->fmt, tex->width) >> pitch_shift) + 0x7) & ~0x7, 
         &tex->params
     );
 
-    rdpq_set_tile_size_fx(TILE1, tex->s0, tex->t0, tex->s1, tex->t1);
+    rdpq_set_tile_size_fx(tile, tex->s0, tex->t0, tex->s1, tex->t1);
 
     if (tex->fmt == FMT_CI4 || tex->fmt == FMT_CI8) {
         rdpq_mode_tlut(TLUT_RGBA16);
@@ -146,21 +146,6 @@ void material_load(struct material* into, FILE* material_file) {
     material_load_tex(&into->tex1, material_file);
 
     rspq_block_begin();
-
-    if (into->tex0.texture_enabled) {
-        if (into->tex0.sprite) {
-            material_upload_tex(TILE0, &into->tex0);
-        }
-
-        material_use_tex(TILE0, &into->tex0);
-    }
-    if (into->tex1.texture_enabled) {
-        if (into->tex1.sprite) {
-            material_upload_tex(TILE1, &into->tex1);
-        }
-
-        material_use_tex(TILE1, &into->tex1);
-    }
 
     rdpq_mode_begin();
 
@@ -293,6 +278,21 @@ void material_load(struct material* into, FILE* material_file) {
     }
 
     rdpq_mode_end();
+
+    if (into->tex0.texture_enabled) {
+        if (into->tex0.sprite) {
+            material_upload_tex(TILE0, &into->tex0);
+        }
+
+        material_use_tex(TILE0, &into->tex0);
+    }
+    if (into->tex1.texture_enabled) {
+        if (into->tex1.sprite) {
+            material_upload_tex(TILE1, &into->tex1);
+        }
+
+        material_use_tex(TILE1, &into->tex1);
+    }
 
     into->block = rspq_block_end();
 }
