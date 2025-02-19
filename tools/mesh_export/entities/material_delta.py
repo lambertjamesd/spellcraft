@@ -5,6 +5,9 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
     if not start or not end:
         return end
     
+    if start == end:
+        return None
+    
     result = end.copy()
 
     if start.filename == end.filename:
@@ -13,7 +16,7 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
     if start.palette_data == end.palette_data:
         result.palette_data = None
 
-    return None
+    return result
 
 def determine_fog_delta(start: material.Fog | None, end: material.Fog | None) -> material.Fog | None:
     if not start or not end:

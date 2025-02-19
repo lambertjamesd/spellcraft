@@ -110,7 +110,6 @@ void material_upload_tex(rdpq_tile_t tile, struct material_tex* tex) {
         .palette = tex->params.palette,
         .tmem_addr = tex->tmem_addr,
     };
-    // rdpq_sprite_upload(tile, tex->sprite, &tex_parms);
     rdpq_tex_upload(tile, &surf, &tex_parms);
 }
 

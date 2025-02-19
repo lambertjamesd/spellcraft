@@ -249,6 +249,14 @@ class TexAxis():
         self.mirror = False
         self.scroll = 0
 
+    def __eq__(self, value: object) -> bool:
+        return self.min == value.min and \
+            self.max == value.max and \
+            self.shift == value.shift and \
+            self.clamp == value.clamp and \
+            self.mask == value.mask and \
+            self.mirror == value.mirror
+
 _fmt_bit_size = {
     'FMT_NONE': 0,
     'FMT_RGBA16': 16,
@@ -333,6 +341,21 @@ class Tex():
         
     def byte_size(self) -> int:
         return _fmt_bit_size[self.fmt] * self.width * self.height // 8
+    
+
+    def __eq__(self, value: object) -> bool:
+        if not value:
+            return False
+
+        return self.filename == value.filename and \
+            self.palette_data == value.palette_data and \
+            self.palette == value.palette and \
+            self.fmt == value.fmt and \
+            self.width == value.width and \
+            self.height == value.height and \
+            self.s == value.s and \
+            self.t == value.t
+                
 
     def __str__(self):
         return f"{self.filename} palette({len(self.palette_data) if self.palette_data else 0}) fmt={self.fmt}"
@@ -766,9 +789,8 @@ def _parse_color(json_data, key_path):
 
 def log_pow_2(value) -> int:
     result = 0
-    while value > 0:
+    while (1 << result) < value:
         result += 1
-        value >>= 1
     return result
 
 def _parse_tex_axis(json_data, image_size, into: TexAxis, key_path):
