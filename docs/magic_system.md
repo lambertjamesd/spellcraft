@@ -113,85 +113,91 @@ Modifier shorthand
 * E = Earth
 * L = Life
 
-| Primary | Modifiers | Effect                           | Trigger |
-|---------|-----------|----------------------------------|---------|
-| Fire    |           | Shoot flames                     | On kill        |
-| Fire    | I         | Shoot lightning                  | On kill        |
-| Fire    | I A       | Lightning dash (teleport)        | On dash through        |
-| Fire    | I A E     | Teleport up and down             | On impact        |
-| Fire    | I A E L   | Shoot AEO lightning sprite       | On sprite attack  |
-| Fire    | I A L     | Shoot lightning sprite           | On sprite attack |
-| Fire    | I E       | Lightning explosion              | On kill |
-| Fire    | I E L     | AEO lightning sprite             | On sprite attack |
-| Fire    | I L       | Lightning sprite                 | On sprite attack |
-| Fire    | A         | Fire dash                        | On impact |
-| Fire    | A E       | Rocket jump                      |  |
-| Fire    | A E L     | Shoot AEO fire sprite            | On sprite attack |
-| Fire    | A L       | Shoots a fire sprite             | On sprite attack |
-| Fire    | E         | AEO explosion                    | On kill |
-| Fire    | E L       | AEO fire sprite                  | On sprite attack  |
-| Fire    | L         | Fire sprite                      | On sprite attack |
-| Ice     |           | Shoot ice                        | On ice shatter |
-| Ice     | F         | Shoot water                      | On contact        |
-| Ice     | F A       | Water dash                       | On dash through        |
-| Ice     | F A E     | AEO water dash                   | On contact |
-| Ice     | F A E L   | Shoot AEO water sprite           | On sprite attack |
-| Ice     | F A L     | Shoot water sprite               | On sprite attack |
-| Ice     | F E       | Water explosion                  | On contact |
-| Ice     | F E L     | AEO water sprite                 | On sprite attack |
-| Ice     | F L       | Water sprite                     | On sprite attack |
-| Ice     | A         | Ice dash                         | On impact |
-| Ice     | A E       | Spin ice sword or aeo ice dash   | On ice shatter |
-| Ice     | A E L     | Shoot AEO ice sprite             | On ice shatter |
-| Ice     | A L       | Shoots a ice sprite              | On ice shatter |
-| Ice     | E         | AEO explosion                    | On ice shatter |
-| Ice     | E L       | AEO ice sprite                   | On ice shatter |
-| Ice     | L         | Ice sprite                       | On ice shatter |
-| Earth   |           | Shield                           | On parry |
-| Earth   | F         | Fire sheild                      | On parry |
-| Earth   | F I       | Lightning sheild                 | On taking damage |
-| Earth   | F I A     | Lightning sniper rock            | On impact |
-| Earth   | F I A L   | Homing lightning sniper rock     | On impact |
-| Earth   | F I L     | Lightning ground mine            | On touch |
-| Earth   | F A       | Rocket projectile                | On impact |
-| Earth   | F A L     | Homing rocket projectile         | On impact |
-| Earth   | F L       | Fire mine                        | On touch |
-| Earth   | I         | Ice shield                       | On parry |
-| Earth   | I A       | Snowball                         | On impact |
-| Earth   | I A L     | Homing snowball                  | On impact |
-| Earth   | I L       | Frosty the snowman               | On touch |
-| Earth   | A         | Projectile                       | On impact |
-| Earth   | A L       | Homing projectile                | On impact |
-| Earth   | L         | Ground mine                      | On touch |
-| Air     |           | Push                             |         |
-| Air     | F         | Burning push                     | On push end |
-| Air     | F I       | Lightning push (teleports)       | On teleport end |
-| Air     | F I E     | circular push (teleports)        | On teleport end |
-| Air     | F I E L   | sprite that telepushes outward   |         |
-| Air     | F I L     | sprite that telepushes forward   |         |
-| Air     | F E       | burning push outward             |         |
-| Air     | F E L     | sprite that burn pushes outward  |         |
-| Air     | F L       | sprite that burn pushes forward  |         |
-| Air     | I         | icy push                         | On ice shatter |
-| Air     | I E       | icy push outward                 | On ice shatter |
-| Air     | I E L     | sprite that icy pushes outward   | On ice shatter |
-| Air     | I L       | sprite that icy pushes forward   | On ice shatter |
-| Air     | E         | push outward                     |         |
-| Air     | E L       | sprite that pushes outward       |         |
-| Air     | L         | sprite that pushes forward       |         |
-| Life    |           | healing                          |         |
-| Life    | F         | instant aeo healing              |         |
-| Life    | F I       | instant convert health to mana   |         |
-| Life    | F I A     | instant life steal sprite        |         |
-| Life    | F I A E   | instant aeo life steal sprite    |         |
-| Life    | F I E     | aeo life steal                   |         |
-| Life    | F A       | instant healing sprite           |         |
-| Life    | F A E     | instant healing aeo sprite       |         |
-| Life    | F E       | instant aeo healing              |         |
-| Life    | I         | convert health to mana           |         |
-| Life    | I A       | create mana steal sprite         | On mana steal |
-| Life    | I A E     | create aeo mana steal sprite     | On mana steal |
-| Life    | I E       | aeo mana steal                   | On mana steal |
-| Life    | A         | healing sprite                   |         |
-| Life    | A E       | healing aeo sprite               |         |
-| Life    | E         | aeo heal                         |         |
+Progress indiciators
+
+* F = Basic function
+* M = Consumes mana
+* T = Has trigger
+
+| Primary | Modifiers | Effect                           | Trigger          | Progress  |
+|---------|-----------|----------------------------------|------------------|-----------|
+| Fire    |           | Shoot flames                     | On kill          | F         |
+| Fire    | I         | Shoot lightning                  | On kill          | F         |
+| Fire    | I A       | Lightning dash (teleport)        | On dash through  | F         |
+| Fire    | I A E     | Teleport up and down             | On impact        | F         |
+| Fire    | I A E L   | Shoot AEO lightning sprite       | On sprite attack |           |
+| Fire    | I A L     | Shoot lightning sprite           | On sprite attack | F         |
+| Fire    | I E       | Lightning explosion              | On kill          | F         |
+| Fire    | I E L     | AEO lightning sprite             | On sprite attack |           |
+| Fire    | I L       | Lightning sprite                 | On sprite attack | F         |
+| Fire    | A         | Fire dash                        | On impact        | F         |
+| Fire    | A E       | Rocket jump                      |                  | F         |
+| Fire    | A E L     | Shoot AEO fire sprite            | On sprite attack |           |
+| Fire    | A L       | Shoots a fire sprite             | On sprite attack | F         |
+| Fire    | E         | AEO explosion                    | On kill          | F         |
+| Fire    | E L       | AEO fire sprite                  | On sprite attack |           |
+| Fire    | L         | Fire sprite                      | On sprite attack | F         |
+| Ice     |           | Shoot ice                        | On ice shatter   |           |
+| Ice     | F         | Shoot water                      | On contact       |           |
+| Ice     | F A       | Water dash                       | On dash through  |           |
+| Ice     | F A E     | AEO water dash                   | On contact       |           |
+| Ice     | F A E L   | Shoot AEO water sprite           | On sprite attack |           |
+| Ice     | F A L     | Shoot water sprite               | On sprite attack |           |
+| Ice     | F E       | Water explosion                  | On contact       |           |
+| Ice     | F E L     | AEO water sprite                 | On sprite attack |           |
+| Ice     | F L       | Water sprite                     | On sprite attack |           |
+| Ice     | A         | Ice dash                         | On impact        |           |
+| Ice     | A E       | Spin ice sword or aeo ice dash   | On ice shatter   |           |
+| Ice     | A E L     | Shoot AEO ice sprite             | On ice shatter   |           |
+| Ice     | A L       | Shoots a ice sprite              | On ice shatter   |           |
+| Ice     | E         | AEO explosion                    | On ice shatter   |           |
+| Ice     | E L       | AEO ice sprite                   | On ice shatter   |           |
+| Ice     | L         | Ice sprite                       | On ice shatter   |           |
+| Earth   |           | Shield                           | On parry         |           |
+| Earth   | F         | Fire sheild                      | On parry         |           |
+| Earth   | F I       | Lightning sheild                 | On taking damage |           |
+| Earth   | F I A     | Lightning sniper rock            | On impact        |           |
+| Earth   | F I A L   | Homing lightning sniper rock     | On impact        |           |
+| Earth   | F I L     | Lightning ground mine            | On touch         |           |
+| Earth   | F A       | Rocket projectile                | On impact        |           |
+| Earth   | F A L     | Homing rocket projectile         | On impact        |           |
+| Earth   | F L       | Fire mine                        | On touch         |           |
+| Earth   | I         | Ice shield                       | On parry         |           |
+| Earth   | I A       | Snowball                         | On impact        |           |
+| Earth   | I A L     | Homing snowball                  | On impact        |           |
+| Earth   | I L       | Frosty the snowman               | On touch         |           |
+| Earth   | A         | Projectile                       | On impact        | F T       |
+| Earth   | A L       | Homing projectile                | On impact        |           |
+| Earth   | L         | Ground mine                      | On touch         |           |
+| Air     |           | Push                             |                  |           |
+| Air     | F         | Burning push                     | On push end      |           |
+| Air     | F I       | Lightning push (teleports)       | On teleport end  |           |
+| Air     | F I E     | circular push (teleports)        | On teleport end  |           |
+| Air     | F I E L   | sprite that telepushes outward   |                  |           |
+| Air     | F I L     | sprite that telepushes forward   |                  |           |
+| Air     | F E       | burning push outward             |                  |           |
+| Air     | F E L     | sprite that burn pushes outward  |                  |           |
+| Air     | F L       | sprite that burn pushes forward  |                  |           |
+| Air     | I         | icy push                         | On ice shatter   |           |
+| Air     | I E       | icy push outward                 | On ice shatter   |           |
+| Air     | I E L     | sprite that icy pushes outward   | On ice shatter   |           |
+| Air     | I L       | sprite that icy pushes forward   | On ice shatter   |           |
+| Air     | E         | push outward                     |                  |           |
+| Air     | E L       | sprite that pushes outward       |                  |           |
+| Air     | L         | sprite that pushes forward       |                  |           |
+| Life    |           | healing                          |                  |           |
+| Life    | F         | instant aeo healing              |                  |           |
+| Life    | F I       | instant convert health to mana   |                  |           |
+| Life    | F I A     | instant life steal sprite        |                  |           |
+| Life    | F I A E   | instant aeo life steal sprite    |                  |           |
+| Life    | F I E     | aeo life steal                   |                  |           |
+| Life    | F A       | instant healing sprite           |                  |           |
+| Life    | F A E     | instant healing aeo sprite       |                  |           |
+| Life    | F E       | instant aeo healing              |                  |           |
+| Life    | I         | convert health to mana           |                  |           |
+| Life    | I A       | create mana steal sprite         | On mana steal    |           |
+| Life    | I A E     | create aeo mana steal sprite     | On mana steal    |           |
+| Life    | I E       | aeo mana steal                   | On mana steal    |           |
+| Life    | A         | healing sprite                   |                  |           |
+| Life    | A E       | healing aeo sprite               |                  |           |
+| Life    | E         | aeo heal                         |                  |           |
