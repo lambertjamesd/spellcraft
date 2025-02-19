@@ -49,6 +49,9 @@ void spell_slot_init(
                 if (modifier_flags.icy) {
                     slot->type = SPELL_EXEC_SLOT_TYPE_TELEPORT;
                     teleport_init(&slot->data.teleport, input, event_options, modifier_flags.earthy ? TELEPORT_DIR_UP_DOWN : TELEPORT_DIR_SIDE);
+                } else if (modifier_flags.earthy) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_JUMP;
+                    jump_init(&slot->data.jump, input, event_options);
                 } else {
                     slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
                     push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_FIRE);
@@ -125,6 +128,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             push_destroy(&slot->data.push);
             break;
+        case SPELL_EXEC_SLOT_TYPE_JUMP:
+            jump_destroy(&slot->data.jump);
+            break;
         case SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE:
             living_sprite_destroy(&slot->data.living_sprite);
             break;
@@ -186,6 +192,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             isActive = push_update(&slot->data.push, &event_listener, &exec->spell_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_JUMP:
+            isActive = jump_update(&slot->data.jump, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE:
             isActive = living_sprite_update(&slot->data.living_sprite, &event_listener, &exec->spell_sources);

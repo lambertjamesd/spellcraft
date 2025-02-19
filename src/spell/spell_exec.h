@@ -13,6 +13,7 @@
 #include "mana_pool.h"
 #include "projectile.h"
 #include "push.h"
+#include "jump.h"
 #include "recast.h"
 #include "shield.h"
 #include "spell_sources.h"
@@ -29,6 +30,7 @@ union spell_exec_data {
     struct explosion explosion;
     struct recast recast;
     struct push push;
+    struct jump jump;
     struct living_sprite living_sprite;
     struct spell_heal heal;
     struct teleport teleport;
@@ -41,6 +43,7 @@ enum spell_exec_slot_type {
     SPELL_EXEC_SLOT_TYPE_SHEILD,
     SPELL_EXEC_SLOT_TYPE_EXPLOSION,
     SPELL_EXEC_SLOT_TYPE_PUSH,
+    SPELL_EXEC_SLOT_TYPE_JUMP,
     SPELL_EXEC_SLOT_TYPE_RECAST,
     SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE,
     SPELL_EXEC_SLOT_TYPE_HEAL,

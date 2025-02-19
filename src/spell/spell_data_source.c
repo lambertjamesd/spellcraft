@@ -28,12 +28,13 @@ struct spell_data_source* spell_data_source_pool_get(struct spell_data_source_po
     return 0;
 }
 
-void spell_data_source_retain(struct spell_data_source* data_source) {
+struct spell_data_source* spell_data_source_retain(struct spell_data_source* data_source) {
     if (!data_source) {
-        return;
+        return NULL;
     }
 
     data_source->reference_count += 1;
+    return data_source;
 }
 
 void spell_data_source_release(struct spell_data_source* data_source) {

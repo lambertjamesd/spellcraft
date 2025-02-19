@@ -48,7 +48,7 @@ struct spell_data_source_pool {
 void spell_data_source_pool_init(struct spell_data_source_pool* pool);
 struct spell_data_source* spell_data_source_pool_get(struct spell_data_source_pool* pool);
 
-void spell_data_source_retain(struct spell_data_source* data_source);
+struct spell_data_source* spell_data_source_retain(struct spell_data_source* data_source);
 void spell_data_source_release(struct spell_data_source* data_source);
 
 void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform);

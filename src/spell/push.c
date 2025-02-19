@@ -56,6 +56,10 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
 
     struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
 
+    if (target) {
+        target->is_pushed += 1;
+    }
+
     if (target && HAS_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE) && push_mode == ELEMENT_TYPE_LIGHTNING) {
         push->should_restore_tangible = true;
         CLEAR_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE);
@@ -65,12 +69,14 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
 }
 
 void push_destroy(struct push* push) {
-    if (push->should_restore_tangible) {
-        struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
+    struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
 
-        if (target) {
-            SET_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE);
-        }
+    if (target) {
+        target->is_pushed -= 1;
+    }
+
+    if (push->should_restore_tangible && target) {
+        SET_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE);
     }
     
     spell_data_source_release(push->data_source);
