@@ -3,14 +3,17 @@
 #include "../collision/collision_scene.h"
 #include "../render/render_scene.h"
 #include "../render/defs.h"
+#include "../collision/shapes/sphere.h"
 #include "../collision/shapes/capsule.h"
 #include "../collision/shapes/cylinder.h"
 #include "../time/time.h"
+#include "./assets.h"
 #include "assets.h"
 
 #define MIN_FOLLOW_DISTANCE 2.0f
 #define TARGET_SPEED        12.0f
 #define ACCELERATION        20.0f
+#define EXPLOSION_TIME      0.5f
 
 #define LAUNCH_VELOCITY     6.0f
 #define LAUNCH_Y_VELOCITY   5.0f
@@ -41,6 +44,37 @@ static struct dynamic_object_type living_sprite_vision = {
     },
 };
 
+static struct dynamic_object_type living_sprite_exploision = {
+    .minkowsi_sum = sphere_minkowski_sum,
+    .bounding_box = sphere_bounding_box,
+    .data = {
+        .sphere = {
+            .radius = 4.0f,
+        }
+    },
+};
+
+void living_sprite_render(void* data, struct render_batch* batch) {
+    struct living_sprite* living_sprite = (struct living_sprite*)data;
+
+    if (living_sprite->explode_timer) {
+        T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
+
+        if (!mtxfp) {
+            return;
+        }
+    
+        mat4x4 mtx;
+        transformSAToMatrix(&living_sprite->transform, mtx, living_sprite_exploision.data.sphere.radius / SCENE_SCALE);
+        t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
+    
+        struct render_batch_element* element = render_batch_add_tmesh(batch, spell_assets_get()->fire_around_mesh, mtxfp, 1, NULL, NULL);
+    
+    } else {
+        render_scene_render_renderable_single_axis(&living_sprite->renderable, batch);
+    }
+}
+
 void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_source* source, struct spell_event_options event_options, struct living_sprite_definition* definition) {
     entity_id entity_id = entity_id_new();
 
@@ -51,7 +85,7 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
 
     renderable_single_axis_init(&living_sprite->renderable, &living_sprite->transform, definition->model_file);
 
-    render_scene_add_renderable(&living_sprite->renderable, 0.5f);
+    render_scene_add(&living_sprite->transform.position, 0.5f, living_sprite_render, living_sprite);
 
     dynamic_object_init(
         entity_id,
@@ -84,19 +118,25 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
     vector2ComplexFromAngle(fixed_time_step * 2.0f, &sprite_max_rotation);
 
     living_sprite->is_attacking = false;
+    living_sprite->is_mine = false;
     living_sprite->definition = definition;
+    living_sprite->explode_timer = 0.0f;
 
     if (event_options.modifiers.windy) {
         vector3Scale(&source->direction, &living_sprite->collider.velocity, LAUNCH_VELOCITY);
         living_sprite->collider.velocity.y = LAUNCH_Y_VELOCITY;
         living_sprite->target = 0;
-    } else if (event_options.modifiers.earthy) {
+    } 
+    
+    if (event_options.modifiers.earthy) {
         living_sprite->target = 0;
+        living_sprite->is_mine = true;
+        living_sprite->vision.scale = 0.5f;
     }
 }
 
 void living_sprite_follow_target(struct living_sprite* living_sprite) {
-    if (!living_sprite->target) {
+    if (!living_sprite->target || living_sprite->is_mine) {
         return;
     }
 
@@ -139,6 +179,17 @@ void living_sprite_follow_target(struct living_sprite* living_sprite) {
 
 void living_sprite_check_targets(struct living_sprite* living_sprite) {
     if (living_sprite->is_attacking) {
+        if (living_sprite->is_mine) {
+            health_apply_contact_damage(&living_sprite->vision, living_sprite->definition->damage, living_sprite->definition->element_type);
+
+            if (living_sprite->explode_timer >= EXPLOSION_TIME) {
+                living_sprite->health.current_health = 0.0f;
+            } else {
+                living_sprite->explode_timer += fixed_time_step;
+            }
+            return;
+        }
+
         if (dynamic_object_is_touching(&living_sprite->collider, living_sprite->target)) {
             health_damage_id(
                 living_sprite->target, 
@@ -159,6 +210,11 @@ void living_sprite_check_targets(struct living_sprite* living_sprite) {
 
     living_sprite->target = new_target->other_object;
     living_sprite->is_attacking = true;
+
+    if (living_sprite->is_mine) {
+        living_sprite->vision.scale = 1.0f;
+        dynamic_object_set_type(&living_sprite->vision, &living_sprite_exploision);
+    }
 }
 
 bool living_sprite_update(struct living_sprite* living_sprite, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
@@ -174,7 +230,7 @@ bool living_sprite_update(struct living_sprite* living_sprite, struct spell_even
 
 void living_sprite_destroy(struct living_sprite* living_sprite) {
     renderable_destroy(&living_sprite->renderable);
-    render_scene_remove(&living_sprite->renderable);
+    render_scene_remove(living_sprite);
     health_destroy(&living_sprite->health);
     collision_scene_remove(&living_sprite->collider);
     collision_scene_remove(&living_sprite->vision);

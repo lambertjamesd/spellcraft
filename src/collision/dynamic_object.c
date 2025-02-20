@@ -34,6 +34,11 @@ void dynamic_object_init(
     dynamic_object_recalc_bb(object);
 }
 
+void dynamic_object_set_type(struct dynamic_object* object, struct dynamic_object_type* type) {
+    object->type = type;
+    dynamic_object_recalc_bb(object);
+}
+
 void dynamic_object_update(struct dynamic_object* object) {
     if (object->is_trigger | object->is_fixed) {
         return;

@@ -77,6 +77,8 @@ void dynamic_object_init(
     struct Vector2* rotation
 );
 
+void dynamic_object_set_type(struct dynamic_object* object, struct dynamic_object_type* type);
+
 void dynamic_object_update(struct dynamic_object* object);
 
 struct contact* dynamic_object_nearest_contact(struct dynamic_object* object);

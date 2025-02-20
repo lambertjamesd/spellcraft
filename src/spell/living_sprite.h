@@ -27,6 +27,8 @@ struct living_sprite {
     entity_id target;
     struct health health;
     bool is_attacking;
+    bool is_mine;
+    float explode_timer;
     struct living_sprite_definition* definition;
 };
 

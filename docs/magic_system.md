@@ -125,17 +125,17 @@ Progress indiciators
 | Fire    | I         | Shoot lightning                  | On kill          | F         |
 | Fire    | I A       | Lightning dash (teleport)        | On dash through  | F         |
 | Fire    | I A E     | Teleport up and down             | On impact        | F         |
-| Fire    | I A E L   | Shoot AEO lightning sprite       | On sprite attack |           |
+| Fire    | I A E L   | Shoot AEO lightning sprite       | On sprite attack | F         |
 | Fire    | I A L     | Shoot lightning sprite           | On sprite attack | F         |
 | Fire    | I E       | Lightning explosion              | On kill          | F         |
-| Fire    | I E L     | AEO lightning sprite             | On sprite attack |           |
+| Fire    | I E L     | AEO lightning sprite             | On sprite attack | F         |
 | Fire    | I L       | Lightning sprite                 | On sprite attack | F         |
 | Fire    | A         | Fire dash                        | On impact        | F         |
 | Fire    | A E       | Rocket jump                      |                  | F         |
-| Fire    | A E L     | Shoot AEO fire sprite            | On sprite attack |           |
+| Fire    | A E L     | Shoot AEO fire sprite            | On sprite attack | F         |
 | Fire    | A L       | Shoots a fire sprite             | On sprite attack | F         |
 | Fire    | E         | AEO explosion                    | On kill          | F         |
-| Fire    | E L       | AEO fire sprite                  | On sprite attack |           |
+| Fire    | E L       | AEO fire sprite                  | On sprite attack | F         |
 | Fire    | L         | Fire sprite                      | On sprite attack | F         |
 | Ice     |           | Shoot ice                        | On ice shatter   |           |
 | Ice     | F         | Shoot water                      | On contact       |           |
