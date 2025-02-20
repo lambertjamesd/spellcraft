@@ -6,6 +6,7 @@ enum element_type {
     ELEMENT_TYPE_FIRE = 1,
     ELEMENT_TYPE_ICE = 2,
     ELEMENT_TYPE_LIGHTNING = 3,
+    ELEMENT_TYPE_WATER = 4,
 };
 
 #endif

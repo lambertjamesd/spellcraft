@@ -14,6 +14,7 @@ static uint8_t is_burst_dash[] = {
     [ELEMENT_TYPE_FIRE] = true,
     [ELEMENT_TYPE_ICE] = false,
     [ELEMENT_TYPE_LIGHTNING] = true,
+    [ELEMENT_TYPE_WATER] = false,
 };
 
 static float push_strength[] = {
@@ -21,6 +22,7 @@ static float push_strength[] = {
     [ELEMENT_TYPE_FIRE] = 10.0f,
     [ELEMENT_TYPE_ICE] = 10.0f,
     [ELEMENT_TYPE_LIGHTNING] = 10.0f,
+    [ELEMENT_TYPE_WATER] = 8.0f,
 };
 
 static float mana_per_second[] = {
@@ -28,6 +30,7 @@ static float mana_per_second[] = {
     [ELEMENT_TYPE_FIRE] = 10.0f,
     [ELEMENT_TYPE_ICE] = 10.0f,
     [ELEMENT_TYPE_LIGHTNING] = 10.0f,
+    [ELEMENT_TYPE_WATER] = 4.0f,
 };
 
 static float burst_mana_amount[] = {
@@ -35,6 +38,7 @@ static float burst_mana_amount[] = {
     [ELEMENT_TYPE_FIRE] = 20.0f,
     [ELEMENT_TYPE_ICE] = 20.0f,
     [ELEMENT_TYPE_LIGHTNING] = 20.0f,
+    [ELEMENT_TYPE_WATER] = 8.0f,
 };
 
 static float contact_damage[] = {
@@ -42,6 +46,7 @@ static float contact_damage[] = {
     [ELEMENT_TYPE_FIRE] = 1.0f,
     [ELEMENT_TYPE_ICE] = 1.0f,
     [ELEMENT_TYPE_LIGHTNING] = 2.0f,
+    [ELEMENT_TYPE_WATER] = 0.0f,
 };
 
 void push_init(struct push* push, struct spell_data_source* source, struct spell_event_options event_options, enum element_type push_mode) {
