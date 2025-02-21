@@ -81,7 +81,7 @@ void living_sprite_render(void* data, struct render_batch* batch) {
                 display_mesh = spell_assets_get()->lightning_around_mesh;
                 break;
             case ELEMENT_TYPE_WATER:
-                display_mesh = spell_assets_get()->lightning_around_mesh;
+                display_mesh = spell_assets_get()->water_around_mesh;
                 break;
             default:
                 display_mesh = spell_assets_get()->fire_around_mesh;
