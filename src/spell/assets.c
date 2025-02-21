@@ -59,6 +59,12 @@ void spell_assets_init() {
 
     // tmesh_cache_release() never called
     assets.fire_sprite = tmesh_cache_load("rom:/meshes/spell/fire_sprite.tmesh");
+
+    // tmesh_cache_release() never called
+    assets.water_around_mesh = tmesh_cache_load("rom:/meshes/spell/water_sphere.tmesh");
+
+    // tmesh_cache_release() never called
+    assets.water_spray_mesh = tmesh_cache_load("rom:/meshes/spell/water_spray.tmesh");
 }
 
 struct spell_assets* spell_assets_get() {

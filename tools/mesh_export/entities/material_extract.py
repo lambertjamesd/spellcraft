@@ -236,6 +236,17 @@ def _determine_tex_from_f3d(tex, uv_scroll, base_path: str) -> material.Tex:
     _determine_tex_axis_from_f3d(tex['S'], result.width, uv_scroll['x'] if uv_scroll and 'x' in uv_scroll else None, result.s)
     _determine_tex_axis_from_f3d(tex['T'], result.height, uv_scroll['y'] if uv_scroll and 'y' in uv_scroll else None, result.t)
 
+    if 'tile_scroll' in tex:
+        s_scroll = tex['tile_scroll'].get('s') or 0
+        t_scroll = tex['tile_scroll'].get('t') or 0
+
+        interval = tex['tile_scroll'].get('interval') or 1
+
+        if s_scroll and interval:
+            result.s.scroll += s_scroll / interval
+        if t_scroll and interval:
+            result.t.scroll += t_scroll / interval
+
     return result
 
 

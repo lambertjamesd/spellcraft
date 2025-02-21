@@ -67,8 +67,28 @@ void living_sprite_render(void* data, struct render_batch* batch) {
         mat4x4 mtx;
         transformSAToMatrix(&living_sprite->transform, mtx, living_sprite_exploision.data.sphere.radius / SCENE_SCALE);
         t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
+
+        struct tmesh* display_mesh;
+
+        switch (living_sprite->definition->element_type) {
+            case ELEMENT_TYPE_FIRE:
+                display_mesh = spell_assets_get()->fire_around_mesh;
+                break;
+            case ELEMENT_TYPE_ICE:
+                display_mesh = spell_assets_get()->fire_around_mesh;
+                break;
+            case ELEMENT_TYPE_LIGHTNING:
+                display_mesh = spell_assets_get()->lightning_around_mesh;
+                break;
+            case ELEMENT_TYPE_WATER:
+                display_mesh = spell_assets_get()->lightning_around_mesh;
+                break;
+            default:
+                display_mesh = spell_assets_get()->fire_around_mesh;
+                break;
+        }
     
-        struct render_batch_element* element = render_batch_add_tmesh(batch, spell_assets_get()->fire_around_mesh, mtxfp, 1, NULL, NULL);
+        struct render_batch_element* element = render_batch_add_tmesh(batch, display_mesh, mtxfp, 1, NULL, NULL);
     
     } else {
         render_scene_render_renderable_single_axis(&living_sprite->renderable, batch);

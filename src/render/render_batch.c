@@ -172,8 +172,8 @@ void render_batch_check_texture_scroll(int tile, struct material_tex* tex) {
         return;
     }
 
-    int w = tex->sprite->width << 2;
-    int h = tex->sprite->height << 2;
+    int w = tex->width << 2;
+    int h = tex->height << 2;
 
     int x_offset = (int)(game_time * tex->scroll_x * w) % w;
     int y_offset = (int)(game_time * tex->scroll_y * h) % h;
@@ -188,7 +188,7 @@ void render_batch_check_texture_scroll(int tile, struct material_tex* tex) {
 
     rdpq_set_tile_size_fx(
         tile, 
-        x_offset + tex->s0, y_offset + tex->s1, 
+        x_offset + tex->s0, y_offset + tex->t0, 
         x_offset + tex->s1, y_offset + tex->t1
     );
 }

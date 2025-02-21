@@ -32,6 +32,9 @@ struct spell_assets {
     struct material* casting_border;
 
     struct tmesh* fire_sprite;
+    
+    struct tmesh* water_around_mesh;
+    struct tmesh* water_spray_mesh;
 };
 
 void spell_assets_init();
