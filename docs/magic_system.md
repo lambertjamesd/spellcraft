@@ -137,22 +137,22 @@ Progress indiciators
 | Fire    | E         | AEO explosion                    | On kill          | F         |
 | Fire    | E L       | AEO fire sprite                  | On sprite attack | F         |
 | Fire    | L         | Fire sprite                      | On sprite attack | F         |
-| Ice     |           | Shoot ice                        | On ice shatter   |           |
+| Ice     |           | Shoot ice                        | On ice shatter   | F         |
 | Ice     | F         | Shoot water                      | On contact       | F         |
-| Ice     | F A       | Water dash                       | On dash through  |           |
-| Ice     | F A E     | AEO water dash                   | On contact       |           |
+| Ice     | F A       | Water dash                       | On dash through  | F M       |
+| Ice     | F A E     | Water jump                       | On contact       | F         |
 | Ice     | F A E L   | Shoot AEO water sprite           | On sprite attack | F         |
 | Ice     | F A L     | Shoot water sprite               | On sprite attack | F         |
 | Ice     | F E       | Water explosion                  | On contact       | F         |
 | Ice     | F E L     | AEO water sprite                 | On sprite attack | F         |
 | Ice     | F L       | Water sprite                     | On sprite attack | F         |
-| Ice     | A         | Ice dash                         | On impact        |           |
-| Ice     | A E       | Spin ice sword or aeo ice dash   | On ice shatter   |           |
-| Ice     | A E L     | Shoot AEO ice sprite             | On ice shatter   |           |
-| Ice     | A L       | Shoots a ice sprite              | On ice shatter   |           |
-| Ice     | E         | AEO explosion                    | On ice shatter   |           |
-| Ice     | E L       | AEO ice sprite                   | On ice shatter   |           |
-| Ice     | L         | Ice sprite                       | On ice shatter   |           |
+| Ice     | A         | Ice dash                         | On impact        | F M       |
+| Ice     | A E       | Hover                            | On ice shatter   |           |
+| Ice     | A E L     | Shoot AEO ice sprite             | On ice shatter   | F         |
+| Ice     | A L       | Shoots a ice sprite              | On ice shatter   | F         |
+| Ice     | E         | AEO explosion                    | On ice shatter   | F         |
+| Ice     | E L       | AEO ice sprite                   | On ice shatter   | F         |
+| Ice     | L         | Ice sprite                       | On ice shatter   | F         |
 | Earth   |           | Shield                           | On parry         |           |
 | Earth   | F         | Fire sheild                      | On parry         |           |
 | Earth   | F I       | Lightning sheild                 | On taking damage |           |

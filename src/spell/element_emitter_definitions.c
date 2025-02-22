@@ -28,6 +28,10 @@ void* ice_push_effect_start(struct Vector3* pos, struct Vector3* direction, floa
     return scale_in_fade_out_new(spell_assets_get()->ice_push_mesh, pos, direction, radius);
 }
 
+void* ice_around_effect_start(struct Vector3* pos, struct Vector3* direction, float radius) {
+    return scale_in_fade_out_new(spell_assets_get()->ice_around_mesh, pos, direction, radius);
+}
+
 static struct lightning_effect_def lightning_def = {
     .spread = 1.1f,
 };
@@ -123,20 +127,18 @@ static struct element_emitter_definition fire_push_definition = {
 static struct element_emitter_definition ice_definition = {
     .element_type = ELEMENT_TYPE_ICE,
     .collider_type = {
-        .minkowsi_sum = sweep_minkowski_sum,
-        .bounding_box = sweep_bounding_box,
+        .minkowsi_sum = cone_minkowski_sum,
+        .bounding_box = cone_bounding_box,
         .data = {
-            .sweep = {
-                .range = {0.707f, 0.707f},
-                .radius = 1.0f,
-                .half_height = 0.0625f,
+            .cone = {
+                .size = {0.3f, 0.3f, 1.0f},
             }
         }
     },
     .scale = 4.0f,
     .mana_per_second = 1.0f,
     .damage_per_frame = 1.0f,
-    .on_effect_start = ice_effect_start,
+    .on_effect_start = ice_push_effect_start,
     .on_effect_update = (on_effect_update)scale_in_fade_out_set_transform,
     .on_effect_stop = (on_effect_stop)scale_in_fade_out_stop,
     .is_effect_running = (is_effect_running)scale_in_fade_out_is_running,
@@ -160,6 +162,27 @@ static struct element_emitter_definition ice_push_definition = {
     .mana_per_second = 1.0f,
     .damage_per_frame = 1.0f,
     .on_effect_start = ice_push_effect_start,
+    .on_effect_update = (on_effect_update)scale_in_fade_out_set_transform,
+    .on_effect_stop = (on_effect_stop)scale_in_fade_out_stop,
+    .is_effect_running = (is_effect_running)scale_in_fade_out_is_running,
+    .effect_free = (effect_free)scale_in_fade_out_free,
+};
+
+static struct element_emitter_definition ice_around_definition = {
+    .element_type = ELEMENT_TYPE_ICE,
+    .collider_type = {
+        .minkowsi_sum = sphere_minkowski_sum,
+        .bounding_box = sphere_bounding_box,
+        .data = {
+            .sphere = {
+                .radius = 1.3f,
+            }
+        }
+    },
+    .scale = 2.0f,
+    .mana_per_second = 1.0f,
+    .damage_per_frame = 1.0f,
+    .on_effect_start = ice_around_effect_start,
     .on_effect_update = (on_effect_update)scale_in_fade_out_set_transform,
     .on_effect_stop = (on_effect_stop)scale_in_fade_out_stop,
     .is_effect_running = (is_effect_running)scale_in_fade_out_is_running,
@@ -271,7 +294,7 @@ static struct element_emitter_definition* fire_definitions[] = {
 static struct element_emitter_definition* ice_definitions[] = {
     [ELEMENT_DEF_INDEX(0, 0, 0)] = &ice_definition,
     // TODO
-    [ELEMENT_DEF_INDEX(0, 0, 1)] = &ice_definition,
+    [ELEMENT_DEF_INDEX(0, 0, 1)] = &ice_around_definition,
     [ELEMENT_DEF_INDEX(0, 1, 0)] = &water_spray_definition,
     [ELEMENT_DEF_INDEX(0, 1, 1)] = &water_around_definition,
 

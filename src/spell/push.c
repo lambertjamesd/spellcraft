@@ -7,51 +7,53 @@
 #include "../util/flags.h"
 #include "assets.h"
 
-int which_one = 0;
-
-static uint8_t is_burst_dash[] = {
-    [ELEMENT_TYPE_NONE] = false,
-    [ELEMENT_TYPE_FIRE] = true,
-    [ELEMENT_TYPE_ICE] = false,
-    [ELEMENT_TYPE_LIGHTNING] = true,
-    [ELEMENT_TYPE_WATER] = false,
-};
-
-static float push_strength[] = {
-    [ELEMENT_TYPE_NONE] = 10.0f,
-    [ELEMENT_TYPE_FIRE] = 10.0f,
-    [ELEMENT_TYPE_ICE] = 10.0f,
-    [ELEMENT_TYPE_LIGHTNING] = 10.0f,
-    [ELEMENT_TYPE_WATER] = 8.0f,
-};
-
-static float mana_per_second[] = {
-    [ELEMENT_TYPE_NONE] = 10.0f,
-    [ELEMENT_TYPE_FIRE] = 10.0f,
-    [ELEMENT_TYPE_ICE] = 10.0f,
-    [ELEMENT_TYPE_LIGHTNING] = 10.0f,
-    [ELEMENT_TYPE_WATER] = 4.0f,
-};
-
-static float burst_mana_amount[] = {
-    [ELEMENT_TYPE_NONE] = 20.0f,
-    [ELEMENT_TYPE_FIRE] = 20.0f,
-    [ELEMENT_TYPE_ICE] = 20.0f,
-    [ELEMENT_TYPE_LIGHTNING] = 20.0f,
-    [ELEMENT_TYPE_WATER] = 8.0f,
-};
-
-static float contact_damage[] = {
-    [ELEMENT_TYPE_NONE] = 0.0f,
-    [ELEMENT_TYPE_FIRE] = 1.0f,
-    [ELEMENT_TYPE_ICE] = 1.0f,
-    [ELEMENT_TYPE_LIGHTNING] = 2.0f,
-    [ELEMENT_TYPE_WATER] = 0.0f,
+static struct push_definition push_definitions[] = {
+    [ELEMENT_TYPE_NONE] = {},
+    [ELEMENT_TYPE_FIRE] = {
+        .push_strength = 4.0f,
+        .mana_per_second = 10.0f,
+        .burst_mana_amount = 20.0f,
+        .contact_damage = 1.0f,
+        .push_acceleration = 60.0f,
+        .is_burst_dash = true,
+        .ignore_gravity = true,
+        .damage_type = DAMAGE_TYPE_FIRE,
+    },
+    [ELEMENT_TYPE_ICE] = {
+        .push_strength = 16.0f,
+        .mana_per_second = 10.0f,
+        .burst_mana_amount = 20.0f,
+        .contact_damage = 1.0f,
+        .push_acceleration = 18.0f,
+        .is_burst_dash = false,
+        .ignore_gravity = false,
+        .damage_type = DAMAGE_TYPE_ICE,
+    },
+    [ELEMENT_TYPE_LIGHTNING] = {
+        .push_strength = 10.0f,
+        .mana_per_second = 10.0f,
+        .burst_mana_amount = 20.0f,
+        .contact_damage = 1.0f,
+        .push_acceleration = 60.0f,
+        .is_burst_dash = true,
+        .ignore_gravity = false,
+        .damage_type = DAMAGE_TYPE_LIGHTING,
+    },
+    [ELEMENT_TYPE_WATER] = {
+        .push_strength = 8.0f,
+        .mana_per_second = 4.0f,
+        .burst_mana_amount = 8.0f,
+        .contact_damage = 1.0f,
+        .push_acceleration = 60.0f,
+        .is_burst_dash = false,
+        .ignore_gravity = false,
+        .damage_type = DAMAGE_TYPE_WATER,
+    },
 };
 
 void push_init(struct push* push, struct spell_data_source* source, struct spell_event_options event_options, enum element_type push_mode) {
     push->data_source = source;
-    push->push_mode = push_mode;
+    push->definition = &push_definitions[push_mode];
 
     spell_data_source_retain(source);
     mana_regulator_init(&push->mana_regulator, event_options.burst_mana, 8.0f);
@@ -63,6 +65,10 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
 
     if (target) {
         target->is_pushed += 1;
+
+        if (push->definition->damage_type == DAMAGE_TYPE_ICE) {
+            target->disable_friction += 1;
+        }
     }
 
     if (target && HAS_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE) && push_mode == ELEMENT_TYPE_LIGHTNING) {
@@ -78,6 +84,10 @@ void push_destroy(struct push* push) {
 
     if (target) {
         target->is_pushed -= 1;
+
+        if (push->definition->damage_type == DAMAGE_TYPE_ICE) {
+            target->disable_friction -= 1;
+        }
     }
 
     if (push->should_restore_tangible && target) {
@@ -97,18 +107,18 @@ void push_destroy(struct push* push) {
 bool push_update(struct push* push, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
 
-    bool is_bursty = is_burst_dash[push->push_mode] || push->data_source->flags.cast_state == SPELL_CAST_STATE_INSTANT;
+    bool is_bursty = push->definition->is_burst_dash || push->data_source->flags.cast_state == SPELL_CAST_STATE_INSTANT;
 
     if (!target) {
         return false;
     }
 
-    if (contact_damage[push->push_mode]) {
-        health_apply_contact_damage(target, contact_damage[push->push_mode], health_determine_damage_type(push->push_mode));
+    if (push->definition->contact_damage) {
+        health_apply_contact_damage(target, push->definition->contact_damage, health_determine_damage_type(push->definition->damage_type));
     }
 
     if (is_bursty && push->mana_regulator.burst_mana_rate == 0.0f) {
-        float burst_mana = mana_pool_request(&spell_sources->mana_pool, burst_mana_amount[push->push_mode]);
+        float burst_mana = mana_pool_request(&spell_sources->mana_pool, push->definition->burst_mana_amount);
 
         if (!burst_mana) {
             return false;
@@ -120,16 +130,19 @@ bool push_update(struct push* push, struct spell_event_listener* event_listener,
     float power_ratio = mana_regulator_request(
         &push->mana_regulator, 
         is_bursty ? NULL : &spell_sources->mana_pool, 
-        mana_per_second[push->push_mode] * scaled_time_step
-    ) * scaled_time_step_inv * (1.0f / mana_per_second[push->push_mode]);
+        push->definition->mana_per_second * scaled_time_step
+    ) * scaled_time_step_inv * (1.0f / push->definition->mana_per_second);
 
     if (power_ratio == 0.0f) {
         return false;
     }
 
     struct Vector3 targetVelocity;
-    vector3Scale(&push->data_source->direction, &targetVelocity, push_strength[push->push_mode] * power_ratio);
-    vector3MoveTowards(&target->velocity, &targetVelocity, scaled_time_step * 60.0f * power_ratio, &target->velocity);
+    vector3Scale(&push->data_source->direction, &targetVelocity, push->definition->push_strength * power_ratio);
+    if (!push->definition->ignore_gravity) {
+        targetVelocity.y = target->velocity.y;
+    }
+    vector3MoveTowards(&target->velocity, &targetVelocity, scaled_time_step * push->definition->push_acceleration * power_ratio, &target->velocity);
 
     if (push->dash_trail_right) {
         dash_trail_move(push->dash_trail_right, target->position);

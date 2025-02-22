@@ -82,7 +82,7 @@ void spell_slot_init(
                 } else {
                     // TODO check for earth and do pause ability
                     slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
-                    push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_FIRE);
+                    push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_ICE);
                 }
             } else if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
