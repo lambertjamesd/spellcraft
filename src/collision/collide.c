@@ -66,7 +66,13 @@ bool collide_object_to_triangle(struct mesh_index* index, void* data, int triang
         collide_data->object, 
         dynamic_object_minkowski_sum, 
         &result)) {
-        correct_overlap(collide_data->object, &result, -1.0f, collide_data->object->type->friction, collide_data->object->type->bounce);
+        correct_overlap(
+            collide_data->object, 
+            &result, 
+            -1.0f, 
+            collide_data->object->disable_friction ? 0.0f : collide_data->object->type->friction, 
+            collide_data->object->type->bounce
+        );
         collide_add_contact(collide_data->object, &result);
         return true;
     }
@@ -140,8 +146,8 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;
 
     // TODO determine push 
-    correct_overlap(b, &result, -0.5f, friction, bounce);
-    correct_overlap(a, &result, 0.5f, friction, bounce);
+    correct_overlap(b, &result, -0.5f, b->disable_friction ? 0.0f : friction, bounce);
+    correct_overlap(a, &result, 0.5f, a->disable_friction ? 0.0f : friction, bounce);
 
     struct contact* contact = collision_scene_new_contact();
 

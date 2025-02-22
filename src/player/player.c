@@ -70,7 +70,7 @@ void player_get_move_basis(struct Transform* transform, struct Vector3* forward,
     vector3Normalize(right, right);
 }
 
-struct animation_clip* player_determine_animation(struct player* player, float* playback_speed, bool* repeat) {
+struct animation_clip* player_determine_animation(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
     for (int i = 0; i < 4; i += 1) {
         if (player->player_spell_sources[i].flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
             *playback_speed = 1.0f;
@@ -82,6 +82,18 @@ struct animation_clip* player_determine_animation(struct player* player, float* 
     struct Vector3 horizontal_velocity = player->collision.velocity;
     horizontal_velocity.y = 0.0f;
     float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
+
+    if (player->collision.is_pushed) {
+        if (ground_normal) {
+            *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
+            *repeat = true;
+            return player->animations.dash;
+        } else {
+            *playback_speed = 1.0f;
+            *repeat = true;
+            return player->animations.air_dash;
+        }
+    }
 
     if (speed < 0.2f) {
         *playback_speed = 1.0f;
@@ -179,6 +191,10 @@ void player_handle_ground_movement(struct player* player, struct Vector3* ground
         return;
     }
 
+    if (player->collision.is_pushed) {
+        return;
+    }
+
     if (vector3MagSqrd(target_direction) < 0.001f) {
         player->collision.velocity = gZeroVec;
     } else {
@@ -197,12 +213,16 @@ void player_handle_ground_movement(struct player* player, struct Vector3* ground
 }
 
 void player_handle_air_movement(struct player* player, struct Vector3* target_direction) {
+    if (player->collision.is_pushed) {
+        return;
+    }
+
     float prev_y = player->collision.velocity.y;
     vector3Scale(target_direction, &player->collision.velocity, PLAYER_MAX_SPEED);
     player->collision.velocity.y = prev_y;
 }
 
-void player_handle_movement(struct player* player, joypad_inputs_t* input) {
+void player_handle_movement(struct player* player, joypad_inputs_t* input, struct Vector3* ground_normal) {
     struct Vector3 right;
     struct Vector3 forward;
 
@@ -223,8 +243,6 @@ void player_handle_movement(struct player* player, joypad_inputs_t* input) {
     vector3Scale(&right, &target_direction, direction.x);
     vector3AddScaled(&target_direction, &forward, direction.y, &target_direction);
 
-    struct Vector3* ground_normal = player_get_ground(player);
-
     if (ground_normal) {
         player_handle_ground_movement(player, ground_normal, &target_direction);
     } else {
@@ -239,10 +257,11 @@ void player_handle_movement(struct player* player, joypad_inputs_t* input) {
 }
 
 void player_update(struct player* player) {
+    struct Vector3* ground_normal = player_get_ground(player);
 
     float playback_speed = 1.0f;
     bool repeat;
-    struct animation_clip* next_clip = player_determine_animation(player, &playback_speed, &repeat);
+    struct animation_clip* next_clip = player_determine_animation(player, ground_normal, &playback_speed, &repeat);
 
     if (player->cutscene_actor.state == ACTOR_STATE_IDLE) {
         player->cutscene_actor.animate_speed = playback_speed;
@@ -258,7 +277,7 @@ void player_update(struct player* player) {
     joypad_inputs_t input = joypad_get_inputs(0);
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
-    player_handle_movement(player, &input);
+    player_handle_movement(player, &input, ground_normal);
 
     struct Vector3 castDirection;
     vector2ToLookDir(&player->transform.rotation, &castDirection);
@@ -384,6 +403,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->animations.run = animation_set_find_clip(player->cutscene_actor.animation_set, "run");
     player->animations.walk = animation_set_find_clip(player->cutscene_actor.animation_set, "walk");
     player->animations.dash = animation_set_find_clip(player->cutscene_actor.animation_set, "dash");
+    player->animations.air_dash = animation_set_find_clip(player->cutscene_actor.animation_set, "air_dash");
 
     player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
     player->assets.staffs[1] = NULL;

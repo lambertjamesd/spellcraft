@@ -39,6 +39,8 @@ void spell_assets_init() {
     assets.fire_push_mesh = tmesh_cache_load("rom:/meshes/spell/fire.tmesh");
 
     // tmesh_cache_release() never called
+    assets.ice_around_mesh = tmesh_cache_load("rom:/meshes/spell/ice_sphere.tmesh");
+    // tmesh_cache_release() never called
     assets.ice_sweep_mesh = tmesh_cache_load("rom:/meshes/spell/ice_sweep.tmesh");
     // tmesh_cache_release() never called
     assets.ice_push_mesh = tmesh_cache_load("rom:/meshes/spell/ice_push.tmesh");

@@ -63,6 +63,7 @@ struct dynamic_object {
     uint16_t is_out_of_bounds: 1;
     uint16_t is_pushed: 3;
     uint16_t is_jumping: 3;
+    uint16_t disable_friction: 3;
     uint16_t collision_layers;
     uint16_t collision_group;
     struct contact* active_contacts;

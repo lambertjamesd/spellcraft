@@ -26,6 +26,7 @@ struct player_animations {
     struct animation_clip* dash;
     struct animation_clip* attack;
     struct animation_clip* attack_hold;
+    struct animation_clip* air_dash;
 };
 
 struct player_definition {

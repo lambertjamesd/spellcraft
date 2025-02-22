@@ -80,9 +80,13 @@ void spell_slot_init(
                         push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_WATER);
                     }
                 } else {
-                    // TODO check for earth and do pause ability
-                    slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
-                    push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_FIRE);
+                    if (modifier_flags.earthy) {
+                        slot->type = SPELL_EXEC_SLOT_TYPE_STASIS;
+                        stasis_init(&slot->data.stasis, input, event_options);
+                    } else {
+                        slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
+                        push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_ICE);
+                    }
                 }
             } else if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
@@ -154,6 +158,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_TELEPORT:
             teleport_destroy(&slot->data.teleport);
             break;
+        case SPELL_EXEC_SLOT_TYPE_STASIS:
+            stasis_destroy(&slot->data.stasis);
+            break;
         default:
             break;
     }
@@ -218,6 +225,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_TELEPORT:
             isActive = teleport_update(&slot->data.teleport, &event_listener, &exec->spell_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_STASIS:
+            isActive = stasis_update(&slot->data.stasis, &event_listener, &exec->spell_sources);
             break;
         default:
             break;

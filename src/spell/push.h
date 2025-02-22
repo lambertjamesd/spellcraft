@@ -1,6 +1,7 @@
 #ifndef __SPELL_PUSH_H__
 #define __SPELL_PUSH_H__
 
+#include <stdbool.h>
 #include "spell_sources.h"
 #include "mana_regulator.h"
 #include "spell_event.h"
@@ -8,12 +9,23 @@
 #include "mana_regulator.h"
 #include "elements.h"
 
+struct push_definition {
+    float push_strength;
+    float mana_per_second;
+    float burst_mana_amount;
+    float contact_damage;
+    float push_acceleration;
+    bool is_burst_dash;
+    bool ignore_gravity;
+    uint8_t damage_type;
+};
+
 struct push {
     struct spell_data_source* data_source;
     struct mana_regulator mana_regulator;
     struct dash_trail* dash_trail_left;
     struct dash_trail* dash_trail_right;
-    uint8_t push_mode;
+    struct push_definition* definition;
     uint8_t should_restore_tangible;
 };
 
