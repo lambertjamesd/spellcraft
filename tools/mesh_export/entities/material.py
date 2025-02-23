@@ -797,17 +797,16 @@ def _parse_tex_axis(json_data, image_size, into: TexAxis, key_path):
     into.min = 0
     into.max = image_size << 2
     into.shift = _optional_number(json_data, 'shift', key_path, into.shift)
-    repeats = _optional_number(json_data, 'repeats', key_path, 2048)
+    into.mirror = _optional_boolean(json_data, 'mirror', key_path, False)
+    into.scroll = _optional_number(json_data, 'scroll', key_path, into.scroll)
 
+    repeats = _optional_number(json_data, 'repeats', key_path, 2048)
     if repeats:
-        into.mask = log_pow_2(image_size * repeats)
+        into.mask = log_pow_2(image_size * (2 if into.mirror else 1))
         into.clamp = False
     else:
         into.mask = log_pow_2(image_size)
         into.clamp = True
-
-    into.mirror = _optional_boolean(json_data, 'mirror', key_path, False)
-    into.scroll = _optional_number(json_data, 'scroll', key_path, into.scroll)
 
 def _resolve_tex(filename: str, relative_to: str) -> str:
     combined_path = os.path.join(os.path.dirname(relative_to), filename)
@@ -832,6 +831,11 @@ def _parse_tex(json_data, key_path, relative_to):
 
     if isinstance(json_data, str):
         result.set_filename(_resolve_tex(json_data, relative_to))
+
+        result.s.max = result.width << 2
+        result.s.mask = log_pow_2(result.width)
+        result.t.max = result.height << 2
+        result.t.mask = log_pow_2(result.height)
     else:
         if not 'filename' in json_data:
             raise Exception(f"{key_path}.filename must be defined")
