@@ -38,6 +38,6 @@ struct overworld {
     struct overworld_tile_def* tile_definitions;
 };
 
-void overworld_render(struct overworld* overworld, mat4x4* view_proj_matrix, struct frame_memory_pool* pool);
+void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, struct frame_memory_pool* pool);
 
 #endif
