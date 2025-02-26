@@ -44,6 +44,8 @@ make
 
 ## TODO
 
+- open world rendering
+-  subdivide mesh into pieces
 - figure out if player model could be rendered more effeciently
 - fix globals.dat build issues
 - camera logic
