@@ -14,12 +14,12 @@ from . import material_extract
 class mesh_data():
     def __init__(self, mat: bpy.types.Material) -> None:
         self.mat: bpy.types.Material = mat
-        self.vertices = []
-        self.normals = []
-        self.color = []
-        self.uv = []
-        self.indices = []
-        self.bone_indices = []
+        self.vertices: list = []
+        self.normals: list = []
+        self.color: list = []
+        self.uv: list = []
+        self.indices: list[int] = []
+        self.bone_indices: list = []
 
     def copy(self):
         result = mesh_data(self.mat)

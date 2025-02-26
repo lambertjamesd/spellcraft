@@ -33,6 +33,11 @@ void test_run_raw(test_callback callback, const char* name) {
     test_call_deferred();
 }
 
+void test_fatal_raw(struct test_context* t, const char* message, const char* location) {
+    fprintf(stderr, "FATAL %s at %s\n", message, location);
+    longjmp(t->jump, 1);
+}
+
 void test_eqi_raw(struct test_context* t, int expected, int actual, const char* location) {
     if (expected == actual) {
         return;

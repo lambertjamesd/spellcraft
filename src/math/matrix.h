@@ -1,6 +1,7 @@
 #ifndef __MATRIX_H__
 #define __MATRIX_H__
 
+#include <stdbool.h>
 #include "vector4.h"
 #include "vector3.h"
 
@@ -22,5 +23,7 @@ void matrixFromScale(float matrix[4][4], float scale);
 
 void matrixApplyPosition(float matrix[4][4], struct Vector3* position);
 void matrixApplyScale(float matrix[4][4], float scale);
+
+bool matrixInv(float input[4][4], float output[4][4]);
 
 #endif

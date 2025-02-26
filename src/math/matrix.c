@@ -131,3 +131,46 @@ void matrixMul(float a[4][4], float b[4][4], float output[4][4]) {
         }
     }
 }
+
+bool matrixInv(float input[4][4], float output[4][4]) {    
+    for (int y = 0; y < 4; y += 1) {
+        for (int x = 0; x < 4; x += 1) {
+            float element = 0.0f;
+
+            int x0 = (x + 1) & 0x3;
+            int x1 = (x + 2) & 0x3;
+            int x2 = (x + 3) & 0x3;
+            int y0 = (y + 1) & 0x3;
+            int y1 = (y + 2) & 0x3;
+            int y2 = (y + 3) & 0x3;
+
+            for (int i = 0; i < 3; i += 1) {
+                element += input[y0][x0] * input[y1][x1] * input[y2][x2] -
+                    input[y2][x0] * input[y1][x1] * input[y0][x2];
+
+                int tmp = x0;
+                x0 = x2;
+                x2 = x1;
+                x1 = tmp;
+            }
+
+            // transpose matrix and negate every other cell
+            output[x][y] = ((x ^ y) & 0x1) ? -element : element;
+        }
+    }
+
+    float det = input[0][0] * output[0][0] + input[0][1] * output[1][0] + input[0][2] * output[2][0] + input[0][3] * output[3][0];
+
+    if (det == 0.0f)
+        return false;
+
+    det = 1.0 / det;
+
+    for (int y = 0; y < 4; y += 1) {
+        for (int x = 0; x < 4; x += 1) {
+            output[y][x] = output[y][x] * det;
+        }
+    }
+
+    return true;
+}

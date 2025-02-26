@@ -14,6 +14,7 @@ void test_ring_malloc(struct test_context* t);
 void test_training_dummy(struct test_context* t);
 void test_sweep_minkowski_sum(struct test_context* t);
 void test_sweep_bounding_box(struct test_context* t);
+void test_matrix_inverse(struct test_context* t);
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(500)
 
@@ -48,6 +49,8 @@ int main() {
 
     test_run(test_sweep_minkowski_sum);
     test_run(test_sweep_bounding_box);
+
+    test_run(test_matrix_inverse);
 
     test_report_failures();
 

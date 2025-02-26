@@ -31,7 +31,7 @@ void setup() {
     init_engine();
     savefile_new();
 
-    current_scene = scene_load("rom:/scenes/large_terrain_test.scene");
+    current_scene = scene_load("rom:/scenes/desert.scene");
 }
 
 static struct frame_memory_pool frame_memory_pools[2];
