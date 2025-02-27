@@ -29,7 +29,7 @@ struct overworld {
     uint16_t tile_x, tile_y;
     uint16_t tile_x_mask;
     struct Vector2 min;
-    struct Vector2 inv_tile_size;
+    float inv_tile_size;
 
     // tile locations modulo wrap to share slots
     struct overworld_tile* loaded_tiles[4][4];
