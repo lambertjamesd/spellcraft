@@ -27,7 +27,10 @@ int overworld_find_next_edge(struct Vector2 transformed_points[8], int current_i
         }
 
         if (result == -1) {
-            result = next_index;
+            if (vector2DistSqr(&transformed_points[current_index], &transformed_points[next_index]) > 0.00001f) {
+                result = next_index;
+            }
+
             continue;
         }
 
@@ -36,7 +39,7 @@ int overworld_find_next_edge(struct Vector2 transformed_points[8], int current_i
         vector2Sub(&transformed_points[next_index], &transformed_points[current_index], &edge_a);
         vector2Sub(&transformed_points[result], &transformed_points[current_index], &edge_b);
 
-        if (vector2Cross(&edge_a, &edge_b) > 0.0f) {
+        if (vector2Cross(&edge_a, &edge_b) > 0.00001f) {
             result = next_index;
         }
     }
@@ -66,7 +69,7 @@ int overworld_create_top_view(mat4x4 view_proj_matrix, struct Vector2* loop) {
         float inv_w = 1.0f / transformed_point.w;
         
         transformed_points[i].x = transformed_point.x * inv_w;
-        transformed_points[i].y = transformed_point.y * inv_w;
+        transformed_points[i].y = transformed_point.z * inv_w;
 
         if (transformed_points[i].y < transformed_points[current_index].y) {
             current_index = i;

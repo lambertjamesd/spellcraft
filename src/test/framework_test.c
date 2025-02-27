@@ -101,6 +101,21 @@ void test_near_equalf_raw(struct test_context* t, float expected, float actual, 
     longjmp(t->jump, 1);
 }
 
+void test_vec2_equal_raw(struct test_context* t, struct Vector2* expected, struct Vector2* actual, const char* location) {
+    if (vector2DistSqr(expected, actual) < 0.000001f) {
+        return;
+    }
+
+    fprintf(
+        stderr, 
+        "ASSERTION FAILED expected <%f, %f> ~= <%f, %f> at %s\n", 
+        expected->x, expected->y,
+        actual->x, actual->y,
+        location
+    );
+    longjmp(t->jump, 1);
+}
+
 void test_report_failures() {
     fprintf(stderr, "%d/%d tests passed\n", total_test_count - failed_test_count, total_test_count);
 
