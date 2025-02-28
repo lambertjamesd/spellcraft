@@ -1,6 +1,7 @@
-#include "overworld.h"
+#include "overworld_render.h"
 
 #include "../math/mathf.h"
+#include "overworld_private.h"
 
 static int edge_deltas[] = {0x1, 0x2, 0x4};
 
@@ -49,7 +50,7 @@ int overworld_find_next_edge(struct Vector2 transformed_points[8], int current_i
     return result;
 }
 
-int overworld_create_top_view(struct overworld* overworld, mat4x4 view_proj_matrix, struct Vector2* loop) {
+int overworld_create_top_view(struct overworld* overworld, mat4x4 view_proj_matrix, struct Vector3* camera_position, struct Vector2* loop) {
     mat4x4 view_inv;
 
     matrixInv(view_proj_matrix, view_inv);
@@ -70,8 +71,8 @@ int overworld_create_top_view(struct overworld* overworld, mat4x4 view_proj_matr
 
         float inv_w = 1.0f / transformed_point.w;
         
-        transformed_points[i].x = (transformed_point.x * inv_w - overworld->min.x) * overworld->inv_tile_size;
-        transformed_points[i].y = (transformed_point.z * inv_w - overworld->min.y) * overworld->inv_tile_size;
+        transformed_points[i].x = (transformed_point.x * inv_w + camera_position->x - overworld->min.x) * overworld->inv_tile_size;
+        transformed_points[i].y = (transformed_point.z * inv_w + camera_position->z - overworld->min.y) * overworld->inv_tile_size;
 
         if (transformed_points[i].y < transformed_points[current_index].y) {
             current_index = i;
@@ -102,16 +103,6 @@ int overworld_create_top_view(struct overworld* overworld, mat4x4 view_proj_matr
     return result;
 }
 
-struct overworld_step_state {
-    struct Vector2 loop[8];
-    int loop_count;
-    int left;
-    int right;
-    float current_y;
-    float min_x;
-    float max_x;
-};
-
 #define PREV_INDEX(state, current) ((current) == 0 ? state->loop_count - 1 : (current) - 1)
 #define NEXT_INDEX(state, current) ((current) + 1 == state->loop_count ? 0 : (current) + 1)
 
@@ -120,7 +111,7 @@ float overworld_interpolate_x(struct Vector2* p0, struct Vector2* p1, float midy
     return (p1->x - p0->x) * t + p0->x;
 }
 
-bool overworld_step(struct overworld* overworld, struct overworld_step_state* state) {
+struct overworld_tile_slice overworld_step(struct overworld* overworld, struct overworld_step_state* state) {
     float min_x = state->min_x;
     float max_x = state->max_x;
 
@@ -178,7 +169,9 @@ bool overworld_step(struct overworld* overworld, struct overworld_step_state* st
     state->current_y = next_y;
 
     if (y_int < 0 || y_int >= overworld->tile_y) {
-        return result;
+        return (struct overworld_tile_slice){
+            .has_more = result && y_int < overworld->tile_y
+        };
     }
 
     int min_int = (int)floorf(min_x);
@@ -193,25 +186,17 @@ bool overworld_step(struct overworld* overworld, struct overworld_step_state* st
         max_int = overworld->tile_x - 1;
     }
 
-    for (int x = min_int; x < max_int; x += 1) {
-        struct overworld_tile_render_block* block = &overworld->render_blocks[x & 0x3][y_int & 0x3];
-
-        if (!block->render_block || block->x != x || block->y != y_int) {
-            continue;
-        }
-
-        // RENDER block
-        // create matrix
-        // run block
-        // pop matrix
-    }
-    
-    return result;
+    return (struct overworld_tile_slice){
+        .min_x = min_int,
+        .max_x = max_int,
+        .y = y_int,
+        .has_more = result,
+    };
 }
 
-void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, struct frame_memory_pool* pool) {
+void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, struct Vector3* camera_position, struct frame_memory_pool* pool) {
     struct overworld_step_state state;
-    state.loop_count = overworld_create_top_view(overworld, view_proj_matrix, state.loop);
+    state.loop_count = overworld_create_top_view(overworld, view_proj_matrix, camera_position, state.loop);
     state.left = 0;
     state.right = 0;
     state.current_y = state.loop[0].y;
@@ -219,7 +204,39 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
     state.max_x = state.loop[0].x;
 
     for (int i = 0; i < 4; i += 1) {
-        if (!overworld_step(overworld, &state)) {
+        struct overworld_tile_slice next = overworld_step(overworld, &state);
+
+        for (int x = next.min_x; x < next.max_x; x += 1) {
+            struct overworld_tile_render_block* block = &overworld->render_blocks[x & 0x3][next.y & 0x3];
+
+            if (!block->render_block || block->x != x || block->y != next.y) {
+                continue;
+            }
+
+            T3DMat4FP* tile_position = frame_malloc(pool, sizeof(T3DMat4FP));
+
+            if (!tile_position) {
+                return;
+            }
+
+            tile_position = UncachedAddr(tile_position);
+
+            T3DMat4 mtx;
+            t3d_mat4_translate(
+                &mtx, 
+                x * overworld->tile_size + overworld->min.x - camera_position->x,
+                -camera_position->y,
+                next.y * overworld->tile_size + overworld->min.y - camera_position->z
+            );
+
+            t3d_mat4_to_fixed_3x4(tile_position, &mtx);
+
+            t3d_matrix_push(tile_position);
+            rspq_block_run(block->render_block);
+            t3d_matrix_pop(1);
+        }
+        
+        if (!next.has_more) {
             break;
         }
     }
