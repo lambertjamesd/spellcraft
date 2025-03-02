@@ -2,13 +2,14 @@
 #define _OVERWORLD_OVERWORLD_
 
 #include <stdint.h>
+#include <stdio.h>
 #include "../math/vector2.h"
 #include "../render/tmesh.h"
 
 #include <t3d/t3d.h>
 
 struct overworld_tile_def {
-    uint32_t rom_location;
+    uint32_t file_offset;
 };
 
 struct overworld_tile {
@@ -27,19 +28,24 @@ struct overworld_tile_render_block {
     uint16_t y;
 };
 
+#define NO_TILE_COORD   0xFFFF
+
 struct overworld {
     uint16_t tile_x, tile_y;
-    uint16_t tile_x_mask;
     struct Vector2 min;
     float inv_tile_size;
     float tile_size;
+    struct overworld_tile_def* tile_definitions;
+    FILE* file;
 
     // tile locations modulo wrap to share slots
     struct overworld_tile* loaded_tiles[4][4];
     struct overworld_tile_render_block render_blocks[4][4];
-    struct overworld_tile* exit_queue[2];
 
-    struct overworld_tile_def* tile_definitions;
+    struct { uint16_t x; uint16_t y; } load_next;
 };
+
+struct overworld* overworld_load(const char* filename);
+void overworld_free(struct overworld* overworld);
 
 #endif

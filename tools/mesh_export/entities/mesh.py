@@ -11,6 +11,16 @@ import math
 from . import armature
 from . import material_extract
 
+def interpolate_vertex(a, b, lerp):
+    lerp_inv = 1 - lerp
+    return (
+        a[0] * lerp_inv + b[0] * lerp,
+        a[1] * lerp_inv + b[1] * lerp,
+        a[2] * lerp_inv + b[2] * lerp,
+        a[3] * lerp_inv + b[3] * lerp,
+        a[4] # just copy over the first bone
+    )
+
 class mesh_data():
     def __init__(self, mat: bpy.types.Material) -> None:
         self.mat: bpy.types.Material = mat
@@ -18,8 +28,9 @@ class mesh_data():
         self.normals: list = []
         self.color: list = []
         self.uv: list = []
-        self.indices: list[int] = []
         self.bone_indices: list = []
+        
+        self.indices: list[int] = []
 
     def copy(self):
         result = mesh_data(self.mat)
@@ -32,6 +43,16 @@ class mesh_data():
         result.bone_indices = self.bone_indices.copy()
 
         return result
+
+    def append_vertex(self, vertex_data):
+        self.vertices.append(vertex_data[0])
+        self.normals.append(vertex_data[1])
+        self.color.append(vertex_data[2])
+        self.uv.append(vertex_data[3])
+        self.bone_indices.append(vertex_data[4])
+
+    def get_vertex(self, index):
+        return (self.vertices[index], self.normals[index], self.color[index], self.uv[index], self.bone_indices[index])
 
     def append_mesh(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix, armature: armature.ArmatureData | None):
         triangles = []

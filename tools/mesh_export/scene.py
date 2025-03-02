@@ -111,6 +111,15 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, file):
         settings.default_material = entities.material_extract.load_material_with_name(mesh[0], mesh[1].mat)
 
         entities.tiny3d_mesh_writer.write_mesh([mesh], None, [], settings, file)
+
+def find_static_blacklist():
+    result = set()
+
+    for collection in bpy.data.collections:
+        if collection.name.startswith('lod_'):
+            result = result.union(collection.all_objects)
+
+    return result
     
 def process_scene():
     input_filename = sys.argv[1]
@@ -136,6 +145,8 @@ def process_scene():
 
     context = parse.struct_serialize.SerializeContext(enums)
 
+    object_blacklist = find_static_blacklist()
+
     for obj in bpy.data.objects:
         if 'loading_zone' in obj:
             scene.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
@@ -153,6 +164,9 @@ def process_scene():
             continue
 
         if obj.name.startswith('fast64_f3d_material_library_'):
+            continue
+
+        if obj in object_blacklist:
             continue
 
         final_transform = base_transform @ obj.matrix_world

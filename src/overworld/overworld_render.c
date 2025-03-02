@@ -210,6 +210,8 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
             struct overworld_tile_render_block* block = &overworld->render_blocks[x & 0x3][next.y & 0x3];
 
             if (!block->render_block || block->x != x || block->y != next.y) {
+                overworld->load_next.x = x;
+                overworld->load_next.y = next.y;
                 continue;
             }
 
