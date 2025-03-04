@@ -13,19 +13,22 @@ struct overworld_tile_def {
 };
 
 struct overworld_tile {
-    struct tmesh* terrain_meshes;
+    struct tmesh terrain_mesh;
     struct tmesh** detail_meshes;
     uint16_t terrain_mesh_count;
     uint16_t detail_meshes_count;
     uint16_t detail_count;
     T3DMat4FP* detail_matrices;
-    rspq_block_t* render_block;
+    float starting_y;
+    float scale_y;
 };
 
 struct overworld_tile_render_block {
     rspq_block_t* render_block;
     uint16_t x;
     uint16_t y;
+    float starting_y;
+    float scale_y;
 };
 
 #define NO_TILE_COORD   0xFFFF

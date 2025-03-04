@@ -4,37 +4,14 @@
 
 struct overworld_tile* overworld_tile_load(FILE* file) {
     struct overworld_tile* result = malloc(sizeof(struct overworld_tile));
-    fread(&result->terrain_mesh_count, 2, 1, file);
-
-    if (result->terrain_mesh_count) {
-        result->terrain_meshes = malloc(sizeof(struct tmesh) * result->terrain_mesh_count);
-    } else {
-        result->terrain_meshes = NULL;
-    }
-
-    for (int i = 0; i < result->terrain_mesh_count; i += 1) {
-        tmesh_load(&result->terrain_meshes[i], file);
-    }
-
-    rspq_block_begin();
-
-    for (int i = 0; i < result->terrain_mesh_count; i += 1) {
-        struct tmesh* mesh = &result->terrain_meshes[i];
-
-        rspq_block_run(mesh->material->block);
-        rspq_block_run(mesh->block);
-    }
-
-    result->render_block = rspq_block_end();
-
+    tmesh_load(&result->terrain_mesh, file);
+    fread(&result->starting_y, sizeof(float), 1, file);
+    fread(&result->scale_y, sizeof(float), 1, file);
     return result;
 }
 
 void overworld_tile_free(struct overworld_tile* tile) {
-    for (int i = 0; i < tile->terrain_mesh_count; i += 1) {
-        tmesh_release(&tile->terrain_meshes[i]);
-    }
-    free(tile->terrain_meshes);
+    tmesh_release(&tile->terrain_mesh);
     free(tile);
 }
 
@@ -50,6 +27,8 @@ struct overworld* overworld_load(const char* filename) {
     fread(&result->tile_size, sizeof(float), 1, result->file);
     result->inv_tile_size = 1.0f / result->tile_size;
     result->tile_definitions = malloc(result->tile_x * result->tile_y * sizeof(struct overworld_tile_def));
+
+    fread(result->tile_definitions, sizeof(struct overworld_tile_def), result->tile_x * result->tile_y, result->file);
     
     result->load_next.x = NO_TILE_COORD;
     result->load_next.y = NO_TILE_COORD;
@@ -86,7 +65,7 @@ void overworld_check_loaded_tiles(struct overworld* overworld) {
     fseek(overworld->file, overworld->tile_definitions[overworld->load_next.x + overworld->load_next.y * overworld->tile_x].file_offset, SEEK_SET);
     overworld->loaded_tiles[slot_x][slot_y] = overworld_tile_load(overworld->file);
     overworld->render_blocks[slot_x][slot_y] = (struct overworld_tile_render_block){
-        .render_block = overworld->loaded_tiles[slot_x][slot_y]->render_block,
+        .render_block = overworld->loaded_tiles[slot_x][slot_y]->terrain_mesh.block,
         .x = overworld->load_next.x,
         .y = overworld->load_next.y,
     };

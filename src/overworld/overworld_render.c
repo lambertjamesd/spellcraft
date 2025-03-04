@@ -227,9 +227,11 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
             t3d_mat4_translate(
                 &mtx, 
                 x * overworld->tile_size + overworld->min.x - camera_position->x,
-                -camera_position->y,
+                block->starting_y - camera_position->y,
                 next.y * overworld->tile_size + overworld->min.y - camera_position->z
             );
+
+            mtx.m[1][1] = block->scale_y;
 
             t3d_mat4_to_fixed_3x4(tile_position, &mtx);
 

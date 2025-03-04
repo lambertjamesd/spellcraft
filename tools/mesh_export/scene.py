@@ -13,6 +13,7 @@ import entities.tiny3d_mesh_writer
 import entities.mesh_optimizer
 import entities.material_extract
 import entities.entry_point
+import entities.overworld
 import parse.struct_parse
 import parse.struct_serialize
 import cutscene.expresion_generator
@@ -120,6 +121,23 @@ def find_static_blacklist():
             result = result.union(collection.all_objects)
 
     return result
+
+def check_for_overworld(base_transform: mathutils.Matrix):
+    settings = entities.export_settings.ExportSettings()
+
+    if not ('lod_1' in  bpy.data.collections):
+        return
+    
+    collection: bpy.types.Collection = bpy.data.collections["lod_1"]
+
+    mesh_list = entities.mesh.mesh_list(base_transform)
+
+    for obj in collection.all_objects:
+        mesh_list.append(obj)
+
+    subdivisions = collection['subdivisions'] if 'subdivisions' in collection else 8
+
+    entities.overworld.generate_overworld(mesh_list, subdivisions, settings)
     
 def process_scene():
     input_filename = sys.argv[1]
@@ -146,6 +164,8 @@ def process_scene():
     context = parse.struct_serialize.SerializeContext(enums)
 
     object_blacklist = find_static_blacklist()
+
+    check_for_overworld(base_transform)
 
     for obj in bpy.data.objects:
         if 'loading_zone' in obj:

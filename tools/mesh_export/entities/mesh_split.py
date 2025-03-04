@@ -19,9 +19,10 @@ def split_on_side(input: mesh.mesh_data, into_mesh: mesh.mesh_data, on_side: str
             if point_index in index_mapping:
                 new_index_loop.append(index_mapping[point_index])
             else:
-                new_index_loop = len(into_mesh.vertices)
-                index_mapping[point_index] = new_index_loop
+                next_vertex_index = len(into_mesh.vertices)
+                index_mapping[point_index] = next_vertex_index
                 into_mesh.append_vertex(input.get_vertex(point_index))
+                new_index_loop.append(next_vertex_index)
 
         next_side = index_sides[(i + 1) % 3]
 
@@ -32,8 +33,9 @@ def split_on_side(input: mesh.mesh_data, into_mesh: mesh.mesh_data, on_side: str
 
             lerp_value = -curr_distance / (next_distance - curr_distance)
 
-            new_index_loop = len(into_mesh.vertices)
-            index_mapping[point_index] = new_index_loop
+            next_vertex_index = len(into_mesh.vertices)
+            index_mapping[point_index] = next_vertex_index
+            new_index_loop.append(next_vertex_index)
             
             into_mesh.append_vertex(
                 mesh.interpolate_vertex(
@@ -77,5 +79,10 @@ def split(input: mesh.mesh_data, normal: mathutils.Vector, d: float) -> tuple[me
         split_on_side(input, front, 'front', front_index_mapping, triangle, index_sides, plane_distance)
         split_on_side(input, back, 'back', back_index_mapping, triangle, index_sides, plane_distance)
             
+    if len(back.indices) == 0:
+        back = None
+
+    if len(front.indices) == 0:
+        front = None
 
     return back, front

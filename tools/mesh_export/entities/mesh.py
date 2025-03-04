@@ -11,12 +11,21 @@ import math
 from . import armature
 from . import material_extract
 
+def interpolate_color(a, b, lerp):
+    lerp_inv = 1 - lerp
+    return [
+        a[0] * lerp_inv + b[0] * lerp,
+        a[1] * lerp_inv + b[1] * lerp,
+        a[2] * lerp_inv + b[2] * lerp,
+        a[3] * lerp_inv + b[3] * lerp
+    ]
+
 def interpolate_vertex(a, b, lerp):
     lerp_inv = 1 - lerp
     return (
         a[0] * lerp_inv + b[0] * lerp,
         a[1] * lerp_inv + b[1] * lerp,
-        a[2] * lerp_inv + b[2] * lerp,
+        interpolate_color(a[2], b[2], lerp),
         a[3] * lerp_inv + b[3] * lerp,
         a[4] # just copy over the first bone
     )
@@ -43,6 +52,14 @@ class mesh_data():
         result.bone_indices = self.bone_indices.copy()
 
         return result
+    
+    def translate(self, offset: mathutils.Vector):
+        for i in range(len(self.vertices)):
+            self.vertices[i] = self.vertices[i] + offset
+
+    def scale(self, scale: mathutils.Vector):
+        for i in range(len(self.vertices)):
+            self.vertices[i] = self.vertices[i] * scale
 
     def append_vertex(self, vertex_data):
         self.vertices.append(vertex_data[0])
@@ -53,6 +70,24 @@ class mesh_data():
 
     def get_vertex(self, index):
         return (self.vertices[index], self.normals[index], self.color[index], self.uv[index], self.bone_indices[index])
+
+    def bounding_box(self) -> tuple[mathutils.Vector, mathutils.Vector]:
+        if len(self.vertices) == 0:
+            return (mathutils.Vector((0, 0, 0)), mathutils.Vector((0, 0, 0)))
+        
+        min_result = mathutils.Vector(self.vertices[0])
+        max_result = mathutils.Vector(self.vertices[0])
+
+        for vertex in self.vertices:
+            min_result.x = min(min_result.x, vertex.x)
+            min_result.y = min(min_result.y, vertex.y)
+            min_result.z = min(min_result.z, vertex.z)
+
+            max_result.x = max(max_result.x, vertex.x)
+            max_result.y = max(max_result.y, vertex.y)
+            max_result.z = max(max_result.z, vertex.z)
+
+        return [min_result, max_result]
 
     def append_mesh(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix, armature: armature.ArmatureData | None):
         triangles = []
@@ -320,7 +355,7 @@ def _write_packed_quaternion(file, input: mathutils.Quaternion):
 
 class mesh_list_entry:
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
-        self.obj: bpy.types.Object= obj
+        self.obj: bpy.types.Object = obj
         self.mesh: bpy.types.Mesh = mesh
         self.transform: mathutils.Matrix = transform
 
