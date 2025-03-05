@@ -20,6 +20,10 @@ struct render_scene_element {
     float radius;
 };
 
+struct render_scene_step {
+    void* data;
+};
+
 struct render_scene {
     struct callback_list callbacks;
     struct callback_list step_callbacks;

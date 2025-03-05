@@ -11,7 +11,7 @@ struct render_scene r_scene_3d;
 
 void render_scene_reset() {
     callback_list_reset(&r_scene_3d.callbacks, sizeof(struct render_scene_element), MIN_RENDER_SCENE_SIZE, NULL);
-    callback_list_reset(&r_scene_3d.step_callbacks, sizeof(void*), MIN_RENDER_SCENE_SIZE, NULL);
+    callback_list_reset(&r_scene_3d.step_callbacks, sizeof(struct render_scene_step), MIN_RENDER_SCENE_SIZE, NULL);
 }
 
 void render_scene_add(struct Vector3* center, float radius, render_scene_callback callback, void* data) {
@@ -87,7 +87,8 @@ void render_scene_remove(void* data) {
 }
 
 void render_scene_add_step(render_step_callback callback, void* data) {
-    callback_list_insert_with_id(&r_scene_3d.step_callbacks, callback, &data, (callback_id)data);
+    struct render_scene_step step = {data};
+    callback_list_insert_with_id(&r_scene_3d.step_callbacks, callback, &step, (callback_id)data);
 }
 
 void render_scene_remove_step(void* data) {
@@ -107,8 +108,8 @@ void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct fr
     struct callback_element* current_step = callback_list_get(&r_scene_3d.step_callbacks, 0);
 
     for (int i = 0; i < r_scene_3d.step_callbacks.count; ++i) {
-        void* data = callback_element_get_data(current_step);
-        ((render_step_callback)current_step->callback)(data, view_proj_matrix, &camera->transform.position, pool);
+        struct render_scene_step* step = callback_element_get_data(current_step);
+        ((render_step_callback)current_step->callback)(step->data, view_proj_matrix, &camera->transform.position, pool);
 
         current_step = callback_list_next(&r_scene_3d.step_callbacks, current_step);
     }

@@ -2,6 +2,7 @@
 
 #include "../math/mathf.h"
 #include "overworld_private.h"
+#include "../render/defs.h"
 
 static int edge_deltas[] = {0x1, 0x2, 0x4};
 
@@ -53,7 +54,9 @@ int overworld_find_next_edge(struct Vector2 transformed_points[8], int current_i
 int overworld_create_top_view(struct overworld* overworld, mat4x4 view_proj_matrix, struct Vector3* camera_position, struct Vector2* loop) {
     mat4x4 view_inv;
 
-    matrixInv(view_proj_matrix, view_inv);
+    if (!matrixInv(view_proj_matrix, view_inv)) {
+        return 0;
+    }
 
     struct Vector2 transformed_points[8];
 
@@ -203,6 +206,10 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
     state.min_x = state.loop[0].x;
     state.max_x = state.loop[0].x;
 
+    if (!state.loop_count) {
+        return;
+    }
+
     for (int i = 0; i < 4; i += 1) {
         struct overworld_tile_slice next = overworld_step(overworld, &state);
 
@@ -224,6 +231,7 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
             tile_position = UncachedAddr(tile_position);
 
             T3DMat4 mtx;
+            t3d_mat4_identity(&mtx);
             t3d_mat4_translate(
                 &mtx, 
                 x * overworld->tile_size + overworld->min.x - camera_position->x,
@@ -231,7 +239,9 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
                 next.y * overworld->tile_size + overworld->min.y - camera_position->z
             );
 
-            mtx.m[1][1] = block->scale_y;
+            mtx.m[0][0] = 1.0f / SCENE_SCALE;
+            mtx.m[1][1] = block->scale_y * (1.0f / SCENE_SCALE);
+            mtx.m[2][2] = 1.0f / SCENE_SCALE; 
 
             t3d_mat4_to_fixed_3x4(tile_position, &mtx);
 
