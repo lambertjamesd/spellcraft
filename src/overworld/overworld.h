@@ -38,6 +38,7 @@ struct overworld {
     struct Vector2 min;
     float inv_tile_size;
     float tile_size;
+    struct tmesh lod_0_meshes[4];
     struct overworld_tile_def* tile_definitions;
     FILE* file;
 

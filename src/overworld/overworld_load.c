@@ -21,9 +21,9 @@ void overworld_tile_free(struct overworld_tile* tile) {
 // EXPR
 #define EXPECTED_OVERWORLD_HEADER 0x4F565744
 
-void overworld_render_step(void* data, mat4x4 view_proj_matrix, struct Vector3* camera_position, struct frame_memory_pool* pool) {
+void overworld_render_step(void* data, mat4x4 view_proj_matrix, struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool) {
     struct overworld* overworld = (struct overworld*)data;
-    overworld_render(overworld, view_proj_matrix, camera_position, pool);
+    overworld_render(overworld, view_proj_matrix, camera, viewport, pool);
 }
 
 struct overworld* overworld_load(const char* filename) {
@@ -40,6 +40,11 @@ struct overworld* overworld_load(const char* filename) {
     fread(&result->tile_y, sizeof(uint16_t), 1, result->file);
     fread(&result->min, sizeof(struct Vector2), 1, result->file);
     fread(&result->tile_size, sizeof(float), 1, result->file);
+
+    for (int i = 0; i < 4; i += 1) {
+        tmesh_load(&result->lod_0_meshes[i], result->file);
+    }
+
     result->inv_tile_size = 1.0f / result->tile_size;
     result->tile_definitions = malloc(result->tile_x * result->tile_y * sizeof(struct overworld_tile_def));
 

@@ -197,14 +197,73 @@ struct overworld_tile_slice overworld_step(struct overworld* overworld, struct o
     };
 }
 
-void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, struct Vector3* camera_position, struct frame_memory_pool* pool) {
+#define LOD_0_SCALE (1.0f / 128.0f)
+
+void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, T3DViewport* prev_viewport, struct frame_memory_pool* pool) {
+    T3DViewport* new_viewport = frame_malloc(pool, sizeof(T3DViewport));
+    *new_viewport = t3d_viewport_create();
+    
+    float tan_fov = tanf(camera->fov * (0.5f * 3.14159f / 180.0f));
+    float aspect_ratio = (float)prev_viewport->size[0] / (float)prev_viewport->size[1];
+
+    float near = camera->far * LOD_0_SCALE;
+    float far = overworld->tile_x * overworld->tile_size * (1.4f * LOD_0_SCALE);
+
+    matrixPerspective(
+        new_viewport->matProj.m, 
+        -aspect_ratio * tan_fov * near,
+        aspect_ratio * tan_fov * near,
+        tan_fov * near,
+        -tan_fov * near,
+        near,
+        far
+    );
+    t3d_viewport_set_w_normalize(new_viewport, near, far);
+
+    struct Transform inverse;
+    transformInvert(&camera->transform, &inverse);
+    inverse.position = gZeroVec;
+    transformToMatrix(&inverse, new_viewport->matCamera.m);
+    new_viewport->_isCamProjDirty = true;
+
+    t3d_viewport_attach(new_viewport);
+
+    T3DMat4 mtx;
+    t3d_mat4_identity(&mtx);
+    t3d_mat4_translate(
+        &mtx, 
+        -camera->transform.position.x * LOD_0_SCALE,
+        -camera->transform.position.y * LOD_0_SCALE,
+        -camera->transform.position.z * LOD_0_SCALE
+    );
+    mtx.m[0][0] = (1.0f / SCENE_SCALE);
+    mtx.m[1][1] = (1.0f / SCENE_SCALE);
+    mtx.m[2][2] = (1.0f / SCENE_SCALE);
+
+    rdpq_mode_zbuf(false, false);
+
+    T3DMat4FP* mtx_fp = UncachedAddr(frame_malloc(pool, sizeof(T3DMat4FP)));
+    t3d_mat4_to_fixed_3x4(mtx_fp, &mtx);
+    t3d_matrix_push(mtx_fp);
+    rspq_block_run(overworld->lod_0_meshes[0].block);
+    t3d_matrix_pop(1);
+
+    rdpq_mode_zbuf(true, true);
+} 
+
+void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool) {
     struct overworld_step_state state;
+    struct Vector3* camera_position = &camera->transform.position;
     state.loop_count = overworld_create_top_view(overworld, view_proj_matrix, camera_position, state.loop);
     state.left = 0;
     state.right = 0;
     state.current_y = state.loop[0].y;
     state.min_x = state.loop[0].x;
     state.max_x = state.loop[0].x;
+
+    overworld_render_lod_0(overworld, camera, viewport, pool);
+
+    t3d_viewport_attach(viewport);
 
     if (!state.loop_count) {
         return;

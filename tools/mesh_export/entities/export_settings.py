@@ -1,4 +1,4 @@
-
+import mathutils
 from . import material
 
 class ExportSettings():
@@ -6,3 +6,14 @@ class ExportSettings():
         self.fixed_point_scale: int = 64
         self.default_material: material.Material = material.Material()
         self.default_material_name: str = 'rom:/materials/default.mat'
+        self.sort_direction: mathutils.Vector | None = None
+
+    def copy(self):
+        result = ExportSettings()
+
+        result.fixed_point_scale = self.fixed_point_scale
+        result.default_material = self.default_material
+        result.default_material_name = self.default_material_name
+        result.sort_direction = self.sort_direction
+
+        return result

@@ -109,7 +109,7 @@ void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct fr
 
     for (int i = 0; i < r_scene_3d.step_callbacks.count; ++i) {
         struct render_scene_step* step = callback_element_get_data(current_step);
-        ((render_step_callback)current_step->callback)(step->data, view_proj_matrix, &camera->transform.position, pool);
+        ((render_step_callback)current_step->callback)(step->data, view_proj_matrix, camera, viewport, pool);
 
         current_step = callback_list_next(&r_scene_3d.step_callbacks, current_step);
     }

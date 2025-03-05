@@ -42,8 +42,10 @@ class OverworldCell():
 
     def __str__(self):
         return f"mesh_data(len) {len(self.mesh_data)} y_offset {self.y_offset} y_scale {self.y_scale}"
+    
+LOD_0_SCALE = 1 / 128
 
-def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, subdivisions: int, settings: export_settings.ExportSettings):
+def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0_mesh: mesh.mesh_list, subdivisions: int, settings: export_settings.ExportSettings):
     mesh_entries = mesh_list.determine_mesh_data()
 
     mesh_bb = None
@@ -95,12 +97,23 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, subdi
             data.write(struct.pack('>ff', cell_bb[0].y, y_scale))
             cell_data.append(OverworldCell(data.getvalue(), cell_bb[0].y, y_scale))
 
+    lod_0_mesh_bytes = io.BytesIO()
+    lod_0_settings = settings.copy()
+    lod_0_settings.sort_direction = mathutils.Vector((1, 0, 0))
+    lod_0_mesh_data = lod_0_mesh.determine_mesh_data(None)
+    for entry in lod_0_mesh_data:
+        entry[1].scale(LOD_0_SCALE)
+    tiny3d_mesh_writer.write_mesh(lod_0_mesh_data, None, [], lod_0_settings, lod_0_mesh_bytes)
+
     with open(overworld_filename, 'wb') as file:
         file.write('OVWD'.encode())
 
         file.write(struct.pack('>HH', subdivisions, subdivisions))
         file.write(struct.pack('>ff', mesh_bb[0].x, mesh_bb[0].z))
         file.write(struct.pack('>f', side_length))
+
+        for i in range(4):
+            file.write(lod_0_mesh_bytes.getvalue())
 
         current_location = file.tell() + 4 * subdivisions * subdivisions
 

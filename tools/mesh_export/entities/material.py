@@ -105,6 +105,9 @@ class Color():
         self.b = b
         self.a = a
 
+    def copy(self):
+        return Color(self.r, self.g, self.b, self.a)
+
     def __eq__(self, value: object) -> bool:
         if not value:
             return False
@@ -126,6 +129,19 @@ class CombineModeCycle():
         self.ac = ac
         self.ad = ad
 
+    def copy(self):
+        return CombineModeCycle(
+            self.a,
+            self.b,
+            self.c,
+            self.d,
+
+            self.aa,
+            self.ab,
+            self.ac,
+            self.ad
+        )
+
     def __str__(self):
         return f"({self.a} {self.b} {self.c} {self.d}) ({self.aa} {self.ab} {self.ac} {self.ad})"
     
@@ -144,6 +160,9 @@ class CombineMode():
     def __init__(self, cyc1: CombineModeCycle, cyc2: CombineModeCycle):
         self.cyc1: CombineModeCycle = cyc1
         self.cyc2: CombineModeCycle = cyc2
+
+    def copy(self):
+        return CombineMode(self.cyc1.copy() if self.cyc1 else None, self.cyc2.copy() if self.cyc2 else None)
 
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, CombineMode):
@@ -173,6 +192,14 @@ class BlendModeCycle():
         self.a2 = a2
         self.b2 = b2
 
+    def copy(self):
+        result = BlendModeCycle()
+        result.a1 = self.a1
+        result.b1 = self.b1
+        result.a2 = self.a2
+        result.b2 = self.b2
+        return result
+
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, BlendModeCycle):
             return False
@@ -196,6 +223,16 @@ class BlendMode():
         self.z_mode = 'OPAQUE'
         self.z_write = True
         self.z_compare = True
+
+    def copy(self):
+        result = BlendMode()
+        result.cyc1 = self.cyc1.copy() if self.cyc1 else None
+        result.cyc2 = self.cyc2.copy() if self.cyc2 else None
+        result.alpha_compare = self.alpha_compare
+        result.z_mode = self.z_mode
+        result.z_write = self.z_write
+        result.z_compare = self.z_compare
+        return result
 
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, BlendMode):
@@ -368,6 +405,15 @@ class Fog():
         self.min_distance: float = 0
         self.max_distance: float = 0
 
+    def copy(self):
+        result = Fog()
+        result.enabled = self.enabled
+        result.use_global = self.use_global
+        result.fog_color = self.fog_color.copy() if self.fog_color else None
+        result.min_distance = self.min_distance
+        result.max_distance = self.max_distance
+        return result
+
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, Fog):
             return False
@@ -397,6 +443,25 @@ class Material():
         self.vertex_gamma: float = 0.454545
         self.uv_gen: str | None = None
         self.fog: Fog | None = None
+
+    def copy(self):
+        result = Material()
+        result.combine_mode = self.combine_mode.copy() if self.combine_mode else None
+        result.blend_mode = self.blend_mode.copy() if self.blend_mode else None
+        result.env_color = self.env_color.copy() if self.env_color else None
+        result.prim_color = self.prim_color.copy() if self.prim_color else None
+        result.blend_color = self.blend_color.copy() if self.blend_color else None
+        result.lighting = self.lighting
+        result.tex0 = self.tex0.copy() if self.tex0 else None
+        result.tex1 = self.tex1.copy() if self.tex1 else None
+        result.palette = self.palette
+        result.culling = self.culling
+        result.z_buffer = self.z_buffer
+        result.vertex_gamma = self.vertex_gamma
+        result.uv_gen = self.uv_gen
+        result.fog = self.fog.copy() if self.fog else None
+        return result
+
 
     def layout_textures(self):
         if self.tex0 and self.tex1:

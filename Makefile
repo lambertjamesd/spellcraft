@@ -123,10 +123,10 @@ SCENE_SOURCES := $(shell find assets/scenes -type f -name '*.blend' | sort)
 
 SCENES := $(SCENE_SOURCES:assets/scenes/%.blend=filesystem/scenes/%.scene)
 
-filesystem/scenes/%.scene: assets/scenes/%.blend build/assets/scripts/globals.json $(EXPORT_SOURCE)
+filesystem/scenes/%.scene filesystem/scenes/%.overworld: assets/scenes/%.blend build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene))
-	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene)
+	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene) $(@:%.scene=%.overworld)
 	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene)
 
 ###

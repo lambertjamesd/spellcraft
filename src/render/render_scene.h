@@ -10,7 +10,7 @@
 #include <t3d/t3d.h>
 
 typedef void (*render_scene_callback)(void* data, struct render_batch* batch);
-typedef void (*render_step_callback)(void* data, mat4x4 view_proj_matrix, struct Vector3* camera_position, struct frame_memory_pool* pool);
+typedef void (*render_step_callback)(void* data, mat4x4 view_proj_matrix, struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool);
 
 typedef int render_id;
 

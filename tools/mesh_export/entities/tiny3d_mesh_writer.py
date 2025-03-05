@@ -431,6 +431,13 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
     
     for mesh in mesh_list:
         mat = material_extract.load_material_with_name(mesh[0], mesh[1].mat)
+
+        if settings.sort_direction:
+            mat = mat.copy()
+            mat.z_buffer = False
+            mat.blend_mode.z_compare = False
+            mat.blend_mode.z_write = False
+
         chunks += mesh_optimizer.chunkify_mesh(mesh[1], mat, settings.default_material)
 
     chunks = mesh_optimizer.determine_chunk_order(chunks, settings.default_material)
