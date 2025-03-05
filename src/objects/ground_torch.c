@@ -47,6 +47,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
 
     matrixFromScale(mtx, 1.0f / SCENE_SCALE);
     matrixApplyPosition(mtx, &torch->position);
+    render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     render_batch_add_tmesh(batch, torch->base_mesh, mtxfp, 1, NULL, NULL);
@@ -65,6 +66,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     matrixApplyPosition(mtx, &torch->position);
     matrixApplyScale(mtx, 1.0f / SCENE_SCALE);
     mtx[3][1] += TORCH_HEIGHT;
+    render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     render_batch_add_tmesh(batch, torch->flame_mesh, mtxfp, 1, NULL, NULL);

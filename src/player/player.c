@@ -371,6 +371,9 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     player->collision.collision_group = COLLISION_GROUP_PLAYER;
 
+    // TMP
+    player->collision.has_gravity = 0;
+
     player->collision.center.y = player_collision.data.capsule.inner_half_height + player_collision.data.capsule.radius;
 
     collision_scene_add(&player->collision);

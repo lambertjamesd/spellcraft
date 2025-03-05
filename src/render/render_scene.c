@@ -11,6 +11,7 @@ struct render_scene r_scene_3d;
 
 void render_scene_reset() {
     callback_list_reset(&r_scene_3d.callbacks, sizeof(struct render_scene_element), MIN_RENDER_SCENE_SIZE, NULL);
+    callback_list_reset(&r_scene_3d.step_callbacks, sizeof(void*), MIN_RENDER_SCENE_SIZE, NULL);
 }
 
 void render_scene_add(struct Vector3* center, float radius, render_scene_callback callback, void* data) {
@@ -39,6 +40,7 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
             mtx[y][x] *= (1.0f / SCENE_SCALE);
         }
     }
+    render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     struct render_batch_element* element = render_batch_add_tmesh(batch, renderable->mesh, mtxfp, 1, &renderable->armature, renderable->attachments);
@@ -59,6 +61,7 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
 
     mat4x4 mtx;
     transformSAToMatrix(renderable->transform.transform, mtx, 1.0f / SCENE_SCALE);
+    render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     struct render_batch_element* element = render_batch_add_tmesh(batch, renderable->mesh, mtxfp, 1, &renderable->armature, renderable->attachments);
@@ -83,6 +86,14 @@ void render_scene_remove(void* data) {
     callback_list_remove(&r_scene_3d.callbacks, (callback_id)data);
 }
 
+void render_scene_add_step(render_step_callback callback, void* data) {
+    callback_list_insert_with_id(&r_scene_3d.step_callbacks, callback, &data, (callback_id)data);
+}
+
+void render_scene_remove_step(void* data) {
+    callback_list_remove(&r_scene_3d.step_callbacks, (callback_id)data);
+}
+
 void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool) {
     struct render_batch batch;
 
@@ -92,6 +103,15 @@ void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct fr
     camera_apply(camera, viewport, &clipping_planes, view_proj_matrix);
 
     t3d_viewport_attach(viewport);
+
+    struct callback_element* current_step = callback_list_get(&r_scene_3d.step_callbacks, 0);
+
+    for (int i = 0; i < r_scene_3d.step_callbacks.count; ++i) {
+        void* data = callback_element_get_data(current_step);
+        ((render_step_callback)current_step->callback)(data, view_proj_matrix, &camera->transform.position, pool);
+
+        current_step = callback_list_next(&r_scene_3d.step_callbacks, current_step);
+    }
 
     render_batch_init(&batch, &camera->transform, pool);
 

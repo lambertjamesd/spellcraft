@@ -10,6 +10,7 @@
 #include "../player/inventory.h"
 #include "../menu/pause_menu.h"
 #include "../menu/hud.h"
+#include "../overworld/overworld.h"
 #include "camera_controller.h"
 
 typedef void(*entity_init)(void* entity, void* definition);
@@ -54,6 +55,7 @@ struct scene {
     
     struct entity_data* entity_data;
     struct loading_zone* loading_zones;
+    struct overworld* overworld;
 
     uint16_t static_entity_count;
     uint16_t entity_data_count;

@@ -28,6 +28,8 @@ def subdivide_mesh_list(meshes: list[tuple[str,mesh.mesh_data]], normal: mathuti
         distance -= distance_step
         result.append(chunk)
 
+    result.append(meshes)
+
     return result
     
 max_block_height = 32767 / 64
@@ -41,7 +43,7 @@ class OverworldCell():
     def __str__(self):
         return f"mesh_data(len) {len(self.mesh_data)} y_offset {self.y_offset} y_scale {self.y_scale}"
 
-def generate_overworld(mesh_list: mesh.mesh_list, subdivisions: int, settings: export_settings.ExportSettings):
+def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, subdivisions: int, settings: export_settings.ExportSettings):
     mesh_entries = mesh_list.determine_mesh_data()
 
     mesh_bb = None
@@ -64,7 +66,7 @@ def generate_overworld(mesh_list: mesh.mesh_list, subdivisions: int, settings: e
     columns = subdivide_mesh_list(mesh_entries, mathutils.Vector((0, 0, 1)), mesh_bb[0].x, side_length, subdivisions)
     cells = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].z, side_length, subdivisions), columns))
 
-    cell_data = []
+    cell_data: list[OverworldCell] = []
     
     for y, row in enumerate(cells):
         for x, cell in enumerate(row):
@@ -93,14 +95,18 @@ def generate_overworld(mesh_list: mesh.mesh_list, subdivisions: int, settings: e
             data.write(struct.pack('>ff', cell_bb[0].y, y_scale))
             cell_data.append(OverworldCell(data.getvalue(), cell_bb[0].y, y_scale))
 
-    print(list(map(lambda x: str(x), cell_data)))
+    with open(overworld_filename, 'wb') as file:
+        file.write('OVWD'.encode())
 
+        file.write(struct.pack('>HH', subdivisions, subdivisions))
+        file.write(struct.pack('>ff', mesh_bb[0].x, mesh_bb[0].z))
+        file.write(struct.pack('>f', side_length))
 
-    # TODO 
-    # generate bounding box
-    # determine side length
-    # subdivide meshes into grid
-    # serialize each cell and determine its size
-    # layout grid index and each grid cell
+        current_location = file.tell() + 4 * subdivisions * subdivisions
 
-    pass
+        for cell in cell_data:
+            file.write(struct.pack('>I', current_location))
+            current_location += len(cell.mesh_data)
+
+        for cell in cell_data:
+            file.write(cell.mesh_data)

@@ -50,6 +50,12 @@ T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count) {
     return (T3DMat4FP*)pose;
 }
 
+void render_batch_relative_mtx(struct render_batch* batch, mat4x4 into) {
+    into[3][0] -= batch->camera_matrix[3][0];
+    into[3][1] -= batch->camera_matrix[3][1];
+    into[3][2] -= batch->camera_matrix[3][2];
+}
+
 struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, void* transform, int transform_count, struct armature* armature, struct tmesh** attachments) {
     struct render_batch_element* element = render_batch_add(batch);
 
@@ -238,6 +244,12 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
     if (default_mtx) {
         mat4x4 scaleMtx;
         matrixFromScale(scaleMtx, 1.0f / SCENE_SCALE);
+        struct Vector3 camera_neg_pos = {
+            -batch->camera_matrix[3][0],
+            -batch->camera_matrix[3][1],
+            -batch->camera_matrix[3][2],
+        };
+        matrixApplyPosition(scaleMtx, &camera_neg_pos);
         t3d_mat4_to_fixed_3x4(default_mtx, (T3DMat4*)scaleMtx);
     }
 

@@ -7,4 +7,6 @@
 struct overworld_tile* overworld_tile_load(FILE* file);
 void overworld_tile_free(struct overworld_tile* tile);
 
+void overworld_check_loaded_tiles(struct overworld* overworld);
+
 #endif

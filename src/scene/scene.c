@@ -1,6 +1,7 @@
 #include "scene.h"
 
 #include "../render/render_batch.h"
+#include "../overworld/overworld_load.h"
 
 struct scene* current_scene;
 
@@ -25,6 +26,10 @@ void scene_update(void* data) {
         if (box3DContainsPoint(&scene->loading_zones[i].bounding_box, &player_center)) {
             scene_queue_next(scene->loading_zones[i].scene_name);
         }
+    }
+
+    if (scene->overworld) {
+        overworld_check_loaded_tiles(scene->overworld);
     }
 }
 

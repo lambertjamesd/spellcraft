@@ -66,6 +66,7 @@ void living_sprite_render(void* data, struct render_batch* batch) {
     
         mat4x4 mtx;
         transformSAToMatrix(&living_sprite->transform, mtx, living_sprite_exploision.data.sphere.radius / SCENE_SCALE);
+        render_batch_relative_mtx(batch, mtx);
         t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
         struct tmesh* display_mesh;

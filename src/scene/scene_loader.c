@@ -10,6 +10,7 @@
 #include "../cutscene/cutscene_runner.h"
 #include "../cutscene/evaluation_context.h"
 #include "../cutscene/expression_evaluate.h"
+#include "../overworld/overworld_load.h"
 
 #include "../enemies/biter.h"
 
@@ -261,6 +262,17 @@ struct scene* scene_load(const char* filename) {
         scene->loading_zones[i].scene_name += (int)scene->string_table;
     }
 
+    uint8_t overworld_filename_length;
+    fread(&overworld_filename_length, 1, 1, file);
+    if (overworld_filename_length) {
+        char overworld_filename[overworld_filename_length + 1];
+        fread(overworld_filename, overworld_filename_length, 1, file);
+        overworld_filename[overworld_filename_length] = '\0';
+        scene->overworld = overworld_load(overworld_filename);
+    } else {
+        scene->overworld = NULL;
+    }
+
     fclose(file);
 
     render_scene_add(NULL, 0.0f, scene_render, scene);
@@ -300,6 +312,11 @@ void scene_release(struct scene* scene) {
     for (int i = 0; i < scene->entity_data_count; i += 1) {
         scene_destroy_entity(&scene->entity_data[i]);
     }
+
+    if (scene->overworld) {
+        overworld_free(scene->overworld);
+    }
+    
     free(scene->entity_data);
 
     free(scene->string_table);

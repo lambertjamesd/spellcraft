@@ -122,11 +122,11 @@ def find_static_blacklist():
 
     return result
 
-def check_for_overworld(base_transform: mathutils.Matrix):
+def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: str):
     settings = entities.export_settings.ExportSettings()
 
     if not ('lod_1' in  bpy.data.collections):
-        return
+        return False
     
     collection: bpy.types.Collection = bpy.data.collections["lod_1"]
 
@@ -137,11 +137,14 @@ def check_for_overworld(base_transform: mathutils.Matrix):
 
     subdivisions = collection['subdivisions'] if 'subdivisions' in collection else 8
 
-    entities.overworld.generate_overworld(mesh_list, subdivisions, settings)
+    entities.overworld.generate_overworld(overworld_filename, mesh_list, subdivisions, settings)
+
+    return True
     
 def process_scene():
     input_filename = sys.argv[1]
-    output_filename = sys.argv[-1]
+    output_filename = sys.argv[-2]
+    overworld_filename = sys.argv[-1]
 
     scene = Scene()
 
@@ -165,7 +168,7 @@ def process_scene():
 
     object_blacklist = find_static_blacklist()
 
-    check_for_overworld(base_transform)
+    has_overworld = check_for_overworld(base_transform, overworld_filename)
 
     for obj in bpy.data.objects:
         if 'loading_zone' in obj:
@@ -274,6 +277,13 @@ def process_scene():
             file.write(struct.pack(">fff", bb_min.x, bb_min.y, bb_min.z))
             file.write(struct.pack(">fff", bb_max.x, bb_max.y, bb_max.z))
             file.write(struct.pack(">I", context.get_string_offset(loading_zone.target)))
+
+        if has_overworld:
+            overworld_romname = overworld_filename.replace('filesystem/', 'rom:/')
+            file.write(struct.pack(">B", len(overworld_romname)))
+            file.write(overworld_romname.encode())
+        else:
+            file.write(b'\0')
             
 
 process_scene()

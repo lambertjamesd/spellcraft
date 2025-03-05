@@ -43,6 +43,7 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     quatIdent(&transform.rotation);
     vector3Scale(&gOneVec, &transform.scale, 1.0f / 64.0f);
     transformToMatrix(&transform, mtx);
+    render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     render_batch_add_tmesh(batch, spell_assets_get()->projectile_mesh, mtxfp, 1, NULL, NULL);

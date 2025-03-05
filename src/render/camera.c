@@ -49,7 +49,7 @@ void camera_apply(struct Camera* camera, T3DViewport* viewport, struct ClippingP
 
     struct Transform inverse;
     transformInvert(&camera->transform, &inverse);
-    // vector3Scale(&inverse.position, &inverse.position, SCENE_SCALE);
+    inverse.position = gZeroVec;
     transformToMatrix(&inverse, viewport->matCamera.m);
     viewport->_isCamProjDirty = true;
     
