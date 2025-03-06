@@ -336,9 +336,11 @@ def material_romname(bpy_mat: bpy.types.Material) -> bool:
     return None
         
 
-def load_material_with_name(material_name: str, bpy_mat: bpy.types.Material) -> material.Material:
+def load_material_with_name(bpy_mat: bpy.types.Material) -> material.Material:
     if not bpy_mat:
         return material.Material()
+    
+    material_name = bpy_mat.name
 
     material_filename = f"assets/{material_name}.mat.json"
 

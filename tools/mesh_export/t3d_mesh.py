@@ -89,10 +89,10 @@ def process_scene():
     if 'default_material' in use_scene and use_scene['default_material']:
         default_material = use_scene['default_material']
         settings.default_material_name = entities.material_extract.material_romname(default_material)
-        settings.default_material = entities.material_extract.load_material_with_name(default_material.name, default_material)
+        settings.default_material = entities.material_extract.load_material_with_name(default_material)
     elif len(meshes) == 1 and entities.material_extract.material_can_extract(meshes[0].mat):
         settings.default_material_name = entities.material_extract.material_romname(meshes[0].mat)
-        settings.default_material = entities.material_extract.load_material_with_name(meshes[0].mat_name(), meshes[0].mat)
+        settings.default_material = entities.material_extract.load_material_with_name(meshes[0].mat)
 
     with open(sys.argv[-1], 'wb') as file:
         entities.tiny3d_mesh_writer.write_mesh(meshes, arm, attatchments, settings, file)

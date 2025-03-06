@@ -430,7 +430,7 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
     chunks = []
     
     for mesh in mesh_list:
-        mat = material_extract.load_material_with_name(mesh.mat_name(), mesh.mat)
+        mat = material_extract.load_material_with_name(mesh.mat)
 
         if settings.sort_direction:
             mat = mat.copy()
