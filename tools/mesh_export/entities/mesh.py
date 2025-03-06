@@ -1,15 +1,10 @@
 import bpy
 import mathutils
-from . import material
-from . import serialize
-import os
 import struct
 import bmesh
-import sys
 import math
 
 from . import armature
-from . import material_extract
 
 def interpolate_color(a, b, lerp):
     lerp_inv = 1 - lerp
@@ -199,10 +194,6 @@ class mesh_data():
 
             pos = vertex_transform @ mesh.vertices[vtx_index].co
 
-            # if vtx_index == 79:
-            #     print(bone_name, vtx_index, mesh.vertices[vtx_index].co, pos)
-
-
             self.vertices.append(pos)
             self.normals.append(normal_vertex_transform @ mesh.vertices[vtx_index].normal)
 
@@ -285,96 +276,6 @@ def pack_vertex(vertex, uv, color, normal, bone_index, gamma = 1):
 
     return result
 
-ATTR_POS = 1 << 0
-ATTR_UV = 1 << 1
-ATTR_COLOR = 1 << 2
-ATTR_NORMAL = 1 << 3
-ATTR_MATRIX = 1 << 4
-
-def _write_meshes(file, mesh_list, armature: armature.ArmatureData):
-    file.write('MESH'.encode())
-    file.write(len(mesh_list).to_bytes(1, 'big'))
-
-    for mesh_pair in mesh_list:
-        material_name = mesh_pair[0]
-        mesh: mesh_data = mesh_pair[1]
-
-        material_romname = material_extract.material_romname(mesh.mat)
-        material_object = material_extract.load_material_with_name(material_name, mesh.mat)
-
-        if material_romname:
-            material_romname_encoded = material_romname.encode()
-            file.write(len(material_romname_encoded).to_bytes(1, 'big'))
-            file.write(material_romname_encoded)
-        else:
-            print(f"embedding material {material_name}")
-
-            # signal an embedded material
-            file.write(b'\0')
-
-            serialize.serialize_material_file(file, material_object)
-    
-        needs_uv = bool(material_object.tex0)
-        needs_normal = bool(material_object.lighting)
-        needs_color = len(mesh.color) > 0
-
-        attribute_mask = ATTR_POS
-
-        if needs_uv:
-            attribute_mask |= ATTR_UV
-
-        if needs_color:
-            attribute_mask |= ATTR_COLOR
-
-        if needs_normal:
-            attribute_mask |= ATTR_NORMAL
-
-        if armature:
-            attribute_mask |= ATTR_MATRIX
-
-        file.write((attribute_mask).to_bytes(1, 'big'))
-
-        # TODO deduplicate vertices
-        # TODO optimize triangle order
-
-        file.write(len(mesh.vertices).to_bytes(2, 'big'))
-        for idx, vertex in enumerate(mesh.vertices):
-            file.write(pack_vertex(
-                vertex,
-                mesh.uv[idx] if needs_uv else None,
-                mesh.color[idx] if needs_color else None,
-                mesh.normals[idx] if needs_normal else None,
-                mesh.bone_indices[idx] if armature else None,
-
-                gamma=material_object.vertex_gamma,
-            ))
-
-        index_size = 1
-
-        if len(mesh.vertices) > 256:
-            index_size = 2
-
-        file.write(len(mesh.indices).to_bytes(2, 'big'))
-
-        for index in mesh.indices:
-            file.write(index.to_bytes(index_size, 'big'))
-
-def _pack_position(input: float) -> int:
-    return round(input * 256)
-
-def _write_packed_quaternion(file, input: mathutils.Quaternion):
-    if input.w < 0:
-        final_input = -input
-    else:
-        final_input = input
-
-    file.write(struct.pack(
-        ">hhh",
-        round(32767 * final_input.x),
-        round(32767 * final_input.y),
-        round(32767 * final_input.z)
-    ))
-
 class mesh_list_entry:
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
         self.obj: bpy.types.Object = obj
@@ -422,9 +323,3 @@ class mesh_list():
         all_meshes.sort(key=lambda x: x[0])
 
         return all_meshes
-
-
-    def write_mesh(self, write_to, armature: armature.ArmatureData | None = None):
-        all_meshes = self.determine_mesh_data(armature)
-        _write_meshes(write_to, all_meshes, armature)
-        armature.write_armature(write_to, armature)
