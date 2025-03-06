@@ -11,8 +11,8 @@ INDEX_BLOCK_SIZE_Z = 8
 ERROR_MARGIN = 0.001
 
 class MeshColliderTriangle():
-    def __init__(self, indices: list[float]):
-        self.indices: list[float] = indices
+    def __init__(self, indices: list[int]):
+        self.indices: list[int] = indices
 
 def _triangle_support_function(vertices: list[mathutils.Vector], triangle: MeshColliderTriangle, direction: mathutils.Vector):
     result_index = max(triangle.indices, key = lambda index: direction.dot(vertices[index]))
@@ -218,7 +218,6 @@ class MeshIndex():
                 for x in range(int(min_block.x), int(max_block.x)):
                     self.check_triangle_to_box(x, y, z, triangle, triangle_index)
 
-
 class MeshCollider():
     def __init__(self):
         self.vertices: list[mathutils.Vector] = []
@@ -272,3 +271,30 @@ class MeshCollider():
 
         index = MeshIndex(self.vertices, self.triangles)
         index.serialize(file)
+
+    def is_empty(self):
+        return len(self.triangles) == 0
+    
+    def copy_blank(self):
+        return MeshCollider()
+    
+    def append_vertex(self, vertex_data):
+        self.vertices.append(vertex_data)
+
+    def append_triangle(self, a, b, c):
+        self.triangles.append(MeshColliderTriangle([a, b, c]))
+
+    def get_triangles(self):
+        result: list[list[int]] = []
+
+        for triangle in self.triangles:
+            result.append(triangle.indices)
+
+        return result
+    
+    def get_vertex(self, index):
+        return self.vertices[index]
+    
+    def get_vertex_interpolated(self, a, b, lerp):
+        lerp_inv = 1 - lerp
+        return self.vertices[a] * lerp_inv + self.vertices[b] * lerp

@@ -38,22 +38,24 @@ def split_on_side(input: mesh.mesh_data, into_mesh: mesh.mesh_data, on_side: str
             new_index_loop.append(next_vertex_index)
             
             into_mesh.append_vertex(
-                mesh.interpolate_vertex(
-                    input.get_vertex(point_index),
-                    input.get_vertex(next_point_index),
+                input.get_vertex_interpolated(
+                    point_index,
+                    next_point_index,
                     lerp_value
                 )
             )
 
     for i in range(1, len(new_index_loop) - 1):
-        into_mesh.indices.append(new_index_loop[0])
-        into_mesh.indices.append(new_index_loop[i])
-        into_mesh.indices.append(new_index_loop[i + 1])
+        into_mesh.append_triangle(
+            new_index_loop[0],
+            new_index_loop[i],
+            new_index_loop[i + 1]
+        )
 
 
 def split(input: mesh.mesh_data, normal: mathutils.Vector, d: float) -> tuple[mesh.mesh_data | None, mesh.mesh_data | None]:
-    back: mesh.mesh_data = mesh.mesh_data(input.mat)
-    front: mesh.mesh_data = mesh.mesh_data(input.mat)
+    back: mesh.mesh_data = input.copy_blank()
+    front: mesh.mesh_data = input.copy_blank()
 
     plane_distance = list(map(lambda x: normal.dot(x) + d, input.vertices))
 
@@ -71,18 +73,16 @@ def split(input: mesh.mesh_data, normal: mathutils.Vector, d: float) -> tuple[me
     front_index_mapping = dict()
     back_index_mapping = dict()
 
-    for triangle_index in range(0, len(input.indices), 3):
-        triangle = input.indices[triangle_index:triangle_index+3]
-
+    for triangle in input.get_triangles():
         index_sides = list(map(get_index_side, triangle))
 
         split_on_side(input, front, 'front', front_index_mapping, triangle, index_sides, plane_distance)
         split_on_side(input, back, 'back', back_index_mapping, triangle, index_sides, plane_distance)
             
-    if len(back.indices) == 0:
+    if back.is_empty():
         back = None
 
-    if len(front.indices) == 0:
+    if front.is_empty():
         front = None
 
     return back, front

@@ -33,7 +33,7 @@ def interpolate_vertex(a, b, lerp):
 class mesh_data():
     def __init__(self, mat: bpy.types.Material) -> None:
         self.mat: bpy.types.Material = mat
-        self.vertices: list = []
+        self.vertices: list[mathutils.Vector] = []
         self.normals: list = []
         self.color: list = []
         self.uv: list = []
@@ -53,6 +53,12 @@ class mesh_data():
 
         return result
     
+    def is_empty(self):
+        return len(self.indices) == 0
+    
+    def copy_blank(self):
+        return mesh_data(self.mat)
+    
     def translate(self, offset: mathutils.Vector):
         for i in range(len(self.vertices)):
             self.vertices[i] = self.vertices[i] + offset
@@ -68,8 +74,24 @@ class mesh_data():
         self.uv.append(vertex_data[3])
         self.bone_indices.append(vertex_data[4])
 
+    def append_triangle(self, a, b, c):
+        self.indices.append(a)
+        self.indices.append(b)
+        self.indices.append(c)
+
+    def get_triangles(self):
+        result: list[list[int]] = []
+
+        for triangle_index in range(0, len(self.indices), 3):
+            result.append(self.indices[triangle_index:triangle_index+3])
+
+        return result
+
     def get_vertex(self, index):
         return (self.vertices[index], self.normals[index], self.color[index], self.uv[index], self.bone_indices[index])
+    
+    def get_vertex_interpolated(self, a, b, lerp):
+        return interpolate_vertex(self.get_vertex(a), self.get_vertex(b), lerp)
 
     def bounding_box(self) -> tuple[mathutils.Vector, mathutils.Vector]:
         if len(self.vertices) == 0:
