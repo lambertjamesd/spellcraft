@@ -7,7 +7,7 @@ from . import mesh_split
 from . import tiny3d_mesh_writer
 from . import export_settings
 
-def subdivide_mesh_list(meshes: list[tuple[str,mesh.mesh_data]], normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list[tuple[str,mesh.mesh_data]]]:
+def subdivide_mesh_list(meshes: list[mesh.mesh_data], normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list[mesh.mesh_data]]:
     result = []
     distance = -(distance_step + start_pos)
 
@@ -16,13 +16,13 @@ def subdivide_mesh_list(meshes: list[tuple[str,mesh.mesh_data]], normal: mathuti
         next = []
 
         for mesh in meshes:
-            behind, front = mesh_split.split(mesh[1], normal, distance)
+            behind, front = mesh_split.split(mesh, normal, distance)
 
             if behind:
-                chunk.append((mesh[0], behind))
+                chunk.append(behind)
 
             if front:
-                next.append((mesh[0], front))
+                next.append(front)
         
         meshes = next
         distance -= distance_step
@@ -51,7 +51,7 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     mesh_bb = None
 
     for entry in mesh_entries:
-        entry_bb = entry[1].bounding_box()
+        entry_bb = entry.bounding_box()
 
         if mesh_bb:
             mesh_bb = bounding_box.union(mesh_bb, entry_bb)
@@ -72,21 +72,21 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     
     for y, row in enumerate(cells):
         for x, cell in enumerate(row):
-            cell_bb = cell[0][1].bounding_box()
+            cell_bb = cell[0].bounding_box()
 
             for i in range(1, len(cell)):
-                cell_bb = bounding_box.union(cell_bb, cell[i][1].bounding_box())
+                cell_bb = bounding_box.union(cell_bb, cell[i].bounding_box())
 
             height = cell_bb[1].y - cell_bb[0].y
             y_scale = max_block_height / height if height > max_block_height else 1
 
             for mesh_data in cell:
-                mesh_data[1].translate(mathutils.Vector((
+                mesh_data.translate(mathutils.Vector((
                     -(x * side_length + mesh_bb[0].x), 
                     -cell_bb[0].y, 
                     -(y * side_length + mesh_bb[0].z)
                 )))
-                mesh_data[1].scale(mathutils.Vector((
+                mesh_data.scale(mathutils.Vector((
                     1, 
                     y_scale, 
                     1
@@ -102,7 +102,7 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     lod_0_settings.sort_direction = mathutils.Vector((1, 0, 0))
     lod_0_mesh_data = lod_0_mesh.determine_mesh_data(None)
     for entry in lod_0_mesh_data:
-        entry[1].scale(LOD_0_SCALE)
+        entry.scale(LOD_0_SCALE)
     tiny3d_mesh_writer.write_mesh(lod_0_mesh_data, None, [], lod_0_settings, lod_0_mesh_bytes)
 
     with open(overworld_filename, 'wb') as file:

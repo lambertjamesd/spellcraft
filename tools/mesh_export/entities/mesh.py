@@ -48,6 +48,11 @@ class mesh_data():
 
         return result
     
+    def mat_name(self) -> str:
+        if self.mat:
+            return self.mat.name
+        return ""
+    
     def is_empty(self):
         return len(self.indices) == 0
     
@@ -296,7 +301,7 @@ class mesh_list():
         bm.free()
         self.meshes.append(mesh_list_entry(obj, mesh, self.base_transform @ obj.matrix_world))
 
-    def determine_mesh_data(self, armature: armature.ArmatureData | None = None):
+    def determine_mesh_data(self, armature: armature.ArmatureData | None = None) -> list[mesh_data]:
         mesh_by_material: dict[str, mesh_data] = dict()
 
         for entry in self.meshes:
@@ -318,8 +323,8 @@ class mesh_list():
 
                 mesh_data_instance.append_mesh(entry.obj, mesh, material_index, transform, armature)
 
-        all_meshes = list(mesh_by_material.items())
+        all_meshes = list(mesh_by_material.values())
 
-        all_meshes.sort(key=lambda x: x[0])
+        all_meshes.sort(key=lambda x: x.mat_name())
 
         return all_meshes

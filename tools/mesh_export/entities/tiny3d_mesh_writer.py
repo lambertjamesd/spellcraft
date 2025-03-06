@@ -424,13 +424,13 @@ def _transition_material(current_material: material.Material, target_material: m
         material_transitions.append((delta, curr_copy))
 
 
-def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.ArmatureData | None, attatchments: list[armature.BoneLinkage], settings: export_settings.ExportSettings, file):
+def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | None, attatchments: list[armature.BoneLinkage], settings: export_settings.ExportSettings, file):
     file.write('T3MS'.encode())
 
     chunks = []
     
     for mesh in mesh_list:
-        mat = material_extract.load_material_with_name(mesh[0], mesh[1].mat)
+        mat = material_extract.load_material_with_name(mesh.mat_name(), mesh.mat)
 
         if settings.sort_direction:
             mat = mat.copy()
@@ -438,7 +438,7 @@ def write_mesh(mesh_list: list[tuple[str, mesh.mesh_data]], arm: armature.Armatu
             mat.blend_mode.z_compare = False
             mat.blend_mode.z_write = False
 
-        chunks += mesh_optimizer.chunkify_mesh(mesh[1], mat, settings.default_material)
+        chunks += mesh_optimizer.chunkify_mesh(mesh, mat, settings.default_material)
 
     chunks = mesh_optimizer.determine_chunk_order(chunks, settings.default_material)
 

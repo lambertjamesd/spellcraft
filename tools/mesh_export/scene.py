@@ -100,7 +100,7 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, file):
         mesh_list.append(entry.obj)
 
     meshes = mesh_list.determine_mesh_data()
-    meshes = list(map(lambda x: (x[0], entities.mesh_optimizer.remove_duplicates(x[1])), meshes))
+    meshes = list(map(lambda x: entities.mesh_optimizer.remove_duplicates(x), meshes))
 
     file.write(len(meshes).to_bytes(2, 'big'))
 
@@ -108,8 +108,8 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, file):
         # this signals the mesh should be embedded
         file.write(b'\0')
 
-        settings.default_material_name = entities.material_extract.material_romname(mesh[1].mat)
-        settings.default_material = entities.material_extract.load_material_with_name(mesh[0], mesh[1].mat)
+        settings.default_material_name = entities.material_extract.material_romname(mesh.mat)
+        settings.default_material = entities.material_extract.load_material_with_name(mesh.mat_name(), mesh.mat)
 
         entities.tiny3d_mesh_writer.write_mesh([mesh], None, [], settings, file)
 
