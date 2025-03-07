@@ -9,7 +9,8 @@
 #include <t3d/t3d.h>
 
 struct overworld_tile_def {
-    uint32_t file_offset;
+    uint32_t visual_block_offset;
+    uint32_t actor_block_offset;
 };
 
 struct overworld_tile {

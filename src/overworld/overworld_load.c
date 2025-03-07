@@ -86,7 +86,7 @@ void overworld_check_loaded_tiles(struct overworld* overworld) {
         rdpq_call_deferred((void (*)(void*))overworld_tile_free, overworld->loaded_tiles[slot_x][slot_y]);
     }
 
-    fseek(overworld->file, overworld->tile_definitions[overworld->load_next.x + overworld->load_next.y * overworld->tile_x].file_offset, SEEK_SET);
+    fseek(overworld->file, overworld->tile_definitions[overworld->load_next.x + overworld->load_next.y * overworld->tile_x].visual_block_offset, SEEK_SET);
     
     struct overworld_tile* tile = overworld_tile_load(overworld->file);
     overworld->loaded_tiles[slot_x][slot_y] = tile;

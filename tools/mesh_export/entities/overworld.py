@@ -1,10 +1,12 @@
 import mathutils
 import io
 import struct
+import time
 from . import mesh
 from . import bounding_box
 from . import mesh_split
 from . import tiny3d_mesh_writer
+from . import mesh_collider
 from . import export_settings
 
 def subdivide_mesh_list(meshes: list[mesh.mesh_data], normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list[mesh.mesh_data]]:
@@ -45,7 +47,7 @@ class OverworldCell():
     
 LOD_0_SCALE = 1 / 128
 
-def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0_mesh: mesh.mesh_list, subdivisions: int, settings: export_settings.ExportSettings):
+def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0_mesh: mesh.mesh_list, collider: mesh_collider.MeshCollider, subdivisions: int, settings: export_settings.ExportSettings):
     mesh_entries = mesh_list.determine_mesh_data()
 
     mesh_bb = None
@@ -63,12 +65,21 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
 
     side_length = max(width, height) / subdivisions
 
-    columns = []
-
+    subdivide_time_start = time.perf_counter()
     columns = subdivide_mesh_list(mesh_entries, mathutils.Vector((0, 0, 1)), mesh_bb[0].x, side_length, subdivisions)
     cells = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].z, side_length, subdivisions), columns))
+    print(f"subdivide_mesh_list for mesh data {time.perf_counter() - subdivide_time_start}")
+
+    subivide_collider_start = time.perf_counter()
+    collider_columns = subdivide_mesh_list([collider], mathutils.Vector((0, 0, 1)), mesh_bb[0].x, side_length, subdivisions)
+    collider_cells: list[list[list[mesh_collider.MeshCollider]]] = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].z, side_length, subdivisions), collider_columns))
+    print(f"subdivide_mesh_list for collider data {time.perf_counter() - subivide_collider_start}")
 
     cell_data: list[OverworldCell] = []
+    collider_cell_data: list[bytes] = []
+
+    write_mesh_time = 0
+    write_collider_time = 0
     
     for y, row in enumerate(cells):
         for x, cell in enumerate(row):
@@ -92,10 +103,21 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
                     1
                 )))
 
+            write_mesh_time -= time.perf_counter()
             data = io.BytesIO()
             tiny3d_mesh_writer.write_mesh(cell, None, [], settings, data)
             data.write(struct.pack('>ff', cell_bb[0].y, y_scale))
             cell_data.append(OverworldCell(data.getvalue(), cell_bb[0].y, y_scale))
+            write_mesh_time += time.perf_counter()
+
+            write_collider_time -= time.perf_counter()
+            collider_data = io.BytesIO()
+            collider_cells[y][x][0].write_out(collider_data)
+            collider_cell_data.append(collider_data.getvalue())
+            write_collider_time += time.perf_counter()
+
+    print(f"write_mesh_time = {write_mesh_time}")
+    print(f"write_collider_time = {write_collider_time}")
 
     lod_0_mesh_bytes = io.BytesIO()
     lod_0_settings = settings.copy()
@@ -115,11 +137,17 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
         for i in range(4):
             file.write(lod_0_mesh_bytes.getvalue())
 
-        current_location = file.tell() + 4 * subdivisions * subdivisions
+        visual_block_location = file.tell() + 8 * subdivisions * subdivisions
 
-        for cell in cell_data:
-            file.write(struct.pack('>I', current_location))
-            current_location += len(cell.mesh_data)
+        actor_block_location = visual_block_location + sum(map(lambda x: len(x.mesh_data), cell_data))
+
+        for index, cell in enumerate(cell_data):
+            file.write(struct.pack('>II', visual_block_location, actor_block_location))
+            visual_block_location += len(cell.mesh_data)
+            actor_block_location += len(collider_cell_data[index])
 
         for cell in cell_data:
             file.write(cell.mesh_data)
+
+        for actor_cell in collider_cell_data:
+            file.write(actor_cell)

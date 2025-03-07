@@ -3,6 +3,7 @@ import mathutils
 import bmesh
 import struct
 import math
+import time
 
 INDEX_BLOCK_SIZE_X = 8
 INDEX_BLOCK_SIZE_Y = 16
