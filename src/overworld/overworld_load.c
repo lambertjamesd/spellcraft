@@ -3,7 +3,10 @@
 #include <malloc.h>
 #include <assert.h>
 #include "../render/render_scene.h"
+#include "../collision/collision_scene.h"
 #include "overworld_render.h"
+#include "../resource/mesh_collider.h"
+#include <memory.h>
 
 struct overworld_tile* overworld_tile_load(FILE* file) {
     struct overworld_tile* result = malloc(sizeof(struct overworld_tile));
@@ -15,6 +18,17 @@ struct overworld_tile* overworld_tile_load(FILE* file) {
 
 void overworld_tile_free(struct overworld_tile* tile) {
     tmesh_release(&tile->terrain_mesh);
+    free(tile);
+}
+
+struct overworld_actor_tile* overworld_actor_tile_load(FILE* file) {
+    struct overworld_actor_tile* result = malloc(sizeof(struct overworld_actor_tile));
+    mesh_collider_load(&result->collider, file);
+    return result;
+}
+
+void overworld_actor_tile_free(struct overworld_actor_tile* tile) {
+    mesh_collider_release(&tile->collider);
     free(tile);
 }
 
@@ -100,4 +114,28 @@ void overworld_check_loaded_tiles(struct overworld* overworld) {
 
     overworld->load_next.x = NO_TILE_COORD;
     overworld->load_next.y = NO_TILE_COORD;
+}
+
+void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3* player_pos) {
+    float tile_x = (player_pos->x - overworld->min.x) * overworld->inv_tile_size;
+    float tile_y = (player_pos->z - overworld->min.y) * overworld->inv_tile_size;
+
+    int x = (int)floorf(tile_x);
+    int y = (int)floorf(tile_y);
+
+    struct overworld_actor_tile** slot = &overworld->loaded_actor_tiles[x & 0x1][y & 0x1];
+
+    if (*slot) {
+        collision_scene_remove_static_collision(&(*slot)->collider);
+        overworld_actor_tile_free(*slot);
+    }
+
+    if (x < 0 || y < 0 || x >= overworld->tile_x || y >= overworld->tile_y) {
+        *slot = NULL;
+        return;
+    }
+    
+    fseek(overworld->file, overworld->tile_definitions[x + y * overworld->tile_x].actor_block_offset, SEEK_SET);
+    *slot = overworld_actor_tile_load(overworld->file);
+    collision_scene_use_static_collision(&(*slot)->collider);
 }

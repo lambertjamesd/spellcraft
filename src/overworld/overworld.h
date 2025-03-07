@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "../math/vector2.h"
 #include "../render/tmesh.h"
+#include "../collision/mesh_collider.h"
 
 #include <t3d/t3d.h>
 
@@ -22,6 +23,10 @@ struct overworld_tile {
     T3DMat4FP* detail_matrices;
     float starting_y;
     float scale_y;
+};
+
+struct overworld_actor_tile {
+    struct mesh_collider collider;
 };
 
 struct overworld_tile_render_block {
@@ -46,6 +51,8 @@ struct overworld {
     // tile locations modulo wrap to share slots
     struct overworld_tile* loaded_tiles[4][4];
     struct overworld_tile_render_block render_blocks[4][4];
+
+    struct overworld_actor_tile* loaded_actor_tiles[2][2];
 
     struct { uint16_t x; uint16_t y; } load_next;
 };

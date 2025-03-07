@@ -9,8 +9,8 @@
 #define CAMERA_FOLLOW_HEIGHT    1.6f
 
 static struct move_towards_parameters camera_move_parameters = {
-    .max_speed = 100.0f,
-    .max_accel = 16.0f,
+    .max_speed = 200.0f,
+    .max_accel = 40.0f,
 };
 
 #define ASPECT_RATIO    (4.0f/3.0f)

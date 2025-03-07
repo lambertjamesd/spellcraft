@@ -30,6 +30,7 @@ void scene_update(void* data) {
 
     if (scene->overworld) {
         overworld_check_loaded_tiles(scene->overworld);
+        overworld_check_collider_tiles(scene->overworld, &scene->player.transform.position);
     }
 }
 
