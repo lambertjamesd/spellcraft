@@ -75,6 +75,16 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     collider_cells: list[list[list[mesh_collider.MeshCollider]]] = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].z, side_length, subdivisions), collider_columns))
     print(f"subdivide_mesh_list for collider data {time.perf_counter() - subivide_collider_start}")
 
+    lod_0_start_time = time.perf_counter()
+    lod_0_mesh_bytes = io.BytesIO()
+    lod_0_settings = settings.copy()
+    lod_0_settings.sort_direction = mathutils.Vector((1, 0, 0))
+    lod_0_mesh_data = lod_0_mesh.determine_mesh_data(None)
+    for entry in lod_0_mesh_data:
+        entry.scale(LOD_0_SCALE)
+    tiny3d_mesh_writer.write_mesh(lod_0_mesh_data, None, [], lod_0_settings, lod_0_mesh_bytes)
+    print(f"lod_0 creation time {time.perf_counter() - lod_0_start_time}")
+
     cell_data: list[OverworldCell] = []
     collider_cell_data: list[bytes] = []
 
@@ -118,14 +128,6 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
 
     print(f"write_mesh_time = {write_mesh_time}")
     print(f"write_collider_time = {write_collider_time}")
-
-    lod_0_mesh_bytes = io.BytesIO()
-    lod_0_settings = settings.copy()
-    lod_0_settings.sort_direction = mathutils.Vector((1, 0, 0))
-    lod_0_mesh_data = lod_0_mesh.determine_mesh_data(None)
-    for entry in lod_0_mesh_data:
-        entry.scale(LOD_0_SCALE)
-    tiny3d_mesh_writer.write_mesh(lod_0_mesh_data, None, [], lod_0_settings, lod_0_mesh_bytes)
 
     with open(overworld_filename, 'wb') as file:
         file.write('OVWD'.encode())

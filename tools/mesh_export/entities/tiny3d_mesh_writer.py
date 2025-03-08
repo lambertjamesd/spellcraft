@@ -1,5 +1,6 @@
 import struct
 
+import mathutils
 from . import mesh
 from . import mesh_optimizer
 from . import export_settings
@@ -16,6 +17,30 @@ def triangle_vertices(data: mesh.mesh_data, triangle: int) -> list[int]:
 
 def determine_space(current_indices: set[int], has_unused_vertex: set[int]) -> int:
     return MAX_BATCH_SIZE - len(current_indices) - len(has_unused_vertex)
+
+
+def determine_needed_vertex_count(data: mesh.mesh_data, triangle: int, current_indices: set[int], has_unused_vertex: set[int]) -> int:
+    result: int = 0
+
+    has_unused_vertex_copy = set(has_unused_vertex)
+
+    for vertex_index in triangle_vertices(data, triangle):
+        if vertex_index in current_indices:
+            continue
+
+        bone_index = data.bone_indices[vertex_index]
+
+        if bone_index in has_unused_vertex_copy:
+            # a space is already available 
+            has_unused_vertex_copy.remove(bone_index)
+            continue
+
+        # 2 slots are needed since all vertices come in batches of 2
+        # this is a constraint set by tiny3d
+        result += 2
+        has_unused_vertex_copy.add(bone_index)
+
+    return result
 
 class _mesh_pending_data():
     def __init__(self, data: mesh.mesh_data):
@@ -47,29 +72,6 @@ class _mesh_pending_data():
                 else:
                     has_unused_vertex.add(bone_index)
 
-    def determine_needed_vertex_count(self, triangle: int, current_indices: set[int], has_unused_vertex: set[int]) -> int:
-        result: int = 0
-
-        has_unused_vertex_copy = set(has_unused_vertex)
-
-        for vertex_index in triangle_vertices(self.data, triangle):
-            if vertex_index in current_indices:
-                continue
-
-            bone_index = self.data.bone_indices[vertex_index]
-
-            if bone_index in has_unused_vertex_copy:
-                # a space is already available 
-                has_unused_vertex_copy.remove(bone_index)
-                continue
-
-            # 2 slots are needed since all vertices come in batches of 2
-            # this is a constraint set by tiny3d
-            result += 2
-            has_unused_vertex_copy.add(bone_index)
-
-        return result
-
     def find_next_triangle(self, current_indices: set[int], has_unused_vertex: set[int]) -> int:
         triangle_result = -1
         needed_vertex_count = 0
@@ -77,7 +79,7 @@ class _mesh_pending_data():
         # search for adjacent vertices first
         for index in current_indices:
             for triangle in self.vertex_triangle_usages[index]:
-                current_needed_vertex_count = self.determine_needed_vertex_count(triangle, current_indices, has_unused_vertex)
+                current_needed_vertex_count = determine_needed_vertex_count(self.data, triangle, current_indices, has_unused_vertex)
 
                 if current_needed_vertex_count == 0:
                     self.mark_triangle_used(triangle, current_indices, has_unused_vertex)
@@ -94,7 +96,7 @@ class _mesh_pending_data():
         if triangle_result == -1:
             for triangles in self.vertex_triangle_usages:
                 for triangle in triangles:
-                    current_needed_vertex_count = self.determine_needed_vertex_count(triangle, current_indices, has_unused_vertex)
+                    current_needed_vertex_count = determine_needed_vertex_count(self.data, triangle, current_indices, has_unused_vertex)
 
                     if current_needed_vertex_count <= space:
                         self.mark_triangle_used(triangle, current_indices, has_unused_vertex)
@@ -115,6 +117,36 @@ class _mesh_pending_data():
     
     def has_more(self):
         return self.triangle_count > 0
+    
+class _sorted_mesh():
+    def __init__(self, data: mesh.mesh_data, direction: mathutils.Vector | None):
+        self.data = data
+        self.current_triangle = 0
+
+        triangle_indicies = range(0, len(data.indices), 3)
+        vertex_distances = list(map(lambda x: direction @ x, data.vertices))
+        triangle_distances = map(lambda x: min(vertex_distances[x: x+3]), triangle_indicies)
+        zipped_distances = zip(triangle_indicies, triangle_distances)
+        sorted_triangles = sorted(zipped_distances, key=lambda x: x[1])
+        self.triangle_indices = list(map(lambda x: x[0], sorted_triangles))
+
+    def has_more(self):
+        return self.current_triangle < len(self.triangle_indices)
+
+    def find_next_triangle(self, current_indices: set[int], has_unused_vertex: set[int]) -> int:
+        triangle = self.triangle_indices[self.current_triangle]
+        space = determine_space(current_indices, has_unused_vertex)
+        needed_vertex_count = determine_needed_vertex_count(self.data, triangle, current_indices, has_unused_vertex)
+        
+        if needed_vertex_count > space:
+            return -1
+        
+        self.current_triangle += 1
+        
+        return triangle
+
+    def determine_usable_vertices(self, vertices: set[int]) -> list[int]:
+        return set()
     
 class _vertex_batch():
     def __init__(self, vertices: set[int], triangles: list[int]):
@@ -227,9 +259,10 @@ class _vertex_layout():
             triangles.append(list(map(lambda index: self.current_indices.index(index), original_indices)))
 
         return _batch_layout(offset, new_indicies, triangles)
+
             
-def _determine_triangle_order(data: mesh.mesh_data) -> list[_batch_layout]:
-    pending_data = _mesh_pending_data(data)
+def _determine_triangle_order(data: mesh.mesh_data, direction: mathutils.Vector | None) -> list[_batch_layout]:
+    pending_data = _sorted_mesh(data, direction) if direction else _mesh_pending_data(data)
 
     can_remove: set[int] = set()
 
@@ -378,9 +411,7 @@ def _build_material_command(material_index: int):
 def _build_bone_command(bone_index: int):
     return struct.pack('>Bh', TMESH_COMMAND_BONE, bone_index)
 
-def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], current_bone: int) -> int:
-    batch_layouts = _determine_triangle_order(chunk.data)
-
+def _write_mesh_chunk_common(batch_layouts: list[_batch_layout], chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], current_bone: int) -> int:
     for batch in batch_layouts:
         source_index = len(vertices)
 
@@ -411,6 +442,14 @@ def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_setting
         command_list.append(_build_triangles_command(batch.triangles))
 
     return current_bone
+
+def _write_much_chunk_sorted(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], sort_direction: mathutils.Vector, current_bone: int) -> int:
+    batch_layouts = _determine_triangle_order(chunk.data, sort_direction)
+    return _write_mesh_chunk_common(batch_layouts, chunk, settings, command_list, vertices, current_bone)
+
+def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], current_bone: int) -> int:
+    batch_layouts = _determine_triangle_order(chunk.data, None)
+    return _write_mesh_chunk_common(batch_layouts, chunk, settings, command_list, vertices, current_bone)
         
 def _transition_material(current_material: material.Material, target_material: material.Material, commands: list, material_transitions: list):
     delta = material_delta.determine_material_delta(current_material, target_material)
@@ -424,10 +463,16 @@ def _transition_material(current_material: material.Material, target_material: m
         material_transitions.append((delta, curr_copy))
 
 
+def _sort_chunks(chunks: list[mesh_optimizer.mesh_chunk], sort_direction: mathutils.Vector) -> list[mesh_optimizer.mesh_chunk]:
+    chunk_distance: list[mathutils.Vector] = list(map(lambda x: x.data.center() @ sort_direction, chunks))
+    zipped = zip(chunks, chunk_distance)
+    sort_result = sorted(zipped, key=lambda x: x[1])
+    return list(map(lambda x: x[0], sort_result))
+
 def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | None, attatchments: list[armature.BoneLinkage], settings: export_settings.ExportSettings, file):
     file.write('T3MS'.encode())
 
-    chunks = []
+    chunks: list[mesh_optimizer.mesh_chunk] = []
     
     for mesh in mesh_list:
         mat = material_extract.load_material_with_name(mesh.mat)
@@ -440,7 +485,10 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
 
         chunks += mesh_optimizer.chunkify_mesh(mesh, mat, settings.default_material)
 
-    chunks = mesh_optimizer.determine_chunk_order(chunks, settings.default_material)
+    if settings.sort_direction:
+        chunks = _sort_chunks(chunks, settings.sort_direction)
+    else:
+        chunks = mesh_optimizer.determine_chunk_order(chunks, settings.default_material)
 
     commands = []
     vertices = []
@@ -463,14 +511,12 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
     current_bone = -1
 
     for chunk in chunks:
-        # if chunk.material.tex0 and chunk.material.tex0.filename and chunk.material.tex0.filename.endswith('cloth.png'):
-        #     print(chunk.used_bones)
-        #     bones = arm.get_filtered_bones()
-        #     print([bones[index].name for index in list(chunk.used_bones)])
-
         _transition_material(current_material, chunk.material, commands, material_transitions)
 
-        current_bone = _write_mesh_chunk(chunk, settings, commands, vertices, current_bone)
+        if settings.sort_direction:
+            current_bone = _write_much_chunk_sorted(chunk, settings, commands, vertices, settings.sort_direction, current_bone)
+        else:
+            current_bone = _write_mesh_chunk(chunk, settings, commands, vertices, current_bone)
 
     if settings.default_material_name:
         _transition_material(current_material, settings.default_material, commands, material_transitions)

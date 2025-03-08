@@ -92,6 +92,10 @@ class mesh_data():
     
     def get_vertex_interpolated(self, a, b, lerp):
         return interpolate_vertex(self.get_vertex(a), self.get_vertex(b), lerp)
+    
+    def center(self) -> mathutils.Vector:
+        bb = self.bounding_box()
+        return (bb[0] + bb[1]) * 0.5
 
     def bounding_box(self) -> tuple[mathutils.Vector, mathutils.Vector]:
         if len(self.vertices) == 0:
