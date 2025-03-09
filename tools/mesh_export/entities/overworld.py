@@ -122,7 +122,7 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
 
             write_collider_time -= time.perf_counter()
             collider_data = io.BytesIO()
-            collider_cells[y][x][0].write_out(collider_data)
+            collider_cells[y][x][0].write_out(collider_data, force_subdivisions = mathutils.Vector((8, 1, 8)))
             collider_cell_data.append(collider_data.getvalue())
             write_collider_time += time.perf_counter()
 

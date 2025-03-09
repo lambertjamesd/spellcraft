@@ -109,8 +109,14 @@ def _determine_index_bounds(points: list[mathutils.Vector]):
 
     return min_point, max_point
 
-def _determine_index_indices(points: list[mathutils.Vector]):
+def _determine_index_indices(points: list[mathutils.Vector], force_subdivisions: mathutils.Vector | None = None):
     min_point, max_point = _determine_index_bounds(points)
+
+    if force_subdivisions:
+        size = max_point - min_point
+        stride_inv = mathutils.Vector((force_subdivisions.x / size.z, force_subdivisions.y / size.y, force_subdivisions.z / size.z))
+        return min_point, stride_inv, force_subdivisions
+
     stride_inv = mathutils.Vector((1 / INDEX_BLOCK_SIZE_X, 1 / INDEX_BLOCK_SIZE_Y, 1 / INDEX_BLOCK_SIZE_Z))
     size = (max_point - min_point) * stride_inv
     block_count = mathutils.Vector((math.ceil(size.x), math.ceil(size.y), math.ceil(size.z)))
@@ -186,13 +192,13 @@ class MeshIndexBlock():
         self.indices: list[int] = []
 
 class MeshIndex():
-    def __init__(self, vertices: list[mathutils.Vector], triangles: list[MeshColliderTriangle]):
+    def __init__(self, vertices: list[mathutils.Vector], triangles: list[MeshColliderTriangle], force_subdivisions: mathutils.Vector | None = None):
         self.vertices: list[mathutils.Vector] = vertices
         self.triangles: list[MeshColliderTriangle] = triangles
 
         self.blocks: list[MeshIndexBlock] = []
 
-        min_point, stride_inv, block_count = _determine_index_indices(vertices)
+        min_point, stride_inv, block_count = _determine_index_indices(vertices, force_subdivisions = force_subdivisions)
 
         self.min_point: mathutils.Vector = min_point
         self.stride_inv: mathutils.Vector = stride_inv
@@ -307,7 +313,7 @@ class MeshCollider():
 
         bm.free()
 
-    def write_out(self, file):
+    def write_out(self, file, force_subdivisions: mathutils.Vector | None = None):
         file.write('CMSH'.encode())
         file.write(len(self.vertices).to_bytes(2, 'big'))
 
@@ -329,7 +335,7 @@ class MeshCollider():
                 triangle.indices[2],
             ))
 
-        index = MeshIndex(self.vertices, self.triangles)
+        index = MeshIndex(self.vertices, self.triangles, force_subdivisions = force_subdivisions)
         index.serialize(file)
 
     def is_empty(self):
