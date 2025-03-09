@@ -117,6 +117,70 @@ def _determine_index_indices(points: list[mathutils.Vector]):
 
     return min_point, stride_inv, block_count
 
+CENTER_THREHOLD = 0.001
+
+def _split_loop(loop: list[mathutils.Vector], axis: int, distance: float) -> tuple[list[mathutils.Vector], list[mathutils.Vector]]:
+    offsets = list(map(lambda x: x[axis] - distance, loop))
+
+    behind = []
+    front = []
+
+    for i in range(len(loop)):
+        current_offset = offsets[i]
+
+        if current_offset < CENTER_THREHOLD:
+            behind.append(loop[i])
+
+        if current_offset > -CENTER_THREHOLD:
+            front.append(loop[i])
+
+
+        next_index = (i + 1) % len(loop)
+        next_offset = offsets[next_index]
+
+        if (current_offset >= CENTER_THREHOLD and next_offset <= -CENTER_THREHOLD) or (current_offset <= -CENTER_THREHOLD and next_offset >= CENTER_THREHOLD):
+            lerp_value = -current_offset / (next_offset - current_offset)
+            center_point = loop[i] * (1 - lerp_value) + loop[next_index] * lerp_value
+            behind.append(center_point)
+            front.append(center_point)
+
+    return behind, front
+
+def _rasterize_loop_detrmine_range(points: list[mathutils.Vector], axis: int) -> tuple[int, int]:
+    return min(map(lambda point: math.floor(point[axis]), points)), min(map(lambda point: math.ceil(point[axis]), points))
+
+def _rasterize_loop_axis_3d(points: list[mathutils.Vector], axis: int, result: list[tuple[int, int, int]], prev_axis: int | None):
+    curr_value = min(map(lambda point: math.floor(point[axis]), points))
+
+    curr_loop = points
+
+    while len(curr_loop) > 0:
+        behind, front = _split_loop(curr_loop, axis, curr_value + 1)
+
+        if len(behind) == 0:
+            raise Exception('the behind loop should never be empty')
+
+        if axis == 1:
+            min_z, max_z = _rasterize_loop_detrmine_range(behind, 2)
+            for z in range(min_z, max_z):
+                result.append((prev_axis, curr_value, z))
+        else:
+            _rasterize_loop_axis_3d(behind, axis + 1, result, curr_value)
+
+        curr_value += 1
+        curr_loop = front
+
+        if curr_value > 100:
+            print(curr_loop)
+            raise Exception('infinite loop here')
+
+    
+def _rasterize_triangle_3d(points: list[mathutils.Vector]) -> list[tuple[int, int, int]]:
+    result = []
+    _rasterize_loop_axis_3d(points, 0, result, None)
+    return result
+
+
 class MeshIndexBlock():
     def __init__(self):
         self.indices: list[int] = []
@@ -201,23 +265,18 @@ class MeshIndex():
 
     def check_triangle(self, triangle_index: int):
         triangle: MeshColliderTriangle = self.triangles[triangle_index]
-        min_pos = self.vertices[triangle.indices[0]]
-        max_pos = self.vertices[triangle.indices[0]]
 
-        for idx in range(1, 3):
-            min_pos = _vector_min(min_pos, self.vertices[triangle.indices[idx]])
-            max_pos = _vector_max(max_pos, self.vertices[triangle.indices[idx]])
+        block_vertices = list(map(lambda index: self._block_coordinates(self.vertices[index]), triangle.indices))
+        block_indices = _rasterize_triangle_3d(block_vertices)
+        
+        for cooridnate in block_indices:
+            if cooridnate[0] < 0 or cooridnate[0] >= self.block_count[0] or \
+                cooridnate[1] < 0 or cooridnate[1] >= self.block_count[1] or \
+                cooridnate[2] < 0 or cooridnate[2] >= self.block_count[2]:
+                continue
 
-        min_block = _vector_floor(self._block_coordinates(min_pos) - mathutils.Vector((ERROR_MARGIN, ERROR_MARGIN, ERROR_MARGIN)))
-        max_block = _vector_ceil(self._block_coordinates(max_pos) + mathutils.Vector((ERROR_MARGIN, ERROR_MARGIN, ERROR_MARGIN)))
-
-        min_block = _vector_max(min_block, mathutils.Vector((0, 0, 0)))
-        max_block = _vector_min(max_block, self.block_count)
-
-        for z in range(int(min_block.z), int(max_block.z)):
-            for y in range(int(min_block.y), int(max_block.y)):
-                for x in range(int(min_block.x), int(max_block.x)):
-                    self.check_triangle_to_box(x, y, z, triangle, triangle_index)
+            index = int(cooridnate[0] + ((cooridnate[1] + cooridnate[2] * self.block_count.y) * self.block_count.x))
+            self.blocks[index].indices.append(triangle_index)
 
 class MeshCollider():
     def __init__(self):
