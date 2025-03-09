@@ -159,13 +159,13 @@ void collision_scene_collide_dynamic() {
 
         curr_edge->is_start_edge = 1;
         curr_edge->object_index = i;
-        curr_edge->x = (short)(element->object->bounding_box.min.x * 32.0f);
+        curr_edge->x = (short)floorf(element->object->bounding_box.min.x * 8.0f);
 
         curr_edge += 1;
 
         curr_edge->is_start_edge = 0;
         curr_edge->object_index = i;
-        curr_edge->x = (short)(element->object->bounding_box.max.x * 32.0f);
+        curr_edge->x = (short)ceilf(element->object->bounding_box.max.x * 8.0f);
 
         curr_edge += 1;
     }
