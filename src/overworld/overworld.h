@@ -27,6 +27,8 @@ struct overworld_tile {
 
 struct overworld_actor_tile {
     struct mesh_collider collider;
+    uint16_t x;
+    uint16_t y;
 };
 
 struct overworld_tile_render_block {

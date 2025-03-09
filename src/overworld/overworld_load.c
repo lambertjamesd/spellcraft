@@ -126,6 +126,11 @@ void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3*
     struct overworld_actor_tile** slot = &overworld->loaded_actor_tiles[x & 0x1][y & 0x1];
 
     if (*slot) {
+        if ((*slot)->x == x && (*slot)->y == y) {
+            // already loaded
+            return;
+        }
+
         collision_scene_remove_static_collision(&(*slot)->collider);
         overworld_actor_tile_free(*slot);
     }
@@ -137,5 +142,7 @@ void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3*
     
     fseek(overworld->file, overworld->tile_definitions[x + y * overworld->tile_x].actor_block_offset, SEEK_SET);
     *slot = overworld_actor_tile_load(overworld->file);
+    (*slot)->x = x;
+    (*slot)->y = y;
     collision_scene_use_static_collision(&(*slot)->collider);
 }
