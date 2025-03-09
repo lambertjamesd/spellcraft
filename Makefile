@@ -138,6 +138,11 @@ build/test_result.txt: $(EXPORT_SOURCE)
 	python3 tools/mesh_export/cutscene_test.py
 	echo "success" > $@
 
+build/blender_results.txt: $(EXPORT_SOURCE)
+	@mkdir -p $(dir $@)
+	$(BLENDER_4) --background --python-exit-code 1 --python tools/mesh_export/tests.py
+	echo "success" > $@
+
 ###
 # source code
 ###
