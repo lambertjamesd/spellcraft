@@ -34,16 +34,15 @@ def split_on_side(input: mesh.mesh_data, into_mesh: mesh.mesh_data, on_side: str
             lerp_value = -curr_distance / (next_distance - curr_distance)
 
             next_vertex_index = len(into_mesh.vertices)
-            index_mapping[point_index] = next_vertex_index
             new_index_loop.append(next_vertex_index)
-            
-            into_mesh.append_vertex(
-                input.get_vertex_interpolated(
-                    point_index,
-                    next_point_index,
-                    lerp_value
-                )
+
+            interpolated = input.get_vertex_interpolated(
+                point_index,
+                next_point_index,
+                lerp_value
             )
+
+            into_mesh.append_vertex(interpolated)
 
     for i in range(1, len(new_index_loop) - 1):
         into_mesh.append_triangle(
