@@ -11,6 +11,8 @@ typedef int collision_id;
 #define MIN_DYNAMIC_OBJECTS 64
 #define MAX_ACTIVE_CONTACTS 128
 
+#define MAX_STATIC_MESHES   8
+
 struct collision_scene_element {
     struct dynamic_object* object;
 };
@@ -23,7 +25,7 @@ struct collision_scene {
     uint16_t count;
     uint16_t capacity;
 
-    struct mesh_collider* mesh_collider;
+    struct mesh_collider* mesh_colliders[8];
 };
 
 void collision_scene_reset();
@@ -32,8 +34,8 @@ void collision_scene_remove(struct dynamic_object* object);
 
 struct dynamic_object* collision_scene_find_object(entity_id id);
 
-void collision_scene_use_static_collision(struct mesh_collider* collider);
-void collision_scene_remove_static_collision(struct mesh_collider* collider);
+void collision_scene_add_static_mesh(struct mesh_collider* collider);
+void collision_scene_remove_static_mesh(struct mesh_collider* collider);
 
 void collision_scene_collide();
 

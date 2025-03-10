@@ -120,29 +120,36 @@ void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3*
     float tile_x = (player_pos->x - overworld->min.x) * overworld->inv_tile_size;
     float tile_y = (player_pos->z - overworld->min.y) * overworld->inv_tile_size;
 
-    int x = (int)floorf(tile_x);
-    int y = (int)floorf(tile_y);
+    int min_x = (int)floorf(tile_x - 0.5f);
+    int min_y = (int)floorf(tile_y - 0.5f);
 
-    struct overworld_actor_tile** slot = &overworld->loaded_actor_tiles[x & 0x1][y & 0x1];
+    int max_x = (int)ceilf(tile_x + 0.5f);
+    int max_y = (int)ceilf(tile_y + 0.5f);
 
-    if (*slot) {
-        if ((*slot)->x == x && (*slot)->y == y) {
-            // already loaded
-            return;
+    for (int x = min_x; x < max_x; x += 1) {
+        for (int y = min_y; y < max_y; y += 1) {
+            struct overworld_actor_tile** slot = &overworld->loaded_actor_tiles[x & 0x1][y & 0x1];
+        
+            if (*slot) {
+                if ((*slot)->x == x && (*slot)->y == y) {
+                    // already loaded
+                    return;
+                }
+        
+                collision_scene_remove_static_mesh(&(*slot)->collider);
+                overworld_actor_tile_free(*slot);
+            }
+        
+            if (x < 0 || y < 0 || x >= overworld->tile_x || y >= overworld->tile_y) {
+                *slot = NULL;
+                return;
+            }
+            
+            fseek(overworld->file, overworld->tile_definitions[x + y * overworld->tile_x].actor_block_offset, SEEK_SET);
+            *slot = overworld_actor_tile_load(overworld->file);
+            (*slot)->x = x;
+            (*slot)->y = y;
+            collision_scene_add_static_mesh(&(*slot)->collider);
         }
-
-        collision_scene_remove_static_collision(&(*slot)->collider);
-        overworld_actor_tile_free(*slot);
     }
-
-    if (x < 0 || y < 0 || x >= overworld->tile_x || y >= overworld->tile_y) {
-        *slot = NULL;
-        return;
-    }
-    
-    fseek(overworld->file, overworld->tile_definitions[x + y * overworld->tile_x].actor_block_offset, SEEK_SET);
-    *slot = overworld_actor_tile_load(overworld->file);
-    (*slot)->x = x;
-    (*slot)->y = y;
-    collision_scene_use_static_collision(&(*slot)->collider);
 }

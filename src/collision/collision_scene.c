@@ -10,6 +10,7 @@
 #include "collide_swept.h"
 #include "contact.h"
 #include "../util/hash_map.h"
+#include <memory.h>
 
 struct collision_scene g_scene;
 
@@ -17,6 +18,7 @@ void collision_scene_reset() {
     free(g_scene.elements);
     free(g_scene.all_contacts);
     hash_map_destroy(&g_scene.entity_mapping);
+    memset(&g_scene, 0, sizeof(g_scene));
 
     hash_map_init(&g_scene.entity_mapping, MIN_DYNAMIC_OBJECTS);
 
@@ -92,13 +94,30 @@ void collision_scene_remove(struct dynamic_object* object) {
     hash_map_delete(&g_scene.entity_mapping, object->entity_id);
 }
 
-void collision_scene_use_static_collision(struct mesh_collider* collider) {
-    g_scene.mesh_collider = collider;
+void collision_scene_add_static_mesh(struct mesh_collider* collider) {
+    for (int i = 0; i < MAX_STATIC_MESHES; i += 1) {
+        if (g_scene.mesh_colliders[i] == NULL) {
+            g_scene.mesh_colliders[i] = collider;
+            return;
+        }
+    }
 }
 
-void collision_scene_remove_static_collision(struct mesh_collider* collider) {
-    if (collider == g_scene.mesh_collider) {
-        g_scene.mesh_collider = NULL;
+void collision_scene_remove_static_mesh(struct mesh_collider* collider) {
+    int write_index = 0;
+    for (int read_index = 0; read_index < MAX_STATIC_MESHES; read_index += 1) {
+        if (write_index != read_index) {
+            g_scene.mesh_colliders[write_index] = g_scene.mesh_colliders[read_index];
+        }
+        
+        if (g_scene.mesh_colliders[read_index] != collider) {
+            write_index += 1;
+        }
+    }
+
+    while (write_index < MAX_STATIC_MESHES) {
+        g_scene.mesh_colliders[write_index] = NULL;
+        write_index += 1;
     }
 }
 
@@ -216,6 +235,7 @@ void collision_scene_collide_dynamic() {
 
 void collision_scene_collide_single(struct dynamic_object* object, struct Vector3* prev_pos) {
     collide_object_reset_sweep();
+    object->is_out_of_bounds = 1;
     for (int i = 0; i < MAX_SWEPT_ITERATIONS; i += 1) {
         struct Vector3 offset;
         vector3Sub(object->position, prev_pos, &offset);
@@ -223,15 +243,33 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
         vector3Sub(&object->bounding_box.max, &object->bounding_box.min, &bbSize);
         vector3Scale(&bbSize, &bbSize, 0.5f);
 
-        if (fabs(offset.x) > bbSize.x ||
+        bool should_swepp = fabs(offset.x) > bbSize.x ||
             fabs(offset.y) > bbSize.y ||
-            fabs(offset.z) > bbSize.z
-        ) {
-            if (!collide_object_to_mesh_swept(object, g_scene.mesh_collider, prev_pos)) {
-                return;
+            fabs(offset.z) > bbSize.z;
+
+        bool did_hit = false;
+
+        for (int mesh_index = 0; mesh_index < MAX_STATIC_MESHES; mesh_index += 1) {
+            struct mesh_collider* mesh = g_scene.mesh_colliders[mesh_index];
+
+            if (!mesh) {
+                break;
             }
-        } else {
-            collide_object_to_mesh(object, g_scene.mesh_collider);
+
+            bool is_contained = mesh_index_is_contained(&mesh->index, object->position);
+
+            if (is_contained) {
+                object->is_out_of_bounds = 0;
+            }
+    
+            if (should_swepp) {
+                did_hit = collide_object_to_mesh_swept(object, mesh, prev_pos) || did_hit;
+            } else {
+                collide_object_to_mesh(object, mesh);
+            }
+        }
+
+        if (did_hit || !should_swepp) {
             return;
         }
     }
@@ -241,6 +279,8 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
     // the object back to the previous known
     // valid location
     *object->position = *prev_pos;
+    // slow the the object so it can start using non swept collision
+    vector3Scale(&object->velocity, &object->velocity, 0.9f);
 }
 
 void collision_scene_collide() {
@@ -261,14 +301,7 @@ void collision_scene_collide() {
 
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
-
-        if (!g_scene.mesh_collider) {
-            continue;
-        }
-
         collision_scene_collide_single(element->object, &prev_pos[i]);
-
-        element->object->is_out_of_bounds = mesh_index_is_contained(&g_scene.mesh_collider->index, element->object->position);
     }
 }
 
