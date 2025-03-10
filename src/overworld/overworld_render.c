@@ -206,7 +206,7 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
     float tan_fov = tanf(camera->fov * (0.5f * 3.14159f / 180.0f));
     float aspect_ratio = (float)prev_viewport->size[0] / (float)prev_viewport->size[1];
 
-    float near = camera->far * LOD_0_SCALE;
+    float near = (camera->far - 50.0f) * LOD_0_SCALE;
     float far = overworld->tile_x * overworld->tile_size * (1.4f * LOD_0_SCALE);
 
     matrixPerspective(

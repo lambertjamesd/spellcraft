@@ -21,7 +21,7 @@ static struct push_definition push_definitions[] = {
     },
     [ELEMENT_TYPE_ICE] = {
         .push_strength = 16.0f,
-        .mana_per_second = 10.0f,
+        // .mana_per_second = 10.0f,
         .burst_mana_amount = 20.0f,
         .contact_damage = 1.0f,
         .push_acceleration = 18.0f,
@@ -127,11 +127,17 @@ bool push_update(struct push* push, struct spell_event_listener* event_listener,
         mana_regulator_init(&push->mana_regulator, burst_mana, 16.0f);
     }
 
-    float power_ratio = mana_regulator_request(
-        &push->mana_regulator, 
-        is_bursty ? NULL : &spell_sources->mana_pool, 
-        push->definition->mana_per_second * scaled_time_step
-    ) * scaled_time_step_inv * (1.0f / push->definition->mana_per_second);
+    float power_ratio;
+    
+    if (push->definition->mana_per_second) {
+        power_ratio = mana_regulator_request(
+            &push->mana_regulator, 
+            is_bursty ? NULL : &spell_sources->mana_pool, 
+            push->definition->mana_per_second * scaled_time_step
+        ) * scaled_time_step_inv * (1.0f / push->definition->mana_per_second);
+    } else {
+        power_ratio = 1.0f;
+    }
 
     if (power_ratio == 0.0f) {
         return false;
