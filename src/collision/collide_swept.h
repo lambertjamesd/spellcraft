@@ -12,6 +12,7 @@ struct object_mesh_collide_data {
     struct EpaResult hit_result;
 };
 
+void collide_object_reset_sweep();
 bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_collider* mesh, struct Vector3* prev_pos);
 
 #endif

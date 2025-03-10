@@ -33,7 +33,23 @@ void object_mesh_collide_data_init(
     data->object = object;
 }
 
+struct triangle_id {
+    struct mesh_index* index;
+    uint16_t triangle_index;
+};
+
+static struct triangle_id g_last_triangle_collided;
+
+void collide_object_reset_sweep() {
+    g_last_triangle_collided.index = NULL;
+    g_last_triangle_collided.triangle_index = 0;
+}
+
 bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int triangle_index) {
+    if (g_last_triangle_collided.index == index && g_last_triangle_collided.triangle_index == triangle_index) {
+        return false;
+    }
+
     struct object_mesh_collide_data* collide_data = (struct object_mesh_collide_data*)data;
 
     struct swept_dynamic_object swept;
@@ -62,6 +78,8 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
         &result
     )) {
         collide_data->hit_result = result;
+        g_last_triangle_collided.index = index;
+        g_last_triangle_collided.triangle_index = triangle_index;
         return true;
     }
 
@@ -77,6 +95,8 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
         &result
     )) {
         collide_data->hit_result = result;
+        g_last_triangle_collided.index = index;
+        g_last_triangle_collided.triangle_index = triangle_index;
         return true;
     }
 
