@@ -425,9 +425,10 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
                 output.write(COMMAND_FOG_COLOR.to_bytes(1, 'big'))
                 _serialize_color(output, mat.fog.fog_color)
 
-            output.write(COMMAND_FOG_RANGE.to_bytes(1, 'big'))
-            output.write(int(mat.fog.min_distance * 64).to_bytes(2, 'big'))
-            output.write(int(mat.fog.max_distance * 64).to_bytes(2, 'big'))
+            if mat.fog.min_distance != mat.fog.max_distance:
+                output.write(COMMAND_FOG_RANGE.to_bytes(1, 'big'))
+                output.write(int(mat.fog.min_distance * 4).to_bytes(2, 'big'))
+                output.write(int(mat.fog.max_distance * 4).to_bytes(2, 'big'))
 
     flags = flags_for_material(mat)
 

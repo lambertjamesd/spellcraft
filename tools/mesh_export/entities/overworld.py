@@ -79,6 +79,7 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     lod_0_mesh_bytes = io.BytesIO()
     lod_0_settings = settings.copy()
     lod_0_settings.sort_direction = mathutils.Vector((1, 0, 0))
+    lod_0_settings.fog_scale = LOD_0_SCALE
     lod_0_mesh_data = lod_0_mesh.determine_mesh_data(None)
     for entry in lod_0_mesh_data:
         entry.scale(LOD_0_SCALE)

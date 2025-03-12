@@ -483,6 +483,10 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
             mat.blend_mode.z_compare = False
             mat.blend_mode.z_write = False
 
+        if settings.fog_scale != 1 and mat.fog:
+            mat.fog.min_distance *= settings.fog_scale
+            mat.fog.max_distance *= settings.fog_scale
+
         chunks += mesh_optimizer.chunkify_mesh(mesh, mat, settings.default_material)
 
     if settings.sort_direction:
