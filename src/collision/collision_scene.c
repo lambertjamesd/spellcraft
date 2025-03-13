@@ -234,7 +234,6 @@ void collision_scene_collide_dynamic() {
 #define MAX_SWEPT_ITERATIONS    5
 
 void collision_scene_collide_single(struct dynamic_object* object, struct Vector3* prev_pos) {
-    collide_object_reset_sweep();
     object->is_out_of_bounds = 1;
     for (int i = 0; i < MAX_SWEPT_ITERATIONS; i += 1) {
         struct Vector3 offset;
