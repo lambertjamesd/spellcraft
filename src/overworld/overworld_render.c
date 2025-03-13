@@ -6,20 +6,6 @@
 
 static int edge_deltas[] = {0x1, 0x2, 0x4};
 
-int overworld_find_first_edge(struct Vector2 transformed_points[8], int current_index) {
-    int result = current_index ^ 0x1;
-
-    for (int i = 1; i < 3; i += 1) {
-        int next_index = current_index ^ edge_deltas[i];
-
-        if (transformed_points[next_index].x > transformed_points[result].x) {
-            result = next_index;
-        }
-    }
-
-    return result;
-}
-
 int overworld_find_next_edge(struct Vector2 transformed_points[8], int current_index, int prev_index) {
     int result = -1;
 
@@ -30,11 +16,12 @@ int overworld_find_next_edge(struct Vector2 transformed_points[8], int current_i
             continue;
         }
 
-        if (result == -1) {
-            if (vector2DistSqr(&transformed_points[current_index], &transformed_points[next_index]) > 0.00001f) {
-                result = next_index;
-            }
+        if (vector2DistSqr(&transformed_points[current_index], &transformed_points[next_index]) < 0.00001f) {
+            continue;
+        }
 
+        if (result == -1) {
+            result = next_index;
             continue;
         }
 
@@ -87,7 +74,7 @@ int overworld_create_top_view(struct overworld* overworld, mat4x4 view_proj_matr
     loop[result++] = transformed_points[current_index];
     int prev_index = current_index;
     int start_index = current_index;
-    current_index = overworld_find_first_edge(transformed_points, current_index);
+    current_index = overworld_find_next_edge(transformed_points, current_index, current_index);
     loop[result++] = transformed_points[current_index];
 
     while (result < 8) {
