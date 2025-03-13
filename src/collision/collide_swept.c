@@ -77,6 +77,7 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
         &result
     )) {
         collide_data->hit_result = result;
+        vector3AddScaled(collide_data->object->position, &result.normal, -result.penetration, collide_data->object->position);
         return true;
     }
 
