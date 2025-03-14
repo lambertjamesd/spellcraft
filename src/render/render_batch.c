@@ -51,9 +51,9 @@ T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count) {
 }
 
 void render_batch_relative_mtx(struct render_batch* batch, mat4x4 into) {
-    into[3][0] -= batch->camera_matrix[3][0] * MODEL_WORLD_SCALE;
-    into[3][1] -= batch->camera_matrix[3][1] * MODEL_WORLD_SCALE;
-    into[3][2] -= batch->camera_matrix[3][2] * MODEL_WORLD_SCALE;
+    into[3][0] -= batch->camera_matrix[3][0] * WORLD_SCALE;
+    into[3][1] -= batch->camera_matrix[3][1] * WORLD_SCALE;
+    into[3][2] -= batch->camera_matrix[3][2] * WORLD_SCALE;
 }
 
 struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, void* transform, int transform_count, struct armature* armature, struct tmesh** attachments) {

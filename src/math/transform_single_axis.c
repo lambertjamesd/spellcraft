@@ -25,8 +25,8 @@ void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix, f
     matrix[2][2] = transform->rotation.x * scale;
     matrix[2][3] = 0.0f;
 
-    matrix[3][0] = transform->position.x * MODEL_WORLD_SCALE;
-    matrix[3][1] = transform->position.y * MODEL_WORLD_SCALE;
-    matrix[3][2] = transform->position.z * MODEL_WORLD_SCALE;
+    matrix[3][0] = transform->position.x * WORLD_SCALE;
+    matrix[3][1] = transform->position.y * WORLD_SCALE;
+    matrix[3][2] = transform->position.z * WORLD_SCALE;
     matrix[3][3] = 1.0f;
 }
