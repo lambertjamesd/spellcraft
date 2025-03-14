@@ -107,10 +107,10 @@ void matrixFromScale(float matrix[4][4], float scale) {
     matrix[3][3] = 1.0f;
 }
 
-void matrixApplyPosition(float matrix[4][4], struct Vector3* position) {
-    matrix[3][0] = position->x;
-    matrix[3][1] = position->y;
-    matrix[3][2] = position->z;
+void matrixApplyScaledPos(float matrix[4][4], struct Vector3* position, float scale) {
+    matrix[3][0] = position->x * scale;
+    matrix[3][1] = position->y * scale;
+    matrix[3][2] = position->z * scale;
 }
 
 void matrixApplyScale(float matrix[4][4], float scale) {

@@ -59,7 +59,7 @@ int overworld_create_top_view(struct overworld* overworld, mat4x4 view_proj_matr
         struct Vector4 transformed_point;
         matrixVec3Mul(view_inv, &point, &transformed_point);
 
-        float inv_w = 1.0f / transformed_point.w;
+        float inv_w = 1.0f / (transformed_point.w * WORLD_SCALE);
         
         transformed_points[i].x = (transformed_point.x * inv_w + camera_position->x - overworld->min.x) * overworld->inv_tile_size;
         transformed_points[i].y = (transformed_point.z * inv_w + camera_position->z - overworld->min.y) * overworld->inv_tile_size;
@@ -193,8 +193,8 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
     float tan_fov = tanf(camera->fov * (0.5f * 3.14159f / 180.0f));
     float aspect_ratio = (float)prev_viewport->size[0] / (float)prev_viewport->size[1];
 
-    float near = (camera->far - 50.0f) * LOD_0_SCALE;
-    float far = overworld->tile_x * overworld->tile_size * (1.4f * LOD_0_SCALE);
+    float near = (camera->far - 50.0f) * LOD_0_SCALE * WORLD_SCALE;
+    float far = overworld->tile_x * overworld->tile_size * (1.4f * LOD_0_SCALE) * WORLD_SCALE;
 
     matrixPerspective(
         new_viewport->matProj.m, 
@@ -219,13 +219,13 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
     t3d_mat4_identity(&mtx);
     t3d_mat4_translate(
         &mtx, 
-        -camera->transform.position.x * LOD_0_SCALE,
-        -camera->transform.position.y * LOD_0_SCALE,
-        -camera->transform.position.z * LOD_0_SCALE
+        -camera->transform.position.x * LOD_0_SCALE * WORLD_SCALE,
+        -camera->transform.position.y * LOD_0_SCALE * WORLD_SCALE,
+        -camera->transform.position.z * LOD_0_SCALE * WORLD_SCALE
     );
-    mtx.m[0][0] = (1.0f / SCENE_SCALE);
-    mtx.m[1][1] = (1.0f / SCENE_SCALE);
-    mtx.m[2][2] = (1.0f / SCENE_SCALE);
+    mtx.m[0][0] = MODEL_WORLD_SCALE;
+    mtx.m[1][1] = MODEL_WORLD_SCALE;
+    mtx.m[2][2] = MODEL_WORLD_SCALE;
 
     rdpq_mode_zbuf(false, false);
 
@@ -280,14 +280,14 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
             t3d_mat4_identity(&mtx);
             t3d_mat4_translate(
                 &mtx, 
-                x * overworld->tile_size + overworld->min.x - camera_position->x,
-                block->starting_y - camera_position->y,
-                next.y * overworld->tile_size + overworld->min.y - camera_position->z
+                (x * overworld->tile_size + overworld->min.x - camera_position->x) * WORLD_SCALE,
+                (block->starting_y - camera_position->y) * WORLD_SCALE,
+                (next.y * overworld->tile_size + overworld->min.y - camera_position->z) * WORLD_SCALE
             );
 
-            mtx.m[0][0] = 1.0f / SCENE_SCALE;
-            mtx.m[1][1] = block->scale_y * (1.0f / SCENE_SCALE);
-            mtx.m[2][2] = 1.0f / SCENE_SCALE; 
+            mtx.m[0][0] = MODEL_WORLD_SCALE;
+            mtx.m[1][1] = block->scale_y * MODEL_WORLD_SCALE;
+            mtx.m[2][2] = MODEL_WORLD_SCALE; 
 
             t3d_mat4_to_fixed_3x4(tile_position, &mtx);
 

@@ -37,8 +37,8 @@ void burning_effect_render(void* data, struct render_batch* batch) {
 
     mat4x4 mtx;
     memcpy(mtx, &batch->camera_matrix, sizeof(mat4x4));
-    matrixApplyPosition(mtx, &effect->position);
-    matrixApplyScale(mtx, effect->current_size * (1.0f / SCENE_SCALE));
+    matrixApplyScaledPos(mtx, &effect->position, WORLD_SCALE);
+    matrixApplyScale(mtx, effect->current_size * MODEL_WORLD_SCALE);
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 

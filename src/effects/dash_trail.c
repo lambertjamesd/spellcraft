@@ -52,7 +52,7 @@ void dash_trail_render_callback(void* data, struct render_batch* batch) {
         struct Vector3 offset;
         vector3AddScaled(&trail->emit_from[current], &trail->tangent[current], (particle_time * TANGENT_OFFSET) * TANGENT_VELOCITY_BOTTOM, &offset);
         
-        offset.y -= 2.0f * (1.0f / SCENE_SCALE);
+        offset.y -= 2.0f * MODEL_WORLD_SCALE;
 
         pack_position_vector(
             &offset, 

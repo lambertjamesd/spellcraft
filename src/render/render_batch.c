@@ -51,9 +51,9 @@ T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count) {
 }
 
 void render_batch_relative_mtx(struct render_batch* batch, mat4x4 into) {
-    into[3][0] -= batch->camera_matrix[3][0];
-    into[3][1] -= batch->camera_matrix[3][1];
-    into[3][2] -= batch->camera_matrix[3][2];
+    into[3][0] -= batch->camera_matrix[3][0] * MODEL_WORLD_SCALE;
+    into[3][1] -= batch->camera_matrix[3][1] * MODEL_WORLD_SCALE;
+    into[3][2] -= batch->camera_matrix[3][2] * MODEL_WORLD_SCALE;
 }
 
 struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, void* transform, int transform_count, struct armature* armature, struct tmesh** attachments) {
@@ -243,13 +243,13 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
     if (default_mtx) {
         mat4x4 scaleMtx;
-        matrixFromScale(scaleMtx, 1.0f / SCENE_SCALE);
+        matrixFromScale(scaleMtx, MODEL_WORLD_SCALE);
         struct Vector3 camera_neg_pos = {
-            -batch->camera_matrix[3][0],
-            -batch->camera_matrix[3][1],
-            -batch->camera_matrix[3][2],
+            batch->camera_matrix[3][0],
+            batch->camera_matrix[3][1],
+            batch->camera_matrix[3][2],
         };
-        matrixApplyPosition(scaleMtx, &camera_neg_pos);
+        matrixApplyScaledPos(scaleMtx, &camera_neg_pos, -WORLD_SCALE);
         t3d_mat4_to_fixed_3x4(default_mtx, (T3DMat4*)scaleMtx);
     }
 
@@ -329,7 +329,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
                 struct Vector4 transformed;
                 struct Vector3 scaled;
-                vector3Scale(&sprite.position, &scaled, SCENE_SCALE);
+                vector3Scale(&sprite.position, &scaled, WORLD_SCALE);
                 matrixVec3Mul(view_proj_matrix, &scaled, &transformed);
 
                 if (transformed.w < 0.0f) {
@@ -342,7 +342,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 float y = (-transformed.y * wInv + 1.0f) * 0.5f * 4.0f;
                 float z = transformed.z * wInv * 0.5f + 0.5f;
 
-                float size = sprite.radius * wInv * SCENE_SCALE;
+                float size = sprite.radius * wInv * WORLD_SCALE;
 
                 if (z < 0.0f || z > 1.0f) {
                     continue;

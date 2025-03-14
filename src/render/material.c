@@ -270,7 +270,7 @@ void material_load(struct material* into, FILE* material_file) {
                     uint16_t max;
                     fread(&min, sizeof(min), 1, material_file);
                     fread(&max, sizeof(max), 1, material_file);
-                    t3d_fog_set_range(min * (1.0f / 4.0f), max * (1.0f / 4.0f));
+                    t3d_fog_set_range(min * WORLD_SCALE, max * WORLD_SCALE);
                 }
                 break;
         }

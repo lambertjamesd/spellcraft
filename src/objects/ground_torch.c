@@ -45,8 +45,8 @@ void ground_torch_render(void* data, struct render_batch* batch) {
 
     mat4x4 mtx;
 
-    matrixFromScale(mtx, 1.0f / SCENE_SCALE);
-    matrixApplyPosition(mtx, &torch->position);
+    matrixFromScale(mtx, MODEL_WORLD_SCALE);
+    matrixApplyScaledPos(mtx, &torch->position, WORLD_SCALE);
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
@@ -63,8 +63,8 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     }
 
     memcpy(mtx, &batch->camera_matrix, sizeof(mat4x4));
-    matrixApplyPosition(mtx, &torch->position);
-    matrixApplyScale(mtx, 1.0f / SCENE_SCALE);
+    matrixApplyScaledPos(mtx, &torch->position, WORLD_SCALE);
+    matrixApplyScale(mtx, MODEL_WORLD_SCALE);
     mtx[3][1] += TORCH_HEIGHT;
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);

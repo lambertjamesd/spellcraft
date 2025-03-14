@@ -54,7 +54,7 @@ void tmesh_load_attachment(struct armature_attatchment* attatchment, FILE* file)
 
     T3DMat4 mtx;
     transformToMatrix(&transform, mtx.m);
-    t3d_mat4_to_fixed(&attatchment->local_transform, &mtx);
+    t3d_mat4_to_fixed(UncachedAddr(&attatchment->local_transform), &mtx);
     data_cache_hit_writeback_invalidate(&attatchment->local_transform, sizeof(T3DMat4FP));
 }
 

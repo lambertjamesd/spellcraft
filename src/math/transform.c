@@ -21,12 +21,21 @@ void transformToMatrix(struct Transform* in, float mtx[4][4]) {
     mtx[3][2] = in->position.z;
 }
 
-void transformApplySceneScale(float mtx[4][4]) {
-    for (int y = 0; y < 3; y += 1) {
-        for (int x = 0; x < 3; x += 1) {
-            mtx[y][x] *= (1.0f / SCENE_SCALE);
-        }
-    }
+
+void transformToWorldMatrix(struct Transform* in, float mtx[4][4]) {
+    quatToMatrix(&in->rotation, mtx);
+
+    float scale_x = in->scale.x * MODEL_WORLD_SCALE;
+    float scale_y = in->scale.y * MODEL_WORLD_SCALE;
+    float scale_z = in->scale.z * MODEL_WORLD_SCALE;
+
+    mtx[0][0] *= scale_x; mtx[0][1] *= scale_x; mtx[0][2] *= scale_x;
+    mtx[1][0] *= scale_y; mtx[1][1] *= scale_y; mtx[1][2] *= scale_y;
+    mtx[2][0] *= scale_z; mtx[2][1] *= scale_z; mtx[2][2] *= scale_z;
+
+    mtx[3][0] = in->position.x * WORLD_SCALE;
+    mtx[3][1] = in->position.y * WORLD_SCALE;
+    mtx[3][2] = in->position.z * WORLD_SCALE;
 }
 
 void transformInvert(struct Transform* in, struct Transform* out) {

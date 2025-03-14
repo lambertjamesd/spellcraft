@@ -12,7 +12,7 @@ struct Transform {
 
 void transformInitIdentity(struct Transform* in);
 void transformToMatrix(struct Transform* in, float mtx[4][4]);
-void transformApplySceneScale(float mtx[4][4]);
+void transformToWorldMatrix(struct Transform* in, float mtx[4][4]);
 void transformInvert(struct Transform* in, struct Transform* out);
 void transformPoint(struct Transform* transform, struct Vector3* in, struct Vector3* out);
 void transformPointInverse(struct Transform* transform, struct Vector3* in, struct Vector3* out);

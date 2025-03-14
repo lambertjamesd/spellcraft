@@ -34,12 +34,7 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
     }
 
     mat4x4 mtx;
-    transformToMatrix(renderable->transform.transform, mtx);
-    for (int y = 0; y < 3; y += 1) {
-        for (int x = 0; x < 3; x += 1) {
-            mtx[y][x] *= (1.0f / SCENE_SCALE);
-        }
-    }
+    transformToWorldMatrix(renderable->transform.transform, mtx);
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
@@ -60,7 +55,7 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
     }
 
     mat4x4 mtx;
-    transformSAToMatrix(renderable->transform.transform, mtx, 1.0f / SCENE_SCALE);
+    transformSAToMatrix(renderable->transform.transform, mtx, 1.0f);
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 

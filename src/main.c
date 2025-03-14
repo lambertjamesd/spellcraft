@@ -37,12 +37,6 @@ void setup() {
 static struct frame_memory_pool frame_memory_pools[2];
 static uint8_t next_frame_memoy_pool;
 
-void transform_to_t3d(struct Transform* transform, T3DMat4FP* matrix) {
-    T3DMat4 tmp;
-    transformToMatrix(transform, tmp.m);
-    t3d_mat4_to_fixed(matrix, &tmp);
-}
-
 void render_3d() {
     uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
