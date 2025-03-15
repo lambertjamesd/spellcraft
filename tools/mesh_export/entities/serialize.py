@@ -375,28 +375,9 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
         output.write(COMMAND_COMBINE.to_bytes(1, 'big'))
         _serialize_combine(output, mat.combine_mode, force_cyc2)
 
-    should_enable_fog = mat.fog and mat.fog.enabled and not mat.combine_mode_uses('SHADE_ALPHA')
-
     if mat.blend_mode:
         output.write(COMMAND_BLEND.to_bytes(1, 'big'))
-
-        final_blend_mode = mat.blend_mode
-
-        if should_enable_fog:
-            final_blend_mode = mat.blend_mode.enable_fog()
-
-        _serialize_blend(output, final_blend_mode, force_cyc2)
-    elif should_enable_fog:
-        fog_blend_mode = material.BlendMode(
-            material.BlendModeCycle(
-                'IN',
-                'SHADE_A',
-                'FOG',
-                'INV_MUX_A'
-            ),
-            None
-        )
-        _serialize_blend(output, fog_blend_mode, True)
+        _serialize_blend(output, mat.blend_mode, force_cyc2)
     
     if mat.env_color:
         output.write(COMMAND_ENV.to_bytes(1, 'big'))
