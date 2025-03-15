@@ -268,14 +268,6 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
                 continue;
             }
 
-            T3DMat4FP* tile_position = frame_malloc(pool, sizeof(T3DMat4FP));
-
-            if (!tile_position) {
-                return;
-            }
-
-            tile_position = UncachedAddr(tile_position);
-
             T3DMat4 mtx;
             t3d_mat4_identity(&mtx);
             t3d_mat4_translate(
@@ -288,6 +280,18 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
             mtx.m[0][0] = MODEL_WORLD_SCALE;
             mtx.m[1][1] = block->scale_y * MODEL_WORLD_SCALE;
             mtx.m[2][2] = MODEL_WORLD_SCALE; 
+
+            if (fabsf(mtx.m[3][2]) > (float)0x7fffffff) {
+                continue;
+            }
+
+            T3DMat4FP* tile_position = frame_malloc(pool, sizeof(T3DMat4FP));
+
+            if (!tile_position) {
+                return;
+            }
+
+            tile_position = UncachedAddr(tile_position);
 
             t3d_mat4_to_fixed_3x4(tile_position, &mtx);
 
