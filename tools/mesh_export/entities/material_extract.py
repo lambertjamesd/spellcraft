@@ -4,6 +4,7 @@ import sys
 
 from . import material
 from . import serialize
+from . import blend_modes
 
 def _reverse_lookup(mapping: dict, value):
     for entry in mapping.items():
@@ -249,6 +250,115 @@ def _determine_tex_from_f3d(tex, uv_scroll, base_path: str) -> material.Tex:
 
     return result
 
+_CYCLE_1_PRESETS = [
+    blend_modes.RM_ZB_OPA_SURF,
+    blend_modes.RM_AA_ZB_OPA_SURF,
+    blend_modes.RM_AA_ZB_OPA_DECAL,
+    blend_modes.RM_AA_ZB_OPA_INTER,
+    blend_modes.RM_AA_ZB_TEX_EDGE,
+    blend_modes.RM_AA_ZB_XLU_SURF,
+    blend_modes.RM_AA_ZB_XLU_DECAL,
+    blend_modes.RM_AA_ZB_XLU_INTER,
+    blend_modes.RM_FOG_SHADE_A,
+    blend_modes.RM_FOG_PRIM_A,
+    blend_modes.RM_PASS,
+    blend_modes.RM_ADD,
+    blend_modes.RM_NOOP,
+    blend_modes.RM_ZB_OPA_SURF,
+    blend_modes.RM_ZB_OPA_DECAL,
+    blend_modes.RM_ZB_XLU_SURF,
+    blend_modes.RM_ZB_XLU_DECAL,
+    blend_modes.RM_OPA_SURF,
+    blend_modes.RM_ZB_CLD_SURF,
+    blend_modes.RM_AA_ZB_TEX_TERR,
+]
+
+_CYCLE_2_PRESETS = [
+    blend_modes.RM_ZB_OPA_SURF,
+    blend_modes.RM_AA_ZB_OPA_SURF,
+    blend_modes.RM_AA_ZB_OPA_DECAL,
+    blend_modes.RM_AA_ZB_OPA_INTER,
+    blend_modes.RM_AA_ZB_TEX_EDGE,
+    blend_modes.RM_AA_ZB_XLU_SURF,
+    blend_modes.RM_AA_ZB_XLU_DECAL,
+    blend_modes.RM_AA_ZB_XLU_INTER,
+    blend_modes.RM_ADD,
+    blend_modes.RM_NOOP,
+    blend_modes.RM_ZB_OPA_SURF,
+    blend_modes.RM_ZB_OPA_DECAL,
+    blend_modes.RM_ZB_XLU_SURF,
+    blend_modes.RM_ZB_XLU_DECAL,
+    blend_modes.RM_ZB_CLD_SURF,
+    blend_modes.RM_ZB_OVL_SURF,
+    blend_modes.RM_AA_ZB_TEX_TERR,
+    blend_modes.RM_OPA_SURF,
+]
+
+enumBlendColor = [
+    'IN',
+    'MEMORY',
+    'BLEND',
+    'FOG',
+]
+
+enumBlendAlpha = [
+    'IN_A',
+    'FOG_A',
+    'SHADE_A',
+    '0',
+]
+
+enumBlendMix = [
+    'INV_MUX_A',
+    'MEM_A',
+    '1',
+    '0'
+]
+
+enumZMode = [
+    'OPAQUE',
+    'INTER',
+    'TRANSPARENT',
+    'DECAL',
+]
+
+enumAlphaCompare = [
+    'NONE',
+    'THRESHOLD',
+    'DITHER',
+]
+
+enumCoverageDest = [
+    'CLAMP',
+    'WRAP',
+    'FULL',
+    'SAVE',
+]
+
+def determine_materail_blend_f3d(rdp_settings) -> material.BlendMode:
+    is_2_cycle = rdp_settings['g_mdsft_cycletype'] == 1
+
+    if rdp_settings['rendermode_advanced_enabled']:
+        return material.BlendMode(
+            material.BlendModeCycle(enumBlendColor[rdp_settings['blend_p1']], enumBlendAlpha[rdp_settings['blend_a1']], enumBlendColor[rdp_settings['blend_m1']], enumBlendMix[rdp_settings['blend_b1']]),
+            material.BlendModeCycle(enumBlendColor[rdp_settings['blend_p2']], enumBlendAlpha[rdp_settings['blend_a2']], enumBlendColor[rdp_settings['blend_m2']], enumBlendMix[rdp_settings['blend_b2']]) if is_2_cycle else None,
+            z_mode = enumZMode[rdp_settings['zmode']],
+            z_write = rdp_settings['z_upd'],
+            z_compare = rdp_settings['z_cmp'],
+            aa = rdp_settings['aa_en'],
+            alpha_compare = enumAlphaCompare[rdp_settings['g_mdsft_alpha_compare']],
+            coverage_dest = enumCoverageDest[rdp_settings['cvg_dst']],
+            color_on_coverage = rdp_settings['clr_on_cvg'],
+            x_coverage_alpha = rdp_settings['cvg_x_alpha'],
+            alpha_coverage = rdp_settings['alpha_cvg_sel'],
+            force_blend = rdp_settings['force_bl'],
+            image_read = rdp_settings['im_rd'],
+        )
+    else:
+        return blend_modes.combine_blend_mode(
+            _CYCLE_1_PRESETS[rdp_settings['rendermode_preset_cycle_1']],
+            _CYCLE_2_PRESETS[rdp_settings['rendermode_preset_cycle_2']] if is_2_cycle else None
+        )
 
 def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     f3d_mat = mat['f3d_mat']
@@ -286,6 +396,14 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
         result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
         result.blend_mode.z_mode = 'TRANSPARENT'
         result.blend_mode.z_write = False
+
+    if rdp_settings['g_mdsft_alpha_compare'] == 1:
+        result.blend_mode.alpha_compare = 'THRESHOLD'
+    elif rdp_settings['g_mdsft_alpha_compare'] == 2:
+        result.blend_mode.alpha_compare = 'NOISE'
+
+    if rdp_settings['set_rendermode']:
+        result.blend_mode = determine_materail_blend_f3d(rdp_settings)
 
     if f3d_mat['set_env']:
         result.env_color = _determine_color_from_f3d(f3d_mat['env_color'])

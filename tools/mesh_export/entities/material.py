@@ -216,30 +216,45 @@ class BlendModeCycle():
         return BlendModeCycle(self.a1, self.b1, self.a2, self.b2)
 
 class BlendMode():
-    def __init__(self, cyc1: BlendModeCycle, cyc2: BlendModeCycle):
+    def __init__(
+            self, 
+            cyc1: BlendModeCycle, 
+            cyc2: BlendModeCycle,
+            z_mode: str = 'OPAQUE',
+            z_write: bool = True,
+            z_compare: bool = True,
+            aa: bool = False,
+            alpha_compare: str = 'NONE',
+            coverage_dest: str = 'CLAMP',
+            color_on_coverage: bool = False,
+            x_coverage_alpha: bool = False,
+            alpha_coverage: bool = False,
+            force_blend: bool = False,
+            image_read: bool = False
+        ):
         self.cyc1: BlendModeCycle = cyc1
         self.cyc2: BlendModeCycle = cyc2
-        self.alpha_compare = 'NONE'
-        self.z_mode = 'OPAQUE'
-        self.z_write = True
-        self.z_compare = True
-
-    def copy(self):
-        result = BlendMode()
-        result.cyc1 = self.cyc1.copy() if self.cyc1 else None
-        result.cyc2 = self.cyc2.copy() if self.cyc2 else None
-        result.alpha_compare = self.alpha_compare
-        result.z_mode = self.z_mode
-        result.z_write = self.z_write
-        result.z_compare = self.z_compare
-        return result
+        self.z_mode = z_mode
+        self.z_write = z_write
+        self.z_compare = z_compare
+        self.aa = aa,
+        self.alpha_compare = alpha_compare
+        self.coverage_dest = coverage_dest
+        self.color_on_coverage = color_on_coverage
+        self.x_coverage_alpha = x_coverage_alpha
+        self.alpha_coverage = alpha_coverage
+        self.force_blend = force_blend
+        self.image_read = image_read
 
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, BlendMode):
             return False
         
         return self.cyc1 == value.cyc1 and self.cyc2 == value.cyc2 and self.alpha_compare == value.alpha_compare and \
-            self.z_mode == value.z_mode and self.z_write == value.z_write and self.z_compare == value.z_compare
+            self.z_mode == value.z_mode and self.z_write == value.z_write and self.z_compare == value.z_compare and \
+            self.aa == value.aa and self.coverage_dest == value.coverage_dest and self.color_on_coverage == value.color_on_coverage and \
+            self.x_coverage_alpha == value.x_coverage_alpha and self.alpha_coverage == value.alpha_coverage and \
+            self.force_blend == value.force_blend and self.image_read == value.image_read
 
     def __str__(self):
         if self.cyc2:
@@ -253,10 +268,17 @@ class BlendMode():
             self.cyc2 and self.cyc2.copy() or None
         )
 
-        result.alpha_compare = self.alpha_compare
         result.z_mode = self.z_mode
         result.z_write = self.z_write
         result.z_compare = self.z_compare
+        result.aa = self.aa
+        result.alpha_compare = self.alpha_compare
+        result.coverage_dest = self.coverage_dest
+        result.color_on_coverage = self.color_on_coverage
+        result.x_coverage_alpha = self.x_coverage_alpha
+        result.alpha_coverage = self.alpha_coverage
+        result.force_blend = self.force_blend
+        result.image_read = self.image_read
 
         return result
     
@@ -462,6 +484,11 @@ class Material():
         result.fog = self.fog.copy() if self.fog else None
         return result
 
+    def combine_mode_uses(self, attr: str) -> bool:
+        if not self.combine_mode:
+            return False
+        
+        return self.combine_mode.uses(attr)
 
     def layout_textures(self):
         if self.tex0 and self.tex1:
