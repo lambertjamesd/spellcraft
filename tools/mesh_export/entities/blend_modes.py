@@ -31,7 +31,7 @@ def build_blend_mode(
 	)
 
 RM_AA_ZB_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	aa = True, 
 	z_compare = True, 
 	z_write = True, 
@@ -43,7 +43,7 @@ RM_AA_ZB_OPA_SURF = build_blend_mode(
 	
 
 RM_RA_ZB_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	aa = True, z_compare = True, z_write = True, coverage_dest = 'CLAMP',
 	z_mode = 'OPAQUE', alpha_coverage = True
 )
@@ -55,13 +55,13 @@ RM_AA_ZB_XLU_SURF = build_blend_mode(
 )
 
 RM_AA_ZB_OPA_DECAL = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	aa = True, z_compare = True, image_read = True, coverage_dest = 'WRAP',  alpha_coverage = True,
 	z_mode = 'DECAL',
 )
 
 RM_RA_ZB_OPA_DECAL = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	aa = True, z_compare = True, coverage_dest = 'WRAP',  alpha_coverage = True,
 	z_mode = 'DECAL',
 )
@@ -73,13 +73,13 @@ RM_AA_ZB_XLU_DECAL = build_blend_mode(
 )
 
 RM_AA_ZB_OPA_INTER = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	aa = True, z_compare = True, z_write = True, image_read = True, coverage_dest = 'CLAMP',
 	alpha_coverage = True,	z_mode = 'INTER',
 )
 
 RM_RA_ZB_OPA_INTER = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	aa = True, z_compare = True, z_write = True, coverage_dest = 'CLAMP',
 	alpha_coverage = True,	z_mode = 'INTER',
 )
@@ -146,13 +146,13 @@ RM_AA_ZB_SUB_TERR = build_blend_mode(
 
 
 RM_AA_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	aa = True, image_read = True, coverage_dest = 'CLAMP',
 	z_mode = 'OPAQUE', alpha_coverage = True,
 )
 
 RM_RA_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	aa = True, coverage_dest = 'CLAMP',
 	z_mode = 'OPAQUE', alpha_coverage = True,
 )
@@ -213,7 +213,7 @@ RM_AA_SUB_TERR = build_blend_mode(
 
 
 RM_ZB_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	z_compare = True, z_write = True, coverage_dest = 'FULL', alpha_coverage = True,
 	z_mode = 'OPAQUE',
 )
@@ -224,7 +224,7 @@ RM_ZB_XLU_SURF = build_blend_mode(
 )
 	
 RM_ZB_OPA_DECAL = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle('IN', '0', 'IN', '1'),
 	z_compare = True, coverage_dest = 'FULL', alpha_coverage = True, z_mode = 'DECAL',
 )
 	
