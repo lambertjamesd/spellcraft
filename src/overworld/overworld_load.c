@@ -9,15 +9,33 @@
 #include <memory.h>
 
 struct overworld_tile* overworld_tile_load(FILE* file) {
-    struct overworld_tile* result = malloc(sizeof(struct overworld_tile));
-    tmesh_load(&result->terrain_mesh, file);
+    uint8_t mesh_count;
+    fread(&mesh_count, 1, 1, file);
+
+    struct overworld_tile* result = malloc(
+        sizeof(struct overworld_tile) +
+        sizeof(struct tmesh) * mesh_count +
+        sizeof(rspq_block_t*) * mesh_count
+    );
+
     fread(&result->starting_y, sizeof(float), 1, file);
-    fread(&result->scale_y, sizeof(float), 1, file);
+    result->terrain_mesh_count = mesh_count;
+
+    result->terrain_meshes = (struct tmesh*)(result + 1);
+    result->render_blocks = (rspq_block_t**)(result->terrain_meshes + mesh_count);
+
+    for (int i = 0; i < mesh_count; i += 1) {
+        tmesh_load(&result->terrain_meshes[i], file);
+        result->render_blocks[i] = result->terrain_meshes[i].block;
+    }
+
     return result;
 }
 
 void overworld_tile_free(struct overworld_tile* tile) {
-    tmesh_release(&tile->terrain_mesh);
+    for (int i = 0; i < tile->terrain_mesh_count; i += 1) {
+        tmesh_release(&tile->terrain_meshes[i]);
+    }
     free(tile);
 }
 
@@ -105,10 +123,10 @@ void overworld_check_loaded_tiles(struct overworld* overworld) {
     struct overworld_tile* tile = overworld_tile_load(overworld->file);
     overworld->loaded_tiles[slot_x][slot_y] = tile;
     overworld->render_blocks[slot_x][slot_y] = (struct overworld_tile_render_block){
-        .render_block = tile->terrain_mesh.block,
+        .render_blocks = tile->render_blocks,
         .x = overworld->load_next.x,
-        .y = overworld->load_next.y,
-        .scale_y = tile->scale_y,
+        .z = overworld->load_next.y,
+        .y_height = tile->terrain_mesh_count,
         .starting_y = tile->starting_y,
     };
 

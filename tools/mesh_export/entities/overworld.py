@@ -2,6 +2,7 @@ import mathutils
 import io
 import struct
 import time
+import math
 from . import mesh
 from . import bounding_box
 from . import mesh_split
@@ -37,15 +38,47 @@ def subdivide_mesh_list(meshes: list[mesh.mesh_data], normal: mathutils.Vector, 
 max_block_height = 32767 / 64
 
 class OverworldCell():
-    def __init__(self, mesh_data: bytes, y_offset: float, y_scale: float):
+    def __init__(self, mesh_data: bytes, y_offset: float):
         self.mesh_data: bytes = mesh_data
         self.y_offset: float = y_offset
-        self.y_scale: float = y_scale
 
     def __str__(self):
-        return f"mesh_data(len) {len(self.mesh_data)} y_offset {self.y_offset} y_scale {self.y_scale}"
+        return f"mesh_data(len) {len(self.mesh_data)} y_offset {self.y_offset}"
     
 LOD_0_SCALE = 1 / 128
+
+def generate_overworld_tile(cell: list[mesh.mesh_data], side_length: float, x: int, z: int, map_min: mathutils.Vector, settings: export_settings.ExportSettings):
+    cell_bb = cell[0].bounding_box()
+
+    for i in range(1, len(cell)):
+        cell_bb = bounding_box.union(cell_bb, cell[i].bounding_box())
+
+    height = cell_bb[1].y - cell_bb[0].y
+
+    y_cells = subdivide_mesh_list(
+        cell, 
+        mathutils.Vector((0, 1, 0)), 
+        cell_bb[0].y, 
+        side_length,
+        math.ceil(height / side_length)
+    )
+
+    data = io.BytesIO()
+    data.write(struct.pack('>B', len(y_cells)))
+    data.write(struct.pack('>f', cell_bb[0].y))
+
+    for y, y_cell in enumerate(y_cells):
+        for mesh_data in y_cell:
+            mesh_data.translate(mathutils.Vector((
+                -(x * side_length + map_min.x), 
+                -cell_bb[0].y - y * side_length, 
+                -(z * side_length + map_min.z)
+            )))
+            
+        tiny3d_mesh_writer.write_mesh(y_cell, None, [], settings, data)
+
+    return OverworldCell(data.getvalue(), cell_bb[0].y)
+
 
 def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0_mesh: mesh.mesh_list, collider: mesh_collider.MeshCollider, subdivisions: int, settings: export_settings.ExportSettings):
     mesh_entries = mesh_list.determine_mesh_data()
@@ -92,38 +125,22 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     write_mesh_time = 0
     write_collider_time = 0
     
-    for y, row in enumerate(cells):
+    for z, row in enumerate(cells):
         for x, cell in enumerate(row):
-            cell_bb = cell[0].bounding_box()
-
-            for i in range(1, len(cell)):
-                cell_bb = bounding_box.union(cell_bb, cell[i].bounding_box())
-
-            height = cell_bb[1].y - cell_bb[0].y
-            y_scale = max_block_height / height if height > max_block_height else 1
-
-            for mesh_data in cell:
-                mesh_data.translate(mathutils.Vector((
-                    -(x * side_length + mesh_bb[0].x), 
-                    -cell_bb[0].y, 
-                    -(y * side_length + mesh_bb[0].z)
-                )))
-                mesh_data.scale(mathutils.Vector((
-                    1, 
-                    y_scale, 
-                    1
-                )))
-
             write_mesh_time -= time.perf_counter()
-            data = io.BytesIO()
-            tiny3d_mesh_writer.write_mesh(cell, None, [], settings, data)
-            data.write(struct.pack('>ff', cell_bb[0].y, y_scale))
-            cell_data.append(OverworldCell(data.getvalue(), cell_bb[0].y, y_scale))
+            cell_data.append(generate_overworld_tile(
+                cell,
+                side_length,
+                x,
+                z,
+                mesh_bb[0],
+                settings
+            ))
             write_mesh_time += time.perf_counter()
 
             write_collider_time -= time.perf_counter()
             collider_data = io.BytesIO()
-            collider_cells[y][x][0].write_out(collider_data, force_subdivisions = mathutils.Vector((8, 1, 8)))
+            collider_cells[z][x][0].write_out(collider_data, force_subdivisions = mathutils.Vector((8, 1, 8)))
             collider_cell_data.append(collider_data.getvalue())
             write_collider_time += time.perf_counter()
 

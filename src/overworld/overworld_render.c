@@ -238,6 +238,58 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
     rdpq_mode_zbuf(true, true);
 } 
 
+void overworld_render_tile(struct overworld* overworld, struct Camera* camera, struct frame_memory_pool* pool, int x, int z) {
+    struct overworld_tile_render_block* block = &overworld->render_blocks[x & 0x3][z & 0x3];
+    struct Vector3* camera_position = &camera->transform.position;
+
+    if (!block->render_blocks || block->x != x || block->z != z) {
+        overworld->load_next.x = x;
+        overworld->load_next.y = z;
+        return;
+    }
+
+    int min_y = (int)floorf((camera_position->y - block->starting_y - camera->far) * overworld->inv_tile_size);
+    int max_y = (int)floorf((camera_position->y - block->starting_y + camera->far) * overworld->inv_tile_size);
+
+    if (min_y < 0) {
+        min_y = 0;
+    }
+
+    if (max_y > block->y_height) {
+        max_y = block->y_height;
+    }
+
+    T3DMat4 mtx;
+    t3d_mat4_identity(&mtx);
+
+    for (int y = min_y; y < max_y; y += 1) {
+        t3d_mat4_translate(
+            &mtx, 
+            (x * overworld->tile_size + overworld->min.x - camera_position->x) * WORLD_SCALE,
+            (block->starting_y + y * overworld->tile_size - camera_position->y) * WORLD_SCALE,
+            (z * overworld->tile_size + overworld->min.y - camera_position->z) * WORLD_SCALE
+        );
+    
+        mtx.m[0][0] = MODEL_WORLD_SCALE;
+        mtx.m[1][1] = MODEL_WORLD_SCALE;
+        mtx.m[2][2] = MODEL_WORLD_SCALE; 
+    
+        T3DMat4FP* tile_position = frame_malloc(pool, sizeof(T3DMat4FP));
+    
+        if (!tile_position) {
+            return;
+        }
+    
+        tile_position = UncachedAddr(tile_position);
+    
+        t3d_mat4_to_fixed_3x4(tile_position, &mtx);
+    
+        t3d_matrix_push(tile_position);
+        rspq_block_run(block->render_blocks[y]);
+        t3d_matrix_pop(1);
+    }
+}
+
 void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool) {
     struct overworld_step_state state;
     struct Vector3* camera_position = &camera->transform.position;
@@ -260,44 +312,7 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
         struct overworld_tile_slice next = overworld_step(overworld, &state);
 
         for (int x = next.min_x; x < next.max_x; x += 1) {
-            struct overworld_tile_render_block* block = &overworld->render_blocks[x & 0x3][next.y & 0x3];
-
-            if (!block->render_block || block->x != x || block->y != next.y) {
-                overworld->load_next.x = x;
-                overworld->load_next.y = next.y;
-                continue;
-            }
-
-            T3DMat4 mtx;
-            t3d_mat4_identity(&mtx);
-            t3d_mat4_translate(
-                &mtx, 
-                (x * overworld->tile_size + overworld->min.x - camera_position->x) * WORLD_SCALE,
-                (block->starting_y - camera_position->y) * WORLD_SCALE,
-                (next.y * overworld->tile_size + overworld->min.y - camera_position->z) * WORLD_SCALE
-            );
-
-            mtx.m[0][0] = MODEL_WORLD_SCALE;
-            mtx.m[1][1] = block->scale_y * MODEL_WORLD_SCALE;
-            mtx.m[2][2] = MODEL_WORLD_SCALE; 
-
-            if (fabsf(mtx.m[3][2]) > (float)0x7fffffff) {
-                continue;
-            }
-
-            T3DMat4FP* tile_position = frame_malloc(pool, sizeof(T3DMat4FP));
-
-            if (!tile_position) {
-                return;
-            }
-
-            tile_position = UncachedAddr(tile_position);
-
-            t3d_mat4_to_fixed_3x4(tile_position, &mtx);
-
-            t3d_matrix_push(tile_position);
-            rspq_block_run(block->render_block);
-            t3d_matrix_pop(1);
+            overworld_render_tile(overworld, camera, pool, x, next.y);
         }
         
         if (!next.has_more) {
