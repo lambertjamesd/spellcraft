@@ -249,7 +249,7 @@ void overworld_render_tile(struct overworld* overworld, struct Camera* camera, s
     }
 
     int min_y = (int)floorf((camera_position->y - block->starting_y - camera->far) * overworld->inv_tile_size);
-    int max_y = (int)floorf((camera_position->y - block->starting_y + camera->far) * overworld->inv_tile_size);
+    int max_y = (int)ceilf((camera_position->y - block->starting_y + camera->far) * overworld->inv_tile_size);
 
     if (min_y < 0) {
         min_y = 0;
@@ -262,18 +262,18 @@ void overworld_render_tile(struct overworld* overworld, struct Camera* camera, s
     T3DMat4 mtx;
     t3d_mat4_identity(&mtx);
 
+    t3d_mat4_translate(
+        &mtx, 
+        (x * overworld->tile_size + overworld->min.x - camera_position->x) * WORLD_SCALE,
+        (min_y * overworld->tile_size + block->starting_y - camera_position->y) * WORLD_SCALE,
+        (z * overworld->tile_size + overworld->min.y - camera_position->z) * WORLD_SCALE
+    );
+
+    mtx.m[0][0] = MODEL_WORLD_SCALE;
+    mtx.m[1][1] = MODEL_WORLD_SCALE;
+    mtx.m[2][2] = MODEL_WORLD_SCALE;
+
     for (int y = min_y; y < max_y; y += 1) {
-        t3d_mat4_translate(
-            &mtx, 
-            (x * overworld->tile_size + overworld->min.x - camera_position->x) * WORLD_SCALE,
-            (block->starting_y + y * overworld->tile_size - camera_position->y) * WORLD_SCALE,
-            (z * overworld->tile_size + overworld->min.y - camera_position->z) * WORLD_SCALE
-        );
-    
-        mtx.m[0][0] = MODEL_WORLD_SCALE;
-        mtx.m[1][1] = MODEL_WORLD_SCALE;
-        mtx.m[2][2] = MODEL_WORLD_SCALE; 
-    
         T3DMat4FP* tile_position = frame_malloc(pool, sizeof(T3DMat4FP));
     
         if (!tile_position) {
@@ -287,6 +287,8 @@ void overworld_render_tile(struct overworld* overworld, struct Camera* camera, s
         t3d_matrix_push(tile_position);
         rspq_block_run(block->render_blocks[y]);
         t3d_matrix_pop(1);
+
+        mtx.m[3][1] += overworld->tile_size * WORLD_SCALE;
     }
 }
 

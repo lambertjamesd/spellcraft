@@ -71,7 +71,7 @@ def generate_overworld_tile(cell: list[mesh.mesh_data], side_length: float, x: i
         for mesh_data in y_cell:
             mesh_data.translate(mathutils.Vector((
                 -(x * side_length + map_min.x), 
-                -cell_bb[0].y - y * side_length, 
+                -(y * side_length + cell_bb[0].y), 
                 -(z * side_length + map_min.z)
             )))
             
