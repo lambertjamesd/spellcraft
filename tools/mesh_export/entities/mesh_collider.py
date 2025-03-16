@@ -114,7 +114,11 @@ def _determine_index_indices(points: list[mathutils.Vector], force_subdivisions:
 
     if force_subdivisions:
         size = max_point - min_point
-        stride_inv = mathutils.Vector((force_subdivisions.x / size.z, force_subdivisions.y / size.y, force_subdivisions.z / size.z))
+        stride_inv = mathutils.Vector((
+            force_subdivisions.x / size.x if size.x != 0 else 1, 
+            force_subdivisions.y / size.y if size.y != 0 else 1, 
+            force_subdivisions.z / size.z if size.z != 0 else 1
+        ))
         return min_point, stride_inv, force_subdivisions
 
     stride_inv = mathutils.Vector((1 / INDEX_BLOCK_SIZE_X, 1 / INDEX_BLOCK_SIZE_Y, 1 / INDEX_BLOCK_SIZE_Z))
