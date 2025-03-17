@@ -317,15 +317,19 @@ bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
     struct Vector3 next_offset;
     vector3Sub(&max_point, &leading_point, &next_offset);
     for (int iteration = 0; iteration < max_iterations && vector3Dot(&dir_local, &next_offset) > 0.0f; iteration += 1) {
-        struct Vector3 offset_time;
         vector3Sub(&next_point, &leading_point, &next_offset);
-        vector3Multiply(&next_offset, &dir_inv, &offset_time);
+        
+        bool is_x_inf = is_inf(dir_inv.x);
+        bool is_y_inf = is_inf(dir_inv.y);
+        bool is_z_inf = is_inf(dir_inv.z);
+        
+        struct Vector3 offset_time = {
+            is_x_inf ? dir_inv.x : next_offset.x * dir_inv.x,
+            is_y_inf ? dir_inv.y : next_offset.y * dir_inv.y,
+            is_z_inf ? dir_inv.z : next_offset.z * dir_inv.z,
+        };
 
         int axis = 0;
-
-        bool is_x_inf = is_inf(offset_time.x);
-        bool is_y_inf = is_inf(offset_time.y);
-        bool is_z_inf = is_inf(offset_time.z);
 
         if (!is_x_inf && 
             (offset_time.x < offset_time.y || is_y_inf) && 
