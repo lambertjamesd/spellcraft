@@ -8,7 +8,7 @@ def _did_cross(a: str, b: str) -> bool:
 
 def split_on_side(input: mesh.mesh_data, into_mesh: mesh.mesh_data, on_side: str, index_mapping: dict, triangle: list[int], index_sides: list[str], plane_distance: list[float]):   
     if not (on_side in index_sides):
-        return
+        return False
 
     new_index_loop = []
 
@@ -51,6 +51,8 @@ def split_on_side(input: mesh.mesh_data, into_mesh: mesh.mesh_data, on_side: str
             new_index_loop[i + 1]
         )
 
+    return True
+
 
 def split(input: mesh.mesh_data, normal: mathutils.Vector, d: float) -> tuple[mesh.mesh_data | None, mesh.mesh_data | None]:
     back: mesh.mesh_data = input.copy_blank()
@@ -75,8 +77,12 @@ def split(input: mesh.mesh_data, normal: mathutils.Vector, d: float) -> tuple[me
     for triangle in input.get_triangles():
         index_sides = list(map(get_index_side, triangle))
 
-        split_on_side(input, front, 'front', front_index_mapping, triangle, index_sides, plane_distance)
-        split_on_side(input, back, 'back', back_index_mapping, triangle, index_sides, plane_distance)
+        has_front = split_on_side(input, front, 'front', front_index_mapping, triangle, index_sides, plane_distance)
+        has_back = split_on_side(input, back, 'back', back_index_mapping, triangle, index_sides, plane_distance)
+
+        if not has_front and not has_back:
+            # the entire polygon was coplanar with the splitting axis
+            split_on_side(input, front, 'both', front_index_mapping, triangle, index_sides, plane_distance)
             
     if back.is_empty():
         back = None

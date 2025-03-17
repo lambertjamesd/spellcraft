@@ -44,8 +44,6 @@ class OverworldCell():
 
     def __str__(self):
         return f"mesh_data(len) {len(self.mesh_data)} y_offset {self.y_offset}"
-    
-LOD_0_SCALE = 1 / 128
 
 def generate_overworld_tile(cell: list[mesh.mesh_data], side_length: float, x: int, z: int, map_min: mathutils.Vector, settings: export_settings.ExportSettings):
     cell_bb = cell[0].bounding_box()
@@ -112,10 +110,10 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     lod_0_mesh_bytes = io.BytesIO()
     lod_0_settings = settings.copy()
     lod_0_settings.sort_direction = mathutils.Vector((1, 0, 0))
-    lod_0_settings.fog_scale = LOD_0_SCALE
+    lod_0_settings.fog_scale = 1 / subdivisions
     lod_0_mesh_data = lod_0_mesh.determine_mesh_data(None)
     for entry in lod_0_mesh_data:
-        entry.scale(LOD_0_SCALE)
+        entry.scale(1 / subdivisions)
     tiny3d_mesh_writer.write_mesh(lod_0_mesh_data, None, [], lod_0_settings, lod_0_mesh_bytes)
     print(f"lod_0 creation time {time.perf_counter() - lod_0_start_time}")
 
@@ -140,7 +138,11 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
 
             write_collider_time -= time.perf_counter()
             collider_data = io.BytesIO()
-            collider_cells[z][x][0].write_out(collider_data, force_subdivisions = mathutils.Vector((8, 1, 8)))
+            if len(collider_cells[z][x]):
+                collider_cells[z][x][0].write_out(collider_data, force_subdivisions = mathutils.Vector((8, 1, 8)))
+            else:
+                tmp = mesh_collider.MeshCollider()
+                tmp.write_out(collider_data, force_subdivisions=mathutils.Vector((8, 1, 8)))
             collider_cell_data.append(collider_data.getvalue())
             write_collider_time += time.perf_counter()
 

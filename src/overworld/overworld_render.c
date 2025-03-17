@@ -184,8 +184,6 @@ struct overworld_tile_slice overworld_step(struct overworld* overworld, struct o
     };
 }
 
-#define LOD_0_SCALE (1.0f / 128.0f)
-
 void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, T3DViewport* prev_viewport, struct frame_memory_pool* pool) {
     T3DViewport* new_viewport = frame_malloc(pool, sizeof(T3DViewport));
     *new_viewport = t3d_viewport_create();
@@ -193,9 +191,11 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
     float tan_fov = tanf(camera->fov * (0.5f * 3.14159f / 180.0f));
     float aspect_ratio = (float)prev_viewport->size[0] / (float)prev_viewport->size[1];
 
-    float near = (camera->far - 5.0f) * LOD_0_SCALE * WORLD_SCALE;
-    float far = overworld->tile_x * overworld->tile_size * (1.4f * LOD_0_SCALE) * WORLD_SCALE;
+    float lod_scale = 1.0f / overworld->tile_x;
 
+    float near = (camera->far - 5.0f) * lod_scale * WORLD_SCALE;
+    float far = overworld->tile_size * (1.4f * WORLD_SCALE);
+    
     matrixPerspective(
         new_viewport->matProj.m, 
         -aspect_ratio * tan_fov * near,
@@ -205,7 +205,7 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
         near,
         far
     );
-    t3d_viewport_set_w_normalize(new_viewport, near, far);
+    t3d_viewport_set_w_normalize(new_viewport, camera->near * WORLD_SCALE, camera->far * WORLD_SCALE);
 
     struct Transform inverse;
     transformInvert(&camera->transform, &inverse);
@@ -219,9 +219,9 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
     t3d_mat4_identity(&mtx);
     t3d_mat4_translate(
         &mtx, 
-        -camera->transform.position.x * LOD_0_SCALE * WORLD_SCALE,
-        -camera->transform.position.y * LOD_0_SCALE * WORLD_SCALE,
-        -camera->transform.position.z * LOD_0_SCALE * WORLD_SCALE
+        -camera->transform.position.x * lod_scale * WORLD_SCALE,
+        -camera->transform.position.y * lod_scale * WORLD_SCALE,
+        -camera->transform.position.z * lod_scale * WORLD_SCALE
     );
     mtx.m[0][0] = MODEL_WORLD_SCALE;
     mtx.m[1][1] = MODEL_WORLD_SCALE;
