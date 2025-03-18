@@ -94,7 +94,7 @@ def generate_lod0(lod_0_objects: list[bpy.types.Object], subdivisions: int, sett
         mesh_list = mesh.mesh_list(scaled_transform)
         mesh_list.append(obj)
 
-        center = scaled_transform @ obj.matrix_world.translation
+        center = (scaled_transform @ obj.matrix_world.translation) * settings.fixed_point_scale
 
         digit_prefix_length = 0
 
