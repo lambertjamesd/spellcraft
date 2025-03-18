@@ -1,5 +1,6 @@
 #include "overworld_render.h"
 
+#include <stdlib.h>
 #include "../math/mathf.h"
 #include "overworld_private.h"
 #include "../render/defs.h"
@@ -184,6 +185,44 @@ struct overworld_tile_slice overworld_step(struct overworld* overworld, struct o
     };
 }
 
+struct overworld_lod0_sort_entry {
+    uint32_t priority;
+    struct tmesh* mesh;
+};
+
+int overworld_entry_sort(const void* a, const void* b) {
+    const struct overworld_lod0_sort_entry* a_entry = (const struct overworld_lod0_sort_entry*)a;
+    const struct overworld_lod0_sort_entry* b_entry = (const struct overworld_lod0_sort_entry*)b;
+    return (int)(b_entry->priority - a_entry->priority);
+}
+
+void overworld_render_lod_0_entries(struct overworld_lod0* lod0, int camera_x, int camera_z) {
+    struct overworld_lod0_sort_entry order[lod0->entry_count];
+
+    struct overworld_lod0_entry* end = lod0->entries + lod0->entry_count;
+    struct overworld_lod0_sort_entry* entry = order;
+    for (struct overworld_lod0_entry* curr = lod0->entries; curr < end; curr += 1, entry += 1) {
+        int dx = (int)curr->x - camera_x;
+        int dy = (int)curr->z - camera_z;
+        entry->priority = ((dx * dx + dy * dy) >> 2) - ((uint32_t)(3 - curr->priority) << 30);
+        entry->mesh = &curr->mesh;
+    }
+
+    qsort(order, lod0->entry_count, sizeof(struct overworld_lod0_sort_entry), overworld_entry_sort);
+
+    struct material* mat = NULL;
+
+    for (int i = 0; i < lod0->entry_count; i += 1) {
+        struct tmesh* mesh = order[i].mesh;
+
+        if (mat != mesh->material) {
+            rspq_block_run(mesh->material->block);
+            mat = mesh->material;
+        }
+        rspq_block_run(mesh->block);
+    }
+}
+
 void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, T3DViewport* prev_viewport, struct frame_memory_pool* pool) {
     T3DViewport* new_viewport = frame_malloc(pool, sizeof(T3DViewport));
     *new_viewport = t3d_viewport_create();
@@ -227,12 +266,15 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
     mtx.m[1][1] = MODEL_WORLD_SCALE;
     mtx.m[2][2] = MODEL_WORLD_SCALE;
 
+    int camera_x = (int)mtx.m[3][0];
+    int camera_z = (int)mtx.m[3][2];
+
     rdpq_mode_zbuf(false, false);
 
     T3DMat4FP* mtx_fp = UncachedAddr(frame_malloc(pool, sizeof(T3DMat4FP)));
     t3d_mat4_to_fixed_3x4(mtx_fp, &mtx);
     t3d_matrix_push(mtx_fp);
-    rspq_block_run(overworld->lod_0_meshes[0].block);
+    overworld_render_lod_0_entries(&overworld->lod0, camera_x, camera_z);
     t3d_matrix_pop(1);
 
     rdpq_mode_zbuf(true, true);

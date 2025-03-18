@@ -1,4 +1,5 @@
 import mathutils
+import bpy
 import io
 import struct
 import time
@@ -9,6 +10,7 @@ from . import mesh_split
 from . import tiny3d_mesh_writer
 from . import mesh_collider
 from . import export_settings
+from . import material_extract
 
 def subdivide_mesh_list(meshes: list[mesh.mesh_data], normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list[mesh.mesh_data]]:
     result = []
@@ -77,8 +79,43 @@ def generate_overworld_tile(cell: list[mesh.mesh_data], side_length: float, x: i
 
     return OverworldCell(data.getvalue(), cell_bb[0].y)
 
+def generate_lod0(lod_0_objects: list[bpy.types.Object], subdivisions: int, settings: export_settings.ExportSettings, base_transform: mathutils.Matrix, file):
+    lod_0_start_time = time.perf_counter()
 
-def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0_mesh: mesh.mesh_list, collider: mesh_collider.MeshCollider, subdivisions: int, settings: export_settings.ExportSettings):
+    lod_0_settings = settings.copy()
+    lod_0_settings.sort_direction = mathutils.Vector((1, 0, 0))
+    lod_0_settings.fog_scale = 1 / subdivisions
+
+    scaled_transform = mathutils.Matrix.Scale(1 / subdivisions, 4) @ base_transform
+
+    all_meshes: list[tuple[mesh.mesh_data, int, int, int]] = []
+
+    for obj in lod_0_objects:
+        mesh_list = mesh.mesh_list(scaled_transform)
+        mesh_list.append(obj)
+
+        center = scaled_transform @ obj.matrix_world.translation
+
+        digit_prefix_length = 0
+
+        while digit_prefix_length < len(obj.name) and obj.name[digit_prefix_length].isdigit():
+            digit_prefix_length += 1
+
+        priority = int(obj.name[0: digit_prefix_length]) if digit_prefix_length > 0 else 0
+
+        all_meshes += map(lambda mesh: (mesh, int(center.x), int(center.z), priority), mesh_list.determine_mesh_data(None))
+
+    file.write(struct.pack('>B', len(all_meshes)))
+
+    for single_mesh in all_meshes:
+        file.write(struct.pack('>hhH', single_mesh[1], single_mesh[2], single_mesh[3]))
+        lod_0_settings.default_material_name = material_extract.material_romname(single_mesh[0].mat)
+        lod_0_settings.default_material = material_extract.load_material_with_name(single_mesh[0].mat)
+        tiny3d_mesh_writer.write_mesh([single_mesh[0]], None, [], lod_0_settings, file)
+
+    print(f"lod_0 creation time {time.perf_counter() - lod_0_start_time}")
+
+def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0_objects: list[bpy.types.Object], collider: mesh_collider.MeshCollider, subdivisions: int, settings: export_settings.ExportSettings, base_transform: mathutils.Matrix):
     mesh_entries = mesh_list.determine_mesh_data()
 
     mesh_bb = None
@@ -105,17 +142,6 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     collider_columns = subdivide_mesh_list([collider], mathutils.Vector((0, 0, 1)), mesh_bb[0].x, side_length, subdivisions)
     collider_cells: list[list[list[mesh_collider.MeshCollider]]] = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].z, side_length, subdivisions), collider_columns))
     print(f"subdivide_mesh_list for collider data {time.perf_counter() - subivide_collider_start}")
-
-    lod_0_start_time = time.perf_counter()
-    lod_0_mesh_bytes = io.BytesIO()
-    lod_0_settings = settings.copy()
-    lod_0_settings.sort_direction = mathutils.Vector((1, 0, 0))
-    lod_0_settings.fog_scale = 1 / subdivisions
-    lod_0_mesh_data = lod_0_mesh.determine_mesh_data(None)
-    for entry in lod_0_mesh_data:
-        entry.scale(1 / subdivisions)
-    tiny3d_mesh_writer.write_mesh(lod_0_mesh_data, None, [], lod_0_settings, lod_0_mesh_bytes)
-    print(f"lod_0 creation time {time.perf_counter() - lod_0_start_time}")
 
     cell_data: list[OverworldCell] = []
     collider_cell_data: list[bytes] = []
@@ -156,8 +182,7 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
         file.write(struct.pack('>ff', mesh_bb[0].x, mesh_bb[0].z))
         file.write(struct.pack('>f', side_length))
 
-        for i in range(4):
-            file.write(lod_0_mesh_bytes.getvalue())
+        generate_lod0(lod_0_objects, subdivisions, settings, base_transform, file)
 
         visual_block_location = file.tell() + 8 * subdivisions * subdivisions
 

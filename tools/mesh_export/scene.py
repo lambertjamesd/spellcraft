@@ -148,17 +148,15 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
         if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH':
             collider.append(mesh, final_transform)
 
-    lod_0_mesh = entities.mesh.mesh_list(base_transform)
-
     lod_0_collection: bpy.types.Collection | None = bpy.data.collections["lod_0"] if "lod_0" in bpy.data.collections else None
+    lod_0_objects = []
 
     if lod_0_collection:
-        for obj in sorted(lod_0_collection.all_objects, key=lambda x: x.name):
-            lod_0_mesh.append(obj)
+        lod_0_objects = list(lod_0_collection.all_objects)
 
     subdivisions = collection['subdivisions'] if 'subdivisions' in collection else 8
 
-    entities.overworld.generate_overworld(overworld_filename, mesh_list, lod_0_mesh, collider, subdivisions, settings)
+    entities.overworld.generate_overworld(overworld_filename, mesh_list, lod_0_objects, collider, subdivisions, settings, base_transform)
 
     return True
     

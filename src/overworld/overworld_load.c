@@ -73,8 +73,15 @@ struct overworld* overworld_load(const char* filename) {
     fread(&result->min, sizeof(struct Vector2), 1, result->file);
     fread(&result->tile_size, sizeof(float), 1, result->file);
 
-    for (int i = 0; i < 4; i += 1) {
-        tmesh_load(&result->lod_0_meshes[i], result->file);
+    fread(&result->lod0.entry_count, 1, 1, result->file);
+
+    result->lod0.entries = malloc(sizeof(struct overworld_lod0_entry) * result->lod0.entry_count);
+
+    for (int i = 0; i < result->lod0.entry_count; i += 1) {
+        fread(&result->lod0.entries[i].x, sizeof(uint16_t), 1, result->file);
+        fread(&result->lod0.entries[i].z, sizeof(uint16_t), 1, result->file);
+        fread(&result->lod0.entries[i].priority, sizeof(uint16_t), 1, result->file);
+        tmesh_load(&result->lod0.entries[i].mesh, result->file);
     }
 
     result->inv_tile_size = 1.0f / result->tile_size;
@@ -98,6 +105,11 @@ void overworld_free(struct overworld* overworld) {
             }
         }
     }
+
+    for (int i = 0; i < overworld->lod0.entry_count; i += 1) {
+        tmesh_release(&overworld->lod0.entries[i].mesh);
+    }
+    free(overworld->lod0.entries);
 
     render_scene_remove_step(overworld);
 

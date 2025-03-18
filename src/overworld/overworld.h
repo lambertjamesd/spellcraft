@@ -39,6 +39,17 @@ struct overworld_tile_render_block {
     uint8_t y_height;
 };
 
+struct overworld_lod0_entry {
+    struct tmesh mesh;
+    int16_t x, z;
+    uint16_t priority;
+};
+
+struct overworld_lod0 {
+    struct overworld_lod0_entry* entries;
+    uint8_t entry_count;
+};
+
 #define NO_TILE_COORD   0xFFFF
 
 struct overworld {
@@ -46,7 +57,7 @@ struct overworld {
     struct Vector2 min;
     float inv_tile_size;
     float tile_size;
-    struct tmesh lod_0_meshes[4];
+    struct overworld_lod0 lod0;
     struct overworld_tile_def* tile_definitions;
     FILE* file;
 
