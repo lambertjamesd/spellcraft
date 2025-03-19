@@ -99,6 +99,7 @@ void collision_scene_add_static_mesh(struct mesh_collider* collider) {
     for (int i = 0; i < MAX_STATIC_MESHES; i += 1) {
         if (g_scene.mesh_colliders[i] == NULL) {
             g_scene.mesh_colliders[i] = collider;
+            g_scene.mesh_collider_count += 1;
             return;
         }
     }
@@ -114,6 +115,8 @@ void collision_scene_remove_static_mesh(struct mesh_collider* collider) {
         
         if (g_scene.mesh_colliders[read_index] != collider) {
             write_index += 1;
+        } else {
+            g_scene.mesh_collider_count -= 1;
         }
     }
 
@@ -248,29 +251,26 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
             fabs(offset.y) > bbSize.y ||
             fabs(offset.z) > bbSize.z;
 
-        bool did_hit = false;
-
-        for (int mesh_index = 0; mesh_index < MAX_STATIC_MESHES; mesh_index += 1) {
+        for (int mesh_index = 0; mesh_index < g_scene.mesh_collider_count; mesh_index += 1) {
             struct mesh_collider* mesh = g_scene.mesh_colliders[mesh_index];
-
-            if (!mesh) {
-                break;
-            }
-
             bool is_contained = mesh_index_is_contained(&mesh->index, object->position);
 
             if (is_contained) {
                 object->is_out_of_bounds = 0;
-            }
-    
-            if (should_sweep) {
-                did_hit = collide_object_to_mesh_swept(object, mesh, prev_pos) || did_hit;
-            } else {
-                collide_object_to_mesh(object, mesh);
+                break;
             }
         }
 
-        if (!did_hit || !should_sweep) {
+        if (should_sweep) {
+            bool did_hit = collide_object_to_multiple_mesh_swept(object, g_scene.mesh_colliders, g_scene.mesh_collider_count, prev_pos);
+            if (!did_hit) {
+                return;
+            }
+        } else {
+            for (int mesh_index = 0; mesh_index < g_scene.mesh_collider_count; mesh_index += 1) {
+                struct mesh_collider* mesh = g_scene.mesh_colliders[mesh_index];
+                collide_object_to_mesh(object, mesh);
+            }
             return;
         }
     }

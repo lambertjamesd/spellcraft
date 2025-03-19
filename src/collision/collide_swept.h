@@ -13,5 +13,6 @@ struct object_mesh_collide_data {
 };
 
 bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_collider* mesh, struct Vector3* prev_pos);
+bool collide_object_to_multiple_mesh_swept(struct dynamic_object* object, struct mesh_collider** meshes, int mesh_count, struct Vector3* prev_pos);
 
 #endif

@@ -149,3 +149,44 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
 
     return true;
 }
+
+bool collide_object_to_multiple_mesh_swept(struct dynamic_object* object, struct mesh_collider** meshes, int mesh_count, struct Vector3* prev_pos) {
+    if (object->is_trigger) {
+        return false;
+    }
+
+    struct object_mesh_collide_data collide_data;
+    object_mesh_collide_data_init(&collide_data, prev_pos, NULL, object);
+
+    struct Vector3 start_pos = *object->position;
+    struct Vector3 offset;
+
+    vector3Sub(
+        object->position, 
+        prev_pos, 
+        &offset
+    );
+
+    bool did_hit = false;
+
+    for (int i = 0; i < mesh_count; i += 1) {
+        collide_data.mesh = meshes[i];
+        if (mesh_index_swept_lookup(
+            &meshes[i]->index, 
+            &object->bounding_box, 
+            &offset, 
+            collide_object_swept_to_triangle, 
+            &collide_data
+        )) {
+            did_hit = true;
+        }
+    }
+
+    if (!did_hit) {
+        return false;
+    }
+
+    collide_object_swept_bounce(object, &collide_data, &start_pos);
+
+    return true;
+}

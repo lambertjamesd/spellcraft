@@ -24,6 +24,7 @@ struct collision_scene {
     struct hash_map entity_mapping;
     uint16_t count;
     uint16_t capacity;
+    uint16_t mesh_collider_count;
 
     struct mesh_collider* mesh_colliders[8];
 };
