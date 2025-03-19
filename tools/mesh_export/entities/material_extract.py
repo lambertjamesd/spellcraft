@@ -355,10 +355,12 @@ def determine_materail_blend_f3d(rdp_settings) -> material.BlendMode:
             image_read = rdp_settings['im_rd'],
         )
     else:
-        return blend_modes.combine_blend_mode(
+        result = blend_modes.combine_blend_mode(
             _CYCLE_1_PRESETS[rdp_settings['rendermode_preset_cycle_1']],
             _CYCLE_2_PRESETS[rdp_settings['rendermode_preset_cycle_2']] if is_2_cycle else None
         )
+        result.alpha_compare = enumAlphaCompare[rdp_settings['g_mdsft_alpha_compare']]
+        return result
 
 def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     f3d_mat = mat['f3d_mat']

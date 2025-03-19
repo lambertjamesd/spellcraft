@@ -204,7 +204,7 @@ void overworld_render_lod_0_entries(struct overworld_lod0* lod0, int camera_x, i
     for (struct overworld_lod0_entry* curr = lod0->entries; curr < end; curr += 1, entry += 1) {
         int dx = (int)curr->x - camera_x;
         int dy = (int)curr->z - camera_z;
-        entry->priority = ((dx * dx + dy * dy) >> 2) - ((uint32_t)(3 - curr->priority) << 30);
+        entry->priority = ((dx * dx + dy * dy) >> 2) - ((uint32_t)(curr->priority) << 30);
         entry->mesh = &curr->mesh;
     }
 

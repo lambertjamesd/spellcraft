@@ -296,7 +296,9 @@ RM_OPA_CI = build_blend_mode(
 	coverage_dest = 'CLAMP', z_mode = 'OPAQUE',
 )
 
-RM_FOG_SHADE_A = build_blend_mode(material.BlendModeCycle('FOG', 'SHADE_A', 'IN', 'INV_MUX_A'))
+# there is a difference bewteen what libultra defines and what seems to work
+# RM_FOG_SHADE_A = build_blend_mode(material.BlendModeCycle('FOG', 'SHADE_A', 'IN', 'INV_MUX_A'))
+RM_FOG_SHADE_A = build_blend_mode(material.BlendModeCycle('IN', 'SHADE_A', 'FOG', 'INV_MUX_A'))
 RM_FOG_PRIM_A	= build_blend_mode(material.BlendModeCycle('FOG', 'FOG_A', 'IN', 'INV_MUX_A'))
 RM_PASS = build_blend_mode(material.BlendModeCycle('IN', '0', 'IN', '1'))
 
