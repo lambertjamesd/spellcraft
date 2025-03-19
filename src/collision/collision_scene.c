@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "mesh_collider.h"
 #include "collide.h"
@@ -101,6 +102,7 @@ void collision_scene_add_static_mesh(struct mesh_collider* collider) {
             return;
         }
     }
+    assert(false);
 }
 
 void collision_scene_remove_static_mesh(struct mesh_collider* collider) {
@@ -242,7 +244,7 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
         vector3Sub(&object->bounding_box.max, &object->bounding_box.min, &bbSize);
         vector3Scale(&bbSize, &bbSize, 0.5f);
 
-        bool should_swepp = fabs(offset.x) > bbSize.x ||
+        bool should_sweep = fabs(offset.x) > bbSize.x ||
             fabs(offset.y) > bbSize.y ||
             fabs(offset.z) > bbSize.z;
 
@@ -261,14 +263,14 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
                 object->is_out_of_bounds = 0;
             }
     
-            if (should_swepp) {
+            if (should_sweep) {
                 did_hit = collide_object_to_mesh_swept(object, mesh, prev_pos) || did_hit;
             } else {
                 collide_object_to_mesh(object, mesh);
             }
         }
 
-        if (did_hit || !should_swepp) {
+        if (!did_hit || !should_sweep) {
             return;
         }
     }
