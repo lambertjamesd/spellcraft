@@ -17,8 +17,12 @@ class BoneLinkage():
 
 class BoneAttributes():
     def __init__(self):
-        self.has_pos = False
-        self.has_rot = False
+        # I may make this default to false
+        # if I can figure out a good way to 
+        # reset the default position at the
+        # start of an animation
+        self.has_pos = True
+        self.has_rot = True
         self.has_scale = False
 
     def __str__(self) -> str:
@@ -208,6 +212,12 @@ class ArmatureBone:
         self.matrix_normal_inv = self.matrix_scene_inv.to_3x3().inverted().transposed()
 
         self.pose_bone: bpy.types.Bone = pose_bone
+
+    def __str__(self):
+        return f"'bone[{self.index}] {self.name}"
+    
+    def __repr__(self):
+        return str(self)
 
 class ArmatureData:
     def __init__(self, obj: bpy.types.Object, base_transform: mathutils.Matrix):
