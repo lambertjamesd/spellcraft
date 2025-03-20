@@ -163,7 +163,7 @@ void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3*
             if (*slot) {
                 if ((*slot)->x == x && (*slot)->y == y) {
                     // already loaded
-                    return;
+                    continue;;
                 }
         
                 collision_scene_remove_static_mesh(&(*slot)->collider);
@@ -172,7 +172,7 @@ void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3*
         
             if (x < 0 || y < 0 || x >= overworld->tile_x || y >= overworld->tile_y) {
                 *slot = NULL;
-                return;
+                continue;
             }
             
             fseek(overworld->file, overworld->tile_definitions[x + y * overworld->tile_x].actor_block_offset, SEEK_SET);

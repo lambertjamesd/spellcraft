@@ -250,7 +250,12 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             batch->camera_matrix[3][2],
         };
         matrixApplyScaledPos(scaleMtx, &camera_neg_pos, -WORLD_SCALE);
-        t3d_mat4_to_fixed_3x4(default_mtx, (T3DMat4*)scaleMtx);
+
+        if (fabsf(scaleMtx[3][0]) > 0x7fff || fabsf(scaleMtx[3][1]) > 0x7fff || fabsf(scaleMtx[3][2]) > 0x7fff) {
+            default_mtx = NULL;
+        } else {
+            t3d_mat4_to_fixed_3x4(default_mtx, (T3DMat4*)scaleMtx);
+        }
     }
 
     for (int i = 0; i < batch->element_count; ++i) {

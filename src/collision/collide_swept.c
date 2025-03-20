@@ -77,7 +77,6 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
         &result
     )) {
         collide_data->hit_result = result;
-        vector3AddScaled(collide_data->object->position, &result.normal, -result.penetration, collide_data->object->position);
         return true;
     }
 
@@ -85,6 +84,8 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
 
     return false;
 }
+
+#define FACE_MARGIN 0.001f
 
 void collide_object_swept_bounce(
     struct dynamic_object* object, 
@@ -107,6 +108,7 @@ void collide_object_swept_bounce(
     
     vector3Add(object->position, &move_amount_normal, object->position);
     vector3Add(object->position, &move_amount_tangent, object->position);
+    vector3AddScaled(object->position, &collide_data->hit_result.normal, -collide_data->hit_result.penetration + FACE_MARGIN, object->position);
 
     // don't include friction on a bounce
     correct_velocity(object, &collide_data->hit_result, -1.0f, 0.0f, object->type->bounce);
