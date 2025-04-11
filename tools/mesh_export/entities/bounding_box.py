@@ -2,11 +2,11 @@ import mathutils
 
 def union(a: tuple[mathutils.Vector, mathutils.Vector], b: tuple[mathutils.Vector, mathutils.Vector]) -> tuple[mathutils.Vector, mathutils.Vector]:
     return mathutils.Vector((
-        min(a.x, b.x),
-        min(a.y, b.y),
-        min(a.z, b.z)
+        min(a[0].x, b[0].x),
+        min(a[0].y, b[0].y),
+        min(a[0].z, b[0].z)
     )), mathutils.Vector((
-        max(a.x, b.x),
-        max(a.y, b.y),
-        max(a.z, b.z)
+        max(a[1].x, b[1].x),
+        max(a[1].y, b[1].y),
+        max(a[1].z, b[1].z)
     ))

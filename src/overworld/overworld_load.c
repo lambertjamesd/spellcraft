@@ -6,27 +6,83 @@
 #include "../collision/collision_scene.h"
 #include "overworld_render.h"
 #include "../resource/mesh_collider.h"
+#include "../resource/tmesh_cache.h"
+#include "../math/transform.h"
 #include <memory.h>
 
 struct overworld_tile* overworld_tile_load(FILE* file) {
     uint8_t mesh_count;
     fread(&mesh_count, 1, 1, file);
+    uint16_t detail_mesh_count;
+    fread(&detail_mesh_count, 2, 1, file);
+    uint16_t detail_count;
+    fread(&detail_count, 2, 1, file);
 
     struct overworld_tile* result = malloc(
         sizeof(struct overworld_tile) +
         sizeof(struct tmesh) * mesh_count +
-        sizeof(rspq_block_t*) * mesh_count
+        sizeof(rspq_block_t*) * mesh_count +
+        sizeof(struct tmesh*) * detail_mesh_count +
+        sizeof(T3DMat4FP) * detail_count
     );
 
     fread(&result->starting_y, sizeof(float), 1, file);
     result->terrain_mesh_count = mesh_count;
+    result->detail_mesh_count = detail_mesh_count;
+    result->detail_count = detail_count;
 
     result->terrain_meshes = (struct tmesh*)(result + 1);
     result->render_blocks = (rspq_block_t**)(result->terrain_meshes + mesh_count);
+    result->detail_meshes = (struct tmesh**)(result->render_blocks + mesh_count);
+    result->detail_matrices = (T3DMat4FP*)(result->detail_meshes + detail_mesh_count);
+
+    for (int i = 0; i < detail_mesh_count; i += 1) {
+        uint8_t filename_len;
+        fread(&filename_len, 1, 1, file);
+        char filename[filename_len + 1];
+        fread(filename, filename_len, 1, file);
+        filename[filename_len] = '\0';
+
+        result->detail_meshes[i] = tmesh_cache_load(filename);
+    }
+
+    T3DMat4FP* curr_matrix = UncachedAddr(result->detail_matrices);
 
     for (int i = 0; i < mesh_count; i += 1) {
+        
         tmesh_load(&result->terrain_meshes[i], file);
-        result->render_blocks[i] = result->terrain_meshes[i].block;
+        rspq_block_begin();
+        rspq_block_run(result->terrain_meshes[i].material->block);
+        rspq_block_run(result->terrain_meshes[i].block);
+        
+        uint16_t block_detail_count;
+        fread(&block_detail_count, 2, 1, file);
+        
+        struct material* curr_material = NULL;
+        for (int detail_index = 0; detail_index < block_detail_count; detail_index += 1) {
+            uint16_t detail_type;
+            fread(&detail_type, 2, 1, file);
+            struct Transform transform;
+            fread(&transform, sizeof(struct Transform), 1, file);
+
+            struct tmesh* mesh = result->detail_meshes[detail_type];
+
+            if (curr_material != mesh->material) {
+                rspq_block_run(mesh->material->block);
+                curr_material = mesh->material;
+            }
+
+            T3DMat4 mtx;
+            transformToMatrix(&transform, mtx.m);
+            t3d_mat4_to_fixed(curr_matrix, &mtx);
+            t3d_matrix_push(curr_matrix);
+            rspq_block_run(mesh->block);
+            t3d_matrix_pop(1);
+
+            ++curr_matrix;
+        }
+
+        result->render_blocks[i] = rspq_block_end();
     }
 
     return result;
@@ -35,6 +91,9 @@ struct overworld_tile* overworld_tile_load(FILE* file) {
 void overworld_tile_free(struct overworld_tile* tile) {
     for (int i = 0; i < tile->terrain_mesh_count; i += 1) {
         tmesh_release(&tile->terrain_meshes[i]);
+    }
+    for (int i = 0; i < tile->detail_mesh_count; i += 1) {
+        tmesh_cache_release(tile->detail_meshes[i]);
     }
     free(tile);
 }

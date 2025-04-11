@@ -11,6 +11,7 @@ from . import tiny3d_mesh_writer
 from . import mesh_collider
 from . import export_settings
 from . import material_extract
+from . import filename
 
 def subdivide_mesh_list(meshes: list[mesh.mesh_data], normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list[mesh.mesh_data]]:
     result = []
@@ -46,36 +47,98 @@ class OverworldCell():
 
     def __str__(self):
         return f"mesh_data(len) {len(self.mesh_data)} y_offset {self.y_offset}"
+    
+coordinate_convert = mathutils.Matrix.Rotation(math.pi * 0.5, 4, 'X')
+coordinate_convert_invert = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
 
-def generate_overworld_tile(cell: list[mesh.mesh_data], side_length: float, x: int, z: int, map_min: mathutils.Vector, settings: export_settings.ExportSettings):
+class OverworldDetail():
+    def __init__(self, obj: bpy.types.Object):
+        self.obj: bpy.types.Object = obj
+        self.final_transform: mathutils.Matrix = coordinate_convert_invert @ obj.matrix_world @ coordinate_convert
+        loc, rot, scale = self.final_transform.decompose()
+        self.position: mathutils.Vector = loc
+        self.mesh_filename = filename.rom_filename(obj.data.library.filepath) + '.tmesh'
+        
+
+def subdivide_detail_list(detail_list: list[OverworldDetail], normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list[OverworldDetail]]:
+    result: list[list[OverworldDetail]] = []
+
+    for i in range(subdivisions):
+        result.append([])
+
+    for detail in detail_list:
+        bin_index = math.floor((normal.dot(detail.position) - start_pos) / distance_step)
+        bin_index = max(bin_index, 0)
+        bin_index = min(bin_index, subdivisions - 1)
+
+        result[bin_index].append(detail)
+
+    return result
+
+def generate_overworld_tile(cell: list[mesh.mesh_data], details: list[OverworldDetail], side_length: float, x: int, z: int, map_min: mathutils.Vector, settings: export_settings.ExportSettings):
     cell_bb = cell[0].bounding_box()
 
     for i in range(1, len(cell)):
         cell_bb = bounding_box.union(cell_bb, cell[i].bounding_box())
 
+    mesh_names = list(set(map(lambda x: x.mesh_filename, details)))
+
     height = cell_bb[1].y - cell_bb[0].y
+
+    vertical_subdivisions = math.ceil(height / side_length)
 
     y_cells = subdivide_mesh_list(
         cell, 
         mathutils.Vector((0, 1, 0)), 
         cell_bb[0].y, 
         side_length,
-        math.ceil(height / side_length)
+        vertical_subdivisions
     )
 
+    detail_cells = subdivide_detail_list(details, mathutils.Vector((0, 1, 0)), cell_bb[0].y, side_length, vertical_subdivisions)
+
     data = io.BytesIO()
-    data.write(struct.pack('>B', len(y_cells)))
+    data.write(struct.pack('>BHH', len(y_cells), len(mesh_names), len(details)))
     data.write(struct.pack('>f', cell_bb[0].y))
 
+    for name in mesh_names:
+        name_bytes = name.encode()
+        data.write(struct.pack('>B', len(name_bytes)))
+        data.write(name_bytes)
+
+    # write out detail meshes
+    # for each detail mesh
+    #  write filename length
+    #  write filename
+
     for y, y_cell in enumerate(y_cells):
+        cell_corner = mathutils.Vector((
+            -(x * side_length + map_min.x), 
+            -(y * side_length + cell_bb[0].y), 
+            -(z * side_length + map_min.z)
+        ))
+
         for mesh_data in y_cell:
-            mesh_data.translate(mathutils.Vector((
-                -(x * side_length + map_min.x), 
-                -(y * side_length + cell_bb[0].y), 
-                -(z * side_length + map_min.z)
-            )))
+            mesh_data.translate(cell_corner)
             
         tiny3d_mesh_writer.write_mesh(y_cell, None, [], settings, data)
+
+        cell_details = detail_cells[y]
+        data.write(struct.pack('>H', len(cell_details)))
+
+        for detail in cell_details:
+            data.write(struct.pack('>H', mesh_names.index(detail.mesh_filename)))
+            pos, rot, scale = detail.final_transform.decompose()
+            adjusted_pos = (pos + cell_corner) * settings.fixed_point_scale
+
+            data.write(struct.pack('>fff', adjusted_pos.x, adjusted_pos.y, adjusted_pos.z))
+            data.write(struct.pack('>ffff', rot.x, rot.y, rot.z, rot.w))
+            data.write(struct.pack('>fff', scale.x, scale.y, scale.z))
+
+        # write out detail objects
+        # foreach detail
+        #    write detail index
+        #    write transform
 
     return OverworldCell(data.getvalue(), cell_bb[0].y)
 
@@ -115,7 +178,7 @@ def generate_lod0(lod_0_objects: list[bpy.types.Object], subdivisions: int, sett
 
     print(f"lod_0 creation time {time.perf_counter() - lod_0_start_time}")
 
-def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0_objects: list[bpy.types.Object], collider: mesh_collider.MeshCollider, subdivisions: int, settings: export_settings.ExportSettings, base_transform: mathutils.Matrix):
+def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0_objects: list[bpy.types.Object], collider: mesh_collider.MeshCollider, detail_list: list[OverworldDetail], subdivisions: int, settings: export_settings.ExportSettings, base_transform: mathutils.Matrix):
     mesh_entries = mesh_list.determine_mesh_data()
 
     mesh_bb = None
@@ -134,14 +197,17 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     side_length = max(width, height) / subdivisions
 
     subdivide_time_start = time.perf_counter()
-    columns = subdivide_mesh_list(mesh_entries, mathutils.Vector((0, 0, 1)), mesh_bb[0].x, side_length, subdivisions)
-    cells = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].z, side_length, subdivisions), columns))
+    columns = subdivide_mesh_list(mesh_entries, mathutils.Vector((0, 0, 1)), mesh_bb[0].z, side_length, subdivisions)
+    cells = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].x, side_length, subdivisions), columns))
     print(f"subdivide_mesh_list for mesh data {time.perf_counter() - subdivide_time_start}")
 
     subivide_collider_start = time.perf_counter()
-    collider_columns = subdivide_mesh_list([collider], mathutils.Vector((0, 0, 1)), mesh_bb[0].x, side_length, subdivisions)
-    collider_cells: list[list[list[mesh_collider.MeshCollider]]] = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].z, side_length, subdivisions), collider_columns))
+    collider_columns = subdivide_mesh_list([collider], mathutils.Vector((0, 0, 1)), mesh_bb[0].z, side_length, subdivisions)
+    collider_cells: list[list[list[mesh_collider.MeshCollider]]] = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].x, side_length, subdivisions), collider_columns))
     print(f"subdivide_mesh_list for collider data {time.perf_counter() - subivide_collider_start}")
+
+    detail_columns = subdivide_detail_list(detail_list, mathutils.Vector((0, 0, 1)), mesh_bb[0].z, side_length, subdivisions)
+    detail_cells: list[list[list[OverworldDetail]]] = list(map(lambda column: subdivide_detail_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].x, side_length, subdivisions), detail_columns))
 
     cell_data: list[OverworldCell] = []
     collider_cell_data: list[bytes] = []
@@ -154,6 +220,7 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
             write_mesh_time -= time.perf_counter()
             cell_data.append(generate_overworld_tile(
                 cell,
+                detail_cells[z][x],
                 side_length,
                 x,
                 z,

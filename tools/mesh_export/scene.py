@@ -131,6 +131,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
     collection: bpy.types.Collection = bpy.data.collections["lod_1"]
 
     mesh_list = entities.mesh.mesh_list(base_transform)
+    detail_list: list[entities.overworld.OverworldDetail] = []
 
     collider = entities.mesh_collider.MeshCollider()
 
@@ -141,6 +142,10 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
             continue
 
         mesh: bpy.types.Mesh = obj.data
+
+        if mesh.library:
+            detail_list.append(entities.overworld.OverworldDetail(obj))
+            continue
 
         if len(mesh.materials) > 0:
             mesh_list.append(obj)
@@ -156,7 +161,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
 
     subdivisions = collection['subdivisions'] if 'subdivisions' in collection else 8
 
-    entities.overworld.generate_overworld(overworld_filename, mesh_list, lod_0_objects, collider, subdivisions, settings, base_transform)
+    entities.overworld.generate_overworld(overworld_filename, mesh_list, lod_0_objects, collider, detail_list, subdivisions, settings, base_transform)
 
     return True
     

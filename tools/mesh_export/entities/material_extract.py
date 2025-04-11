@@ -5,6 +5,7 @@ import sys
 from . import material
 from . import serialize
 from . import blend_modes
+from . import filename
 
 def _reverse_lookup(mapping: dict, value):
     for entry in mapping.items():
@@ -449,9 +450,7 @@ def material_romname(bpy_mat: bpy.types.Material) -> bool:
             raise Exception(f"{material_filename} does not exist")
         
     if bpy_mat.library:
-        input_filename = sys.argv[1]
-        image_path = os.path.normpath(os.path.join(os.path.dirname(input_filename), bpy_mat.library.filepath[2:]))
-        return 'rom:/' + image_path[len('assets/'):-len('.blend')]
+        return filename.rom_filename(bpy_mat.library.filepath)
     
     return None
         

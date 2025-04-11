@@ -20,7 +20,7 @@ struct overworld_tile {
     float starting_y;
     struct tmesh** detail_meshes;
     uint16_t terrain_mesh_count;
-    uint16_t detail_meshes_count;
+    uint16_t detail_mesh_count;
     uint16_t detail_count;
     T3DMat4FP* detail_matrices;
 };
