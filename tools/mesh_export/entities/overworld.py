@@ -196,6 +196,10 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
 
     side_length = max(width, height) / subdivisions
 
+    for detail in detail_list:
+        if 'collider' in detail.obj.data:
+            collider.append(detail.obj.data['collider'], coordinate_convert_invert @ detail.obj.matrix_world)
+
     subdivide_time_start = time.perf_counter()
     columns = subdivide_mesh_list(mesh_entries, mathutils.Vector((0, 0, 1)), mesh_bb[0].z, side_length, subdivisions)
     cells = list(map(lambda column: subdivide_mesh_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].x, side_length, subdivisions), columns))
