@@ -215,7 +215,7 @@ struct scene* scene_load(const char* filename) {
     }
 
     inventory_init();
-    camera_init(&scene->camera, 70.0f, 1.0f, 250.0f);
+    camera_init(&scene->camera, 70.0f, 1.0f, 125.0f);
     player_init(&scene->player, &player_def, &scene->camera.transform);
     camera_controller_init(&scene->camera_controller, &scene->camera, &scene->player);
 
