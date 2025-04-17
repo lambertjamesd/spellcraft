@@ -324,3 +324,11 @@ void scene_release(struct scene* scene) {
 
     free(scene);
 }
+
+struct entity_definition* scene_get_entity(unsigned index) {
+    if (index >= sizeof(scene_entity_definitions) / sizeof(*scene_entity_definitions)) {
+        return NULL;
+    }
+
+    return &scene_entity_definitions[index];
+}

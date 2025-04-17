@@ -1,13 +1,16 @@
 #include "overworld_load.h"
 
-#include <malloc.h>
-#include <assert.h>
-#include "../render/render_scene.h"
 #include "../collision/collision_scene.h"
-#include "overworld_render.h"
+#include "../cutscene/evaluation_context.h"
+#include "../cutscene/expression_evaluate.h"
+#include "../math/transform.h"
+#include "../render/render_scene.h"
 #include "../resource/mesh_collider.h"
 #include "../resource/tmesh_cache.h"
-#include "../math/transform.h"
+#include "../scene/scene_loader.h"
+#include "overworld_render.h"
+#include <assert.h>
+#include <malloc.h>
 #include <memory.h>
 
 struct overworld_tile* overworld_tile_load(FILE* file) {
@@ -153,6 +156,15 @@ struct overworld* overworld_load(const char* filename) {
 
     render_scene_add_step(overworld_render_step, result);
 
+    hash_map_init(&result->loaded_actors, MAX_ACTIVE_ACTORS);
+
+    for (int i = 0; i < MAX_ACTIVE_ACTORS; i += 1) {
+        result->actors[i].next = i + 1 < MAX_ACTIVE_ACTORS ? &result->actors[i + 1] : NULL;
+    }
+
+    result->next_free_actor = &result->actors[0];
+    result->next_active_actor = NULL;
+
     return result;
 }
 
@@ -205,15 +217,101 @@ void overworld_check_loaded_tiles(struct overworld* overworld) {
     overworld->load_next.y = NO_TILE_COORD;
 }
 
+#define SPAWN_IN_RADIUS     100.0f
+
+int overworld_actor_spawn_compare(const void* a, const void *b) {
+    return (int)((struct overworld_actor_spawn_location*)a)->x - (int)((struct overworld_actor_spawn_location*)b)->x;
+}
+
+struct overworld_actor* overworld_malloc_actor(struct overworld* overworld) {
+    struct overworld_actor* result = overworld->next_free_actor;
+
+    if (!result) {
+        return NULL;
+    }
+
+    overworld->next_active_actor = result->next;
+
+    return result;
+}
+
+struct overworld_actor* overworld_actor_spawn(struct overworld* overworld, struct overworld_actor_spawn_information* info) {
+    struct entity_definition* entity_def = scene_get_entity(info->entity_type_id);
+
+    if (!entity_def) {
+        return NULL;
+    }
+
+    struct overworld_actor* result = overworld_malloc_actor(overworld);
+
+    if (!result) {
+        return NULL;
+    }
+
+    struct evaluation_context context;
+    evaluation_context_init(&context, 0);
+    expression_evaluate(&context, &info->expression);
+    int should_spawn = evaluation_context_pop(&context);
+    evaluation_context_destroy(&context);
+
+    if (!should_spawn) {
+        result->entity = NULL;
+        return result;
+    }
+
+    result->entity = malloc(entity_def->entity_size);
+    entity_def->init(result, info->entity_def);
+    return result;
+}
+
+void overworld_check_tile_spawns(struct overworld* overworld, struct overworld_actor_tile* tile, float tile_x, float tile_y, float radius) {
+    int min_x = (int)((tile_x - tile->x - radius) * 256.0f);
+    int max_x = (int)((tile_y - tile->y + radius) * 256.0f);
+    int int_rad_sqrd = (int)(radius * radius * (256.0f * 256.0f));
+
+    int x = (int)((tile_x - tile->x) * 256.0f);
+    int y = (int)((tile_y - tile->y) * 256.0f);
+
+    struct overworld_actor_spawn_location* end = tile->spawn_locations + tile->active_spawn_locations;
+
+    for (
+        struct overworld_actor_spawn_location* curr = tile->spawn_locations; 
+        curr < end && (int)curr->x <= max_x;
+    ) {
+        int dx = (int)curr->x - x;
+        int dy = (int)curr->y - y;
+
+        if (dx * dx + dy * dy > int_rad_sqrd) {
+            ++curr;
+            continue;
+        }
+
+        int spawn_id = (int)tile->first_spawn_id + (int)curr->spawn_id_offset;
+        
+        if (!hash_map_get(&overworld->loaded_actors, spawn_id)) {
+            struct overworld_actor* actor = overworld_actor_spawn(overworld, &tile->spawn_information[curr->spawn_id_offset]);
+            hash_map_set(&overworld->loaded_actors, spawn_id, actor);
+            actor->entity_type_id = spawn_id;
+            actor->spawn_id_offset = curr->spawn_id_offset;
+            actor->x = (int)(tile->x << 8) + curr->x;
+            actor->y = (int)(tile->y << 8) + curr->y;
+        }
+        
+        --end;
+        *curr = *end;
+    }
+}
+
 void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3* player_pos) {
     float tile_x = (player_pos->x - overworld->min.x) * overworld->inv_tile_size;
     float tile_y = (player_pos->z - overworld->min.y) * overworld->inv_tile_size;
+    float radius = SPAWN_IN_RADIUS * overworld->inv_tile_size;
 
-    int min_x = (int)floorf(tile_x - 0.5f);
-    int min_y = (int)floorf(tile_y - 0.5f);
+    int min_x = (int)floorf(tile_x - radius);
+    int min_y = (int)floorf(tile_y - radius);
 
-    int max_x = (int)ceilf(tile_x + 0.5f);
-    int max_y = (int)ceilf(tile_y + 0.5f);
+    int max_x = (int)ceilf(tile_x + radius);
+    int max_y = (int)ceilf(tile_y + radius);
 
     for (int x = min_x; x < max_x; x += 1) {
         for (int y = min_y; y < max_y; y += 1) {
