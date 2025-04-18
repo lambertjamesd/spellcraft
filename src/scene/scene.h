@@ -24,8 +24,6 @@ struct entity_definition {
     uint16_t definition_size;
 };
 
-#define ENTITY_DEFINITION(name) {#name, (entity_init)name ## _init, (entity_destroy)name ## _destroy, sizeof(struct name), sizeof(struct name ## _definition)}
-
 struct entity_data {
     struct entity_definition* definition;
     void* entities;

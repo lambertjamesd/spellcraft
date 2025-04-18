@@ -21,10 +21,15 @@
 #include "../objects/ground_torch.h"
 #include "../objects/training_dummy.h"
 #include "../objects/treasure_chest.h"
+#include "../objects/empty.h"
 
 #include "../collision/collision_scene.h"
 
+
+#define ENTITY_DEFINITION(name) [ENTITY_TYPE_ ## name] = {#name, (entity_init)name ## _init, (entity_destroy)name ## _destroy, sizeof(struct name), sizeof(struct name ## _definition)}
+
 static struct entity_definition scene_entity_definitions[] = {
+    ENTITY_DEFINITION(empty),
     ENTITY_DEFINITION(biter),
     ENTITY_DEFINITION(collectable),
     ENTITY_DEFINITION(crate),

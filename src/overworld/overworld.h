@@ -28,7 +28,6 @@ struct overworld_tile {
 
 struct overworld_actor_spawn_information {
     uint16_t entity_type_id;
-    uint16_t spawn_id;
     struct expression expression;
     void* entity_def;
 };
@@ -40,11 +39,10 @@ struct overworld_actor_spawn_location {
 
 struct overworld_actor {
     struct overworld_actor* next;
+    uint32_t x, y;
     void* entity;
     uint16_t entity_type_id;
     uint16_t spawn_id_offset;
-
-    uint32_t x, y;
 };
 
 struct overworld_actor_tile {

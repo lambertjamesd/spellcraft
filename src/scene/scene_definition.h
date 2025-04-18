@@ -7,6 +7,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+enum entity_type_id {
+    ENTITY_TYPE_empty,
+    ENTITY_TYPE_biter,
+    ENTITY_TYPE_collectable,
+    ENTITY_TYPE_crate,
+    ENTITY_TYPE_ground_torch,
+    ENTITY_TYPE_npc,
+    ENTITY_TYPE_training_dummy,
+    ENTITY_TYPE_treasure_chest,
+};
+
 struct crate_definition {
     struct Vector3 position;
     struct Vector2 rotation;

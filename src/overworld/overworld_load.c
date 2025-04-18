@@ -8,6 +8,7 @@
 #include "../resource/mesh_collider.h"
 #include "../resource/tmesh_cache.h"
 #include "../scene/scene_loader.h"
+#include "../objects/empty.h"
 #include "overworld_render.h"
 #include <assert.h>
 #include <malloc.h>
@@ -219,10 +220,6 @@ void overworld_check_loaded_tiles(struct overworld* overworld) {
 
 #define SPAWN_IN_RADIUS     100.0f
 
-int overworld_actor_spawn_compare(const void* a, const void *b) {
-    return (int)((struct overworld_actor_spawn_location*)a)->x - (int)((struct overworld_actor_spawn_location*)b)->x;
-}
-
 struct overworld_actor* overworld_malloc_actor(struct overworld* overworld) {
     struct overworld_actor* result = overworld->next_free_actor;
 
@@ -235,12 +232,8 @@ struct overworld_actor* overworld_malloc_actor(struct overworld* overworld) {
     return result;
 }
 
-struct overworld_actor* overworld_actor_spawn(struct overworld* overworld, struct overworld_actor_spawn_information* info) {
-    struct entity_definition* entity_def = scene_get_entity(info->entity_type_id);
-
-    if (!entity_def) {
-        return NULL;
-    }
+struct overworld_actor* overworld_actor_spawn(struct overworld* overworld, struct overworld_actor_tile* tile, struct overworld_actor_spawn_location* spawn_location) {
+    struct overworld_actor_spawn_information* info = &tile->spawn_information[spawn_location->spawn_id_offset];
 
     struct overworld_actor* result = overworld_malloc_actor(overworld);
 
@@ -254,13 +247,21 @@ struct overworld_actor* overworld_actor_spawn(struct overworld* overworld, struc
     int should_spawn = evaluation_context_pop(&context);
     evaluation_context_destroy(&context);
 
-    if (!should_spawn) {
-        result->entity = NULL;
-        return result;
+    int entity_type_id = should_spawn ? info->entity_type_id : ENTITY_TYPE_empty;
+    struct entity_definition* entity_def = scene_get_entity(entity_type_id);
+
+    if (!entity_def) {
+        return NULL;
     }
 
+    result->spawn_id_offset = spawn_location->spawn_id_offset;
+    result->x = (int)(tile->x << 8) + spawn_location->x;
+    result->y = (int)(tile->y << 8) + spawn_location->y;
     result->entity = malloc(entity_def->entity_size);
+    result->entity_type_id = entity_type_id;
     entity_def->init(result, info->entity_def);
+    hash_map_set(&overworld->loaded_actors, (int)tile->first_spawn_id + (int)spawn_location->spawn_id_offset, result);
+
     return result;
 }
 
@@ -289,12 +290,7 @@ void overworld_check_tile_spawns(struct overworld* overworld, struct overworld_a
         int spawn_id = (int)tile->first_spawn_id + (int)curr->spawn_id_offset;
         
         if (!hash_map_get(&overworld->loaded_actors, spawn_id)) {
-            struct overworld_actor* actor = overworld_actor_spawn(overworld, &tile->spawn_information[curr->spawn_id_offset]);
-            hash_map_set(&overworld->loaded_actors, spawn_id, actor);
-            actor->entity_type_id = spawn_id;
-            actor->spawn_id_offset = curr->spawn_id_offset;
-            actor->x = (int)(tile->x << 8) + curr->x;
-            actor->y = (int)(tile->y << 8) + curr->y;
+            overworld_actor_spawn(overworld, tile, curr);
         }
         
         --end;
