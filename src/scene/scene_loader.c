@@ -26,17 +26,30 @@
 #include "../collision/collision_scene.h"
 
 
-#define ENTITY_DEFINITION(name) [ENTITY_TYPE_ ## name] = {#name, (entity_init)name ## _init, (entity_destroy)name ## _destroy, sizeof(struct name), sizeof(struct name ## _definition)}
+#define ENTITY_DEFINITION(name, fields) [ENTITY_TYPE_ ## name] = { \
+    #name, \
+    (entity_init)name ## _init, \
+    (entity_destroy)name ## _destroy, \
+    sizeof(struct name), \
+    sizeof(struct name ## _definition), \
+    fields, \
+    sizeof(fields) / sizeof(*fields) \
+}
+
+static struct entity_field_type_location fields_empty[] = {};
+static struct entity_field_type_location fields_npc[] = {
+    { .offset = offsetof(struct npc_definition, dialog), .type = ENTITY_FIELD_TYPE_STRING },
+};
 
 static struct entity_definition scene_entity_definitions[] = {
-    ENTITY_DEFINITION(empty),
-    ENTITY_DEFINITION(biter),
-    ENTITY_DEFINITION(collectable),
-    ENTITY_DEFINITION(crate),
-    ENTITY_DEFINITION(ground_torch),
-    ENTITY_DEFINITION(npc),
-    ENTITY_DEFINITION(training_dummy),
-    ENTITY_DEFINITION(treasure_chest),
+    ENTITY_DEFINITION(empty, fields_empty),
+    ENTITY_DEFINITION(biter, fields_empty),
+    ENTITY_DEFINITION(collectable, fields_empty),
+    ENTITY_DEFINITION(crate, fields_empty),
+    ENTITY_DEFINITION(ground_torch, fields_empty),
+    ENTITY_DEFINITION(npc, fields_npc),
+    ENTITY_DEFINITION(training_dummy, fields_empty),
+    ENTITY_DEFINITION(treasure_chest, fields_empty),
 };
 
 // WRLD
@@ -54,19 +67,10 @@ struct entity_definition* scene_find_def(const char* name) {
    return NULL;
 }
 
-struct type_location {
-    uint8_t type;
-    uint8_t offset;
-};
-
-enum type_location_types {
-    TYPE_LOCATION_STRING,
-};
-
-void scene_apply_types(void* definition, char* string_table, struct type_location* type_locations, int type_location_count) {
+void scene_apply_types(void* definition, char* string_table, struct entity_field_type_location* type_locations, int type_location_count) {
     for (int i = 0; i < type_location_count; i += 1) {
         switch (type_locations[i].type) {
-            case TYPE_LOCATION_STRING: {
+            case ENTITY_FIELD_TYPE_STRING: {
                 char** entry_location = (char**)((char*)definition + type_locations[i].offset);
                 *entry_location += (int)string_table;
                 break;
@@ -113,13 +117,6 @@ void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FIL
     fread(&definition_size, 2, 1, file);
     assert(definition_size == def->definition_size);
 
-    uint8_t type_location_count;
-
-    fread(&type_location_count, 1, 1, file);
-
-    struct type_location type_locations[type_location_count];
-    fread(type_locations, sizeof(struct type_location), type_location_count, file);
-
     char* entity = malloc(def->entity_size * entity_data->entity_count);
     char entity_def_data[definition_size * entity_data->entity_count];
     char* entity_def = entity_def_data;
@@ -133,7 +130,7 @@ void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FIL
 
     for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
         if (scene_load_check_condition(file)) {
-            scene_apply_types(entity_def, scene->string_table, type_locations, type_location_count);
+            scene_apply_types(entity_def, scene->string_table, def->fields, def->field_count);
             def->init(entity, entity_def);
             entity += def->entity_size;
             final_count += 1;

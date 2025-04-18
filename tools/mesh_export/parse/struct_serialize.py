@@ -234,11 +234,10 @@ class TypeLocation():
         self.type_id: int = type_id
         self.offset: int = offset
 
-def _obj_gather_types(definition, type_locations: list[TypeLocation], context: SerializeContext, current_offset: int) -> int:
+def _obj_gather_types(definition, context: SerializeContext, current_offset: int) -> int:
     current_offset = _apply_alignment(current_offset, obj_determine_alignment(definition, context))
 
     if _is_string_type(definition):
-        type_locations.append(TypeLocation(TYPE_ID_STR, current_offset))
         return current_offset + 4
     
     if isinstance(definition, str):
@@ -255,12 +254,12 @@ def _obj_gather_types(definition, type_locations: list[TypeLocation], context: S
     
     if isinstance(definition, struct_parse.StructureInfo):
         for child in definition.children:
-            current_offset = _obj_gather_types(child.data_type, type_locations, context, current_offset = current_offset)
+            current_offset = _obj_gather_types(child.data_type, context, current_offset = current_offset)
 
         return current_offset
     
     raise Exception(f'Unknown type {definition}')
 
-def obj_gather_types(definition, type_locations: list[TypeLocation], context: SerializeContext) -> int:
-    result = _obj_gather_types(definition, type_locations, context, 0)
+def obj_gather_types(definition, context: SerializeContext) -> int:
+    result = _obj_gather_types(definition, context, 0)
     return _apply_alignment(result, obj_determine_alignment(definition, context))

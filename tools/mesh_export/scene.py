@@ -272,16 +272,9 @@ def process_scene():
             def_type = enums['enum entity_type_id'].str_to_int('ENTITY_TYPE_' + item[0])
             file.write(def_type.to_bytes(2, 'big'))
 
-            type_locations: list[parse.struct_serialize.TypeLocation] = []
-
             file.write(len(item[1]).to_bytes(2, 'big'))
-            struct_size = parse.struct_serialize.obj_gather_types(item[1][0].def_type, type_locations, context)
+            struct_size = parse.struct_serialize.obj_gather_types(item[1][0].def_type, context)
             file.write(struct_size.to_bytes(2, 'big'))
-
-            file.write(struct.pack(">B", len(type_locations)))
-
-            for type_location in type_locations:
-                file.write(struct.pack(">BB", type_location.type_id, type_location.offset))
             
             for entry in item[1]:
                 parse.struct_serialize.write_obj(file, entry.obj, entry.def_type, context)

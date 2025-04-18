@@ -16,12 +16,23 @@
 typedef void(*entity_init)(void* entity, void* definition);
 typedef void(*entity_destroy)(void* entity);
 
+struct entity_field_type_location {
+    uint8_t type;
+    uint8_t offset;
+};
+
+enum entity_field_types {
+    ENTITY_FIELD_TYPE_STRING,
+};
+
 struct entity_definition {
     const char* name;
     entity_init init;
     entity_destroy destroy;
     uint16_t entity_size;
     uint16_t definition_size;
+    struct entity_field_type_location* fields;
+    uint16_t field_count;
 };
 
 struct entity_data {
