@@ -269,10 +269,8 @@ def process_scene():
         file.write(len(grouped_list).to_bytes(2, 'big'))
 
         for item in grouped_list:
-            def_name = item[0]
-
-            file.write(len(def_name).to_bytes(1, 'big'))
-            file.write(def_name.encode())
+            def_type = enums['enum entity_type_id'].str_to_int('ENTITY_TYPE_' + item[0])
+            file.write(def_type.to_bytes(2, 'big'))
 
             type_locations: list[parse.struct_serialize.TypeLocation] = []
 

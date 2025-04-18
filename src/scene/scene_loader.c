@@ -102,13 +102,9 @@ bool scene_load_check_condition(FILE* file) {
 }
 
 void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FILE* file) {
-    uint8_t name_len;
-    fread(&name_len, 1, 1, file);
-    char name[name_len + 1];
-    fread(name, 1, name_len, file);
-    name[name_len] = '\0';
-
-    struct entity_definition* def = scene_find_def(name);
+    uint16_t entity_type_id;
+    fread(&entity_type_id, 2, 1, file);
+    struct entity_definition* def = scene_get_entity(entity_type_id);
 
     assert(def);
 
