@@ -102,14 +102,70 @@ void overworld_tile_free(struct overworld_tile* tile) {
     free(tile);
 }
 
+void overworld_actor_tile_load_entities(struct overworld_actor_tile* tile, FILE* file) {
+    uint16_t entity_count;
+    fread(&entity_count, sizeof(uint16_t), 1, file);
+    tile->active_spawn_locations = entity_count;
+
+    if (!entity_count) {
+        tile->first_spawn_id = 0;
+        tile->spawn_locations = NULL;
+        tile->spawn_information = NULL;
+        return;
+    }
+
+    uint32_t entity_definition_size;
+    uint32_t expression_size;
+
+    fread(&entity_definition_size, sizeof(uint32_t), 1, file);
+    fread(&expression_size, sizeof(uint32_t), 1, file);
+
+    void* entity_definition_data = malloc(entity_definition_size);
+    void* expression_data = malloc(expression_size);
+
+    fread(entity_definition_data, entity_definition_size, 1, file);
+    fread(expression_data, expression_size, 1, file);
+
+    fread(&tile->first_spawn_id, sizeof(uint32_t), 1, file);
+
+    tile->spawn_locations = malloc(sizeof(struct overworld_actor_spawn_location) * entity_count);
+    fread(tile->spawn_locations, sizeof(struct overworld_actor_spawn_location), entity_count, file);
+
+    tile->spawn_information = malloc(sizeof(struct overworld_actor_spawn_information) * entity_count);
+    struct overworld_actor_spawn_information* end = tile->spawn_information + entity_count;
+
+    for (struct overworld_actor_spawn_information* curr = tile->spawn_information; curr < end; curr += 1) {
+        uint16_t entity_type_id;
+        fread(&entity_type_id, sizeof(uint16_t), 1, file);
+
+        struct entity_definition* def = scene_get_entity(entity_type_id);
+        assert(def);
+
+        curr->entity_def = entity_definition_data;
+        curr->expression.expression_program = expression_data;
+
+        entity_definition_data = (char*)entity_definition_data + def->definition_size;
+        expression_data = expression_skip(expression_data);
+    }
+}
+
 struct overworld_actor_tile* overworld_actor_tile_load(FILE* file) {
     struct overworld_actor_tile* result = malloc(sizeof(struct overworld_actor_tile));
     mesh_collider_load(&result->collider, file);
+    overworld_actor_tile_load_entities(result, file);
     return result;
 }
 
 void overworld_actor_tile_free(struct overworld_actor_tile* tile) {
     mesh_collider_release(&tile->collider);
+
+    if (tile->spawn_information) {
+        free(tile->spawn_information[0].entity_def);
+        free(tile->spawn_information[0].expression.expression_program);
+        free(tile->spawn_information);
+        free(tile->spawn_locations);
+    }
+
     free(tile);
 }
 

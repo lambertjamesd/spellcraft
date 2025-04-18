@@ -240,6 +240,8 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
             else:
                 tmp = mesh_collider.MeshCollider()
                 tmp.write_out(collider_data, force_subdivisions=mathutils.Vector((8, 1, 8)))
+            
+            collider_data.write((0).to_bytes(2, 'big'))
             collider_cell_data.append(collider_data.getvalue())
             write_collider_time += time.perf_counter()
 

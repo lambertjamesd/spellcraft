@@ -108,3 +108,26 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
         }
     }
 }
+
+void* expression_skip(void* expression_program) {
+    uint8_t* current = expression_program;
+
+    while (*current != EXPRESSION_TYPE_END) {
+        int instruction = *current;
+        ++current;
+
+        switch (instruction) {
+            case EXPRESSION_TYPE_LOAD_LOCAL:
+                current += sizeof(union expression_data);
+                break;
+            case EXPRESSION_TYPE_LOAD_GLOBAL:
+                current += sizeof(union expression_data);
+                break;
+            case EXPRESSION_TYPE_LOAD_LITERAL:
+                current += sizeof(union expression_data);
+                break;
+        }
+    }
+    ++current;
+    return current;
+}
