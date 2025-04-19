@@ -1,7 +1,6 @@
 import bpy
 import sys
 import os
-import entities.entities
 import mathutils
 import math
 import struct
