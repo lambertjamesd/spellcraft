@@ -1,6 +1,7 @@
 import bpy
 import sys
 import os
+import entities.entities
 import mathutils
 import math
 import struct
@@ -66,7 +67,7 @@ class Scene():
         self.loading_zones: list[LoadingZone] = []
         self.scene_mesh_collider = entities.mesh_collider.MeshCollider()
 
-def process_linked_object(scene: Scene, obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo]):
+def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo]):
     type = None
 
     if 'type' in mesh:
@@ -84,8 +85,8 @@ def process_linked_object(scene: Scene, obj: bpy.types.Object, mesh: bpy.types.M
         raise Exception(f"could not find def type {def_type_name}")
     
     print(f"found object {obj.name} of type {def_type_name}")
-    
-    scene.objects.append(ObjectEntry(obj, type, definitions[def_type_name]))
+
+    return ObjectEntry(obj, type, definitions[def_type_name])
 
 def write_static(scene: Scene, base_transform: mathutils.Matrix, file):
     settings = entities.export_settings.ExportSettings()
@@ -117,7 +118,7 @@ def find_static_blacklist():
 
     return result
 
-def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: str):
+def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: str, definitions):
     settings = entities.export_settings.ExportSettings()
 
     if not ('lod_1' in  bpy.data.collections):
@@ -127,6 +128,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
 
     mesh_list = entities.mesh.mesh_list(base_transform)
     detail_list: list[entities.overworld.OverworldDetail] = []
+    entity_list: list[entities.entities.ObjectEntry] = []
 
     collider = entities.mesh_collider.MeshCollider()
 
@@ -134,6 +136,10 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
         final_transform = base_transform @ obj.matrix_world
 
         if obj.type != "MESH":
+            continue
+
+        if 'type' in obj or 'type' in obj.data:
+            entity_list.append(process_linked_object(obj, obj.data, definitions))
             continue
 
         mesh: bpy.types.Mesh = obj.data
@@ -156,7 +162,17 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
 
     subdivisions = collection['subdivisions'] if 'subdivisions' in collection else 8
 
-    entities.overworld.generate_overworld(overworld_filename, mesh_list, lod_0_objects, collider, detail_list, subdivisions, settings, base_transform)
+    entities.overworld.generate_overworld(
+        overworld_filename, 
+        mesh_list, 
+        lod_0_objects, 
+        collider, 
+        detail_list, 
+        entity_list,
+        subdivisions, 
+        settings, 
+        base_transform
+    )
 
     return True
     
@@ -187,7 +203,7 @@ def process_scene():
 
     object_blacklist = find_static_blacklist()
 
-    has_overworld = check_for_overworld(base_transform, overworld_filename)
+    has_overworld = check_for_overworld(base_transform, overworld_filename, definitions)
 
     for obj in bpy.data.objects:
         if 'loading_zone' in obj:
@@ -199,7 +215,7 @@ def process_scene():
             continue
 
         if 'type' in obj or 'type' in obj.data:
-            process_linked_object(scene, obj, obj.data, definitions)
+            scene.objects.append(process_linked_object(obj, obj.data, definitions))
             continue
 
         if obj.type != "MESH":

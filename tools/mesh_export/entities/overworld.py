@@ -12,6 +12,7 @@ from . import mesh_collider
 from . import export_settings
 from . import material_extract
 from . import filename
+from . import entities
 
 def subdivide_mesh_list(meshes: list[mesh.mesh_data], normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list[mesh.mesh_data]]:
     result = []
@@ -60,8 +61,8 @@ class OverworldDetail():
         self.mesh_filename = filename.rom_filename(obj.data.library.filepath) + '.tmesh'
         
 
-def subdivide_detail_list(detail_list: list[OverworldDetail], normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list[OverworldDetail]]:
-    result: list[list[OverworldDetail]] = []
+def subdivide_detail_list(detail_list: list, normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list]:
+    result: list[list] = []
 
     for i in range(subdivisions):
         result.append([])
@@ -96,7 +97,6 @@ def generate_overworld_tile(cell: list[mesh.mesh_data], details: list[OverworldD
     )
 
     detail_cells = subdivide_detail_list(details, mathutils.Vector((0, 1, 0)), cell_bb[0].y, side_length, vertical_subdivisions)
-
     data = io.BytesIO()
     data.write(struct.pack('>BHH', len(y_cells), len(mesh_names), len(details)))
     data.write(struct.pack('>f', cell_bb[0].y))
@@ -105,11 +105,6 @@ def generate_overworld_tile(cell: list[mesh.mesh_data], details: list[OverworldD
         name_bytes = name.encode()
         data.write(struct.pack('>B', len(name_bytes)))
         data.write(name_bytes)
-
-    # write out detail meshes
-    # for each detail mesh
-    #  write filename length
-    #  write filename
 
     for y, y_cell in enumerate(y_cells):
         cell_corner = mathutils.Vector((
@@ -134,11 +129,6 @@ def generate_overworld_tile(cell: list[mesh.mesh_data], details: list[OverworldD
             data.write(struct.pack('>fff', adjusted_pos.x, adjusted_pos.y, adjusted_pos.z))
             data.write(struct.pack('>ffff', rot.x, rot.y, rot.z, rot.w))
             data.write(struct.pack('>fff', scale.x, scale.y, scale.z))
-
-        # write out detail objects
-        # foreach detail
-        #    write detail index
-        #    write transform
 
     return OverworldCell(data.getvalue(), cell_bb[0].y)
 
@@ -178,7 +168,21 @@ def generate_lod0(lod_0_objects: list[bpy.types.Object], subdivisions: int, sett
 
     print(f"lod_0 creation time {time.perf_counter() - lod_0_start_time}")
 
-def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0_objects: list[bpy.types.Object], collider: mesh_collider.MeshCollider, detail_list: list[OverworldDetail], subdivisions: int, settings: export_settings.ExportSettings, base_transform: mathutils.Matrix):
+class OverworldInputData():
+    def __init__(self):
+        pass
+
+def generate_overworld(
+        overworld_filename: str, 
+        mesh_list: mesh.mesh_list, 
+        lod_0_objects: list[bpy.types.Object], 
+        collider: mesh_collider.MeshCollider, 
+        detail_list: list[OverworldDetail], 
+        entity_list: list[entities.ObjectEntry],
+        subdivisions: int, 
+        settings: export_settings.ExportSettings, 
+        base_transform: mathutils.Matrix
+        ):
     mesh_entries = mesh_list.determine_mesh_data()
 
     mesh_bb = None
@@ -213,11 +217,15 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
     detail_columns = subdivide_detail_list(detail_list, mathutils.Vector((0, 0, 1)), mesh_bb[0].z, side_length, subdivisions)
     detail_cells: list[list[list[OverworldDetail]]] = list(map(lambda column: subdivide_detail_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].x, side_length, subdivisions), detail_columns))
 
+    entity_columns = subdivide_detail_list(entity_list, mathutils.Vector((0, 0, 1)), mesh_bb[0].z, side_length, subdivisions)
+    entity_cells: list[list[list[entities.ObjectEntry]]] = list(map(lambda column: subdivide_detail_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].x, side_length, subdivisions), entity_columns))
+
     cell_data: list[OverworldCell] = []
     collider_cell_data: list[bytes] = []
 
     write_mesh_time = 0
     write_collider_time = 0
+    first_spawn_id = 0
     
     for z, row in enumerate(cells):
         for x, cell in enumerate(row):
@@ -241,6 +249,17 @@ def generate_overworld(overworld_filename: str, mesh_list: mesh.mesh_list, lod_0
                 tmp = mesh_collider.MeshCollider()
                 tmp.write_out(collider_data, force_subdivisions=mathutils.Vector((8, 1, 8)))
             
+            # entities.write_object_groups(
+            #     min, max,
+            #     entity_cells[z][x],
+            #     enums,
+            #     variable_context,
+            #     first_spawn_id,
+            #     collider_data
+            # )
+
+            first_spawn_id += len(entity_cells[z][x])
+
             collider_data.write((0).to_bytes(2, 'big'))
             collider_cell_data.append(collider_data.getvalue())
             write_collider_time += time.perf_counter()

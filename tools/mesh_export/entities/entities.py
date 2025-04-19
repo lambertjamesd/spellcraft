@@ -18,7 +18,7 @@ class ObjectEntry():
         self.obj: bpy.types.Object = obj
         self.name: str = name
         self.def_type: StructureInfo = def_type
-        self.location: mathutils.Vector = get_position(obj)
+        self.position: mathutils.Vector = get_position(obj)
 
     def write_condition(self, variable_context: VariableContext, file):
         condition_text = self.obj['condition'] if 'condition' in self.obj else 'true'
@@ -79,8 +79,8 @@ def write_object_groups(
     for idx, object in enumerate(objects):
         file.write(struct.pack(
             '>BBH', 
-            to_cell_pos(object.location.x, cell_min.x, cell_max.x),
-            to_cell_pos(object.location.z, cell_min.z, cell_max.z),
+            to_cell_pos(object.position.x, cell_min.x, cell_max.x),
+            to_cell_pos(object.position.z, cell_min.z, cell_max.z),
             idx
         ))
 
