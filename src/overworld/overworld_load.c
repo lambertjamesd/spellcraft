@@ -4,11 +4,12 @@
 #include "../cutscene/evaluation_context.h"
 #include "../cutscene/expression_evaluate.h"
 #include "../math/transform.h"
+#include "../objects/empty.h"
 #include "../render/render_scene.h"
 #include "../resource/mesh_collider.h"
 #include "../resource/tmesh_cache.h"
 #include "../scene/scene_loader.h"
-#include "../objects/empty.h"
+#include "../scene/scene.h"
 #include "overworld_render.h"
 #include <assert.h>
 #include <malloc.h>
@@ -111,20 +112,28 @@ void overworld_actor_tile_load_entities(struct overworld_actor_tile* tile, FILE*
         tile->first_spawn_id = 0;
         tile->spawn_locations = NULL;
         tile->spawn_information = NULL;
+        tile->string_table = NULL;
         return;
     }
 
     uint32_t entity_definition_size;
     uint32_t expression_size;
+    uint16_t string_sizes;
 
     fread(&entity_definition_size, sizeof(uint32_t), 1, file);
     fread(&expression_size, sizeof(uint32_t), 1, file);
+    fread(&string_sizes, sizeof(uint16_t), 1, file);
 
     void* entity_definition_data = malloc(entity_definition_size);
     void* expression_data = malloc(expression_size);
+    void* string_table = string_sizes ? malloc(string_sizes) : NULL;
 
     fread(entity_definition_data, entity_definition_size, 1, file);
     fread(expression_data, expression_size, 1, file);
+    if (string_sizes) {
+        fread(string_table, string_sizes, 1, file);
+    }
+    tile->string_table = string_table;
 
     fread(&tile->first_spawn_id, sizeof(uint32_t), 1, file);
 
@@ -141,6 +150,7 @@ void overworld_actor_tile_load_entities(struct overworld_actor_tile* tile, FILE*
         struct entity_definition* def = scene_get_entity(entity_type_id);
         assert(def);
 
+        scene_entity_apply_types(entity_definition_data, string_table, def->fields, def->field_count);
         curr->entity_def = entity_definition_data;
         curr->expression.expression_program = expression_data;
 
@@ -164,6 +174,7 @@ void overworld_actor_tile_free(struct overworld_actor_tile* tile) {
         free(tile->spawn_information[0].expression.expression_program);
         free(tile->spawn_information);
         free(tile->spawn_locations);
+        free(tile->string_table);
     }
 
     free(tile);

@@ -67,18 +67,6 @@ struct entity_definition* scene_find_def(const char* name) {
    return NULL;
 }
 
-void scene_apply_types(void* definition, char* string_table, struct entity_field_type_location* type_locations, int type_location_count) {
-    for (int i = 0; i < type_location_count; i += 1) {
-        switch (type_locations[i].type) {
-            case ENTITY_FIELD_TYPE_STRING: {
-                char** entry_location = (char**)((char*)definition + type_locations[i].offset);
-                *entry_location += (int)string_table;
-                break;
-            }
-        }
-    }
-}
-
 // EXPR
 #define EXPECTED_CONDITION_HEADER 0x45585052
 
@@ -130,7 +118,7 @@ void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FIL
 
     for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
         if (scene_load_check_condition(file)) {
-            scene_apply_types(entity_def, scene->string_table, def->fields, def->field_count);
+            scene_entity_apply_types(entity_def, scene->string_table, def->fields, def->field_count);
             def->init(entity, entity_def);
             entity += def->entity_size;
             final_count += 1;

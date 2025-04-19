@@ -13,6 +13,7 @@ import entities.tiny3d_mesh_writer
 import entities.mesh_optimizer
 import entities.material_extract
 import entities.entry_point
+from entities.entities import ObjectEntry
 import entities.overworld
 import parse.struct_parse
 import parse.struct_serialize
@@ -24,12 +25,6 @@ class StaticEntry():
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
         self.obj = obj
         self.mesh = mesh
-
-class ObjectEntry():
-    def __init__(self, obj: bpy.types.Object, name: str, def_type: parse.struct_parse.StructureInfo):
-        self.obj: bpy.types.Object = obj
-        self.name: str = name
-        self.def_type: parse.struct_parse.StructureInfo = def_type
 
 class LocationEntry():
     def __init__(self, obj: bpy.types.Object, name: str):
@@ -277,13 +272,10 @@ def process_scene():
             file.write(struct_size.to_bytes(2, 'big'))
             
             for entry in item[1]:
-                parse.struct_serialize.write_obj(file, entry.obj, entry.def_type, context)
+                entry.write_definition(context, file)
 
             for entry in item[1]:
-                condition_text = entry.obj['condition'] if 'condition' in entry.obj else 'true'
-                condition = cutscene.parser.parse_expression(condition_text, entry.obj.name + ".condition")
-                script = cutscene.expresion_generator.generate_script(condition, variable_context, 'int')
-                script.serialize(file)
+                entry.write_condition(variable_context, file)
 
         file.write(struct.pack(">H", len(scene.loading_zones)))
 

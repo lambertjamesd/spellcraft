@@ -86,4 +86,6 @@ bool scene_has_next();
 char* scene_get_next();
 char* scene_get_next_entry();
 
+void scene_entity_apply_types(void* definition, char* string_table, struct entity_field_type_location* type_locations, int type_location_count);
+
 #endif

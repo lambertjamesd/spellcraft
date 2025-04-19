@@ -56,6 +56,7 @@ struct overworld_actor_tile {
 
     struct overworld_actor_spawn_location* spawn_locations;
     struct overworld_actor_spawn_information* spawn_information;
+    char* string_table;
 };
 
 struct overworld_tile_render_block {

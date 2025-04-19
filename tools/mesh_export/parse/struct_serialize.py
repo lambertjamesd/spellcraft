@@ -111,6 +111,10 @@ def _get_value(obj: bpy.types.Object, key: str, default_value):
 def _get_transform(obj: bpy.types.Object) -> mathutils.Matrix:
     return coordinate_convert_invert @ obj.matrix_world @ coordinate_convert
 
+def get_position(obj: bpy.types.Object) -> mathutils.Vector:
+    loc, rot, scale = _get_transform(obj).decompose()
+    return loc
+
 def layout_strings(obj: bpy.types.Object, definition, context: SerializeContext, field_name = None):
     if _is_string_type(definition):
         context.get_string_offset(str(_get_value(obj, field_name, "")))
@@ -120,7 +124,7 @@ def layout_strings(obj: bpy.types.Object, definition, context: SerializeContext,
             layout_strings(obj, child.data_type, context, child.name)
 
 def write_vector3_position(file, obj: bpy.types.Object):
-    loc, rot, scale = _get_transform(obj).decompose()
+    loc = get_position(obj)
     file.write(struct.pack(">fff", loc.x, loc.y, loc.z))
 
 
