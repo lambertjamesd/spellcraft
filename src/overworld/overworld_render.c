@@ -266,8 +266,8 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
     mtx.m[1][1] = MODEL_WORLD_SCALE;
     mtx.m[2][2] = MODEL_WORLD_SCALE;
 
-    int camera_x = (int)mtx.m[3][0];
-    int camera_z = (int)mtx.m[3][2];
+    int camera_x = -(int)mtx.m[3][0];
+    int camera_z = -(int)mtx.m[3][2];
 
     rdpq_mode_zbuf(false, false);
 
