@@ -140,7 +140,7 @@ def generate_lod0(lod_0_objects: list[bpy.types.Object], subdivisions: int, sett
     lod_0_settings.fog_scale = 1 / subdivisions
 
     scaled_transform = mathutils.Matrix.Scale(1 / subdivisions, 4) @ base_transform
-    center_scale = settings.fixed_point_scale / settings.world_scale
+    center_scale = settings.world_scale
 
     all_meshes: list[tuple[mesh.mesh_data, int, int, int]] = []
 
