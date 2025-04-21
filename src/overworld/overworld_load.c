@@ -149,6 +149,7 @@ void overworld_actor_tile_load_entities(struct overworld_actor_tile* tile, FILE*
 
         struct entity_definition* def = scene_get_entity(entity_type_id);
         assert(def);
+        curr->entity_type_id = entity_type_id;
 
         scene_entity_apply_types(entity_definition_data, string_table, def->fields, def->field_count);
         curr->entity_def = entity_definition_data;
@@ -386,6 +387,7 @@ void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3*
             if (*slot) {
                 if ((*slot)->x == x && (*slot)->y == y) {
                     // already loaded
+                    overworld_check_tile_spawns(overworld, *slot, tile_x, tile_y, radius);
                     continue;;
                 }
         
