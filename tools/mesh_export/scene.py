@@ -117,7 +117,7 @@ def find_static_blacklist():
 
     return result
 
-def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: str, definitions):
+def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: str, definitions, enums, variable_context):
     settings = entities.export_settings.ExportSettings()
 
     if not ('lod_1' in  bpy.data.collections):
@@ -170,7 +170,9 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
         entity_list,
         subdivisions, 
         settings, 
-        base_transform
+        base_transform,
+        enums,
+        variable_context
     )
 
     return True
@@ -202,9 +204,15 @@ def process_scene():
 
     object_blacklist = find_static_blacklist()
 
-    has_overworld = check_for_overworld(base_transform, overworld_filename, definitions)
+    has_overworld = check_for_overworld(base_transform, overworld_filename, definitions, enums, variable_context)
 
     for obj in bpy.data.objects:
+        if obj.name.startswith('fast64_f3d_material_library_'):
+            continue
+
+        if obj in object_blacklist:
+            continue
+
         if 'loading_zone' in obj:
             scene.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
             continue
@@ -218,12 +226,6 @@ def process_scene():
             continue
 
         if obj.type != "MESH":
-            continue
-
-        if obj.name.startswith('fast64_f3d_material_library_'):
-            continue
-
-        if obj in object_blacklist:
             continue
 
         final_transform = base_transform @ obj.matrix_world

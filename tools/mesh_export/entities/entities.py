@@ -29,8 +29,8 @@ class ObjectEntry():
     def write_definition(self, context: SerializeContext, file):
         write_obj(file, self.obj, self.def_type, context)
 
-def to_cell_pos(value: float, min: float, max: float) -> int:
-    norm_value = (value - min) / (max - min)
+def to_cell_pos(value: float, min_pos: float, max_pos: float) -> int:
+    norm_value = (value - min_pos) / (max_pos - min_pos)
     int_value = int(255 * norm_value)
     return max(0, min(255, int_value))
 

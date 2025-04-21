@@ -182,7 +182,9 @@ def generate_overworld(
         entity_list: list[entities.ObjectEntry],
         subdivisions: int, 
         settings: export_settings.ExportSettings, 
-        base_transform: mathutils.Matrix
+        base_transform: mathutils.Matrix,
+        enums: dict,
+        variable_context
         ):
     mesh_entries = mesh_list.determine_mesh_data()
 
@@ -249,19 +251,24 @@ def generate_overworld(
             else:
                 tmp = mesh_collider.MeshCollider()
                 tmp.write_out(collider_data, force_subdivisions=mathutils.Vector((8, 1, 8)))
+
+            min_cell_min = mathutils.Vector((
+                x * side_length + mesh_bb[0].x,
+                mesh_bb[0].x,
+                z * side_length + mesh_bb[0].z,
+            ))
             
-            # entities.write_object_groups(
-            #     min, max,
-            #     entity_cells[z][x],
-            #     enums,
-            #     variable_context,
-            #     first_spawn_id,
-            #     collider_data
-            # )
+            entities.write_object_groups(
+                min_cell_min, min_cell_min + mathutils.Vector((side_length, 0, side_length)),
+                entity_cells[z][x],
+                enums,
+                variable_context,
+                first_spawn_id,
+                collider_data
+            )
 
             first_spawn_id += len(entity_cells[z][x])
 
-            collider_data.write((0).to_bytes(2, 'big'))
             collider_cell_data.append(collider_data.getvalue())
             write_collider_time += time.perf_counter()
 

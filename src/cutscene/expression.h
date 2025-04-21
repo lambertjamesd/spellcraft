@@ -50,6 +50,14 @@ struct expression {
     void* expression_program;
 };
 
+// EXPR
+#define EXPECTED_EXPR_HEADER 0x45585052
+
+struct __attribute__((packed)) expression_header {
+    uint32_t header;
+    uint16_t len;
+};
+
 void expression_load(struct expression* expression, FILE* file);
 void expression_destroy(struct expression* expression);
 

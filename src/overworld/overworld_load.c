@@ -117,11 +117,11 @@ void overworld_actor_tile_load_entities(struct overworld_actor_tile* tile, FILE*
     }
 
     uint32_t entity_definition_size;
-    uint32_t expression_size;
+    uint16_t expression_size;
     uint16_t string_sizes;
 
     fread(&entity_definition_size, sizeof(uint32_t), 1, file);
-    fread(&expression_size, sizeof(uint32_t), 1, file);
+    fread(&expression_size, sizeof(uint16_t), 1, file);
     fread(&string_sizes, sizeof(uint16_t), 1, file);
 
     void* entity_definition_data = malloc(entity_definition_size);
@@ -152,10 +152,13 @@ void overworld_actor_tile_load_entities(struct overworld_actor_tile* tile, FILE*
 
         scene_entity_apply_types(entity_definition_data, string_table, def->fields, def->field_count);
         curr->entity_def = entity_definition_data;
-        curr->expression.expression_program = expression_data;
+        
+        struct expression_header* header = expression_data;
+        assert(header->header == EXPECTED_EXPR_HEADER);
+        curr->expression.expression_program = header + 1;
 
         entity_definition_data = (char*)entity_definition_data + def->definition_size;
-        expression_data = expression_skip(expression_data);
+        expression_data = (char*)curr->expression.expression_program + header->len;
     }
 }
 

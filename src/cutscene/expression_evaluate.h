@@ -7,6 +7,4 @@
 // the evaluation result is left on the top of th context stack
 void expression_evaluate(struct evaluation_context* context, struct expression* expression);
 
-void* expression_skip(void* expression_program);
-
 #endif
