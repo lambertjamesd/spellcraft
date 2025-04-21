@@ -72,6 +72,10 @@ class VariableLayout():
 
     def get_all_entries(self) -> list[VaraibleLayoutEntry]:
         return self._ordered_entires
+    
+    def __str__(self):
+        return 'VariableLayout:\n' + '\n'.join(["0x{0:04x} {1} : {2}".format(entry.offset, entry.name, entry.type_name) for entry in self._ordered_entires])
+
 
     def deserialize(self, file):
         file_contents = json.load(file)
