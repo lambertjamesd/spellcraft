@@ -107,6 +107,7 @@ void overworld_actor_tile_load_entities(struct overworld_actor_tile* tile, FILE*
     uint16_t entity_count;
     fread(&entity_count, sizeof(uint16_t), 1, file);
     tile->active_spawn_locations = entity_count;
+    tile->total_spawn_locations = entity_count;
 
     if (!entity_count) {
         tile->first_spawn_id = 0;
@@ -161,6 +162,28 @@ void overworld_actor_tile_load_entities(struct overworld_actor_tile* tile, FILE*
         entity_definition_data = (char*)entity_definition_data + def->definition_size;
         expression_data = (char*)curr->expression.expression_program + header->len;
     }
+}
+
+void overworld_actor_tile_mark_spawned(struct overworld* overworld, struct overworld_actor_tile* tile) {
+    struct overworld_actor_spawn_location* curr = tile->spawn_locations;
+    struct overworld_actor_spawn_location* end = curr + tile->active_spawn_locations;
+    struct overworld_actor_spawn_location* write = curr;
+
+    while (curr < end) {
+        if (hash_map_get(&overworld->loaded_actors, tile->first_spawn_id + (int)curr->spawn_id_offset)) {
+            ++curr;
+            continue;
+        }
+
+        if (write != curr) {
+            *write = *curr;
+        }
+
+        ++curr;
+        ++write;
+    }
+
+    tile->active_spawn_locations = write - tile->spawn_locations;
 }
 
 struct overworld_actor_tile* overworld_actor_tile_load(FILE* file) {
@@ -289,7 +312,9 @@ void overworld_check_loaded_tiles(struct overworld* overworld) {
     overworld->load_next.y = NO_TILE_COORD;
 }
 
-#define SPAWN_IN_RADIUS     100.0f
+#define COLLIDER_SPAWN_RADIUS   100.0f
+#define DESPAWN_RADIUS          90.0f
+#define SPAWN_IN_RADIUS         80.0f
 
 struct overworld_actor* overworld_malloc_actor(struct overworld* overworld) {
     struct overworld_actor* result = overworld->next_free_actor;
@@ -298,7 +323,8 @@ struct overworld_actor* overworld_malloc_actor(struct overworld* overworld) {
         return NULL;
     }
 
-    overworld->next_active_actor = result->next;
+    overworld->next_free_actor = result->next;
+    result->next = NULL;
 
     return result;
 }
@@ -325,20 +351,22 @@ struct overworld_actor* overworld_actor_spawn(struct overworld* overworld, struc
         return NULL;
     }
 
-    result->spawn_id_offset = spawn_location->spawn_id_offset;
+    int spawn_id =(int)tile->first_spawn_id + (int)spawn_location->spawn_id_offset;
+
+    result->spawn_id = spawn_id;
     result->x = (int)(tile->x << 8) + spawn_location->x;
     result->y = (int)(tile->y << 8) + spawn_location->y;
     result->entity = malloc(entity_def->entity_size);
     result->entity_type_id = entity_type_id;
-    entity_def->init(result, info->entity_def);
-    hash_map_set(&overworld->loaded_actors, (int)tile->first_spawn_id + (int)spawn_location->spawn_id_offset, result);
+    result->next = overworld->next_active_actor;
+    overworld->next_active_actor = result;
+    entity_def->init(result->entity, info->entity_def);
+    hash_map_set(&overworld->loaded_actors, spawn_id, result);
 
     return result;
 }
 
 void overworld_check_tile_spawns(struct overworld* overworld, struct overworld_actor_tile* tile, float tile_x, float tile_y, float radius) {
-    int min_x = (int)((tile_x - tile->x - radius) * 256.0f);
-    int max_x = (int)((tile_y - tile->y + radius) * 256.0f);
     int int_rad_sqrd = (int)(radius * radius * (256.0f * 256.0f));
 
     int x = (int)((tile_x - tile->x) * 256.0f);
@@ -348,7 +376,7 @@ void overworld_check_tile_spawns(struct overworld* overworld, struct overworld_a
 
     for (
         struct overworld_actor_spawn_location* curr = tile->spawn_locations; 
-        curr < end && (int)curr->x <= max_x;
+        curr < end;
     ) {
         int dx = (int)curr->x - x;
         int dy = (int)curr->y - y;
@@ -367,18 +395,99 @@ void overworld_check_tile_spawns(struct overworld* overworld, struct overworld_a
         --end;
         *curr = *end;
     }
+
+    tile->active_spawn_locations = end - tile->spawn_locations;
+}
+
+bool overworld_despawn_actor(struct overworld* overworld, struct overworld_actor* current, struct Vector3* player_pos) {
+    struct entity_definition* entity_def = scene_get_entity(current->entity_type_id);
+    assert(entity_def);
+
+    entity_def->destroy(current->entity);
+    free(current->entity);
+
+    uint32_t tile_x = current->x >> 8;
+    uint32_t tile_y = current->y >> 8;
+
+    struct overworld_actor_tile* slot = overworld->loaded_actor_tiles[tile_x & 0x1][tile_y & 0x1];
+
+    if (slot->x != tile_x || slot->y != tile_y) {
+        return true;
+    }
+
+    uint16_t spawn_offset = current->spawn_id - slot->first_spawn_id;
+
+    struct overworld_actor_spawn_information* spawn_info = &slot->spawn_information[spawn_offset];
+
+    struct Vector3* spawn_pos = (struct Vector3*)spawn_info->entity_def;
+    float dx = spawn_pos->x - player_pos->x;
+    float dz = spawn_pos->z - player_pos->z;
+
+    if (dx * dx + dz * dz < SPAWN_IN_RADIUS * SPAWN_IN_RADIUS) {
+        current->entity_type_id = ENTITY_TYPE_empty;
+        current->entity = malloc(sizeof(struct Vector3));
+        memcpy(current->entity, spawn_pos, sizeof(struct Vector3));
+        return false;
+    }
+
+    assert(slot->active_spawn_locations < slot->total_spawn_locations);
+
+    struct overworld_actor_spawn_location* spawn_location = &slot->spawn_locations[slot->active_spawn_locations];
+
+    spawn_location->spawn_id_offset = spawn_offset;
+    spawn_location->x = current->x & 0xFF;
+    spawn_location->y = current->y & 0xFF;
+
+    ++slot->active_spawn_locations;
+
+    return true;
+}
+
+void overworld_check_actor_despawn(struct overworld* overworld, struct Vector3* player_pos) {
+    struct overworld_actor* current = overworld->next_active_actor;
+    struct overworld_actor* prev = NULL;
+
+    while (current) {
+        // this is a bit hacky, right now all
+        // entities need to put their position
+        // first in the layout
+        struct Vector3* entity_pos = current->entity;
+
+        float dx = entity_pos->x - player_pos->x;
+        float dz = entity_pos->z - player_pos->z;
+
+        struct overworld_actor* next = current->next;
+
+        if (dx * dx + dz * dz > DESPAWN_RADIUS * DESPAWN_RADIUS) {
+            if (overworld_despawn_actor(overworld, current, player_pos)) {
+                hash_map_delete(&overworld->loaded_actors, current->spawn_id);
+
+                if (prev) {
+                    prev->next = next;
+                } else {
+                    overworld->next_active_actor = next;
+                }
+                // return free actor
+                current->next = overworld->next_free_actor;
+                overworld->next_free_actor = current;
+            }
+        }
+
+        current = next;
+    }
 }
 
 void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3* player_pos) {
     float tile_x = (player_pos->x - overworld->min.x) * overworld->inv_tile_size;
     float tile_y = (player_pos->z - overworld->min.y) * overworld->inv_tile_size;
     float radius = SPAWN_IN_RADIUS * overworld->inv_tile_size;
+    float collider_radius = COLLIDER_SPAWN_RADIUS * overworld->inv_tile_size;
 
-    int min_x = (int)floorf(tile_x - radius);
-    int min_y = (int)floorf(tile_y - radius);
+    int min_x = (int)floorf(tile_x - collider_radius);
+    int min_y = (int)floorf(tile_y - collider_radius);
 
-    int max_x = (int)ceilf(tile_x + radius);
-    int max_y = (int)ceilf(tile_y + radius);
+    int max_x = (int)ceilf(tile_x + collider_radius);
+    int max_y = (int)ceilf(tile_y + collider_radius);
 
     for (int x = min_x; x < max_x; x += 1) {
         for (int y = min_y; y < max_y; y += 1) {
@@ -402,9 +511,12 @@ void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3*
             
             fseek(overworld->file, overworld->tile_definitions[x + y * overworld->tile_x].actor_block_offset, SEEK_SET);
             *slot = overworld_actor_tile_load(overworld->file);
+            overworld_actor_tile_mark_spawned(overworld, *slot);
             (*slot)->x = x;
             (*slot)->y = y;
             collision_scene_add_static_mesh(&(*slot)->collider);
         }
     }
+
+    overworld_check_actor_despawn(overworld, player_pos);
 }
