@@ -32,7 +32,7 @@ void test_mesh_index_lookup_triangle_indices(struct test_context* t) {
     test_collide_info_init(&info);
 
     mesh_index_lookup_triangle_indices(
-        &g_scene.mesh_collider->index,
+        &g_scene.mesh_colliders[0]->index,
         &(struct Box3D){
             {10.0f, 40.0f, -10.0f},
             {30.0f, 45.0f, 10.0f},
@@ -51,7 +51,7 @@ void test_mesh_index_swept_lookup(struct test_context* t) {
     test_collide_info_init(&info);
 
     mesh_index_swept_lookup(
-        &g_scene.mesh_collider->index, 
+        &g_scene.mesh_colliders[0]->index, 
         &(struct Box3D) {
             {10.0f, 40.0f, -10.0f},
             {30.0f, 45.0f, 10.0f},
@@ -67,7 +67,7 @@ void test_mesh_index_swept_lookup(struct test_context* t) {
     test_collide_info_init(&lower_info);
 
     mesh_index_swept_lookup(
-        &g_scene.mesh_collider->index, 
+        &g_scene.mesh_colliders[0]->index, 
         &(struct Box3D) {
             {10.0f, 4.0f, -4.0f},
             {30.0f, 6.0f, 4.0f},
@@ -84,7 +84,7 @@ void test_mesh_index_swept_lookup(struct test_context* t) {
     lower_info.should_collide = false;
 
     mesh_index_swept_lookup(
-        &g_scene.mesh_collider->index, 
+        &g_scene.mesh_colliders[0]->index, 
         &(struct Box3D) {
             {10.0f, 4.0f, -4.0f},
             {30.0f, 6.0f, 4.0f},

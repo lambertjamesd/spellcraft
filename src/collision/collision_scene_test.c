@@ -23,7 +23,7 @@ void test_remove_and_free_object(void* object) {
     free(object);
 }
 
-void collision_scene_collide_single(struct mesh_collider* mesh, struct dynamic_object* object, struct Vector3* prev_pos);
+void collision_scene_collide_single(struct dynamic_object* object, struct Vector3* prev_pos);
 
 void test_collision_scene_collide_single(struct test_context* t) {
     test_load_scene("rom:/scenes/testing.scene");

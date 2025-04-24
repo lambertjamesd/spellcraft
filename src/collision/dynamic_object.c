@@ -112,6 +112,7 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
     struct Vector3 unrotated_out;
     
     object->type->minkowsi_sum(&object->type->data, &rotated_dir, &unrotated_out);
+    vector3Add(output, &object->center, output);
 
     struct Vector3 unpitched_out;
 
@@ -127,8 +128,6 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
         *output = unpitched_out;
     }
 
-    vector3Add(output, &object->center, output);
-
     if (object->scale != 1.0f) {
         vector3Scale(output, output, object->scale);
     }
@@ -142,12 +141,20 @@ void dynamic_object_recalc_bb(struct dynamic_object* object) {
     if (object->scale != 1.0f) {
         vector3Scale(&object->bounding_box.min, &object->bounding_box.min, object->scale);
         vector3Scale(&object->bounding_box.max, &object->bounding_box.max, object->scale);
-        vector3AddScaled(object->position, &object->center, object->scale, &offset);
+        vector3Scale(&object->center, &offset, object->scale);
     } else {
-        vector3Add(&object->center, object->position, &offset);
+        offset = object->center;
     }
-    vector3Add(&object->bounding_box.min, &offset, &object->bounding_box.min);
-    vector3Add(&object->bounding_box.max, &offset, &object->bounding_box.max);
+
+    struct Vector3 rotatedOffset;
+    rotatedOffset.x = offset.x * object->rotation->x + offset.z * object->rotation->y;
+    rotatedOffset.y = offset.y;
+    rotatedOffset.z = offset.z * object->rotation->x - offset.x * object->rotation->y;
+
+    vector3Add(&rotatedOffset, object->position, &rotatedOffset);
+
+    vector3Add(&object->bounding_box.min, &rotatedOffset, &object->bounding_box.min);
+    vector3Add(&object->bounding_box.max, &rotatedOffset, &object->bounding_box.max);
 }
 
 bool dynamic_object_should_slide(float max_stable_slope, float normal_y) {

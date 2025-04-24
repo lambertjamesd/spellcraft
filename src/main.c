@@ -128,7 +128,6 @@ int main(void)
     debug_init_usblog();
     console_set_debug(true);
 
-    
     // give time for the debugger to connect
     long long start_time = timer_ticks();
     while (timer_ticks() - start_time < DEBUG_CONNECT_DELAY);

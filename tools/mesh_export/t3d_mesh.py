@@ -18,6 +18,11 @@ import entities.armature
 def replace_extension(filename: str, ext: str) -> str:
     return os.path.splitext(filename)[0]+ext
 
+APPLIED_MODIFIERS = {
+    "MIRROR",
+    "SIMPLE_DEFORM",
+}
+
 def process_scene():
     bpy.ops.object.mode_set(mode="OBJECT")
 
@@ -35,7 +40,8 @@ def process_scene():
         bpy.context.view_layer.objects.active = obj
 
         for modifier in obj.modifiers:
-            if modifier.type != 'MIRROR':
+            if not (modifier.type in APPLIED_MODIFIERS):
+                print("skipping modifier " + modifier.type)
                 continue
             bpy.ops.object.modifier_apply(modifier=modifier.name, single_user = True)
 

@@ -102,8 +102,8 @@ void spell_slot_init(
             recast_init(&slot->data.recast, input, event_options, RECAST_MODE_RECAST);
             break;
         case SPELL_SYMBOL_AIR:
-            slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
-            push_init(&slot->data.push, input, event_options, spell_data_source_determine_element(modifier_flags));
+            slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
+            wind_init(&slot->data.wind, input, event_options, NULL);
             break;
         case SPELL_SYMBOL_LIFE:
             slot->type = SPELL_EXEC_SLOT_TYPE_HEAL;
@@ -160,6 +160,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_STASIS:
             stasis_destroy(&slot->data.stasis);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_WIND:
+            wind_destroy(&slot->data.wind);
             break;
         default:
             break;
@@ -228,6 +231,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_STASIS:
             isActive = stasis_update(&slot->data.stasis, &event_listener, &exec->spell_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_WIND:
+            isActive = wind_update(&slot->data.wind, &event_listener, &exec->spell_sources);
             break;
         default:
             break;
