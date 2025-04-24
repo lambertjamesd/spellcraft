@@ -147,9 +147,14 @@ void dynamic_object_recalc_bb(struct dynamic_object* object) {
     }
 
     struct Vector3 rotatedOffset;
-    rotatedOffset.x = offset.x * object->rotation->x + offset.z * object->rotation->y;
-    rotatedOffset.y = offset.y;
-    rotatedOffset.z = offset.z * object->rotation->x - offset.x * object->rotation->y;
+
+    if (object->rotation) {
+        rotatedOffset.x = offset.x * object->rotation->x + offset.z * object->rotation->y;
+        rotatedOffset.y = offset.y;
+        rotatedOffset.z = offset.z * object->rotation->x - offset.x * object->rotation->y;
+    } else {
+        rotatedOffset = offset;
+    }
 
     vector3Add(&rotatedOffset, object->position, &rotatedOffset);
 

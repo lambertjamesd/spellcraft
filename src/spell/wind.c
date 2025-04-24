@@ -71,5 +71,18 @@ bool wind_update(struct wind* wind, struct spell_event_listener* event_listener,
         wind->renderable.armature.pose[i].rotation = tmp;
     }
 
+    struct contact* curr = wind->dynamic_object.active_contacts;
+
+    while (curr) {
+        struct dynamic_object* obj = collision_scene_find_object(curr->other_object);
+        curr = curr->next;
+
+        if (!obj) {
+            continue;
+        }
+
+        obj->position->x += 0.01f;
+    }
+
     return wind->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE;
 }
