@@ -12,6 +12,7 @@
 #include "../resource/animation_cache.h"
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
+#include "../debug/debug_colliders.h"
 
 #define PLAYER_MAX_SPEED    4.2f
 
@@ -276,6 +277,12 @@ void player_update(struct player* player) {
 
     joypad_inputs_t input = joypad_get_inputs(0);
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
+
+    if (pressed.d_up) {
+        debug_collider_enable();
+    } else if (pressed.d_down) {
+        debug_collider_disable();
+    }
 
     player_handle_movement(player, &input, ground_normal);
 

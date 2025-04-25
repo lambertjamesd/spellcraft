@@ -29,11 +29,17 @@ void cylinder_horz_minkowski_sum(void* data, struct Vector3* direction, struct V
 void cylinder_horz_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
-    box->min.x = -shape_data->cylinder.radius;
-    box->min.y = -shape_data->cylinder.radius;
-    box->min.z = -shape_data->cylinder.half_height;
+    float radius = shape_data->cylinder.radius;
+    float half_height = shape_data->cylinder.half_height;
 
-    box->max.x = shape_data->cylinder.radius;
-    box->max.y = shape_data->cylinder.radius;
-    box->max.z = shape_data->cylinder.half_height;
+    float x_offset = fabsf(rotation->x * radius) + fabsf(rotation->y * half_height);
+    float z_offset = fabsf(rotation->x * half_height) + fabsf(rotation->y * radius);
+
+    box->min.x = -x_offset;
+    box->min.y = -radius;
+    box->min.z = -z_offset;
+
+    box->max.x = x_offset;
+    box->max.y = radius;
+    box->max.z = z_offset;
 }

@@ -46,10 +46,11 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     );
 
     wind->dynamic_object.is_trigger = 1;
+    wind->dynamic_object.collision_group = source->target;
     wind->dynamic_object.center = (struct Vector3){
         .x = 0.0f,
         .y = 0.0f,
-        .z = -wind_collider.data.cylinder.half_height,
+        .z = wind_collider.data.cylinder.half_height,
     };
 
     collision_scene_add(&wind->dynamic_object);

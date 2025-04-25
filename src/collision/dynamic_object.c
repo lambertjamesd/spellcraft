@@ -112,7 +112,7 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
     struct Vector3 unrotated_out;
     
     object->type->minkowsi_sum(&object->type->data, &rotated_dir, &unrotated_out);
-    vector3Add(output, &object->center, output);
+    vector3Add(&unrotated_out, &object->center, &unrotated_out);
 
     struct Vector3 unpitched_out;
 

@@ -361,3 +361,11 @@ void collision_scene_query(struct dynamic_object_type* shape, struct Vector3* ce
         callback(callback_data, element->object);
     }
 }
+
+int collision_scene_get_count() {
+    return g_scene.count;
+}
+
+struct dynamic_object* collision_scene_get_element(int index) {
+    return g_scene.elements[index].object;
+}

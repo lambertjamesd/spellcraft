@@ -51,7 +51,7 @@ RM_RA_ZB_OPA_SURF = build_blend_mode(
 RM_AA_ZB_XLU_SURF = build_blend_mode(
 	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
 	aa = True, z_compare = True, image_read = True, coverage_dest = 'WRAP',  color_on_coverage = True,
-	force_blend = True, z_mode = 'TRANPARENT',
+	force_blend = True, z_mode = 'TRANSPARENT',
 )
 
 RM_AA_ZB_OPA_DECAL = build_blend_mode(
@@ -93,7 +93,7 @@ RM_AA_ZB_XLU_INTER = build_blend_mode(
 RM_AA_ZB_XLU_LINE = build_blend_mode(
 	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
 	aa = True, z_compare = True, image_read = True, coverage_dest = 'CLAMP', x_coverage_alpha = True,
-	alpha_coverage = True, force_blend = True, z_mode = 'TRANPARENT',
+	alpha_coverage = True, force_blend = True, z_mode = 'TRANSPARENT',
 )
 
 RM_AA_ZB_DEC_LINE = build_blend_mode(
@@ -220,7 +220,7 @@ RM_ZB_OPA_SURF = build_blend_mode(
 	
 RM_ZB_XLU_SURF = build_blend_mode(
 	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
-	z_compare = True, image_read = True, coverage_dest = 'FULL', force_blend = True, z_mode = 'TRANPARENT',
+	z_compare = True, image_read = True, coverage_dest = 'FULL', force_blend = True, z_mode = 'TRANSPARENT',
 )
 	
 RM_ZB_OPA_DECAL = build_blend_mode(
@@ -235,7 +235,7 @@ RM_ZB_XLU_DECAL = build_blend_mode(
 	
 RM_ZB_CLD_SURF = build_blend_mode(
 	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
-	z_compare = True, image_read = True, coverage_dest = 'SAVE', force_blend = True, z_mode = 'TRANPARENT',
+	z_compare = True, image_read = True, coverage_dest = 'SAVE', force_blend = True, z_mode = 'TRANSPARENT',
 )
 	
 RM_ZB_OVL_SURF = build_blend_mode(
