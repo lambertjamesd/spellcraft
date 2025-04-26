@@ -6,6 +6,9 @@
 #include "../entity/entity_id.h"
 #include "../collision/collision_scene.h"
 
+#define WIND_SPEED   8.0f
+#define WIND_ACCEL      30.0f
+
 static struct dynamic_object_type wind_collider = {
     .minkowsi_sum = cylinder_horz_minkowski_sum,
     .bounding_box = cylinder_horz_bounding_box,
@@ -74,6 +77,12 @@ bool wind_update(struct wind* wind, struct spell_event_listener* event_listener,
 
     struct contact* curr = wind->dynamic_object.active_contacts;
 
+    struct Vector3 target_wind = {
+        .x = wind->transform.rotation.y * WIND_SPEED,
+        .y = 0.0f,
+        .z = wind->transform.rotation.x * WIND_SPEED,
+    };
+
     while (curr) {
         struct dynamic_object* obj = collision_scene_find_object(curr->other_object);
         curr = curr->next;
@@ -82,7 +91,9 @@ bool wind_update(struct wind* wind, struct spell_event_listener* event_listener,
             continue;
         }
 
-        obj->position->x += 0.01f;
+        vector3MoveTowards(&obj->velocity, &target_wind, fixed_time_step * WIND_ACCEL, &obj->velocity);
+        obj->is_pushed = 1;
+        fprintf(stderr, "pushed %08x\n", (int)obj);
     }
 
     return wind->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE;

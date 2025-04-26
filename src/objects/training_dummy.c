@@ -35,6 +35,12 @@ void training_dummy_check_fire(struct training_dummy* dummy) {
     }
 }
 
+void training_dummy_push(struct training_dummy* dummy, struct Vector3* direction, float strength) {
+    struct Vector3 torque;
+    vector3Cross(direction, &gUp, &torque);
+    vector3AddScaled(&dummy->angularVelocity, &torque, -6.0f, &dummy->angularVelocity);
+}
+
 void training_dummy_update(void* data) {
     struct training_dummy* dummy = (struct training_dummy*)data;
 
@@ -64,6 +70,11 @@ void training_dummy_update(void* data) {
     } else {
         dummy->renderable.force_material = NULL;
         dummy->shock_timer = 0;
+
+        if (vector3Dot(&dummy->collision.velocity, &dummy->collision.velocity) > 0.0f) {
+            training_dummy_push(dummy, &dummy->collision.velocity, 20.0f);
+            dummy->collision.velocity = gZeroVec;
+        }
     }
 
 
@@ -93,10 +104,7 @@ void training_dummy_push_damage_hit(struct training_dummy* dummy, entity_id sour
     vector3Sub(&dummy->transform.position, object->position, &offset);
     offset.y = 0.0f;
     vector3Normalize(&offset, &offset);
-
-    struct Vector3 torque;
-    vector3Cross(&offset, &gUp, &torque);
-    vector3AddScaled(&dummy->angularVelocity, &torque, -6.0f, &dummy->angularVelocity);
+    training_dummy_push(dummy, &offset, -6.0f);
 }
 
 void training_dummy_on_hit(void* data, float amount, entity_id source, enum damage_type type) {
