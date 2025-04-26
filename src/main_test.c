@@ -20,6 +20,7 @@ void test_overworld_step(struct test_context* t);
 void test_cylinder_minkowski_sum(struct test_context* t);
 void test_cylinder_horz_minkowski_sum(struct test_context* t);
 void test_cylinder_horz_bounding_box(struct test_context* t);
+void test_sphere_minkowski_sum(struct test_context* t);
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(500)
 
@@ -64,6 +65,7 @@ int main() {
     test_run(test_cylinder_minkowski_sum);
     test_run(test_cylinder_horz_minkowski_sum);
     test_run(test_cylinder_horz_bounding_box);
+    test_run(test_sphere_minkowski_sum);
 
     test_report_failures();
 

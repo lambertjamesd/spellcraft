@@ -8,25 +8,23 @@
 void sphere_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
-    float radius = shape_data->sphere.radius;
-
     float distance = fabsf(direction->x);
-    output->x = direction->x > 0.0f ? radius : -radius;
-    output->y = 0.0f;
-    output->z = 0.0f;
+    int axis_index = 0;
 
     for (int i = 1; i < 3; ++i) {
         float distanceCheck = fabsf(VECTOR3_AS_ARRAY(direction)[i]);
 
         if (distanceCheck > distance) {
             distance = distanceCheck;
-            *output = gZeroVec;
-            if (VECTOR3_AS_ARRAY(direction)[i] > 0.0f) {
-                VECTOR3_AS_ARRAY(output)[i] = radius;
-            } else {
-                VECTOR3_AS_ARRAY(output)[i] = -radius;
-            }
+            axis_index = i;
         }
+    }
+
+    *output = gZeroVec;
+    if (VECTOR3_AS_ARRAY(direction)[axis_index] > 0.0f) {
+        VECTOR3_AS_ARRAY(output)[axis_index] = shape_data->sphere.radius;;
+    } else {
+        VECTOR3_AS_ARRAY(output)[axis_index] = -shape_data->sphere.radius;;
     }
 
     // float distanceCheck = (fabsf(direction->x) + fabsf(direction->y) + fabsf(direction->z)) * SQRT_1_3;
