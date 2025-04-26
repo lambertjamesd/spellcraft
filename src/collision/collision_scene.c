@@ -297,6 +297,10 @@ void collision_scene_collide() {
             --element->object->is_pushed;
         }
 
+        if (element->object->disable_friction) {
+            --element->object->disable_friction;
+        }
+
         dynamic_object_update(element->object);
 
         dynamic_object_recalc_bb(element->object);

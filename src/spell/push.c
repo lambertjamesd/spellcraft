@@ -63,12 +63,6 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
 
     struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
 
-    if (target) {
-        if (push->definition->damage_type == DAMAGE_TYPE_ICE) {
-            target->disable_friction += 1;
-        }
-    }
-
     if (target && HAS_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE) && push_mode == ELEMENT_TYPE_LIGHTNING) {
         push->should_restore_tangible = true;
         CLEAR_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE);
@@ -79,12 +73,6 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
 
 void push_destroy(struct push* push) {
     struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
-
-    if (target) {
-        if (push->definition->damage_type == DAMAGE_TYPE_ICE) {
-            target->disable_friction -= 1;
-        }
-    }
 
     if (push->should_restore_tangible && target) {
         SET_FLAG(target->collision_layers, COLLISION_LAYER_LIGHTING_TANGIBLE);
@@ -140,6 +128,10 @@ bool push_update(struct push* push, struct spell_event_listener* event_listener,
     }
 
     DYNAMIC_OBJECT_MARK_PUSHED(target);
+    if (push->definition->damage_type == DAMAGE_TYPE_ICE) {
+        DYNAMIC_OBJECT_MARK_DISABLE_FRICTION(target);
+    }
+
     struct Vector3 targetVelocity;
     vector3Scale(&push->data_source->direction, &targetVelocity, push->definition->push_strength * power_ratio);
     if (!push->definition->ignore_gravity) {

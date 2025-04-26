@@ -13,20 +13,10 @@ void jump_init(struct jump* jump, struct spell_data_source* source, struct spell
     jump->did_start = false;
     jump->max_float_time = definition->max_hover_time;
     jump->definition = definition;
-
-    struct dynamic_object* target = collision_scene_find_object(jump->data_source->target);
-
-    if (target) {
-        target->is_jumping += 1;
-    }
 }
 
 void jump_destroy(struct jump* jump) {
-    struct dynamic_object* target = collision_scene_find_object(jump->data_source->target);
 
-    if (target) {
-        target->is_jumping -= 1;
-    }
 }
 
 bool jump_update(struct jump* jump, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
@@ -35,6 +25,8 @@ bool jump_update(struct jump* jump, struct spell_event_listener* event_listener,
     if (!target) {
         return false;
     }
+    
+    DYNAMIC_OBJECT_MARK_JUMPING(target);
 
     float requested_amount = jump->definition->mana_per_second * fixed_time_step;
     float power_ratio = mana_pool_request(&spell_sources->mana_pool, requested_amount) / requested_amount;

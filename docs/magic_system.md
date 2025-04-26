@@ -169,7 +169,7 @@ Progress indiciators
 | Earth   | A         | Projectile                       | On impact        | F T       |
 | Earth   | A L       | Homing projectile                | On impact        |           |
 | Earth   | L         | Ground mine                      | On touch         |           |
-| Air     |           | Push                             |                  |           |
+| Air     |           | Push                             |                  | F         |
 | Air     | F         | Burning push                     | On push end      |           |
 | Air     | F I       | Lightning push (teleports)       | On teleport end  |           |
 | Air     | F I E     | circular push (teleports)        | On teleport end  |           |

@@ -46,7 +46,9 @@ struct dynamic_object_type {
     float max_stable_slope;
 };
 
-#define DYNAMIC_OBJECT_MARK_PUSHED(object)  (object)->is_pushed = 2
+#define DYNAMIC_OBJECT_MARK_PUSHED(object)              (object)->is_pushed = 2
+#define DYNAMIC_OBJECT_MARK_DISABLE_FRICTION(object)    (object)->disable_friction = 2
+#define DYNAMIC_OBJECT_MARK_JUMPING(object)             (object)->is_jumping = 2
 
 struct dynamic_object {
     entity_id entity_id;
@@ -64,8 +66,8 @@ struct dynamic_object {
     uint16_t is_fixed: 1;
     uint16_t is_out_of_bounds: 1;
     uint16_t is_pushed: 2;
-    uint16_t is_jumping: 3;
-    uint16_t disable_friction: 3;
+    uint16_t is_jumping: 2;
+    uint16_t disable_friction: 2;
     uint16_t collision_layers;
     uint16_t collision_group;
     struct contact* active_contacts;
