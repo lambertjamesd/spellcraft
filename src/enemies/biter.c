@@ -98,8 +98,6 @@ void biter_update_target(struct biter* biter) {
         vector3RotatedSpeed(&biter->transform.rotation, &targetVelocity, MOVE_SPEED);
         vector3MoveTowards(&biter->dynamic_object.velocity, &targetVelocity, MOVE_ACCELERATION * fixed_time_step, &biter->dynamic_object.velocity);
 
-        fprintf(stderr, "am biter %08x\n", (int)&biter->dynamic_object);
-
         if (biter->animator.current_clip != biter->animations.run) {
             animator_run_clip(&biter->animator, biter->animations.run, 0.0f, true);
         }

@@ -64,8 +64,6 @@ void push_init(struct push* push, struct spell_data_source* source, struct spell
     struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
 
     if (target) {
-        target->is_pushed += 1;
-
         if (push->definition->damage_type == DAMAGE_TYPE_ICE) {
             target->disable_friction += 1;
         }
@@ -83,8 +81,6 @@ void push_destroy(struct push* push) {
     struct dynamic_object* target = collision_scene_find_object(push->data_source->target);
 
     if (target) {
-        target->is_pushed -= 1;
-
         if (push->definition->damage_type == DAMAGE_TYPE_ICE) {
             target->disable_friction -= 1;
         }
@@ -143,6 +139,7 @@ bool push_update(struct push* push, struct spell_event_listener* event_listener,
         return false;
     }
 
+    DYNAMIC_OBJECT_MARK_PUSHED(target);
     struct Vector3 targetVelocity;
     vector3Scale(&push->data_source->direction, &targetVelocity, push->definition->push_strength * power_ratio);
     if (!push->definition->ignore_gravity) {

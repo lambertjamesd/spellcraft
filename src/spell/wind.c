@@ -6,8 +6,8 @@
 #include "../entity/entity_id.h"
 #include "../collision/collision_scene.h"
 
-#define WIND_SPEED   8.0f
-#define WIND_ACCEL      30.0f
+#define WIND_SPEED   16.0f
+#define WIND_ACCEL      10.0f
 
 static struct dynamic_object_type wind_collider = {
     .minkowsi_sum = cylinder_horz_minkowski_sum,
@@ -92,8 +92,8 @@ bool wind_update(struct wind* wind, struct spell_event_listener* event_listener,
         }
 
         vector3MoveTowards(&obj->velocity, &target_wind, fixed_time_step * WIND_ACCEL, &obj->velocity);
-        obj->is_pushed = 1;
-        fprintf(stderr, "pushed %08x\n", (int)obj);
+        DYNAMIC_OBJECT_MARK_PUSHED(obj);
+        obj->velocity.y -= (GRAVITY_CONSTANT - 0.1f) * fixed_time_step;
     }
 
     return wind->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE;

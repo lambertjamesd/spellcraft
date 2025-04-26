@@ -293,6 +293,10 @@ void collision_scene_collide() {
 
         collision_scene_return_contacts(element->object);
 
+        if (element->object->is_pushed) {
+            --element->object->is_pushed;
+        }
+
         dynamic_object_update(element->object);
 
         dynamic_object_recalc_bb(element->object);
