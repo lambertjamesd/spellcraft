@@ -121,6 +121,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
     biter->transform.rotation = definition->rotation;
 
     entity_id id = entity_id_new();
+    entity_id vision_id = entity_id_new();
 
     renderable_single_axis_init(&biter->renderable, &biter->transform, "rom:/meshes/enemies/enemy1.tmesh");
     dynamic_object_init(
@@ -133,7 +134,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
     );
 
     dynamic_object_init(
-        id, 
+        vision_id, 
         &biter->vision, 
         &biter_vision_collision_type, 
         COLLISION_LAYER_DAMAGE_PLAYER,
