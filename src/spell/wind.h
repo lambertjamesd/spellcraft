@@ -9,16 +9,18 @@
 #include "elements.h"
 
 enum wind_flags {
-    WIND_FLAGS_LIGHTNING = 1 << 0,
-    WIND_FLAGS_ICY       = 1 << 1,
+    WIND_FLAGS_LIGHTNING    = 1 << 0,
+    WIND_FLAGS_ICY          = 1 << 1,
+    WIND_FLAGS_SPHERE_PUSH  = 1 << 2,
 
-    WIND_FLAGS_DID_BURST = 1 << 2,
+    WIND_FLAGS_DID_BURST    = 1 << 3,
 };
 
 struct wind_definition {
     float acceleration;
     float top_speed;
     float burst_time;
+    float base_scale;
     uint16_t flags;
 };
 
@@ -48,6 +50,6 @@ void wind_destroy(struct wind* wind);
 
 bool wind_update(struct wind* wind, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
-struct wind_definition* wind_lookup_definition(enum element_type element);
+struct wind_definition* wind_lookup_definition(enum element_type element, bool has_ground);
 
 #endif

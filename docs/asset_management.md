@@ -48,6 +48,11 @@ can attach any object, not just the one used to create the link point.
 Animations should be done as actions for the single armature. The animation should be generic such as "walk" or "attack"
 and not include names of the object being animated.
 
+You can override a meshes default material by adding a custom property on the scene with the name `default_material` of
+type data block with the id type of material. This is helpful if the mesh has multiple material that share the same
+textures information. You can specify a default material where the texture are already loaded allowing the mesh optimizer
+to skip loading the texture data when switching between the materials improving speeds when batched drawing.
+
 ## Scenes
 
 Any mesh in a scene that has materials will be rendered in the loaded game with some exceptions detailed further down.

@@ -1,5 +1,5 @@
-#ifndef __COLLISION_SHAPE_CYLINDER_H__
-#define __COLLISION_SHAPE_CYLINDER_H__
+#ifndef __COLLISION_SHAPE_CYLINDER_HORZ_H__
+#define __COLLISION_SHAPE_CYLINDER_HORZ_H__
 
 #include "../../math/vector2.h"
 #include "../../math/vector3.h"
