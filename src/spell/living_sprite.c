@@ -200,6 +200,12 @@ void living_sprite_follow_target(struct living_sprite* living_sprite) {
 
 void living_sprite_check_targets(struct living_sprite* living_sprite) {
     if (living_sprite->is_attacking) {
+        if (living_sprite->definition->element_type == ELEMENT_TYPE_AIR) {
+            // TODO
+            living_sprite->health.current_health = 0.0f;
+            return;
+        }
+
         if (living_sprite->is_mine) {
             health_apply_contact_damage(&living_sprite->vision, living_sprite->definition->damage, living_sprite->definition->element_type);
 

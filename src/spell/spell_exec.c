@@ -102,8 +102,14 @@ void spell_slot_init(
             recast_init(&slot->data.recast, input, event_options, RECAST_MODE_RECAST);
             break;
         case SPELL_SYMBOL_AIR:
-            slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
-            wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(spell_data_source_determine_element(modifier_flags), modifier_flags.earthy));
+            if (modifier_flags.living) {
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_AIR, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+                slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
+                living_sprite_init(&slot->data.living_sprite, input, event_options, def);
+            } else {
+                slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
+                wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(spell_data_source_determine_element(modifier_flags), modifier_flags.earthy));
+            }
             break;
         case SPELL_SYMBOL_LIFE:
             slot->type = SPELL_EXEC_SLOT_TYPE_HEAL;
