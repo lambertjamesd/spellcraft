@@ -170,21 +170,21 @@ Progress indiciators
 | Earth   | A L       | Homing projectile                | On impact        |           |
 | Earth   | L         | Ground mine                      | On touch         |           |
 | Air     |           | Push                             |                  | F         |
-| Air     | F         | Burning push                     | On push end      |           |
-| Air     | F I       | Lightning push (teleports)       | On teleport end  |           |
-| Air     | F I E     | circular push (teleports)        | On teleport end  |           |
+| Air     | F         | Burning push                     | On push end      | F         |
+| Air     | F I       | Lightning push (teleports)       | On teleport end  | F         |
+| Air     | F I E     | circular push (teleports)        | On teleport end  | F         |
 | Air     | F I E L   | sprite that telepushes outward   |                  |           |
 | Air     | F I L     | sprite that telepushes forward   |                  |           |
-| Air     | F E       | burning push outward             |                  |           |
+| Air     | F E       | burning push outward             |                  | F         |
 | Air     | F E L     | sprite that burn pushes outward  |                  |           |
 | Air     | F L       | sprite that burn pushes forward  |                  |           |
-| Air     | I         | icy push                         | On ice shatter   |           |
-| Air     | I E       | icy push outward                 | On ice shatter   |           |
+| Air     | I         | icy push                         | On ice shatter   | F         |
+| Air     | I E       | icy push outward                 | On ice shatter   | F         |
 | Air     | I E L     | sprite that icy pushes outward   | On ice shatter   |           |
 | Air     | I L       | sprite that icy pushes forward   | On ice shatter   |           |
-| Air     | E         | push outward                     |                  |           |
+| Air     | E         | push outward                     |                  | F         |
 | Air     | E L       | sprite that pushes outward       |                  |           |
-| Air     | L         | sprite that pushes forward       |                  |           |
+| Air     | L         | sprite that pushes forward       |                  | F         |
 | Life    |           | healing                          |                  |           |
 | Life    | F         | instant aeo healing              |                  |           |
 | Life    | F I       | instant convert health to mana   |                  |           |
