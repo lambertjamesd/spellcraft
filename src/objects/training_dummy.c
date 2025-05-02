@@ -93,25 +93,18 @@ void training_dummy_update(void* data) {
     vector3Scale(&dummy->angularVelocity, &dummy->angularVelocity, 0.7f);
 }
 
-void training_dummy_push_damage_hit(struct training_dummy* dummy, entity_id source) {
-    struct dynamic_object* object = collision_scene_find_object(source);
-    
-    if (!object) {
-        return;
-    }
-
-    struct Vector3 offset;
-    vector3Sub(&dummy->transform.position, object->position, &offset);
+void training_dummy_push_damage_hit(struct training_dummy* dummy, struct damage_info* damage) {
+    struct Vector3 offset = damage->direction;
     offset.y = 0.0f;
     vector3Normalize(&offset, &offset);
     training_dummy_push(dummy, &offset, -6.0f);
 }
 
-void training_dummy_on_hit(void* data, float amount, entity_id source, enum damage_type type) {
+void training_dummy_on_hit(void* data, struct damage_info* damage) {
     struct training_dummy* dummy = (struct training_dummy*)data;
 
-    if (type & (DAMAGE_TYPE_PROJECTILE | DAMAGE_TYPE_BASH)) {
-        training_dummy_push_damage_hit(dummy, source);
+    if (damage->type & (DAMAGE_TYPE_PROJECTILE | DAMAGE_TYPE_BASH)) {
+        training_dummy_push_damage_hit(dummy, damage);
     }
 }
 
@@ -149,11 +142,6 @@ void training_dummy_init(struct training_dummy* dummy, struct training_dummy_def
     update_add(dummy, training_dummy_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
 
     dummy->burning_effect = NULL;
-}
-
-void health_set_callback(struct health* health, health_damage_callback callback, void* data) {
-    health->callback = callback;
-    health->callback_data = data;
 }
 
 void training_dummy_destroy(struct training_dummy* dummy) {

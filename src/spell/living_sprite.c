@@ -200,12 +200,6 @@ void living_sprite_follow_target(struct living_sprite* living_sprite) {
 
 void living_sprite_check_targets(struct living_sprite* living_sprite) {
     if (living_sprite->is_attacking) {
-        if (living_sprite->definition->element_type == ELEMENT_TYPE_AIR) {
-            // TODO
-            living_sprite->health.current_health = 0.0f;
-            return;
-        }
-
         if (living_sprite->is_mine) {
             health_apply_contact_damage(&living_sprite->vision, living_sprite->definition->damage, living_sprite->definition->element_type);
 
@@ -217,12 +211,25 @@ void living_sprite_check_targets(struct living_sprite* living_sprite) {
             return;
         }
 
-        if (dynamic_object_is_touching(&living_sprite->collider, living_sprite->target)) {
+        struct contact* target_contact = dynamic_object_find_contact(&living_sprite->collider, living_sprite->target);
+
+        if (target_contact) {
+            if (living_sprite->definition->element_type == ELEMENT_TYPE_AIR) {
+                // TODO
+                living_sprite->health.current_health = 0.0f;
+                return;
+            }
+
+            struct damage_info damage = {
+                .amount = living_sprite->definition->damage,
+                .type = health_determine_damage_type(living_sprite->definition->element_type),
+                .source = living_sprite->collider.entity_id,
+                .direction = target_contact->normal,
+            };
+
             health_damage_id(
                 living_sprite->target, 
-                living_sprite->definition->damage, 
-                living_sprite->collider.entity_id, 
-                health_determine_damage_type(living_sprite->definition->element_type)
+                &damage
             );
             living_sprite->health.current_health = 0.0f;
         }

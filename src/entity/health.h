@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../spell/elements.h"
+#include "../math/vector3.h"
 
 enum damage_type {
     DAMAGE_TYPE_PROJECTILE = (1 << 0),
@@ -15,7 +16,15 @@ enum damage_type {
     DAMAGE_TYPE_BASH = (1 << 5),
 };
 
-typedef void (*health_damage_callback)(void* data, float amount, entity_id source, enum damage_type type);
+struct damage_info {
+    float amount;
+    enum damage_type type;
+    entity_id source;
+    // may not be normalized
+    struct Vector3 direction;
+};
+
+typedef void (*health_damage_callback)(void* data, struct damage_info* damage);
 
 struct health {
     entity_id entity_id;
@@ -36,8 +45,8 @@ void health_init(struct health* health, entity_id id, float max_health);
 void health_set_callback(struct health* health, health_damage_callback callback, void* data);
 void health_destroy(struct health* health);
 
-void health_damage(struct health* health, float amount, entity_id source, enum damage_type type);
-void health_damage_id(entity_id target, float amount, entity_id source, enum damage_type type);
+void health_damage(struct health* health, struct damage_info* damage);
+void health_damage_id(entity_id target, struct damage_info* damage);
 
 void health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type);
 

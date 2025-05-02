@@ -167,8 +167,15 @@ bool projectile_update(struct projectile* projectile, struct spell_event_listene
             } else if (projectile->element == ELEMENT_TYPE_LIGHTNING) {
                 damage_type |= DAMAGE_TYPE_LIGHTING;
             }
+
+            struct damage_info damage = {
+                .amount = 1.0f,
+                .type = damage_type,
+                .source = projectile->dynamic_object.entity_id,
+                .direction = projectile->dynamic_object.velocity,
+            };
             
-            health_damage(health, 1.0f, projectile->dynamic_object.entity_id, damage_type);
+            health_damage(health, &damage);
         }
 
         projectile->has_hit = 1;

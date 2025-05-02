@@ -36,7 +36,14 @@ void test_training_dummy(struct test_context* t) {
     test_near_equalf(t, 0.0f, dummy.angularVelocity.y);
     test_near_equalf(t, 0.0f, dummy.angularVelocity.z);
 
-    health_damage(&dummy.health, 1.0f, damage_source, DAMAGE_TYPE_PROJECTILE);
+    struct damage_info damage = {
+        .amount = 1.0f,
+        .type = DAMAGE_TYPE_PROJECTILE,
+        .source = damage_source,
+        .direction = { 0.0f, 0.0f, 1.0f },
+    };
+
+    health_damage(&dummy.health, &damage);
 
     test_gtf(t, dummy.angularVelocity.x, 0.0f);
     test_near_equalf(t, 0.0f, dummy.angularVelocity.y);

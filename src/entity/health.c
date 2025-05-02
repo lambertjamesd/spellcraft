@@ -38,57 +38,70 @@ void health_init(struct health* health, entity_id id, float max_health) {
     health->callback_data = NULL;
 }
 
+void health_set_callback(struct health* health, health_damage_callback callback, void* data) {
+    health->callback = callback;
+    health->callback_data = data;
+}
+
 void health_destroy(struct health* health) {
     hash_map_delete(&health_entity_mapping, health->entity_id);
     update_remove(health);
 }
 
-void health_damage(struct health* health, float amount, entity_id source, enum damage_type type) {
+void health_damage(struct health* health, struct damage_info* damage) {
     if (health->max_health) {
-        health->current_health -= amount;
+        health->current_health -= damage->amount;
     }
 
-    if (type & DAMAGE_TYPE_FIRE) {
+    if (damage->type & DAMAGE_TYPE_FIRE) {
         health->status_timer = 7;
         health->current_status = DAMAGE_TYPE_FIRE;
-    } else if (type & DAMAGE_TYPE_ICE) {
+    } else if (damage->type & DAMAGE_TYPE_ICE) {
         health->status_timer = 7;
         health->current_status = DAMAGE_TYPE_ICE;
-    } else if (type & DAMAGE_TYPE_LIGHTING) {
+    } else if (damage->type & DAMAGE_TYPE_LIGHTING) {
         health->status_timer = 3;
         health->current_status = DAMAGE_TYPE_LIGHTING;
-    } else if (type & DAMAGE_TYPE_WATER) {
+    } else if (damage->type & DAMAGE_TYPE_WATER) {
         health->status_timer = 7;
         health->current_status = DAMAGE_TYPE_WATER;
     }
 
     if (health->callback) {
-        health->callback(health->callback_data, amount, source, type);
+        health->callback(health->callback_data, damage);
     }
 }
 
-void health_damage_id(entity_id target, float amount, entity_id source, enum damage_type type) {
+void health_damage_id(entity_id target, struct damage_info* damage) {
     struct health* health = health_get(target);
 
     if (!health) {
         return;
     }
 
-    health_damage(health, amount, source, type);
+    health_damage(health, damage);
 }
 
 void health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type) {
     struct contact* curr = damage_source->active_contacts;
 
+    struct damage_info damage;
+    damage.amount = amount;
+    damage.type = type;
+
     while (curr) {
         struct health* target_health = health_get(curr->other_object);
-        curr = curr->next;
 
         if (!target_health) {
+            curr = curr->next;
             continue;
         }
 
-        health_damage(target_health, amount, damage_source->entity_id, type);
+        damage.source = curr->other_object;
+        damage.direction = curr->normal;
+
+        health_damage(target_health, &damage);
+        curr = curr->next;
     }
 }
 

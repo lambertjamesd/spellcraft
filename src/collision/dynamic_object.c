@@ -69,18 +69,18 @@ struct contact* dynamic_object_nearest_contact(struct dynamic_object* object) {
     return nearest_target;
 }
 
-bool dynamic_object_is_touching(struct dynamic_object* object, entity_id id) {
+struct contact* dynamic_object_find_contact(struct dynamic_object* object, entity_id id) {
     struct contact* current = object->active_contacts;
 
     while (current) {
         if (current->other_object == id) {
-            return true;
+            return current;
         }
             
         current = current->next;
     }
 
-    return false;
+    return NULL;
 }
 
 void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {

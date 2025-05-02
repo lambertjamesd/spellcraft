@@ -75,7 +75,7 @@ void biter_update_target(struct biter* biter) {
         return;
     }
 
-    bool should_attack = distance_sqrd < ATTACK_RANGE * ATTACK_RANGE || dynamic_object_is_touching(&biter->dynamic_object, biter->current_target);
+    bool should_attack = distance_sqrd < ATTACK_RANGE * ATTACK_RANGE || dynamic_object_find_contact(&biter->dynamic_object, biter->current_target);
 
     vector2LookDir(&rotation, &direction);
 
