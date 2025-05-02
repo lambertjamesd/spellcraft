@@ -48,4 +48,13 @@ void test_cone_bounding_box(struct test_context* t) {
     test_near_equalf(t, 1.0f, bb.max.x);
     test_near_equalf(t, 1.0f, bb.max.y);
     test_near_equalf(t, 2.0f, bb.max.z);
+
+    vector2ComplexFromAngle(M_PI * 0.25f, &rotation);
+    cone_bounding_box(&data, &rotation, &bb);
+    test_near_equalf(t, 0.0f, bb.min.x);
+    test_near_equalf(t, -1.0f, bb.min.y);
+    test_near_equalf(t, 0.0f, bb.min.z);
+    test_near_equalf(t, 2.12132049f, bb.max.x);
+    test_near_equalf(t, 1.0f, bb.max.y);
+    test_near_equalf(t, 2.12132049f, bb.max.z);
 }

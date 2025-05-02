@@ -20,12 +20,14 @@ void cone_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) 
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
     struct Vector2 corner;
+    struct Vector2 flip_rotation;
+    vector2ComplexConj(rotation, &flip_rotation);
 
     corner.x = shape_data->cone.size.x;
     corner.y = shape_data->cone.size.z;
 
     struct Vector2 cornerRotated;
-    vector2ComplexMul(&corner, rotation, &cornerRotated);
+    vector2ComplexMul(&corner, &flip_rotation, &cornerRotated);
 
     box->min.x = cornerRotated.x;
     box->min.y = -shape_data->cone.size.y;
@@ -35,7 +37,7 @@ void cone_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) 
     box->max.y = shape_data->cone.size.y;
 
     corner.x = -corner.x;
-    vector2ComplexMul(&corner, rotation, &cornerRotated);
+    vector2ComplexMul(&corner, &flip_rotation, &cornerRotated);
 
     box->min.x = MIN(box->min.x, cornerRotated.x);
     box->min.z = MIN(box->min.z, cornerRotated.y);
