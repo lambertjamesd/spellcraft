@@ -5,6 +5,7 @@
 #include "../effects/mesh_animation.h"
 #include "../entity/health.h"
 #include "../math/transform.h"
+#include "../entity/health_shield.h"
 #include "spell_event.h"
 #include "spell_sources.h"
 
@@ -14,6 +15,7 @@ struct shield {
     struct mesh_animation* start_animation;
     struct dynamic_object dynamic_object;
     struct health health;
+    struct health_shield shield;
     float parry_timer;
     float hold_radius;
     float lifetime;

@@ -72,6 +72,11 @@ void player_get_move_basis(struct Transform* transform, struct Vector3* forward,
 }
 
 struct animation_clip* player_determine_animation(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+    if (player->cutscene_actor.animator.current_clip == player->animations.take_damage && 
+        animator_is_running(&player->cutscene_actor.animator)) {
+        return player->animations.take_damage;
+    }
+
     for (int i = 0; i < 4; i += 1) {
         if (player->player_spell_sources[i].flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
             *playback_speed = 1.0f;
@@ -348,6 +353,11 @@ void player_update(struct player* player) {
     live_cast_cleanup_unused_spells(&player->live_cast, &player->spell_exec);
 }
 
+void player_on_damage(void* data, struct damage_info* damage) {
+    struct player* player = (struct player*)data;
+    animator_run_clip(&player->cutscene_actor.animator, player->animations.take_damage, 0.0f, false);
+}
+
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
     entity_id entity_id = entity_id_new();
 
@@ -385,6 +395,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     spell_exec_init(&player->spell_exec);
     live_cast_init(&player->live_cast);
     health_init(&player->health, entity_id, 100.0f);
+    health_set_callback(&player->health, player_on_damage, player);
 
     for (int i = 0; i < PLAYER_CAST_SOURCE_COUNT; i += 1) {
         struct spell_data_source* source = &player->player_spell_sources[i];
@@ -411,6 +422,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->animations.walk = animation_set_find_clip(player->cutscene_actor.animation_set, "walk");
     player->animations.dash = animation_set_find_clip(player->cutscene_actor.animation_set, "dash");
     player->animations.air_dash = animation_set_find_clip(player->cutscene_actor.animation_set, "air_dash");
+    player->animations.take_damage = animation_set_find_clip(player->cutscene_actor.animation_set, "take_damage");
 
     player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
     player->assets.staffs[1] = NULL;

@@ -42,6 +42,28 @@ static struct dynamic_object_type biter_vision_collision_type = {
 
 void biter_update_target(struct biter* biter) {
     if (biter->animator.current_clip == biter->animations.attack) {
+        if (!biter->current_target || !biter->animator.events) {
+            return;
+        }
+
+        struct dynamic_object* target_object = collision_scene_find_object(biter->current_target);
+
+        if (!target_object) {
+            return;
+        }
+        
+        if (vector3DistSqrd(target_object->position, &biter->transform.position) > ATTACK_RANGE * ATTACK_RANGE) {
+            return;
+        }
+
+        struct damage_info damage = {
+            .amount = 1.0f,
+            .type = DAMAGE_TYPE_BASH,
+            .source = biter->dynamic_object.entity_id,
+        };
+        vector2ToLookDir(&biter->transform.rotation, &damage.direction);
+        health_damage_id(biter->current_target, &damage);
+        biter->current_target = 0;
         return;
     }
 

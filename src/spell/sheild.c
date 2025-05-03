@@ -49,6 +49,13 @@ void shield_init(struct shield* shield, struct spell_data_source* source, struct
         spell_assets_get()->projectile_appear, 
         spell_assets_get()->projectile_appear_clip
     );
+
+    struct health* shielding_health = health_get(source->target);
+    health_shield_init(&shield->shield, &source->direction);
+
+    if (shielding_health) {
+        health_add_shield(shielding_health, &shield->shield);
+    }
 }
 
 void shield_destroy(struct shield* shield) {
@@ -58,10 +65,17 @@ void shield_destroy(struct shield* shield) {
         render_scene_remove(shield);
     }
     spell_data_source_release(shield->data_source);
+
+    struct health* shielding_health = health_get(shield->data_source->target);
+
+    if (shielding_health) {
+        health_remove_shield(shielding_health, &shield->shield);
+    }
 }
 
 bool shield_update(struct shield* shield, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     shield_update_transform(shield);
+    shield->shield.direction = shield->data_source->direction;
 
     if (shield->start_animation) {
         if (mesh_animation_update(shield->start_animation)) {

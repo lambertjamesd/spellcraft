@@ -36,6 +36,7 @@ void health_init(struct health* health, entity_id id, float max_health) {
 
     health->callback = NULL;
     health->callback_data = NULL;
+    health->health_shield = NULL;
 }
 
 void health_set_callback(struct health* health, health_damage_callback callback, void* data) {
@@ -49,6 +50,10 @@ void health_destroy(struct health* health) {
 }
 
 void health_damage(struct health* health, struct damage_info* damage) {
+    if (health->health_shield && health_shield_does_block(health->health_shield, damage)) {
+        return;
+    }
+
     if (health->max_health) {
         health->current_health -= damage->amount;
     }
@@ -123,6 +128,16 @@ bool health_is_shocked(struct health* health) {
 
 bool health_is_alive(struct health* health) {
     return health->current_health > 0.0f;
+}
+
+void health_add_shield(struct health* health, struct health_shield* health_shield) {
+    health->health_shield = health_shield;
+}
+
+void health_remove_shield(struct health* health, struct health_shield* health_shield) {
+    if (health->health_shield == health_shield) {
+        health->health_shield = NULL;
+    }
 }
 
 static enum damage_type element_to_damage_type[] = {

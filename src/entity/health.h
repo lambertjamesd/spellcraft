@@ -6,23 +6,8 @@
 #include <stdbool.h>
 #include "../spell/elements.h"
 #include "../math/vector3.h"
-
-enum damage_type {
-    DAMAGE_TYPE_PROJECTILE = (1 << 0),
-    DAMAGE_TYPE_FIRE = (1 << 1),
-    DAMAGE_TYPE_ICE = (1 << 2),
-    DAMAGE_TYPE_LIGHTING = (1 << 3),
-    DAMAGE_TYPE_WATER = (1 << 4),
-    DAMAGE_TYPE_BASH = (1 << 5),
-};
-
-struct damage_info {
-    float amount;
-    enum damage_type type;
-    entity_id source;
-    // may not be normalized
-    struct Vector3 direction;
-};
+#include "damage.h"
+#include "health_shield.h"
 
 typedef void (*health_damage_callback)(void* data, struct damage_info* damage);
 
@@ -35,6 +20,8 @@ struct health {
 
     health_damage_callback callback;
     void* callback_data;
+
+    struct health_shield* health_shield;
 };
 
 struct dynamic_object;
@@ -56,6 +43,9 @@ bool health_is_burning(struct health* health);
 bool health_is_frozen(struct health* health);
 bool health_is_shocked(struct health* health);
 bool health_is_alive(struct health* health);
+
+void health_add_shield(struct health* health, struct health_shield* health_shield);
+void health_remove_shield(struct health* health, struct health_shield* health_shield);
 
 enum damage_type health_determine_damage_type(enum element_type element_type);
 
