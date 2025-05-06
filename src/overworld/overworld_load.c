@@ -198,7 +198,7 @@ void overworld_actor_tile_free(struct overworld_actor_tile* tile) {
 
     if (tile->spawn_information) {
         free(tile->spawn_information[0].entity_def);
-        free(tile->spawn_information[0].expression.expression_program);
+        free((char*)tile->spawn_information[0].expression.expression_program - sizeof(struct expression_header));
         free(tile->spawn_information);
         free(tile->spawn_locations);
         free(tile->string_table);
