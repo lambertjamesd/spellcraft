@@ -19,6 +19,11 @@
 #define MANA_BAR_Y              214
 #define MANA_BAR_HEIGHT         4
 
+#define HEALTH_BAR_Y            206
+
+static color_t mana_color = {80, 0, 240, 200};
+static color_t health_color = {240, 80, 0, 200};
+
 void hud_render_spell_icon(struct spell* spell, int x, int y) {
     if (!spell) {
         return;
@@ -32,6 +37,33 @@ void hud_render_spell_icon(struct spell* spell, int x, int y) {
         x + 24, y + 24,
         0, 0
     );
+}
+
+void hud_draw_bar(int max_width, int current_width, int prev_width, int y, color_t color) {
+    rspq_block_run(solid_primitive_material->block);
+    rdpq_set_prim_color((color_t){255, 255, 255, 128});
+    rdpq_texture_rectangle(
+        TILE0, 
+        MANA_BAR_X - 1, y - 1, 
+        MANA_BAR_X + max_width + 1, y + MANA_BAR_HEIGHT + 1, 
+        0, 0
+    );
+    rdpq_set_prim_color(color);
+    rdpq_texture_rectangle(
+        TILE0, 
+        MANA_BAR_X, y, 
+        MANA_BAR_X + current_width, y + MANA_BAR_HEIGHT, 
+        0, 0
+    );
+    if (current_width < prev_width) {
+        rdpq_set_prim_color((color_t){220, 100, 0, 200});
+        rdpq_texture_rectangle(
+            TILE0, 
+            MANA_BAR_X + current_width, y, 
+            MANA_BAR_X + prev_width, y + MANA_BAR_HEIGHT, 
+            0, 0
+        );
+    }
 }
 
 void hud_render(void *data) {
@@ -95,34 +127,21 @@ void hud_render(void *data) {
         SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
     );
 
-    int max_width = MANA_TO_SIZE(spell_exec_max_mana(&hud->player->spell_exec));
-    int current_width = MANA_TO_SIZE(spell_exec_current_mana(&hud->player->spell_exec));
-    int prev_width = MANA_TO_SIZE(spell_exec_prev_mana(&hud->player->spell_exec));
+    hud_draw_bar(
+        MANA_TO_SIZE(spell_exec_max_mana(&hud->player->spell_exec)),
+        MANA_TO_SIZE(spell_exec_current_mana(&hud->player->spell_exec)),
+        MANA_TO_SIZE(spell_exec_prev_mana(&hud->player->spell_exec)),
+        MANA_BAR_Y,
+        mana_color
+    );
 
-    rspq_block_run(solid_primitive_material->block);
-    rdpq_set_prim_color((color_t){255, 255, 255, 128});
-    rdpq_texture_rectangle(
-        TILE0, 
-        MANA_BAR_X - 1, MANA_BAR_Y - 1, 
-        MANA_BAR_X + max_width + 1, MANA_BAR_Y + MANA_BAR_HEIGHT + 1, 
-        0, 0
+    hud_draw_bar(
+        MANA_TO_SIZE(hud->player->health.max_health),
+        MANA_TO_SIZE(hud->player->health.current_health),
+        MANA_TO_SIZE(0),
+        HEALTH_BAR_Y,
+        health_color
     );
-    rdpq_set_prim_color((color_t){80, 0, 240, 200});
-    rdpq_texture_rectangle(
-        TILE0, 
-        MANA_BAR_X, MANA_BAR_Y, 
-        MANA_BAR_X + current_width, MANA_BAR_Y + MANA_BAR_HEIGHT, 
-        0, 0
-    );
-    if (current_width < prev_width) {
-        rdpq_set_prim_color((color_t){220, 100, 0, 200});
-        rdpq_texture_rectangle(
-            TILE0, 
-            MANA_BAR_X + current_width, MANA_BAR_Y, 
-            MANA_BAR_X + prev_width, MANA_BAR_Y + MANA_BAR_HEIGHT, 
-            0, 0
-        );
-    }
 
     if (hud->player->live_cast.current_spell_output) {
         live_cast_render_preview(&hud->player->live_cast);

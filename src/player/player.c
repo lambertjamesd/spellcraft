@@ -359,8 +359,6 @@ void player_on_damage(void* data, struct damage_info* damage) {
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
-    entity_id entity_id = entity_id_new();
-
     struct transform_mixed transform;
     transform_mixed_init_sa(&transform, &player->transform);
 
@@ -378,7 +376,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     vector2ComplexFromAngle(fixed_time_step * 7.0f, &player_max_rotation);
 
     dynamic_object_init(
-        entity_id,
+        ENTITY_ID_PLAYER,
         &player->collision,
         &player_collision,
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
@@ -394,7 +392,7 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     spell_exec_init(&player->spell_exec);
     live_cast_init(&player->live_cast);
-    health_init(&player->health, entity_id, 100.0f);
+    health_init(&player->health, ENTITY_ID_PLAYER, 100.0f);
     health_set_callback(&player->health, player_on_damage, player);
 
     for (int i = 0; i < PLAYER_CAST_SOURCE_COUNT; i += 1) {
@@ -402,7 +400,7 @@ void player_init(struct player* player, struct player_definition* definition, st
 
         source->flags.all = 0;
         source->reference_count = 1;
-        source->target = entity_id;
+        source->target = ENTITY_ID_PLAYER;
     }
 
     cutscene_actor_init(

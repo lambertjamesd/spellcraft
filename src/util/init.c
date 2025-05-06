@@ -8,6 +8,7 @@
 #include "../entity/health.h"
 #include "../entity/interactable.h"
 #include "../menu/menu_rendering.h"
+#include "../objects/assets.h"
 #include "../objects/collectable.h"
 #include "../menu/dialog_box.h"
 #include "../cutscene/cutscene_runner.h"
@@ -15,6 +16,7 @@
 
 void init_engine() {
     spell_assets_init();
+    object_assets_init();
     menu_common_init();
     render_scene_reset();
     update_reset();

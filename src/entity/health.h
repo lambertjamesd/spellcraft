@@ -35,6 +35,8 @@ void health_destroy(struct health* health);
 void health_damage(struct health* health, struct damage_info* damage);
 void health_damage_id(entity_id target, struct damage_info* damage);
 
+void health_heal(struct health* health, float amount);
+
 void health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type);
 
 struct health* health_get(entity_id id);

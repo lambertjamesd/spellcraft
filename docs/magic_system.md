@@ -153,7 +153,7 @@ Progress indiciators
 | Ice     | E         | AEO explosion                    | On ice shatter   | F         |
 | Ice     | E L       | AEO ice sprite                   | On ice shatter   | F         |
 | Ice     | L         | Ice sprite                       | On ice shatter   | F         |
-| Earth   |           | Shield                           | On parry         |           |
+| Earth   |           | Shield                           | On parry         | F         |
 | Earth   | F         | Fire sheild                      | On parry         |           |
 | Earth   | F I       | Lightning sheild                 | On taking damage |           |
 | Earth   | F I A     | Lightning sniper rock            | On impact        |           |
@@ -185,16 +185,16 @@ Progress indiciators
 | Air     | E         | push outward                     |                  | F         |
 | Air     | E L       | sprite that pushes outward       |                  |           |
 | Air     | L         | sprite that pushes forward       |                  | F         |
-| Life    |           | healing                          |                  |           |
-| Life    | F         | instant aeo healing              |                  |           |
-| Life    | F I       | instant convert health to mana   |                  |           |
+| Life    |           | healing                          |                  | F         |
+| Life    | F         | instant                          |                  | F         |
+| Life    | F I       | instant convert health to mana   |                  | F         |
 | Life    | F I A     | instant life steal sprite        |                  |           |
 | Life    | F I A E   | instant aeo life steal sprite    |                  |           |
 | Life    | F I E     | aeo life steal                   |                  |           |
 | Life    | F A       | instant healing sprite           |                  |           |
 | Life    | F A E     | instant healing aeo sprite       |                  |           |
 | Life    | F E       | instant aeo healing              |                  |           |
-| Life    | I         | convert health to mana           |                  |           |
+| Life    | I         | convert health to mana           |                  | F         |
 | Life    | I A       | create mana steal sprite         | On mana steal    |           |
 | Life    | I A E     | create aeo mana steal sprite     | On mana steal    |           |
 | Life    | I E       | aeo mana steal                   | On mana steal    |           |

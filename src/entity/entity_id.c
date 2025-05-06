@@ -1,8 +1,7 @@
 #include "entity_id.h"
 
-static entity_id next_id = 0;
+static entity_id next_id = ENTITY_ID_FIRST_DYNAMIC;
 
 entity_id entity_id_new() {
-    next_id += 1;
-    return next_id;
+    return next_id++;
 }

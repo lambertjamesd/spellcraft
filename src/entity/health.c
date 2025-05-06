@@ -1,5 +1,6 @@
 #include "health.h"
 
+#include "../math/mathf.h"
 #include "../util/hash_map.h"
 #include "../time/time.h"
 #include "../collision/dynamic_object.h"
@@ -85,6 +86,10 @@ void health_damage_id(entity_id target, struct damage_info* damage) {
     }
 
     health_damage(health, damage);
+}
+
+void health_heal(struct health* health, float amount) {
+    health->current_health = minf(health->max_health, health->current_health + amount);
 }
 
 void health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type) {

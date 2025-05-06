@@ -11,6 +11,7 @@ enum damage_type {
     DAMAGE_TYPE_LIGHTING = (1 << 3),
     DAMAGE_TYPE_WATER = (1 << 4),
     DAMAGE_TYPE_BASH = (1 << 5),
+    DAMAGE_TYPE_STEAL = (1 << 6),
 };
 
 struct damage_info {

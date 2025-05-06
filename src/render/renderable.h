@@ -18,7 +18,10 @@ struct renderable {
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename);
 void renderable_single_axis_init(struct renderable* renderable, struct TransformSingleAxis* transform, const char* mesh_filename);
 
+void renderable_single_axis_init_direct(struct renderable* renderable, struct TransformSingleAxis* transform, struct tmesh* mesh);
+
 void renderable_destroy(struct renderable* renderable);
+void renderable_destroy_direct(struct renderable* renderable);
 
 
 #endif
