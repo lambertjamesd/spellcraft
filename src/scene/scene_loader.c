@@ -160,13 +160,16 @@ struct scene* scene_load(const char* filename) {
     bool found_entry = false;
 
     struct cutscene* starting_cutscene = NULL;
+
+    struct named_location* named_locations = malloc(sizeof(struct named_location) * location_count);
+    struct named_location* end = named_locations + location_count;
     
-    for (int i = 0; i < location_count; i += 1) {
+    for (struct named_location* curr = named_locations; curr < end; ++curr) {
         uint8_t name_length;
         fread(&name_length, 1, 1, file);
-        char name[name_length + 1];
-        fread(name, name_length, 1, file);
-        name[name_length] = '\0';
+        curr->name = malloc(name_length + 1);
+        fread(curr->name, name_length, 1, file);
+        curr->name[name_length] = '\0';
 
         uint8_t on_enter_length;
         fread(&on_enter_length, 1, 1, file);
@@ -174,24 +177,21 @@ struct scene* scene_load(const char* filename) {
         fread(on_enter, on_enter_length, 1, file);
         on_enter[on_enter_length] = '\0';
 
-        struct Vector3 pos;
-        struct Vector2 rot;
-
-        fread(&pos, sizeof(struct Vector3), 1, file);
-        fread(&rot, sizeof(struct Vector2), 1, file);
+        fread(&curr->position, sizeof(struct Vector3), 1, file);
+        fread(&curr->rotation, sizeof(struct Vector2), 1, file);
 
         if (found_entry) {
             continue;
         }
 
-        if (strcmp(name, "default") == 0) {
-            player_def.location = pos;
-            player_def.rotation = rot;
+        if (strcmp(curr->name, "default") == 0) {
+            player_def.location = curr->position;
+            player_def.rotation = curr->rotation;
         }
 
-        if (strcmp(name, scene_get_next_entry()) == 0) {
-            player_def.location = pos;
-            player_def.rotation = rot;
+        if (strcmp(curr->name, scene_get_next_entry()) == 0) {
+            player_def.location = curr->position;
+            player_def.rotation = curr->rotation;
             found_entry = true;
 
             if (on_enter_length) {
@@ -199,6 +199,9 @@ struct scene* scene_load(const char* filename) {
             }
         }
     }
+
+    scene->named_locations = named_locations;
+    scene->named_location_count = location_count;
 
     inventory_init();
     camera_init(&scene->camera, 70.0f, 1.0f, 125.0f);
@@ -307,6 +310,11 @@ void scene_release(struct scene* scene) {
 
     free(scene->string_table);
     free(scene->loading_zones);
+
+    for (int i = 0; i < scene->named_location_count; i += 1) {
+        free(scene->named_locations[i].name);
+    }
+    free(scene->named_locations);
 
     free(scene);
 }

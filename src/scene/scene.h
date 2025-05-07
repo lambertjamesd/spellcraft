@@ -50,6 +50,12 @@ struct loading_zone {
     char* scene_name;
 };
 
+struct named_location {
+    char* name;
+    struct Vector3 position;
+    struct Vector2 rotation;
+};
+
 struct scene {
     struct static_entity* static_entities;
 
@@ -64,11 +70,13 @@ struct scene {
     
     struct entity_data* entity_data;
     struct loading_zone* loading_zones;
+    struct named_location* named_locations;
     struct overworld* overworld;
 
     uint16_t static_entity_count;
     uint16_t entity_data_count;
     uint16_t loading_zone_count;
+    uint16_t named_location_count;
 
     char* string_table;
 };
@@ -85,6 +93,8 @@ bool scene_has_next();
 
 char* scene_get_next();
 char* scene_get_next_entry();
+
+struct named_location* scene_find_location(char* name);
 
 void scene_entity_apply_types(void* definition, char* string_table, struct entity_field_type_location* type_locations, int type_location_count);
 

@@ -103,6 +103,17 @@ struct cutscene* cutscene_load(char* filename) {
             case CUTSCENE_STEP_CAMERA_LOOK_AT_NPC:
                 fread(&step->data.camera_look_at.target, 4, 1, file);
                 break;
+            case CUTSCENE_STEP_INTERACT_WITH_LOCATION: {
+                fread(&step->data.interact_with_location.type, 4, 1, file);
+                fread(&step->data.interact_with_location.subject, 4, 1, file);
+                uint8_t name_length;
+                fread(&name_length, 1, 1, file);
+                char* name = malloc(name_length + 1);
+                fread(name, 1, name_length, file);
+                name[name_length] = '\0';
+                step->data.interact_with_location.location_name = name;
+                break;
+            }    
         }
     }
 
@@ -132,6 +143,9 @@ void cutscene_destroy(struct cutscene* cutscene) {
                 break;
             case CUTSCENE_STEP_EXPRESSION:
                 expression_destroy(&step->data.expression.expression);
+                break;
+            case CUTSCENE_STEP_INTERACT_WITH_LOCATION:
+                free(step->data.interact_with_location.location_name);
                 break;
             default:
                 break;

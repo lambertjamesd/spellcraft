@@ -1,0 +1,13 @@
+global has_talked_outside: bool;
+
+pause true, false;
+interact_with_npc INTERACTION_LOOK_SPACE, NPC_TYPE_PLAYER, NPC_TYPE_MENTOR;
+interact_with_npc INTERACTION_LOOK_WAIT, NPC_TYPE_MENTOR, NPC_TYPE_PLAYER;
+
+say "Hey {player_name}, I'll meet in in the basement of your house";
+
+interact_with_location INTERACTION_MOVE_WAIT, NPC_TYPE_MENTOR, "default";
+
+has_talked_outside = true;
+
+pause false, false;

@@ -21,6 +21,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_IDLE_NPC,
     CUTSCENE_STEP_CAMERA_LOOK_AT_NPC,
     CUTSCENE_STEP_CAMERA_FOLLOW,
+    CUTSCENE_STEP_INTERACT_WITH_LOCATION,
 };
 
 struct cutscene_step;
@@ -75,6 +76,11 @@ union cutscene_step_data {
     struct {
         union cutscene_actor_id target;
     } camera_look_at;
+    struct {
+        enum interaction_type type;
+        union cutscene_actor_id subject;
+        char* location_name;
+    } interact_with_location;
 };
 
 struct cutscene_step {
