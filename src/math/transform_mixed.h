@@ -24,6 +24,6 @@ void transform_mixed_init_pos(struct transform_mixed* transform_mixed, struct Ve
 
 struct Vector3* transform_mixed_get_position(struct transform_mixed* transform);
 
-bool transform_rotate_towards(struct transform_mixed* transform, struct Vector3* forward, float max_radians);
+bool transform_rotate_towards(struct TransformSingleAxis* transform, struct Vector3* forward, float max_radians);
 
 #endif

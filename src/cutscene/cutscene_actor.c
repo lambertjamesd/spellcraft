@@ -1,5 +1,6 @@
 #include "cutscene_actor.h"
 
+#include "../collision/collision_scene.h"
 #include "../time/time.h"
 #include "../resource/animation_cache.h"
 #include "../util/hash_map.h"
@@ -12,15 +13,17 @@ static struct hash_map cutscene_actor_hash_map;
 void cutscene_actor_init(
     struct cutscene_actor* actor, 
     struct cutscene_actor_def* def,
-    struct transform_mixed transform, 
+    entity_id entity_id,
+    struct TransformSingleAxis* transform,
     enum npc_type npc_type, 
     int index, 
     struct armature* armature, 
     char* animations_path
 ) {
-    actor->transform = transform;
+    actor->transform = *transform;
     actor->animation_set = animations_path ? animation_cache_load(animations_path) : NULL;
     actor->animations.idle = animation_set_find_clip(actor->animation_set, "idle");
+    actor->animations.walk = animation_set_find_clip(actor->animation_set, "walk");
 
     animator_init(&actor->animator, armature ? armature->bone_count : 0);
     actor->armature = armature;
@@ -34,10 +37,25 @@ void cutscene_actor_init(
     hash_map_set(&cutscene_actor_hash_map, actor->id.unique_id, actor);
 
     animator_run_clip(&actor->animator, actor->animations.idle, 0.0f, true);
+
+    dynamic_object_init(
+        entity_id,
+        &actor->collider,
+        &def->collider,
+        def->collision_layers,
+        &actor->transform.position,
+        &actor->transform.rotation
+    );
+
+    actor->collider.center.y += def->half_height;
+    actor->collider.collision_group = def->collision_group;
+
+    collision_scene_add(&actor->collider);
 }
 
 void cutscene_actor_destroy(struct cutscene_actor* actor) {
     animation_cache_release(actor->animation_set);
+    collision_scene_remove(&actor->collider);
     animator_destroy(&actor->animator);
     hash_map_delete(&cutscene_actor_hash_map, actor->id.unique_id);
 }
@@ -74,14 +92,12 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
         return false;
     }
 
-    struct Vector3* pos = transform_mixed_get_position(&actor->transform);
-
     if (HAS_FLAG(actor->state, ACTOR_STATE_MOVING)) {
         if (vector3MoveTowards(
-            pos, 
+            &actor->transform.position, 
             &actor->target,
             actor->def->move_speed * fixed_time_step,
-            pos
+            &actor->transform.position
         )) {
             CLEAR_FLAG(actor->state, ACTOR_STATE_MOVING);
         }
@@ -89,7 +105,7 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
 
     if (HAS_FLAG(actor->state, ACTOR_STATE_LOOKING)) {
         struct Vector3 offset;
-        vector3Sub(&actor->target, pos, &offset);
+        vector3Sub(&actor->target, &actor->transform.position, &offset);
 
         if (transform_rotate_towards(&actor->transform, &offset, actor->def->rotate_speed * fixed_time_step)) {
             CLEAR_FLAG(actor->state, ACTOR_STATE_LOOKING);
@@ -99,15 +115,15 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
     if (HAS_FLAG(actor->state, ACTOR_STATE_SPACE)) {
         struct Vector3 offset;
         offset.y = 0.0f;
-        vector3Sub(pos, &actor->target, &offset);
+        vector3Sub(&actor->transform.position, &actor->target, &offset);
 
         float distSqrd = vector3MagSqrd(&offset);
 
         if (distSqrd < SPACING_DISTANCE * SPACING_DISTANCE) {
             if (distSqrd < 0.000001f) {
-                vector3AddScaled(pos, &gRight, actor->def->move_speed * fixed_time_step, pos);
+                vector3AddScaled(&actor->transform.position, &gRight, actor->def->move_speed * fixed_time_step, &actor->transform.position);
             } else {
-                vector3AddScaled(pos, &offset, actor->def->move_speed * fixed_time_step / sqrtf(distSqrd), pos);
+                vector3AddScaled(&actor->transform.position, &offset, actor->def->move_speed * fixed_time_step / sqrtf(distSqrd), &actor->transform.position);
             }
         } else {
             CLEAR_FLAG(actor->state, ACTOR_STATE_SPACE);

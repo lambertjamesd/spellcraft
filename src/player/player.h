@@ -40,10 +40,9 @@ struct inventory_assets {
 };
 
 struct player {
-    struct TransformSingleAxis transform;
+    struct cutscene_actor cutscene_actor;
     struct renderable renderable;
     struct Transform* camera_transform;
-    struct dynamic_object collision;
     struct health health;
 
     struct spell_data_source player_spell_sources[PLAYER_CAST_SOURCE_COUNT];
@@ -54,7 +53,6 @@ struct player {
     struct player_animations animations;
     struct inventory_assets assets;
 
-    struct cutscene_actor cutscene_actor;
 };
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform);
@@ -62,5 +60,7 @@ void player_init(struct player* player, struct player_definition* definition, st
 void player_render(struct player* player, struct render_batch* batch);
 
 void player_destroy(struct player* player);
+
+struct Vector3* player_get_position(struct player* player);
 
 #endif

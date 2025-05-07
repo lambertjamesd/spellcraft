@@ -7,6 +7,8 @@
 #include "../render/animator.h"
 #include "../render/animation_clip.h"
 #include "../render/armature.h"
+#include "../collision/dynamic_object.h"
+#include "../render/renderable.h"
 #include <stdbool.h>
 
 enum actor_state {
@@ -19,6 +21,7 @@ enum actor_state {
 
 struct cutscene_actor_animations {
     struct animation_clip* idle;
+    struct animation_clip* walk;
 };
 
 union cutscene_actor_id {
@@ -36,10 +39,15 @@ struct cutscene_actor_def {
     float eye_level;
     float move_speed;
     float rotate_speed;
+    struct dynamic_object_type collider;
+    float half_height;
+    uint16_t collision_layers;
+    uint16_t collision_group;
 };
 
 struct cutscene_actor {
-    struct transform_mixed transform;
+    struct TransformSingleAxis transform;
+    struct dynamic_object collider;
     struct animation_set* animation_set;
     struct cutscene_actor_animations animations;
     struct animator animator;
@@ -51,7 +59,7 @@ struct cutscene_actor {
     struct cutscene_actor_def* def;
 };
 
-void cutscene_actor_init(struct cutscene_actor* actor, struct cutscene_actor_def* def, struct transform_mixed transform, enum npc_type npc_type, int index, struct armature* armature, char* animations_path);
+void cutscene_actor_init(struct cutscene_actor* actor, struct cutscene_actor_def* def, entity_id entity_id, struct TransformSingleAxis* transform, enum npc_type npc_type, int index, struct armature* armature, char* animations_path);
 
 void cutscene_actor_destroy(struct cutscene_actor* actor);
 void cutscene_actor_reset();

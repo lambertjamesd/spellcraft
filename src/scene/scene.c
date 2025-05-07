@@ -19,8 +19,8 @@ void scene_render(void* data, struct render_batch* batch) {
 void scene_update(void* data) {
     struct scene* scene = (struct scene*)data;
 
-    struct Vector3 player_center = scene->player.transform.position;
-    player_center.y += scene->player.collision.center.y;
+    struct Vector3 player_center = scene->player.cutscene_actor.transform.position;
+    player_center.y += scene->player.cutscene_actor.collider.center.y;
 
     for (int i = 0; i < scene->loading_zone_count; i += 1) {
         if (box3DContainsPoint(&scene->loading_zones[i].bounding_box, &player_center)) {
@@ -30,7 +30,7 @@ void scene_update(void* data) {
 
     if (scene->overworld) {
         overworld_check_loaded_tiles(scene->overworld);
-        overworld_check_collider_tiles(scene->overworld, &scene->player.transform.position);
+        overworld_check_collider_tiles(scene->overworld, player_get_position(&scene->player));
     }
 }
 

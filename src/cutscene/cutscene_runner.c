@@ -128,7 +128,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             cutscene_actor_interact_with(
                 subject,
                 step->data.interact_with_npc.type,
-                transform_mixed_get_position(&target->transform)
+                &target->transform.position
             );
 
             break;
@@ -149,7 +149,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
                 break;
             }
 
-            camera_look_at(&current_scene->camera_controller, transform_mixed_get_position(&target->transform));
+            camera_look_at(&current_scene->camera_controller, &target->transform.position);
             break;
         }
         case CUTSCENE_STEP_CAMERA_FOLLOW: {

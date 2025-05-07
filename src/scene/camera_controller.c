@@ -35,7 +35,7 @@ void camera_controller_determine_two_target_position(struct camera_controller* c
     camera_cached_calcuations_check(&controller->_cache_calcluations, controller->camera);
 
     struct Vector3 offset;
-    vector3Sub(&controller->look_target, &controller->player->transform.position, &offset);
+    vector3Sub(&controller->look_target, player_get_position(controller->player), &offset);
     offset.y = 0.0f;
 
     float target_distance = sqrtf(vector3MagSqrd(&offset));
@@ -61,12 +61,12 @@ void camera_controller_determine_two_target_position(struct camera_controller* c
     target_check.y = controller->player->cutscene_actor.def->eye_level;
     target_check.z = offset.z * cos_theta + offset.x * sin_theta;
 
-    vector3Add(&controller->player->transform.position, &target_check, result);
+    vector3Add(player_get_position(controller->player), &target_check, result);
 
     target_check.x = offset.x * cos_theta + offset.z * sin_theta;
     target_check.y = controller->player->cutscene_actor.def->eye_level;
     target_check.z = offset.z * cos_theta - offset.x * sin_theta;
-    vector3Add(&controller->player->transform.position, &target_check, &target_check);
+    vector3Add(player_get_position(controller->player), &target_check, &target_check);
 
     if (vector3DistSqrd(result, &controller->camera->transform.position) > 
         vector3DistSqrd(&target_check, &controller->camera->transform.position)) {
@@ -79,10 +79,10 @@ void camera_controller_determine_player_move_target(struct camera_controller* co
 
     if (behind_player) {
         struct Quaternion quat;
-        quatAxisComplex(&gUp, &controller->player->transform.rotation, &quat);
+        quatAxisComplex(&gUp, &controller->player->cutscene_actor.transform.rotation, &quat);
         quatMultVector(&quat, &gForward, &offset);
     } else {
-        vector3Sub(&controller->player->transform.position, &controller->camera->transform.position, &offset);
+        vector3Sub(player_get_position(controller->player), &controller->camera->transform.position, &offset);
 
         offset.y = 0.0f;
         vector3Normalize(&offset, &offset);
@@ -92,7 +92,7 @@ void camera_controller_determine_player_move_target(struct camera_controller* co
         }
     }
 
-    vector3AddScaled(&controller->player->transform.position, &offset, -CAMERA_FOLLOW_DISTANCE, result);
+    vector3AddScaled(player_get_position(controller->player), &offset, -CAMERA_FOLLOW_DISTANCE, result);
     result->y += CAMERA_FOLLOW_HEIGHT;
 }
 
@@ -100,7 +100,7 @@ void camera_controller_update_position(struct camera_controller* controller, str
     move_towards(&controller->camera->transform.position, &controller->speed, &controller->target, &camera_move_parameters);
 
     struct Vector3 offset;
-    vector3Sub(&controller->player->transform.position, &controller->camera->transform.position, &offset);
+    vector3Sub(player_get_position(controller->player), &controller->camera->transform.position, &offset);
 
     vector3Sub(&target->position, &controller->camera->transform.position, &offset);
     offset.y += CAMERA_FOLLOW_HEIGHT;
@@ -113,7 +113,7 @@ void camera_controller_update(struct camera_controller* controller) {
     } else if (controller->state == CAMERA_STATE_LOOK_AT_WITH_PLAYER) {
         camera_controller_determine_two_target_position(controller, &controller->target);
     }
-    camera_controller_update_position(controller, &controller->player->transform);
+    camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
 }
 
 void camera_controller_init(struct camera_controller* controller, struct Camera* camera, struct player* player) {
@@ -131,7 +131,7 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     controller->_cache_calcluations.fov = 0.0f;
     quatAxisAngle(&gRight, 0.0f, &controller->camera->transform.rotation);
 
-    camera_controller_update_position(controller, &player->transform);
+    camera_controller_update_position(controller, &player->cutscene_actor.transform);
 }
 
 void camera_controller_destroy(struct camera_controller* controller) {

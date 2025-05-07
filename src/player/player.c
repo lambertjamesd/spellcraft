@@ -23,19 +23,6 @@
 
 static struct Vector2 player_max_rotation;
 
-static struct dynamic_object_type player_collision = {
-    .minkowsi_sum = capsule_minkowski_sum,
-    .bounding_box = capsule_bounding_box,
-    .data = {
-        .capsule = {
-            .radius = 0.25f,
-            .inner_half_height = 0.5f,
-        }
-    },
-    // about a 40 degree slope
-    .max_stable_slope = 0.219131191f,
-};
-
 static struct dynamic_object_type player_visual_shape = {
     .minkowsi_sum = cylinder_minkowski_sum,
     .bounding_box = cylinder_bounding_box,
@@ -51,6 +38,21 @@ static struct cutscene_actor_def player_actor_def = {
     .eye_level = 1.26273f,
     .move_speed = 1.0f,
     .rotate_speed = 2.0f,
+    .half_height = 0.75f,
+    .collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
+    .collision_group = COLLISION_GROUP_PLAYER,
+    .collider = {
+        .minkowsi_sum = capsule_minkowski_sum,
+        .bounding_box = capsule_bounding_box,
+        .data = {
+            .capsule = {
+                .radius = 0.25f,
+                .inner_half_height = 0.5f,
+            }
+        },
+        // about a 40 degree slope
+        .max_stable_slope = 0.219131191f,
+    },
 };
 
 void player_get_move_basis(struct Transform* transform, struct Vector3* forward, struct Vector3* right) {
@@ -85,11 +87,11 @@ struct animation_clip* player_determine_animation(struct player* player, struct 
         }
     }
 
-    struct Vector3 horizontal_velocity = player->collision.velocity;
+    struct Vector3 horizontal_velocity = player->cutscene_actor.collider.velocity;
     horizontal_velocity.y = 0.0f;
     float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
 
-    if (player->collision.is_pushed) {
+    if (player->cutscene_actor.collider.is_pushed) {
         if (ground_normal) {
             *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
             *repeat = true;
@@ -161,9 +163,9 @@ void player_handle_a_action(struct player* player) {
         return;
     }
 
-    struct Vector3 query_center = player->transform.position;
+    struct Vector3 query_center = player->cutscene_actor.transform.position;
     struct Vector3 query_offset;
-    vector2ToLookDir(&player->transform.rotation, &query_offset);
+    vector2ToLookDir(&player->cutscene_actor.transform.rotation, &query_offset);
     vector3AddScaled(&query_center, &query_offset, 1.0f, &query_center);
     query_center.y += player_visual_shape.data.cylinder.half_height;
     bool did_intersect = false;
@@ -176,7 +178,7 @@ void player_check_inventory(struct player* player) {
 }
 
 struct Vector3* player_get_ground(struct player* player) {
-    struct contact* contact = player->collision.active_contacts;
+    struct contact* contact = player->cutscene_actor.collider.active_contacts;
 
     struct Vector3* result = NULL;
 
@@ -192,17 +194,17 @@ struct Vector3* player_get_ground(struct player* player) {
 }
 
 void player_handle_ground_movement(struct player* player, struct Vector3* ground_normal, struct Vector3* target_direction) {
-    if (dynamic_object_should_slide(player_collision.max_stable_slope, ground_normal->y)) {
+    if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_normal->y)) {
         // TODO handle sliding logic
         return;
     }
 
-    if (player->collision.is_pushed) {
+    if (player->cutscene_actor.collider.is_pushed) {
         return;
     }
 
     if (vector3MagSqrd(target_direction) < 0.001f) {
-        player->collision.velocity = gZeroVec;
+        player->cutscene_actor.collider.velocity = gZeroVec;
     } else {
         struct Vector3 projected_target_direction;
         vector3ProjectPlane(target_direction, ground_normal, &projected_target_direction);
@@ -214,18 +216,18 @@ void player_handle_ground_movement(struct player* player, struct Vector3* ground
 
         vector3Scale(&projected_target_direction, &projected_target_direction, 1.0f / sqrtf(vector3MagSqrd(&projected_normalized)));
 
-        vector3Scale(&projected_target_direction, &player->collision.velocity, PLAYER_MAX_SPEED);
+        vector3Scale(&projected_target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
     }
 }
 
 void player_handle_air_movement(struct player* player, struct Vector3* target_direction) {
-    if (player->collision.is_pushed) {
+    if (player->cutscene_actor.collider.is_pushed) {
         return;
     }
 
-    float prev_y = player->collision.velocity.y;
-    vector3Scale(target_direction, &player->collision.velocity, PLAYER_MAX_SPEED);
-    player->collision.velocity.y = prev_y;
+    float prev_y = player->cutscene_actor.collider.velocity.y;
+    vector3Scale(target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
+    player->cutscene_actor.collider.velocity.y = prev_y;
 }
 
 void player_handle_movement(struct player* player, joypad_inputs_t* input, struct Vector3* ground_normal) {
@@ -258,7 +260,7 @@ void player_handle_movement(struct player* player, joypad_inputs_t* input, struc
     if (magSqrd > 0.01f) {
         struct Vector2 directionUnit;
         vector2LookDir(&directionUnit, &target_direction);
-        vector2RotateTowards(&player->transform.rotation, &directionUnit, &player_max_rotation, &player->transform.rotation);
+        vector2RotateTowards(&player->cutscene_actor.transform.rotation, &directionUnit, &player_max_rotation, &player->cutscene_actor.transform.rotation);
     }
 }
 
@@ -292,7 +294,7 @@ void player_update(struct player* player) {
     player_handle_movement(player, &input, ground_normal);
 
     struct Vector3 castDirection;
-    vector2ToLookDir(&player->transform.rotation, &castDirection);
+    vector2ToLookDir(&player->cutscene_actor.transform.rotation, &castDirection);
 
     // for (int i = 0; i < PLAYER_CAST_SOURCE_COUNT; i += 1) {
     //     struct spell_data_source* source = &player->player_spell_sources[i];
@@ -311,7 +313,7 @@ void player_update(struct player* player) {
     struct spell_data_source* source = &player->player_spell_sources[4];
 
     source->direction = castDirection;
-    source->position = player->transform.position;
+    source->position = player->cutscene_actor.transform.position;
     source->position.y += 1.0f;
     source->flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
 
@@ -333,7 +335,7 @@ void player_update(struct player* player) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_BREAK);
     }
 
-    struct contact* contact = player->collision.active_contacts;
+    struct contact* contact = player->cutscene_actor.collider.active_contacts;
 
     while (contact) {
         struct collectable* collectable = collectable_get(contact->other_object);
@@ -359,36 +361,34 @@ void player_on_damage(void* data, struct damage_info* damage) {
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
-    struct transform_mixed transform;
-    transform_mixed_init_sa(&transform, &player->transform);
-
-    transformSaInitIdentity(&player->transform);
-    renderable_single_axis_init(&player->renderable, &player->transform, "rom:/meshes/characters/apprentice.tmesh");
+    transformSaInitIdentity(&player->cutscene_actor.transform);
+    renderable_single_axis_init(&player->renderable, &player->cutscene_actor.transform, "rom:/meshes/characters/apprentice.tmesh");
 
     player->camera_transform = camera_transform;
 
-    player->transform.position = definition->location;
-    player->transform.rotation = definition->rotation;
+    player->cutscene_actor.transform.position = definition->location;
+    player->cutscene_actor.transform.rotation = definition->rotation;
 
     render_scene_add_renderable(&player->renderable, 2.0f);
     update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     vector2ComplexFromAngle(fixed_time_step * 7.0f, &player_max_rotation);
 
-    dynamic_object_init(
+    struct TransformSingleAxis transform = {
+        .position = definition->location,
+        .rotation = definition->rotation,
+    };
+
+    cutscene_actor_init(
+        &player->cutscene_actor,
+        &player_actor_def,
         ENTITY_ID_PLAYER,
-        &player->collision,
-        &player_collision,
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
-        &player->transform.position,
-        &player->transform.rotation
+        &transform,
+        NPC_TYPE_PLAYER,
+        0,
+        &player->renderable.armature,
+        "rom:/meshes/characters/apprentice.anim"
     );
-
-    player->collision.collision_group = COLLISION_GROUP_PLAYER;
-
-    player->collision.center.y = player_collision.data.capsule.inner_half_height + player_collision.data.capsule.radius;
-
-    collision_scene_add(&player->collision);
 
     spell_exec_init(&player->spell_exec);
     live_cast_init(&player->live_cast);
@@ -402,16 +402,6 @@ void player_init(struct player* player, struct player_definition* definition, st
         source->reference_count = 1;
         source->target = ENTITY_ID_PLAYER;
     }
-
-    cutscene_actor_init(
-        &player->cutscene_actor,
-        &player_actor_def,
-        transform,
-        NPC_TYPE_PLAYER,
-        0,
-        &player->renderable.armature,
-        "rom:/meshes/characters/apprentice.anim"
-    );
 
     player->animations.attack = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1");
     player->animations.attack_hold = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1_hold");
@@ -436,8 +426,11 @@ void player_destroy(struct player* player) {
 
     render_scene_remove(&player->renderable);
     update_remove(player);
-    collision_scene_remove(&player->collision);
     cutscene_actor_destroy(&player->cutscene_actor);
 
     tmesh_cache_release(player->assets.staffs[0]);
+}
+
+struct Vector3* player_get_position(struct player* player) {
+    return &player->cutscene_actor.transform.position;
 }

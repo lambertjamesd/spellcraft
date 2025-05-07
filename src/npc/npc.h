@@ -5,7 +5,6 @@
 #include "../math/transform_single_axis.h"
 #include "../render/renderable.h"
 #include "../render/animator.h"
-#include "../collision/dynamic_object.h"
 #include "../entity/interactable.h"
 #include "../cutscene/cutscene.h"
 #include "../cutscene/cutscene_actor.h"
@@ -19,15 +18,9 @@ struct npc_information {
 };
 
 struct npc {
-    struct TransformSingleAxis transform;
-    struct renderable renderable;
-
     struct cutscene_actor cutscene_actor;
-
-    struct dynamic_object collider;
-
+    struct renderable renderable;
     struct interactable interactable;
-
     struct cutscene* talk_to_cutscene;
 };
 
