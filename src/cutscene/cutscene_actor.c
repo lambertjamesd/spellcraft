@@ -8,7 +8,8 @@
 
 static struct hash_map cutscene_actor_hash_map;
 
-#define SPACING_DISTANCE  1.8f
+#define SPACING_DISTANCE        1.8f
+#define AT_LOCATION_TOLERANCE   0.25f
 
 void cutscene_actor_init(
     struct cutscene_actor* actor, 
@@ -93,13 +94,26 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
     }
 
     if (HAS_FLAG(actor->state, ACTOR_STATE_MOVING)) {
-        if (vector3MoveTowards(
-            &actor->transform.position, 
-            &actor->target,
-            actor->def->move_speed * fixed_time_step,
-            &actor->transform.position
-        )) {
+        struct Vector3 offset;
+        vector3Sub(&actor->target, &actor->transform.position, &offset);
+        offset.y = 0.0f;
+        float distSqrd = vector3MagSqrd(&offset);
+
+        transform_rotate_towards(&actor->transform, &offset, actor->def->rotate_speed * fixed_time_step);
+
+        if (distSqrd < AT_LOCATION_TOLERANCE * AT_LOCATION_TOLERANCE) {
             CLEAR_FLAG(actor->state, ACTOR_STATE_MOVING);
+            actor->collider.velocity.x = 0.0f;
+            actor->collider.velocity.z = 0.0f;
+            animator_run_clip(&actor->animator, actor->animations.idle, 0.0f, true);
+        } else {
+            float inv = actor->def->move_speed / sqrtf(distSqrd);
+            actor->collider.velocity.x = offset.x * inv;
+            actor->collider.velocity.z = offset.z * inv;
+
+            if (actor->animator.current_clip != actor->animations.walk) {
+                animator_run_clip(&actor->animator, actor->animations.walk, 0.0f, true);
+            }
         }
     }
 

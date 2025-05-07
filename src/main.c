@@ -190,7 +190,7 @@ int main(void)
         }
 
         joypad_poll();
-        if (update_has_layer(UPDATE_LAYER_WORLD)) {
+        if (update_has_layer(UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE)) {
             collision_scene_collide();
         }
         update_dispatch();
