@@ -27,6 +27,22 @@ void dash_trail_render_callback(void* data, struct render_batch* batch) {
         return;
     }
 
+    T3DMat4FP* offset_mtx = render_batch_get_transformfp(batch);
+
+    if (!offset_mtx) {
+        return;
+    }
+
+    mat4x4 mtx;
+    struct Vector3 effect_origin = {
+        .x = trail->last_position.x - batch->camera_matrix[3][0],
+        .y = trail->last_position.y - batch->camera_matrix[3][1],
+        .z = trail->last_position.z - batch->camera_matrix[3][2],
+    };
+    matrixFromScale(mtx, MODEL_WORLD_SCALE);
+    matrixApplyScaledPos(mtx, &effect_origin, WORLD_SCALE);
+    t3d_mat4_to_fixed_3x4(offset_mtx, (T3DMat4*)mtx);
+
     T3DVertPacked* vertices = frame_malloc(batch->pool, sizeof(T3DVertPacked) * trail->vertex_count);
 
     if (!vertices) {
@@ -51,7 +67,8 @@ void dash_trail_render_callback(void* data, struct render_batch* batch) {
 
         struct Vector3 offset;
         vector3AddScaled(&trail->emit_from[current], &trail->tangent[current], (particle_time * TANGENT_OFFSET) * TANGENT_VELOCITY_BOTTOM, &offset);
-        
+        vector3Sub(&offset, &trail->last_position, &offset);
+
         offset.y -= 2.0f * MODEL_WORLD_SCALE;
 
         pack_position_vector(
@@ -60,6 +77,7 @@ void dash_trail_render_callback(void* data, struct render_batch* batch) {
         );
 
         vector3AddScaled(&trail->emit_from[current], &trail->tangent[current], (particle_time * TANGENT_OFFSET) * TANGENT_VELOCITY_TOP, &offset);
+        vector3Sub(&offset, &trail->last_position, &offset);
         float vertical_jump = particle_time * INITIAL_V + particle_time * particle_time * GRAVITY;
         if (vertical_jump >= 0) {
             offset.y += vertical_jump;
@@ -83,6 +101,8 @@ void dash_trail_render_callback(void* data, struct render_batch* batch) {
         return;
     }
 
+    t3d_matrix_push(offset_mtx);
+
     data_cache_hit_writeback_invalidate(vertices, sizeof(T3DVertPacked) * trail->vertex_count);
 
     t3d_vert_load(vertices, 0, trail->vertex_count * 2);
@@ -93,6 +113,8 @@ void dash_trail_render_callback(void* data, struct render_batch* batch) {
     }
 
     t3d_tri_sync();
+
+    t3d_matrix_pop(1);
 }
 
 void dash_trail_render(void* data, struct render_batch* batch) {
