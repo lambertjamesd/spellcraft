@@ -4,6 +4,8 @@
 #include "spell_sources.h"
 #include "mana_regulator.h"
 #include "spell_event.h"
+#include "../collision/collision_scene.h"
+#include "../collision/dynamic_object.h"
 
 struct heal_flags {
     uint16_t instant: 1;
@@ -22,6 +24,8 @@ struct spell_heal {
     struct mana_regulator mana_regulator;
 
     struct heal_definition* definition;
+
+    struct dynamic_object aoe_trigger;
 
     struct heal_flags flags;
     float mana_stored;

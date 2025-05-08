@@ -190,14 +190,14 @@ Progress indiciators
 | Life    | F I       | instant convert health to mana   |                  | F         |
 | Life    | F I A     | instant life steal sprite        |                  |           |
 | Life    | F I A E   | instant aeo life steal sprite    |                  |           |
-| Life    | F I E     | aeo life steal                   |                  |           |
+| Life    | F I E     | aeo life steal                   |                  | F         |
 | Life    | F A       | instant healing sprite           |                  |           |
 | Life    | F A E     | instant healing aeo sprite       |                  |           |
-| Life    | F E       | instant aeo healing              |                  |           |
+| Life    | F E       | instant aeo healing              |                  | F         |
 | Life    | I         | convert health to mana           |                  | F         |
 | Life    | I A       | create mana steal sprite         | On mana steal    |           |
 | Life    | I A E     | create aeo mana steal sprite     | On mana steal    |           |
-| Life    | I E       | aeo mana steal                   | On mana steal    |           |
+| Life    | I E       | aeo mana steal                   | On mana steal    | F         |
 | Life    | A         | healing sprite                   |                  |           |
 | Life    | A E       | healing aeo sprite               |                  |           |
-| Life    | E         | aeo heal                         |                  |           |
+| Life    | E         | aeo heal                         |                  | F         |

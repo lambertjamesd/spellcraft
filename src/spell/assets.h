@@ -36,6 +36,8 @@ struct spell_assets {
     
     struct tmesh* water_around_mesh;
     struct tmesh* water_spray_mesh;
+
+    struct tmesh* heal_aoe_mesh;
 };
 
 void spell_assets_init();
