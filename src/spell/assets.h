@@ -38,6 +38,7 @@ struct spell_assets {
     struct tmesh* water_spray_mesh;
 
     struct tmesh* heal_aoe_mesh;
+    struct tmesh* life_sprite;
 };
 
 void spell_assets_init();

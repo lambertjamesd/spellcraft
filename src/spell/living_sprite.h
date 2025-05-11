@@ -12,11 +12,23 @@
 #include "../render/renderable.h"
 #include <stdbool.h>
 
+struct living_sprite;
+struct render_batch;
+
+typedef void (*sprite_on_contact)(struct living_sprite* sprite, struct contact* contact, float portion);
+
 struct living_sprite_definition {
     enum element_type element_type;
     struct dynamic_object_type collider_type;
     float damage;
     const char* model_file;
+    sprite_on_contact on_contact;
+};
+
+struct living_sprite_flags {
+    uint16_t is_attacking: 1;
+    uint16_t is_mine: 1;
+    uint16_t did_apply_aeo;
 };
 
 struct living_sprite {
@@ -26,8 +38,7 @@ struct living_sprite {
     struct dynamic_object vision;
     entity_id target;
     struct health health;
-    bool is_attacking;
-    bool is_mine;
+    struct living_sprite_flags flags;
     float explode_timer;
     struct living_sprite_definition* definition;
 };

@@ -70,6 +70,8 @@ void spell_assets_init() {
 
     // tmesh_cache_release() never called
     assets.heal_aoe_mesh = tmesh_cache_load("rom:/meshes/spell/heal_aeo.tmesh");
+    // tmesh_cache_release() never called
+    assets.life_sprite = tmesh_cache_load("rom:/meshes/spell/life_sprite.tmesh");
 }
 
 struct spell_assets* spell_assets_get() {

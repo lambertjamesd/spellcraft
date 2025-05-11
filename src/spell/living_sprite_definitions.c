@@ -1,6 +1,34 @@
 #include "./living_sprite_definitions.h"
 #include "../collision/shapes/capsule.h"
 
+void sprite_element_damage(struct living_sprite* living_sprite, struct contact* contact, float portion) {
+    struct damage_info damage = {
+        .amount = living_sprite->definition->damage,
+        .type = health_determine_damage_type(living_sprite->definition->element_type),
+        .source = living_sprite->collider.entity_id,
+        .direction = contact->normal,
+    };
+
+    health_damage_id(
+        living_sprite->target, 
+        &damage
+    );
+}
+
+void sprite_wind_effect(struct living_sprite* living_sprite, struct contact* contact, float portion) {
+
+}
+
+void sprite_heal_effect(struct living_sprite* living_sprite, struct contact* contact, float portion) {
+    struct health* health = health_get(contact->other_object);
+
+    if (!health) {
+        return;
+    }
+
+    health_heal(health, living_sprite->health.current_health * portion);
+}
+
 static struct living_sprite_definition sprite_definitions[] = {
     [ELEMENT_TYPE_FIRE] = {
         .element_type = ELEMENT_TYPE_FIRE,
@@ -18,6 +46,7 @@ static struct living_sprite_definition sprite_definitions[] = {
         },
         .damage = 10.0f,
         .model_file = "rom:/meshes/spell/fire_sprite.tmesh",
+        .on_contact = sprite_element_damage,
     },
     [ELEMENT_TYPE_ICE] = {
         .element_type = ELEMENT_TYPE_ICE,
@@ -35,6 +64,7 @@ static struct living_sprite_definition sprite_definitions[] = {
         },
         .damage = 10.0f,
         .model_file = "rom:/meshes/spell/ice_sprite.tmesh",
+        .on_contact = sprite_element_damage,
     },
     [ELEMENT_TYPE_LIGHTNING] = {
         .element_type = ELEMENT_TYPE_LIGHTNING,
@@ -52,6 +82,7 @@ static struct living_sprite_definition sprite_definitions[] = {
         },
         .damage = 10.0f,
         .model_file = "rom:/meshes/spell/lightning_sprite.tmesh",
+        .on_contact = sprite_element_damage,
     },
     [ELEMENT_TYPE_WATER] = {
         .element_type = ELEMENT_TYPE_WATER,
@@ -69,6 +100,7 @@ static struct living_sprite_definition sprite_definitions[] = {
         },
         .damage = 0.0f,
         .model_file = "rom:/meshes/spell/water_sprite.tmesh",
+        .on_contact = sprite_element_damage,
     },
     [ELEMENT_TYPE_AIR] = {
         .element_type = ELEMENT_TYPE_AIR,
@@ -86,9 +118,45 @@ static struct living_sprite_definition sprite_definitions[] = {
         },
         .damage = 0.0f,
         .model_file = "rom:/meshes/spell/wind_sprite.tmesh",
+        .on_contact = sprite_wind_effect,
+    },
+    [ELEMENT_TYPE_LIFE] = {
+        .element_type = ELEMENT_TYPE_LIFE,
+        .collider_type = {
+            .minkowsi_sum = capsule_minkowski_sum,
+            .bounding_box = capsule_bounding_box,
+            .data = {
+                .capsule = {
+                    .radius = 0.25f,
+                    .inner_half_height = 0.1f,
+                }
+            },
+            .friction = 0.5f,
+            .bounce = 0.5f,
+        },
+        .damage = 0.0f,
+        .model_file = "rom:/meshes/spell/life_sprite.tmesh",
+        .on_contact = sprite_heal_effect,
     },
 };
 
+static struct living_sprite_definition life_steal_sprite = {
+    .element_type = ELEMENT_TYPE_LIFE,
+    .collider_type = {
+        .minkowsi_sum = capsule_minkowski_sum,
+        .bounding_box = capsule_bounding_box,
+        .data = {
+            .capsule = {
+                .radius = 0.25f,
+                .inner_half_height = 0.1f,
+            }
+        },
+        .friction = 0.5f,
+        .bounce = 0.5f,
+    },
+    .damage = 0.0f,
+    .model_file = "rom:/meshes/spell/life_steal_sprite.tmesh",
+};
 
 struct living_sprite_definition* living_sprite_find_def(enum element_type element_type, bool has_air, bool has_fire, bool has_ice) {
     switch (element_type)
@@ -103,6 +171,8 @@ struct living_sprite_definition* living_sprite_find_def(enum element_type elemen
         return &sprite_definitions[ELEMENT_TYPE_WATER];
     case ELEMENT_TYPE_AIR:
         return &sprite_definitions[ELEMENT_TYPE_AIR];
+    case ELEMENT_TYPE_LIFE:
+        return has_ice ? &life_steal_sprite : &sprite_definitions[ELEMENT_TYPE_LIFE];
     default:
         return NULL;
     }

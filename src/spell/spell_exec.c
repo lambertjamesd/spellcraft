@@ -112,8 +112,14 @@ void spell_slot_init(
             }
             break;
         case SPELL_SYMBOL_LIFE:
-            slot->type = SPELL_EXEC_SLOT_TYPE_HEAL;
-            spell_heal_init(&slot->data.heal, input, event_options);
+            if (modifier_flags.flaming) {
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_LIFE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+                slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
+                living_sprite_init(&slot->data.living_sprite, input, event_options, def);
+            } else {
+                slot->type = SPELL_EXEC_SLOT_TYPE_HEAL;
+                spell_heal_init(&slot->data.heal, input, event_options);
+            }
             break;
         default:
             assert(false);

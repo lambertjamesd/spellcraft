@@ -13,7 +13,7 @@
 #define MIN_FOLLOW_DISTANCE 2.0f
 #define TARGET_SPEED        12.0f
 #define ACCELERATION        20.0f
-#define EXPLOSION_TIME      0.5f
+#define EXPLOSION_TIME      1.0f
 
 #define LAUNCH_VELOCITY     6.0f
 #define LAUNCH_Y_VELOCITY   5.0f
@@ -84,13 +84,15 @@ void living_sprite_render(void* data, struct render_batch* batch) {
             case ELEMENT_TYPE_WATER:
                 display_mesh = spell_assets_get()->water_around_mesh;
                 break;
+            case ELEMENT_TYPE_LIFE:
+                display_mesh = spell_assets_get()->heal_aoe_mesh;
+                break;
             default:
                 display_mesh = spell_assets_get()->fire_around_mesh;
                 break;
         }
     
-        struct render_batch_element* element = render_batch_add_tmesh(batch, display_mesh, mtxfp, 1, NULL, NULL);
-    
+        render_batch_add_tmesh(batch, display_mesh, mtxfp, 1, NULL, NULL);
     } else {
         render_scene_render_renderable_single_axis(&living_sprite->renderable, batch);
     }
@@ -138,8 +140,9 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
 
     vector2ComplexFromAngle(fixed_time_step * 2.0f, &sprite_max_rotation);
 
-    living_sprite->is_attacking = false;
-    living_sprite->is_mine = false;
+    living_sprite->flags.is_attacking = false;
+    living_sprite->flags.is_mine = false;
+    living_sprite->flags.did_apply_aeo = false;
     living_sprite->definition = definition;
     living_sprite->explode_timer = 0.0f;
 
@@ -147,24 +150,24 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
         vector3Scale(&source->direction, &living_sprite->collider.velocity, LAUNCH_VELOCITY);
         living_sprite->collider.velocity.y = LAUNCH_Y_VELOCITY;
         living_sprite->target = 0;
-    } 
+    }
     
     if (event_options.modifiers.earthy) {
         living_sprite->target = 0;
-        living_sprite->is_mine = true;
+        living_sprite->flags.is_mine = true;
         living_sprite->vision.scale = 0.5f;
     }
 }
 
 void living_sprite_follow_target(struct living_sprite* living_sprite) {
-    if (!living_sprite->target || living_sprite->is_mine) {
+    if (!living_sprite->target || living_sprite->flags.is_mine) {
         return;
     }
 
     struct dynamic_object* target = collision_scene_find_object(living_sprite->target);
 
     if (!target) {
-        living_sprite->is_attacking = false;
+        living_sprite->flags.is_attacking = false;
         living_sprite->target = 0;
         return;
     }
@@ -183,7 +186,7 @@ void living_sprite_follow_target(struct living_sprite* living_sprite) {
 
     float distance = vector3Dot(&dir, &offset);
 
-    if (!living_sprite->is_attacking && distance < MIN_FOLLOW_DISTANCE) {
+    if (!living_sprite->flags.is_attacking && distance < MIN_FOLLOW_DISTANCE) {
         return;
     }
 
@@ -198,10 +201,36 @@ void living_sprite_follow_target(struct living_sprite* living_sprite) {
     vector3MoveTowards(&living_sprite->collider.velocity, &targetVelocity, fixed_time_step * ACCELERATION, &living_sprite->collider.velocity);
 }
 
+void living_sprite_apply_targets(struct living_sprite* living_sprite) {
+    int count = 0;
+
+    struct contact* curr = living_sprite->vision.active_contacts;
+
+    while (curr) {
+        count += 1;
+        curr = curr->next;
+    }
+
+    if (count == 0) {
+        return;
+    }
+
+    float portion = 1.0f / (float)count;
+
+    curr = living_sprite->vision.active_contacts;
+    while (curr) {
+        living_sprite->definition->on_contact(living_sprite, curr, portion);
+        curr = curr->next;
+    }
+}
+
 void living_sprite_check_targets(struct living_sprite* living_sprite) {
-    if (living_sprite->is_attacking) {
-        if (living_sprite->is_mine) {
-            health_apply_contact_damage(&living_sprite->vision, living_sprite->definition->damage, living_sprite->definition->element_type);
+    if (living_sprite->flags.is_attacking) {
+        if (living_sprite->flags.is_mine) {
+            if (!living_sprite->flags.did_apply_aeo) {
+                living_sprite_apply_targets(living_sprite);
+                living_sprite->flags.did_apply_aeo = true;
+            }
 
             if (living_sprite->explode_timer >= EXPLOSION_TIME) {
                 living_sprite->health.current_health = 0.0f;
@@ -214,23 +243,7 @@ void living_sprite_check_targets(struct living_sprite* living_sprite) {
         struct contact* target_contact = dynamic_object_find_contact(&living_sprite->collider, living_sprite->target);
 
         if (target_contact) {
-            if (living_sprite->definition->element_type == ELEMENT_TYPE_AIR) {
-                // TODO
-                living_sprite->health.current_health = 0.0f;
-                return;
-            }
-
-            struct damage_info damage = {
-                .amount = living_sprite->definition->damage,
-                .type = health_determine_damage_type(living_sprite->definition->element_type),
-                .source = living_sprite->collider.entity_id,
-                .direction = target_contact->normal,
-            };
-
-            health_damage_id(
-                living_sprite->target, 
-                &damage
-            );
+            living_sprite->definition->on_contact(living_sprite, target_contact, 1.0f);
             living_sprite->health.current_health = 0.0f;
         }
         return;
@@ -243,9 +256,9 @@ void living_sprite_check_targets(struct living_sprite* living_sprite) {
     }
 
     living_sprite->target = new_target->other_object;
-    living_sprite->is_attacking = true;
+    living_sprite->flags.is_attacking = true;
 
-    if (living_sprite->is_mine) {
+    if (living_sprite->flags.is_mine) {
         living_sprite->vision.scale = 1.0f;
         dynamic_object_set_type(&living_sprite->vision, &living_sprite_exploision);
     }

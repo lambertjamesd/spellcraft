@@ -167,7 +167,7 @@ Progress indiciators
 | Earth   | I A L     | Homing snowball                  | On impact        |           |
 | Earth   | I L       | Frosty the snowman               | On touch         |           |
 | Earth   | A         | Projectile                       | On impact        | F T       |
-| Earth   | A L       | Homing projectile                | On impact        |           |
+| Earth   | A L       | Homing projectile                | On impact        | F         |
 | Earth   | L         | Ground mine                      | On touch         |           |
 | Air     |           | Push                             |                  | F         |
 | Air     | F         | Burning push                     | On push end      | F         |
