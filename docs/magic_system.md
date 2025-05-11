@@ -156,15 +156,15 @@ Progress indiciators
 | Earth   |           | Shield                           | On parry         | F         |
 | Earth   | F         | Fire sheild                      | On parry         |           |
 | Earth   | F I       | Lightning sheild                 | On taking damage |           |
-| Earth   | F I A     | Lightning sniper rock            | On impact        |           |
+| Earth   | F I A     | Lightning sniper rock            | On impact        | F         |
 | Earth   | F I A L   | Homing lightning sniper rock     | On impact        |           |
 | Earth   | F I L     | Lightning ground mine            | On touch         |           |
-| Earth   | F A       | Rocket projectile                | On impact        |           |
-| Earth   | F A L     | Homing rocket projectile         | On impact        |           |
+| Earth   | F A       | Rocket projectile                | On impact        | F         |
+| Earth   | F A L     | Homing rocket projectile         | On impact        | F         |
 | Earth   | F L       | Fire mine                        | On touch         |           |
 | Earth   | I         | Ice shield                       | On parry         |           |
-| Earth   | I A       | Snowball                         | On impact        |           |
-| Earth   | I A L     | Homing snowball                  | On impact        |           |
+| Earth   | I A       | Snowball                         | On impact        | F         |
+| Earth   | I A L     | Homing snowball                  | On impact        | F         |
 | Earth   | I L       | Frosty the snowman               | On touch         |           |
 | Earth   | A         | Projectile                       | On impact        | F T       |
 | Earth   | A L       | Homing projectile                | On impact        | F         |

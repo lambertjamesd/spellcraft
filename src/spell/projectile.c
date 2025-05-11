@@ -12,10 +12,24 @@
 #include "assets.h"
 
 static float projectile_speed[] = {
-    [ELEMENT_TYPE_NONE] = 10.0f,
+    [ELEMENT_TYPE_NONE] = 7.0f,
     [ELEMENT_TYPE_FIRE] = 10.0f,
     [ELEMENT_TYPE_ICE] = 10.0f,
     [ELEMENT_TYPE_LIGHTNING] = 100.0f,
+};
+
+static float projectile_vertical_speed[] = {
+    [ELEMENT_TYPE_NONE] = 1.0f,
+    [ELEMENT_TYPE_FIRE] = 0.0f,
+    [ELEMENT_TYPE_ICE] = 3.0f,
+    [ELEMENT_TYPE_LIGHTNING] = 0.0f,
+};
+
+static float projectile_accel[] = {
+    [ELEMENT_TYPE_NONE] = 7.0f,
+    [ELEMENT_TYPE_FIRE] = 0.0f,
+    [ELEMENT_TYPE_ICE] = 6.0f,
+    [ELEMENT_TYPE_LIGHTNING] = 0.0f,
 };
 
 static struct dynamic_object_type projectile_collision = {
@@ -46,7 +60,24 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, spell_assets_get()->projectile_mesh, mtxfp, 1, NULL, NULL);
+    struct tmesh* mesh;
+
+    switch (projectile->element) {
+        case ELEMENT_TYPE_FIRE:
+            mesh = spell_assets_get()->projectile_mesh;
+            break;
+        case ELEMENT_TYPE_ICE:
+            mesh = spell_assets_get()->projectile_ice_mesh;
+            break;
+        case ELEMENT_TYPE_LIGHTNING:
+            mesh = spell_assets_get()->projectile_mesh;
+            break;
+        default:
+            mesh = spell_assets_get()->projectile_mesh;
+            break;
+    }
+
+    render_batch_add_tmesh(batch, mesh, mtxfp, 1, NULL, NULL);
 }
 
 void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, union spell_modifier_flags modifiers, struct spell_event_options event_options, enum element_type element) {
@@ -73,7 +104,12 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     projectile->dynamic_object.collision_group = COLLISION_GROUP_PLAYER;
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
-    projectile->dynamic_object.has_gravity = 0;
+
+    if (modifiers.flaming) {
+        projectile->dynamic_object.has_gravity = 0;
+    } else {
+        projectile->dynamic_object.velocity.y = projectile_vertical_speed[element];
+    }
 
     if (modifiers.living) {
         projectile->is_controlled = 1;
@@ -113,9 +149,8 @@ bool projectile_update(struct projectile* projectile, struct spell_event_listene
         vector3Scale(&projectile->data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[projectile->element]);
     }
 
-    if (projectile->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
-        projectile->is_controlled = 0;
-        projectile->dynamic_object.has_gravity = 1;
+    if (projectile->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
+        projectile->dynamic_object.velocity.y += fixed_time_step * projectile_accel[projectile->element];
     }
 
     if (projectile->has_secondary_event) {

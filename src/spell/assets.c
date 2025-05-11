@@ -10,6 +10,8 @@ void spell_assets_init() {
     // tmesh_cache_release() never called
     assets.projectile_mesh = tmesh_cache_load("rom:/meshes/spell/rock.tmesh");
     // tmesh_cache_release() never called
+    assets.projectile_ice_mesh = tmesh_cache_load("rom:/meshes/spell/ice_ball.tmesh");
+    // tmesh_cache_release() never called
     assets.projectile_appear = tmesh_cache_load("rom:/meshes/spell/rock_spawn.tmesh");
     // tmesh_cache_release() never called
     assets.sheild_mesh = tmesh_cache_load("rom:/meshes/spell/rock_shield.tmesh");
