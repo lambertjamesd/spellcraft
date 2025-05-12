@@ -154,7 +154,7 @@ Progress indiciators
 | Ice     | E L       | AEO ice sprite                   | On ice shatter   | F         |
 | Ice     | L         | Ice sprite                       | On ice shatter   | F         |
 | Earth   |           | Shield                           | On parry         | F         |
-| Earth   | F         | Fire sheild                      | On parry         |           |
+| Earth   | F         | Fire sheild                      | On parry         | F         |
 | Earth   | F I       | Lightning sheild                 | On taking damage |           |
 | Earth   | F I A     | Lightning sniper rock            | On impact        | F         |
 | Earth   | F I A L   | Homing lightning sniper rock     | On impact        |           |
@@ -162,7 +162,7 @@ Progress indiciators
 | Earth   | F A       | Rocket projectile                | On impact        | F         |
 | Earth   | F A L     | Homing rocket projectile         | On impact        | F         |
 | Earth   | F L       | Fire mine                        | On touch         |           |
-| Earth   | I         | Ice shield                       | On parry         |           |
+| Earth   | I         | Ice shield                       | On parry         | F         |
 | Earth   | I A       | Snowball                         | On impact        | F         |
 | Earth   | I A L     | Homing snowball                  | On impact        | F         |
 | Earth   | I L       | Frosty the snowman               | On touch         |           |
