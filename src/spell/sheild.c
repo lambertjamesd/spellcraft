@@ -5,6 +5,7 @@
 #include "../render/render_scene.h"
 
 #define MAX_SHEILD_LIFETIME 7.0f
+#define PARRY_WINDOW        0.5f
 
 void shield_render(void* data, struct render_batch* batch) {
     struct shield* shield = (struct shield*)data;
@@ -34,6 +35,21 @@ void shield_update_transform(struct shield* shield) {
     quatLook(&reverse_dir, &gUp, &shield->transform.rotation);
 }
 
+bool shield_should_block(void *data, struct damage_info* damage) {
+    struct shield* shield = (struct shield*)data;
+
+    if (shield->parry_timer > 0.0f) {
+        shield->flags.did_parry = true;
+        shield->parry_timer = 0.0f;
+    }
+
+    if (shield->element == ELEMENT_TYPE_ICE) {
+        shield->lifetime = 0.0f;
+    }
+
+    return true;
+}
+
 void shield_init(struct shield* shield, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element) {
     shield->data_source = source;
     spell_data_source_retain(source);
@@ -41,7 +57,10 @@ void shield_init(struct shield* shield, struct spell_data_source* source, struct
     shield->transform.scale = gOneVec;
     // TODO get rom target object
     shield->hold_radius = 0.5f;
-    shield->lifetime = MAX_SHEILD_LIFETIME;
+    shield->lifetime = element == ELEMENT_TYPE_FIRE ? PARRY_WINDOW : MAX_SHEILD_LIFETIME;
+    shield->element = element;
+    shield->parry_timer = element == ELEMENT_TYPE_ICE ? MAX_SHEILD_LIFETIME : PARRY_WINDOW;
+    shield->flags.did_parry = false;
 
     shield->start_animation = mesh_animation_new(
         &shield->transform.position, 
@@ -51,7 +70,7 @@ void shield_init(struct shield* shield, struct spell_data_source* source, struct
     );
 
     struct health* shielding_health = health_get(source->target);
-    health_shield_init(&shield->shield, &source->direction);
+    health_shield_init(&shield->shield, &source->direction, shield_should_block, shield);
 
     if (shielding_health) {
         health_add_shield(shielding_health, &shield->shield);
@@ -88,6 +107,12 @@ bool shield_update(struct shield* shield, struct spell_event_listener* event_lis
     }
 
     shield->lifetime -= fixed_time_step;
+    shield->parry_timer -= fixed_time_step;
+
+    if (shield->flags.did_parry) {
+        spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, shield->data_source, 0.0f);
+        shield->flags.did_parry = false;
+    }
 
     return shield->lifetime >= 0.0f;
 }
