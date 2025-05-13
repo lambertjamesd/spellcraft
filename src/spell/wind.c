@@ -143,10 +143,10 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     collision_scene_add(&wind->dynamic_object);
 }
 
-void wind_apply_burst_velocity_with_dir(struct wind* wind, struct dynamic_object* obj, struct Vector3* wind_direction) {
+void wind_apply_burst_velocity_with_dir(float top_speed, struct dynamic_object* obj, struct Vector3* wind_direction) {
     struct Vector3 tangent;
     vector3ProjectPlane(&obj->velocity, wind_direction, &tangent);
-    vector3AddScaled(&tangent, wind_direction, wind->definition->top_speed, &obj->velocity);
+    vector3AddScaled(&tangent, wind_direction, top_speed, &obj->velocity);
     DYNAMIC_OBJECT_MARK_PUSHED(obj);
 }
 
@@ -161,7 +161,7 @@ void wind_apply_burst_velocity(struct wind* wind) {
             continue;
         }
 
-        wind_apply_burst_velocity_with_dir(wind, obj, &wind_direction);
+        wind_apply_burst_velocity_with_dir(wind->definition->top_speed, obj, &wind_direction);
     }
 }
 
@@ -177,23 +177,23 @@ void wind_apply_sphere_burst_velocity(struct wind* wind) {
         wind_direction.y = 0.0f;
         vector3Normalize(&wind_direction, &wind_direction);
 
-        wind_apply_burst_velocity_with_dir(wind, obj, &wind_direction);
+        wind_apply_burst_velocity_with_dir(wind->definition->top_speed, obj, &wind_direction);
     }
 }
 
-void wind_apply_push_velocity_with_dir(struct wind* wind, struct dynamic_object* obj, struct Vector3* wind_direction)  {
+void wind_apply_push_velocity_with_dir(struct wind_definition* definition, struct dynamic_object* obj, struct Vector3* wind_direction)  {
     struct Vector3 tangent;
     vector3ProjectPlane(&obj->velocity, wind_direction, &tangent);
     struct Vector3 normal;
     vector3Sub(&obj->velocity, &tangent, &normal);
     struct Vector3 wind_velocity;
-    vector3Scale(wind_direction, &wind_velocity, wind->definition->top_speed);
-    vector3MoveTowards(&normal, &wind_velocity, wind->definition->acceleration * fixed_time_step, &normal);
+    vector3Scale(wind_direction, &wind_velocity, definition->top_speed);
+    vector3MoveTowards(&normal, &wind_velocity, definition->acceleration * fixed_time_step, &normal);
     vector3Add(&tangent, &normal, &obj->velocity);
 
     DYNAMIC_OBJECT_MARK_PUSHED(obj);
 
-    if (wind->definition->flags & WIND_FLAGS_ICY) {
+    if (definition->flags & WIND_FLAGS_ICY) {
         DYNAMIC_OBJECT_MARK_DISABLE_FRICTION(obj);
     }
     obj->velocity.y -= (GRAVITY_CONSTANT - 0.1f) * fixed_time_step;
@@ -213,7 +213,7 @@ void wind_apply_push_velocity(struct wind* wind) {
             continue;
         }
 
-        wind_apply_push_velocity_with_dir(wind, obj, &wind_direction);
+        wind_apply_push_velocity_with_dir(wind->definition, obj, &wind_direction);
     }
 }
 
@@ -232,7 +232,7 @@ void wind_apply_sphere_push_velocity(struct wind* wind) {
         wind_direction.y = 0.0f;
         vector3Normalize(&wind_direction, &wind_direction);
 
-        wind_apply_push_velocity_with_dir(wind, obj, &wind_direction);
+        wind_apply_push_velocity_with_dir(wind->definition, obj, &wind_direction);
     }
 }
 

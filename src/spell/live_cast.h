@@ -15,6 +15,7 @@ struct active_spell {
 struct live_cast {
     struct spell pending_spell;
     uint8_t current_spell_output;
+    struct active_spell* last_spell;
     struct active_spell* active_spells;
     struct spell_render_animation spell_animation;
 };

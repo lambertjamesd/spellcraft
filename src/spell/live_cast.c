@@ -10,6 +10,7 @@ void live_cast_init(struct live_cast* live_cast) {
     live_cast->current_spell_output = 0;
     live_cast->active_spells = NULL;
     live_cast->spell_animation.last_symbol_time = 0.0f;
+    live_cast->last_spell = NULL;
 }
 
 void active_spell_free(struct active_spell* active_spell) {
@@ -28,15 +29,16 @@ void live_cast_destroy(struct live_cast* live_cast) {
         curr = next;
     }
     live_cast->active_spells = NULL;
+    live_cast->last_spell = NULL;
 }
 
 bool live_cast_has_pending_spell(struct live_cast* live_cast) {
-    return live_cast->current_spell_output > 0;
+    return live_cast->current_spell_output > 0 || live_cast->last_spell != NULL;
 }
 
 struct spell* live_cast_extract_active_spell(struct live_cast* live_cast) {
     if (live_cast->current_spell_output == 0) {
-        return NULL;
+        return &live_cast->last_spell->spell;
     }
 
     struct active_spell* spell = malloc(sizeof(struct active_spell));
@@ -47,6 +49,8 @@ struct spell* live_cast_extract_active_spell(struct live_cast* live_cast) {
 
     spell_set_symbol(&live_cast->pending_spell, 0, 0, (struct spell_symbol){});
     live_cast->current_spell_output = 0;
+
+    live_cast->last_spell = spell;
 
     return &spell->spell;
 }
@@ -90,7 +94,7 @@ void live_cast_cleanup_unused_spells(struct live_cast* live_cast, struct spell_e
     struct active_spell* curr = live_cast->active_spells;
 
     while (curr) {
-        if (spell_exec_is_used(spell_exec, &curr->spell)) {
+        if (curr == live_cast->last_spell || spell_exec_is_used(spell_exec, &curr->spell)) {
             prev = curr;
             curr = curr->next;
         } else {
