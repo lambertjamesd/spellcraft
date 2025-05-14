@@ -48,7 +48,7 @@ void single_push_update(void* data) {
     struct dynamic_object* obj = collision_scene_find_object(push_target->target);
 
     if (push_target->time_left < 0.0f || !obj) {
-        if (obj)
+        single_push_restore_target(push_target, obj);
 
         single_push_free(push_target);
         return;

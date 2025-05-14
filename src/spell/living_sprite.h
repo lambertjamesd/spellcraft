@@ -28,7 +28,9 @@ struct living_sprite_definition {
 struct living_sprite_flags {
     uint16_t is_attacking: 1;
     uint16_t is_mine: 1;
-    uint16_t did_apply_aeo;
+    uint16_t did_apply_aeo: 1;
+    uint16_t has_fire: 1;
+    uint16_t has_ice: 1;
 };
 
 struct living_sprite {

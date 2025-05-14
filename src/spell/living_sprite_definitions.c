@@ -1,5 +1,28 @@
 #include "./living_sprite_definitions.h"
 #include "../collision/shapes/capsule.h"
+#include "../collision/collision_scene.h"
+#include "push_single_target.h"
+
+static struct push_single_definition wind_push = {
+    .acceleration = 10.0f,
+    .top_speed = 16.0f,
+    .time = 2.0f,
+    .bursty = false,
+};
+
+static struct push_single_definition flaming_wind_push = {
+    .acceleration = 0.0f,
+    .top_speed = 10.0f,
+    .time = 1.0f,
+    .bursty = true,
+};
+
+static struct push_single_definition lightning_wind_push  = {
+    .acceleration = 0.0f,
+    .top_speed = 100.0f,
+    .time = 0.1f,
+    .bursty = true,
+};
 
 void sprite_element_damage(struct living_sprite* living_sprite, struct contact* contact, float portion) {
     struct damage_info damage = {
@@ -16,7 +39,30 @@ void sprite_element_damage(struct living_sprite* living_sprite, struct contact* 
 }
 
 void sprite_wind_effect(struct living_sprite* living_sprite, struct contact* contact, float portion) {
+    struct push_single_definition* definition = &wind_push;
 
+    if (living_sprite->flags.has_fire) {
+        definition = living_sprite->flags.has_ice ? &lightning_wind_push : &flaming_wind_push;
+    } else {
+        definition = &wind_push;
+    }
+
+
+    if (living_sprite->flags.is_mine) {
+        struct dynamic_object* obj = collision_scene_find_object(contact->other_object);
+        if (!obj) {
+            return;
+        }
+        struct Vector3 wind_direction;
+        vector3Sub(obj->position, &living_sprite->transform.position, &wind_direction);
+        wind_direction.y = 0.0f;
+        vector3Normalize(&wind_direction, &wind_direction);
+        single_push_new(contact->other_object, &wind_direction, definition);
+    } else {
+        struct Vector3 wind_direction;
+        vector3Negate(&contact->normal, &wind_direction);
+        single_push_new(contact->other_object, &wind_direction, definition);
+    }
 }
 
 void sprite_heal_effect(struct living_sprite* living_sprite, struct contact* contact, float portion) {
