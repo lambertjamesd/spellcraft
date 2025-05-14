@@ -301,6 +301,10 @@ void collision_scene_collide() {
             --element->object->disable_friction;
         }
 
+        if (element->object->under_water) {
+            --element->object->under_water;
+        }
+
         dynamic_object_update(element->object);
 
         dynamic_object_recalc_bb(element->object);

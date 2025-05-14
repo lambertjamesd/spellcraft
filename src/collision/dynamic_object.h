@@ -68,6 +68,7 @@ struct dynamic_object {
     uint16_t is_pushed: 2;
     uint16_t is_jumping: 2;
     uint16_t disable_friction: 2;
+    uint16_t under_water: 2;
     uint16_t collision_layers;
     uint16_t collision_group;
     struct contact* active_contacts;
