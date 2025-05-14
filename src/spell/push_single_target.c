@@ -12,7 +12,7 @@ void single_push_apply_burst_velocity_with_dir(float top_speed, struct dynamic_o
     DYNAMIC_OBJECT_MARK_PUSHED(obj);
 }
 
-void single_push_apply_velocity_with_dir(struct push_definition* definition, struct dynamic_object* obj, struct Vector3* wind_direction)  {
+void single_push_apply_velocity_with_dir(struct push_single_definition* definition, struct dynamic_object* obj, struct Vector3* wind_direction)  {
     struct Vector3 tangent;
     vector3ProjectPlane(&obj->velocity, wind_direction, &tangent);
     struct Vector3 normal;
@@ -26,6 +26,21 @@ void single_push_apply_velocity_with_dir(struct push_definition* definition, str
     obj->velocity.y -= (GRAVITY_CONSTANT - 0.1f) * fixed_time_step;
 }
 
+void single_push_restore_target(struct push_single_target* push, struct dynamic_object* obj) {
+    if (!obj) {
+        return;
+    }
+
+    if (push->definition->bursty) {
+        obj->velocity = gZeroVec;
+    }
+}
+
+void single_push_free(struct push_single_target* push) {
+    update_remove(push);
+    effect_free(push);
+}
+
 void single_push_update(void* data) {
     struct push_single_target* push_target = (struct push_single_target*)data;
 
@@ -33,7 +48,9 @@ void single_push_update(void* data) {
     struct dynamic_object* obj = collision_scene_find_object(push_target->target);
 
     if (push_target->time_left < 0.0f || !obj) {
-        update_remove(data);
+        if (obj)
+
+        single_push_free(push_target);
         return;
     }
 
@@ -44,7 +61,7 @@ void single_push_update(void* data) {
     }
 }
 
-struct push_single_target* single_push(entity_id target, struct Vector3* direction, struct push_definition* definiton) {
+struct push_single_target* single_push_new(entity_id target, struct Vector3* direction, struct push_single_definition* definiton) {
     struct push_single_target* result = effect_malloc(sizeof(struct push_single_target));
 
     if (!result) {

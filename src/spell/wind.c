@@ -12,63 +12,87 @@
 
 static struct wind_definition wind_definitions[] = {
     [ELEMENT_TYPE_NONE] = {
-        .acceleration = 10.0f,
-        .top_speed = 16.0f,
-        .burst_time = 0.0f,
+        .push = {
+            .acceleration = 10.0f,
+            .top_speed = 16.0f,
+            .time = 0.0f,
+            .bursty = false,
+        },
         .base_scale = 1.0f,
-        .flags = 0,
     },
     [ELEMENT_TYPE_FIRE] = {
-        .acceleration = 0.0f,
-        .top_speed = 10.0f,
-        .burst_time = 1.0f,
+        .push = {
+            .acceleration = 0.0f,
+            .top_speed = 10.0f,
+            .time = 1.0f,
+            .bursty = true,
+        },
         .base_scale = 1.0f,
-        .flags = 0,
     },
     [ELEMENT_TYPE_ICE] = {
-        .acceleration = 16.0f,
-        .top_speed = 10.0f,
-        .burst_time = 0.0f,
+        .push = {
+            .acceleration = 16.0f,
+            .top_speed = 10.0f,
+            .time = 0.0f,
+            .bursty = false,
+        },
         .base_scale = 1.0f,
-        .flags = WIND_FLAGS_ICY,
+        .icy = true,
     },
     [ELEMENT_TYPE_LIGHTNING] = {
-        .acceleration = 0.0f,
-        .top_speed = 100.0f,
-        .burst_time = 0.1f,
+        .push = {
+            .acceleration = 0.0f,
+            .top_speed = 100.0f,
+            .time = 0.1f,
+            .bursty = true,
+            .lightning = true,
+        },
         .base_scale = 1.0f,
-        .flags = WIND_FLAGS_LIGHTNING,
+        .lightning = true,
     },
 };
 
 static struct wind_definition wind_sphere_definitions[] = {
     [ELEMENT_TYPE_NONE] = {
-        .acceleration = 10.0f,
-        .top_speed = 16.0f,
-        .burst_time = 0.0f,
+        .push = {
+            .acceleration = 10.0f,
+            .top_speed = 16.0f,
+            .time = 0.0f,
+        },
         .base_scale = 1.0f,
-        .flags = WIND_FLAGS_SPHERE_PUSH,
+        .sphere = true,
     },
     [ELEMENT_TYPE_FIRE] = {
-        .acceleration = 0.0f,
-        .top_speed = 10.0f,
-        .burst_time = 0.5f,
+        .push = {
+            .acceleration = 0.0f,
+            .top_speed = 10.0f,
+            .time = 0.5f,
+            .bursty = true,
+        },
         .base_scale = 1.0f,
-        .flags = WIND_FLAGS_SPHERE_PUSH,
+        .sphere = true,
     },
     [ELEMENT_TYPE_ICE] = {
-        .acceleration = 16.0f,
-        .top_speed = 10.0f,
-        .burst_time = 0.0f,
+        .push = {
+            .acceleration = 16.0f,
+            .top_speed = 10.0f,
+            .time = 0.0f,
+        },
         .base_scale = 1.0f,
-        .flags = WIND_FLAGS_ICY | WIND_FLAGS_SPHERE_PUSH,
+        .sphere = true,
+        .icy = true,
     },
     [ELEMENT_TYPE_LIGHTNING] = {
-        .acceleration = 0.0f,
-        .top_speed = 100.0f,
-        .burst_time = 0.1f,
+        .push = {
+            .acceleration = 0.0f,
+            .top_speed = 100.0f,
+            .time = 0.1f,
+            .bursty = true,
+            .lightning = true,
+        },
         .base_scale = 1.0f,
-        .flags = WIND_FLAGS_LIGHTNING | WIND_FLAGS_SPHERE_PUSH,
+        .sphere = true,
+        .lightning = true,
     },
 };
 
@@ -104,13 +128,12 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     entity_id id = entity_id_new();
 
     wind->definition = effect_definition;
-    wind->push_timer = effect_definition->burst_time;
-    wind->flags = effect_definition->flags;
-    wind->current_pushing_count = 0;
+    wind->push_timer = effect_definition->push.time;
+    wind->did_burst = false;
 
     wind->data_source = spell_data_source_retain(source);
     spell_data_source_apply_transform_sa(source, &wind->transform);
-    renderable_single_axis_init(&wind->renderable, &wind->transform, (wind->flags & WIND_FLAGS_SPHERE_PUSH) ?  "rom:/meshes/spell/wind_sphere.tmesh" : "rom:/meshes/spell/wind.tmesh");
+    renderable_single_axis_init(&wind->renderable, &wind->transform, effect_definition->sphere ? "rom:/meshes/spell/wind_sphere.tmesh" : "rom:/meshes/spell/wind.tmesh");
 
     render_scene_add_renderable(&wind->renderable, 1.0f);
 
@@ -121,7 +144,7 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     dynamic_object_init(
         id, 
         &wind->dynamic_object, 
-        (wind->flags & WIND_FLAGS_SPHERE_PUSH) ? &wind_collider_sphere : &wind_collider, 
+        effect_definition->sphere ? &wind_collider_sphere : &wind_collider, 
         COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE, 
         &wind->transform.position, 
         &wind->transform.rotation
@@ -130,7 +153,7 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     wind->dynamic_object.is_trigger = 1;
     wind->dynamic_object.collision_group = source->target;
 
-    if (!(wind->flags & WIND_FLAGS_SPHERE_PUSH)) {
+    if (!effect_definition->sphere) {
         wind->dynamic_object.center = (struct Vector3){
             .x = 0.0f,
             .y = 0.0f,
@@ -143,60 +166,11 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     collision_scene_add(&wind->dynamic_object);
 }
 
-void wind_apply_burst_velocity_with_dir(float top_speed, struct dynamic_object* obj, struct Vector3* wind_direction) {
-    struct Vector3 tangent;
-    vector3ProjectPlane(&obj->velocity, wind_direction, &tangent);
-    vector3AddScaled(&tangent, wind_direction, top_speed, &obj->velocity);
-    DYNAMIC_OBJECT_MARK_PUSHED(obj);
-}
-
-void wind_apply_burst_velocity(struct wind* wind) {
-    struct Vector3 wind_direction;
-    vector2ToLookDir(&wind->transform.rotation, &wind_direction);
-
-    for (int i = 0; i < wind->current_pushing_count; i += 1) {
-        struct dynamic_object* obj = collision_scene_find_object(wind->pushing_entities[i]);
-
-        if (!obj) {
-            continue;
-        }
-
-        wind_apply_burst_velocity_with_dir(wind->definition->top_speed, obj, &wind_direction);
-    }
-}
-
-void wind_apply_sphere_burst_velocity(struct wind* wind) {
-    for (int i = 0; i < wind->current_pushing_count; i += 1) {
-        struct dynamic_object* obj = collision_scene_find_object(wind->pushing_entities[i]);
-
-        if (!obj) {
-            continue;
-        }
-        struct Vector3 wind_direction;
-        vector3Sub(obj->position, &wind->transform.position, &wind_direction);
-        wind_direction.y = 0.0f;
-        vector3Normalize(&wind_direction, &wind_direction);
-
-        wind_apply_burst_velocity_with_dir(wind->definition->top_speed, obj, &wind_direction);
-    }
-}
-
 void wind_apply_push_velocity_with_dir(struct wind_definition* definition, struct dynamic_object* obj, struct Vector3* wind_direction)  {
-    struct Vector3 tangent;
-    vector3ProjectPlane(&obj->velocity, wind_direction, &tangent);
-    struct Vector3 normal;
-    vector3Sub(&obj->velocity, &tangent, &normal);
-    struct Vector3 wind_velocity;
-    vector3Scale(wind_direction, &wind_velocity, definition->top_speed);
-    vector3MoveTowards(&normal, &wind_velocity, definition->acceleration * fixed_time_step, &normal);
-    vector3Add(&tangent, &normal, &obj->velocity);
-
-    DYNAMIC_OBJECT_MARK_PUSHED(obj);
-
-    if (definition->flags & WIND_FLAGS_ICY) {
+    single_push_apply_velocity_with_dir(&definition->push, obj, wind_direction);
+    if (definition->icy) {
         DYNAMIC_OBJECT_MARK_DISABLE_FRICTION(obj);
     }
-    obj->velocity.y -= (GRAVITY_CONSTANT - 0.1f) * fixed_time_step;
 }
 
 void wind_apply_push_velocity(struct wind* wind) {
@@ -237,20 +211,6 @@ void wind_apply_sphere_push_velocity(struct wind* wind) {
 }
 
 void wind_destroy(struct wind* wind) {
-    if (wind->definition->burst_time) {
-        // burst pushes lose the velocity after the initial push
-        
-        for (int i = 0; i < wind->current_pushing_count; i += 1) {
-            struct dynamic_object* obj = collision_scene_find_object(wind->pushing_entities[i]);
-
-            if (!obj) {
-                continue;
-            }
-
-            obj->velocity = gZeroVec;
-        }
-    }
-
     spell_data_source_release(wind->data_source);
     renderable_destroy(&wind->renderable);
     render_scene_remove(&wind->renderable);
@@ -258,39 +218,44 @@ void wind_destroy(struct wind* wind) {
 }
 
 bool wind_update_burst(struct wind* wind, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
-    if (!(wind->flags & WIND_FLAGS_DID_BURST)) {
+    if (!wind->did_burst) {
         struct contact* contact = wind->dynamic_object.active_contacts;
 
         if (contact) {
-            wind->flags |= WIND_FLAGS_DID_BURST;
-            int contact_index = 0;
-    
-            while (contact && contact_index < MAX_PUSHING_ENTITIES) {
-                wind->pushing_entities[contact_index] = contact->other_object;
-                contact = contact->next;
-                ++contact_index;
+            wind->did_burst = true;
+
+            struct Vector3 wind_direction;
+            if (!wind->definition->sphere) {
+                vector2ToLookDir(&wind->transform.rotation, &wind_direction);
             }
     
-            wind->current_pushing_count = contact_index;
-            collision_scene_remove(&wind->dynamic_object);
-        }
-    }
+            for (; contact; contact = contact->next) {
+                if (wind->definition->sphere) {
+                    struct dynamic_object* obj = collision_scene_find_object(contact->other_object);
 
-    if (wind->flags & WIND_FLAGS_SPHERE_PUSH) {
-        wind_apply_sphere_burst_velocity(wind);
-    } else {
-        wind_apply_burst_velocity(wind);
+                    if (!obj) {
+                        continue;
+                    }
+
+                    vector3Sub(obj->position, &wind->transform.position, &wind_direction);
+                    wind_direction.y = 0.0f;
+                    vector3Normalize(&wind_direction, &wind_direction);
+                }
+
+                single_push_new(contact->other_object, &wind_direction, &wind->definition->push);
+            }
+        }
     }
 
     wind->push_timer -= fixed_time_step;
 
-    return wind->push_timer > 0.0f && wind->data_source->flags.cast_state != SPELL_CAST_STATE_INACTIVE;
+    return wind->push_timer > 0.0f || wind->data_source->flags.cast_state != SPELL_CAST_STATE_INACTIVE;
 }
 
 bool wind_update_persistant(struct wind* wind, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     spell_data_source_apply_transform_sa(wind->data_source, &wind->transform);
 
-    if (wind->flags & WIND_FLAGS_SPHERE_PUSH) {
+    if (wind->definition->sphere) {
         wind_apply_sphere_push_velocity(wind);
     } else {
         wind_apply_push_velocity(wind);
@@ -306,7 +271,7 @@ bool wind_update(struct wind* wind, struct spell_event_listener* event_listener,
         wind->renderable.armature.pose[i].rotation = tmp;
     }
 
-    if (wind->definition->burst_time) {
+    if (wind->definition->push.bursty) {
         return wind_update_burst(wind, event_listener, spell_sources);
     } else {
         return wind_update_persistant(wind, event_listener, spell_sources);

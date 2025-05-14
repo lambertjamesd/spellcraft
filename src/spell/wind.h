@@ -7,26 +7,17 @@
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
 #include "elements.h"
-
-enum wind_flags {
-    WIND_FLAGS_LIGHTNING    = 1 << 0,
-    WIND_FLAGS_ICY          = 1 << 1,
-    WIND_FLAGS_SPHERE_PUSH  = 1 << 2,
-
-    WIND_FLAGS_DID_BURST    = 1 << 3,
-};
+#include "push_single_target.h"
 
 struct wind_definition {
-    float acceleration;
-    float top_speed;
-    float burst_time;
+    struct push_single_definition push;
+    uint8_t sphere: 1;
+    uint8_t icy: 1;
+    uint8_t lightning: 1;
     float base_scale;
-    uint16_t flags;
 };
 
 #define MAX_WIND_BONES   3
-
-#define MAX_PUSHING_ENTITIES    8
 
 struct wind {
     struct spell_data_source* data_source;
@@ -38,11 +29,8 @@ struct wind {
     struct Quaternion bone_rotations[MAX_WIND_BONES];
 
     float push_timer;
-    uint16_t flags;
 
-    uint8_t current_pushing_count;
-
-    entity_id pushing_entities[MAX_PUSHING_ENTITIES];
+    uint8_t did_burst: 1;
 };
 
 void wind_init(struct wind* wind, struct spell_data_source* source, struct spell_event_options event_options, struct wind_definition* effect_definition);
