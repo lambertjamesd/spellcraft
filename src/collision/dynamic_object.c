@@ -105,20 +105,16 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
         pitched_dir = *direction;
     }
 
-    rotated_dir.x = pitched_dir.x * object->rotation->x - pitched_dir.z * object->rotation->y;
-    rotated_dir.y = pitched_dir.y;
-    rotated_dir.z = pitched_dir.z * object->rotation->x + pitched_dir.x * object->rotation->y;
-
+    vector3RotateWith2(&pitched_dir, object->rotation, &rotated_dir);
     struct Vector3 unrotated_out;
     
     object->type->minkowsi_sum(&object->type->data, &rotated_dir, &unrotated_out);
     vector3Add(&unrotated_out, &object->center, &unrotated_out);
 
     struct Vector3 unpitched_out;
-
-    unpitched_out.x = unrotated_out.x * object->rotation->x + unrotated_out.z * object->rotation->y;
-    unpitched_out.y = unrotated_out.y;
-    unpitched_out.z = unrotated_out.z * object->rotation->x - unrotated_out.x * object->rotation->y;
+    struct Vector2 inv_rotation;
+    vector2ComplexConj(object->rotation, &inv_rotation);
+    vector3RotateWith2(&unrotated_out, &inv_rotation, &unpitched_out);
 
     if (object->pitch) {
         output->x = unpitched_out.x;

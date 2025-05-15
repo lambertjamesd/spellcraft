@@ -37,11 +37,8 @@ bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct 
                 relative_pos.x * relative_pos.x + relative_pos.z * relative_pos.z < 
                 trigger->data.cylinder.radius * trigger->data.cylinder.radius;
         case SPATIAL_TRIGGER_BOX: {
-            struct Vector3 unrotated = {
-                relative_pos.x * trigger->transform->rotation.x - relative_pos.z * trigger->transform->rotation.y,
-                relative_pos.y,
-                relative_pos.z * trigger->transform->rotation.x + relative_pos.x * trigger->transform->rotation.y,
-            };
+            struct Vector3 unrotated;
+            vector3RotateWith2(&relative_pos, &trigger->transform->rotation, &unrotated);
 
             return fabsf(unrotated.x) < trigger->data.box.half_size.x &&
                 fabsf(unrotated.y) < trigger->data.box.half_size.y &&

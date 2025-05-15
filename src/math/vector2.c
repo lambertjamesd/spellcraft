@@ -156,3 +156,9 @@ void vector3RotatedSpeed(struct Vector2* rotation, struct Vector3* result, float
     result->y = 0.0f;
     result->z = rotation->x * speed;
 }
+
+void vector3RotateWith2(struct Vector3* input, struct Vector2* rotation, struct Vector3* result) {
+    result->x = input->x * rotation->x - input->z * rotation->y;
+    result->y = input->y;
+    result->z = input->z * rotation->x + input->x * rotation->y;
+}
