@@ -2,6 +2,7 @@
 #define __COLLISION_COLLISION_SCENE_H__
 
 #include "dynamic_object.h"
+#include "spatial_trigger.h"
 #include "../collision/mesh_collider.h"
 #include "../util/hash_map.h"
 #include "contact.h"
@@ -13,9 +14,17 @@ typedef int collision_id;
 
 #define MAX_STATIC_MESHES   8
 
-struct collision_scene_element {
-    struct dynamic_object* object;
+enum collision_element_type {
+    COLLISION_ELEMENT_TYPE_DYNAMIC,
+    COLLISION_ELEMENT_TYPE_TRIGGER,
 };
+
+struct collision_scene_element {
+    void* object;
+    enum collision_element_type type;
+};
+
+struct Box3D* collision_scene_element_bounding_box(struct collision_scene_element* element);
 
 struct collision_scene {
     struct collision_scene_element* elements;
@@ -32,6 +41,9 @@ struct collision_scene {
 void collision_scene_reset();
 void collision_scene_add(struct dynamic_object* object);
 void collision_scene_remove(struct dynamic_object* object);
+
+void collision_scene_add_trigger(struct spatial_trigger* trigger);
+void collision_scene_remove_trigger(struct spatial_trigger* trigger);
 
 struct dynamic_object* collision_scene_find_object(entity_id id);
 

@@ -176,6 +176,25 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     a->active_contacts = contact;
 }
 
+void collide_object_to_trigger(struct dynamic_object* obj, struct spatial_trigger* trigger) {
+    if (!spatial_trigger_does_contain_point(trigger, obj->position)) {
+        return;
+    }
+
+    struct contact* contact = collision_scene_new_contact();
+
+    if (!contact) {
+        return;
+    }
+    
+    contact->normal = gZeroVec;
+    contact->point = *obj->position;
+    contact->other_object = obj->entity_id;
+
+    contact->next = trigger->active_contacts;
+    trigger->active_contacts = contact;
+}
+
 void collide_add_contact(struct dynamic_object* object, struct EpaResult* result) {
     struct contact* contact = collision_scene_new_contact();
 

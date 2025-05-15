@@ -15,6 +15,18 @@
 
 struct collision_scene g_scene;
 
+struct Box3D* collision_scene_element_bounding_box(struct collision_scene_element* element) {
+    if (element->type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
+        return &((struct dynamic_object*)element->object)->bounding_box;
+    }
+
+    if (element->type == COLLISION_ELEMENT_TYPE_TRIGGER) {
+        return &((struct spatial_trigger*)element->object)->bounding_box;
+    }
+
+    return NULL;
+}
+
 void collision_scene_reset() {
     free(g_scene.elements);
     free(g_scene.all_contacts);
@@ -36,7 +48,7 @@ void collision_scene_reset() {
     g_scene.all_contacts[MAX_ACTIVE_CONTACTS - 1].next = NULL;
 }
 
-void collision_scene_add(struct dynamic_object* object) {
+void collision_scene_add_with_type(void* object, enum collision_element_type type) {
     if (g_scene.count >= g_scene.capacity) {
         g_scene.capacity *= 2;
         g_scene.elements = realloc(g_scene.elements, sizeof(struct collision_scene_element) * g_scene.capacity);
@@ -45,12 +57,15 @@ void collision_scene_add(struct dynamic_object* object) {
     struct collision_scene_element* next = &g_scene.elements[g_scene.count];
 
     next->object = object;
+    next->type = type;
 
     g_scene.count += 1;
-
-    hash_map_set(&g_scene.entity_mapping, object->entity_id, object);
 }
 
+void collision_scene_add(struct dynamic_object* object) {
+    collision_scene_add_with_type(object, COLLISION_ELEMENT_TYPE_DYNAMIC);
+    hash_map_set(&g_scene.entity_mapping, object->entity_id, object);
+}
 
 struct dynamic_object* collision_scene_find_object(entity_id id) {
     if (!id) {
@@ -74,7 +89,7 @@ void collision_scene_return_contacts(struct dynamic_object* object) {
     }
 }
 
-void collision_scene_remove(struct dynamic_object* object) {
+void collision_scene_remove_any(void* object) {
     bool has_found = false;
 
     for (int i = 0; i < g_scene.count; ++i) {
@@ -91,8 +106,19 @@ void collision_scene_remove(struct dynamic_object* object) {
     if (has_found) {
         g_scene.count -= 1;
     }
+}
 
+void collision_scene_remove(struct dynamic_object* object) {
+    collision_scene_remove_any(object);
     hash_map_delete(&g_scene.entity_mapping, object->entity_id);
+}
+
+void collision_scene_add_trigger(struct spatial_trigger* trigger) {
+    collision_scene_add_with_type(trigger, COLLISION_ELEMENT_TYPE_TRIGGER);
+}
+
+void collision_scene_remove_trigger(struct spatial_trigger* trigger) {
+    collision_scene_remove_any(trigger);
 }
 
 void collision_scene_add_static_mesh(struct mesh_collider* collider) {
@@ -180,16 +206,17 @@ void collision_scene_collide_dynamic() {
 
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
+        struct Box3D* bb = collision_scene_element_bounding_box(element);
 
         curr_edge->is_start_edge = 1;
         curr_edge->object_index = i;
-        curr_edge->x = (short)floorf(element->object->bounding_box.min.x * 8.0f);
+        curr_edge->x = (short)floorf(bb->min.x * 8.0f);
 
         curr_edge += 1;
 
         curr_edge->is_start_edge = 0;
         curr_edge->object_index = i;
-        curr_edge->x = (short)ceilf(element->object->bounding_box.max.x * 8.0f);
+        curr_edge->x = (short)ceilf(bb->max.x * 8.0f);
 
         curr_edge += 1;
     }
@@ -204,13 +231,21 @@ void collision_scene_collide_dynamic() {
         struct collide_edge edge = collide_edges[edge_index];
 
         if (edge.is_start_edge) {
-            struct dynamic_object* a = g_scene.elements[edge.object_index].object;
+            struct collision_scene_element* a = &g_scene.elements[edge.object_index];
 
             for (int active_index = 0; active_index < active_object_count; active_index += 1) {
-                struct dynamic_object* b = g_scene.elements[active_objects[active_index]].object;
+                struct collision_scene_element* b = &g_scene.elements[active_objects[active_index]];
 
-                if (box3DHasOverlap(&a->bounding_box, &b->bounding_box)) {
-                    collide_object_to_object(a, b);
+                if (a->type == COLLISION_ELEMENT_TYPE_DYNAMIC && b->type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
+                    struct dynamic_object* a_obj = a->object;
+                    struct dynamic_object* b_obj = b->object;
+                    if (box3DHasOverlap(&a_obj->bounding_box, &b_obj->bounding_box)) {
+                        collide_object_to_object(a_obj, b_obj);
+                    }
+                } else if (a->type == COLLISION_ELEMENT_TYPE_DYNAMIC && b->type == COLLISION_ELEMENT_TYPE_TRIGGER) {
+                    collide_object_to_trigger(a->object, b->object);
+                } else if (a->type == COLLISION_ELEMENT_TYPE_TRIGGER && b->type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
+                    collide_object_to_trigger(b->object, a->object);
                 }
             }
 
@@ -289,31 +324,42 @@ void collision_scene_collide() {
 
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
-        prev_pos[i] = *element->object->position;
-
-        collision_scene_return_contacts(element->object);
-
-        if (element->object->is_pushed) {
-            --element->object->is_pushed;
+        if (element->type == COLLISION_ELEMENT_TYPE_TRIGGER) {
+            continue;
         }
 
-        if (element->object->disable_friction) {
-            --element->object->disable_friction;
+        struct dynamic_object* object = (struct dynamic_object*)element->object;
+
+        prev_pos[i] = *object->position;
+
+        collision_scene_return_contacts(object);
+
+        if (object->is_pushed) {
+            --object->is_pushed;
         }
 
-        if (element->object->under_water) {
-            --element->object->under_water;
+        if (object->disable_friction) {
+            --object->disable_friction;
         }
 
-        dynamic_object_update(element->object);
+        if (object->under_water) {
+            --object->under_water;
+        }
 
-        dynamic_object_recalc_bb(element->object);
+        dynamic_object_update(object);
+
+        dynamic_object_recalc_bb(object);
     }
 
     collision_scene_collide_dynamic();
 
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
+
+        if (element->type == COLLISION_ELEMENT_TYPE_TRIGGER) {
+            continue;
+        }
+
         collision_scene_collide_single(element->object, &prev_pos[i]);
     }
 }
@@ -353,24 +399,30 @@ void collision_scene_query(struct dynamic_object_type* shape, struct Vector3* ce
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
 
-        if (!(element->object->collision_layers & collision_layers)) {
+        if (element->type == COLLISION_ELEMENT_TYPE_TRIGGER) {
             continue;
         }
 
-        if (!box3DHasOverlap(&bounding_box, &element->object->bounding_box)) {
+        struct dynamic_object* object = element->object;
+
+        if (!(object->collision_layers & collision_layers)) {
+            continue;
+        }
+
+        if (!box3DHasOverlap(&bounding_box, &object->bounding_box)) {
             continue;
         }
 
         struct Simplex simplex;
 
         struct Vector3 first_dir;
-        vector3Sub(center, element->object->position, &first_dir);
+        vector3Sub(center, object->position, &first_dir);
 
-        if (!gjkCheckForOverlap(&simplex, &positioned_shape, positioned_shape_mink_sum, element->object, dynamic_object_minkowski_sum, &first_dir)) {
+        if (!gjkCheckForOverlap(&simplex, &positioned_shape, positioned_shape_mink_sum, object, dynamic_object_minkowski_sum, &first_dir)) {
             continue;;
         }
 
-        callback(callback_data, element->object);
+        callback(callback_data, object);
     }
 }
 
@@ -379,5 +431,9 @@ int collision_scene_get_count() {
 }
 
 struct dynamic_object* collision_scene_get_element(int index) {
-    return g_scene.elements[index].object;
+    if (g_scene.elements[index].type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
+        return g_scene.elements[index].object;
+    }
+
+    return NULL;
 }

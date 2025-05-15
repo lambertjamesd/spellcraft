@@ -4,6 +4,7 @@
 #include "../math/transform_single_axis.h"
 #include "../math/vector3.h"
 #include "../math/box3d.h"
+#include "../entity/entity_id.h"
 #include "contact.h"
 #include <stdbool.h>
 

@@ -13,6 +13,10 @@ void debug_render_colliders(void* data, struct render_batch* batch) {
     for (int i = 0; i < collision_scene_get_count(); i += 1) {
         struct dynamic_object* dynamic_object = collision_scene_get_element(i);
 
+        if (!dynamic_object) {
+            continue;
+        }
+
         T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
         if (!mtxfp) {
