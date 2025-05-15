@@ -22,6 +22,7 @@
 #include "../objects/training_dummy.h"
 #include "../objects/treasure_chest.h"
 #include "../objects/empty.h"
+#include "../objects/water_cube.h"
 
 #include "../collision/collision_scene.h"
 
@@ -50,6 +51,7 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(npc, fields_npc),
     ENTITY_DEFINITION(training_dummy, fields_empty),
     ENTITY_DEFINITION(treasure_chest, fields_empty),
+    ENTITY_DEFINITION(water_cube, fields_empty),
 };
 
 // WRLD

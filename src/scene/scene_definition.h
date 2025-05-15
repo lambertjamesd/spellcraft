@@ -16,6 +16,7 @@ enum entity_type_id {
     ENTITY_TYPE_npc,
     ENTITY_TYPE_training_dummy,
     ENTITY_TYPE_treasure_chest,
+    ENTITY_TYPE_water_cube,
 };
 
 struct crate_definition {
@@ -76,6 +77,12 @@ struct biter_definition {
 struct ground_torch_definition {
     struct Vector3 position;
     bool is_lit;
+};
+
+struct water_cube_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    struct Vector3 scale;
 };
 
 enum npc_type {

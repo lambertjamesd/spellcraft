@@ -75,8 +75,8 @@ struct dynamic_object* collision_scene_find_object(entity_id id) {
     return hash_map_get(&g_scene.entity_mapping, id);
 }
 
-void collision_scene_return_contacts(struct dynamic_object* object) {
-    struct contact* last_contact = object->active_contacts;
+void collision_scene_return_contacts(struct contact* active_contacts) {
+    struct contact* last_contact = active_contacts;
 
     while (last_contact && last_contact->next) {
         last_contact = last_contact->next;
@@ -84,8 +84,7 @@ void collision_scene_return_contacts(struct dynamic_object* object) {
 
     if (last_contact) {
         last_contact->next = g_scene.next_free_contact;
-        g_scene.next_free_contact = object->active_contacts;
-        object->active_contacts = NULL;
+        g_scene.next_free_contact = active_contacts;
     }
 }
 
@@ -94,7 +93,15 @@ void collision_scene_remove_any(void* object) {
 
     for (int i = 0; i < g_scene.count; ++i) {
         if (object == g_scene.elements[i].object) {
-            collision_scene_return_contacts(object);
+            if (g_scene.elements[i].type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
+                struct dynamic_object* obj = g_scene.elements[i].object;
+                collision_scene_return_contacts(obj->active_contacts);
+                obj->active_contacts = NULL;
+            } else {
+                struct spatial_trigger* trigger = g_scene.elements[i].object;
+                collision_scene_return_contacts(trigger->active_contacts);
+                trigger->active_contacts = NULL;
+            }
             has_found = true;
         }
 
@@ -325,6 +332,10 @@ void collision_scene_collide() {
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
         if (element->type == COLLISION_ELEMENT_TYPE_TRIGGER) {
+            struct spatial_trigger* trigger = element->object;
+            spatial_trigger_recalc_bb(trigger);
+            collision_scene_return_contacts(trigger->active_contacts);
+            trigger->active_contacts = NULL;
             continue;
         }
 
@@ -332,7 +343,8 @@ void collision_scene_collide() {
 
         prev_pos[i] = *object->position;
 
-        collision_scene_return_contacts(object);
+        collision_scene_return_contacts(object->active_contacts);
+        object->active_contacts = NULL;
 
         if (object->is_pushed) {
             --object->is_pushed;

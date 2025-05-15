@@ -115,6 +115,10 @@ def get_position(obj: bpy.types.Object) -> mathutils.Vector:
     loc, rot, scale = _get_transform(obj).decompose()
     return loc
 
+def get_scale(obj: bpy.types.Object) -> mathutils.Vector:
+    loc, rot, scale = _get_transform(obj).decompose()
+    return scale
+
 def layout_strings(obj: bpy.types.Object, definition, context: SerializeContext, field_name = None):
     if _is_string_type(definition):
         context.get_string_offset(str(_get_value(obj, field_name, "")))
@@ -126,6 +130,10 @@ def layout_strings(obj: bpy.types.Object, definition, context: SerializeContext,
 def write_vector3_position(file, obj: bpy.types.Object):
     loc = get_position(obj)
     file.write(struct.pack(">fff", loc.x, loc.y, loc.z))
+
+def write_vector3_scale(file, obj: bpy.types.Object):
+    scale = get_scale(obj)
+    file.write(struct.pack(">fff", scale.x, scale.y, scale.z))
 
 
 def write_vector2_rotation(file, obj: bpy.types.Object):
@@ -187,6 +195,9 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
         if definition == 'struct Vector3':
             if field_name == 'position':
                 write_vector3_position(file, obj)
+                return offset + 12
+            if field_name == 'scale':
+                write_vector3_scale(file, obj)
                 return offset + 12
         if definition == 'struct Vector2':
             if field_name == 'rotation':
