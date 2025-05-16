@@ -19,6 +19,13 @@
 
 #define PLAYER_CAST_SOURCE_COUNT    5
 
+enum player_animation_state {
+    PLAYER_ANIMATION_GROUNDED,
+    PLAYER_ANIMATION_JUMPING,
+    PLAYER_ANIMATION_FALLING,
+    PLAYER_ANIMATION_SWIMMING,
+};
+
 struct player_animations {
     struct animation_clip* idle;
     struct animation_clip* run;
@@ -28,6 +35,16 @@ struct player_animations {
     struct animation_clip* attack_hold;
     struct animation_clip* air_dash;
     struct animation_clip* take_damage;
+
+    struct animation_clip* tread_water;
+    struct animation_clip* swim;
+
+    struct animation_clip* jump;
+    struct animation_clip* jump_peak;
+    struct animation_clip* fall;
+    struct animation_clip* land;
+
+    enum player_animation_state state;
 };
 
 struct player_definition {

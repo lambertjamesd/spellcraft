@@ -350,6 +350,10 @@ void collision_scene_collide() {
             --object->is_pushed;
         }
 
+        if (object->is_jumping) {
+            --object->is_jumping;
+        }
+
         if (object->disable_friction) {
             --object->disable_friction;
         }

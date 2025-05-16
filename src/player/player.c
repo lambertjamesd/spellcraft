@@ -73,8 +73,77 @@ void player_get_move_basis(struct Transform* transform, struct Vector3* forward,
     vector3Normalize(right, right);
 }
 
-struct animation_clip* player_determine_animation(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
-    if (player->cutscene_actor.animator.current_clip == player->animations.take_damage && 
+struct animation_clip* player_determine_animation_jumping(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+    struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
+    struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    *playback_speed = 1.0f;
+    *repeat = false;
+    if (collider->velocity.y < 0.0f) {
+        player->animations.state = PLAYER_ANIMATION_FALLING;
+        return player->animations.jump_peak;
+    } else if (ground_normal) {
+        player->animations.state = PLAYER_ANIMATION_GROUNDED;
+        return player->animations.land;
+    }
+
+    return NULL;
+}
+
+struct animation_clip* player_determine_animation_falling(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+    struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
+    struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    *playback_speed = 1.0f;
+
+    if (ground_normal) {
+        *repeat = false;
+        player->animations.state = PLAYER_ANIMATION_GROUNDED;
+        return player->animations.land;
+    } else if (collider->under_water) {
+        player->animations.state = PLAYER_ANIMATION_SWIMMING;
+        *repeat = true;
+        return player->animations.tread_water;
+    } else if (current_clip == player->animations.jump_peak) {
+        *repeat = false;
+        return player->animations.jump_peak;
+    } else {
+        *repeat = false;
+        return player->animations.fall;
+    }
+}
+
+struct animation_clip* player_determine_animation_swimming(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+    struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
+    struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    *playback_speed = 1.0f;
+
+    if (ground_normal) {
+        *repeat = false;
+        player->animations.state = PLAYER_ANIMATION_GROUNDED;
+        return player->animations.land;
+    } else if (!collider->under_water) {
+        player->animations.state = PLAYER_ANIMATION_FALLING;
+        *repeat = true;
+        return player->animations.fall;
+    }
+
+    struct Vector3 horizontal_velocity = collider->velocity;
+    horizontal_velocity.y = 0.0f;
+    float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
+
+    *playback_speed = 1.0f;
+    *repeat = true;
+    return speed > 0.1f ? player->animations.swim : player->animations.tread_water;
+}
+
+struct animation_clip* player_determine_animation_grounded(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+    struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
+    struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    
+    if (current_clip == player->animations.take_damage && 
         animator_is_running(&player->cutscene_actor.animator)) {
         return player->animations.take_damage;
     }
@@ -87,11 +156,31 @@ struct animation_clip* player_determine_animation(struct player* player, struct 
         }
     }
 
-    struct Vector3 horizontal_velocity = player->cutscene_actor.collider.velocity;
+    struct Vector3 horizontal_velocity = collider->velocity;
     horizontal_velocity.y = 0.0f;
     float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
 
-    if (player->cutscene_actor.collider.is_pushed) {
+    if (current_clip == player->animations.land) {
+        *playback_speed = 1.0f;
+        *repeat = false;
+        return player->animations.land;
+    }
+
+    if (collider->is_jumping) {
+        *playback_speed = 1.0f;
+        *repeat = false;
+        player->animations.state = PLAYER_ANIMATION_JUMPING;
+        return player->animations.jump;
+    }
+
+    if (collider->under_water) {
+        *playback_speed = 1.0f;
+        *repeat = true;
+        player->animations.state = PLAYER_ANIMATION_SWIMMING;
+        return player->animations.tread_water;
+    }
+
+    if (collider->is_pushed) {
         if (ground_normal) {
             *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
             *repeat = true;
@@ -124,6 +213,22 @@ struct animation_clip* player_determine_animation(struct player* player, struct 
     *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
     *repeat = true;
     return player->animations.dash;
+}
+
+struct animation_clip* player_determine_animation(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+    if (player->animations.state == PLAYER_ANIMATION_JUMPING) {
+        return player_determine_animation_jumping(player, ground_normal, playback_speed, repeat);
+    }
+
+    if (player->animations.state == PLAYER_ANIMATION_FALLING) {
+        return player_determine_animation_falling(player, ground_normal, playback_speed, repeat);
+    }
+
+    if (player->animations.state == PLAYER_ANIMATION_SWIMMING) {
+        return player_determine_animation_swimming(player, ground_normal, playback_speed, repeat);
+    }
+
+    return player_determine_animation_grounded(player, ground_normal, playback_speed, repeat);
 }
 
 bool player_cast_state(joypad_buttons_t buttons, int button_index) {
@@ -273,7 +378,7 @@ void player_update(struct player* player) {
 
     if (player->cutscene_actor.state == ACTOR_STATE_IDLE) {
         player->cutscene_actor.animate_speed = playback_speed;
-        if (next_clip != player->cutscene_actor.animator.current_clip) {
+        if (next_clip != NULL && next_clip != player->cutscene_actor.animator.current_clip) {
             animator_run_clip(&player->cutscene_actor.animator, next_clip, 0.0f, repeat);
         }
     }
@@ -411,6 +516,16 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->animations.dash = animation_set_find_clip(player->cutscene_actor.animation_set, "dash");
     player->animations.air_dash = animation_set_find_clip(player->cutscene_actor.animation_set, "air_dash");
     player->animations.take_damage = animation_set_find_clip(player->cutscene_actor.animation_set, "take_damage");
+
+    player->animations.tread_water = animation_set_find_clip(player->cutscene_actor.animation_set, "tread_water");
+    player->animations.swim = animation_set_find_clip(player->cutscene_actor.animation_set, "swim");
+
+    player->animations.jump = animation_set_find_clip(player->cutscene_actor.animation_set, "jump");
+    player->animations.jump_peak = animation_set_find_clip(player->cutscene_actor.animation_set, "jump_peak");
+    player->animations.fall = animation_set_find_clip(player->cutscene_actor.animation_set, "fall");
+    player->animations.land = animation_set_find_clip(player->cutscene_actor.animation_set, "land");
+
+    player->animations.state = PLAYER_ANIMATION_GROUNDED;
 
     player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
     player->assets.staffs[1] = NULL;

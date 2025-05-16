@@ -3,6 +3,8 @@
 #include "../collision/collision_scene.h"
 #include "../time/time.h"
 
+#define OBJECT_DENSITY  0.6f
+
 void water_cube_update(void* data) {
     struct water_cube* cube = (struct water_cube*)data;
 
@@ -17,9 +19,22 @@ void water_cube_update(void* data) {
             continue;
         }
 
-        obj->under_water = 2;
+        float water_top = cube->trigger.bounding_box.max.y;
+
+        if (obj->bounding_box.min.y >= water_top) {
+            continue;
+        }
+
+        float underwater_ratio = obj->bounding_box.max.y <= water_top ? 
+            1.0f : 
+            (water_top - obj->bounding_box.min.y) / (obj->bounding_box.max.y - obj->bounding_box.min.y);
+
         vector3Scale(&obj->velocity, &obj->velocity, 0.9f);
-        obj->velocity.y -= GRAVITY_CONSTANT * fixed_time_step;
+        obj->velocity.y -= underwater_ratio * (GRAVITY_CONSTANT / OBJECT_DENSITY) * fixed_time_step;
+
+        if (underwater_ratio > 0.5f) {
+            obj->under_water = 2;
+        }
     }
 }
 
