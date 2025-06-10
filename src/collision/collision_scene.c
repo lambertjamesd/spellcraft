@@ -362,6 +362,10 @@ void collision_scene_collide() {
             --object->under_water;
         }
 
+        if (object->has_ice_dash) {
+            --object->has_ice_dash;
+        }
+
         dynamic_object_update(object);
 
         dynamic_object_recalc_bb(object);

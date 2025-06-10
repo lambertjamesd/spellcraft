@@ -130,6 +130,7 @@ bool push_update(struct push* push, struct spell_event_listener* event_listener,
     DYNAMIC_OBJECT_MARK_PUSHED(target);
     if (push->definition->damage_type == DAMAGE_TYPE_ICE) {
         DYNAMIC_OBJECT_MARK_DISABLE_FRICTION(target);
+        DYNAMIC_OBJECT_MARK_ICE_DASH(target);
     }
 
     struct Vector3 targetVelocity;

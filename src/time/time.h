@@ -13,6 +13,7 @@ typedef int update_id;
 #define UPDATE_LAYER_PAUSE_MENU     (1 << 3)
 #define UPDATE_LAYER_CUTSCENE       (1 << 4)
 
+#define UPDATE_PRIORITY_PHYICS  -1
 #define UPDATE_PRIORITY_PLAYER  0
 #define UPDATE_PRIORITY_SPELLS  1
 #define UPDATE_PRIORITY_CAMERA  2

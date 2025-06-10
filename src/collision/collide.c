@@ -7,16 +7,16 @@
 #include <stdio.h>
 
 
-void correct_velocity(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce) {
-    float velocityDot = vector3Dot(&object->velocity, &result->normal);
+void correct_velocity(struct dynamic_object* object, struct Vector3* normal, float ratio, float friction, float bounce) {
+    float velocityDot = vector3Dot(&object->velocity, normal);
 
     if ((velocityDot < 0) == (ratio < 0)) {
         struct Vector3 tangentVelocity;
 
-        vector3AddScaled(&object->velocity, &result->normal, -velocityDot, &tangentVelocity);
+        vector3AddScaled(&object->velocity, normal, -velocityDot, &tangentVelocity);
         vector3Scale(&tangentVelocity, &tangentVelocity, 1.0f - friction);
 
-        vector3AddScaled(&tangentVelocity, &result->normal, velocityDot * -bounce, &object->velocity);
+        vector3AddScaled(&tangentVelocity, normal, velocityDot * -bounce, &object->velocity);
     }
 }
 
@@ -29,7 +29,7 @@ void correct_overlap(struct dynamic_object* object, struct EpaResult* result, fl
 
     if (dynamic_object_should_slide(object->type->max_stable_slope, slope_amount)) {
         vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
-        correct_velocity(object, result, ratio, friction, bounce);
+        correct_velocity(object, &result->normal, ratio, friction, bounce);
     } else {
         float offset = result->penetration / slope_amount;
         if (ratio > 0.0f) {

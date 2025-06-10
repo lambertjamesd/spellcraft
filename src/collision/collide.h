@@ -11,7 +11,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
 
 void collide_object_to_trigger(struct dynamic_object* obj, struct spatial_trigger* trigger);
 
-void correct_velocity(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce);
+void correct_velocity(struct dynamic_object* object, struct Vector3* normal, float ratio, float friction, float bounce);
 void correct_overlap(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce);
 
 void collide_add_contact(struct dynamic_object* object, struct EpaResult* result);
