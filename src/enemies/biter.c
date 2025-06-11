@@ -23,6 +23,8 @@ static struct dynamic_object_type biter_collision_type = {
         },
     },
     .friction = 0.5f,
+    // about a 40 degree slope
+    .max_stable_slope = 0.219131191f,
 };
 
 static struct dynamic_object_type biter_vision_collision_type = {

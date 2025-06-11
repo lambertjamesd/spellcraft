@@ -150,6 +150,7 @@ ALPHACOMPARE = {
     "NONE": 0,
     "THRESHOLD": 1,
     "NOISE": 3,
+    "DITHER": 3,
 }
 
 UV_GEN = {

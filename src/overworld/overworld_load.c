@@ -27,8 +27,7 @@ struct overworld_tile* overworld_tile_load(FILE* file) {
         sizeof(struct overworld_tile) +
         sizeof(struct tmesh) * mesh_count +
         sizeof(rspq_block_t*) * mesh_count +
-        sizeof(struct tmesh*) * detail_mesh_count +
-        sizeof(T3DMat4FP) * detail_count
+        sizeof(struct tmesh*) * detail_mesh_count
     );
 
     fread(&result->starting_y, sizeof(float), 1, file);
@@ -39,7 +38,7 @@ struct overworld_tile* overworld_tile_load(FILE* file) {
     result->terrain_meshes = (struct tmesh*)(result + 1);
     result->render_blocks = (rspq_block_t**)(result->terrain_meshes + mesh_count);
     result->detail_meshes = (struct tmesh**)(result->render_blocks + mesh_count);
-    result->detail_matrices = (T3DMat4FP*)(result->detail_meshes + detail_mesh_count);
+    result->detail_matrices = detail_count ? malloc(sizeof(T3DMat4FP) * detail_count) : NULL;
 
     for (int i = 0; i < detail_mesh_count; i += 1) {
         uint8_t filename_len;
@@ -100,6 +99,7 @@ void overworld_tile_free(struct overworld_tile* tile) {
     for (int i = 0; i < tile->detail_mesh_count; i += 1) {
         tmesh_cache_release(tile->detail_meshes[i]);
     }
+    free(tile->detail_matrices);
     free(tile);
 }
 
