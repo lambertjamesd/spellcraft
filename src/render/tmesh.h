@@ -22,8 +22,6 @@ struct tmesh {
     uint16_t vertex_count;
     uint16_t material_transition_count;
     struct armature_definition armature;
-    // this is a single instance for the entire mesh this should be instanced in the future after t3d supports it
-    T3DMat4FP *armature_pose;
 
     struct armature_attatchment* attatchments;
     uint16_t attatchment_count;

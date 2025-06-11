@@ -25,7 +25,6 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->mesh.transform = NULL;
     result->mesh.transform_count = 0;
     result->mesh.pose = NULL;
-    result->mesh.tmp_fixed_pose = NULL;
     result->mesh.color = (color_t){255, 255, 255, 255};
     result->mesh.use_prim_color = 0;
 
@@ -70,7 +69,6 @@ struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, 
     element->mesh.transform = transform;
     element->mesh.transform_count = transform_count;
     element->mesh.pose = NULL;
-    element->mesh.tmp_fixed_pose = UncachedAddr(mesh->armature_pose);
 
     if (armature && armature->bone_count) {
         T3DMat4* pose = armature_build_pose(armature, batch->pool);
@@ -300,8 +298,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 continue;
             }
 
-            if (element->mesh.pose && element->mesh.tmp_fixed_pose) {
-                memcpy(element->mesh.tmp_fixed_pose, element->mesh.pose, sizeof(T3DMat4FP) * element->mesh.bone_count);
+            if (element->mesh.pose) {
+                t3d_segment_set(T3D_SEGMENT_SKELETON, element->mesh.pose);
             }
 
             if (element->mesh.transform_count) {

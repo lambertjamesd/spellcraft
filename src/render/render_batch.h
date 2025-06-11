@@ -48,8 +48,6 @@ struct render_batch_element {
             T3DMat4FP* pose;
             short bone_count;
             short transform_count;
-            // this is temporary
-            T3DMat4FP* tmp_fixed_pose;
             color_t color;
             uint8_t use_prim_color;
         } mesh;

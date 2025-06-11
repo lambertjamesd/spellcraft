@@ -111,13 +111,6 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     fread(tmesh->armature.parent_linkage, 1, bone_count, file);
     fread(tmesh->armature.default_pose, sizeof(struct armature_packed_transform), bone_count, file);
 
-    if (bone_count) {
-        tmesh->armature_pose = malloc(sizeof(T3DMat4FP) * bone_count);
-        armature_def_apply(&tmesh->armature, tmesh->armature_pose);
-    } else {
-        tmesh->armature_pose = NULL;
-    }
-
     // load attatchments
     fread(&tmesh->attatchment_count, 2, 1, file);
 
@@ -139,6 +132,8 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     fread(&command_count, sizeof(uint16_t), 1, file);
 
     bool has_bone = false;
+
+    T3DMat4FP* armature = t3d_segment_placeholder(T3D_SEGMENT_SKELETON);
 
     rspq_block_begin();
 
@@ -190,9 +185,9 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
                         has_bone = false;
                     }
                 } else if (has_bone) {
-                    t3d_matrix_set(&tmesh->armature_pose[bone_index], true);
+                    t3d_matrix_set(&armature[bone_index], true);
                 } else {
-                    t3d_matrix_push(&tmesh->armature_pose[bone_index]);
+                    t3d_matrix_push(&armature[bone_index]);
                     has_bone = true;
                 }
                 break;
@@ -212,7 +207,6 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
 void tmesh_release(struct tmesh* tmesh) {
     rspq_block_free(tmesh->block);
     free(tmesh->vertices);
-    free(tmesh->armature_pose);
 
     if (tmesh->material) {
         material_cache_release(tmesh->material);
