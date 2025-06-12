@@ -12,6 +12,7 @@ struct lightning_effect {
     struct armature armature;
     struct lightning_effect_def* def;
     struct Vector3 last_position;
+    struct Vector3 start_position;
     short next_transform;
 };
 

@@ -8,7 +8,21 @@
 
 void lightning_effect_render(void* data, struct render_batch* batch) {
     struct lightning_effect* effect = (struct lightning_effect*)data;
-    render_batch_add_tmesh(batch, spell_assets_get()->lightning_mesh, NULL, 0, &effect->armature, NULL);
+
+    T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
+
+    if (!mtxfp) {
+        return;
+    }
+
+    mat4x4 mtx;
+    struct Vector3 scaled_pos;
+    vector3Scale(&effect->start_position, &scaled_pos, WORLD_SCALE);
+    matrixFromPosition(mtx, &scaled_pos);
+    render_batch_relative_mtx(batch, mtx);
+    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
+
+    render_batch_add_tmesh(batch, spell_assets_get()->lightning_mesh, mtxfp, 1, &effect->armature, NULL);
 }
 
 struct lightning_effect* lightning_effect_new(struct Vector3* position, struct lightning_effect_def* def) {
@@ -23,6 +37,7 @@ struct lightning_effect* lightning_effect_new(struct Vector3* position, struct l
 
     result->def = def;
     result->next_transform = 0;
+    result->start_position = *position;
 
     return result;
 }
@@ -33,7 +48,10 @@ void lightning_effect_set_position(struct lightning_effect* effect, struct Vecto
     for (int i = 0; i < 2; i += 2) {
         struct Transform* next_transform = &effect->armature.pose[effect->next_transform];
 
-        vector3Scale(position, &next_transform->position, MODEL_SCALE);
+        struct Vector3 relative_pos;
+        vector3Sub(position, &effect->start_position, &relative_pos);
+
+        vector3Scale(&relative_pos, &next_transform->position, MODEL_SCALE);
         vector3Scale(&gOneVec, &next_transform->scale, randomInRangef(radius * 0.5f, radius));
 
         struct Quaternion look_rotation;
