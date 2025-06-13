@@ -4,11 +4,12 @@
 #include "../math/transform_single_axis.h"
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
+#include "../collision/spatial_trigger.h"
 
 struct mana_gem {
     struct TransformSingleAxis transform;
-    struct renderable renderable;
-    struct dynamic_object collision;
+    struct spatial_trigger trigger;
+    struct Vector3 velocity;
     float mana_amount;
     float radius;
 };

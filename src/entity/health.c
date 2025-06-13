@@ -50,13 +50,21 @@ void health_destroy(struct health* health) {
     update_remove(health);
 }
 
-void health_damage(struct health* health, struct damage_info* damage) {
+float health_damage(struct health* health, struct damage_info* damage) {
     if (health->health_shield && health_shield_does_block(health->health_shield, damage)) {
-        return;
+        return 0.0f;
     }
 
+    float result = 0.0f;
+
     if (health->max_health) {
-        health->current_health -= damage->amount;
+        if (health->current_health >= damage->amount) {
+            result = damage->amount;
+            health->current_health -= damage->amount;
+        } else {
+            result = health->current_health;
+            health->current_health = 0.0f;
+        }
     }
 
     if (damage->type & DAMAGE_TYPE_FIRE) {
@@ -76,16 +84,18 @@ void health_damage(struct health* health, struct damage_info* damage) {
     if (health->callback) {
         health->callback(health->callback_data, damage);
     }
+
+    return result;
 }
 
-void health_damage_id(entity_id target, struct damage_info* damage) {
+float health_damage_id(entity_id target, struct damage_info* damage) {
     struct health* health = health_get(target);
 
     if (!health) {
-        return;
+        return 0.0f;
     }
 
-    health_damage(health, damage);
+    return health_damage(health, damage);
 }
 
 void health_heal(struct health* health, float amount) {

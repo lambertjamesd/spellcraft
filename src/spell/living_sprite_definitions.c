@@ -1,6 +1,7 @@
-#include "./living_sprite_definitions.h"
-#include "../collision/shapes/capsule.h"
 #include "../collision/collision_scene.h"
+#include "../collision/shapes/capsule.h"
+#include "../objects/mana_gem.h"
+#include "./living_sprite_definitions.h"
 #include "push_single_target.h"
 
 static struct push_single_definition wind_push = {
@@ -73,6 +74,33 @@ void sprite_heal_effect(struct living_sprite* living_sprite, struct contact* con
     }
 
     health_heal(health, living_sprite->health.current_health * portion);
+}
+
+void sprite_life_steal_effect(struct living_sprite* living_sprite, struct contact* contact, float portion) {
+    struct health* health = health_get(contact->other_object);
+
+    if (!health) {
+        return;
+    }
+
+    struct Vector3 location;
+
+    struct dynamic_object* dynamic = collision_scene_find_object(contact->other_object);
+
+    if (dynamic) {
+        vector3Add(dynamic->position, &dynamic->center, &location);
+    } else {
+        vector3Add(&living_sprite->transform.position, &gUp, &location);
+    }
+
+    float damage_amount = health_damage(health, &(struct damage_info){
+        .amount = 5.0f,
+        .direction = gZeroVec,
+        .source = living_sprite->collider.entity_id,
+        .type = DAMAGE_TYPE_STEAL,
+    });
+
+    mana_gem_new(&location, damage_amount);
 }
 
 static struct living_sprite_definition sprite_definitions[] = {
@@ -202,6 +230,7 @@ static struct living_sprite_definition life_steal_sprite = {
     },
     .damage = 0.0f,
     .model_file = "rom:/meshes/spell/life_steal_sprite.tmesh",
+    .on_contact = sprite_life_steal_effect,
 };
 
 struct living_sprite_definition* living_sprite_find_def(enum element_type element_type, bool has_air, bool has_fire, bool has_ice) {

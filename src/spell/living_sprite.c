@@ -1,14 +1,13 @@
 #include "living_sprite.h"
 
 #include "../collision/collision_scene.h"
-#include "../render/render_scene.h"
-#include "../render/defs.h"
-#include "../collision/shapes/sphere.h"
 #include "../collision/shapes/capsule.h"
 #include "../collision/shapes/cylinder.h"
+#include "../collision/shapes/sphere.h"
+#include "../render/defs.h"
+#include "../render/render_scene.h"
 #include "../time/time.h"
 #include "./assets.h"
-#include "assets.h"
 
 #define MIN_FOLLOW_DISTANCE 2.0f
 #define TARGET_SPEED        12.0f

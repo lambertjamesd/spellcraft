@@ -131,8 +131,7 @@ void spell_heal_apply_to_target(struct spell_heal* heal, struct spell_sources* s
             .source = heal->data_source->target,
             .type = DAMAGE_TYPE_STEAL,
         };
-        health_damage(target, &damage);
-        heal->mana_stored += mana_amount;
+        heal->mana_stored += health_damage(target, &damage) / efficiency;
     }
 }
 
