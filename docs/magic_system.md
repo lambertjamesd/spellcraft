@@ -123,15 +123,15 @@ Progress indiciators
 |---------|-----------|----------------------------------|------------------|-----------|
 | Fire    |           | Shoot flames                     | On kill          | F         |
 | Fire    | I         | Shoot lightning                  | On kill          | F         |
-| Fire    | I A       | Lightning dash (teleport)        | On dash through  | F         |
-| Fire    | I A E     | Teleport up and down             | On impact        | F         |
+| Fire    | I A       | Lightning push (teleports)       | On dash through  | F         |
+| Fire    | I A E     | Lightning push out (teleports)   | On impact        | F         |
 | Fire    | I A E L   | Shoot AEO lightning sprite       | On sprite attack | F         |
 | Fire    | I A L     | Shoot lightning sprite           | On sprite attack | F         |
 | Fire    | I E       | Lightning explosion              | On kill          | F         |
 | Fire    | I E L     | AEO lightning sprite             | On sprite attack | F         |
 | Fire    | I L       | Lightning sprite                 | On sprite attack | F         |
-| Fire    | A         | Fire dash                        | On impact        | F M       |
-| Fire    | A E       | Rocket jump                      |                  | F         |
+| Fire    | A         | Fire push                        |                  | F M       |
+| Fire    | A E       | Fire puh outward                 |                  | F         |
 | Fire    | A E L     | Shoot AEO fire sprite            | On sprite attack | F         |
 | Fire    | A L       | Shoots a fire sprite             | On sprite attack | F         |
 | Fire    | E         | AEO explosion                    | On kill          | F         |
@@ -139,15 +139,15 @@ Progress indiciators
 | Fire    | L         | Fire sprite                      | On sprite attack | F         |
 | Ice     |           | Shoot ice                        | On ice shatter   | F         |
 | Ice     | F         | Shoot water                      | On contact       | F         |
-| Ice     | F A       | Water dash                       | On dash through  | F M       |
-| Ice     | F A E     | Water jump                       | On contact       | F         |
+| Ice     | F A       | Water push                       |                  | F M       |
+| Ice     | F A E     | Water puh outward                |                  | F         |
 | Ice     | F A E L   | Shoot AEO water sprite           | On sprite attack | F         |
 | Ice     | F A L     | Shoot water sprite               | On sprite attack | F         |
 | Ice     | F E       | Water explosion                  | On contact       | F         |
 | Ice     | F E L     | AEO water sprite                 | On sprite attack | F         |
 | Ice     | F L       | Water sprite                     | On sprite attack | F         |
-| Ice     | A         | Ice dash                         | On impact        | F M       |
-| Ice     | A E       | Hover                            | On ice shatter   | F M       |
+| Ice     | A         | Ice push                         | On impact        | F M       |
+| Ice     | A E       | Ice push outward                 | On ice shatter   | F M       |
 | Ice     | A E L     | Shoot AEO ice sprite             | On ice shatter   | F         |
 | Ice     | A L       | Shoots a ice sprite              | On ice shatter   | F         |
 | Ice     | E         | AEO explosion                    | On ice shatter   | F         |
@@ -169,35 +169,35 @@ Progress indiciators
 | Earth   | A         | Projectile                       | On impact        | F T       |
 | Earth   | A L       | Homing projectile                | On impact        | F         |
 | Earth   | L         | Ground mine                      | On touch         |           |
-| Air     |           | Push                             |                  | F         |
-| Air     | F         | Burning push                     | On push end      | F         |
-| Air     | F I       | Lightning push (teleports)       | On teleport end  | F         |
-| Air     | F I E     | circular push (teleports)        | On teleport end  | F         |
+| Air     |           | Dash                             |                  | F         |
+| Air     | F         | Fire dash                        | On dah end       | F         |
+| Air     | F I       | Lightning dash (teleports)       | On teleport end  | F         |
+| Air     | F I E     | Lightning jump (teleports)       | On teleport end  | F         |
 | Air     | F I E L   | sprite that telepushes outward   |                  | F         |
 | Air     | F I L     | sprite that telepushes forward   |                  | F         |
-| Air     | F E       | burning push outward             |                  | F         |
+| Air     | F E       | Fire jump                        |                  | F         |
 | Air     | F E L     | sprite that burn pushes outward  |                  | F         |
 | Air     | F L       | sprite that burn pushes forward  |                  | F         |
-| Air     | I         | icy push                         | On ice shatter   | F         |
-| Air     | I E       | icy push outward                 | On ice shatter   | F         |
+| Air     | I         | ice dash                         |                  | F         |
+| Air     | I E       | instant stop                     |                  | F         |
 | Air     | I E L     | sprite that icy pushes outward   | On ice shatter   |           |
 | Air     | I L       | sprite that icy pushes forward   | On ice shatter   |           |
-| Air     | E         | push outward                     |                  | F         |
+| Air     | E         | jump                             |                  | F         |
 | Air     | E L       | sprite that pushes outward       |                  | F         |
 | Air     | L         | sprite that pushes forward       |                  | F         |
 | Life    |           | healing                          |                  | F         |
 | Life    | F         | instant                          |                  | F         |
 | Life    | F I       | instant convert health to mana   |                  | F         |
-| Life    | F I A     | instant life steal sprite        |                  |           |
-| Life    | F I A E   | instant aeo life steal sprite    |                  |           |
+| Life    | F I A     | shoot life steal sprite          |                  | F         |
+| Life    | F I A E   | shoot aeo life steal sprite      |                  | F         |
 | Life    | F I E     | aeo life steal                   |                  | F         |
-| Life    | F A       | instant healing sprite           |                  |           |
-| Life    | F A E     | instant healing aeo sprite       |                  |           |
+| Life    | F A       | shoot healing sprite             |                  | F         |
+| Life    | F A E     | shoot healing aeo sprite         |                  | F         |
 | Life    | F E       | instant aeo healing              |                  | F         |
 | Life    | I         | convert health to mana           |                  | F         |
-| Life    | I A       | create mana steal sprite         | On mana steal    |           |
-| Life    | I A E     | create aeo mana steal sprite     | On mana steal    |           |
+| Life    | I A       | create mana steal sprite         | On mana steal    | F         |
+| Life    | I A E     | create aeo mana steal sprite     | On mana steal    | F         |
 | Life    | I E       | aeo mana steal                   | On mana steal    | F         |
-| Life    | A         | healing sprite                   |                  |           |
-| Life    | A E       | healing aeo sprite               |                  |           |
+| Life    | A         | healing sprite                   |                  | F         |
+| Life    | A E       | healing aeo sprite               |                  | F         |
 | Life    | E         | aeo heal                         |                  | F         |

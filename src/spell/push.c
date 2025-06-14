@@ -8,7 +8,16 @@
 #include "assets.h"
 
 static struct push_definition push_definitions[] = {
-    [ELEMENT_TYPE_NONE] = {},
+    [ELEMENT_TYPE_NONE] = {
+        .push_strength = 8.0f,
+        .mana_per_second = 4.0f,
+        .burst_mana_amount = 8.0f,
+        .contact_damage = 1.0f,
+        .push_acceleration = 60.0f,
+        .is_burst_dash = false,
+        .ignore_gravity = false,
+        .damage_type = 0,
+    },
     [ELEMENT_TYPE_FIRE] = {
         .push_strength = 4.0f,
         .mana_per_second = 10.0f,

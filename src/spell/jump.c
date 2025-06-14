@@ -57,7 +57,7 @@ struct jump_definition jump_def_fire = {
     .mana_per_second = 3.0f,
 };
 
-struct jump_definition jump_def_water = {
+struct jump_definition jump_def_basic = {
     .initial_impulse = 0.5f,
     .hover_accel = 10.0f,
     .max_hover_time = 5.0f,

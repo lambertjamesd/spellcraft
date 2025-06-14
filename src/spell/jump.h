@@ -30,6 +30,6 @@ void jump_destroy(struct jump* jump);
 bool jump_update(struct jump* jump, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
 
 extern struct jump_definition jump_def_fire;
-extern struct jump_definition jump_def_water;
+extern struct jump_definition jump_def_basic;
 
 #endif

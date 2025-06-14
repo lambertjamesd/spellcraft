@@ -94,7 +94,7 @@ void sprite_life_steal_effect(struct living_sprite* living_sprite, struct contac
     }
 
     float damage_amount = health_damage(health, &(struct damage_info){
-        .amount = 5.0f,
+        .amount = living_sprite->health.current_health * portion,
         .direction = gZeroVec,
         .source = living_sprite->collider.entity_id,
         .type = DAMAGE_TYPE_STEAL,

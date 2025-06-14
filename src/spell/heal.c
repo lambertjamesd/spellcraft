@@ -49,7 +49,7 @@ void spell_heal_init(struct spell_heal* heal, struct spell_data_source* source, 
     spell_data_source_retain(source);
     entity_id id = entity_id_new();
 
-    if (event_options.modifiers.windy) {
+    if (event_options.modifiers.flaming) {
         heal->flags.instant = 1;
     } else {
         heal->flags.instant = 0;
