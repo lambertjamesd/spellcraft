@@ -17,6 +17,7 @@ enum entity_type_id {
     ENTITY_TYPE_training_dummy,
     ENTITY_TYPE_treasure_chest,
     ENTITY_TYPE_water_cube,
+    ENTITY_TYPE_mana_plant,
 };
 
 struct crate_definition {
@@ -83,6 +84,11 @@ struct water_cube_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     struct Vector3 scale;
+};
+
+struct mana_plant_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
 };
 
 enum npc_type {

@@ -46,7 +46,7 @@ for mesh in bpy.data.meshes:
         "name": short_path.removesuffix(".blend").replace("/", "_"),
         "description": "",
         "mesh": relative_path,
-        "id": mesh['type'],
+        "type": mesh['type'],
     })
 
 object_list.sort(key=lambda x: x["name"])
