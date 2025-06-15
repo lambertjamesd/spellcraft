@@ -11,6 +11,7 @@
 
 #include "../math/matrix.h"
 #include "../math/transform.h"
+#include "../math/transform_single_axis.h"
 
 #define RENDER_BATCH_MAX_SIZE   256
 #define RENDER_BATCH_TRANSFORM_COUNT    64
@@ -80,6 +81,7 @@ struct render_batch_billboard_element* render_batch_add_particles(struct render_
 struct render_batch_billboard_element render_batch_get_sprites(struct render_batch* batch, int count);
 mat4x4* render_batch_get_transform(struct render_batch* batch);
 T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch);
+T3DMat4FP* render_batch_transformfp_from_sa(struct render_batch* batch, struct TransformSingleAxis* transform, float scale);
 // !!! This stomps on the input pose so don't attempt to use it after calling this function
 T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count);
 

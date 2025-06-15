@@ -47,6 +47,18 @@
             "description": "",
             "mesh": "meshes/objects/treasurechest.blend#TreasureChest",
             "type": "treasure_chest"
+        },
+        {
+            "name": "objects_water_cube",
+            "description": "",
+            "mesh": "meshes/objects/water_cube.blend#Cube",
+            "type": "water_cube"
+        },
+        {
+            "name": "pickups_mana_plant",
+            "description": "",
+            "mesh": "meshes/pickups/mana_plant.blend#mana_plant",
+            "type": "mana_plant"
         }
     ]
 }
