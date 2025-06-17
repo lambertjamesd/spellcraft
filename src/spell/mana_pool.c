@@ -1,12 +1,21 @@
 
 #include "mana_pool.h"
 #include "../time/time.h"
+#include "../util/hash_map.h"
+#include "../math/minmax.h"
 
 #define MANA_REGEN_DELAY    0.5f
 #define MANA_LEAK_RATE      0.03f
 
 #define MANA_PREV_THRESHOLD 0.1f
 #define MANA_PREV_FALL_RATE 10.0f
+
+static struct hash_map mana_entity_mapping;
+
+void mana_pool_reset() {
+    hash_map_destroy(&mana_entity_mapping);
+    hash_map_init(&mana_entity_mapping, 32);
+}
 
 void mana_pool_init(struct mana_pool* pool, struct mana_pool_definition* definition) {
     pool->max_mana = definition->max_mana;
@@ -51,6 +60,13 @@ void mana_pool_charge(struct mana_pool* pool, float amount) {
     pool->charged_mana += mana_pool_request(pool, amount);
 }
 
+void mana_pool_add(struct mana_pool* pool, float amount) {
+    if (!pool) {
+        return;
+    }
+    pool->current_mana = MIN(pool->max_mana, pool->current_mana + amount);
+}
+
 float mana_pool_request(struct mana_pool* pool, float amount) {
     float scale_amount = amount * pool->power_scale;
 
@@ -90,4 +106,16 @@ float mana_pool_request_charged_mana(struct mana_pool* pool) {
     pool->previous_mana = pool->current_mana;
 
     return result;
+}
+
+void mana_pool_set_entity_id(struct mana_pool* pool, entity_id entity_id) {
+    hash_map_set(&mana_entity_mapping, entity_id, pool);
+}
+
+void mana_pool_clear_entity_id(entity_id entity_id) {
+    hash_map_delete(&mana_entity_mapping, entity_id);
+}
+
+struct mana_pool* mana_pool_get(entity_id entity_id) {
+    return hash_map_get(&mana_entity_mapping, entity_id);
 }

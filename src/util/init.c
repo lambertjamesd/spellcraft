@@ -6,6 +6,7 @@
 #include "../time/time.h"
 #include "../collision/collision_scene.h"
 #include "../entity/health.h"
+#include "../spell/mana_pool.h"
 #include "../entity/interactable.h"
 #include "../menu/menu_rendering.h"
 #include "../objects/assets.h"
@@ -22,6 +23,7 @@ void init_engine() {
     update_reset();
     collision_scene_reset();
     health_reset();
+    mana_pool_reset();
     interactable_reset();
     menu_reset();
     collectable_assets_load();

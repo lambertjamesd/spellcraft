@@ -5,19 +5,23 @@
 #include "../render/render_scene.h"
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
+#include "../spell/mana_pool.h"
 
-#define GEM_SCALE   0.291593f
-#define GEM_OFFSET  0.938087f
+#define GEM_SCALE           0.291593f
+#define GEM_OFFSET          0.938087f
+#define GEM_COLLIDER_SIZE   0.5f
 
 #define RESPAWN_TIME    5.0f
 #define GROW_TIME       0.5f
+
+#define MANA_AMOUNT     100.0f
 
 static struct spatial_trigger_type mana_plant_grab_trigger = {
     .type = SPATIAL_TRIGGER_CYLINDER,
     .data = {
         .cylinder = {
             .half_height = GEM_OFFSET + GEM_SCALE,
-            .radius = GEM_SCALE,
+            .radius = GEM_COLLIDER_SIZE,
         },
     },
 };
@@ -79,6 +83,7 @@ void mana_plant_update(void* data) {
         while (contact) {
             if (contact->other_object == ENTITY_ID_PLAYER) {
                 plant->respawn_timer = RESPAWN_TIME;
+                mana_pool_add(mana_pool_get(ENTITY_ID_PLAYER), MANA_AMOUNT);
                 break;
             }
 

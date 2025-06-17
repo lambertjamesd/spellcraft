@@ -8,6 +8,7 @@
 #include "../render/defs.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
+#include "../spell/mana_pool.h"
 
 #define RADIUS_SCALE        0.02f
 #define MIN_RADIUS          0.1f
@@ -68,6 +69,7 @@ bool mana_gem_gravitate_towards(struct mana_gem* gem, struct Vector3* target) {
     float dist_sqrd = vector3MagSqrd(&offset);
 
     if (dist_sqrd < COLLECT_DISTANCE * COLLECT_DISTANCE) {
+        mana_pool_add(mana_pool_get(ENTITY_ID_PLAYER), gem->mana_amount);
         mana_gem_free(gem);
         return true;
     }

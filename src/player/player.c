@@ -496,6 +496,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     );
 
     spell_exec_init(&player->spell_exec);
+    mana_pool_set_entity_id(&player->spell_exec.spell_sources.mana_pool, ENTITY_ID_PLAYER);
     live_cast_init(&player->live_cast);
     health_init(&player->health, ENTITY_ID_PLAYER, 100.0f);
     health_set_callback(&player->health, player_on_damage, player);
@@ -538,6 +539,7 @@ void player_destroy(struct player* player) {
     spell_exec_destroy(&player->spell_exec);
     live_cast_destroy(&player->live_cast);
     health_destroy(&player->health);
+    mana_pool_clear_entity_id(ENTITY_ID_PLAYER);
 
     render_scene_remove(&player->renderable);
     update_remove(player);

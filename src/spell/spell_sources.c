@@ -2,7 +2,7 @@
 
 static struct mana_pool_definition default_mana_definition = {
     .max_mana = 100.0f,
-    .mana_regen_rate = 20.0f,
+    .mana_regen_rate = 0.1f,
     .power_scale = 1.0f,
 };
 
