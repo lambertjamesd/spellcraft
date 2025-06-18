@@ -165,6 +165,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
     );
 
     biter->dynamic_object.center.y = biter_collision_type.data.sphere.radius * 0.5f;
+    biter->dynamic_object.density_class = DYNAMIC_DENSITY_MEDIUM;
     biter->vision.center.y = biter->dynamic_object.center.y;
     biter->vision.is_trigger = 1;
 

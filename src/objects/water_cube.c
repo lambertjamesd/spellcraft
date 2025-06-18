@@ -5,8 +5,14 @@
 #include "../time/time.h"
 #include "../math/mathf.h"
 
-#define OBJECT_DENSITY      0.6f
 #define MAX_MOVE_AMOUNT     10.0f
+
+static float density_level[] = {
+    [DYNAMIC_DENSITY_LIGHT] = GRAVITY_CONSTANT / 0.3f,
+    [DYNAMIC_DENSITY_MEDIUM] = GRAVITY_CONSTANT / 0.6f,
+    [DYNAMIC_DENSITY_NEUTRAL] = GRAVITY_CONSTANT / 1.0f,
+    [DYNAMIC_DENSITY_HEAVY] = GRAVITY_CONSTANT / 1.4f,
+};
 
 void water_cube_update(void* data) {
     struct water_cube* cube = (struct water_cube*)data;
@@ -55,8 +61,8 @@ void water_cube_update(void* data) {
             1.0f : 
             (water_top - obj->bounding_box.min.y) / (obj->bounding_box.max.y - obj->bounding_box.min.y);
 
-        vector3Scale(&obj->velocity, &obj->velocity, 0.9f);
-        obj->velocity.y -= underwater_ratio * (GRAVITY_CONSTANT / OBJECT_DENSITY) * fixed_time_step;
+        vector3Scale(&obj->velocity, &obj->velocity, mathfLerp(1.0f, 0.9f, underwater_ratio));
+        obj->velocity.y -= underwater_ratio * density_level[obj->density_class] * fixed_time_step;
 
         if (underwater_ratio > 0.5f) {
             DYNAMIC_OBJECT_MARK_UNDER_WATER(obj);

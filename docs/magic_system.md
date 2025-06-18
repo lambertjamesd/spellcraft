@@ -121,20 +121,20 @@ Progress indiciators
 
 | Primary | Modifiers | Effect                           | Trigger          | Progress  |
 |---------|-----------|----------------------------------|------------------|-----------|
-| Fire    |           | Shoot flames                     | On kill          | F         |
-| Fire    | I         | Shoot lightning                  | On kill          | F         |
+| Fire    |           | Shoot flames                     | On kill          | F M       |
+| Fire    | I         | Shoot lightning                  | On kill          | F M       |
 | Fire    | I A       | Lightning push (teleports)       | On dash through  | F         |
 | Fire    | I A E     | Lightning push out (teleports)   | On impact        | F         |
 | Fire    | I A E L   | Shoot AEO lightning sprite       | On sprite attack | F         |
 | Fire    | I A L     | Shoot lightning sprite           | On sprite attack | F         |
-| Fire    | I E       | Lightning explosion              | On kill          | F         |
+| Fire    | I E       | Lightning explosion              | On kill          | F M       |
 | Fire    | I E L     | AEO lightning sprite             | On sprite attack | F         |
 | Fire    | I L       | Lightning sprite                 | On sprite attack | F         |
 | Fire    | A         | Fire push                        |                  | F M       |
 | Fire    | A E       | Fire puh outward                 |                  | F         |
 | Fire    | A E L     | Shoot AEO fire sprite            | On sprite attack | F         |
 | Fire    | A L       | Shoots a fire sprite             | On sprite attack | F         |
-| Fire    | E         | AEO explosion                    | On kill          | F         |
+| Fire    | E         | AEO explosion                    | On kill          | F M       |
 | Fire    | E L       | AEO fire sprite                  | On sprite attack | F         |
 | Fire    | L         | Fire sprite                      | On sprite attack | F         |
 | Ice     |           | Shoot ice                        | On ice shatter   | F         |

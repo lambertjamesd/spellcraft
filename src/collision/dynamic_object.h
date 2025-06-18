@@ -52,6 +52,13 @@ struct dynamic_object_type {
 #define DYNAMIC_OBJECT_MARK_UNDER_WATER(object)         (object)->under_water = 2
 #define DYNAMIC_OBJECT_MARK_ICE_DASH(object)            (object)->has_ice_dash = 2
 
+enum dynamic_density_class {
+    DYNAMIC_DENSITY_LIGHT,
+    DYNAMIC_DENSITY_MEDIUM,
+    DYNAMIC_DENSITY_NEUTRAL,
+    DYNAMIC_DENSITY_HEAVY,
+};
+
 struct dynamic_object {
     entity_id entity_id;
     struct dynamic_object_type* type;
@@ -72,6 +79,7 @@ struct dynamic_object {
     uint16_t disable_friction: 2;
     uint16_t under_water: 2;
     uint16_t has_ice_dash: 2;
+    uint16_t density_class: 2;
     uint16_t collision_layers;
     uint16_t collision_group;
     struct contact* active_contacts;

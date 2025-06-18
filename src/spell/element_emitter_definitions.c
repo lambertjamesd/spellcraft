@@ -94,7 +94,7 @@ static struct element_emitter_definition fire_around_definition = {
         }
     },
     .scale = 2.0f,
-    .mana_per_second = 1.0f,
+    .mana_per_second = 3.0f,
     .damage_per_frame = 1.0f,
     .on_effect_start = fire_around_effect_start,
     .on_effect_update = (on_effect_update)scale_in_fade_out_set_transform,
@@ -180,7 +180,7 @@ static struct element_emitter_definition ice_around_definition = {
         }
     },
     .scale = 2.0f,
-    .mana_per_second = 1.0f,
+    .mana_per_second = 3.0f,
     .damage_per_frame = 1.0f,
     .on_effect_start = ice_around_effect_start,
     .on_effect_update = (on_effect_update)scale_in_fade_out_set_transform,
@@ -203,7 +203,7 @@ static struct element_emitter_definition lightning_definition = {
         }
     },
     .scale = 4.0f,
-    .mana_per_second = 1.0f,
+    .mana_per_second = 2.0f,
     .damage_per_frame = 1.0f,
     .on_effect_start = lightning_effect_start,
     .on_effect_update = (on_effect_update)lightning_effect_set_position,

@@ -102,6 +102,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
         NULL
     );
     projectile->dynamic_object.collision_group = COLLISION_GROUP_PLAYER;
+    projectile->dynamic_object.density_class = DYNAMIC_DENSITY_HEAVY;
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
 

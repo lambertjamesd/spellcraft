@@ -495,6 +495,8 @@ void player_init(struct player* player, struct player_definition* definition, st
         "rom:/meshes/characters/apprentice.anim"
     );
 
+    player->cutscene_actor.collider.density_class = DYNAMIC_DENSITY_MEDIUM;
+
     spell_exec_init(&player->spell_exec);
     mana_pool_set_entity_id(&player->spell_exec.spell_sources.mana_pool, ENTITY_ID_PLAYER);
     live_cast_init(&player->live_cast);

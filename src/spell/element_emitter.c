@@ -52,19 +52,31 @@ bool element_emitter_update(struct element_emitter* element_emitter, struct spel
         element_emitter->is_active = false;
     }
 
+    float mana_requested = fixed_time_step * element_emitter->effect_definition->mana_per_second;
+
+    float mana_ratio = mana_pool_request(
+        &spell_sources->mana_pool, 
+        mana_requested
+    ) / mana_requested;
+
+    if (mana_ratio == 0.0f) {
+        return false;
+    }
+
     element_emitter->effect_definition->on_effect_update(
         element_emitter->effect, 
         &element_emitter->transform.position, 
         &element_emitter->data_source->direction,
-        element_emitter->effect_definition->scale
+        element_emitter->effect_definition->scale * mana_ratio
     );
 
     spell_data_source_apply_transform_sa(element_emitter->data_source, &element_emitter->transform);
 
+
     if (element_emitter->is_active) {
         health_apply_contact_damage(
             &element_emitter->dynamic_object, 
-            element_emitter->effect_definition->damage_per_frame, 
+            element_emitter->effect_definition->damage_per_frame * mana_ratio, 
             health_determine_damage_type(element_emitter->effect_definition->element_type)
         );
     } 
