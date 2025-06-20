@@ -18,6 +18,7 @@ enum entity_type_id {
     ENTITY_TYPE_treasure_chest,
     ENTITY_TYPE_water_cube,
     ENTITY_TYPE_mana_plant,
+    ENTITY_TYPE_jelly,
 };
 
 struct crate_definition {
@@ -87,6 +88,11 @@ struct water_cube_definition {
 };
 
 struct mana_plant_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+};
+
+struct jelly_definition {
     struct Vector3 position;
     struct Vector2 rotation;
 };

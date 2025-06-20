@@ -7,10 +7,16 @@
             "type": "npc"
         },
         {
-            "name": "enemies_enemy1",
+            "name": "Biter",
             "description": "",
             "mesh": "meshes/enemies/enemy1.blend#enemy1",
             "type": "biter"
+        },
+        {
+            "name": "Jelly",
+            "description": "",
+            "mesh": "meshes/enemies/water_jelly.blend#Sphere",
+            "type": "jelly"
         },
         {
             "name": "objects_crate",

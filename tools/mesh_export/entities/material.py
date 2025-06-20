@@ -555,6 +555,7 @@ class Material():
     tex0 = {self.tex0}
     tex1 = {self.tex1}
     fog = {self.fog}
+    uv_gen = {self.uv_gen}
 """
 
 def _check_is_enum(value, key_path, enum_list):

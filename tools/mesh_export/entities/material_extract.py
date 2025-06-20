@@ -428,6 +428,9 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     else:
         result.culling = False
 
+    if rdp_settings['g_tex_gen']:
+        result.uv_gen = 'spherical'
+
     result.fog = material.Fog()
     result.fog.enabled = rdp_settings['g_fog'] and f3d_mat['set_fog'] and True or False
     result.fog.use_global = f3d_mat['use_global_fog'] and True or False
