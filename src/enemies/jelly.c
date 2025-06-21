@@ -8,12 +8,14 @@
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
 
-#define MAX_HEALTH      100.0f
+#define MAX_HEALTH      400.0f
 #define STARTING_HEALTH 20.0f
-#define HEAL_RATE       10.0f
+#define HEAL_RATE       30.0f
 
 #define STARTING_RADIUS 0.4f
 #define MIN_RADIUS      0.2f
+
+#define FREEZE_TIME     1.0f
 
 static struct dynamic_object_type jelly_collider = {
     SPHERE_COLLIDER(1.0f),
@@ -30,6 +32,24 @@ float jelly_recalc_radius(struct jelly* jelly) {
 
 float jelly_on_hit(void* data, struct damage_info* damage) {
     struct jelly* jelly = (struct jelly*)data;
+
+    if (jelly->is_frozen) {
+        if (damage->type & (DAMAGE_TYPE_BASH | DAMAGE_TYPE_PROJECTILE)) {
+            return damage->amount;
+        }
+
+        if (damage->type & DAMAGE_TYPE_FIRE) {
+            jelly->freeze_timer += fixed_time_step;
+
+            if (jelly->freeze_timer > FREEZE_TIME) {
+                jelly->is_frozen = 0;
+                jelly->freeze_timer = 0.0f;
+            }
+            return 0.0f;
+        }
+
+        return 0.0f;
+    }
     
     jelly->needs_new_radius = 1;
 
@@ -39,7 +59,13 @@ float jelly_on_hit(void* data, struct damage_info* damage) {
     }
 
     if (damage->type & DAMAGE_TYPE_ICE) {
-        // TODO transition to freeze
+        jelly->freeze_timer += fixed_time_step;
+
+        if (jelly->freeze_timer > FREEZE_TIME) {
+            jelly->is_frozen = 1;
+            jelly->freeze_timer = 0.0f;
+        }
+
         return 0.0f;
     }
 
@@ -48,7 +74,7 @@ float jelly_on_hit(void* data, struct damage_info* damage) {
     }
 
     if (damage->type & (DAMAGE_TYPE_FIRE | DAMAGE_TYPE_LIGHTING)) {
-        return jelly->health.current_health;
+        return damage->amount;
     }
 
     return 0.0f;
@@ -63,11 +89,22 @@ void jelly_render(void* data, struct render_batch* batch) {
         return;
     }
 
-    render_batch_add_tmesh(batch, jelly->mesh, mtxfp, 1, NULL, NULL);
+    render_batch_add_tmesh(
+        batch, 
+        jelly->is_frozen ? jelly->ice_mesh : jelly->mesh, 
+        mtxfp, 
+        1, 
+        NULL, 
+        NULL
+    );
 }
 
 void jelly_update(void* data) {
     struct jelly* jelly = (struct jelly*)data;
+
+    if (jelly->is_frozen) {
+
+    }
 
     if (jelly->needs_new_radius) {
         dynamic_object_set_scale(&jelly->collider, jelly_recalc_radius(jelly));
@@ -87,6 +124,7 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
     jelly->transform.rotation = definition->rotation;
 
     jelly->mesh = tmesh_cache_load("rom:/meshes/enemies/water_jelly.tmesh");
+    jelly->ice_mesh = tmesh_cache_load("rom:/meshes/enemies/ice_jelly.tmesh");
 
     render_scene_add(&jelly->transform.position, 1.0f, jelly_render, jelly);
 
@@ -94,6 +132,9 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
     health_set_callback(&jelly->health, jelly_on_hit, jelly);
     jelly->health.current_health = STARTING_HEALTH;
     jelly->needs_new_radius = 0;
+    jelly->is_frozen = 0;
+
+    jelly->freeze_timer = 0.0f;
 
     dynamic_object_init(
         entity_id, 

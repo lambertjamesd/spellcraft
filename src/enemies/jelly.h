@@ -11,10 +11,14 @@
 struct jelly {
     struct TransformSingleAxis transform;
     struct tmesh* mesh;
+    struct tmesh* ice_mesh;
     struct health health;
     struct dynamic_object collider;
 
+    float freeze_timer;
+
     uint16_t needs_new_radius: 1;
+    uint16_t is_frozen: 1;
 };
 
 void jelly_init(struct jelly* jelly, struct jelly_definition* definition);
