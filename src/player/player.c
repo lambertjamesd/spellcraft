@@ -460,9 +460,11 @@ void player_update(struct player* player) {
     live_cast_cleanup_unused_spells(&player->live_cast, &player->spell_exec);
 }
 
-void player_on_damage(void* data, struct damage_info* damage) {
+float player_on_damage(void* data, struct damage_info* damage) {
     struct player* player = (struct player*)data;
     animator_run_clip(&player->cutscene_actor.animator, player->animations.take_damage, 0.0f, false);
+    
+    return damage->amount;
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {

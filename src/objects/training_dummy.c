@@ -100,12 +100,14 @@ void training_dummy_push_damage_hit(struct training_dummy* dummy, struct damage_
     training_dummy_push(dummy, &offset, -6.0f);
 }
 
-void training_dummy_on_hit(void* data, struct damage_info* damage) {
+float training_dummy_on_hit(void* data, struct damage_info* damage) {
     struct training_dummy* dummy = (struct training_dummy*)data;
 
     if (damage->type & (DAMAGE_TYPE_PROJECTILE | DAMAGE_TYPE_BASH)) {
         training_dummy_push_damage_hit(dummy, damage);
     }
+
+    return damage->amount;
 }
 
 void training_dummy_init(struct training_dummy* dummy, struct training_dummy_definition* definition) {

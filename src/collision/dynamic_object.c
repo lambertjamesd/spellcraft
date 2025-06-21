@@ -178,3 +178,8 @@ bool dynamic_object_is_grounded(struct dynamic_object* object) {
 
     return false;
 }
+
+void dynamic_object_set_scale(struct dynamic_object* object, float scale) {
+    object->scale = scale;
+    dynamic_object_recalc_bb(object);
+}

@@ -55,12 +55,22 @@ float health_damage(struct health* health, struct damage_info* damage) {
         return 0.0f;
     }
 
+    float amount = damage->amount;
+
+    if (health->callback) {
+        amount = health->callback(health->callback_data, damage);
+
+        if (amount <= 0.0f) {
+            return 0.0f;
+        }
+    }
+
     float result = 0.0f;
 
     if (health->max_health) {
-        if (health->current_health >= damage->amount) {
-            result = damage->amount;
-            health->current_health -= damage->amount;
+        if (health->current_health >= amount) {
+            result = amount;
+            health->current_health -= amount;
         } else {
             result = health->current_health;
             health->current_health = 0.0f;
@@ -79,10 +89,6 @@ float health_damage(struct health* health, struct damage_info* damage) {
     } else if (damage->type & DAMAGE_TYPE_WATER) {
         health->status_timer = 7;
         health->current_status = DAMAGE_TYPE_WATER;
-    }
-
-    if (health->callback) {
-        health->callback(health->callback_data, damage);
     }
 
     return result;

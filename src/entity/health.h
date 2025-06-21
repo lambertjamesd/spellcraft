@@ -9,7 +9,7 @@
 #include "damage.h"
 #include "health_shield.h"
 
-typedef void (*health_damage_callback)(void* data, struct damage_info* damage);
+typedef float (*health_damage_callback)(void* data, struct damage_info* damage);
 
 struct health {
     entity_id entity_id;
