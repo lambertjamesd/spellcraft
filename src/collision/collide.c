@@ -28,6 +28,28 @@ void correct_velocity(struct dynamic_object* object, struct Vector3* normal, flo
     }
 }
 
+void correct_overlap_no_slide(
+    struct dynamic_object* object, 
+    float penetration, 
+    float slope_amount, 
+    float ratio, 
+    float friction, 
+    float bounce
+) {
+    float offset = penetration / slope_amount;
+    object->position->y -= offset;
+
+    if (object->velocity.y < 0.0f) {
+        object->velocity.y = -object->velocity.y * object->type->bounce;
+    }
+
+    if (object->type->friction) {
+        float scalar = 1.0f - object->type->friction;
+        object->velocity.x *= scalar;
+        object->velocity.z *= scalar;
+    }
+}
+
 void correct_overlap(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce) {
     if (object->is_fixed) {
         return;
@@ -39,22 +61,14 @@ void correct_overlap(struct dynamic_object* object, struct EpaResult* result, fl
         vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
         correct_velocity(object, &result->normal, ratio, friction, bounce);
     } else {
-        float offset = result->penetration / slope_amount;
-        if (ratio > 0.0f) {
-            object->position->y += offset;
-        } else {
-            object->position->y -= offset;
-        }
-
-        if (object->velocity.y < 0.0f) {
-            object->velocity.y = -object->velocity.y * object->type->bounce;
-        }
-
-        if (object->type->friction) {
-            float scalar = 1.0f - object->type->friction;
-            object->velocity.x *= scalar;
-            object->velocity.z *= scalar;
-        }
+        correct_overlap_no_slide(
+            object,
+            result->penetration,
+            slope_amount,
+            ratio,
+            friction,
+            bounce
+        );
     }
 
 }
@@ -162,9 +176,21 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
     float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;
 
+    float overlap_ratio = 0.5f;
+
+    if (result.normal.y > 0) {
+        if (dynamic_object_should_slide(a->type->max_stable_slope, -result.normal.y)) {
+            overlap_ratio = 0.0f;
+        }
+    } else {
+        if (dynamic_object_should_slide(b->type->max_stable_slope, result.normal.y)) {
+            overlap_ratio = 1.0f;
+        }
+    }
+
     // TODO determine push 
-    correct_overlap(b, &result, -0.5f, b->disable_friction ? 0.0f : friction, bounce);
-    correct_overlap(a, &result, 0.5f, a->disable_friction ? 0.0f : friction, bounce);
+    correct_overlap(b, &result, overlap_ratio - 1.0f, b->disable_friction ? 0.0f : friction, bounce);
+    correct_overlap(a, &result, overlap_ratio, a->disable_friction ? 0.0f : friction, bounce);
 
     struct contact* contact = collision_scene_new_contact();
 

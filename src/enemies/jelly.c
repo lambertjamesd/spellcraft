@@ -104,7 +104,7 @@ float jelly_on_hit(void* data, struct damage_info* damage) {
 void jelly_render(void* data, struct render_batch* batch) {
     struct jelly* jelly = (struct jelly*)data;
 
-    T3DMat4FP* mtxfp = render_batch_transformfp_from_sa(batch, &jelly->transform, 32.0f);
+    T3DMat4FP* mtxfp = render_batch_transformfp_from_sa(batch, &jelly->transform, jelly->collider.scale);
 
     if (!mtxfp) {
         return;
