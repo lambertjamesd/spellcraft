@@ -52,6 +52,7 @@ static struct cutscene_actor_def player_actor_def = {
         },
         // about a 40 degree slope
         .max_stable_slope = 0.219131191f,
+        .friction = 0.2f,
     },
 };
 

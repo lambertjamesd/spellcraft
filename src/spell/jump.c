@@ -47,7 +47,7 @@ bool jump_update(struct jump* jump, struct spell_event_listener* event_listener,
         target->velocity.y += jump->definition->hover_accel * fixed_time_step * power_ratio;
     }
 
-    return jump->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE;
+    return jump->data_source->flags.cast_state != SPELL_CAST_STATE_INACTIVE;
 }
 
 struct jump_definition jump_def_fire = {

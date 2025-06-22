@@ -2,6 +2,7 @@
 
 #include "../collision/collision_scene.h"
 #include "../collision/shapes/sphere.h"
+#include "../collision/shapes/box.h"
 #include "../entity/entity_id.h"
 #include "../math/minmax.h"
 #include "../render/render_scene.h"
@@ -19,11 +20,33 @@
 
 static struct dynamic_object_type jelly_collider = {
     SPHERE_COLLIDER(1.0f),
-    .friction = 0.5f,
+    .friction = 0.1f,
     .bounce = 0.7f,
     // about a 40 degree slope
     .max_stable_slope = 0.219131191f,
 };
+
+static struct dynamic_object_type jelly_ice_collider = {
+    BOX_COLLIDER(1.0f, 1.0f, 1.0f),
+    .friction = 0.025f,
+    .bounce = 0.7f,
+    // about a 40 degree slope
+    .max_stable_slope = 0.0f,
+};
+
+void jelly_freeze(struct jelly* jelly) {
+    jelly->is_frozen = 1;
+    jelly->freeze_timer = 0.0f;
+    jelly->collider.type = &jelly_ice_collider;
+    jelly->collider.density_class = DYNAMIC_DENSITY_MEDIUM;
+}
+
+void jelly_thaw(struct jelly* jelly) {
+    jelly->is_frozen = 0;
+    jelly->freeze_timer = 0.0f;
+    jelly->collider.type = &jelly_collider;
+    jelly->collider.density_class = DYNAMIC_DENSITY_NEUTRAL;
+}
 
 float jelly_recalc_radius(struct jelly* jelly) {
     float health_ratio = sqrtf(MAX(jelly->health.current_health, 0.0f) * (1.0f / STARTING_HEALTH));
@@ -42,8 +65,7 @@ float jelly_on_hit(void* data, struct damage_info* damage) {
             jelly->freeze_timer += fixed_time_step;
 
             if (jelly->freeze_timer > FREEZE_TIME) {
-                jelly->is_frozen = 0;
-                jelly->freeze_timer = 0.0f;
+                jelly_thaw(jelly);
             }
             return 0.0f;
         }
@@ -62,8 +84,7 @@ float jelly_on_hit(void* data, struct damage_info* damage) {
         jelly->freeze_timer += fixed_time_step;
 
         if (jelly->freeze_timer > FREEZE_TIME) {
-            jelly->is_frozen = 1;
-            jelly->freeze_timer = 0.0f;
+            jelly_freeze(jelly);
         }
 
         return 0.0f;
@@ -83,7 +104,7 @@ float jelly_on_hit(void* data, struct damage_info* damage) {
 void jelly_render(void* data, struct render_batch* batch) {
     struct jelly* jelly = (struct jelly*)data;
 
-    T3DMat4FP* mtxfp = render_batch_transformfp_from_sa(batch, &jelly->transform, jelly->collider.scale);
+    T3DMat4FP* mtxfp = render_batch_transformfp_from_sa(batch, &jelly->transform, 32.0f);
 
     if (!mtxfp) {
         return;
@@ -155,9 +176,10 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
 }
 
 void jelly_destroy(struct jelly* jelly) {
-    tmesh_cache_release(jelly->mesh);
     render_scene_remove(jelly);
     health_destroy(&jelly->health);
     collision_scene_remove(&jelly->collider);
     update_remove(jelly);
+    tmesh_cache_release(jelly->mesh);
+    tmesh_cache_release(jelly->ice_mesh);
 }

@@ -10,11 +10,19 @@
 void correct_velocity(struct dynamic_object* object, struct Vector3* normal, float ratio, float friction, float bounce) {
     float velocityDot = vector3Dot(&object->velocity, normal);
 
+    if (object->type->friction == 0.125f) {
+        fprintf(stderr, "velocityDot = %f\n", velocityDot);
+    }
+
     if ((velocityDot < 0) == (ratio < 0)) {
         struct Vector3 tangentVelocity;
 
         vector3AddScaled(&object->velocity, normal, -velocityDot, &tangentVelocity);
         vector3Scale(&tangentVelocity, &tangentVelocity, 1.0f - friction);
+
+        if (object->type->friction == 0.125f) {
+            fprintf(stderr, "friction = %f, x,y,z=%f,%f,%f\n", friction, tangentVelocity.x, tangentVelocity.y, tangentVelocity.z);
+        }
 
         vector3AddScaled(&tangentVelocity, normal, velocityDot * -bounce, &object->velocity);
     }
@@ -37,7 +45,16 @@ void correct_overlap(struct dynamic_object* object, struct EpaResult* result, fl
         } else {
             object->position->y -= offset;
         }
-        object->velocity.y = 0.0f;
+
+        if (object->velocity.y < 0.0f) {
+            object->velocity.y = -object->velocity.y * object->type->bounce;
+        }
+
+        if (object->type->friction) {
+            float scalar = 1.0f - object->type->friction;
+            object->velocity.x *= scalar;
+            object->velocity.z *= scalar;
+        }
     }
 
 }

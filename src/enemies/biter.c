@@ -9,8 +9,8 @@
 
 #define VISION_DISTANCE     4.0f
 #define ATTACK_RANGE        1.0f
-#define MOVE_SPEED          8.5f
-#define MOVE_ACCELERATION   12.0f
+#define MOVE_SPEED          6.5f
+#define MOVE_ACCELERATION   8.0f
 
 static struct Vector2 biter_max_rotation;
 
@@ -22,7 +22,7 @@ static struct dynamic_object_type biter_collision_type = {
             .radius = 0.4f,
         },
     },
-    .friction = 0.5f,
+    .friction = 0.1f,
     // about a 40 degree slope
     .max_stable_slope = 0.219131191f,
 };
