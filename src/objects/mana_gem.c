@@ -120,6 +120,7 @@ void mana_gem_init(struct mana_gem* gem, struct Vector3* position, float mana_am
     gem->transform.rotation = gRight2;
     gem->velocity = gZeroVec;
     gem->radius = maxf(sqrtf(mana_amount) * RADIUS_SCALE, MIN_RADIUS);
+    gem->mana_amount = mana_amount;
     render_scene_add(&gem->transform.position, gem->radius, mana_gem_render, gem);
 
     spatial_trigger_init(&gem->trigger, &gem->transform, &mana_gem_trigger_type);

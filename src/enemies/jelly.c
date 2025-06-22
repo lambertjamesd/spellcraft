@@ -123,17 +123,13 @@ void jelly_render(void* data, struct render_batch* batch) {
 void jelly_update(void* data) {
     struct jelly* jelly = (struct jelly*)data;
 
-    if (jelly->is_frozen) {
-
-    }
-
     if (jelly->needs_new_radius) {
         dynamic_object_set_scale(&jelly->collider, jelly_recalc_radius(jelly));
         jelly->collider.center.y = jelly->collider.scale;
         jelly->needs_new_radius = 0;
     }
 
-    if (jelly->health.current_health <= 0.0f) {
+    if (jelly->health.current_health <= 0.0f || (!jelly->is_frozen && jelly->collider.under_water)) {
         jelly_destroy(jelly);
     }
 }
