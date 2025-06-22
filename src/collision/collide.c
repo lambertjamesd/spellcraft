@@ -176,19 +176,9 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
     float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;
 
+    // TODO better ratio depending on object weights
     float overlap_ratio = 0.5f;
 
-    if (result.normal.y > 0) {
-        if (dynamic_object_should_slide(a->type->max_stable_slope, -result.normal.y)) {
-            overlap_ratio = 0.0f;
-        }
-    } else {
-        if (dynamic_object_should_slide(b->type->max_stable_slope, result.normal.y)) {
-            overlap_ratio = 1.0f;
-        }
-    }
-
-    // TODO determine push 
     correct_overlap(b, &result, overlap_ratio - 1.0f, b->disable_friction ? 0.0f : friction, bounce);
     correct_overlap(a, &result, overlap_ratio, a->disable_friction ? 0.0f : friction, bounce);
 
