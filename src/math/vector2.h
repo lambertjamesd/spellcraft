@@ -39,5 +39,6 @@ void vector2ToLookDir(struct Vector2* input, struct Vector3* out);
 void vector3RotatedSpeed(struct Vector2* rotation, struct Vector3* result, float speed);
 
 void vector3RotateWith2(struct Vector3* input, struct Vector2* rotation, struct Vector3* result);
+void vector3RotateWith2Inv(struct Vector3* input, struct Vector2* rotation, struct Vector3* result);
 
 #endif

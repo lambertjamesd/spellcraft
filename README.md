@@ -42,6 +42,26 @@ Run Make
 make
 ```
 
+## Enemy ideas
+
+* Stone golem
+* Something that flies
+* Something fast
+* Big biter
+* Something underground
+* Magic user
+* Fighter (weakness is parry)
+* Enemies that are individually weak but come in groups
+* Single difficult fight
+* Something immune to life steal (zombie maybe)
+* A support enemy that strengthens allys
+
+### Enemy attack ideas
+
+* Attack that spread on the ground, jumping can dodge
+* Punches, sword swings (can parry)
+* Ranged attacks (Parry could fire projectiles straight back)
+
 ## TODO
 
 - open world rendering
