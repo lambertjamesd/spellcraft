@@ -8,6 +8,7 @@
 #include "../entity/entity_id.h"
 #include "contact.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 enum SPATIAL_TRIGGER_TYPE {
     SPATIAL_TRIGGER_SPHERE,
@@ -33,11 +34,13 @@ struct spatial_trigger {
     struct spatial_trigger_type* type;
     struct Box3D bounding_box;
     struct contact* active_contacts;
+    uint16_t collision_layers;
+    uint16_t collision_group;
 };
 
 #define SPATIAL_TRIGGER_BOX(x, y, z) .type = SPATIAL_TRIGGER_BOX, .data = {.box = {.half_size = {x,y,z}}}
 
-void spatial_trigger_init(struct spatial_trigger* trigger, struct TransformSingleAxis* transform, struct spatial_trigger_type* type);
+void spatial_trigger_init(struct spatial_trigger* trigger, struct TransformSingleAxis* transform, struct spatial_trigger_type* type, uint16_t collision_layers);
 
 void spatial_trigger_recalc_bb(struct spatial_trigger* trigger);
 bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct Vector3* point);

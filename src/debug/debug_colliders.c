@@ -11,10 +11,22 @@ static struct tmesh* bb_mesh;
 
 void debug_render_colliders(void* data, struct render_batch* batch) {
     for (int i = 0; i < collision_scene_get_count(); i += 1) {
-        struct dynamic_object* dynamic_object = collision_scene_get_element(i);
+        struct collision_scene_element* element = collision_scene_get_element(i);
 
-        if (!dynamic_object) {
+        struct Box3D* bb = NULL;
+
+        if (!element || !element->object) {
             continue;
+        }
+
+        if (element->type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
+            bb = &(((struct dynamic_object*)element->object)->bounding_box);
+        } else if (element->type == COLLISION_ELEMENT_TYPE_TRIGGER) {
+            bb = &(((struct spatial_trigger*)element->object)->bounding_box);
+        }
+
+        if (!bb) {
+            continue;;
         }
 
         T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
@@ -26,10 +38,10 @@ void debug_render_colliders(void* data, struct render_batch* batch) {
         mat4x4 mtx;
 
         matrixFromScale(mtx, MODEL_WORLD_SCALE);
-        mtx[0][0] = (dynamic_object->bounding_box.max.x - dynamic_object->bounding_box.min.x) * MODEL_WORLD_SCALE;
-        mtx[1][1] = (dynamic_object->bounding_box.max.y - dynamic_object->bounding_box.min.y) * MODEL_WORLD_SCALE;
-        mtx[2][2] = (dynamic_object->bounding_box.max.z - dynamic_object->bounding_box.min.z) * MODEL_WORLD_SCALE;
-        matrixApplyScaledPos(mtx, &dynamic_object->bounding_box.min, WORLD_SCALE);
+        mtx[0][0] = (bb->max.x - bb->min.x) * MODEL_WORLD_SCALE;
+        mtx[1][1] = (bb->max.y - bb->min.y) * MODEL_WORLD_SCALE;
+        mtx[2][2] = (bb->max.z - bb->min.z) * MODEL_WORLD_SCALE;
+        matrixApplyScaledPos(mtx, &bb->min, WORLD_SCALE);
         render_batch_relative_mtx(batch, mtx);
         t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
         

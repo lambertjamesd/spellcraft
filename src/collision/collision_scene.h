@@ -59,6 +59,6 @@ typedef void (*collision_scene_query_callback)(void* data, struct dynamic_object
 void collision_scene_query(struct dynamic_object_type* shape, struct Vector3* center, int collision_layers, collision_scene_query_callback callback, void* callback_data);
 
 int collision_scene_get_count();
-struct dynamic_object* collision_scene_get_element(int index);
+struct collision_scene_element* collision_scene_get_element(int index);
 
 #endif

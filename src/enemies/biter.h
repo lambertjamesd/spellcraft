@@ -5,6 +5,7 @@
 
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
+#include "../collision/spatial_trigger.h"
 #include "../math/transform_single_axis.h"
 #include "../entity/health.h"
 #include "../render/animator.h"
@@ -19,7 +20,7 @@ struct biter {
     struct TransformSingleAxis transform;
     struct renderable renderable;
     struct dynamic_object dynamic_object;
-    struct dynamic_object vision;
+    struct spatial_trigger vision;
     struct health health;
 
     struct animation_set* animation_set;

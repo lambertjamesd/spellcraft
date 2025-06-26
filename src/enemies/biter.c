@@ -6,8 +6,9 @@
 #include "../render/render_scene.h"
 #include "../resource/animation_cache.h"
 #include "../time/time.h"
+#include "../math/constants.h"
 
-#define VISION_DISTANCE     4.0f
+#define VISION_DISTANCE     8.0f
 #define ATTACK_RANGE        1.0f
 #define MOVE_SPEED          6.5f
 #define MOVE_ACCELERATION   8.0f
@@ -27,17 +28,13 @@ static struct dynamic_object_type biter_collision_type = {
     .max_stable_slope = 0.219131191f,
 };
 
-static struct dynamic_object_type biter_vision_collision_type = {
-    .minkowsi_sum = cone_minkowski_sum,
-    .bounding_box = cone_bounding_box,
+static struct spatial_trigger_type biter_vision_type = {
+    .type = SPATIAL_TRIGGER_WEDGE,
     .data = {
-        .sphere = {
+        .wedge = {
             .radius = VISION_DISTANCE,
-        },
-    },
-    .data = {
-        .cone = {
-            .size = {VISION_DISTANCE, VISION_DISTANCE, VISION_DISTANCE},
+            .half_height = VISION_DISTANCE,
+            .angle = {SQRT_1_2, SQRT_1_2},
         },
     },
 };
@@ -70,7 +67,7 @@ void biter_update_target(struct biter* biter) {
     }
 
     if (!biter->current_target) {
-        struct contact* nearest_target = dynamic_object_nearest_contact(&biter->vision);
+        struct contact* nearest_target = dynamic_object_nearest_contact(biter->vision.active_contacts, &biter->transform.position);
 
         if (nearest_target) {
             biter->current_target = nearest_target->other_object;
@@ -143,7 +140,6 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
     biter->transform.rotation = definition->rotation;
 
     entity_id id = entity_id_new();
-    entity_id vision_id = entity_id_new();
 
     renderable_single_axis_init(&biter->renderable, &biter->transform, "rom:/meshes/enemies/enemy1.tmesh");
     dynamic_object_init(
@@ -155,22 +151,18 @@ void biter_init(struct biter* biter, struct biter_definition* definition) {
         &biter->transform.rotation
     );
 
-    dynamic_object_init(
-        vision_id, 
+    spatial_trigger_init(
         &biter->vision, 
-        &biter_vision_collision_type, 
-        COLLISION_LAYER_DAMAGE_PLAYER,
-        &biter->transform.position, 
-        &biter->transform.rotation
+        &biter->transform,
+        &biter_vision_type,
+        COLLISION_LAYER_DAMAGE_PLAYER
     );
 
     biter->dynamic_object.center.y = biter_collision_type.data.sphere.radius * 0.5f;
     biter->dynamic_object.density_class = DYNAMIC_DENSITY_MEDIUM;
-    biter->vision.center.y = biter->dynamic_object.center.y;
-    biter->vision.is_trigger = 1;
 
     collision_scene_add(&biter->dynamic_object);
-    collision_scene_add(&biter->vision);
+    collision_scene_add_trigger(&biter->vision);
 
     update_add(biter, (update_callback)biter_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
 
@@ -195,7 +187,7 @@ void biter_destroy(struct biter* biter) {
     render_scene_remove(&biter->renderable);
     renderable_destroy(&biter->renderable);
     collision_scene_remove(&biter->dynamic_object);
-    collision_scene_remove(&biter->vision);
+    collision_scene_remove_trigger(&biter->vision);
     health_destroy(&biter->health);
     update_remove(biter);
     animator_destroy(&biter->animator);

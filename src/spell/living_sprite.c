@@ -250,7 +250,7 @@ void living_sprite_check_targets(struct living_sprite* living_sprite) {
         return;
     }
     
-    struct contact* new_target = dynamic_object_nearest_contact(&living_sprite->vision);
+    struct contact* new_target = dynamic_object_nearest_contact(living_sprite->vision.active_contacts, &living_sprite->transform.position);
 
     if (!new_target || !new_target->other_object) {
         return;

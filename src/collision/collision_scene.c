@@ -450,10 +450,6 @@ int collision_scene_get_count() {
     return g_scene.count;
 }
 
-struct dynamic_object* collision_scene_get_element(int index) {
-    if (g_scene.elements[index].type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
-        return g_scene.elements[index].object;
-    }
-
-    return NULL;
+struct collision_scene_element* collision_scene_get_element(int index) {
+    return &g_scene.elements[index];
 }

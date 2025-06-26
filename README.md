@@ -62,6 +62,10 @@ make
 * Punches, sword swings (can parry)
 * Ranged attacks (Parry could fire projectiles straight back)
 
+### Spell ideas
+
+Create a decoy
+
 ## TODO
 
 - open world rendering

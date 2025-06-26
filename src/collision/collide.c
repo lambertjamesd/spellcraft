@@ -210,6 +210,14 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
 }
 
 void collide_object_to_trigger(struct dynamic_object* obj, struct spatial_trigger* trigger) {
+    if (!(obj->collision_layers & trigger->collision_layers)) {
+        return;
+    }
+
+    if (trigger->collision_group && trigger->collision_group == obj->collision_group) {
+        return;
+    }
+
     if (!spatial_trigger_does_contain_point(trigger, obj->position)) {
         return;
     }

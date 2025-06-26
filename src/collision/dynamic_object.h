@@ -98,7 +98,7 @@ void dynamic_object_set_type(struct dynamic_object* object, struct dynamic_objec
 
 void dynamic_object_update(struct dynamic_object* object);
 
-struct contact* dynamic_object_nearest_contact(struct dynamic_object* object);
+struct contact* dynamic_object_nearest_contact(struct contact* first_contact, struct Vector3* position);
 struct contact* dynamic_object_find_contact(struct dynamic_object* object, entity_id id);
 
 void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);

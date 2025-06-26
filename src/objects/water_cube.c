@@ -76,7 +76,7 @@ void water_cube_init(struct water_cube* cube, struct water_cube_definition* defi
     cube->trigger_type = (struct spatial_trigger_type){
         SPATIAL_TRIGGER_BOX(definition->scale.x, definition->scale.y, definition->scale.z)
     };
-    spatial_trigger_init(&cube->trigger, &cube->transform, &cube->trigger_type);
+    spatial_trigger_init(&cube->trigger, &cube->transform, &cube->trigger_type, COLLISION_LAYER_TANGIBLE);
     collision_scene_add_trigger(&cube->trigger);
     update_add(cube, water_cube_update, UPDATE_PRIORITY_PHYICS, UPDATE_LAYER_WORLD);
 }

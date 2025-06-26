@@ -123,7 +123,7 @@ void mana_gem_init(struct mana_gem* gem, struct Vector3* position, float mana_am
     gem->mana_amount = mana_amount;
     render_scene_add(&gem->transform.position, gem->radius, mana_gem_render, gem);
 
-    spatial_trigger_init(&gem->trigger, &gem->transform, &mana_gem_trigger_type);
+    spatial_trigger_init(&gem->trigger, &gem->transform, &mana_gem_trigger_type, COLLISION_LAYER_DAMAGE_PLAYER);
     collision_scene_add_trigger(&gem->trigger);
 
     update_add(gem, mana_gem_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);

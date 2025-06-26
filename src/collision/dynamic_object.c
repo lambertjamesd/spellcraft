@@ -54,13 +54,13 @@ void dynamic_object_update(struct dynamic_object* object) {
     vector3AddScaled(object->position, &object->velocity, fixed_time_step * object->time_scalar, object->position);
 }
 
-struct contact* dynamic_object_nearest_contact(struct dynamic_object* object) {
+struct contact* dynamic_object_nearest_contact(struct contact* first_contact, struct Vector3* position) {
     struct contact* nearest_target = NULL;
-    struct contact* current = object->active_contacts;
+    struct contact* current = first_contact;
     float distance = 0.0f;
 
     while (current) {
-        float check = vector3DistSqrd(&current->point, object->position);
+        float check = vector3DistSqrd(&current->point, position);
         if (!nearest_target || check < distance) {
             distance = check;
             nearest_target = current;
