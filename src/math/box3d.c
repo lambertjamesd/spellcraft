@@ -3,10 +3,10 @@
 
 int box3DContainsPoint(struct Box3D* box, struct Vector3* point) {
     return box->min.x < point->x &&
-        box->min.z < point->y &&
+        box->min.y < point->y &&
         box->min.z < point->z &&
         box->max.x > point->x &&
-        box->max.z > point->y &&
+        box->max.y > point->y &&
         box->max.z > point->z;
         
 }
