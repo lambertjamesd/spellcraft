@@ -108,16 +108,16 @@ void dynamic_object_minkowski_sum(void* data, struct Vector3* direction, struct 
         pitched_dir = *direction;
     }
 
-    vector3RotateWith2(&pitched_dir, object->rotation, &rotated_dir);
+    struct Vector2 inv_rotation;
+    vector2ComplexConj(object->rotation, &inv_rotation);
+    vector3RotateWith2(&pitched_dir, &inv_rotation, &rotated_dir);
     struct Vector3 unrotated_out;
     
     object->type->minkowsi_sum(&object->type->data, &rotated_dir, &unrotated_out);
     vector3Add(&unrotated_out, &object->center, &unrotated_out);
 
     struct Vector3 unpitched_out;
-    struct Vector2 inv_rotation;
-    vector2ComplexConj(object->rotation, &inv_rotation);
-    vector3RotateWith2(&unrotated_out, &inv_rotation, &unpitched_out);
+    vector3RotateWith2(&unrotated_out, object->rotation, &unpitched_out);
 
     if (object->pitch) {
         output->x = unpitched_out.x;
@@ -148,9 +148,9 @@ void dynamic_object_recalc_bb(struct dynamic_object* object) {
     struct Vector3 rotatedOffset;
 
     if (object->rotation) {
-        rotatedOffset.x = offset.x * object->rotation->x + offset.z * object->rotation->y;
+        rotatedOffset.x = offset.x * object->rotation->x - offset.z * object->rotation->y;
         rotatedOffset.y = offset.y;
-        rotatedOffset.z = offset.z * object->rotation->x - offset.x * object->rotation->y;
+        rotatedOffset.z = offset.z * object->rotation->x + offset.x * object->rotation->y;
     } else {
         rotatedOffset = offset;
     }

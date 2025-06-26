@@ -142,7 +142,7 @@ def write_vector2_rotation(file, obj: bpy.types.Object):
 
     final_right = mathutils.Vector([rotated_right.x, 0, rotated_right.z]).normalized()
 
-    file.write(struct.pack(">ff", final_right.x, -final_right.z))
+    file.write(struct.pack(">ff", final_right.x, final_right.z))
 
 def _apply_alignment(current_offset: int, alignment: int) -> int:
     return (current_offset + alignment - 1) & ~(alignment - 1)

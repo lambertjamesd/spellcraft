@@ -84,6 +84,11 @@ void biter_update_target(struct biter* biter) {
 
     struct dynamic_object* target_object = collision_scene_find_object(biter->current_target);
 
+    if (!target_object) {
+        biter->current_target = 0;
+        return;
+    }
+
     struct Vector3 direction;
     struct Vector2 rotation;
 

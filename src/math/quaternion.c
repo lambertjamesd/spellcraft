@@ -42,7 +42,7 @@ void quatAxisComplex(struct Vector3* axis, struct Vector2* complex, struct Quate
     } else {
         sinTheta = sqrtf(sinTheta);
 
-        if (complex->y < 0.0f) {
+        if (complex->y > 0.0f) {
             sinTheta = -sinTheta;
         }
     }

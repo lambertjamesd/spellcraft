@@ -68,8 +68,6 @@ bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct 
                 fabsf(unrotated.z) < data->box.half_size.z;
         }
         case SPATIAL_TRIGGER_WEDGE: {
-            fprintf(stderr, "relative_pos = %f, %f\n", relative_pos.x, relative_pos.z);
-
             if (fabsf(relative_pos.y) > data->wedge.half_height) {
                 return false;
             }
@@ -80,9 +78,7 @@ bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct 
             }
 
             struct Vector3 unrotated;
-            vector3RotateWith2(&relative_pos, &trigger->transform->rotation, &unrotated);
-
-            fprintf(stderr, "unrotated = %f, %f\n", unrotated.x, unrotated.z);
+            vector3RotateWith2Inv(&relative_pos, &trigger->transform->rotation, &unrotated);
 
             struct Vector2* angle = &data->wedge.angle;
 
