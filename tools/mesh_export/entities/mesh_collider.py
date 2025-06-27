@@ -157,7 +157,13 @@ def _split_loop(loop: list[mathutils.Vector], axis: int, distance: float) -> tup
     return behind, front
 
 def _rasterize_loop_detrmine_range(points: list[mathutils.Vector], axis: int) -> tuple[int, int]:
-    return min(map(lambda point: math.floor(point[axis]), points)), max(map(lambda point: math.ceil(point[axis]), points))
+    min_result = min(map(lambda point: math.floor(point[axis]), points))
+    max_result = max(map(lambda point: math.ceil(point[axis]), points))
+
+    if min_result == max_result:
+        max_result += 1
+
+    return min_result, max_result
 
 def _rasterize_loop_axis_3d(points: list[mathutils.Vector], axis: int, result: list[tuple[int, int, int]], prev_axis: int | None):
     curr_value = min(map(lambda point: math.floor(point[axis]), points))
