@@ -66,6 +66,10 @@ make
 
 Create a decoy
 
+### minigame ideas
+
+"basketball"
+
 ## TODO
 
 - open world rendering

@@ -11,6 +11,7 @@ const call_pairings = [
     [['renderable_init', 'renderable_single_axis_init'], 'renderable_destroy'],
     ['update_add', 'update_remove'],
     ['collision_scene_add', 'collision_scene_remove'],
+    ['collision_scene_add_trigger', 'collision_scene_remove_trigger'],
     ['animator_init', 'animator_destroy'],
     ['animation_cache_load', 'animation_cache_release'],
     ['spell_exec_init', 'spell_exec_destroy'],
