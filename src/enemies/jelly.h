@@ -15,6 +15,11 @@ struct jelly {
     struct health health;
     struct dynamic_object collider;
 
+    struct Vector3 shear_spring;
+    struct Vector3 shear_velocity;
+
+    float jump_timer;
+
     float freeze_timer;
 
     uint16_t needs_new_radius: 1;
