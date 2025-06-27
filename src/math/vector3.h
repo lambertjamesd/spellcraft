@@ -36,6 +36,7 @@ void vector3Normalize(struct Vector3* in, struct Vector3* out);
 void vector3Lerp(struct Vector3* a, struct Vector3* b, float t, struct Vector3* out);
 float vector3Dot(struct Vector3* a, struct Vector3* b);
 float vector3MagSqrd(struct Vector3* a);
+float vector3MagSqrd2D(struct Vector3* a);
 float vector3DistSqrd(struct Vector3* a, struct Vector3* b);
 void vector3Cross(struct Vector3* a, struct Vector3* b, struct Vector3* out);
 void vector3Perp(struct Vector3* a, struct Vector3* out);

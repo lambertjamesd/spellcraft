@@ -7,6 +7,7 @@
 #include "../resource/animation_cache.h"
 #include "../time/time.h"
 #include "../math/constants.h"
+#include "vision.h"
 
 #define VISION_DISTANCE     8.0f
 #define ATTACK_RANGE        1.0f
@@ -66,15 +67,15 @@ void biter_update_target(struct biter* biter) {
         return;
     }
 
-    if (!biter->current_target) {
-        struct contact* nearest_target = dynamic_object_nearest_contact(biter->vision.active_contacts, &biter->transform.position);
+    struct Vector3 direction;
+    struct dynamic_object* target_object = vision_update_current_target(
+        &biter->current_target,
+        &biter->vision,
+        VISION_DISTANCE,
+        &direction
+    );
 
-        if (nearest_target) {
-            biter->current_target = nearest_target->other_object;
-        }
-    }
-
-    if (!biter->current_target) {
+    if (!target_object) {
         if (biter->animator.current_clip != biter->animations.idle) {
             animator_run_clip(&biter->animator, biter->animations.idle, 0.0f, true);
         }
@@ -82,25 +83,8 @@ void biter_update_target(struct biter* biter) {
         return;
     }
 
-    struct dynamic_object* target_object = collision_scene_find_object(biter->current_target);
-
-    if (!target_object) {
-        biter->current_target = 0;
-        return;
-    }
-
-    struct Vector3 direction;
     struct Vector2 rotation;
-
-    vector3Sub(target_object->position, &biter->transform.position, &direction);
-    
-    float distance_sqrd = vector3MagSqrd(&direction);
-
-    if (distance_sqrd > VISION_DISTANCE * VISION_DISTANCE) {
-        biter->current_target = 0;
-        return;
-    }
-
+    float distance_sqrd = vector3MagSqrd2D(&direction);
     bool should_attack = distance_sqrd < ATTACK_RANGE * ATTACK_RANGE || dynamic_object_find_contact(&biter->dynamic_object, biter->current_target);
 
     vector2LookDir(&rotation, &direction);

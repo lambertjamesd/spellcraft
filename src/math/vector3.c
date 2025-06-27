@@ -79,6 +79,10 @@ float vector3MagSqrd(struct Vector3* a) {
     return a->x * a->x + a->y * a->y + a->z * a->z;
 }
 
+float vector3MagSqrd2D(struct Vector3* a) {
+    return a->x * a->x + a->z * a->z;
+}
+
 float vector3DistSqrd(struct Vector3* a, struct Vector3* b) {
     float x = a->x - b->x;
     float y = a->y - b->y;

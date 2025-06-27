@@ -1,14 +1,16 @@
 #include "jelly.h"
 
 #include "../collision/collision_scene.h"
-#include "../collision/shapes/sphere.h"
 #include "../collision/shapes/box.h"
+#include "../collision/shapes/sphere.h"
 #include "../entity/entity_id.h"
+#include "../math/constants.h"
 #include "../math/minmax.h"
+#include "../render/defs.h"
 #include "../render/render_scene.h"
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
-#include "../render/defs.h"
+#include "vision.h"
 
 #define MAX_HEALTH      400.0f
 #define STARTING_HEALTH 20.0f
@@ -19,14 +21,19 @@
 
 #define FREEZE_TIME     1.0f
 
-#define JUMP_INTERVAL   4.0f
-#define JUMP_IMPULSE    4.0f
+#define JUMP_INTERVAL   2.0f
+#define JUMP_IMPULSE         4.0f
+#define JUMP_SIDE_IMPULSE    2.0f
 #define JUMP_WINDUP     0.9f
 #define JUMP_TIME       0.2f
 
+#define VISION_DISTANCE 8.0f
+
+static struct Vector2 jelly_max_rotation;
+
 static struct dynamic_object_type jelly_collider = {
     SPHERE_COLLIDER(1.0f),
-    .friction = 0.1f,
+    .friction = 0.5f,
     .bounce = 0.7f,
     // about a 40 degree slope
     .max_stable_slope = 0.219131191f,
@@ -38,6 +45,17 @@ static struct dynamic_object_type jelly_ice_collider = {
     .bounce = 0.7f,
     // about a 40 degree slope
     .max_stable_slope = 0.0f,
+};
+
+static struct spatial_trigger_type jelly_vision_type = {
+    .type = SPATIAL_TRIGGER_WEDGE,
+    .data = {
+        .wedge = {
+            .radius = VISION_DISTANCE,
+            .half_height = VISION_DISTANCE,
+            .angle = {SQRT_1_2, SQRT_1_2},
+        },
+    },
 };
 
 void jelly_freeze(struct jelly* jelly) {
@@ -57,6 +75,79 @@ void jelly_thaw(struct jelly* jelly) {
 float jelly_recalc_radius(struct jelly* jelly) {
     float health_ratio = sqrtf(MAX(jelly->health.current_health, 0.0f) * (1.0f / STARTING_HEALTH));
     return (health_ratio * (STARTING_RADIUS - MIN_RADIUS)) + MIN_RADIUS;
+}
+
+void jelly_update_spring(struct jelly* jelly, struct Vector3* jump_dir) {
+    struct Vector3 target_spring;
+    vector3Add(&jelly->transform.position, &gUp, &target_spring);
+
+    float time_left = JUMP_INTERVAL - jelly->jump_timer;
+
+    if (time_left < JUMP_WINDUP + JUMP_TIME) {
+        if (time_left < JUMP_TIME) {
+            target_spring.y += 0.1f;
+        } else {
+            float spring_back_amount = 0.5f - (time_left - JUMP_TIME) * (0.5f / JUMP_WINDUP);
+
+            target_spring.x -= spring_back_amount * jump_dir->x;
+            target_spring.y -= spring_back_amount;
+            target_spring.z -= spring_back_amount * jump_dir->z;
+        }
+    }
+
+    struct Vector3 offset;
+    vector3Sub(&target_spring, &jelly->shear_spring, &offset);
+
+    vector3AddScaled(&jelly->shear_velocity, &offset, 2.5f, &jelly->shear_velocity);
+    vector3Scale(&jelly->shear_velocity, &jelly->shear_velocity, 0.91f);
+    vector3AddScaled(&jelly->shear_spring, &jelly->shear_velocity, fixed_time_step, &jelly->shear_spring);
+}
+
+void jelly_update_target(struct jelly* jelly, struct Vector3* jump_target) {
+    if (!dynamic_object_is_grounded(&jelly->collider)) {
+        return;
+    }
+
+    struct Vector3 offset;
+
+    struct dynamic_object* target = vision_update_current_target(
+        &jelly->current_target,
+        &jelly->vision,
+        VISION_DISTANCE,
+        &offset
+    );
+
+    if (!target) {
+        jelly->jump_timer = 0.0f;
+        *jump_target = gZeroVec;
+        return;
+    }
+
+    if (jelly->jump_timer == 0.0f) {
+        struct Vector2 target_rotation;
+        vector2LookDir(&target_rotation, &offset);
+        vector2RotateTowards(&jelly->transform.rotation, 
+                &target_rotation, 
+                &jelly_max_rotation, 
+                &jelly->transform.rotation
+        );
+        if (vector2Dot(&jelly->transform.rotation, &target_rotation) < 0.9f) {
+            *jump_target = gZeroVec;
+            return;
+        }
+    }
+
+    vector2ToLookDir(&jelly->transform.rotation, jump_target);
+
+    if (jelly->jump_timer > JUMP_INTERVAL) {
+        jelly->collider.velocity.x += JUMP_SIDE_IMPULSE * jump_target->x;
+        jelly->collider.velocity.y += JUMP_IMPULSE;
+        jelly->collider.velocity.z += JUMP_SIDE_IMPULSE * jump_target->z;
+        jelly->jump_timer = 0.0f;
+    } else {
+        jelly->jump_timer += fixed_time_step;
+    }
+
 }
 
 float jelly_on_hit(void* data, struct damage_info* damage) {
@@ -119,20 +210,22 @@ void jelly_render(void* data, struct render_batch* batch) {
     mat4x4 mtx;
     transformSAToMatrix(&jelly->transform, mtx, jelly->collider.scale);
 
-    struct Vector3 shear_direction;
-    vector3Sub(&jelly->shear_spring, &jelly->transform.position, &shear_direction);
-    if (shear_direction.y < 0.1f) {
-        shear_direction.y = 0.1f;
+    if (!jelly->is_frozen) {
+        struct Vector3 shear_direction;
+        vector3Sub(&jelly->shear_spring, &jelly->transform.position, &shear_direction);
+        if (shear_direction.y < 0.1f) {
+            shear_direction.y = 0.1f;
+        }
+        float side_scale = 1.0f / sqrtf(shear_direction.y);
+        vector3Scale(&shear_direction, &shear_direction, jelly->collider.scale * MODEL_WORLD_SCALE);
+        mtx[0][0] *= side_scale;
+        mtx[0][2] *= side_scale;
+        mtx[1][0] = shear_direction.x;
+        mtx[1][1] = shear_direction.y;
+        mtx[1][2] = shear_direction.z;
+        mtx[2][0] *= side_scale;
+        mtx[2][2] *= side_scale;
     }
-    float side_scale = 1.0f / sqrtf(shear_direction.y);
-    vector3Scale(&shear_direction, &shear_direction, jelly->collider.scale * MODEL_WORLD_SCALE);
-    mtx[0][0] *= side_scale;
-    mtx[0][2] *= side_scale;
-    mtx[1][0] = shear_direction.x;
-    mtx[1][1] = shear_direction.y;
-    mtx[1][2] = shear_direction.z;
-    mtx[2][0] *= side_scale;
-    mtx[2][2] *= side_scale;
 
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
@@ -147,32 +240,8 @@ void jelly_render(void* data, struct render_batch* batch) {
     );
 }
 
-void jelly_update_spring(struct jelly* jelly) {
-    struct Vector3 target_spring;
-    vector3Add(&jelly->transform.position, &gUp, &target_spring);
-
-    float time_left = JUMP_INTERVAL - jelly->jump_timer;
-
-    if (time_left < JUMP_WINDUP + JUMP_TIME) {
-        if (time_left < JUMP_TIME) {
-            target_spring.y += 0.1f;
-        } else {
-            target_spring.y -= 0.5f - (time_left - JUMP_TIME) * (0.5f / JUMP_WINDUP);
-        }
-    }
-
-    struct Vector3 offset;
-    vector3Sub(&target_spring, &jelly->shear_spring, &offset);
-
-    vector3AddScaled(&jelly->shear_velocity, &offset, 2.5f, &jelly->shear_velocity);
-    vector3Scale(&jelly->shear_velocity, &jelly->shear_velocity, 0.91f);
-    vector3AddScaled(&jelly->shear_spring, &jelly->shear_velocity, fixed_time_step, &jelly->shear_spring);
-}
-
 void jelly_update(void* data) {
     struct jelly* jelly = (struct jelly*)data;
-
-    jelly_update_spring(jelly);
 
     if (jelly->needs_new_radius) {
         dynamic_object_set_scale(&jelly->collider, jelly_recalc_radius(jelly));
@@ -180,14 +249,12 @@ void jelly_update(void* data) {
         jelly->needs_new_radius = 0;
     }
 
-    if (dynamic_object_is_grounded(&jelly->collider)) {
-        if (jelly->jump_timer > JUMP_INTERVAL) {
-            jelly->collider.velocity.y += JUMP_IMPULSE;
-            jelly->jump_timer = 0.0f;
-        }
-    
-        jelly->jump_timer += fixed_time_step;
+    if (!jelly->is_frozen) {
+        struct Vector3 jump_target;
+        jelly_update_target(jelly, &jump_target);
+        jelly_update_spring(jelly, &jump_target);
     }
+
 
     if (jelly->health.current_health <= 0.0f || (!jelly->is_frozen && jelly->collider.under_water)) {
         jelly_destroy(jelly);
@@ -228,10 +295,22 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
     jelly->collider.scale = jelly_recalc_radius(jelly);
     jelly->collider.center.y = jelly->collider.scale;
     jelly->jump_timer = 0.0f;
+    jelly->current_target = 0;
 
     collision_scene_add(&jelly->collider);
 
+    spatial_trigger_init(
+        &jelly->vision, 
+        &jelly->transform,
+        &jelly_vision_type,
+        COLLISION_LAYER_DAMAGE_PLAYER
+    );
+
+    collision_scene_add_trigger(&jelly->vision);
+
     update_add(jelly, jelly_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
+
+    vector2ComplexFromAngle(fixed_time_step * 3.0f, &jelly_max_rotation);
 }
 
 void jelly_destroy(struct jelly* jelly) {
@@ -241,4 +320,5 @@ void jelly_destroy(struct jelly* jelly) {
     update_remove(jelly);
     tmesh_cache_release(jelly->mesh);
     tmesh_cache_release(jelly->ice_mesh);
+    collision_scene_remove_trigger(&jelly->vision);
 }
