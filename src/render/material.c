@@ -246,7 +246,6 @@ void material_load(struct material* into, FILE* material_file) {
                             break;
                         case T3D_VERTEX_FX_SPHERICAL_UV:
                             t3d_state_set_vertex_fx(T3D_VERTEX_FX_SPHERICAL_UV, into->tex0.sprite->width, into->tex0.sprite->height);
-                            t3d_state_set_vertex_fx_scale(320);
                             break;
                     }
                 }

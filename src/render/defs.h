@@ -4,7 +4,7 @@
 #include "../math/vector3.h"
 
 #define MODEL_SCALE 64
-#define WORLD_SCALE 32
+#define WORLD_SCALE 2
 
 #define MODEL_WORLD_SCALE   ((float)WORLD_SCALE / (float)MODEL_SCALE)
 

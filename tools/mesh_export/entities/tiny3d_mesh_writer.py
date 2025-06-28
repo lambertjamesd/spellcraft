@@ -329,15 +329,16 @@ def _pack_rotation(rot):
         round(32767 * final_rot.z)
     )
 
-def _pack_normal(normal):
-  x_int = int(round(normal[0] * 15.5))
-  y_int = int(round(normal[1] * 15.5))
-  z_int = int(round(normal[2] * 15.5))
+def _pack_normal(normal: mathutils.Vector):
+  normalized = normal.normalized()
+  x_int = int(round(normalized[0] * 15.5))
+  y_int = int(round(normalized[1] * 31.5))
+  z_int = int(round(normalized[2] * 15.5))
   x_int = min(max(x_int, -16), 15)
-  y_int = min(max(y_int, -16), 15)
+  y_int = min(max(y_int, -32), 31)
   z_int = min(max(z_int, -16), 15)
 
-  return ((x_int & 0b11111) << 10 | (y_int & 0b11111) <<  5 | (z_int & 0b11111) << 0).to_bytes(2, 'big')
+  return (((x_int & 0b11111) << 11) | ((y_int & 0b111111) <<  5) | ((z_int & 0b11111) << 0)).to_bytes(2, 'big')
 
 def _pack_color(color):
     return struct.pack(

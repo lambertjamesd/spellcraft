@@ -108,12 +108,14 @@ void health_heal(struct health* health, float amount) {
     health->current_health = minf(health->max_health, health->current_health + amount);
 }
 
-void health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type) {
+bool health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type) {
     struct contact* curr = damage_source->active_contacts;
 
     struct damage_info damage;
     damage.amount = amount;
     damage.type = type;
+
+    bool did_hit = false;
 
     while (curr) {
         struct health* target_health = health_get(curr->other_object);
@@ -127,8 +129,11 @@ void health_apply_contact_damage(struct dynamic_object* damage_source, float amo
         damage.direction = curr->normal;
 
         health_damage(target_health, &damage);
+        did_hit = true;
         curr = curr->next;
     }
+
+    return did_hit;
 }
 
 struct health* health_get(entity_id id) {
