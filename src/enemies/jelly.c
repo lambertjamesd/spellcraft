@@ -34,7 +34,7 @@ static struct Vector2 jelly_max_rotation;
 static struct dynamic_object_type jelly_collider = {
     SPHERE_COLLIDER(1.0f),
     .friction = 0.5f,
-    .bounce = 0.7f,
+    .bounce = 0.0f,
     // about a 40 degree slope
     .max_stable_slope = 0.219131191f,
 };
@@ -42,7 +42,7 @@ static struct dynamic_object_type jelly_collider = {
 static struct dynamic_object_type jelly_ice_collider = {
     BOX_COLLIDER(1.0f, 1.0f, 1.0f),
     .friction = 0.025f,
-    .bounce = 0.7f,
+    .bounce = 0.1f,
     // about a 40 degree slope
     .max_stable_slope = 0.0f,
 };
@@ -103,8 +103,20 @@ void jelly_update_spring(struct jelly* jelly, struct Vector3* jump_dir) {
     vector3AddScaled(&jelly->shear_spring, &jelly->shear_velocity, fixed_time_step, &jelly->shear_spring);
 }
 
-void jelly_update_target(struct jelly* jelly, struct Vector3* jump_target) {
-    if (!dynamic_object_is_grounded(&jelly->collider)) {
+void jelly_update_handle_damage(struct jelly* jelly, bool is_grounded) {
+    if (jelly->is_attacking) {
+        health_apply_contact_damage(&jelly->collider, 5.0f, DAMAGE_TYPE_BASH);
+    }
+
+    if (!is_grounded && jelly->is_jumping) {
+        jelly->is_jumping = 1;
+    } else if (is_grounded) {
+        jelly->is_attacking = 0;
+    }
+}
+
+void jelly_update_target(struct jelly* jelly, struct Vector3* jump_target, bool is_grounded) {
+    if (!is_grounded) {
         return;
     }
 
@@ -144,6 +156,8 @@ void jelly_update_target(struct jelly* jelly, struct Vector3* jump_target) {
         jelly->collider.velocity.y += JUMP_IMPULSE;
         jelly->collider.velocity.z += JUMP_SIDE_IMPULSE * jump_target->z;
         jelly->jump_timer = 0.0f;
+        jelly->is_jumping = 1;
+        jelly->is_attacking = 1;
     } else {
         jelly->jump_timer += fixed_time_step;
     }
@@ -251,7 +265,9 @@ void jelly_update(void* data) {
 
     if (!jelly->is_frozen) {
         struct Vector3 jump_target;
-        jelly_update_target(jelly, &jump_target);
+        bool is_grounded = dynamic_object_is_grounded(&jelly->collider);
+        jelly_update_handle_damage(jelly, is_grounded);
+        jelly_update_target(jelly, &jump_target, is_grounded);
         jelly_update_spring(jelly, &jump_target);
     }
 
@@ -277,6 +293,8 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
     jelly->health.current_health = STARTING_HEALTH;
     jelly->needs_new_radius = 0;
     jelly->is_frozen = 0;
+    jelly->is_jumping = 0;
+    jelly->is_attacking = 0;
 
     jelly->freeze_timer = 0.0f;
     vector3Add(&definition->position, &gUp, &jelly->shear_spring);

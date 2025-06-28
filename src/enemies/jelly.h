@@ -28,6 +28,8 @@ struct jelly {
 
     uint16_t needs_new_radius: 1;
     uint16_t is_frozen: 1;
+    uint16_t is_jumping: 1; 
+    uint16_t is_attacking: 1;
 };
 
 void jelly_init(struct jelly* jelly, struct jelly_definition* definition);
