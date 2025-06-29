@@ -397,9 +397,9 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
     if palette_data:
         _serialize_palette(output, palette_data, palette_offset)
 
-    if mat.uv_gen:
+    if mat.vtx_effect:
         output.write(COMMAND_UV_GEN.to_bytes(1, 'big'))
-        output.write(UV_GEN[mat.uv_gen].to_bytes(1, 'big'))
+        output.write(UV_GEN[mat.vtx_effect].to_bytes(1, 'big'))
 
     if mat.fog:
         output.write(COMMAND_FOG.to_bytes(1, 'big'))

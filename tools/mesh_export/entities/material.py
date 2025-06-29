@@ -463,7 +463,7 @@ class Material():
         self.culling: bool | None = None
         self.z_buffer: bool | None = None
         self.vertex_gamma: float = 0.454545
-        self.uv_gen: str | None = None
+        self.vtx_effect: str | None = None
         self.fog: Fog | None = None
 
     def copy(self):
@@ -480,7 +480,7 @@ class Material():
         result.culling = self.culling
         result.z_buffer = self.z_buffer
         result.vertex_gamma = self.vertex_gamma
-        result.uv_gen = self.uv_gen
+        result.vtx_effect = self.vtx_effect
         result.fog = self.fog.copy() if self.fog else None
         return result
 
@@ -555,7 +555,7 @@ class Material():
     tex0 = {self.tex0}
     tex1 = {self.tex1}
     fog = {self.fog}
-    uv_gen = {self.uv_gen}
+    vtx_effect = {self.vtx_effect}
 """
 
 def _check_is_enum(value, key_path, enum_list):
@@ -989,7 +989,7 @@ def parse_material(filename: str):
 
     result.vertex_gamma = _optional_number(json_data, 'vertexGamma', 'vertexGamma', 1)
 
-    result.uv_gen = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
+    result.vtx_effect = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
 
     result.fog = Fog()
 

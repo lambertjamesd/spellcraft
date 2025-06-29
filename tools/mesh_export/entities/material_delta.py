@@ -67,8 +67,8 @@ def determine_material_delta(start: material.Material, end: material.Material) -
     if end.z_buffer != None and (start.z_buffer == None or start.z_buffer != end.z_buffer):
         result.z_buffer = end.z_buffer
 
-    if end.uv_gen != None and (start.uv_gen == None or start.uv_gen != end.uv_gen):
-        result.uv_gen = end.uv_gen
+    if end.vtx_effect != None and (start.vtx_effect == None or start.vtx_effect != end.vtx_effect):
+        result.vtx_effect = end.vtx_effect
 
     result.fog = determine_fog_delta(start.fog, end.fog)
 
@@ -183,8 +183,8 @@ def apply_material_delta(delta: material.Material, into: material.Material):
     if delta.z_buffer != None:
         into.z_buffer = delta.z_buffer
 
-    if delta.uv_gen != None:
-        into.uv_gen = delta.uv_gen
+    if delta.vtx_effect != None:
+        into.vtx_effect = delta.vtx_effect
 
     if delta.fog != None:
         into.fog = delta.fog
