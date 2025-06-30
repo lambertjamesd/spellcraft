@@ -20,6 +20,7 @@ import parse.struct_serialize
 import cutscene.expresion_generator
 import cutscene.parser
 import cutscene.variable_layout
+import entities.camera_animation
 
 class StaticEntry():
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
@@ -308,6 +309,8 @@ def process_scene():
             file.write(overworld_romname.encode())
         else:
             file.write(b'\0')
+
+        entities.camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
             
 
 process_scene()
