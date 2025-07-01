@@ -121,6 +121,10 @@ struct cutscene* cutscene_load(char* filename) {
                 step->data.interact_with_location.location_name = string_load(file);
                 break;
             }    
+            case CUTSCENE_STEP_FADE:
+                fread(&step->data.fade.color, 4, 1, file);
+                fread(&step->data.fade.duration, 4, 1, file);
+                break;
         }
     }
 

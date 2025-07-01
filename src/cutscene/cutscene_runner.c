@@ -13,10 +13,17 @@
 #include "expression_evaluate.h"
 #include "show_item.h"
 #include "../savefile/savefile.h"
+#include "../effects/fade_effect.h"
 #include <assert.h>
 
 #define MAX_QUEUED_CUTSCENES   4
 #define MAX_CUTSCENE_CALL_DEPTH 6
+
+static struct Coloru8 fade_colors[] = {
+    {0, 0, 0, 0},
+    {0, 0, 0, 255},
+    {255, 255, 255, 255},
+};
 
 extern struct scene* current_scene;
 
@@ -184,6 +191,9 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             );
             break;
         }
+        case CUTSCENE_STEP_FADE:
+            fade_effect_set(fade_colors[step->data.fade.color], step->data.fade.duration);
+            break;
     }
 }
 

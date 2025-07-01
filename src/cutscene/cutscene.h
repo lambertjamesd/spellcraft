@@ -24,6 +24,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_CAMERA_ANIMATE,
     CUTSCENE_STEP_CAMERA_WAIT,
     CUTSCENE_STEP_INTERACT_WITH_LOCATION,
+    CUTSCENE_STEP_FADE,
 };
 
 struct cutscene_step;
@@ -86,6 +87,10 @@ union cutscene_step_data {
         union cutscene_actor_id subject;
         char* location_name;
     } interact_with_location;
+    struct {
+        enum fade_colors color;
+        float duration;
+    } fade;
 };
 
 struct cutscene_step {

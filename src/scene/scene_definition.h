@@ -125,6 +125,12 @@ enum interaction_type {
     INTERACTION_LOOK_MOVE_SPACE_WAIT,
 };
 
+enum fade_colors {
+    FADE_COLOR_NONE,
+    FADE_COLOR_BLACK,
+    FADE_COLOR_WHITE,
+};
+
 typedef char* script_location;
 
 struct npc_definition {
