@@ -130,6 +130,10 @@ def _init_default_properties(target):
         if attr.name == 'position' or \
             attr.name == 'rotation':
             continue
+
+        if attr.name in target.data:
+            target[attr.name] = target.data[attr.name]
+            continue
         
         if attr.data_type == 'bool':
             if not attr.name in target:

@@ -1,0 +1,10 @@
+
+pause true, false;
+
+cam_animate "cutscene_test";
+say "Watch out for the jelly enemies";
+cam_wait;
+
+cam_follow;
+
+pause false, false;

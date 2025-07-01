@@ -164,14 +164,20 @@ void camera_controller_destroy(struct camera_controller* controller) {
 void camera_look_at(struct camera_controller* controller, struct Vector3* target) {
     controller->look_target = *target;
     controller->state = CAMERA_STATE_LOOK_AT_WITH_PLAYER;
+    controller->camera->fov = 70.0f;
 }
 
 void camera_follow_player(struct camera_controller* controller) {
     controller->state = CAMERA_STATE_FOLLOW;
+    controller->camera->fov = 70.0f;
 }
 
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation) {
     controller->state = CAMERA_STATE_ANIMATE;
     controller->animation = animation;
     controller->current_frame = 0;
+}
+
+bool camera_is_animating(struct camera_controller* controller) {
+    return controller->animation != 0 && controller->current_frame < controller->animation->frame_count;
 }

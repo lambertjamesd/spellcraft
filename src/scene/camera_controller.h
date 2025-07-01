@@ -39,4 +39,6 @@ void camera_look_at(struct camera_controller* controller, struct Vector3* target
 void camera_follow_player(struct camera_controller* controller);
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation);
 
+bool camera_is_animating(struct camera_controller* controller);
+
 #endif

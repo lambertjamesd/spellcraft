@@ -20,7 +20,9 @@ CUTSCENE_STEP_INTERACT_WITH_NPC = 9
 CUTSCENE_STEP_IDLE_NPC = 10
 CUTSCENE_STEP_CAMERA_LOOK_AT_NPC = 11
 CUTSCENE_STEP_CAMERA_FOLLOW = 12
-CUTSCENE_STEP_INTERACT_WITH_LOCATION = 13
+CUTSCENE_STEP_CAMERA_ANIMATE = 13
+CUTSCENE_STEP_CAMERA_WAIT = 14
+CUTSCENE_STEP_INTERACT_WITH_LOCATION = 15
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -35,6 +37,8 @@ _step_args = {
     "idle_npc": [ParameterType("int", True)],
     "cam_look_npc": [ParameterType("int", True)],
     "cam_follow": [],
+    "cam_animate": [ParameterType("str", True)],
+    "cam_wait": [],
     "interact_with_location": [ParameterType("int", True), ParameterType("int", True), ParameterType("str", True)],
 }
 
@@ -46,6 +50,8 @@ _step_ids = {
     "idle_npc": CUTSCENE_STEP_IDLE_NPC,
     "cam_look_npc": CUTSCENE_STEP_CAMERA_LOOK_AT_NPC,
     "cam_follow": CUTSCENE_STEP_CAMERA_FOLLOW,
+    "cam_animate": CUTSCENE_STEP_CAMERA_ANIMATE,
+    "cam_wait": CUTSCENE_STEP_CAMERA_WAIT,
     "interact_with_location": CUTSCENE_STEP_INTERACT_WITH_LOCATION,
 }
 
