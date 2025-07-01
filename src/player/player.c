@@ -14,6 +14,8 @@
 #include "../time/time.h"
 #include "../debug/debug_colliders.h"
 
+#include "../effects/fade_effect.h"
+
 #define PLAYER_MAX_SPEED    4.2f
 
 #define PLAYER_DASH_THRESHOLD 4.7f

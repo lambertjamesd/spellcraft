@@ -23,7 +23,7 @@ void menu_reset() {
     callback_list_reset(&g_menu_callbacks, sizeof(struct menu_callback_data), MIN_MENU_COUNT, menu_data_compare);
 }
 
-void menu_add_callback(menu_render_callback callback, void* data, int priority) {
+void menu_add_callback(menu_render_callback callback, void* data, enum menu_priority priority) {
     struct menu_callback_data entry;
 
     entry.data = data;

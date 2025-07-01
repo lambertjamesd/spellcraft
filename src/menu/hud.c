@@ -149,7 +149,7 @@ void hud_render(void *data) {
 }
 
 void hud_init(struct hud* hud, struct player* player) {
-    menu_add_callback(hud_render, hud, 0);
+    menu_add_callback(hud_render, hud, MENU_PRIORITY_HUD);
     hud->player = player;
 }
 
