@@ -12,6 +12,7 @@
 #include "../menu/hud.h"
 #include "../overworld/overworld.h"
 #include "camera_controller.h"
+#include "camera_animation.h"
 
 typedef void(*entity_init)(void* entity, void* definition);
 typedef void(*entity_destroy)(void* entity);
@@ -79,6 +80,8 @@ struct scene {
     uint16_t named_location_count;
 
     char* string_table;
+
+    struct camera_animation_list camera_animations;
 };
 
 extern struct scene* current_scene;

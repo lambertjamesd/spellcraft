@@ -95,7 +95,7 @@ class ArmatureAttributes():
     
 class PackedArmatureData():
     def __init__(self, loc: mathutils.Vector, rot: mathutils.Quaternion, scale: mathutils.Vector):
-        packed_rotation = _pack_quaternion(rot)
+        packed_rotation = pack_quaternion(rot)
         self._data: list[int] = [
             _pack_position(loc.x),
             _pack_position(loc.y),
@@ -357,7 +357,7 @@ def get_channels(group: bpy.types.ActionGroup, suffix: str) -> list[bpy.types.FC
 def _pack_position(input: float) -> int:
     return round(input * 256)
 
-def _pack_quaternion(input: mathutils.Quaternion):
+def pack_quaternion(input: mathutils.Quaternion):
     if input.w < 0:
         final_input = -input
     else:

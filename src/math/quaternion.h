@@ -4,6 +4,7 @@
 
 #include "vector3.h"
 #include "vector2.h"
+#include <stdint.h>
 
 struct Quaternion {
     float x, y, z, w;
@@ -31,5 +32,7 @@ void quatApplyAngularVelocity(struct Quaternion* input, struct Vector3* w, float
 void quatDecompose(struct Quaternion* input, struct Vector3* axis, float* angle);
 
 float quatDot(struct Quaternion* a, struct Quaternion* b);
+
+void quatUnpack(int16_t* packed, struct Quaternion* result);
 
 #endif

@@ -83,17 +83,8 @@ int16_t* animator_extract_bone(int16_t* bone_data, struct animation_used_attribu
     }
 
     if (attributes.has_rot) {
-        result->rotation.x = (float)(bone_data[0] * (1.0f / 32767.0f));
-        result->rotation.y = (float)(bone_data[1] * (1.0f / 32767.0f));
-        result->rotation.z = (float)(bone_data[2] * (1.0f / 32767.0f));
-
-        float wSqrd = 1.0f - (result->rotation.x * result->rotation.x + result->rotation.y * result->rotation.y + result->rotation.z * result->rotation.z);
-        if (wSqrd <= 0.0f) {
-            result->rotation.w = 0.0f;
-        } else {
-            result->rotation.w = sqrtf(wSqrd);
-        }
-
+        quatUnpack(bone_data, &result->rotation);
+        
         bone_data += 3;
     }
 

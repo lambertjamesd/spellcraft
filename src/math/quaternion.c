@@ -290,3 +290,16 @@ void quatDecompose(struct Quaternion* input, struct Vector3* axis, float* angle)
 float quatDot(struct Quaternion* a, struct Quaternion* b) {
     return a->x * b->x + a->y * b->y + a->z * b->z + a->w * b->w;
 }
+
+void quatUnpack(int16_t* packed, struct Quaternion* result) {
+    result->x = (float)(packed[0] * (1.0f / 32767.0f));
+    result->y = (float)(packed[1] * (1.0f / 32767.0f));
+    result->z = (float)(packed[2] * (1.0f / 32767.0f));
+
+    float wSqrd = 1.0f - (result->x * result->x + result->y * result->y + result->z * result->z);
+    if (wSqrd <= 0.0f) {
+        result->w = 0.0f;
+    } else {
+        result->w = sqrtf(wSqrd);
+    }
+}

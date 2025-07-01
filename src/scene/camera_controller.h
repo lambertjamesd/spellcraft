@@ -3,10 +3,12 @@
 
 #include "../render/camera.h"
 #include "../player/player.h"
+#include "camera_animation.h"
 
 enum camera_controller_state {
     CAMERA_STATE_FOLLOW,
     CAMERA_STATE_LOOK_AT_WITH_PLAYER,
+    CAMERA_STATE_ANIMATE,
 };
 
 struct camera_cached_calcuations {
@@ -25,6 +27,8 @@ struct camera_controller {
     float speed;
     struct Vector3 look_target;
     enum camera_controller_state state;
+    struct camera_animation* animation;
+    uint16_t current_frame;
 };
 
 void camera_controller_init(struct camera_controller* controller, struct Camera* camera, struct player* player);
@@ -33,5 +37,6 @@ void camera_controller_destroy(struct camera_controller* controller);
 
 void camera_look_at(struct camera_controller* controller, struct Vector3* target);
 void camera_follow_player(struct camera_controller* controller);
+void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation);
 
 #endif

@@ -107,11 +107,31 @@ void camera_controller_update_position(struct camera_controller* controller, str
     quatLook(&offset, &gUp, &controller->camera->transform.rotation);
 }
 
+static struct camera_animation_frame __attribute__((aligned(16))) anim_frame_buffer;
+
 void camera_controller_update(struct camera_controller* controller) {
     if (controller->state == CAMERA_STATE_FOLLOW) {
         camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);
     } else if (controller->state == CAMERA_STATE_LOOK_AT_WITH_PLAYER) {
         camera_controller_determine_two_target_position(controller, &controller->target);
+    } else if (controller->state == CAMERA_STATE_ANIMATE) {
+        if (!controller->animation || controller->current_frame >= controller->animation->frame_count) {
+            return;
+        }
+
+        data_cache_hit_invalidate((void*)&anim_frame_buffer, 16);
+        dma_read(
+            &anim_frame_buffer, 
+            controller->animation->rom_offset + sizeof(struct camera_animation_frame) * controller->current_frame, 
+            sizeof(struct camera_animation_frame)
+        );
+
+        controller->camera->transform.position = anim_frame_buffer.position;
+        quatUnpack(anim_frame_buffer.rotation, &controller->camera->transform.rotation);
+        controller->camera->fov = 180.0f * (1.0f / 0xFFFF) * anim_frame_buffer.fov;
+        controller->current_frame += 1;
+
+        return;
     }
     camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
 }
@@ -132,6 +152,9 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     quatAxisAngle(&gRight, 0.0f, &controller->camera->transform.rotation);
 
     camera_controller_update_position(controller, &player->cutscene_actor.transform);
+
+    controller->animation = NULL;
+    controller->current_frame = 0;
 }
 
 void camera_controller_destroy(struct camera_controller* controller) {
@@ -145,4 +168,10 @@ void camera_look_at(struct camera_controller* controller, struct Vector3* target
 
 void camera_follow_player(struct camera_controller* controller) {
     controller->state = CAMERA_STATE_FOLLOW;
+}
+
+void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation) {
+    controller->state = CAMERA_STATE_ANIMATE;
+    controller->animation = animation;
+    controller->current_frame = 0;
 }

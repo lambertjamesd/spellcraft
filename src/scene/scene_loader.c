@@ -148,6 +148,34 @@ void scene_destroy_entity(struct entity_data* entity_data) {
     free(entity_data->entities);
 }
 
+void scene_load_camera_animations(struct camera_animation_list* list, const char* filename, FILE* file) {
+    uint16_t count;
+    fread(&count, sizeof(count), 1, file);
+    camera_animation_list_init(list, count, 0);
+
+    int filename_len = strlen(filename);
+    char modified_filename[filename_len + 1];
+    strcpy(modified_filename, filename + strlen("rom:/"));
+    strcpy(modified_filename + filename_len - 10, "sanim");
+
+    list->rom_location = dfs_rom_addr(modified_filename);
+
+    for (int i = 0; i < count; ++i) {
+        uint8_t name_length;
+        fread(&name_length, 1, 1, file);
+        char* name = malloc(name_length + 1);
+        fread(name, name_length, 1, file);
+        name[name_length] = '\0';
+
+        struct camera_animation* animation = &list->animations[i];
+
+        animation->name = name;
+        fread(&animation->frame_count, sizeof(uint16_t), 1, file);
+        fread(&animation->rom_offset, sizeof(uint32_t), 1, file);
+        animation->rom_offset += list->rom_location;
+    }
+}
+
 struct scene* scene_load(const char* filename) {
     FILE* file = asset_fopen(filename, NULL);
 
@@ -269,6 +297,8 @@ struct scene* scene_load(const char* filename) {
         scene->overworld = NULL;
     }
 
+    scene_load_camera_animations(&scene->camera_animations, filename, file);
+
     fclose(file);
 
     render_scene_add(NULL, 0.0f, scene_render, scene);
@@ -322,6 +352,8 @@ void scene_release(struct scene* scene) {
         free(scene->named_locations[i].name);
     }
     free(scene->named_locations);
+
+    camera_animation_list_destroy(&scene->camera_animations);
 
     free(scene);
 }

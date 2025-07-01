@@ -9,6 +9,9 @@ from . import armature
 # FOV = 2 * arctan(sensor_size / (2 * focal_length))
 SENSOR_SIZE = 36
 
+base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
+base_rotation = base_transform.to_quaternion()
+
 class camera_animation_frame:
     def __init__(self):
         self.location = mathutils.Vector()
@@ -43,10 +46,11 @@ class camera_animation_frame:
             raise Exception(f'unknown animation frame value {name}')
         
     def pack(self):
-        rotation = armature.pack_quaternion(self.get_rotation())
+        position = base_transform @ self.location
+        rotation = armature.pack_quaternion(base_rotation @ self.get_rotation())
         return struct.pack(
-            'fffhhhH',
-            self.location.x, self.location.y, self.location.z,
+            '>fffhhhH',
+            position.x, position.y, position.z,
             rotation[0], rotation[1], rotation[2],
             round(0xffff * self.fov / math.pi)
         )
@@ -102,8 +106,6 @@ def export_camera_animations(filename: str, scene_file):
 
     items = actions.items()
 
-    scene_file.write(len(items).to_bytes(2, 'big'))
-
     animation_content = []
 
     for name, anim in items:
@@ -115,6 +117,8 @@ def export_camera_animations(filename: str, scene_file):
 
         animation_content.append(anim.pack_animation_data())
 
+    scene_file.write(len(items).to_bytes(2, 'big'))
+
     offset = 0
     index = 0
 
@@ -125,7 +129,6 @@ def export_camera_animations(filename: str, scene_file):
 
         frame_count = anim.end_frame() - anim.start_frame()
         scene_file.write(frame_count.to_bytes(2, 'big'))
-        scene_file.write(bpy.context.scene.render.fps.to_bytes(2, 'big'))
         scene_file.write(offset.to_bytes(4, 'big'))
         offset += len(animation_content[index])
         index += 1
