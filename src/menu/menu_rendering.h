@@ -5,8 +5,8 @@ typedef void (*menu_render_callback)(void* data);
 
 enum menu_priority {
     MENU_PRIORITY_HUD,
-    MENU_PRIORITY_DIALOG,
     MENU_PRIORITY_OVERLAY,
+    MENU_PRIORITY_DIALOG,
 };
 
 void menu_reset();

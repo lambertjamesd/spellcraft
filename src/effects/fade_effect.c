@@ -57,12 +57,12 @@ void fade_effect_activate() {
 void fade_effect_set(struct Coloru8 color, float time) {
     start_color = fade_effect_calculate_color();
     if (start_color.a == 0) {
-        start_color = end_color;
+        start_color = color;
         start_color.a = 0;
     }
     if (color.a == 0) {
         end_color = start_color;
-        start_color.a = 0;
+        end_color.a = 0;
     } else {
         end_color = color;
     }
