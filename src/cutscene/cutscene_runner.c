@@ -163,6 +163,10 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             camera_follow_player(&current_scene->camera_controller);
             break;
         }
+        case CUTSCENE_STEP_CAMERA_RETURN: {
+            camera_return(&current_scene->camera_controller);
+            break;
+        }
         case CUTSCENE_STEP_CAMERA_ANIMATE: {
             camera_play_animation(
                 &current_scene->camera_controller, 

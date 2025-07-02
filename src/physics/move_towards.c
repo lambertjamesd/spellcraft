@@ -3,10 +3,13 @@
 #include "../time/time.h"
 #include "../math/mathf.h"
 #include <math.h>
+#include <stdio.h>
 
 // dP = v*t + 0.5*a*t*t
 // t = v/a
 // stop_distance = 0.5*v*v/a
+
+// distance * a * 2.0 < v*v
 
 // sqrtf(stop_distance * a * 2)
 
@@ -20,13 +23,19 @@ void move_towards(
 
     float target_speed = parameters->max_speed;
 
-    float max_speed_sqr = distance * parameters->max_accel;
+    float stop_distance_check = 2.0f * distance * parameters->max_accel;
 
-    if (max_speed_sqr < parameters->max_speed * parameters->max_speed) {
-        target_speed = sqrtf(target_speed);
+    float speed_value = *speed;
+
+    if (stop_distance_check < speed_value * speed_value) {
+        target_speed = 0.0f;
     }
 
-    *speed = mathfMoveTowards(*speed, target_speed, parameters->max_accel * fixed_time_step);
+    speed_value = mathfMoveTowards(speed_value, target_speed, parameters->max_accel * fixed_time_step);
 
-    vector3MoveTowards(position, target, *speed * fixed_time_step, position);
+    if (fabsf(speed_value) > 0.001f) {
+        vector3MoveTowards(position, target, speed_value * fixed_time_step, position);
+    }
+
+    *speed = speed_value;
 }

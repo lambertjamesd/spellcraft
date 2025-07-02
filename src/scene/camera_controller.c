@@ -3,14 +3,15 @@
 #include "../time/time.h"
 #include "../math/transform_single_axis.h"
 #include "../physics/move_towards.h"
+#include "../math/mathf.h"
 #include <math.h>
 
 #define CAMERA_FOLLOW_DISTANCE  3.4f
 #define CAMERA_FOLLOW_HEIGHT    1.6f
 
 static struct move_towards_parameters camera_move_parameters = {
-    .max_speed = 400.0f,
-    .max_accel = 20.0f,
+    .max_speed = 30.0f,
+    .max_accel = 10.0f,
 };
 
 #define ASPECT_RATIO    (4.0f/3.0f)
@@ -107,6 +108,25 @@ void camera_controller_update_position(struct camera_controller* controller, str
     quatLook(&offset, &gUp, &controller->camera->transform.rotation);
 }
 
+void camera_controller_return_target(struct camera_controller* controller, struct Vector3* target) {
+    struct Vector3 offset;
+    quatMultVector(&controller->camera->transform.rotation, &gForward, &offset);
+    offset.y = 0.0f;
+    vector3Scale(&offset, &offset, -1.0f);
+    vector3Normalize(&offset, &offset);
+    vector3AddScaled(player_get_position(controller->player), &offset, -CAMERA_FOLLOW_DISTANCE, target);
+    target->y += CAMERA_FOLLOW_HEIGHT;
+
+    move_towards(&controller->camera->transform.position, &controller->speed, &controller->target, &camera_move_parameters);
+
+    controller->camera->fov = mathfMoveTowards(controller->camera->fov, 70.0f, 20.0f * fixed_time_step);
+
+    if (vector3DistSqrd(target, &controller->camera->transform.position) < 0.0001f) {
+        controller->state = CAMERA_STATE_FOLLOW;
+        controller->camera->fov = 70.0f;
+    }
+}
+
 static struct camera_animation_frame __attribute__((aligned(16))) anim_frame_buffer;
 
 void camera_controller_update(struct camera_controller* controller) {
@@ -131,6 +151,9 @@ void camera_controller_update(struct camera_controller* controller) {
         controller->camera->fov = 180.0f * (1.0f / 0xFFFF) * anim_frame_buffer.fov;
         controller->current_frame += 1;
 
+        return;
+    } else if (controller->state == CAMERA_STATE_RETURN_TO_PLAYER) {
+        camera_controller_return_target(controller, &controller->target);
         return;
     }
     camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
@@ -170,6 +193,11 @@ void camera_look_at(struct camera_controller* controller, struct Vector3* target
 void camera_follow_player(struct camera_controller* controller) {
     controller->state = CAMERA_STATE_FOLLOW;
     controller->camera->fov = 70.0f;
+}
+
+void camera_return(struct camera_controller* controller) {
+    controller->state = CAMERA_STATE_RETURN_TO_PLAYER;
+    controller->speed = 0.0f;
 }
 
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation) {
