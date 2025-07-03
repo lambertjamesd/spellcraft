@@ -107,6 +107,7 @@ void dynamic_object_recalc_bb(struct dynamic_object* object);
 bool dynamic_object_should_slide(float max_stable_slope, float normal_y);
 
 bool dynamic_object_is_grounded(struct dynamic_object* object);
+struct contact* dynamic_object_get_ground(struct dynamic_object* object);
 
 void dynamic_object_set_scale(struct dynamic_object* object, float scale);
 

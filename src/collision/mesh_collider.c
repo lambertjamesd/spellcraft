@@ -372,3 +372,78 @@ bool mesh_index_is_contained(struct mesh_index* index, struct Vector3* point) {
     return local_position.x >= 0 && local_position.y >= 0 && local_position.z >= 0 &&
         local_position.x <= index->block_count.x && local_position.y <= index->block_count.y && local_position.z <= index->block_count.z;
 }
+
+bool mesh_triangle_shadow_cast(struct mesh_triangle_indices indices, struct Vector3* vertices, struct Vector3* starting_point, struct mesh_shadow_cast_result* result) {
+    struct Vector3 triangle_edges[3];
+
+    struct Vector3 cast_offset;
+
+    for (int i = 0; i < 3; ++i) {
+        int next_index = i == 2 ? 0 : i + 1;
+        vector3Sub(&vertices[indices.indices[next_index]], &vertices[indices.indices[i]], &triangle_edges[i]);
+        vector3Sub(starting_point, &vertices[indices.indices[i]], &cast_offset);
+
+        if (cast_offset.z * triangle_edges[i].x - cast_offset.x * triangle_edges[i].z < 0.00001f) {
+            return false;
+        }
+    }
+
+    struct Vector3 normal;
+    vector3Cross(&triangle_edges[0], &triangle_edges[1], &normal);
+
+    if (fabsf(normal.y) < 0.00001f) {
+        return false;
+    }
+
+    float y = (normal.x * cast_offset.x + normal.z * cast_offset.z) / normal.y + vertices[indices.indices[2]].y;
+
+    if (y > starting_point->y) {
+        return false;
+    }
+
+    result->y = y;
+    result->normal = normal;
+
+    return true;
+}
+
+bool mesh_collider_shadow_cast(struct mesh_collider* collider, struct Vector3* starting_point, struct mesh_shadow_cast_result* result) {
+    struct mesh_index* index = &collider->index;
+    struct Vector3 relative;
+    vector3Sub(starting_point, &index->min, &relative);
+    vector3Multiply(&relative, &index->stride_inv, &relative);
+
+    int x = (int)floorf(relative.x);
+    int y = (int)floorf(relative.y);
+    int z = (int)floorf(relative.z);
+
+    if (x < 0 || z < 0 || y < 0 || x >= index->block_count.x || z >= index->block_count.z) {
+        return false;
+    }
+
+    if (y >= index->block_count.y) {
+        y = index->block_count.y - 1;
+    }
+
+    struct mesh_index_block* current_block = &index->blocks[x + ((y + z * index->block_count.y) * index->block_count.x)];
+    bool has_hit = false;
+
+    while (y >= 0) {
+        for (int idx = current_block->first_index; idx < current_block->last_index; ++idx) {
+            struct mesh_triangle_indices indices = collider->triangles[index->index_indices[idx]];
+
+            struct mesh_shadow_cast_result check;
+            if (mesh_triangle_shadow_cast(indices, collider->vertices, starting_point, &check)) {
+                if (!has_hit || result->y > check.y) {
+                    *result = check;
+                    has_hit = true;
+                }
+            }
+        }
+
+        y -= 1;
+        current_block -= index->block_count.x;
+    }
+    
+    return false;
+}

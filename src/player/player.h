@@ -9,6 +9,7 @@
 #include "../render/animation_clip.h"
 #include "../render/animator.h"
 #include "../cutscene/cutscene_actor.h"
+#include "../effects/drop_shadow.h"
 
 #include "../spell/projectile.h"
 #include "../spell/spell_exec.h"
@@ -69,7 +70,8 @@ struct player {
 
     struct player_animations animations;
     struct inventory_assets assets;
-
+    
+    struct drop_shadow drop_shadow;
 };
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform);

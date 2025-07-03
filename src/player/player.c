@@ -285,22 +285,6 @@ void player_check_inventory(struct player* player) {
     player->renderable.attachments[0] = staff->item_type == ITEM_TYPE_NONE ? NULL : player->assets.staffs[staff->staff_index];
 }
 
-struct Vector3* player_get_ground(struct player* player) {
-    struct contact* contact = player->cutscene_actor.collider.active_contacts;
-
-    struct Vector3* result = NULL;
-
-    while (contact) {
-        if (contact->normal.y > 0.001f && (!result || contact->normal.y > result->y)) {
-            result = &contact->normal;
-        }
-
-        contact = contact->next;
-    }
-
-    return result;
-}
-
 void player_handle_ground_movement(struct player* player, struct Vector3* ground_normal, struct Vector3* target_direction) {
     if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_normal->y)) {
         // TODO handle sliding logic
@@ -373,7 +357,8 @@ void player_handle_movement(struct player* player, joypad_inputs_t* input, struc
 }
 
 void player_update(struct player* player) {
-    struct Vector3* ground_normal = player_get_ground(player);
+    struct contact* ground = dynamic_object_get_ground(&player->cutscene_actor.collider);
+    struct Vector3* ground_normal = ground ? &ground->normal : NULL;
 
     float playback_speed = 1.0f;
     bool repeat;
@@ -539,6 +524,8 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->assets.staffs[1] = NULL;
     player->assets.staffs[2] = NULL;
     player->assets.staffs[3] = NULL;
+
+    drop_shadow_init(&player->drop_shadow, &player->cutscene_actor.collider);
 }
 
 void player_destroy(struct player* player) {
@@ -553,6 +540,7 @@ void player_destroy(struct player* player) {
     cutscene_actor_destroy(&player->cutscene_actor);
 
     tmesh_cache_release(player->assets.staffs[0]);
+    drop_shadow_destroy(&player->drop_shadow);
 }
 
 struct Vector3* player_get_position(struct player* player) {

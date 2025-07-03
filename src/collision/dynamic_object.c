@@ -179,6 +179,22 @@ bool dynamic_object_is_grounded(struct dynamic_object* object) {
     return false;
 }
 
+struct contact* dynamic_object_get_ground(struct dynamic_object* object) {
+    struct contact* contact = object->active_contacts;
+
+    struct contact* result = NULL;
+
+    while (contact) {
+        if (contact->normal.y > 0.001f && (!result || contact->normal.y > result->normal.y)) {
+            result = contact;
+        }
+
+        contact = contact->next;
+    }
+
+    return result;
+}
+
 void dynamic_object_set_scale(struct dynamic_object* object, float scale) {
     object->scale = scale;
     dynamic_object_recalc_bb(object);
