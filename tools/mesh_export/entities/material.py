@@ -258,9 +258,9 @@ class BlendMode():
 
     def __str__(self):
         if self.cyc2:
-            return f"2 cycle {self.cyc1} {self.cyc2}"
+            return f"2 cycle {self.cyc1} {self.cyc2} {self.z_mode}"
         
-        return f"1 cycle {self.cyc1}"
+        return f"1 cycle {self.cyc1} {self.z_mode}"
     
     def copy(self):
         result = BlendMode(

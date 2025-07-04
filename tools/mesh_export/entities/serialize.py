@@ -146,6 +146,14 @@ ZMODE = {
     "DECAL": 3 << 10,
 }
 
+COVERAGE_DEST = {
+    'CLAMP': 0 << 8,
+    'WRAP': 1 << 8,
+    'ZAP': 2 << 8,
+    'FULL': 2 << 8,
+    'SAVE': 3 << 8,
+}
+
 ALPHACOMPARE = {
     "NONE": 0,
     "THRESHOLD": 1,
@@ -234,6 +242,7 @@ def _serialize_combine(file, combine: material.CombineMode, force_cyc2: bool):
 SOM_Z_COMPARE = 1 << 4
 SOM_Z_WRITE = 1 << 5
 SOM_READ_ENABLE = 1 << 6
+SOM_BLENDING = 1 << 14
 
 def _serialize_blend(file, blend: material.BlendMode, force_cyc2: bool):
     a1 = BLEND_A[blend.cyc1.a1]
@@ -247,6 +256,12 @@ def _serialize_blend(file, blend: material.BlendMode, force_cyc2: bool):
     b2_2 = b2
 
     other_flags = ZMODE[blend.z_mode] | ALPHACOMPARE[blend.alpha_compare]
+
+    if blend.coverage_dest:
+        other_flags |= COVERAGE_DEST[blend.coverage_dest]
+
+    if blend.force_blend:
+        other_flags |= SOM_BLENDING
 
     if blend.cyc1.needs_read():
         other_flags |= SOM_READ_ENABLE

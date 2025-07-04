@@ -169,7 +169,7 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     rdpq_blender_t blendMode;
                     fread(&blendMode, sizeof(rdpq_blender_t), 1, material_file);
-                    rdpq_mode_blender(blendMode & SOM_BLEND_MASK);  
+                    rdpq_mode_blender(blendMode & SOM_BLEND_MASK);
 
                     if (blendMode & SOM_Z_COMPARE) {
                         into->flags |= MATERIAL_FLAGS_Z_READ;
@@ -189,8 +189,13 @@ void material_load(struct material* into, FILE* material_file) {
                         rdpq_mode_alphacompare(0);
                     }
 
+                    int flags = SOM_ZMODE_MASK | SOM_READ_ENABLE | SOM_Z_COMPARE | SOM_Z_WRITE | SOM_BLENDING | SOM_COVERAGE_DEST_MASK;
+                    rdpq_change_other_modes_raw(flags, blendMode & flags);
+
                     // TODO check when the zmode is decal
-                    // into->sort_priority = SORT_PRIORITY_DECAL;
+                    if ((blendMode & SOM_ZMODE_MASK) == SOM_ZMODE_DECAL) {
+                        into->sort_priority = SORT_PRIORITY_DECAL;
+                    }
 
                     if ((blendMode & SOM_Z_WRITE) == 0) {
                         into->sort_priority = SORT_PRIORITY_TRANSPARENT;
