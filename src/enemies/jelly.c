@@ -329,6 +329,8 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
     update_add(jelly, jelly_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
 
     vector2ComplexFromAngle(fixed_time_step * 3.0f, &jelly_max_rotation);
+
+    drop_shadow_init(&jelly->drop_shadow, &jelly->collider);
 }
 
 void jelly_destroy(struct jelly* jelly) {

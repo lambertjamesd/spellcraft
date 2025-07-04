@@ -383,7 +383,7 @@ bool mesh_triangle_shadow_cast(struct mesh_triangle_indices indices, struct Vect
         vector3Sub(&vertices[indices.indices[next_index]], &vertices[indices.indices[i]], &triangle_edges[i]);
         vector3Sub(starting_point, &vertices[indices.indices[i]], &cast_offset);
 
-        if (cast_offset.z * triangle_edges[i].x - cast_offset.x * triangle_edges[i].z < 0.00001f) {
+        if (cast_offset.z * triangle_edges[i].x - cast_offset.x * triangle_edges[i].z > 0.00001f) {
             return false;
         }
     }
@@ -395,9 +395,9 @@ bool mesh_triangle_shadow_cast(struct mesh_triangle_indices indices, struct Vect
         return false;
     }
 
-    float y = (normal.x * cast_offset.x + normal.z * cast_offset.z) / normal.y + vertices[indices.indices[2]].y;
+    float y = vertices[indices.indices[2]].y - (normal.x * cast_offset.x + normal.z * cast_offset.z) / normal.y;
 
-    if (y > starting_point->y) {
+    if (y > starting_point->y + 0.0001f) {
         return false;
     }
 
@@ -445,5 +445,5 @@ bool mesh_collider_shadow_cast(struct mesh_collider* collider, struct Vector3* s
         current_block -= index->block_count.x;
     }
     
-    return false;
+    return has_hit;
 }

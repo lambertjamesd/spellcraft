@@ -8,6 +8,7 @@
 #include "../render/renderable.h"
 #include "../render/tmesh.h"
 #include "../scene/scene_definition.h"
+#include "../effects/drop_shadow.h"
 
 struct jelly {
     struct TransformSingleAxis transform;
@@ -30,6 +31,8 @@ struct jelly {
     uint16_t is_frozen: 1;
     uint16_t is_jumping: 1; 
     uint16_t is_attacking: 1;
+
+    struct drop_shadow drop_shadow;
 };
 
 void jelly_init(struct jelly* jelly, struct jelly_definition* definition);
