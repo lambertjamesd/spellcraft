@@ -90,7 +90,7 @@ void render_scene_remove_step(void* data) {
     callback_list_remove(&r_scene_3d.step_callbacks, (callback_id)data);
 }
 
-// #define FX_SCALE    32
+#define FX_SCALE    32
 
 void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool) {
     struct render_batch batch;
@@ -102,7 +102,7 @@ void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct fr
 
     t3d_viewport_attach(viewport);
     // just in case I need this fix
-    // t3d_state_set_vertex_fx_scale(FX_SCALE);
+    t3d_state_set_vertex_fx_scale(FX_SCALE);
 
     struct callback_element* current_step = callback_list_get(&r_scene_3d.step_callbacks, 0);
 

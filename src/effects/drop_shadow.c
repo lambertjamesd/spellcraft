@@ -28,6 +28,8 @@ void drop_shadow_render(void* data, struct render_batch* batch) {
         normal = contact->normal;
     }
 
+    pos.y += 0.1f;
+
     if (normal.y < 0.0001f) {
         return;
     }
