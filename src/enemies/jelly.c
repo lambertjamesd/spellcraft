@@ -259,7 +259,6 @@ void jelly_update(void* data) {
 
     if (jelly->needs_new_radius) {
         dynamic_object_set_scale(&jelly->collider, jelly_recalc_radius(jelly));
-        jelly->collider.center.y = jelly->collider.scale;
         jelly->needs_new_radius = 0;
     }
 
@@ -311,7 +310,7 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
 
     jelly->collider.density_class = DYNAMIC_DENSITY_NEUTRAL;
     jelly->collider.scale = jelly_recalc_radius(jelly);
-    jelly->collider.center.y = jelly->collider.scale;
+    jelly->collider.center.y = 1.0f;
     jelly->jump_timer = 0.0f;
     jelly->current_target = 0;
 
