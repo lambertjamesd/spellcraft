@@ -34,7 +34,8 @@ bool mesh_index_merge_indices(
     uint16_t* into, 
     int* actual_index_count,
     triangle_callback callback,
-    void* data
+    void* data,
+    int collision_layers
 ) {
     uint16_t* a = index->index_indices + block->first_index;
     uint16_t* b = into;
@@ -63,7 +64,7 @@ bool mesh_index_merge_indices(
                 ++b;
             } else {
                 // new index added
-                did_hit = callback(index, data, *a) || did_hit;
+                did_hit = callback(index, data, *a, collision_layers) || did_hit;
             }
 
             *out++ = *a++;
@@ -90,7 +91,8 @@ bool mesh_index_traverse_index(
     triangle_callback callback,
     void* data,
     uint16_t* indices,
-    int* index_count
+    int* index_count,
+    int collision_layers
 ) {
     bool did_hit = false;
 
@@ -109,7 +111,8 @@ bool mesh_index_traverse_index(
                     indices, 
                     index_count,
                     callback,
-                    data
+                    data,
+                    collision_layers
                 ) || did_hit;
 
                 block += 1;
@@ -150,14 +153,14 @@ void mesh_index_calculate_box(struct mesh_index* index, struct Box3D* box, struc
     max->z = MIN(index->block_count.z, max->z);
 }
 
-void mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* box, triangle_callback callback, void* data) {
+void mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* box, triangle_callback callback, void* data, int collision_layers) {
     struct Vector3i32 min;
     struct Vector3i32 max;
 
     mesh_index_calculate_box(index, box, &min, &max);
     uint16_t indices[MAX_INDEX_SET_SIZE];
     int index_count = 0;
-    mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count);
+    mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count, collision_layers);
 }
 
 float mesh_index_inv_offset(float input) {
@@ -277,7 +280,7 @@ bool is_inf(float value) {
     return value == infinityf() || value == -infinityf();
 }
 
-bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* move_amount, triangle_callback callback, void* data) {
+bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* move_amount, triangle_callback callback, void* data, int collision_layers) {
     struct Box3D start_position;
     vector3Sub(&end_position->min, move_amount, &start_position.min);
     vector3Sub(&end_position->max, move_amount, &start_position.max);
@@ -287,7 +290,7 @@ bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
     mesh_index_calculate_box(index, &start_position, &min, &max);
     uint16_t indices[MAX_INDEX_SET_SIZE];
     int index_count = 0;
-    if (mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count)) {
+    if (mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count, collision_layers)) {
         return true;
     }
 
@@ -355,7 +358,7 @@ bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_positio
             return false;
         }
 
-        if (range_result == MESH_RANGE_RESULT_COLLIDE && mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count)) {
+        if (range_result == MESH_RANGE_RESULT_COLLIDE && mesh_index_traverse_index(index, &min, &max, callback, data, &indices[0], &index_count, collision_layers)) {
             return true;
         }
 

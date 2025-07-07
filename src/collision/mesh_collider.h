@@ -7,8 +7,15 @@
 #include "../math/vector3.h"
 #include "../math/box3d.h"
 
+enum surface_type {
+    SURFACE_TYPE_DEFAULT,
+    SURFACE_TYPE_HOLEY,
+    SURFACE_TYPE_WATER,
+};
+
 struct mesh_triangle_indices {
     uint16_t indices[3];
+    uint16_t surface_type;
 };
 
 struct mesh_index_block {
@@ -43,12 +50,12 @@ struct mesh_shadow_cast_result {
     struct Vector3 normal;
 };
 
-typedef bool (*triangle_callback)(struct mesh_index* index, void* data, int triangle_index);
+typedef bool (*triangle_callback)(struct mesh_index* index, void* data, int triangle_index, int collision_layers);
 
 void mesh_triangle_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 
-void mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* box, triangle_callback callback, void* data);
-bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* move_amount, triangle_callback callback, void* data);
+void mesh_index_lookup_triangle_indices(struct mesh_index* index, struct Box3D* box, triangle_callback callback, void* data, int collision_layers);
+bool mesh_index_swept_lookup(struct mesh_index* index, struct Box3D* end_position, struct Vector3* move_amount, triangle_callback callback, void* data, int collision_layers);
 bool mesh_index_is_contained(struct mesh_index* index, struct Vector3* point);
 
 bool mesh_collider_shadow_cast(struct mesh_collider* index, struct Vector3* starting_point, struct mesh_shadow_cast_result* result);

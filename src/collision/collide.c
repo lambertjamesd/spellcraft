@@ -6,6 +6,11 @@
 #include "../util/flags.h"
 #include <stdio.h>
 
+int surface_type_collision_layers[] = {
+    COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
+    COLLISION_LAYER_TANGIBLE,
+    0,
+};
 
 void correct_velocity(struct dynamic_object* object, struct Vector3* normal, float ratio, float friction, float bounce) {
     float velocityDot = vector3Dot(&object->velocity, normal);
@@ -70,9 +75,14 @@ struct object_mesh_collide_data {
     struct mesh_triangle triangle;
 };
 
-bool collide_object_to_triangle(struct mesh_index* index, void* data, int triangle_index) {
+bool collide_object_to_triangle(struct mesh_index* index, void* data, int triangle_index, int collision_layers) {
     struct object_mesh_collide_data* collide_data = (struct object_mesh_collide_data*)data;
+
     collide_data->triangle.triangle = collide_data->mesh->triangles[triangle_index];
+    
+    if (!(surface_type_collision_layers[collide_data->triangle.triangle.surface_type] & collision_layers)) {
+        return false;
+    }
 
     struct Simplex simplex;
     if (!gjkCheckForOverlap(&simplex, &collide_data->triangle, mesh_triangle_minkowski_sum, collide_data->object, dynamic_object_minkowski_sum, &gRight)) {
@@ -111,7 +121,7 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
     collide_data.mesh = mesh;
     collide_data.object = object;
     collide_data.triangle.vertices = mesh->vertices;
-    mesh_index_lookup_triangle_indices(&mesh->index, &object->bounding_box, collide_object_to_triangle, &collide_data);
+    mesh_index_lookup_triangle_indices(&mesh->index, &object->bounding_box, collide_object_to_triangle, &collide_data, object->collision_layers);
 }
 
 void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b) {

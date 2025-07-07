@@ -33,16 +33,20 @@ void object_mesh_collide_data_init(
     data->object = object;
 }
 
-bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int triangle_index) {
+bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int triangle_index, int collision_layers) {
     struct object_mesh_collide_data* collide_data = (struct object_mesh_collide_data*)data;
-
-    struct swept_dynamic_object swept;
-    swept.object = collide_data->object;
-    vector3Sub(collide_data->prev_pos, collide_data->object->position, &swept.offset);
 
     struct mesh_triangle triangle;
     triangle.vertices = collide_data->mesh->vertices;
     triangle.triangle = collide_data->mesh->triangles[triangle_index];
+
+    if (!(surface_type_collision_layers[triangle.triangle.surface_type] & collision_layers)) {
+        return false;
+    }
+
+    struct swept_dynamic_object swept;
+    swept.object = collide_data->object;
+    vector3Sub(collide_data->prev_pos, collide_data->object->position, &swept.offset);
 
     struct Simplex simplex;
     if (!gjkCheckForOverlap(&simplex, &triangle, mesh_triangle_minkowski_sum, &swept, swept_dynamic_object_minkowski_sum, &gRight)) {
@@ -142,7 +146,8 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
         &object->bounding_box, 
         &offset, 
         collide_object_swept_to_triangle, 
-        &collide_data
+        &collide_data,
+        object->collision_layers
     )) {
         return false;
     }
@@ -178,7 +183,8 @@ bool collide_object_to_multiple_mesh_swept(struct dynamic_object* object, struct
             &object->bounding_box, 
             &offset, 
             collide_object_swept_to_triangle, 
-            &collide_data
+            &collide_data,
+            object->collision_layers
         )) {
             did_hit = true;
         }

@@ -14,6 +14,7 @@ struct teleport {
     struct Vector3 saved_velocity;
     float teleport_time;
     enum teleport_dir dir;
+    uint16_t was_tangible: 1;
 };
 
 void teleport_init(struct teleport* teleport, struct spell_data_source* source, struct spell_event_options event_options, enum teleport_dir dir);

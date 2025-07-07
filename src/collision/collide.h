@@ -6,6 +6,8 @@
 #include "spatial_trigger.h"
 #include "epa.h"
 
+extern int surface_type_collision_layers[];
+
 void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider* mesh);
 void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b);
 

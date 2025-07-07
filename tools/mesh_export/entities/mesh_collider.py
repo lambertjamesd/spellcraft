@@ -12,8 +12,9 @@ INDEX_BLOCK_SIZE_Z = 8
 ERROR_MARGIN = 0.001
 
 class MeshColliderTriangle():
-    def __init__(self, indices: list[int]):
+    def __init__(self, indices: list[int], surface_type: int = 0):
         self.indices: list[int] = indices
+        self.surface_type = surface_type
 
 def _triangle_support_function(vertices: list[mathutils.Vector], triangle: MeshColliderTriangle, direction: mathutils.Vector):
     result_index = max(triangle.indices, key = lambda index: direction.dot(vertices[index]))
@@ -315,11 +316,20 @@ class MeshCollider():
             self.vertices.append(transform @ vert.co)
 
         for face in bm.faces:
+            mat = None
+            if face.material_index >= 0 and face.material_index < len(mesh.materials):
+                mat = mesh.materials[face.material_index]
+
+            surface_type = 0
+
+            if mat and 'surface_type' in mat:
+                surface_type = mat['surface_type']
+            
             self.triangles.append(MeshColliderTriangle([
                 face.verts[0].index + start_index,
                 face.verts[1].index + start_index,
                 face.verts[2].index + start_index,
-            ]))
+            ], surface_type=surface_type))
 
         bm.free()
 
@@ -339,10 +349,11 @@ class MeshCollider():
 
         for triangle in self.triangles:
             file.write(struct.pack(
-                ">HHH",
+                ">HHHH",
                 triangle.indices[0],
                 triangle.indices[1],
                 triangle.indices[2],
+                triangle.surface_type,
             ))
 
         index = MeshIndex(self.vertices, self.triangles, force_subdivisions = force_subdivisions)

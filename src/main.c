@@ -31,8 +31,8 @@ void setup() {
     init_engine();
     savefile_new();
 
-    current_scene = scene_load("rom:/scenes/overworld_test.scene");
-    //  current_scene = scene_load("rom:/scenes/ability_testing.scene");
+    // current_scene = scene_load("rom:/scenes/overworld_test.scene");
+    current_scene = scene_load("rom:/scenes/ability_testing.scene");
     //  current_scene = scene_load("rom:/scenes/material_testing.scene");
     //  current_scene = scene_load("rom:/scenes/playerhome_outside.scene");
 }

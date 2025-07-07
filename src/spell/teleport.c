@@ -27,6 +27,9 @@ bool teleport_update(struct teleport* teleport, struct spell_event_listener* eve
         teleport->teleport_time -= fixed_time_step;
         if (teleport->teleport_time <= 0.0f) {
             target->velocity = teleport->saved_velocity;
+            if (teleport->was_tangible) {
+                target->collision_layers |= COLLISION_LAYER_TANGIBLE;
+            }
             return false;
         }
         return true;
@@ -49,6 +52,8 @@ bool teleport_update(struct teleport* teleport, struct spell_event_listener* eve
     }
 
     teleport->saved_velocity = prev_vel;
+    teleport->was_tangible = (target->collision_layers & COLLISION_LAYER_TANGIBLE) != 0;
+    target->collision_layers &= ~COLLISION_LAYER_TANGIBLE;
 
     return true;
 }
