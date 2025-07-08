@@ -233,10 +233,10 @@ def process_scene():
 
         mesh: bpy.types.Mesh = obj.data
 
-        if len(mesh.materials) > 0:
+        if len(mesh.materials) > 0 and not obj.name.startswith('collision'):
             scene.static.append(StaticEntry(obj, mesh, final_transform))
 
-        if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH':
+        if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH' or obj.name.startswith('collision'):
             scene.scene_mesh_collider.append(mesh, final_transform)
 
     with open(output_filename, 'wb') as file:

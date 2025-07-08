@@ -5,6 +5,7 @@ enumSurfaceType = [
     ("default", "Default", ""),
     ("holey", "Holey", ""),
     ("water", "Water", ""),
+    ("sticky", "Sticky", ""),
 ]
 
 class MATERIAL_PT_spellcraft_collision(bpy.types.Panel):

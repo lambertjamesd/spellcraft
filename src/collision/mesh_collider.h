@@ -7,12 +7,6 @@
 #include "../math/vector3.h"
 #include "../math/box3d.h"
 
-enum surface_type {
-    SURFACE_TYPE_DEFAULT,
-    SURFACE_TYPE_HOLEY,
-    SURFACE_TYPE_WATER,
-};
-
 struct mesh_triangle_indices {
     uint16_t indices[3];
     uint16_t surface_type;

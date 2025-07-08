@@ -76,7 +76,7 @@ void player_get_move_basis(struct Transform* transform, struct Vector3* forward,
     vector3Normalize(right, right);
 }
 
-struct animation_clip* player_determine_animation_jumping(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+struct animation_clip* player_determine_animation_jumping(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
     struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
@@ -85,7 +85,7 @@ struct animation_clip* player_determine_animation_jumping(struct player* player,
     if (collider->velocity.y < 0.0f) {
         player->animations.state = PLAYER_ANIMATION_FALLING;
         return player->animations.jump_peak;
-    } else if (ground_normal) {
+    } else if (ground_contact) {
         player->animations.state = PLAYER_ANIMATION_GROUNDED;
         return player->animations.land;
     }
@@ -93,13 +93,13 @@ struct animation_clip* player_determine_animation_jumping(struct player* player,
     return NULL;
 }
 
-struct animation_clip* player_determine_animation_falling(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+struct animation_clip* player_determine_animation_falling(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
     struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
     *playback_speed = 1.0f;
 
-    if (ground_normal) {
+    if (ground_contact) {
         *repeat = false;
         player->animations.state = PLAYER_ANIMATION_GROUNDED;
         return player->animations.land;
@@ -116,13 +116,13 @@ struct animation_clip* player_determine_animation_falling(struct player* player,
     }
 }
 
-struct animation_clip* player_determine_animation_swimming(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+struct animation_clip* player_determine_animation_swimming(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
     struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
     *playback_speed = 1.0f;
 
-    if (ground_normal) {
+    if (ground_contact) {
         *repeat = false;
         player->animations.state = PLAYER_ANIMATION_GROUNDED;
         return player->animations.land;
@@ -141,7 +141,7 @@ struct animation_clip* player_determine_animation_swimming(struct player* player
     return speed > 0.1f ? player->animations.swim : player->animations.tread_water;
 }
 
-struct animation_clip* player_determine_animation_grounded(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+struct animation_clip* player_determine_animation_grounded(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
     struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
@@ -184,7 +184,7 @@ struct animation_clip* player_determine_animation_grounded(struct player* player
     }
 
     if (collider->is_pushed) {
-        if (ground_normal) {
+        if (ground_contact) {
             *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
             *repeat = true;
             return player->animations.dash;
@@ -218,20 +218,20 @@ struct animation_clip* player_determine_animation_grounded(struct player* player
     return player->animations.dash;
 }
 
-struct animation_clip* player_determine_animation(struct player* player, struct Vector3* ground_normal, float* playback_speed, bool* repeat) {
+struct animation_clip* player_determine_animation(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
     if (player->animations.state == PLAYER_ANIMATION_JUMPING) {
-        return player_determine_animation_jumping(player, ground_normal, playback_speed, repeat);
+        return player_determine_animation_jumping(player, ground_contact, playback_speed, repeat);
     }
 
     if (player->animations.state == PLAYER_ANIMATION_FALLING) {
-        return player_determine_animation_falling(player, ground_normal, playback_speed, repeat);
+        return player_determine_animation_falling(player, ground_contact, playback_speed, repeat);
     }
 
     if (player->animations.state == PLAYER_ANIMATION_SWIMMING) {
-        return player_determine_animation_swimming(player, ground_normal, playback_speed, repeat);
+        return player_determine_animation_swimming(player, ground_contact, playback_speed, repeat);
     }
 
-    return player_determine_animation_grounded(player, ground_normal, playback_speed, repeat);
+    return player_determine_animation_grounded(player, ground_contact, playback_speed, repeat);
 }
 
 bool player_cast_state(joypad_buttons_t buttons, int button_index) {
@@ -285,8 +285,8 @@ void player_check_inventory(struct player* player) {
     player->renderable.attachments[0] = staff->item_type == ITEM_TYPE_NONE ? NULL : player->assets.staffs[staff->staff_index];
 }
 
-void player_handle_ground_movement(struct player* player, struct Vector3* ground_normal, struct Vector3* target_direction) {
-    if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_normal->y)) {
+void player_handle_ground_movement(struct player* player, struct contact* ground_contact, struct Vector3* target_direction) {
+    if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
         // TODO handle sliding logic
         return;
     }
@@ -299,12 +299,12 @@ void player_handle_ground_movement(struct player* player, struct Vector3* ground
         player->cutscene_actor.collider.velocity = gZeroVec;
     } else {
         struct Vector3 projected_target_direction;
-        vector3ProjectPlane(target_direction, ground_normal, &projected_target_direction);
+        vector3ProjectPlane(target_direction, &ground_contact->normal, &projected_target_direction);
 
         struct Vector3 normalized_direction;
         vector3Normalize(target_direction, &normalized_direction);
         struct Vector3 projected_normalized;
-        vector3ProjectPlane(&normalized_direction, ground_normal, &projected_normalized);
+        vector3ProjectPlane(&normalized_direction, &ground_contact->normal, &projected_normalized);
 
         vector3Scale(&projected_target_direction, &projected_target_direction, 1.0f / sqrtf(vector3MagSqrd(&projected_normalized)));
 
@@ -322,7 +322,7 @@ void player_handle_air_movement(struct player* player, struct Vector3* target_di
     player->cutscene_actor.collider.velocity.y = prev_y;
 }
 
-void player_handle_movement(struct player* player, joypad_inputs_t* input, struct Vector3* ground_normal) {
+void player_handle_movement(struct player* player, joypad_inputs_t* input, struct contact* ground_contact) {
     struct Vector3 right;
     struct Vector3 forward;
 
@@ -343,8 +343,8 @@ void player_handle_movement(struct player* player, joypad_inputs_t* input, struc
     vector3Scale(&right, &target_direction, direction.x);
     vector3AddScaled(&target_direction, &forward, direction.y, &target_direction);
 
-    if (ground_normal) {
-        player_handle_ground_movement(player, ground_normal, &target_direction);
+    if (ground_contact) {
+        player_handle_ground_movement(player, ground_contact, &target_direction);
     } else {
         player_handle_air_movement(player, &target_direction);
     }
@@ -358,11 +358,10 @@ void player_handle_movement(struct player* player, joypad_inputs_t* input, struc
 
 void player_update(struct player* player) {
     struct contact* ground = dynamic_object_get_ground(&player->cutscene_actor.collider);
-    struct Vector3* ground_normal = ground ? &ground->normal : NULL;
 
     float playback_speed = 1.0f;
     bool repeat;
-    struct animation_clip* next_clip = player_determine_animation(player, ground_normal, &playback_speed, &repeat);
+    struct animation_clip* next_clip = player_determine_animation(player, ground, &playback_speed, &repeat);
 
     if (player->cutscene_actor.state == ACTOR_STATE_IDLE) {
         player->cutscene_actor.animate_speed = playback_speed;
@@ -384,7 +383,7 @@ void player_update(struct player* player) {
         debug_collider_disable();
     }
 
-    player_handle_movement(player, &input, ground_normal);
+    player_handle_movement(player, &input, ground);
 
     struct Vector3 castDirection;
     vector2ToLookDir(&player->cutscene_actor.transform.rotation, &castDirection);

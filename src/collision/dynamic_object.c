@@ -161,8 +161,8 @@ void dynamic_object_recalc_bb(struct dynamic_object* object) {
     vector3Add(&object->bounding_box.max, &rotatedOffset, &object->bounding_box.max);
 }
 
-bool dynamic_object_should_slide(float max_stable_slope, float normal_y) {
-    return normal_y <= 1.0f - max_stable_slope;
+bool dynamic_object_should_slide(float max_stable_slope, float normal_y, enum surface_type surface_type) {
+    return surface_type != SURFACE_TYPE_STICKY && normal_y <= 1.0f - max_stable_slope;
 }
 
 bool dynamic_object_is_grounded(struct dynamic_object* object) {

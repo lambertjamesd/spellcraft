@@ -1,0 +1,11 @@
+#ifndef __COLLIION_MESH_SURFACE_TYPE_H__
+#define __COLLIION_MESH_SURFACE_TYPE_H__
+
+enum surface_type {
+    SURFACE_TYPE_DEFAULT,
+    SURFACE_TYPE_HOLEY,
+    SURFACE_TYPE_WATER,
+    SURFACE_TYPE_STICKY,
+};
+
+#endif

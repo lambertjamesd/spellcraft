@@ -66,6 +66,7 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
         &result
     )) {
         collide_data->hit_result = result;
+        collide_data->surface_type = triangle.triangle.surface_type;
         return true;
     }
 
@@ -81,6 +82,7 @@ bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int 
         &result
     )) {
         collide_data->hit_result = result;
+        collide_data->surface_type = triangle.triangle.surface_type;
         return true;
     }
 
@@ -121,7 +123,7 @@ void collide_object_swept_bounce(
     vector3Add(&move_amount, &object->bounding_box.min, &object->bounding_box.min);
     vector3Add(&move_amount, &object->bounding_box.max, &object->bounding_box.max);
 
-    collide_add_contact(object, &collide_data->hit_result);
+    collide_add_contact(object, &collide_data->hit_result, collide_data->surface_type);
 }
 
 bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_collider* mesh, struct Vector3* prev_pos) {

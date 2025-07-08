@@ -10,6 +10,7 @@ int surface_type_collision_layers[] = {
     COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
     COLLISION_LAYER_TANGIBLE,
     0,
+    COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
 };
 
 void correct_velocity(struct dynamic_object* object, struct Vector3* normal, float ratio, float friction, float bounce) {
@@ -46,14 +47,14 @@ void correct_overlap_no_slide(
     }
 }
 
-void correct_overlap(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce) {
+void correct_overlap(struct dynamic_object* object, struct EpaResult* result, float ratio, float friction, float bounce, enum surface_type surface_type) {
     if (object->is_fixed) {
         return;
     }
 
     float slope_amount = ratio > 0.0f ? -result->normal.y : result->normal.y;
 
-    if (dynamic_object_should_slide(object->type->max_stable_slope, slope_amount)) {
+    if (dynamic_object_should_slide(object->type->max_stable_slope, slope_amount, surface_type)) {
         vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
         correct_velocity(object, &result->normal, ratio, friction, bounce);
     } else {
@@ -98,14 +99,16 @@ bool collide_object_to_triangle(struct mesh_index* index, void* data, int triang
         collide_data->object, 
         dynamic_object_minkowski_sum, 
         &result)) {
+        enum surface_type surface_type = collide_data->triangle.triangle.surface_type;
         correct_overlap(
             collide_data->object, 
             &result, 
             -1.0f, 
             collide_data->object->disable_friction ? 0.0f : collide_data->object->type->friction, 
-            collide_data->object->type->bounce
+            collide_data->object->type->bounce,
+            surface_type
         );
-        collide_add_contact(collide_data->object, &result);
+        collide_add_contact(collide_data->object, &result, surface_type);
         return true;
     }
 
@@ -165,6 +168,8 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
             a->active_contacts = contact;
         }
 
+        contact->surface_type = 0;
+
         return;
     }
 
@@ -180,8 +185,8 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     // TODO better ratio depending on object weights
     float overlap_ratio = 0.5f;
 
-    correct_overlap(b, &result, overlap_ratio - 1.0f, b->disable_friction ? 0.0f : friction, bounce);
-    correct_overlap(a, &result, overlap_ratio, a->disable_friction ? 0.0f : friction, bounce);
+    correct_overlap(b, &result, overlap_ratio - 1.0f, b->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
+    correct_overlap(a, &result, overlap_ratio, a->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
 
     struct contact* contact = collision_scene_new_contact();
 
@@ -192,6 +197,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     contact->normal = result.normal;
     contact->point = result.contactA;
     contact->other_object = a ? a->entity_id : 0;
+    contact->surface_type = 0;
 
     contact->next = b->active_contacts;
     b->active_contacts = contact;
@@ -205,6 +211,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     vector3Negate(&result.normal, &contact->normal);
     contact->point = result.contactB;
     contact->other_object = b ? b->entity_id : 0;
+    contact->surface_type = 0;
 
     contact->next = a->active_contacts;
     a->active_contacts = contact;
@@ -232,12 +239,13 @@ void collide_object_to_trigger(struct dynamic_object* obj, struct spatial_trigge
     contact->normal = gZeroVec;
     contact->point = *obj->position;
     contact->other_object = obj->entity_id;
+    contact->surface_type = 0;
 
     contact->next = trigger->active_contacts;
     trigger->active_contacts = contact;
 }
 
-void collide_add_contact(struct dynamic_object* object, struct EpaResult* result) {
+void collide_add_contact(struct dynamic_object* object, struct EpaResult* result, enum surface_type surface_type) {
     struct contact* contact = collision_scene_new_contact();
 
     if (!contact) {
@@ -247,6 +255,7 @@ void collide_add_contact(struct dynamic_object* object, struct EpaResult* result
     contact->normal = result->normal;
     contact->point = result->contactA;
     contact->other_object = 0;
+    contact->surface_type = surface_type;
 
     contact->next = object->active_contacts;
     object->active_contacts = contact;

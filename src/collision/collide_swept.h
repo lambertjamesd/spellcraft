@@ -10,6 +10,7 @@ struct object_mesh_collide_data {
     struct mesh_collider* mesh;
     struct dynamic_object* object;
     struct EpaResult hit_result;
+    enum surface_type surface_type;
 };
 
 bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_collider* mesh, struct Vector3* prev_pos);
