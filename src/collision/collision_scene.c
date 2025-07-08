@@ -328,6 +328,7 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
 
 void collision_scene_collide() {
     struct Vector3 prev_pos[g_scene.count];
+    bool prev_was_grounded[g_scene.count];
 
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
@@ -342,9 +343,12 @@ void collision_scene_collide() {
         struct dynamic_object* object = (struct dynamic_object*)element->object;
 
         prev_pos[i] = *object->position;
+        prev_was_grounded[i] = dynamic_object_get_ground(object) != NULL;
 
         collision_scene_return_contacts(object->active_contacts);
+        collision_scene_return_contacts(object->shadow_contact);
         object->active_contacts = NULL;
+        object->shadow_contact = NULL;
 
         if (object->is_pushed) {
             --object->is_pushed;
@@ -380,7 +384,28 @@ void collision_scene_collide() {
             continue;
         }
 
+        struct dynamic_object* object = (struct dynamic_object*)element->object;
+
         collision_scene_collide_single(element->object, &prev_pos[i]);
+
+        bool is_grounded = dynamic_object_get_ground(object) != NULL;
+
+        if (!is_grounded) {
+            struct mesh_shadow_cast_result shadow;
+            if (collision_scene_shadow_cast(object->position, &shadow)) {
+                struct contact* contact = collision_scene_new_contact();
+
+                if (contact) {
+                    contact->next = NULL;
+                    contact->normal = shadow.normal;
+                    contact->other_object = 0;
+                    contact->point = *object->position;
+                    contact->point.y = shadow.y;
+                    contact->surface_type = shadow.surface_type;
+                    object->shadow_contact = contact;
+                }
+            }
+        }
     }
 }
 

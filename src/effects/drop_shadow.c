@@ -12,25 +12,12 @@ void drop_shadow_render(void* data, struct render_batch* batch) {
     struct drop_shadow* drop_shadow = (struct drop_shadow*)data;
 
     struct contact* contact = dynamic_object_get_ground(drop_shadow->target);
-    struct Vector3 pos;
-    struct Vector3 normal;
 
     if (!contact) {
-        struct mesh_shadow_cast_result cast_result;
-        if (!collision_scene_shadow_cast(drop_shadow->target->position, &cast_result)) {
-            return;
-        }
-        pos = *drop_shadow->target->position;
-        pos.y = cast_result.y;
-        normal = cast_result.normal;
-    } else {
-        pos = contact->point;
-        normal = contact->normal;
+        contact = drop_shadow->target->shadow_contact;
     }
 
-    pos.y += 0.1f;
-
-    if (normal.y < 0.0001f) {
+    if (!contact || contact->normal.y < 0.0001f) {
         return;
     }
     
@@ -41,7 +28,10 @@ void drop_shadow_render(void* data, struct render_batch* batch) {
     }
 
     struct Vector3 skewScale;
-    vector3Scale(&normal, &skewScale, SHADOW_SCALE / normal.y);
+    vector3Scale(&contact->normal, &skewScale, SHADOW_SCALE / contact->normal.y);
+
+    struct Vector3 pos = contact->point;
+    pos.y += 0.1f;
 
     mat4x4 mtx;
     matrixFromScale(mtx, SHADOW_SCALE);

@@ -406,6 +406,7 @@ bool mesh_triangle_shadow_cast(struct mesh_triangle_indices indices, struct Vect
 
     result->y = y;
     result->normal = normal;
+    result->surface_type = indices.surface_type;
 
     return true;
 }

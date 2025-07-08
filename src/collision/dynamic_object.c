@@ -32,7 +32,8 @@ void dynamic_object_init(
     object->has_ice_dash = 0;
     object->collision_layers = collision_layers;
     object->collision_group = 0;
-    object->active_contacts = 0;
+    object->active_contacts = NULL;
+    object->shadow_contact = NULL;
     object->scale = 1.0f;
     dynamic_object_recalc_bb(object);
 }
@@ -162,7 +163,7 @@ void dynamic_object_recalc_bb(struct dynamic_object* object) {
 }
 
 bool dynamic_object_should_slide(float max_stable_slope, float normal_y, enum surface_type surface_type) {
-    return surface_type != SURFACE_TYPE_STICKY && normal_y <= 1.0f - max_stable_slope;
+    return (surface_type != SURFACE_TYPE_STICKY && normal_y <= 1.0f - max_stable_slope) || fabsf(normal_y) < 0.001f;
 }
 
 bool dynamic_object_is_grounded(struct dynamic_object* object) {

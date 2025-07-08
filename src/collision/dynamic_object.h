@@ -83,6 +83,7 @@ struct dynamic_object {
     uint16_t collision_layers;
     uint16_t collision_group;
     struct contact* active_contacts;
+    struct contact* shadow_contact;
 };
 
 void dynamic_object_init(
