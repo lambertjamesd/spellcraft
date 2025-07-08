@@ -32,9 +32,9 @@ void setup() {
     savefile_new();
 
     // current_scene = scene_load("rom:/scenes/overworld_test.scene");
-    // current_scene = scene_load("rom:/scenes/ability_testing.scene");
+    current_scene = scene_load("rom:/scenes/ability_testing.scene");
     //  current_scene = scene_load("rom:/scenes/material_testing.scene");
-     current_scene = scene_load("rom:/scenes/playerhome_outside.scene");
+    //  current_scene = scene_load("rom:/scenes/playerhome_outside.scene");
 }
 
 static struct frame_memory_pool frame_memory_pools[2];

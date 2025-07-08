@@ -12,8 +12,12 @@
 #include "contact.h"
 #include "../util/hash_map.h"
 #include <memory.h>
+#include "../math/constants.h"
+
+#define MAX_SNAP_TO_GROUND_ANGLE    30.0f
 
 struct collision_scene g_scene;
+static struct Vector2 max_ground_snap_angle;
 
 struct Box3D* collision_scene_element_bounding_box(struct collision_scene_element* element) {
     if (element->type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
@@ -46,6 +50,8 @@ void collision_scene_reset() {
     }
 
     g_scene.all_contacts[MAX_ACTIVE_CONTACTS - 1].next = NULL;
+
+    vector2ComplexFromAngle(MAX_SNAP_TO_GROUND_ANGLE * M_DEG_2_RAD, &max_ground_snap_angle);
 }
 
 void collision_scene_add_with_type(void* object, enum collision_element_type type) {
@@ -326,6 +332,33 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
     vector3Scale(&object->velocity, &object->velocity, 0.9f);
 }
 
+void collision_scene_snap_to_ground(struct dynamic_object* object, struct Vector3* prev_pos) {
+    if (!object->shadow_contact || 
+        object->shadow_contact->surface_type == SURFACE_TYPE_WATER ||
+        object->shadow_contact->point.y > object->position->y) {
+        return;
+    }
+
+    struct Vector3 offset;
+    vector3Sub(object->position, prev_pos, &offset);
+    float horz_offset = offset.x * offset.x + offset.z * offset.z;
+
+    float vert_offset = object->position->y - object->shadow_contact->point.y;
+
+    horz_offset *= max_ground_snap_angle.y * max_ground_snap_angle.y;
+    vert_offset *= max_ground_snap_angle.x;
+    vert_offset *= vert_offset;
+
+    if (vert_offset > horz_offset) {
+        return;
+    }
+
+    object->position->y = object->shadow_contact->point.y;
+    object->shadow_contact->next = object->active_contacts;
+    object->active_contacts = object->shadow_contact;
+    object->shadow_contact = NULL;
+}
+
 void collision_scene_collide() {
     struct Vector3 prev_pos[g_scene.count];
     bool prev_was_grounded[g_scene.count];
@@ -403,6 +436,10 @@ void collision_scene_collide() {
                     contact->point.y = shadow.y;
                     contact->surface_type = shadow.surface_type;
                     object->shadow_contact = contact;
+                }
+
+                if (prev_was_grounded[i]) {
+                    collision_scene_snap_to_ground(object, &prev_pos[i]);
                 }
             }
         }
