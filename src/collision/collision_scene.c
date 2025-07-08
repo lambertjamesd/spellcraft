@@ -13,6 +13,7 @@
 #include "../util/hash_map.h"
 #include <memory.h>
 #include "../math/constants.h"
+#include "water.h"
 
 #define MAX_SNAP_TO_GROUND_ANGLE    30.0f
 
@@ -423,25 +424,25 @@ void collision_scene_collide() {
 
         bool is_grounded = dynamic_object_get_ground(object) != NULL;
 
-        if (!is_grounded) {
-            struct mesh_shadow_cast_result shadow;
-            if (collision_scene_shadow_cast(object->position, &shadow)) {
-                struct contact* contact = collision_scene_new_contact();
+        struct mesh_shadow_cast_result shadow;
+        if (collision_scene_shadow_cast(object->position, &shadow)) {
+            struct contact* contact = collision_scene_new_contact();
 
-                if (contact) {
-                    contact->next = NULL;
-                    contact->normal = shadow.normal;
-                    contact->other_object = 0;
-                    contact->point = *object->position;
-                    contact->point.y = shadow.y;
-                    contact->surface_type = shadow.surface_type;
-                    object->shadow_contact = contact;
-                }
-
-                if (prev_was_grounded[i]) {
-                    collision_scene_snap_to_ground(object, &prev_pos[i]);
-                }
+            if (contact) {
+                contact->next = NULL;
+                contact->normal = shadow.normal;
+                contact->other_object = 0;
+                contact->point = *object->position;
+                contact->point.y = shadow.y;
+                contact->surface_type = shadow.surface_type;
+                object->shadow_contact = contact;
             }
+
+            water_apply(object);
+        }
+        
+        if (!is_grounded && prev_was_grounded[i]) {
+            collision_scene_snap_to_ground(object, &prev_pos[i]);
         }
     }
 }
