@@ -400,7 +400,7 @@ bool mesh_triangle_shadow_cast(struct mesh_triangle_indices indices, struct Vect
 
     float y = vertices[indices.indices[2]].y - (normal.x * cast_offset.x + normal.z * cast_offset.z) / normal.y;
 
-    if (y > starting_point->y + 0.0001f) {
+    if (indices.surface_type != SURFACE_TYPE_WATER && y > starting_point->y + 0.0001f) {
         return false;
     }
 
