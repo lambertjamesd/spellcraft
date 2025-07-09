@@ -1,12 +1,6 @@
 {
     "objects": [
         {
-            "name": "characters_mentor",
-            "description": "",
-            "mesh": "meshes/characters/mentor.blend#mentor",
-            "type": "npc"
-        },
-        {
             "name": "Biter",
             "description": "",
             "mesh": "meshes/enemies/enemy1.blend#enemy1",
@@ -17,6 +11,18 @@
             "description": "",
             "mesh": "meshes/enemies/water_jelly.blend#Sphere",
             "type": "jelly"
+        },
+        {
+            "name": "characters_mentor",
+            "description": "",
+            "mesh": "meshes/characters/mentor.blend#mentor",
+            "type": "npc"
+        },
+        {
+            "name": "enemies_jelly_king",
+            "description": "",
+            "mesh": "meshes/enemies/jelly_king.blend#jellyking",
+            "type": "jelly_king"
         },
         {
             "name": "objects_crate",

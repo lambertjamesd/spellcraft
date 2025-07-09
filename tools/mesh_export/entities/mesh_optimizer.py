@@ -86,38 +86,40 @@ def split_into_bone_pairs(mesh_data: mesh.mesh_data, mat: material.Material) -> 
 MATRIX_TIME = 4.134
 
 def determine_chunk_order(chunks: list[mesh_chunk], default_material: material.Material) -> list[mesh_chunk]:
-    used_chunks = set()
-
     current_material = default_material
     current_bones = None
 
     result = []
 
-    while len(used_chunks) < len(chunks):
-        next_chunk_index = None
-        next_cost = 0
+    for render_layer in range(0, 3):
+        chunk_layer = list(filter(lambda x: x.material.get_render_layer() == render_layer, chunks))
+        target_length = len(result) + len(chunk_layer)
+        used_chunks = set()
 
-        for idx, chunk in enumerate(chunks):
-            if idx in used_chunks:
-                continue
+        while len(result) < target_length:
+            next_chunk_index = None
+            next_cost = 0
 
-            diff = material_delta.determine_material_delta(current_material, chunk.material)
+            for idx, chunk in enumerate(chunk_layer):
+                if idx in used_chunks:
+                    continue
 
-            cost_to_switch = material_delta.determine_material_cost(diff)
+                diff = material_delta.determine_material_delta(current_material, chunk.material)
 
-            if current_bones != chunk.used_bones:
-                cost_to_switch += MATRIX_TIME
+                cost_to_switch = material_delta.determine_material_cost(diff)
 
-            if next_chunk_index == None or cost_to_switch < next_cost:
-                next_chunk_index = idx
-                next_cost = cost_to_switch
-            
+                if current_bones != chunk.used_bones:
+                    cost_to_switch += MATRIX_TIME
 
-        next_chunk: mesh_chunk = chunks[next_chunk_index]
-        current_bones = next_chunk.used_bones
-        current_material = next_chunk.material
-        result.append(next_chunk)
-        used_chunks.add(next_chunk_index)
+                if next_chunk_index == None or cost_to_switch < next_cost:
+                    next_chunk_index = idx
+                    next_cost = cost_to_switch
+
+            next_chunk: mesh_chunk = chunk_layer[next_chunk_index]
+            current_bones = next_chunk.used_bones
+            current_material = next_chunk.material
+            result.append(next_chunk)
+            used_chunks.add(next_chunk_index)
 
     return result
 

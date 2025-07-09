@@ -505,6 +505,21 @@ class Material():
         
         return 128, 128
     
+    def get_render_layer(self) -> int:
+        if not self.blend_mode:
+            return 0
+        
+        if self.blend_mode.z_mode == 'OPAQUE':
+            return 0
+        if self.blend_mode.z_mode == 'INTER':
+            return 0
+        if self.blend_mode.z_mode == 'TRANSPARENT':
+            return 1
+        if self.blend_mode.z_mode == 'DECAL':
+            return 2
+        
+        return 0
+    
     def get_palette_data(self) -> list[int] | None:
         if not self.tex0 and not self.tex1:
             return None, 0

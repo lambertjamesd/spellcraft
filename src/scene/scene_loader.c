@@ -14,6 +14,7 @@
 
 #include "../enemies/biter.h"
 #include "../enemies/jelly.h"
+#include "../enemies/jelly_king.h"
 
 #include "../npc/npc.h"
 
@@ -57,6 +58,7 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(water_cube, fields_empty),
     ENTITY_DEFINITION(mana_plant, fields_empty),
     ENTITY_DEFINITION(jelly, fields_empty),
+    ENTITY_DEFINITION(jelly_king, fields_empty),
 };
 
 // WRLD
