@@ -12,6 +12,13 @@
 
 struct jelly_king_animations {
     struct animation_clip* idle;
+    struct animation_clip* attack;
+};
+
+enum jelly_king_state {
+    JELLY_KING_IDLE,
+    JELLY_KING_MOVE_TO_TARGET,
+    JELLY_KING_ATTACK,
 };
 
 struct jelly_king {
@@ -23,6 +30,8 @@ struct jelly_king {
     struct animation_set* animation_set;
     struct animator animator;
     struct jelly_king_animations animations;
+    struct Vector2 max_rotate;
+    enum jelly_king_state state;
 };
 
 void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition);
