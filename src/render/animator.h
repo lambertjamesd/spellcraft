@@ -26,5 +26,6 @@ void animator_destroy(struct animator* animator);
 void animator_update(struct animator* animator, struct Transform* transforms, float delta_time);
 void animator_run_clip(struct animator* animator, struct animation_clip* clip, float start_time, bool loop);
 int animator_is_running(struct animator* animator);
+bool animator_is_running_clip(struct animator* animator, struct animation_clip* clip);
 
 #endif

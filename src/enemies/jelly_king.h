@@ -22,6 +22,7 @@ enum jelly_king_state {
     JELLY_KING_MOVE_TO_TARGET,
     JELLY_KING_ATTACK,
     JELLY_KING_ATTACK_RANGED,
+    JELLY_KING_ATTACK_AIMING,
 };
 
 #define MAX_JELLY_MINIONS   5
@@ -45,6 +46,9 @@ struct jelly_king {
     } state_data;
 
     struct jelly minion[MAX_JELLY_MINIONS];
+
+    uint8_t next_minion;
+    uint8_t last_minion;
 };
 
 void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition);

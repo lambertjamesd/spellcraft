@@ -108,9 +108,9 @@ void jelly_update_handle_damage(struct jelly* jelly, bool is_grounded) {
         health_apply_contact_damage(&jelly->collider, 5.0f, DAMAGE_TYPE_BASH);
     }
 
-    if (!is_grounded && jelly->is_jumping) {
-        jelly->is_jumping = 1;
-    } else if (is_grounded) {
+    if (!is_grounded) {
+        jelly->is_jumping = 0;
+    } else if (is_grounded && !jelly->is_jumping) {
         jelly->is_attacking = 0;
     }
 }
@@ -347,4 +347,21 @@ void jelly_destroy(struct jelly* jelly) {
     tmesh_cache_release(jelly->mesh);
     tmesh_cache_release(jelly->ice_mesh);
     collision_scene_remove_trigger(&jelly->vision);
+}
+
+bool jelly_get_is_active(struct jelly* jelly) {
+    return jelly->is_active;
+}
+
+void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, int collision_group, entity_id target) {
+    jelly->collider.velocity = *velocity;
+    jelly->jump_timer = 0.0f;
+    jelly->is_jumping = 1;
+    jelly->is_attacking = 1;
+    jelly->collider.collision_group = collision_group;
+    jelly->current_target = target;
+}
+
+void jelly_reset_collision_group(struct jelly* jelly) {
+    jelly->collider.collision_group = 0;
 }

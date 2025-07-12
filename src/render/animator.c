@@ -328,3 +328,7 @@ void animator_run_clip(struct animator* animator, struct animation_clip* clip, f
 int animator_is_running(struct animator* animator) {
     return animator->current_clip != NULL;
 }
+
+bool animator_is_running_clip(struct animator* animator, struct animation_clip* clip) {
+    return animator->current_clip == clip;
+}

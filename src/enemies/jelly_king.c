@@ -15,6 +15,10 @@
 #define SPEED                   20.0f
 #define ACCEL                   1.5f
 
+#define MINION_DELAY_TIMER      10
+
+#define LAUNCH_VELOCITY         6.0f
+
 static struct dynamic_object_type jelly_king_collider = {
     CYLINDER_COLLIDER(2.0f, 1.5f),
     .friction = 0.1f,
@@ -33,10 +37,25 @@ static struct spatial_trigger_type jelly_king_vision_type = {
     },
 };
 
+bool jelly_king_rotate_to_target(struct jelly_king* jelly_king, struct contact* nearest_target, float threshold) {
+    if (!nearest_target) {
+        return false;
+    }
+
+    struct Vector3 offset;
+    vector3Sub(&nearest_target->point, &jelly_king->transform.position, &offset);
+
+    struct Vector2 targetRotation;
+    vector2LookDir(&targetRotation, &offset);
+
+    vector2RotateTowards(&jelly_king->transform.rotation, &targetRotation, &jelly_king->max_rotate, &jelly_king->transform.rotation);
+
+    return vector2Dot(&targetRotation, &jelly_king->transform.rotation) > threshold;
+}
+
 void jelly_king_fire_minions(struct jelly_king* jelly_king, int count) {
     jelly_king->state_data.fire_minion.number_left = count;
-    jelly_king->state = JELLY_KING_ATTACK_RANGED;
-    animator_run_clip(&jelly_king->animator, jelly_king->animations.attack_ranged, 0.0f, false);
+    jelly_king->state = JELLY_KING_ATTACK_AIMING;
 }
 
 void jelly_king_idle(struct jelly_king* jelly_king) {
@@ -55,16 +74,8 @@ void jelly_king_move_to_target(struct jelly_king* jelly_king) {
     if (!nearest_target) {
         return;
     }
-
-    struct Vector3 offset;
-    vector3Sub(&nearest_target->point, &jelly_king->transform.position, &offset);
-
-    struct Vector2 targetRotation;
-    vector2LookDir(&targetRotation, &offset);
-
-    vector2RotateTowards(&jelly_king->transform.rotation, &targetRotation, &jelly_king->max_rotate, &jelly_king->transform.rotation);
-
-    if (vector2Dot(&targetRotation, &jelly_king->transform.rotation) > 0.5f) {
+    
+    if (jelly_king_rotate_to_target(jelly_king, nearest_target, 0.5f)) {
         struct Vector3 targetVel;
         vector2ToLookDir(&jelly_king->transform.rotation, &targetVel);
         vector3Scale(&targetVel, &targetVel, SPEED);
@@ -86,18 +97,87 @@ void jelly_king_attack(struct jelly_king* jelly_king) {
     }
 }
 
-void jelly_king_attack_ranged(struct jelly_king* jelly_king) {
-    if (!animator_is_running(&jelly_king->animator)) {
-        --jelly_king->state_data.fire_minion.number_left;
-        if (!jelly_king->state_data.fire_minion.number_left) {
-            jelly_king->state = JELLY_KING_MOVE_TO_TARGET;
-            return;
+void jelly_king_fire_jelly(struct jelly_king* jelly_king) {
+    struct jelly* jelly;
+
+    for (int i = 0; i < MAX_JELLY_MINIONS; i += 1) {
+        jelly = &jelly_king->minion[jelly_king->next_minion];
+        jelly_king->last_minion = jelly_king->next_minion;
+        jelly_king->next_minion = (jelly_king->next_minion == MAX_JELLY_MINIONS - 1) ? 0 : (jelly_king->next_minion + 1);
+
+        if (jelly_get_is_active(jelly)) {
+            jelly = NULL;
+            continue;
         }
-        animator_run_clip(&jelly_king->animator, jelly_king->animations.attack_ranged, 0.0f, false);
+
+        break;
+    }
+
+    if (!jelly) {
+        return;
+    }
+
+    struct jelly_definition definition;
+    definition.position = jelly_king->transform.position;
+    definition.rotation = jelly_king->transform.rotation;
+    jelly_init(jelly, &definition);
+
+    struct contact* nearest_target = dynamic_object_nearest_contact(jelly_king->vision.active_contacts, &jelly_king->transform.position);
+
+    struct Vector3 attack_velocity;
+    vector2ToLookDir(&jelly_king->transform.rotation, &attack_velocity);
+    vector3Scale(&attack_velocity, &attack_velocity, LAUNCH_VELOCITY);
+    attack_velocity.y = LAUNCH_VELOCITY;
+    jelly_launch_attack(
+        jelly, 
+        &attack_velocity, 
+        jelly_king->collider.collision_group, 
+        nearest_target ? nearest_target->other_object : 0
+    );
+}
+
+void jelly_king_reaim(struct jelly_king* jelly_king) {
+    --jelly_king->state_data.fire_minion.number_left;
+    jelly_king->state = JELLY_KING_ATTACK_AIMING;
+}
+
+void jelly_king_attack_ranged(struct jelly_king* jelly_king) {
+    if (!animator_is_running_clip(&jelly_king->animator, jelly_king->animations.attack_ranged)) {
+        jelly_king_reaim(jelly_king);
+        return;
     }
 
     if (jelly_king->animator.events) {
-        fprintf(stderr, "attacking!\n");
+        jelly_king_fire_jelly(jelly_king);
+        jelly_king_reaim(jelly_king);
+    }
+}
+
+void jelly_king_attack_aiming(struct jelly_king* jelly_king) {
+    if (animator_is_running_clip(&jelly_king->animator, jelly_king->animations.attack_ranged)) {
+        return;
+    } else if (!animator_is_running(&jelly_king->animator)) {
+        struct jelly* jelly = &jelly_king->minion[jelly_king->last_minion];
+        if (jelly_get_is_active(jelly)) {
+            jelly_reset_collision_group(jelly);
+        }
+        animator_run_clip(&jelly_king->animator, jelly_king->animations.idle, 0.0f, true);
+    }
+
+    if (jelly_king->state_data.fire_minion.number_left == 0) {
+        jelly_king->state = JELLY_KING_IDLE;
+        return;
+    }
+
+    struct contact* nearest_target = dynamic_object_nearest_contact(jelly_king->vision.active_contacts, &jelly_king->transform.position);
+
+    if (!nearest_target) {
+        return;
+    }
+    
+    if (jelly_king_rotate_to_target(jelly_king, nearest_target, 0.95f)) {
+        jelly_king->state = JELLY_KING_ATTACK_RANGED;
+        animator_run_clip(&jelly_king->animator, jelly_king->animations.attack_ranged, 0.0f, false);
     }
 }
 
@@ -118,6 +198,9 @@ void jelly_king_update(void* data) {
             break;
         case JELLY_KING_ATTACK_RANGED:
             jelly_king_attack_ranged(jelly_king);
+            break;
+        case JELLY_KING_ATTACK_AIMING:
+            jelly_king_attack_aiming(jelly_king);
             break;
     }
 }
@@ -153,6 +236,8 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
     );
     jelly_king->collider.center.y = jelly_king_collider.data.cylinder.half_height;
     jelly_king->collider.collision_group = entity_id;
+    jelly_king->next_minion = 0;
+    jelly_king->last_minion = 0;
 
     collision_scene_add(&jelly_king->collider);
 

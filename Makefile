@@ -162,6 +162,9 @@ $(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(SC
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 $(BUILD_DIR)/spellcraft_test.elf: $(TEST_OBJS)
 
+build/%.asm: build/%.o
+	mips-linux-gnu-objdump -S --disassemble $< > $@
+
 spellcraft.z64: N64_ROM_TITLE="SpellCraft"
 spellcraft.z64: $(BUILD_DIR)/spellcraft.dfs
 

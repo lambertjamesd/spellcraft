@@ -1,6 +1,7 @@
 #ifndef __ENEMIES_JELLY_H__
 #define __ENEMIES_JELLY_H__
 
+#include <stdbool.h>
 #include "../collision/dynamic_object.h"
 #include "../collision/spatial_trigger.h"
 #include "../entity/health.h"
@@ -38,5 +39,11 @@ struct jelly {
 
 void jelly_init(struct jelly* jelly, struct jelly_definition* definition);
 void jelly_destroy(struct jelly* jelly);
+
+bool jelly_get_is_active(struct jelly* jelly);
+
+void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, int collision_group, entity_id target);
+
+void jelly_reset_collision_group(struct jelly* jelly);
 
 #endif
