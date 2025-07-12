@@ -8,6 +8,11 @@ enumSurfaceType = [
     ("sticky", "Sticky", ""),
 ]
 
+enumLightSetup = [
+    ("none", "None", ""),
+    ("from_camera", "From camera", "")
+]
+
 class MATERIAL_PT_spellcraft_collision(bpy.types.Panel):
     bl_label = "Collision Inspector"
     bl_idname = "MATERIAL_PT_spellcraft_collision"
@@ -27,9 +32,16 @@ class MATERIAL_PT_spellcraft_collision(bpy.types.Panel):
         split.label(text="Surface Type")
         split.prop(material, "surface_type", text="")
 
+        split = box.split(factor=0.5)
+        split.label(text="Light Setup")
+        split.prop(material, "light_setup", text="")
+
 def register():
     bpy.types.Material.surface_type = bpy.props.EnumProperty(
         name="Surface Type", items=enumSurfaceType, default="default"
+    )
+    bpy.types.Material.light_setup = bpy.props.EnumProperty(
+        name="Light Setup", items=enumLightSetup, default="none"
     )
     bpy.utils.register_class(MATERIAL_PT_spellcraft_collision)
 

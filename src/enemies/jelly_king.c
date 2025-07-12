@@ -125,6 +125,7 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
         &jelly_king->transform.rotation
     );
     jelly_king->collider.center.y = jelly_king_collider.data.cylinder.half_height;
+    jelly_king->collider.collision_group = entity_id;
 
     collision_scene_add(&jelly_king->collider);
 
