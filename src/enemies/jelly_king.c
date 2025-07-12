@@ -33,6 +33,12 @@ static struct spatial_trigger_type jelly_king_vision_type = {
     },
 };
 
+void jelly_king_fire_minions(struct jelly_king* jelly_king, int count) {
+    jelly_king->state_data.fire_minion.number_left = count;
+    jelly_king->state = JELLY_KING_ATTACK_RANGED;
+    animator_run_clip(&jelly_king->animator, jelly_king->animations.attack_ranged, 0.0f, false);
+}
+
 void jelly_king_idle(struct jelly_king* jelly_king) {
     struct contact* nearest_target = dynamic_object_nearest_contact(jelly_king->vision.active_contacts, &jelly_king->transform.position);
 
@@ -64,6 +70,8 @@ void jelly_king_move_to_target(struct jelly_king* jelly_king) {
         vector3Scale(&targetVel, &targetVel, SPEED);
 
         vector3MoveTowards(&jelly_king->collider.velocity, &targetVel, ACCEL * fixed_time_step, &jelly_king->collider.velocity);
+
+        jelly_king_fire_minions(jelly_king, 3);
     }
 
     if (dynamic_object_find_contact(&jelly_king->collider, nearest_target->other_object)) {
@@ -75,6 +83,21 @@ void jelly_king_move_to_target(struct jelly_king* jelly_king) {
 void jelly_king_attack(struct jelly_king* jelly_king) {
     if (!animator_is_running(&jelly_king->animator)) {
         jelly_king->state = JELLY_KING_MOVE_TO_TARGET;
+    }
+}
+
+void jelly_king_attack_ranged(struct jelly_king* jelly_king) {
+    if (!animator_is_running(&jelly_king->animator)) {
+        --jelly_king->state_data.fire_minion.number_left;
+        if (!jelly_king->state_data.fire_minion.number_left) {
+            jelly_king->state = JELLY_KING_MOVE_TO_TARGET;
+            return;
+        }
+        animator_run_clip(&jelly_king->animator, jelly_king->animations.attack_ranged, 0.0f, false);
+    }
+
+    if (jelly_king->animator.events) {
+        fprintf(stderr, "attacking!\n");
     }
 }
 
@@ -93,6 +116,9 @@ void jelly_king_update(void* data) {
         case JELLY_KING_ATTACK:
             jelly_king_attack(jelly_king);
             break;
+        case JELLY_KING_ATTACK_RANGED:
+            jelly_king_attack_ranged(jelly_king);
+            break;
     }
 }
 
@@ -109,6 +135,7 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
     jelly_king->animation_set = animation_cache_load("rom:/meshes/enemies/jelly_king.anim");
     jelly_king->animations.idle = animation_set_find_clip(jelly_king->animation_set, "idle");
     jelly_king->animations.attack = animation_set_find_clip(jelly_king->animation_set, "attack");
+    jelly_king->animations.attack_ranged = animation_set_find_clip(jelly_king->animation_set, "attack_ranged");
     jelly_king->state = JELLY_KING_IDLE;
 
     animator_init(&jelly_king->animator, jelly_king->renderable.armature.bone_count);
@@ -135,6 +162,8 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
     collision_scene_add_trigger(&jelly_king->vision);
 
     vector2ComplexFromAngle(MAX_ROTATE_PER_SECOND * M_DEG_2_RAD * fixed_time_step, &jelly_king->max_rotate);
+
+    memset(jelly_king->minion, 0, sizeof(jelly_king->minion));
 }
 
 void jelly_king_destroy(struct jelly_king* jelly_king) {
@@ -143,4 +172,8 @@ void jelly_king_destroy(struct jelly_king* jelly_king) {
     update_remove(jelly_king);
     collision_scene_remove(&jelly_king->collider);
     collision_scene_remove_trigger(&jelly_king->vision);
+
+    for (int i = 0; i < MAX_JELLY_MINIONS; i += 1) {
+        jelly_destroy(&jelly_king->minion[i]);
+    }
 }

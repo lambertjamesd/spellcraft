@@ -294,6 +294,7 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
     jelly->is_frozen = 0;
     jelly->is_jumping = 0;
     jelly->is_attacking = 0;
+    jelly->is_active = 1;
 
     jelly->freeze_timer = 0.0f;
     vector3Add(&definition->position, &gUp, &jelly->shear_spring);
@@ -333,6 +334,12 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
 }
 
 void jelly_destroy(struct jelly* jelly) {
+    if (!jelly->is_active) {
+        return;
+    }
+
+    jelly->is_active = 0;
+
     render_scene_remove(jelly);
     health_destroy(&jelly->health);
     collision_scene_remove(&jelly->collider);

@@ -31,6 +31,7 @@ struct jelly {
     uint16_t is_frozen: 1;
     uint16_t is_jumping: 1; 
     uint16_t is_attacking: 1;
+    uint16_t is_active: 1;
 
     struct drop_shadow drop_shadow;
 };

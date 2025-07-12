@@ -9,17 +9,22 @@
 #include "../scene/scene_definition.h"
 #include "../render/renderable.h"
 #include "../render/animator.h"
+#include "jelly.h"
 
 struct jelly_king_animations {
     struct animation_clip* idle;
     struct animation_clip* attack;
+    struct animation_clip* attack_ranged;
 };
 
 enum jelly_king_state {
     JELLY_KING_IDLE,
     JELLY_KING_MOVE_TO_TARGET,
     JELLY_KING_ATTACK,
+    JELLY_KING_ATTACK_RANGED,
 };
+
+#define MAX_JELLY_MINIONS   5
 
 struct jelly_king {
     struct TransformSingleAxis transform;
@@ -32,6 +37,14 @@ struct jelly_king {
     struct jelly_king_animations animations;
     struct Vector2 max_rotate;
     enum jelly_king_state state;
+
+    union {
+        struct {
+            int number_left;
+        } fire_minion;
+    } state_data;
+
+    struct jelly minion[MAX_JELLY_MINIONS];
 };
 
 void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition);
