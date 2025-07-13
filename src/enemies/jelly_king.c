@@ -17,7 +17,13 @@
 
 #define MINION_DELAY_TIMER      10
 
-#define DEFAULT_LAUNCH_SPEED         6.0f
+#define DEFAULT_LAUNCH_SPEED    6.0f
+
+#define ATTACK_DELAY_FRAMES     (5 * 50)
+
+#define BITE_ATTACK_RANGE       3.0f
+
+#define MAX_CHANGE_TIME         4.0f
 
 static struct dynamic_object_type jelly_king_collider = {
     CYLINDER_COLLIDER(2.0f, 1.5f),
@@ -53,9 +59,45 @@ bool jelly_king_rotate_to_target(struct jelly_king* jelly_king, struct contact* 
     return vector2Dot(&targetRotation, &jelly_king->transform.rotation) > threshold;
 }
 
+bool jelly_king_can_fire_minion(struct jelly_king* jelly_king) {
+    for (int i = 0; i < MAX_JELLY_MINIONS; i += 1) {
+        if (!jelly_get_is_active(&jelly_king->minion[i])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void jelly_king_fire_minions(struct jelly_king* jelly_king, int count) {
     jelly_king->state_data.fire_minion.number_left = count;
     jelly_king->state = JELLY_KING_ATTACK_AIMING;
+}
+
+void jelly_king_start_idle(struct jelly_king* jelly_king) {
+    jelly_king->state = JELLY_KING_IDLE;
+    jelly_king->state_data.idle.attack_timer = ATTACK_DELAY_FRAMES;
+    animator_run_clip(&jelly_king->animator, jelly_king->animations.idle, 0.0f, true);
+}
+
+void jelly_king_chase_player(struct jelly_king* jelly_king) {
+    jelly_king->state = JELLY_KING_MOVE_TO_TARGET;
+    jelly_king->state_data.chase.chase_timeout = MAX_CHANGE_TIME;
+}
+
+void jelly_king_start_aeo_attack(struct jelly_king* jelly_king) {
+    jelly_king->state = JELLY_KING_ATTACK_AEO;
+    animator_run_clip(&jelly_king->animator, jelly_king->animations.attack_aeo, 0.0f, false);
+}
+
+void jelly_move_towards_target(struct jelly_king* jelly_king, struct contact* nearest_target) {
+    if (jelly_king_rotate_to_target(jelly_king, nearest_target, 0.5f)) {
+        struct Vector3 targetVel;
+        vector2ToLookDir(&jelly_king->transform.rotation, &targetVel);
+        vector3Scale(&targetVel, &targetVel, SPEED);
+
+        vector3MoveTowards(&jelly_king->collider.velocity, &targetVel, ACCEL * fixed_time_step, &jelly_king->collider.velocity);
+    }
 }
 
 void jelly_king_idle(struct jelly_king* jelly_king) {
@@ -64,8 +106,32 @@ void jelly_king_idle(struct jelly_king* jelly_king) {
     if (!nearest_target) {
         return;
     }
+    
+    jelly_move_towards_target(jelly_king, nearest_target);
 
-    jelly_king->state = JELLY_KING_MOVE_TO_TARGET;
+    if (jelly_king->state_data.idle.attack_timer > 0) {
+        --jelly_king->state_data.idle.attack_timer;
+    }
+
+    if (jelly_king->state_data.idle.attack_timer <= 0) {
+        struct Vector3 offset;
+        vector3Sub(&nearest_target->point, &jelly_king->transform.position, &offset);
+
+        float distanceSq = vector3MagSqrd2D(&offset);
+
+        if (distanceSq < BITE_ATTACK_RANGE * BITE_ATTACK_RANGE) {
+            struct Vector2 rotation;
+            vector2LookDir(&rotation, &offset);
+
+            if (vector2Dot(&rotation, &jelly_king->transform.rotation) < 0.7f) {
+                jelly_king_start_aeo_attack(jelly_king);
+            } else {
+                jelly_king_chase_player(jelly_king);
+            }
+        } else if (jelly_king_can_fire_minion(jelly_king)) {
+            jelly_king_fire_minions(jelly_king, 3);
+        }
+    }
 }
 
 void jelly_king_move_to_target(struct jelly_king* jelly_king) {
@@ -75,25 +141,23 @@ void jelly_king_move_to_target(struct jelly_king* jelly_king) {
         return;
     }
     
-    if (jelly_king_rotate_to_target(jelly_king, nearest_target, 0.5f)) {
-        struct Vector3 targetVel;
-        vector2ToLookDir(&jelly_king->transform.rotation, &targetVel);
-        vector3Scale(&targetVel, &targetVel, SPEED);
-
-        vector3MoveTowards(&jelly_king->collider.velocity, &targetVel, ACCEL * fixed_time_step, &jelly_king->collider.velocity);
-
-        jelly_king_fire_minions(jelly_king, 3);
-    }
+    jelly_move_towards_target(jelly_king, nearest_target);
 
     if (dynamic_object_find_contact(&jelly_king->collider, nearest_target->other_object)) {
         animator_run_clip(&jelly_king->animator, jelly_king->animations.attack, 0.0f, false);
         jelly_king->state = JELLY_KING_ATTACK;
     }
+
+    jelly_king->state_data.chase.chase_timeout -= fixed_time_step;
+
+    if (jelly_king->state_data.chase.chase_timeout < 0.0f) {
+        jelly_king_start_idle(jelly_king);
+    }
 }
 
 void jelly_king_attack(struct jelly_king* jelly_king) {
     if (!animator_is_running(&jelly_king->animator)) {
-        jelly_king->state = JELLY_KING_MOVE_TO_TARGET;
+        jelly_king_start_idle(jelly_king);
     }
 }
 
@@ -200,8 +264,8 @@ void jelly_king_attack_aiming(struct jelly_king* jelly_king) {
         animator_run_clip(&jelly_king->animator, jelly_king->animations.idle, 0.0f, true);
     }
 
-    if (jelly_king->state_data.fire_minion.number_left == 0) {
-        jelly_king->state = JELLY_KING_IDLE;
+    if (jelly_king->state_data.fire_minion.number_left == 0 || !jelly_king_can_fire_minion(jelly_king)) {
+        jelly_king_start_idle(jelly_king);
         return;
     }
 
@@ -214,6 +278,12 @@ void jelly_king_attack_aiming(struct jelly_king* jelly_king) {
     if (jelly_king_rotate_to_target(jelly_king, nearest_target, 0.95f)) {
         jelly_king->state = JELLY_KING_ATTACK_RANGED;
         animator_run_clip(&jelly_king->animator, jelly_king->animations.attack_ranged, 0.0f, false);
+    }
+}
+
+void jelly_king_attack_aeo(struct jelly_king* jelly_king) {
+    if (!animator_is_running(&jelly_king->animator)) {
+        jelly_king_start_idle(jelly_king);
     }
 }
 
@@ -238,6 +308,9 @@ void jelly_king_update(void* data) {
         case JELLY_KING_ATTACK_AIMING:
             jelly_king_attack_aiming(jelly_king);
             break;
+        case JELLY_KING_ATTACK_AEO:
+            jelly_king_attack_aeo(jelly_king);
+            break;
     }
 }
 
@@ -255,10 +328,10 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
     jelly_king->animations.idle = animation_set_find_clip(jelly_king->animation_set, "idle");
     jelly_king->animations.attack = animation_set_find_clip(jelly_king->animation_set, "attack");
     jelly_king->animations.attack_ranged = animation_set_find_clip(jelly_king->animation_set, "attack_ranged");
-    jelly_king->state = JELLY_KING_IDLE;
+    jelly_king->animations.attack_aeo = animation_set_find_clip(jelly_king->animation_set, "attack_aeo");
 
     animator_init(&jelly_king->animator, jelly_king->renderable.armature.bone_count);
-    animator_run_clip(&jelly_king->animator, jelly_king->animations.idle, 0.0f, true);
+    jelly_king_start_idle(jelly_king);
 
     update_add(jelly_king, jelly_king_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
 

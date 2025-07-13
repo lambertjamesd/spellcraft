@@ -15,6 +15,7 @@ struct jelly_king_animations {
     struct animation_clip* idle;
     struct animation_clip* attack;
     struct animation_clip* attack_ranged;
+    struct animation_clip* attack_aeo;
 };
 
 enum jelly_king_state {
@@ -23,6 +24,7 @@ enum jelly_king_state {
     JELLY_KING_ATTACK,
     JELLY_KING_ATTACK_RANGED,
     JELLY_KING_ATTACK_AIMING,
+    JELLY_KING_ATTACK_AEO,
 };
 
 #define MAX_JELLY_MINIONS   5
@@ -43,6 +45,12 @@ struct jelly_king {
         struct {
             int number_left;
         } fire_minion;
+        struct {
+            int attack_timer;
+        } idle;
+        struct {
+            float chase_timeout;
+        } chase;
     } state_data;
 
     struct jelly minion[MAX_JELLY_MINIONS];
