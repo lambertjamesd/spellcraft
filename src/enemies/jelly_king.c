@@ -17,7 +17,7 @@
 
 #define MINION_DELAY_TIMER      10
 
-#define LAUNCH_VELOCITY         6.0f
+#define DEFAULT_LAUNCH_SPEED         6.0f
 
 static struct dynamic_object_type jelly_king_collider = {
     CYLINDER_COLLIDER(2.0f, 1.5f),
@@ -125,9 +125,45 @@ void jelly_king_fire_jelly(struct jelly_king* jelly_king) {
     struct contact* nearest_target = dynamic_object_nearest_contact(jelly_king->vision.active_contacts, &jelly_king->transform.position);
 
     struct Vector3 attack_velocity;
-    vector2ToLookDir(&jelly_king->transform.rotation, &attack_velocity);
-    vector3Scale(&attack_velocity, &attack_velocity, LAUNCH_VELOCITY);
-    attack_velocity.y = LAUNCH_VELOCITY;
+
+    if (nearest_target) {
+        // 0 = s * t + 1/2 * g * t * t
+        // d = s * t
+
+        // t = (d / s)
+
+        // 0 = s * (d / s) + 0.5 * g * d*d/(s*s)
+        // 0 = d + 0.5 * g * d*d/(s*s)
+        // -d = 0.5 * g * d*d/(s*s)
+        // s*s = -0.5 * g * d
+        // s = sqrt(-0.5 * g * d)
+
+
+        // s = sqrt(-g * 0.5 * distance)
+        // vh = offset * s / distance
+        // vv = s
+        
+        struct Vector3 offset;
+        vector3Sub(&nearest_target->point, &jelly_king->transform.position, &offset);
+        float distance = sqrtf(vector3MagSqrd2D(&offset));
+
+        if (distance < 0.01f) {
+            attack_velocity = gZeroVec;
+        } else {
+            float speed = sqrtf((-GRAVITY_CONSTANT * 0.5f) * distance);
+            float distance_inv = speed / distance;
+            
+            attack_velocity.x = offset.x * distance_inv;
+            attack_velocity.y = speed;
+            attack_velocity.z = offset.z * distance_inv;
+        }
+
+    } else {
+        vector2ToLookDir(&jelly_king->transform.rotation, &attack_velocity);
+        vector3Scale(&attack_velocity, &attack_velocity, DEFAULT_LAUNCH_SPEED);
+        attack_velocity.y = DEFAULT_LAUNCH_SPEED;
+    }
+    
     jelly_launch_attack(
         jelly, 
         &attack_velocity, 
