@@ -465,6 +465,7 @@ class Material():
         self.vertex_gamma: float = 0.454545
         self.vtx_effect: str | None = None
         self.fog: Fog | None = None
+        self.light_count: int | None = None
 
     def copy(self):
         result = Material()
@@ -482,6 +483,7 @@ class Material():
         result.vertex_gamma = self.vertex_gamma
         result.vtx_effect = self.vtx_effect
         result.fog = self.fog.copy() if self.fog else None
+        result.light_count = self.light_count
         return result
 
     def combine_mode_uses(self, attr: str) -> bool:

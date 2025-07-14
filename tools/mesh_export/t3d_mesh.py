@@ -100,6 +100,9 @@ def process_scene():
         settings.default_material_name = entities.material_extract.material_romname(meshes[0].mat)
         settings.default_material = entities.material_extract.load_material_with_name(meshes[0].mat)
 
+    if 'light_source' in use_scene:
+        settings.light_source = use_scene['light_source']
+
     with open(sys.argv[-1], 'wb') as file:
         entities.tiny3d_mesh_writer.write_mesh(meshes, arm, attatchments, settings, file)
 

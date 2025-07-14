@@ -27,6 +27,7 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->mesh.pose = NULL;
     result->mesh.color = (color_t){255, 255, 255, 255};
     result->mesh.use_prim_color = 0;
+    result->light_source = 0;
 
     return result;
 }
@@ -66,6 +67,7 @@ struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, 
 
     element->mesh.block = mesh->block;
     element->material = mesh->material;
+    element->light_source = mesh->light_source;
     element->mesh.transform = transform;
     element->mesh.transform_count = transform_count;
     element->mesh.pose = NULL;
@@ -218,6 +220,29 @@ static bool element_type_2d[] = {
     [RENDER_BATCH_CALLBACK] = false,
 };
 
+static uint8_t white_color[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+static uint8_t black_color[4] = {0x00, 0x00, 0x00, 0xFF};
+
+void render_batch_setup_light(struct render_batch* batch, enum light_source light_source) {
+    switch (light_source) {
+        case LIGHT_SOURCE_NONE:
+            t3d_light_set_ambient(white_color);
+            t3d_light_set_count(0);
+            break;
+        case LIGHT_SOURCE_CAMERA: {
+            T3DVec3 dir = {{
+                .x = batch->camera_matrix[2][0],
+                .y = batch->camera_matrix[2][1],
+                .z = batch->camera_matrix[2][2],
+            }};
+            t3d_light_set_ambient(black_color);
+            t3d_light_set_directional(0, white_color, &dir);
+            t3d_light_set_count(1);
+            break;
+        }
+    }
+}
+
 void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3DViewport* viewport) {
     uint16_t order[RENDER_BATCH_MAX_SIZE];
     uint16_t order_tmp[RENDER_BATCH_MAX_SIZE];
@@ -251,6 +276,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
     bool is_sprite_mode = false;
     bool z_write = true;
     bool z_read = true;
+    enum light_source light_source = LIGHT_SOURCE_NONE;
+    render_batch_setup_light(batch, light_source);
 
     T3DMat4FP* default_mtx = render_batch_get_transformfp(batch);
 
@@ -293,6 +320,11 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             }
 
             current_mat = element->material;
+        }
+
+        if (light_source != element->light_source) {
+            render_batch_setup_light(batch, element->light_source);
+            light_source = element->light_source;
         }
 
         bool should_sprite_mode = element_type_2d[element->type];

@@ -9,6 +9,7 @@ class ExportSettings():
         self.default_material_name: str = 'rom:/materials/default.mat'
         self.sort_direction: mathutils.Vector | None = None
         self.fog_scale = 1
+        self.light_source = 0
 
     def copy(self):
         result = ExportSettings()
@@ -19,5 +20,6 @@ class ExportSettings():
         result.default_material_name = self.default_material_name
         result.sort_direction = self.sort_direction
         result.fog_scale = self.fog_scale
+        result.light_source = self.light_source
 
         return result

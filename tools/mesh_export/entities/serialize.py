@@ -16,6 +16,7 @@ COMMAND_UV_GEN = 8
 COMMAND_FOG = 9
 COMMAND_FOG_COLOR = 10
 COMMAND_FOG_RANGE = 11
+COMMAND_LIGHT_COUNT = 12
 
 T3D_FLAG_DEPTH      = 1 << 0
 T3D_FLAG_TEXTURED   = 1 << 1
@@ -437,6 +438,10 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
 
     output.write(COMMAND_FLAGS.to_bytes(1, 'big'))
     output.write(flags.to_bytes(2, 'big'))
+
+    if mat.light_count != None:
+        output.write(COMMAND_LIGHT_COUNT.to_bytes(1, 'big'))
+        output.write(mat.light_count.to_bytes(1, 'big'))
 
     output.write(COMMAND_EOF.to_bytes(1, 'big'))
 

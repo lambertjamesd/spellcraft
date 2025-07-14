@@ -125,6 +125,7 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
         tmesh->attatchments = NULL;
     }
 
+    fread(&tmesh->light_source, 1, 1, file);
 
     // load mesh draw commands
     

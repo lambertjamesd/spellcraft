@@ -41,6 +41,7 @@ typedef void (*RenderCallback)(void* data, struct render_batch* batch);
 struct render_batch_element {
     struct material* material;
     uint16_t type;
+    uint8_t light_source;
     union {
         struct {
             rspq_block_t* block;

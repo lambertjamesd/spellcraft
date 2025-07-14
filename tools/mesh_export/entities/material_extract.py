@@ -441,6 +441,11 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     result.fog.min_distance = f3d_mat['fog_position'][0]
     result.fog.max_distance = f3d_mat['fog_position'][1]
 
+    if f3d_mat['set_lights']:
+        result.light_count = 1
+    else:
+        result.light_count = 0
+
     return result
 
 def material_can_extract(bpy_mat: bpy.types.Material) -> bool:

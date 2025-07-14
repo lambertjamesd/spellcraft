@@ -550,6 +550,7 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
         file.write(_pack_rotation(rot))
         file.write(struct.pack(">h", int(scale.x * 256)))
         
+    file.write(settings.light_source.to_bytes(1, 'big'))
 
     file.write(len(commands).to_bytes(2, 'big'))
 

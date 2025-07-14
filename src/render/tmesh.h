@@ -8,6 +8,11 @@
 #include "armature.h"
 #include "../math/transform.h"
 
+enum light_source {
+    LIGHT_SOURCE_NONE,
+    LIGHT_SOURCE_CAMERA,
+};
+
 struct armature_attatchment {
     char* name;
     uint16_t bone_index;
@@ -25,6 +30,7 @@ struct tmesh {
 
     struct armature_attatchment* attatchments;
     uint16_t attatchment_count;
+    uint8_t light_source;
 };
 
 void tmesh_load(struct tmesh* tmesh, FILE* file);

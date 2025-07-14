@@ -48,6 +48,7 @@ void material_destroy(struct material* material) {
 #define COMMAND_FOG         0x09
 #define COMMAND_FOG_COLOR   0x0A
 #define COMMAND_FOG_RANGE   0x0B
+#define COMMAND_LIGHT_COUNT 0x0C
 
 static GLenum material_filter_modes[] = {
     GL_NEAREST,
@@ -276,6 +277,13 @@ void material_load(struct material* into, FILE* material_file) {
                     fread(&min, sizeof(min), 1, material_file);
                     fread(&max, sizeof(max), 1, material_file);
                     t3d_fog_set_range(min * WORLD_SCALE, max * WORLD_SCALE);
+                }
+                break;
+            case COMMAND_LIGHT_COUNT:
+                {
+                    uint8_t light_count;
+                    fread(&light_count, 1, 1, material_file);
+                    t3d_light_set_count(light_count);
                 }
                 break;
         }
