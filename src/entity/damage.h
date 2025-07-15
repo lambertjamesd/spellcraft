@@ -1,6 +1,8 @@
 #ifndef __ENTITY_DAMAGE_H__
 #define __ENTITY_DAMAGE_H__
 
+#include <stdint.h>
+#include <stdbool.h>
 #include "../math/vector3.h"
 #include "./entity_id.h"
 
@@ -12,14 +14,31 @@ enum damage_type {
     DAMAGE_TYPE_WATER = (1 << 4),
     DAMAGE_TYPE_BASH = (1 << 5),
     DAMAGE_TYPE_STEAL = (1 << 6),
+    DAMAGE_TYPE_KNOCKBACK = (1 << 7),
+};
+
+struct damage_source {
+    float amount;
+    enum damage_type type;
+    float knockback_strength;
 };
 
 struct damage_info {
     float amount;
     enum damage_type type;
     entity_id source;
+    float knockback_strength;
     // may not be normalized
     struct Vector3 direction;
 };
+
+#define MAX_DAMAGED_SET_SIZE    8
+
+struct damaged_set {
+    entity_id damaged_entities[MAX_DAMAGED_SET_SIZE];
+};
+
+void damaged_set_reset(struct damaged_set* set);
+bool damaged_set_check(struct damaged_set* set, entity_id id);
 
 #endif

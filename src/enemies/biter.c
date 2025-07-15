@@ -62,7 +62,7 @@ void biter_update_target(struct biter* biter) {
             .source = biter->dynamic_object.entity_id,
         };
         vector2ToLookDir(&biter->transform.rotation, &damage.direction);
-        health_damage_id(biter->current_target, &damage);
+        health_damage_id(biter->current_target, &damage, NULL);
         biter->current_target = 0;
         return;
     }

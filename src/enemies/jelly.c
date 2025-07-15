@@ -58,6 +58,11 @@ static struct spatial_trigger_type jelly_vision_type = {
     },
 };
 
+static struct damage_source damage_source = {
+    .amount = 5.0f,
+    .type = DAMAGE_TYPE_BASH,
+};
+
 void jelly_freeze(struct jelly* jelly) {
     jelly->is_frozen = 1;
     jelly->freeze_timer = 0.0f;
@@ -105,7 +110,7 @@ void jelly_update_spring(struct jelly* jelly, struct Vector3* jump_dir) {
 
 void jelly_update_handle_damage(struct jelly* jelly, bool is_grounded) {
     if (jelly->is_attacking) {
-        health_apply_contact_damage(&jelly->collider, 5.0f, DAMAGE_TYPE_BASH);
+        health_apply_contact_damage(&jelly->collider, &damage_source, NULL);
     }
 
     if (!is_grounded) {

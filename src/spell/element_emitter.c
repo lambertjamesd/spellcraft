@@ -74,10 +74,15 @@ bool element_emitter_update(struct element_emitter* element_emitter, struct spel
 
 
     if (element_emitter->is_active) {
+        struct damage_source source = {
+            .amount = element_emitter->effect_definition->damage_per_frame * mana_ratio,
+            .type = health_determine_damage_type(element_emitter->effect_definition->element_type),
+        };
+
         health_apply_contact_damage(
             &element_emitter->dynamic_object, 
-            element_emitter->effect_definition->damage_per_frame * mana_ratio, 
-            health_determine_damage_type(element_emitter->effect_definition->element_type)
+            &source, 
+            NULL
         );
     } 
 

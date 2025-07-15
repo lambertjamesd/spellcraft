@@ -35,7 +35,8 @@ void sprite_element_damage(struct living_sprite* living_sprite, struct contact* 
 
     health_damage_id(
         living_sprite->target, 
-        &damage
+        &damage,
+        NULL
     );
 }
 

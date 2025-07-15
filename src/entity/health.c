@@ -4,6 +4,7 @@
 #include "../util/hash_map.h"
 #include "../time/time.h"
 #include "../collision/dynamic_object.h"
+#include "../collision/collision_scene.h"
 #include <stddef.h>
 
 static struct hash_map health_entity_mapping;
@@ -91,13 +92,32 @@ float health_damage(struct health* health, struct damage_info* damage) {
         health->current_status = DAMAGE_TYPE_WATER;
     }
 
+    if (damage->type & DAMAGE_TYPE_KNOCKBACK) {
+        struct dynamic_object* object = collision_scene_find_object(health->entity_id);
+
+        if (object) {
+            struct Vector3 direction = damage->direction;
+            direction.y = 0.0f;
+            vector3Normalize(&direction, &direction);
+            vector3Scale(&direction, &direction, -damage->knockback_strength);
+            direction.y = damage->knockback_strength;
+            DYNAMIC_OBJECT_MARK_JUMPING(object);
+
+            vector3Add(&object->velocity, &direction, &object->velocity);
+        }
+    }
+
     return result;
 }
 
-float health_damage_id(entity_id target, struct damage_info* damage) {
+float health_damage_id(entity_id target, struct damage_info* damage, struct damaged_set* set) {
     struct health* health = health_get(target);
 
     if (!health) {
+        return 0.0f;
+    }
+
+    if (!damaged_set_check(set, target)) {
         return 0.0f;
     }
 
@@ -108,19 +128,20 @@ void health_heal(struct health* health, float amount) {
     health->current_health = minf(health->max_health, health->current_health + amount);
 }
 
-bool health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type) {
+bool health_apply_contact_damage(struct dynamic_object* damage_source, struct damage_source* source, struct damaged_set* set) {
     struct contact* curr = damage_source->active_contacts;
 
     struct damage_info damage;
-    damage.amount = amount;
-    damage.type = type;
+    damage.amount = source->amount;
+    damage.type = source->type;
+    damage.knockback_strength = source->knockback_strength;
 
     bool did_hit = false;
 
     while (curr) {
         struct health* target_health = health_get(curr->other_object);
 
-        if (!target_health) {
+        if (!target_health || !damaged_set_check(set, curr->other_object)) {
             curr = curr->next;
             continue;
         }

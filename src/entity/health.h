@@ -33,11 +33,11 @@ void health_set_callback(struct health* health, health_damage_callback callback,
 void health_destroy(struct health* health);
 
 float health_damage(struct health* health, struct damage_info* damage);
-float health_damage_id(entity_id target, struct damage_info* damage);
+float health_damage_id(entity_id target, struct damage_info* damage, struct damaged_set* set);
 
 void health_heal(struct health* health, float amount);
 
-bool health_apply_contact_damage(struct dynamic_object* damage_source, float amount, enum damage_type type);
+bool health_apply_contact_damage(struct dynamic_object* damage_source, struct damage_source* damage, struct damaged_set* set);
 
 struct health* health_get(entity_id id);
 

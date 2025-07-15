@@ -43,6 +43,12 @@ static struct spatial_trigger_type jelly_king_vision_type = {
     },
 };
 
+static struct damage_source aeo_attack = {
+    .amount = 10.0f,
+    .type = DAMAGE_TYPE_KNOCKBACK,
+    .knockback_strength = 5.0f,
+};
+
 bool jelly_king_rotate_to_target(struct jelly_king* jelly_king, struct contact* nearest_target, float threshold) {
     if (!nearest_target) {
         return false;
@@ -285,11 +291,19 @@ void jelly_king_attack_aeo(struct jelly_king* jelly_king) {
     if (!animator_is_running(&jelly_king->animator)) {
         jelly_king_start_idle(jelly_king);
     }
+
+    if (jelly_king->animator.events) {
+        health_apply_contact_damage(&jelly_king->collider, &aeo_attack, NULL);
+    }
 }
 
 void jelly_king_update(void* data) {
     struct jelly_king* jelly_king = (struct jelly_king*)data;
     animator_update(&jelly_king->animator, jelly_king->renderable.armature.pose, fixed_time_step);
+
+    jelly_king->collider_type.data.cylinder.half_height = jelly_king_collider.data.cylinder.half_height * jelly_king->renderable.armature.pose[0].scale.y;
+    jelly_king->collider.center.y = jelly_king->collider_type.data.cylinder.half_height;
+    jelly_king->collider_type.data.cylinder.radius = jelly_king_collider.data.cylinder.radius * jelly_king->renderable.armature.pose[0].scale.x;
 
     switch (jelly_king->state)
     {
@@ -335,10 +349,12 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
 
     update_add(jelly_king, jelly_king_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
 
+    jelly_king->collider_type = jelly_king_collider;
+
     dynamic_object_init(
         entity_id,
         &jelly_king->collider,
-        &jelly_king_collider,
+        &jelly_king->collider_type,
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,
         &jelly_king->transform.position,
         &jelly_king->transform.rotation

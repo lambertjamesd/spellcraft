@@ -441,7 +441,7 @@ void collision_scene_collide() {
             water_apply(object);
         }
         
-        if (!is_grounded && prev_was_grounded[i]) {
+        if (!is_grounded && prev_was_grounded[i] && !object->is_jumping) {
             collision_scene_snap_to_ground(object, &prev_pos[i]);
         }
     }

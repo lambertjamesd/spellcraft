@@ -10,6 +10,7 @@
 #include "../render/tmesh.h"
 #include "../scene/scene_definition.h"
 #include "../effects/drop_shadow.h"
+#include "../entity/damage.h"
 
 struct jelly {
     struct TransformSingleAxis transform;

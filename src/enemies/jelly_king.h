@@ -34,6 +34,7 @@ struct jelly_king {
     struct renderable renderable;
     struct health health;
     struct dynamic_object collider;
+    struct dynamic_object_type collider_type;
     struct spatial_trigger vision;
     struct animation_set* animation_set;
     struct animator animator;
