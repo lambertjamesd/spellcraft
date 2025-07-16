@@ -65,6 +65,7 @@ make
 ### Spell ideas
 
 Create a decoy
+Have earth + life be recast
 
 ### minigame ideas
 

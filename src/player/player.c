@@ -76,177 +76,20 @@ void player_get_move_basis(struct Transform* transform, struct Vector3* forward,
     vector3Normalize(right, right);
 }
 
-struct animation_clip* player_determine_animation_jumping(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
-    struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
-    struct dynamic_object* collider = &player->cutscene_actor.collider;
-
-    *playback_speed = 1.0f;
-    *repeat = false;
-    if (collider->velocity.y < 0.0f) {
-        player->animations.state = PLAYER_ANIMATION_FALLING;
-        return player->animations.jump_peak;
-    } else if (ground_contact) {
-        player->animations.state = PLAYER_ANIMATION_GROUNDED;
-        return player->animations.land;
-    }
-
-    return NULL;
+void player_run_clip(struct player* player, struct animation_clip* clip) {
+    animator_run_clip(&player->cutscene_actor.animator, clip, 0.0f, false);
+    player->cutscene_actor.animate_speed = 1.0f;
 }
 
-struct animation_clip* player_determine_animation_falling(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
-    struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
-    struct dynamic_object* collider = &player->cutscene_actor.collider;
-
-    *playback_speed = 1.0f;
-
-    if (ground_contact) {
-        *repeat = false;
-        player->animations.state = PLAYER_ANIMATION_GROUNDED;
-        return player->animations.land;
-    } else if (collider->under_water) {
-        player->animations.state = PLAYER_ANIMATION_SWIMMING;
-        *repeat = true;
-        return player->animations.tread_water;
-    } else if (current_clip == player->animations.jump_peak) {
-        *repeat = false;
-        return player->animations.jump_peak;
-    } else {
-        *repeat = false;
-        return player->animations.fall;
-    }
+bool player_is_running(struct player* player, struct animation_clip* clip) {
+    return animator_is_running_clip(&player->cutscene_actor.animator, clip);
 }
 
-struct animation_clip* player_determine_animation_swimming(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
-    struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
-    struct dynamic_object* collider = &player->cutscene_actor.collider;
-
-    *playback_speed = 1.0f;
-
-    if (ground_contact) {
-        *repeat = false;
-        player->animations.state = PLAYER_ANIMATION_GROUNDED;
-        return player->animations.land;
-    } else if (!collider->under_water) {
-        player->animations.state = PLAYER_ANIMATION_FALLING;
-        *repeat = true;
-        return player->animations.fall;
+void player_loop_animation(struct player* player, struct animation_clip* clip, float speed) {
+    if (!animator_is_running_clip(&player->cutscene_actor.animator, clip)) {
+        animator_run_clip(&player->cutscene_actor.animator, clip, 0.0f, true);
     }
-
-    struct Vector3 horizontal_velocity = collider->velocity;
-    horizontal_velocity.y = 0.0f;
-    float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
-
-    *playback_speed = 1.0f;
-    *repeat = true;
-    return speed > 0.1f ? player->animations.swim : player->animations.tread_water;
-}
-
-struct animation_clip* player_determine_animation_grounded(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
-    struct animation_clip* current_clip = player->cutscene_actor.animator.current_clip;
-    struct dynamic_object* collider = &player->cutscene_actor.collider;
-
-    
-    if (current_clip == player->animations.take_damage && 
-        animator_is_running(&player->cutscene_actor.animator)) {
-        return player->animations.take_damage;
-    }
-
-    for (int i = 0; i < 4; i += 1) {
-        if (player->player_spell_sources[i].flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
-            *playback_speed = 1.0f;
-            *repeat = false;
-            return player->animations.attack_hold;
-        }
-    }
-
-    struct Vector3 horizontal_velocity = collider->velocity;
-    horizontal_velocity.y = 0.0f;
-    float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
-
-    if (current_clip == player->animations.land) {
-        *playback_speed = 1.0f;
-        *repeat = false;
-        return player->animations.land;
-    }
-
-    if (collider->is_jumping) {
-        *playback_speed = 1.0f;
-        *repeat = false;
-        player->animations.state = PLAYER_ANIMATION_JUMPING;
-        return player->animations.jump;
-    }
-
-    if (collider->under_water) {
-        *playback_speed = 1.0f;
-        *repeat = true;
-        player->animations.state = PLAYER_ANIMATION_SWIMMING;
-        return player->animations.tread_water;
-    }
-
-    if (collider->is_pushed) {
-        if (ground_contact) {
-            *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
-            *repeat = true;
-            return player->animations.dash;
-        } else {
-            *playback_speed = 1.0f;
-            *repeat = true;
-            return player->animations.air_dash;
-        }
-    }
-
-    if (speed < 0.2f) {
-        *playback_speed = 1.0f;
-        *repeat = true;
-        return player->animations.idle;
-    }
-
-    if (speed < PLAYER_RUN_THRESHOLD) {
-        *playback_speed = speed * (1.0f / PLAYER_WALK_ANIM_SPEED);
-        *repeat = true;
-        return player->animations.walk;
-    }
-
-    if (speed < PLAYER_DASH_THRESHOLD) {
-        *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
-        *repeat = true;
-        return player->animations.run;
-    }
-
-    *playback_speed = speed * (1.0f / PLAYER_MAX_SPEED);
-    *repeat = true;
-    return player->animations.dash;
-}
-
-struct animation_clip* player_determine_animation(struct player* player, struct contact* ground_contact, float* playback_speed, bool* repeat) {
-    if (player->animations.state == PLAYER_ANIMATION_JUMPING) {
-        return player_determine_animation_jumping(player, ground_contact, playback_speed, repeat);
-    }
-
-    if (player->animations.state == PLAYER_ANIMATION_FALLING) {
-        return player_determine_animation_falling(player, ground_contact, playback_speed, repeat);
-    }
-
-    if (player->animations.state == PLAYER_ANIMATION_SWIMMING) {
-        return player_determine_animation_swimming(player, ground_contact, playback_speed, repeat);
-    }
-
-    return player_determine_animation_grounded(player, ground_contact, playback_speed, repeat);
-}
-
-bool player_cast_state(joypad_buttons_t buttons, int button_index) {
-    switch (button_index) {
-        case 0:
-            return buttons.c_up;
-        case 1:
-            return buttons.c_down;
-        case 2:
-            return buttons.c_left;
-        case 3:
-            return buttons.c_right;
-        default: 
-            return false;
-    }
+    player->cutscene_actor.animate_speed = speed;
 }
 
 void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
@@ -267,10 +110,6 @@ void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
 }
 
 void player_handle_a_action(struct player* player) {
-    if (spell_exec_charge(&player->spell_exec)) {
-        return;
-    }
-
     struct Vector3 query_center = player->cutscene_actor.transform.position;
     struct Vector3 query_offset;
     vector2ToLookDir(&player->cutscene_actor.transform.rotation, &query_offset);
@@ -278,6 +117,171 @@ void player_handle_a_action(struct player* player) {
     query_center.y += player_visual_shape.data.cylinder.half_height;
     bool did_intersect = false;
     collision_scene_query(&player_visual_shape, &query_center, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_intersect);
+}
+
+bool player_check_for_casting(struct player* player) {
+    joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
+
+    if (live_cast_has_pending_spell(&player->live_cast) && pressed.a) {
+        spell_exec_start(&player->spell_exec, 4, live_cast_extract_active_spell(&player->live_cast), &player->player_spell_sources[4]);
+        return true;
+    }
+
+    if (pressed.a && spell_exec_charge(&player->spell_exec)) {
+        return true;
+    }
+
+    return false;
+}
+
+void player_update_jumping(struct player* player, struct contact* ground_contact) {
+    struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    if (collider->velocity.y < 0.0f) {
+        player->state = PLAYER_FALLING;
+        player_run_clip(player, player->animations.jump_peak);
+    } else if (ground_contact) {
+        player->state = PLAYER_GROUNDED;
+        player_run_clip(player, player->animations.land);
+    }
+}
+
+void player_update_falling(struct player* player, struct contact* ground_contact) {
+    struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    player_check_for_casting(player);
+
+    if (ground_contact) {
+        player->state = PLAYER_GROUNDED;
+        player_run_clip(player, player->animations.land);
+    } else if (collider->under_water) {
+        player->state = PLAYER_SWIMMING;
+        player_loop_animation(player, player->animations.tread_water, 1.0f);
+    } else if (!player_is_running(player, player->animations.jump_peak)) {
+        player_loop_animation(player, player->animations.fall, 1.0f);
+    }
+}
+
+void player_update_swimming(struct player* player, struct contact* ground_contact) {
+    struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    if (ground_contact) {
+        player->state = PLAYER_GROUNDED;
+        player_run_clip(player, player->animations.land);
+        return;
+    } else if (!collider->under_water) {
+        player->state = PLAYER_FALLING;
+        player_loop_animation(player, player->animations.fall, 1.0f);
+        return;
+    }
+
+    struct Vector3 horizontal_velocity = collider->velocity;
+    horizontal_velocity.y = 0.0f;
+    float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
+
+    player_loop_animation(player, speed > 0.1f ? player->animations.swim : player->animations.tread_water, 1.0f);
+}
+
+void player_update_grounded(struct player* player, struct contact* ground_contact) {
+    joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
+    struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    if (!player_check_for_casting(player) && pressed.a) {
+        player_handle_a_action(player);
+    }
+
+    if (player_is_running(player, player->animations.take_damage)) {
+        return;
+    }
+
+    for (int i = 0; i < 4; i += 1) {
+        if (player->player_spell_sources[i].flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
+            player_loop_animation(player, player->animations.attack_hold, 1.0f);
+            return;
+        }
+    }
+
+    struct Vector3 horizontal_velocity = collider->velocity;
+    horizontal_velocity.y = 0.0f;
+    float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
+
+    if (player_is_running(player, player->animations.land)) {
+        return;
+    }
+
+    if (collider->is_jumping) {
+        player->state = PLAYER_JUMPING;
+        player_run_clip(player, player->animations.jump);
+        return;
+    }
+
+    if (collider->under_water) {
+        player->state = PLAYER_SWIMMING;
+        player_loop_animation(player, player->animations.tread_water, 1.0f);
+        return;
+    }
+
+    if (collider->is_pushed) {
+        if (ground_contact) {
+            player_loop_animation(player, player->animations.dash, speed * (1.0f / PLAYER_MAX_SPEED));
+            return;
+        } else {
+            player_loop_animation(player, player->animations.air_dash, 1.0f);
+            return;
+        }
+    }
+
+    if (speed < 0.2f) {
+        player_loop_animation(player, player->animations.idle, 1.0f);
+        return;
+    }
+
+    if (speed < PLAYER_RUN_THRESHOLD) {
+        player_loop_animation(player, player->animations.walk, speed * (1.0f / PLAYER_WALK_ANIM_SPEED));
+        return;
+    }
+
+    if (speed < PLAYER_DASH_THRESHOLD) {
+        player_loop_animation(player, player->animations.run, speed * (1.0f / PLAYER_MAX_SPEED));
+        return;
+    }
+
+    player_loop_animation(player, player->animations.dash, speed * (1.0f / PLAYER_MAX_SPEED));
+    return;
+}
+
+void player_update_state(struct player* player, struct contact* ground_contact) {
+    if (player->state == PLAYER_JUMPING) {
+        player_update_jumping(player, ground_contact);
+        return;
+    }
+
+    if (player->state == PLAYER_FALLING) {
+        player_update_falling(player, ground_contact);
+        return;
+    }
+
+    if (player->state == PLAYER_SWIMMING) {
+        player_update_swimming(player, ground_contact);
+        return;
+    }
+
+    player_update_grounded(player, ground_contact);
+}
+
+bool player_cast_state(joypad_buttons_t buttons, int button_index) {
+    switch (button_index) {
+        case 0:
+            return buttons.c_up;
+        case 1:
+            return buttons.c_down;
+        case 2:
+            return buttons.c_left;
+        case 3:
+            return buttons.c_right;
+        default: 
+            return false;
+    }
 }
 
 void player_check_inventory(struct player* player) {
@@ -356,35 +360,7 @@ void player_handle_movement(struct player* player, joypad_inputs_t* input, struc
     }
 }
 
-void player_update(struct player* player) {
-    struct contact* ground = dynamic_object_get_ground(&player->cutscene_actor.collider);
-
-    float playback_speed = 1.0f;
-    bool repeat;
-    struct animation_clip* next_clip = player_determine_animation(player, ground, &playback_speed, &repeat);
-
-    if (player->cutscene_actor.state == ACTOR_STATE_IDLE) {
-        player->cutscene_actor.animate_speed = playback_speed;
-        if (next_clip != NULL && next_clip != player->cutscene_actor.animator.current_clip) {
-            animator_run_clip(&player->cutscene_actor.animator, next_clip, 0.0f, repeat);
-        }
-    }
-
-    if (cutscene_actor_update(&player->cutscene_actor) || !update_has_layer(UPDATE_LAYER_WORLD)) {
-        return;
-    }
-
-    joypad_inputs_t input = joypad_get_inputs(0);
-    joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
-
-    if (pressed.d_up) {
-        debug_collider_enable();
-    } else if (pressed.d_down) {
-        debug_collider_disable();
-    }
-
-    player_handle_movement(player, &input, ground);
-
+void player_update_spells(struct player* player, joypad_inputs_t input, joypad_buttons_t pressed) {
     struct Vector3 castDirection;
     vector2ToLookDir(&player->cutscene_actor.transform.rotation, &castDirection);
 
@@ -409,10 +385,6 @@ void player_update(struct player* player) {
     source->position.y += 1.0f;
     source->flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
 
-    if (live_cast_has_pending_spell(&player->live_cast) && pressed.a) {
-        spell_exec_start(&player->spell_exec, 4, live_cast_extract_active_spell(&player->live_cast), source);
-    }
-
     if (pressed.b) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_LIFE);
     } else if (pressed.c_up) {
@@ -426,7 +398,9 @@ void player_update(struct player* player) {
     } else if (live_cast_has_pending_spell(&player->live_cast) && pressed.r) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_BREAK);
     }
+}
 
+void player_check_collectables(struct player* player) {
     struct contact* contact = player->cutscene_actor.collider.active_contacts;
 
     while (contact) {
@@ -438,12 +412,31 @@ void player_update(struct player* player) {
 
         contact = contact->next;
     }
+}
 
-    if (pressed.a) {
-        player_handle_a_action(player);
+void player_update(struct player* player) {
+    joypad_inputs_t input = joypad_get_inputs(0);
+    joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
+
+    if (pressed.d_up) {
+        debug_collider_enable();
+    } else if (pressed.d_down) {
+        debug_collider_disable();
     }
 
+    player_update_spells(player, input, pressed);
+    player_check_collectables(player);
     player_check_inventory(player);
+
+    if (cutscene_actor_update(&player->cutscene_actor) || !update_has_layer(UPDATE_LAYER_WORLD)) {
+        return;
+    }
+
+    struct contact* ground = dynamic_object_get_ground(&player->cutscene_actor.collider);
+    player_update_state(player, ground);
+
+    player_handle_movement(player, &input, ground);
+
     live_cast_cleanup_unused_spells(&player->live_cast, &player->spell_exec);
 }
 
@@ -517,7 +510,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->animations.fall = animation_set_find_clip(player->cutscene_actor.animation_set, "fall");
     player->animations.land = animation_set_find_clip(player->cutscene_actor.animation_set, "land");
 
-    player->animations.state = PLAYER_ANIMATION_GROUNDED;
+    player->state = PLAYER_GROUNDED;
 
     player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
     player->assets.staffs[1] = NULL;

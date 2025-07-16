@@ -20,11 +20,11 @@
 
 #define PLAYER_CAST_SOURCE_COUNT    5
 
-enum player_animation_state {
-    PLAYER_ANIMATION_GROUNDED,
-    PLAYER_ANIMATION_JUMPING,
-    PLAYER_ANIMATION_FALLING,
-    PLAYER_ANIMATION_SWIMMING,
+enum player_state {
+    PLAYER_GROUNDED,
+    PLAYER_JUMPING,
+    PLAYER_FALLING,
+    PLAYER_SWIMMING,
 };
 
 struct player_animations {
@@ -44,8 +44,6 @@ struct player_animations {
     struct animation_clip* jump_peak;
     struct animation_clip* fall;
     struct animation_clip* land;
-
-    enum player_animation_state state;
 };
 
 struct player_definition {
@@ -72,6 +70,8 @@ struct player {
     struct inventory_assets assets;
     
     struct drop_shadow drop_shadow;
+
+    enum player_state state;
 };
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform);
