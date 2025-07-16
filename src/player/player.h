@@ -25,6 +25,8 @@ enum player_state {
     PLAYER_JUMPING,
     PLAYER_FALLING,
     PLAYER_SWIMMING,
+    PLAYER_KNOCKBACK,
+    PLAYER_GETTING_UP,
 };
 
 struct player_animations {
@@ -44,6 +46,10 @@ struct player_animations {
     struct animation_clip* jump_peak;
     struct animation_clip* fall;
     struct animation_clip* land;
+
+    struct animation_clip* knocked_back;
+    struct animation_clip* knockback_fly;
+    struct animation_clip* knockback_land;
 };
 
 struct player_definition {

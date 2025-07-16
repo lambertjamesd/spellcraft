@@ -109,6 +109,84 @@ void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
     interactable->callback(interactable, 0);
 }
 
+void player_get_input_direction(struct player* player, struct Vector3* target_direction) {
+    joypad_inputs_t input = joypad_get_inputs(0);
+
+    struct Vector3 right;
+    struct Vector3 forward;
+
+    player_get_move_basis(player->camera_transform, &forward, &right);
+
+    struct Vector2 direction;
+
+    direction.x = input.stick_x * (1.0f / 80.0f);
+    direction.y = -input.stick_y * (1.0f / 80.0f);
+
+    float magSqrd = vector2MagSqr(&direction);
+
+    if (magSqrd > 1.0f) {
+        vector2Scale(&direction, 1.0f / sqrtf(magSqrd), &direction);
+    }
+
+    vector3Scale(&right, target_direction, direction.x);
+    vector3AddScaled(target_direction, &forward, direction.y, target_direction);
+}
+
+void player_look_towards(struct player* player, struct Vector3* target_direction) {
+    if (vector3MagSqrd(target_direction) > 0.01f) {
+        struct Vector2 directionUnit;
+        vector2LookDir(&directionUnit, target_direction);
+        vector2RotateTowards(&player->cutscene_actor.transform.rotation, &directionUnit, &player_max_rotation, &player->cutscene_actor.transform.rotation);
+    }
+}
+
+void player_handle_ground_movement(struct player* player, struct contact* ground_contact) {
+    struct Vector3 target_direction;
+    player_get_input_direction(player, &target_direction);
+
+    if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
+        // TODO handle sliding logic
+        return;
+    }
+
+    player_look_towards(player, &target_direction);
+
+    if (player->cutscene_actor.collider.is_pushed) {
+        return;
+    }
+
+    if (vector3MagSqrd(&target_direction) < 0.001f) {
+        player->cutscene_actor.collider.velocity = gZeroVec;
+    } else {
+        struct Vector3 projected_target_direction;
+        vector3ProjectPlane(&target_direction, &ground_contact->normal, &projected_target_direction);
+
+        struct Vector3 normalized_direction;
+        vector3Normalize(&target_direction, &normalized_direction);
+        struct Vector3 projected_normalized;
+        vector3ProjectPlane(&normalized_direction, &ground_contact->normal, &projected_normalized);
+
+        vector3Scale(&projected_target_direction, &projected_target_direction, 1.0f / sqrtf(vector3MagSqrd(&projected_normalized)));
+
+        vector3Scale(&projected_target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
+    }
+}
+
+void player_handle_air_movement(struct player* player) {
+    if (player->cutscene_actor.collider.is_pushed) {
+        return;
+    }
+
+    struct Vector3 target_direction;
+    player_get_input_direction(player, &target_direction);
+
+    player_look_towards(player, &target_direction);
+
+    float prev_y = player->cutscene_actor.collider.velocity.y;
+    vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
+    player->cutscene_actor.collider.velocity.y = prev_y;
+}
+
 void player_handle_a_action(struct player* player) {
     struct Vector3 query_center = player->cutscene_actor.transform.position;
     struct Vector3 query_offset;
@@ -151,6 +229,8 @@ void player_update_falling(struct player* player, struct contact* ground_contact
 
     player_check_for_casting(player);
 
+    player_handle_air_movement(player);
+
     if (ground_contact) {
         player->state = PLAYER_GROUNDED;
         player_run_clip(player, player->animations.land);
@@ -164,6 +244,8 @@ void player_update_falling(struct player* player, struct contact* ground_contact
 
 void player_update_swimming(struct player* player, struct contact* ground_contact) {
     struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    player_handle_air_movement(player);
 
     if (ground_contact) {
         player->state = PLAYER_GROUNDED;
@@ -182,12 +264,46 @@ void player_update_swimming(struct player* player, struct contact* ground_contac
     player_loop_animation(player, speed > 0.1f ? player->animations.swim : player->animations.tread_water, 1.0f);
 }
 
+void player_getting_up(struct player* player, struct contact* ground_contact) {
+    if (!player_is_running(player, player->animations.knockback_land)) {
+        player->state = PLAYER_GROUNDED;
+    }
+}
+
+void player_update_knockback(struct player* player, struct contact* ground_contact) {
+    if (ground_contact && player->cutscene_actor.collider.velocity.y < 0.1f) {
+        player_run_clip(player, player->animations.knockback_land);
+        player->state = PLAYER_GETTING_UP;
+        return;
+    }
+
+    struct Vector2 target_rotation;
+    vector2LookDir(&target_rotation, &player->cutscene_actor.collider.velocity);
+
+    if (vector2MagSqr(&target_rotation) > 0.5f) {
+        vector2Negate(&target_rotation, &target_rotation);
+        vector2RotateTowards(&player->cutscene_actor.transform.rotation, &target_rotation, &player_max_rotation, &player->cutscene_actor.transform.rotation);
+    }
+
+    if (!player_is_running(player, player->animations.knocked_back)) {
+        player_loop_animation(player, player->animations.knockback_fly, 1.0f);
+    }
+}
+
 void player_update_grounded(struct player* player, struct contact* ground_contact) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
     if (!player_check_for_casting(player) && pressed.a) {
         player_handle_a_action(player);
+    }
+
+    if (ground_contact) {
+        player_handle_ground_movement(player, ground_contact);
+    } else {
+        player_run_clip(player, player->animations.jump_peak);
+        player->state = PLAYER_FALLING;
+        return;
     }
 
     if (player_is_running(player, player->animations.take_damage)) {
@@ -251,22 +367,26 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
 }
 
 void player_update_state(struct player* player, struct contact* ground_contact) {
-    if (player->state == PLAYER_JUMPING) {
-        player_update_jumping(player, ground_contact);
-        return;
+    switch (player->state) {
+        case PLAYER_JUMPING:
+            player_update_jumping(player, ground_contact);
+            break;
+        case PLAYER_FALLING:
+            player_update_falling(player, ground_contact);
+            break;
+        case PLAYER_SWIMMING:
+            player_update_swimming(player, ground_contact);
+            break;
+        case PLAYER_KNOCKBACK:
+            player_update_knockback(player, ground_contact);
+            break;
+        case PLAYER_GETTING_UP:
+            player_getting_up(player, ground_contact);
+            break;
+        default:
+            player_update_grounded(player, ground_contact);
+            break;
     }
-
-    if (player->state == PLAYER_FALLING) {
-        player_update_falling(player, ground_contact);
-        return;
-    }
-
-    if (player->state == PLAYER_SWIMMING) {
-        player_update_swimming(player, ground_contact);
-        return;
-    }
-
-    player_update_grounded(player, ground_contact);
 }
 
 bool player_cast_state(joypad_buttons_t buttons, int button_index) {
@@ -287,77 +407,6 @@ bool player_cast_state(joypad_buttons_t buttons, int button_index) {
 void player_check_inventory(struct player* player) {
     struct staff_stats* staff = inventory_equipped_staff();
     player->renderable.attachments[0] = staff->item_type == ITEM_TYPE_NONE ? NULL : player->assets.staffs[staff->staff_index];
-}
-
-void player_handle_ground_movement(struct player* player, struct contact* ground_contact, struct Vector3* target_direction) {
-    if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
-        // TODO handle sliding logic
-        return;
-    }
-
-    if (player->cutscene_actor.collider.is_pushed) {
-        return;
-    }
-
-    if (vector3MagSqrd(target_direction) < 0.001f) {
-        player->cutscene_actor.collider.velocity = gZeroVec;
-    } else {
-        struct Vector3 projected_target_direction;
-        vector3ProjectPlane(target_direction, &ground_contact->normal, &projected_target_direction);
-
-        struct Vector3 normalized_direction;
-        vector3Normalize(target_direction, &normalized_direction);
-        struct Vector3 projected_normalized;
-        vector3ProjectPlane(&normalized_direction, &ground_contact->normal, &projected_normalized);
-
-        vector3Scale(&projected_target_direction, &projected_target_direction, 1.0f / sqrtf(vector3MagSqrd(&projected_normalized)));
-
-        vector3Scale(&projected_target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
-    }
-}
-
-void player_handle_air_movement(struct player* player, struct Vector3* target_direction) {
-    if (player->cutscene_actor.collider.is_pushed) {
-        return;
-    }
-
-    float prev_y = player->cutscene_actor.collider.velocity.y;
-    vector3Scale(target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
-    player->cutscene_actor.collider.velocity.y = prev_y;
-}
-
-void player_handle_movement(struct player* player, joypad_inputs_t* input, struct contact* ground_contact) {
-    struct Vector3 right;
-    struct Vector3 forward;
-
-    player_get_move_basis(player->camera_transform, &forward, &right);
-
-    struct Vector2 direction;
-
-    direction.x = input->stick_x * (1.0f / 80.0f);
-    direction.y = -input->stick_y * (1.0f / 80.0f);
-
-    float magSqrd = vector2MagSqr(&direction);
-
-    if (magSqrd > 1.0f) {
-        vector2Scale(&direction, 1.0f / sqrtf(magSqrd), &direction);
-    }
-
-    struct Vector3 target_direction;
-    vector3Scale(&right, &target_direction, direction.x);
-    vector3AddScaled(&target_direction, &forward, direction.y, &target_direction);
-
-    if (ground_contact) {
-        player_handle_ground_movement(player, ground_contact, &target_direction);
-    } else {
-        player_handle_air_movement(player, &target_direction);
-    }
-
-    if (magSqrd > 0.01f) {
-        struct Vector2 directionUnit;
-        vector2LookDir(&directionUnit, &target_direction);
-        vector2RotateTowards(&player->cutscene_actor.transform.rotation, &directionUnit, &player_max_rotation, &player->cutscene_actor.transform.rotation);
-    }
 }
 
 void player_update_spells(struct player* player, joypad_inputs_t input, joypad_buttons_t pressed) {
@@ -435,14 +484,26 @@ void player_update(struct player* player) {
     struct contact* ground = dynamic_object_get_ground(&player->cutscene_actor.collider);
     player_update_state(player, ground);
 
-    player_handle_movement(player, &input, ground);
-
     live_cast_cleanup_unused_spells(&player->live_cast, &player->spell_exec);
+}
+
+void player_knockback(struct player* player) {
+    player->state = PLAYER_KNOCKBACK;
+    player_run_clip(player, player->animations.knocked_back);
 }
 
 float player_on_damage(void* data, struct damage_info* damage) {
     struct player* player = (struct player*)data;
-    animator_run_clip(&player->cutscene_actor.animator, player->animations.take_damage, 0.0f, false);
+
+    if (player->state == PLAYER_KNOCKBACK || player->state == PLAYER_GETTING_UP) {
+        return 0.0f;
+    }
+
+    if (damage->type & DAMAGE_TYPE_KNOCKBACK) {
+        player_knockback(player);
+    } else {
+        animator_run_clip(&player->cutscene_actor.animator, player->animations.take_damage, 0.0f, false);
+    }
     
     return damage->amount;
 }
@@ -509,6 +570,10 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->animations.jump_peak = animation_set_find_clip(player->cutscene_actor.animation_set, "jump_peak");
     player->animations.fall = animation_set_find_clip(player->cutscene_actor.animation_set, "fall");
     player->animations.land = animation_set_find_clip(player->cutscene_actor.animation_set, "land");
+
+    player->animations.knocked_back = animation_set_find_clip(player->cutscene_actor.animation_set, "knocked_back");
+    player->animations.knockback_fly = animation_set_find_clip(player->cutscene_actor.animation_set, "knockback_fly");
+    player->animations.knockback_land = animation_set_find_clip(player->cutscene_actor.animation_set, "knockback_land");
 
     player->state = PLAYER_GROUNDED;
 

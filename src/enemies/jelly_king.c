@@ -46,7 +46,7 @@ static struct spatial_trigger_type jelly_king_vision_type = {
 static struct damage_source aeo_attack = {
     .amount = 10.0f,
     .type = DAMAGE_TYPE_KNOCKBACK,
-    .knockback_strength = 5.0f,
+    .knockback_strength = 2.0f,
 };
 
 bool jelly_king_rotate_to_target(struct jelly_king* jelly_king, struct contact* nearest_target, float threshold) {
