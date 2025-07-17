@@ -13,6 +13,7 @@
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
 #include "../debug/debug_colliders.h"
+#include "../render/defs.h"
 
 #include "../effects/fade_effect.h"
 
@@ -463,15 +464,15 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
         armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh->attatchments[0].bone_index, &cast_transform);
 
         struct Vector3 direction;
-        quatMultVector(&cast_transform.rotation, &gForward, &direction);
+        quatMultVector(&cast_transform.rotation, &gUp, &direction);
         vector3RotateWith2(&direction, &player->cutscene_actor.transform.rotation, &source->direction);
-        vector3Add(&cast_transform.position, &player->cutscene_actor.transform.position, &source->position);
+        vector3AddScaled(&player->cutscene_actor.transform.position, &cast_transform.position, 1.0f / MODEL_SCALE, &source->position);
 
         if (!animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
             source->flags.is_animating = 0;
             source->flags.cast_state = SPELL_CAST_STATE_INACTIVE;
         } else {
-            source->flags.cast_state = player->cutscene_actor.armature->active_events ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+            source->flags.cast_state = player->cutscene_actor.animator.events ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
         }
     } else {
         source->direction = castDirection;
