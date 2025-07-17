@@ -47,6 +47,16 @@ void spell_data_source_release(struct spell_data_source* data_source) {
     data_source->reference_count -= 1;
 }
 
+bool spell_data_source_request_animation(struct spell_data_source* data_source, enum spell_animation animation) {
+    if (!data_source->flags.has_animator) {
+        return false;
+    }
+
+    data_source->request_animation = animation;
+
+    return true;
+}
+
 void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform) {
     transform->position = data_source->position;
 

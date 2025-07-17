@@ -52,9 +52,14 @@ void spell_slot_init(
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
             } else {
-                struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, modifier_flags.earthy, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
-                slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
-                element_emitter_init(&slot->data.element_emitter, input, event_options, def);
+                if (!modifier_flags.icy && !modifier_flags.earthy) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
+                    elemental_sword_init(&slot->data.sword, input, event_options);
+                } else {
+                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, modifier_flags.earthy, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                    element_emitter_init(&slot->data.element_emitter, input, event_options, def);
+                }
             }
             break;
         case SPELL_SYMBOL_ICE:
@@ -180,6 +185,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_WIND:
             wind_destroy(&slot->data.wind);
             break;
+        case SPELL_EXEC_SLOT_TYPE_SWORD:
+            elemental_sword_destroy(&slot->data.sword);
+            break;
         default:
             break;
     }
@@ -250,6 +258,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_WIND:
             isActive = wind_update(&slot->data.wind, &event_listener, &exec->spell_sources);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_SWORD:
+            isActive = elemental_sword_update(&slot->data.sword, &event_listener, &exec->spell_sources);
             break;
         default:
             break;

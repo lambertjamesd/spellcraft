@@ -118,3 +118,15 @@ T3DMat4* armature_build_pose(struct armature* armature, struct frame_memory_pool
 
     return pose;
 }
+
+void armature_bone_transform(struct armature* armature, int bone_index, struct Transform* result) {
+    transformInitIdentity(result);
+
+    while (bone_index >= 0 && bone_index < armature->bone_count) {
+        struct Transform tmp;
+        transformConcat(&armature->pose[bone_index], result, &tmp);
+        *result = tmp;
+
+        bone_index = armature->parent_linkage[bone_index];
+    }
+}

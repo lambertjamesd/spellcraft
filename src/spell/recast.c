@@ -46,6 +46,7 @@ bool recast_update_end_cast(struct recast* recast, struct spell_event_listener* 
     recast->output->direction = recast->original_source->direction;
     recast->output->flags = recast->original_source->flags;
     recast->output->flags.cast_state = SPELL_CAST_STATE_ACTIVE;
+    recast->output->flags.has_animator = 0;
     recast->output->target = recast->original_source->target;
     
     if (recast->recast_source) {
@@ -75,6 +76,7 @@ bool recast_update(struct recast* recast, struct spell_event_listener* event_lis
         output->flags = recast->original_source->flags;
         output->direction = recast->original_source->direction;
         output->flags.cast_state = recast->recast_source->flags.cast_state;
+        output->flags.has_animator = 0;
         output->target = recast->original_source->target;
 
         spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, output, recast->burst_mana);

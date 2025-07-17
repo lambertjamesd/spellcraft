@@ -22,6 +22,7 @@
 #include "teleport.h"
 #include "stasis.h"
 #include "wind.h"
+#include "elemental_sword.h"
 
 typedef uint32_t spell_slot_id;
 
@@ -38,6 +39,7 @@ union spell_exec_data {
     struct teleport teleport;
     struct stasis stasis;
     struct wind wind;
+    struct elemental_sword sword;
 };
 
 enum spell_exec_slot_type {
@@ -54,6 +56,7 @@ enum spell_exec_slot_type {
     SPELL_EXEC_SLOT_TYPE_TELEPORT,
     SPELL_EXEC_SLOT_TYPE_STASIS,
     SPELL_EXEC_SLOT_TYPE_WIND,
+    SPELL_EXEC_SLOT_TYPE_SWORD,
 };
 
 struct spell_exec_slot {

@@ -50,6 +50,8 @@ struct player_animations {
     struct animation_clip* knocked_back;
     struct animation_clip* knockback_fly;
     struct animation_clip* knockback_land;
+
+    struct animation_clip* swing_attack;
 };
 
 struct player_definition {
@@ -73,6 +75,7 @@ struct player {
     struct live_cast live_cast;
 
     struct player_animations animations;
+    struct animation_clip* last_spell_animation;
     struct inventory_assets assets;
     
     struct drop_shadow drop_shadow;

@@ -200,8 +200,33 @@ void player_handle_a_action(struct player* player) {
 bool player_check_for_casting(struct player* player) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
+    struct spell_data_source* source = &player->player_spell_sources[4];
+    
+    if (source->flags.is_animating) {
+        return true;
+    }
+
     if (live_cast_has_pending_spell(&player->live_cast) && pressed.a) {
-        spell_exec_start(&player->spell_exec, 4, live_cast_extract_active_spell(&player->live_cast), &player->player_spell_sources[4]);
+
+        spell_exec_start(&player->spell_exec, 4, live_cast_extract_active_spell(&player->live_cast), source);
+
+        if (source->request_animation) {
+            source->flags.is_animating = 1;
+
+            struct animation_clip* to_play = NULL;
+            switch (source->request_animation) {
+                case SPELL_ANIMATION_SWING:
+                    to_play = player->animations.swing_attack;
+                    break;
+            }
+            
+            if (to_play) {
+                player_run_clip(player, to_play);
+            }
+            player->last_spell_animation = to_play;
+            source->request_animation = 0;
+        }
+
         return true;
     }
 
@@ -296,6 +321,10 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
 
     if (!player_check_for_casting(player) && pressed.a) {
         player_handle_a_action(player);
+    }
+
+    if (animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
+        return;
     }
 
     if (ground_contact) {
@@ -429,10 +458,27 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
     // A cast slot
     struct spell_data_source* source = &player->player_spell_sources[4];
 
-    source->direction = castDirection;
-    source->position = player->cutscene_actor.transform.position;
-    source->position.y += 1.0f;
-    source->flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+    if (source->flags.is_animating) {
+        struct Transform cast_transform;
+        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh->attatchments[0].bone_index, &cast_transform);
+
+        struct Vector3 direction;
+        quatMultVector(&cast_transform.rotation, &gForward, &direction);
+        vector3RotateWith2(&direction, &player->cutscene_actor.transform.rotation, &source->direction);
+        vector3Add(&cast_transform.position, &player->cutscene_actor.transform.position, &source->position);
+
+        if (!animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
+            source->flags.is_animating = 0;
+            source->flags.cast_state = SPELL_CAST_STATE_INACTIVE;
+        } else {
+            source->flags.cast_state = player->cutscene_actor.armature->active_events ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+        }
+    } else {
+        source->direction = castDirection;
+        source->position = player->cutscene_actor.transform.position;
+        source->position.y += 1.0f;
+        source->flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+    }
 
     if (pressed.b) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_LIFE);
@@ -508,6 +554,32 @@ float player_on_damage(void* data, struct damage_info* damage) {
     return damage->amount;
 }
 
+void player_load_animation(struct player* player) {
+    player->animations.attack = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1");
+    player->animations.attack_hold = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1_hold");
+    player->animations.idle = animation_set_find_clip(player->cutscene_actor.animation_set, "idle");
+    player->animations.run = animation_set_find_clip(player->cutscene_actor.animation_set, "run");
+    player->animations.walk = animation_set_find_clip(player->cutscene_actor.animation_set, "walk");
+    player->animations.dash = animation_set_find_clip(player->cutscene_actor.animation_set, "dash");
+    player->animations.air_dash = animation_set_find_clip(player->cutscene_actor.animation_set, "air_dash");
+    player->animations.take_damage = animation_set_find_clip(player->cutscene_actor.animation_set, "take_damage");
+
+    player->animations.tread_water = animation_set_find_clip(player->cutscene_actor.animation_set, "tread_water");
+    player->animations.swim = animation_set_find_clip(player->cutscene_actor.animation_set, "swim");
+
+    player->animations.jump = animation_set_find_clip(player->cutscene_actor.animation_set, "jump");
+    player->animations.jump_peak = animation_set_find_clip(player->cutscene_actor.animation_set, "jump_peak");
+    player->animations.fall = animation_set_find_clip(player->cutscene_actor.animation_set, "fall");
+    player->animations.land = animation_set_find_clip(player->cutscene_actor.animation_set, "land");
+
+    player->animations.knocked_back = animation_set_find_clip(player->cutscene_actor.animation_set, "knocked_back");
+    player->animations.knockback_fly = animation_set_find_clip(player->cutscene_actor.animation_set, "knockback_fly");
+    player->animations.knockback_land = animation_set_find_clip(player->cutscene_actor.animation_set, "knockback_land");
+
+    player->animations.swing_attack = animation_set_find_clip(player->cutscene_actor.animation_set, "swing_attack_0");
+
+}
+
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
     transformSaInitIdentity(&player->cutscene_actor.transform);
     renderable_single_axis_init(&player->renderable, &player->cutscene_actor.transform, "rom:/meshes/characters/apprentice.tmesh");
@@ -550,30 +622,15 @@ void player_init(struct player* player, struct player_definition* definition, st
         struct spell_data_source* source = &player->player_spell_sources[i];
 
         source->flags.all = 0;
+        source->flags.has_animator = 1;
         source->reference_count = 1;
+        source->request_animation = 0;
         source->target = ENTITY_ID_PLAYER;
     }
 
-    player->animations.attack = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1");
-    player->animations.attack_hold = animation_set_find_clip(player->cutscene_actor.animation_set, "attack1_hold");
-    player->animations.idle = animation_set_find_clip(player->cutscene_actor.animation_set, "idle");
-    player->animations.run = animation_set_find_clip(player->cutscene_actor.animation_set, "run");
-    player->animations.walk = animation_set_find_clip(player->cutscene_actor.animation_set, "walk");
-    player->animations.dash = animation_set_find_clip(player->cutscene_actor.animation_set, "dash");
-    player->animations.air_dash = animation_set_find_clip(player->cutscene_actor.animation_set, "air_dash");
-    player->animations.take_damage = animation_set_find_clip(player->cutscene_actor.animation_set, "take_damage");
+    player_load_animation(player);
 
-    player->animations.tread_water = animation_set_find_clip(player->cutscene_actor.animation_set, "tread_water");
-    player->animations.swim = animation_set_find_clip(player->cutscene_actor.animation_set, "swim");
-
-    player->animations.jump = animation_set_find_clip(player->cutscene_actor.animation_set, "jump");
-    player->animations.jump_peak = animation_set_find_clip(player->cutscene_actor.animation_set, "jump_peak");
-    player->animations.fall = animation_set_find_clip(player->cutscene_actor.animation_set, "fall");
-    player->animations.land = animation_set_find_clip(player->cutscene_actor.animation_set, "land");
-
-    player->animations.knocked_back = animation_set_find_clip(player->cutscene_actor.animation_set, "knocked_back");
-    player->animations.knockback_fly = animation_set_find_clip(player->cutscene_actor.animation_set, "knockback_fly");
-    player->animations.knockback_land = animation_set_find_clip(player->cutscene_actor.animation_set, "knockback_land");
+    player->last_spell_animation = NULL;
 
     player->state = PLAYER_GROUNDED;
 

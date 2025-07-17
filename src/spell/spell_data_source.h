@@ -17,9 +17,16 @@ enum spell_cast_state {
     SPELL_CAST_STATE_INSTANT,
 };
 
+enum spell_animation {
+    SPELL_ANIMATION_NONE,
+    SPELL_ANIMATION_SWING,
+};
+
 union spell_source_flags {
     struct {
         uint16_t cast_state: 2;
+        uint16_t has_animator: 1;
+        uint16_t is_animating: 1;
     };
     uint16_t all;
 };
@@ -28,9 +35,9 @@ struct spell_data_source {
     struct Vector3 position;
     struct Vector3 direction;
     union spell_source_flags flags;
-    entity_id target;
-
     uint8_t reference_count;
+    uint8_t request_animation;
+    entity_id target;
 };
 
 struct spell_event_options {
@@ -50,6 +57,7 @@ struct spell_data_source* spell_data_source_pool_get(struct spell_data_source_po
 
 struct spell_data_source* spell_data_source_retain(struct spell_data_source* data_source);
 void spell_data_source_release(struct spell_data_source* data_source);
+bool spell_data_source_request_animation(struct spell_data_source* data_source, enum spell_animation animation);
 
 void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform);
 
