@@ -1,12 +1,10 @@
 #include "dash_trail.h"
 
-#include <malloc.h>
 #include "../render/defs.h"
 #include "../time/time.h"
 #include "../math/mathf.h"
 #include "../spell/assets.h"
 #include "./effect_allocator.h"
-#include "../time/time.h"
 #include "../render/render_scene.h"
 
 #define INITIAL_V           5.0f

@@ -466,7 +466,9 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
         struct Vector3 direction;
         quatMultVector(&cast_transform.rotation, &gUp, &direction);
         vector3RotateWith2(&direction, &player->cutscene_actor.transform.rotation, &source->direction);
-        vector3AddScaled(&player->cutscene_actor.transform.position, &cast_transform.position, 1.0f / MODEL_SCALE, &source->position);
+
+        vector3RotateWith2(&cast_transform.position, &player->cutscene_actor.transform.rotation, &direction);
+        vector3AddScaled(&player->cutscene_actor.transform.position, &direction, 1.0f / MODEL_SCALE, &source->position);
 
         if (!animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
             source->flags.is_animating = 0;

@@ -428,13 +428,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 );
             }
         } else if (element->type == RENDER_BATCH_CALLBACK) {
-            if (default_mtx) {
-                t3d_matrix_push(default_mtx);
-            }
             element->callback.callback(element->callback.data, batch);
-            if (default_mtx) {
-                t3d_matrix_pop(1);
-            }
         }
     }
 }

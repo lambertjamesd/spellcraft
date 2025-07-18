@@ -1,0 +1,22 @@
+#ifndef __SWORD_TRAIL_H__
+#define __SWORD_TRAIL_H__
+
+#include <stdint.h>
+#include "../math/vector3.h"
+
+#define MAX_SWORD_TRAIL_LENGTH 8
+
+struct sword_trail {
+    struct Vector3 trail_halves[MAX_SWORD_TRAIL_LENGTH][2];
+
+    uint8_t last_vertex;
+    uint8_t vertex_count;
+};
+
+struct sword_trail* sword_trail_new();
+// NULL indicates the trial is done
+void sword_trail_move(struct sword_trail* trail, struct Vector3* a, struct Vector3* b);
+void sword_trail_stop(struct sword_trail* trail);
+
+
+#endif

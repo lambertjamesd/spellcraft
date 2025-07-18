@@ -3,7 +3,6 @@
 
 #include "../math/vector3.h"
 #include "../render/render_batch.h"
-#include <t3d/t3d.h>
 
 #define DASH_PARTICLE_COUNT 16
 
