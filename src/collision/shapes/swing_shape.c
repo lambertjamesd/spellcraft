@@ -3,6 +3,8 @@
 #include "../dynamic_object.h"
 #include <memory.h>
 
+#define COLLIDER_DROP   0.5f
+
 void swing_shape_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
     struct swing_shape* shape = shape_data->swing.shape;
@@ -28,6 +30,10 @@ void swing_shape_minkowski_sum(void* data, struct Vector3* direction, struct Vec
     }
 
     *output = *result;
+
+    if (direction->y < 0.0f) {
+        output->y -= COLLIDER_DROP;
+    }
 }
 
 void swing_shape_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
@@ -49,6 +55,8 @@ void swing_shape_bounding_box(void* data, struct Vector2* rotation, struct Box3D
         vector3Min(&box->min, curr, &box->min);
         vector3Max(&box->max, curr, &box->max);
     }
+
+    box->min.y -= COLLIDER_DROP;
 }
 
 void swing_shape_init(struct swing_shape* shape) {
