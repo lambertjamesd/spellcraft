@@ -5,6 +5,7 @@
 #include "../math/vector3.h"
 #include "../math/box3d.h"
 #include "../math/box2d.h"
+#include "./shapes/swing_shape.h"
 #include "contact.h"
 #include "gjk.h"
 #include <stdint.h>
@@ -33,6 +34,7 @@ union dynamic_object_type_data
     struct { struct Vector3 size; } cone;
     struct { float radius; float half_height; } cylinder;
     struct { struct Vector2 range; float radius; float half_height; } sweep;
+    struct { struct swing_shape* shape; } swing;
 };
 
 struct dynamic_object_type {

@@ -352,6 +352,7 @@ void jelly_destroy(struct jelly* jelly) {
     tmesh_cache_release(jelly->mesh);
     tmesh_cache_release(jelly->ice_mesh);
     collision_scene_remove_trigger(&jelly->vision);
+    drop_shadow_destroy(&jelly->drop_shadow);
 }
 
 bool jelly_get_is_active(struct jelly* jelly) {
