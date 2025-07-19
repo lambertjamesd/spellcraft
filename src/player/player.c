@@ -324,7 +324,7 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
         player_handle_a_action(player);
     }
 
-    if (animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
+    if (player->last_spell_animation && animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
         return;
     }
 
