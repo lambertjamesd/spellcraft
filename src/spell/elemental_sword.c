@@ -66,7 +66,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
         NULL
     );
 
-    elemental_sword->collider.is_trigger = 1;
+    elemental_sword->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
 
     collision_scene_add(&elemental_sword->collider);
 }

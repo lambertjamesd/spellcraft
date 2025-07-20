@@ -150,7 +150,7 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
         &wind->transform.rotation
     );
 
-    wind->dynamic_object.is_trigger = 1;
+    wind->dynamic_object.trigger_type = TRIGGER_TYPE_BASIC;
     wind->dynamic_object.collision_group = source->target;
 
     if (!effect_definition->sphere) {

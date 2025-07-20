@@ -5,6 +5,7 @@
 #include "../time/time.h"
 #include "../collision/dynamic_object.h"
 #include "../collision/collision_scene.h"
+#include "../effects/hit_effect.h"
 #include <stddef.h>
 
 static struct hash_map health_entity_mapping;
@@ -148,6 +149,10 @@ bool health_apply_contact_damage(struct dynamic_object* damage_source, struct da
 
         damage.source = curr->other_object;
         damage.direction = curr->normal;
+
+        if (!vector3IsZero(&damage.direction)) {
+            hit_effect_start(&curr->point, &curr->normal);
+        }
 
         health_damage(target_health, &damage);
         did_hit = true;

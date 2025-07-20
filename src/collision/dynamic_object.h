@@ -61,6 +61,12 @@ enum dynamic_density_class {
     DYNAMIC_DENSITY_HEAVY,
 };
 
+enum dynamic_object_trigger_type {
+    TRIGGER_TYPE_NONE,
+    TRIGGER_TYPE_BASIC,
+    TRIGGER_TYPE_OVERLAP,
+};
+
 struct dynamic_object {
     entity_id entity_id;
     struct dynamic_object_type* type;
@@ -73,7 +79,7 @@ struct dynamic_object {
     struct Box3D bounding_box;
     float time_scalar;
     uint16_t has_gravity: 1;
-    uint16_t is_trigger: 1;
+    uint16_t trigger_type: 2;
     uint16_t is_fixed: 1;
     uint16_t is_out_of_bounds: 1;
     uint16_t is_pushed: 2;
@@ -113,5 +119,8 @@ bool dynamic_object_is_grounded(struct dynamic_object* object);
 struct contact* dynamic_object_get_ground(struct dynamic_object* object);
 
 void dynamic_object_set_scale(struct dynamic_object* object, float scale);
+
+#define DYNAMIC_OBJECT_NEEDS_OVERLAP(obj)   ((obj)->trigger_type != TRIGGER_TYPE_BASIC)
+#define DYNAMIC_OBJECT_SHOULD_PUSH(obj)     ((obj)->trigger_type == TRIGGER_TYPE_NONE)
 
 #endif

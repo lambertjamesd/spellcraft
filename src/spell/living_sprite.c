@@ -128,7 +128,7 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
     );
 
     living_sprite->vision.center.y = living_sprite->collider.center.y;
-    living_sprite->vision.is_trigger = true;
+    living_sprite->vision.trigger_type = TRIGGER_TYPE_BASIC;
 
     living_sprite->collider.center.y = living_sprite_collision.data.capsule.radius + living_sprite_collision.data.capsule.inner_half_height;
 

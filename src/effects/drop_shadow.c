@@ -1,5 +1,6 @@
 #include "drop_shadow.h"
 
+#include "assets.h"
 #include "../render/render_scene.h"
 #include "../resource/tmesh_cache.h"
 #include "../math/matrix.h"
@@ -48,10 +49,9 @@ void drop_shadow_init(struct drop_shadow* drop_shadow, struct dynamic_object* ta
     drop_shadow->target = target;
 
     render_scene_add(target->position, 1.0f, drop_shadow_render, drop_shadow);
-    drop_shadow->mesh = tmesh_cache_load("rom:/meshes/effects/drop-shadow.tmesh");
+    drop_shadow->mesh = effect_assets_get()->drop_shadow;
 }
 
 void drop_shadow_destroy(struct drop_shadow* drop_shadow) {
     render_scene_remove(drop_shadow);
-    tmesh_cache_release(drop_shadow->mesh);
 }

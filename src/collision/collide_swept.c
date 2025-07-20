@@ -127,7 +127,7 @@ void collide_object_swept_bounce(
 }
 
 bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_collider* mesh, struct Vector3* prev_pos) {
-    if (object->is_trigger) {
+    if (object->trigger_type != TRIGGER_TYPE_NONE) {
         return false;
     }
 
@@ -160,7 +160,7 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
 }
 
 bool collide_object_to_multiple_mesh_swept(struct dynamic_object* object, struct mesh_collider** meshes, int mesh_count, struct Vector3* prev_pos) {
-    if (object->is_trigger) {
+    if (object->trigger_type != TRIGGER_TYPE_NONE) {
         return false;
     }
 

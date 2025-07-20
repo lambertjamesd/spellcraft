@@ -1,6 +1,7 @@
 #include "init.h"
 
 #include "../spell/assets.h"
+#include "../effects/assets.h"
 #include "../menu/menu_common.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
@@ -17,6 +18,7 @@
 
 void init_engine() {
     spell_assets_init();
+    effect_assets_init();
     object_assets_init();
     menu_common_init();
     render_scene_reset();

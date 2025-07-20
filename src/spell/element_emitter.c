@@ -27,7 +27,7 @@ void element_emitter_init(struct element_emitter* element_emitter, struct spell_
         &element_emitter->transform.rotation
     );
     element_emitter->dynamic_object.scale = effect_definition->scale;
-    element_emitter->dynamic_object.is_trigger = 1;
+    element_emitter->dynamic_object.trigger_type = TRIGGER_TYPE_BASIC;
     element_emitter->effect_definition = effect_definition;
     collision_scene_add(&element_emitter->dynamic_object);
     element_emitter->is_active = true;

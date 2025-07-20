@@ -72,7 +72,7 @@ void spell_heal_init(struct spell_heal* heal, struct spell_data_source* source, 
             &source->position, 
             NULL
         );
-        heal->aoe_trigger.is_trigger = 1;
+        heal->aoe_trigger.trigger_type = TRIGGER_TYPE_BASIC;
         collision_scene_add(&heal->aoe_trigger);
     } else {
         heal->flags.aoe = 0;

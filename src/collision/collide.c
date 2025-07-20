@@ -116,7 +116,7 @@ bool collide_object_to_triangle(struct mesh_index* index, void* data, int triang
 }
 
 void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider* mesh) {   
-    if (object->is_trigger) {
+    if (object->trigger_type != TRIGGER_TYPE_NONE) {
         return;
     }
 
@@ -136,7 +136,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         return;
     }
 
-    if (a->is_trigger && b->is_trigger) {
+    if (a->trigger_type != 0 && b->trigger_type != 0) {
         return;
     }
 
@@ -145,14 +145,16 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         return;
     }
 
-    if (a->is_trigger || b->is_trigger) {
+    bool needs_overlap = DYNAMIC_OBJECT_NEEDS_OVERLAP(a) && DYNAMIC_OBJECT_NEEDS_OVERLAP(b);
+
+    if (!needs_overlap) {
         struct contact* contact = collision_scene_new_contact();
 
         if (!contact) {
             return;
         }
 
-        if (b->is_trigger) {
+        if (b->trigger_type == TRIGGER_TYPE_BASIC) {
             contact->normal = gZeroVec;
             contact->point = *a->position;
             contact->other_object = a ? a->entity_id : 0;
@@ -179,42 +181,51 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         return;
     }
 
-    float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
-    float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;
+    bool should_push = DYNAMIC_OBJECT_SHOULD_PUSH(a) && DYNAMIC_OBJECT_SHOULD_PUSH(b);
 
-    // TODO better ratio depending on object weights
-    float overlap_ratio = 0.5f;
-
-    correct_overlap(b, &result, overlap_ratio - 1.0f, b->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
-    correct_overlap(a, &result, overlap_ratio, a->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
-
-    struct contact* contact = collision_scene_new_contact();
-
-    if (!contact) {
-        return;
+    if (should_push) {
+        float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
+        float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;
+    
+        // TODO better ratio depending on object weights
+        float overlap_ratio = 0.5f;
+    
+        correct_overlap(b, &result, overlap_ratio - 1.0f, b->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
+        correct_overlap(a, &result, overlap_ratio, a->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
     }
 
-    contact->normal = result.normal;
-    contact->point = result.contactA;
-    contact->other_object = a ? a->entity_id : 0;
-    contact->surface_type = 0;
 
-    contact->next = b->active_contacts;
-    b->active_contacts = contact;
-
-    contact = collision_scene_new_contact();
-
-    if (!contact) {
-        return;
+    if (DYNAMIC_OBJECT_NEEDS_OVERLAP(b)) {
+        struct contact* contact = collision_scene_new_contact();
+    
+        if (!contact) {
+            return;
+        }
+    
+        contact->normal = result.normal;
+        contact->point = result.contactA;
+        contact->other_object = a ? a->entity_id : 0;
+        contact->surface_type = 0;
+    
+        contact->next = b->active_contacts;
+        b->active_contacts = contact;
     }
     
-    vector3Negate(&result.normal, &contact->normal);
-    contact->point = result.contactB;
-    contact->other_object = b ? b->entity_id : 0;
-    contact->surface_type = 0;
-
-    contact->next = a->active_contacts;
-    a->active_contacts = contact;
+    if (DYNAMIC_OBJECT_NEEDS_OVERLAP(a)) {
+        struct contact* contact = collision_scene_new_contact();
+    
+        if (!contact) {
+            return;
+        }
+        
+        vector3Negate(&result.normal, &contact->normal);
+        contact->point = result.contactB;
+        contact->other_object = b ? b->entity_id : 0;
+        contact->surface_type = 0;
+    
+        contact->next = a->active_contacts;
+        a->active_contacts = contact;
+    }
 }
 
 void collide_object_to_trigger(struct dynamic_object* obj, struct spatial_trigger* trigger) {

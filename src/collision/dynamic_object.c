@@ -22,7 +22,7 @@ void dynamic_object_init(
     object->center = gZeroVec;
     object->time_scalar = 1.0f;
     object->has_gravity = 1;
-    object->is_trigger = 0;
+    object->trigger_type = TRIGGER_TYPE_NONE;
     object->is_fixed = 0;
     object->is_out_of_bounds = 0;
     object->is_pushed = 0;
@@ -44,7 +44,7 @@ void dynamic_object_set_type(struct dynamic_object* object, struct dynamic_objec
 }
 
 void dynamic_object_update(struct dynamic_object* object) {
-    if (object->is_trigger | object->is_fixed) {
+    if (object->trigger_type != TRIGGER_TYPE_NONE || object->is_fixed) {
         return;
     }
 

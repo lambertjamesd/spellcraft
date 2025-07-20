@@ -83,6 +83,7 @@ struct render_batch_billboard_element render_batch_get_sprites(struct render_bat
 mat4x4* render_batch_get_transform(struct render_batch* batch);
 T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch);
 T3DMat4FP* render_batch_transformfp_from_sa(struct render_batch* batch, struct TransformSingleAxis* transform, float scale);
+T3DMat4FP* render_batch_transformfp_from_full(struct render_batch* batch, struct Transform* transform);
 // !!! This stomps on the input pose so don't attempt to use it after calling this function
 T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count);
 
