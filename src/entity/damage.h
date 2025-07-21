@@ -35,7 +35,7 @@ struct damage_info {
 #define MAX_DAMAGED_SET_SIZE    8
 
 struct damaged_set {
-    entity_id damaged_entities[MAX_DAMAGED_SET_SIZE];
+    uint8_t damaged_entities[MAX_DAMAGED_SET_SIZE];
 };
 
 void damaged_set_reset(struct damaged_set* set);

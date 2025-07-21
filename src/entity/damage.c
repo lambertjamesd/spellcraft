@@ -7,19 +7,21 @@ void damaged_set_reset(struct damaged_set* set) {
 }
 
 bool damaged_set_check(struct damaged_set* set, entity_id id) {
+    uint8_t shortened_id = (uint8_t)(id & 0xFF);
+
     if (!set) {
         return true;
     }
 
-    entity_id* max = set->damaged_entities + MAX_DAMAGED_SET_SIZE;
+    uint8_t* max = set->damaged_entities + MAX_DAMAGED_SET_SIZE;
 
-    for (entity_id* it = set->damaged_entities; it < max; ++it) {
-        if (*it == id) {
+    for (uint8_t* it = set->damaged_entities; it < max; ++it) {
+        if (*it == shortened_id) {
             return false;
         }
 
         if (*it == 0) {
-            *it = id;
+            *it = shortened_id;
             return true;
         }
     }

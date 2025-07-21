@@ -231,7 +231,9 @@ void jelly_render(void* data, struct render_batch* batch) {
 
     if (!jelly->is_frozen) {
         struct Vector3 shear_direction;
+
         vector3Sub(&jelly->shear_spring, &jelly->transform.position, &shear_direction);
+
         if (shear_direction.y < 0.1f) {
             shear_direction.y = 0.1f;
         }

@@ -69,6 +69,8 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
     elemental_sword->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
 
     collision_scene_add(&elemental_sword->collider);
+
+    damaged_set_reset(&elemental_sword->damaged_set);
 }
 
 void elemental_sword_destroy(struct elemental_sword* elemental_sword) {
@@ -88,10 +90,11 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
 
         struct damage_source source = {
             .amount = 10.0f,
-            .type = DAMAGE_TYPE_FIRE,
+            .type = DAMAGE_TYPE_FIRE | DAMAGE_TYPE_KNOCKBACK,
+            .knockback_strength = 1.0f,
         };
 
-        health_apply_contact_damage(&elemental_sword->collider, &source, NULL);
+        health_apply_contact_damage(&elemental_sword->collider, &source, &elemental_sword->damaged_set);
     }
 
     return elemental_sword->data_source->flags.is_animating;
