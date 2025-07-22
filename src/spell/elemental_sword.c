@@ -34,11 +34,12 @@ void elemental_sword_render(void* data, struct render_batch* batch) {
     render_batch_add_tmesh(batch, sword->mesh, mtxfp, 1, NULL, NULL);
 }
 
-void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_data_source* source, struct spell_event_options event_options) {
+void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element_type) {
     entity_id entity_id = entity_id_new();
     elemental_sword->data_source = spell_data_source_retain(source);
+    elemental_sword->element_type = element_type;
 
-    spell_data_source_request_animation(source, SPELL_ANIMATION_SWING);
+    spell_data_source_request_animation(source, event_options.modifiers.earthy ? SPELL_ANIMATION_SPIN : SPELL_ANIMATION_SWING);
 
     render_scene_add(&source->position, 1.0f, elemental_sword_render, elemental_sword);
 
@@ -81,6 +82,14 @@ void elemental_sword_destroy(struct elemental_sword* elemental_sword) {
     collision_scene_remove(&elemental_sword->collider);
 }
 
+static struct damage_source damage_sources[] = {
+    [ELEMENT_TYPE_FIRE] = {
+        .amount = 10.0f,
+        .type = DAMAGE_TYPE_FIRE | DAMAGE_TYPE_KNOCKBACK,
+        .knockback_strength = 1.0f,
+    }
+};
+
 bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     if (elemental_sword->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
         struct Vector3 tip;
@@ -88,13 +97,7 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
         sword_trail_move(elemental_sword->trail, &elemental_sword->data_source->position, &tip);
         swing_shape_add(&elemental_sword->swing_shape, &elemental_sword->data_source->position, &tip);
 
-        struct damage_source source = {
-            .amount = 10.0f,
-            .type = DAMAGE_TYPE_FIRE | DAMAGE_TYPE_KNOCKBACK,
-            .knockback_strength = 1.0f,
-        };
-
-        health_apply_contact_damage(&elemental_sword->collider, &source, &elemental_sword->damaged_set);
+        health_apply_contact_damage(&elemental_sword->collider, &damage_sources[elemental_sword->element_type], &elemental_sword->damaged_set);
     }
 
     return elemental_sword->data_source->flags.is_animating;

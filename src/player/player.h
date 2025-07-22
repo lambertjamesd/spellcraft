@@ -52,6 +52,7 @@ struct player_animations {
     struct animation_clip* knockback_land;
 
     struct animation_clip* swing_attack;
+    struct animation_clip* spin_attack;
 };
 
 struct player_definition {

@@ -219,6 +219,9 @@ bool player_check_for_casting(struct player* player) {
                 case SPELL_ANIMATION_SWING:
                     to_play = player->animations.swing_attack;
                     break;
+                case SPELL_ANIMATION_SPIN:
+                    to_play = player->animations.spin_attack;
+                    break;
             }
             
             if (to_play) {
@@ -580,7 +583,7 @@ void player_load_animation(struct player* player) {
     player->animations.knockback_land = animation_set_find_clip(player->cutscene_actor.animation_set, "knockback_land");
 
     player->animations.swing_attack = animation_set_find_clip(player->cutscene_actor.animation_set, "swing_attack_0");
-
+    player->animations.spin_attack = animation_set_find_clip(player->cutscene_actor.animation_set, "spin_attack");
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {

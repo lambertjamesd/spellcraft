@@ -52,9 +52,9 @@ void spell_slot_init(
                 slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
                 explosion_init(&slot->data.explosion, input, event_options, modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
             } else {
-                if (!modifier_flags.icy && !modifier_flags.earthy) {
+                if (!modifier_flags.icy) {
                     slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
-                    elemental_sword_init(&slot->data.sword, input, event_options);
+                    elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_FIRE);
                 } else {
                     struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, modifier_flags.earthy, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
                     slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;

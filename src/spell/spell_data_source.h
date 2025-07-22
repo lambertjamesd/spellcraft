@@ -20,6 +20,7 @@ enum spell_cast_state {
 enum spell_animation {
     SPELL_ANIMATION_NONE,
     SPELL_ANIMATION_SWING,
+    SPELL_ANIMATION_SPIN,
 };
 
 union spell_source_flags {
