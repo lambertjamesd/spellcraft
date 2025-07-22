@@ -122,6 +122,8 @@ void jelly_update_handle_damage(struct jelly* jelly, bool is_grounded) {
 
 void jelly_update_target(struct jelly* jelly, struct Vector3* jump_target, bool is_grounded) {
     if (!is_grounded) {
+        jelly->jump_timer = 0.0f;
+        *jump_target = gZeroVec;
         return;
     }
 
