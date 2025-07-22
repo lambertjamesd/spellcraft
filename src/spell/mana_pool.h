@@ -25,6 +25,7 @@ void mana_pool_init(struct mana_pool* pool, struct mana_pool_definition* definit
 void mana_pool_update(struct mana_pool* pool);
 
 float mana_pool_request(struct mana_pool* pool, float amount);
+float mana_pool_request_ratio(struct mana_pool* pool, float amount);
 void mana_pool_charge(struct mana_pool* pool, float amount);
 
 void mana_pool_add(struct mana_pool* pool, float amount);

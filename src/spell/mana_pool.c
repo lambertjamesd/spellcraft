@@ -91,6 +91,31 @@ float mana_pool_request(struct mana_pool* pool, float amount) {
     return scale_amount;
 }
 
+float mana_pool_request_ratio(struct mana_pool* pool, float amount) {
+    // max_mana of 0 is infinite mana
+    if (pool->max_mana == 0.0f) {
+        return pool->power_scale;
+    }
+
+    float scale_amount = amount * pool->power_scale;
+    float result = pool->power_scale;
+
+    if (game_time - pool->last_request_time > MANA_PREV_THRESHOLD) {
+        pool->previous_mana = pool->current_mana;
+    }
+
+    if (scale_amount > pool->current_mana) {
+        result = pool->current_mana / amount;
+        pool->current_mana = 0.0f;
+    } else {
+        pool->current_mana -= scale_amount;
+    }
+
+    pool->last_request_time = game_time;
+
+    return result;
+}
+
 float mana_pool_get_previous_mana(struct mana_pool* pool) {
     if (pool->charged_mana > 0.0f) {
         return pool->current_mana + pool->charged_mana;

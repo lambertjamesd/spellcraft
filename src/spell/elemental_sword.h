@@ -13,6 +13,8 @@
 struct elemental_sword_definition {
     enum spell_animation animation;
     struct damage_source damage_source;
+    float sword_length;
+    float mana_cost;
 };
 
 struct elemental_sword {
@@ -24,7 +26,11 @@ struct elemental_sword {
     struct swing_shape swing_shape;
     struct damaged_set damaged_set;
 
-    enum element_type element_type;
+    struct elemental_sword_definition* definition;
+
+    uint16_t needs_mana_check: 1;
+    
+    float power_ratio;
 };
 
 void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element_type);
