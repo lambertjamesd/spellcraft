@@ -20,6 +20,7 @@ enum entity_type_id {
     ENTITY_TYPE_mana_plant,
     ENTITY_TYPE_jelly,
     ENTITY_TYPE_jelly_king,
+    ENTITY_TYPE_door,
 };
 
 struct crate_definition {
@@ -99,6 +100,11 @@ struct jelly_definition {
 };
 
 struct jelly_king_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+};
+
+struct door_definition {
     struct Vector3 position;
     struct Vector2 rotation;
 };

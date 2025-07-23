@@ -20,6 +20,7 @@
 
 #include "../objects/collectable.h"
 #include "../objects/crate.h"
+#include "../objects/door.h"
 #include "../objects/ground_torch.h"
 #include "../objects/training_dummy.h"
 #include "../objects/treasure_chest.h"
@@ -59,6 +60,7 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(mana_plant, fields_empty),
     ENTITY_DEFINITION(jelly, fields_empty),
     ENTITY_DEFINITION(jelly_king, fields_empty),
+    ENTITY_DEFINITION(door, fields_empty),
 };
 
 // WRLD

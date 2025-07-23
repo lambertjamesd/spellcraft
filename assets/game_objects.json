@@ -31,6 +31,12 @@
             "type": "crate"
         },
         {
+            "name": "objects_doors_door",
+            "description": "",
+            "mesh": "meshes/objects/doors/door.blend#door",
+            "type": "door"
+        },
+        {
             "name": "objects_pickups_heart",
             "description": "",
             "mesh": "meshes/objects/pickups/heart.blend#heart",
