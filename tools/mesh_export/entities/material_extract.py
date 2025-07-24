@@ -364,7 +364,6 @@ def determine_materail_blend_f3d(rdp_settings) -> material.BlendMode:
         return result
 
 def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
-    print(mat, mat.name)
     f3d_mat = mat['f3d_mat']
     rdp_settings = f3d_mat['rdp_settings']
 

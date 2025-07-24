@@ -21,6 +21,7 @@ import cutscene.expresion_generator
 import cutscene.parser
 import cutscene.variable_layout
 import entities.camera_animation
+import entities.room
 
 class StaticEntry():
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
@@ -32,6 +33,7 @@ class LocationEntry():
         self.obj: bpy.types.Object = obj
         self.name: str = name
         self.on_enter: str = obj['on_enter'] if 'on_enter' in obj else ''
+        self.room_index = 0
 
 class LoadingZone():
     def __init__(self, obj: bpy.types.Object, target: str):
@@ -88,15 +90,30 @@ def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitio
 
     return ObjectEntry(obj, type, definitions[def_type_name])
 
-def write_static(scene: Scene, base_transform: mathutils.Matrix, file):
+def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection: entities.room.room_collection, file):
     settings = entities.export_settings.ExportSettings()
-    mesh_list = entities.mesh.mesh_list(base_transform)
 
     for entry in scene.static:
-        mesh_list.append(entry.obj)
+        room_collection.get_obj_room_index(entry.obj)
 
-    meshes = mesh_list.determine_mesh_data()
-    meshes = list(map(lambda x: entities.mesh_optimizer.remove_duplicates(x), meshes))
+    mesh_list_for_rooms = []
+
+    for i in range(len(room_collection.rooms)):
+        mesh_list_for_rooms.append(entities.mesh.mesh_list(base_transform))
+
+    for entry in scene.static:
+        mesh_list_for_rooms[room_collection.get_obj_room_index(entry.obj)].append(entry.obj)
+
+    meshes_for_rooms = list(map(lambda x: x.determine_mesh_data(), mesh_list_for_rooms))
+
+    for i in range(len(meshes_for_rooms)):
+        meshes_for_rooms[i] = list(map(lambda x: entities.mesh_optimizer.remove_duplicates(x), meshes_for_rooms[i]))
+
+    meshes = []
+
+    for room_meshes in meshes_for_rooms:
+        for mesh in room_meshes:
+            meshes.append(mesh)
 
     file.write(len(meshes).to_bytes(2, 'big'))
 
@@ -108,6 +125,14 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, file):
         settings.default_material = entities.material_extract.load_material_with_name(mesh.mat)
 
         entities.tiny3d_mesh_writer.write_mesh([mesh], None, [], settings, file)
+
+    room_count = len(meshes_for_rooms)
+    file.write(room_count.to_bytes(2, 'big'))
+    index_start = 0
+
+    for room_meshes in meshes_for_rooms:
+        file.write(struct.pack('>HH', index_start, index_start + len(room_meshes)))
+        index_start += len(room_meshes)
 
 def find_static_blacklist():
     result = set()
@@ -244,6 +269,8 @@ def process_scene():
 
         file.write(len(scene.locations).to_bytes(1, 'big'))
 
+        room_collection = entities.room.room_collection()
+
         for location in scene.locations:
             location_bytes = location.name.encode()
             file.write(len(location_bytes).to_bytes(1, 'big'))
@@ -256,7 +283,9 @@ def process_scene():
             parse.struct_serialize.write_vector3_position(file, location.obj)
             parse.struct_serialize.write_vector2_rotation(file, location.obj)
 
-        write_static(scene, base_transform, file)
+            file.write(struct.pack('>H', room_collection.get_obj_room_index(location.obj)))
+
+        write_static(scene, base_transform, room_collection, file)
 
         scene.scene_mesh_collider.write_out(file)
 

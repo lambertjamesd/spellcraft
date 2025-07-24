@@ -55,10 +55,17 @@ struct named_location {
     char* name;
     struct Vector3 position;
     struct Vector2 rotation;
+    uint16_t room_index;
+};
+
+struct static_entity_range {
+    uint16_t start;
+    uint16_t end;
 };
 
 struct scene {
     struct static_entity* static_entities;
+    struct static_entity_range* room_static_ranges;
 
     struct mesh_collider mesh_collider;
 
@@ -74,6 +81,7 @@ struct scene {
     struct named_location* named_locations;
     struct overworld* overworld;
 
+    uint16_t room_count;
     uint16_t static_entity_count;
     uint16_t entity_data_count;
     uint16_t loading_zone_count;

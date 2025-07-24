@@ -218,6 +218,7 @@ struct scene* scene_load(const char* filename) {
 
         fread(&curr->position, sizeof(struct Vector3), 1, file);
         fread(&curr->rotation, sizeof(struct Vector2), 1, file);
+        fread(&curr->room_index, sizeof(uint16_t), 1, file);
 
         if (found_entry) {
             continue;
@@ -252,9 +253,9 @@ struct scene* scene_load(const char* filename) {
 
     uint16_t static_count;
     fread(&static_count, 2, 1, file);
+    scene->static_entity_count = static_count;
 
     scene->static_entities = malloc(sizeof(struct static_entity) * static_count);
-    scene->static_entity_count = static_count;
 
     for (int i = 0; i < static_count; ++i) {
         uint8_t str_len;
@@ -263,6 +264,13 @@ struct scene* scene_load(const char* filename) {
         struct static_entity* entity = &scene->static_entities[i];
         tmesh_load(&scene->static_entities[i].tmesh, file);
     }
+
+    uint16_t room_count;
+    fread(&room_count, 2, 1, file);
+    scene->room_count = room_count;
+
+    scene->room_static_ranges = malloc(sizeof(struct static_entity_range) * room_count);
+    fread(scene->room_static_ranges, sizeof(struct static_entity_range), room_count, file);
 
     mesh_collider_load(&scene->mesh_collider, file);
     collision_scene_add_static_mesh(&scene->mesh_collider);
