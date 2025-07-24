@@ -8,12 +8,26 @@ struct scene* current_scene;
 static char next_scene_name[64];
 static char next_entrance_name[16];
 
+void scene_render_room(struct scene* scene, int room_index, struct render_batch* batch) {
+    if (room_index < 0 || room_index >= scene->room_count) {
+        return;
+    }
+
+    struct static_entity_range range = scene->room_static_ranges[room_index];
+
+    struct static_entity* curr = scene->static_entities + range.start;
+    struct static_entity* end = scene->static_entities + range.end;
+
+    for (; curr < end; ++curr) {
+        render_batch_add_tmesh(batch, &curr->tmesh, NULL, 0, NULL, NULL);
+    }
+}
+
 void scene_render(void* data, struct render_batch* batch) {
     struct scene* scene = (struct scene*)data;
-
-    for (int i = 0; i < scene->static_entity_count; ++i) {
-        render_batch_add_tmesh(batch, &scene->static_entities[i].tmesh, NULL, 0, NULL, NULL);
-    }
+    
+    scene_render_room(scene, scene->current_room, batch);
+    scene_render_room(scene, scene->preview_room, batch);
 }
 
 void scene_update(void* data) {

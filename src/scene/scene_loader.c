@@ -202,6 +202,9 @@ struct scene* scene_load(const char* filename) {
 
     struct named_location* named_locations = malloc(sizeof(struct named_location) * location_count);
     struct named_location* end = named_locations + location_count;
+
+    scene->current_room = 0;
+    scene->preview_room = ROOM_NONE;
     
     for (struct named_location* curr = named_locations; curr < end; ++curr) {
         uint8_t name_length;
@@ -227,11 +230,13 @@ struct scene* scene_load(const char* filename) {
         if (strcmp(curr->name, "default") == 0) {
             player_def.location = curr->position;
             player_def.rotation = curr->rotation;
+            scene->current_room = curr->room_index;
         }
 
         if (strcmp(curr->name, scene_get_next_entry()) == 0) {
             player_def.location = curr->position;
             player_def.rotation = curr->rotation;
+            scene->current_room = curr->room_index;
             found_entry = true;
 
             if (on_enter_length) {
@@ -333,6 +338,7 @@ void scene_release(struct scene* scene) {
         tmesh_release(&entity->tmesh);
     }
     free(scene->static_entities);
+    free(scene->room_static_ranges);
 
     render_scene_remove(scene);
     update_remove(scene);

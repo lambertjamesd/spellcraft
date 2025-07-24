@@ -14,6 +14,8 @@
 #include "camera_controller.h"
 #include "camera_animation.h"
 
+#define ROOM_NONE   0xFFFF
+
 typedef void(*entity_init)(void* entity, void* definition);
 typedef void(*entity_destroy)(void* entity);
 
@@ -86,6 +88,9 @@ struct scene {
     uint16_t entity_data_count;
     uint16_t loading_zone_count;
     uint16_t named_location_count;
+
+    uint16_t current_room;
+    uint16_t preview_room;
 
     char* string_table;
 
