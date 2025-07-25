@@ -53,6 +53,7 @@ fixed_sizes = {
     'struct Vector2': 8,
     'struct Quaternion': 16,
     'collectable_sub_type': 4,
+    'room_id': 2,
     'bool': 1,
 }
 
@@ -71,6 +72,7 @@ fixed_alignments = {
     'struct Vector2': 4,
     'struct Quaternion': 4,
     'collectable_sub_type': 4,
+    'room_id': 2,
     'bool': 1,
 }
 
@@ -86,6 +88,7 @@ struct_formats = {
     'int16_t': 'h',
     'int8_t': 'b',
     'collectable_sub_type': 'I',
+    'room_id': 'H',
     'bool': 'B',
 }
 

@@ -213,11 +213,25 @@ def process_scene():
     base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
     definitions = {}
     enums = {}
+    room_collection = entities.room.room_collection()
 
     with open('src/scene/scene_definition.h', 'r') as file:
         file_content = file.read()
         definitions = parse.struct_parse.find_structs(file_content)
         enums = parse.struct_parse.find_enums(file_content)
+
+    room_names = ['room_default']
+
+    for collection in bpy.data.collections:
+        if collection.name.startswith('room_'):
+            room_names.append(collection.name)
+
+    room_enum = parse.struct_parse.EnumInfo('enum rooms', room_names)
+
+    for name in sorted(room_names):
+        room_collection.get_room_index(name)
+
+    enums['enum rooms'] = room_enum
 
     globals = cutscene.variable_layout.VariableLayout()
 
@@ -268,8 +282,6 @@ def process_scene():
         file.write('WRLD'.encode())
 
         file.write(len(scene.locations).to_bytes(1, 'big'))
-
-        room_collection = entities.room.room_collection()
 
         for location in scene.locations:
             location_bytes = location.name.encode()

@@ -10,17 +10,7 @@
 #include "../time/time.h"
 
 static struct dynamic_object_type treasure_chest_collision = {
-    .minkowsi_sum = box_minkowski_sum,
-    .bounding_box = box_bounding_box,
-    .data = {
-        .box = {
-            .half_size = {
-                0.4f,
-                0.35f,
-                0.35f,
-            }
-        }
-    },
+    BOX_COLLIDER(0.4f, 0.35f, 0.35f),
     .bounce = 0.2f,
     .friction = 0.25f,
 };

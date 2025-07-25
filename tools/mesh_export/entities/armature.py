@@ -103,9 +103,9 @@ class PackedArmatureData():
             packed_rotation[0],
             packed_rotation[1],
             packed_rotation[2],
-            _pack_position(scale.x),
-            _pack_position(scale.y),
-            _pack_position(scale.z),
+            _pack_scale(scale.x),
+            _pack_scale(scale.y),
+            _pack_scale(scale.z),
         ]
 
     def write_to_file(self, file, attributes: BoneAttributes | None = None):
@@ -355,6 +355,9 @@ def get_channels(group: bpy.types.ActionGroup, suffix: str) -> list[bpy.types.FC
     return result
 
 def _pack_position(input: float) -> int:
+    return round(input * 8)
+
+def _pack_scale(input: float) -> int:
     return round(input * 256)
 
 def pack_quaternion(input: mathutils.Quaternion):

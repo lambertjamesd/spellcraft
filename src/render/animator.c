@@ -75,9 +75,9 @@ void animator_request_frame(struct animator* animator, int next_frame) {
 
 int16_t* animator_extract_bone(int16_t* bone_data, struct animation_used_attributes attributes, struct Transform* result) {
     if (attributes.has_pos) {
-        result->position.x = (float)(bone_data[0] * (1.0f / 256.0f));
-        result->position.y = (float)(bone_data[1] * (1.0f / 256.0f));
-        result->position.z = (float)(bone_data[2] * (1.0f / 256.0f));
+        result->position.x = (float)(bone_data[0] * (1.0f / 8.0f));
+        result->position.y = (float)(bone_data[1] * (1.0f / 8.0f));
+        result->position.z = (float)(bone_data[2] * (1.0f / 8.0f));
 
         bone_data += 3;
     }

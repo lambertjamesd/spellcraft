@@ -261,6 +261,46 @@ void cutscene_builder_delay(struct cutscene_builder* builder, float delay) {
     };
 }
 
+void cutscene_builder_interact_npc(
+    struct cutscene_builder* builder,
+    enum interaction_type type,
+    union cutscene_actor_id subject,
+    union cutscene_actor_id target
+) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_INTERACT_WITH_NPC,
+        .data = {
+            .interact_with_npc = {
+                .type = type,
+                .subject = subject,
+                .target = target,
+            },
+        },
+    };
+}
+
+void cutscene_builder_interact_position(
+    struct cutscene_builder* builder,
+    enum interaction_type type,
+    union cutscene_actor_id subject,
+    struct Vector3* position
+) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_INTERACT_WITH_POSITION,
+        .data = {
+            .interact_with_position = {
+                .type = type,
+                .subject = subject,
+                .position = *position,
+            },
+        },
+    };
+}
+
 // release with cutscene_free()
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder) {
     // release with cutscene_free()

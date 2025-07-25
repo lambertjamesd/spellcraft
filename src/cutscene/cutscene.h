@@ -26,6 +26,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_CAMERA_WAIT,
     CUTSCENE_STEP_INTERACT_WITH_LOCATION,
     CUTSCENE_STEP_FADE,
+    CUTSCENE_STEP_INTERACT_WITH_POSITION,
 };
 
 struct cutscene_step;
@@ -92,6 +93,11 @@ union cutscene_step_data {
         enum fade_colors color;
         float duration;
     } fade;
+    struct {
+        enum interaction_type type;
+        union cutscene_actor_id subject;
+        struct Vector3 position;
+    } interact_with_position;
 };
 
 struct cutscene_step {
@@ -116,6 +122,18 @@ void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause,
 void cutscene_builder_dialog(struct cutscene_builder* builder, char* message);
 void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type item, bool should_show);
 void cutscene_builder_delay(struct cutscene_builder* builder, float delay);
+void cutscene_builder_interact_npc(
+    struct cutscene_builder* builder,
+    enum interaction_type type,
+    union cutscene_actor_id subject,
+    union cutscene_actor_id target
+);
+void cutscene_builder_interact_position(
+    struct cutscene_builder* builder,
+    enum interaction_type type,
+    union cutscene_actor_id subject,
+    struct Vector3* position
+);
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder);
 

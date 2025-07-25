@@ -53,6 +53,8 @@ enum inventory_item_type {
 
 typedef uint32_t collectable_sub_type;
 
+typedef uint16_t room_id;
+
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT
 
 struct collectable_definition {
@@ -107,6 +109,8 @@ struct jelly_king_definition {
 struct door_definition {
     struct Vector3 position;
     struct Vector2 rotation;
+    room_id room_a;
+    room_id room_b;
 };
 
 enum npc_type {

@@ -11,6 +11,15 @@ def _get_item_types(self, context):
 def _get_scripts(self, context):
     return list(map(lambda x: (x, x, ''), object_definitions.get_scripts()))
 
+def _get_rooms(self, context):
+    result = []
+
+    for collection in bpy.data.collections:
+        if collection.name.startswith('room_'):
+            result.append(collection.name)
+
+    return list(map(lambda x: (x, x, ''), result))
+
 def _get_entry_points(self, context):
     return list(map(lambda x: (x, x[len('rom:/scenes/'):], ''), object_definitions.get_entry_points()))
 
@@ -59,6 +68,30 @@ class NODE_OT_game_object_scripts(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
+    
+class NODE_OT_game_object_room_id(bpy.types.Operator):
+    """Set room id"""
+    bl_idname = "node.game_object_room_id"
+    bl_label = "Set room id property"
+    bl_description = "Sets a room id property on a game object"
+    bl_property = "selected_item"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    selected_item: bpy.props.EnumProperty(items=_get_rooms)
+    name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        context.object[self.name] = self.selected_item
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
+
 
 class NODE_OT_game_objects_clear_script(bpy.types.Operator):
     """Set custom property"""
@@ -104,6 +137,7 @@ _enum_mapping = {
     'collectable_sub_type': NODE_OT_game_object_item_type.bl_idname,
     'enum inventory_item_type': NODE_OT_game_object_item_type.bl_idname,
     'script_location': NODE_OT_game_object_scripts.bl_idname,
+    'room_id': NODE_OT_game_object_room_id.bl_idname,
 }
 
 def _get_obj_def(current_object):
@@ -151,6 +185,9 @@ def _init_default_properties(target):
         elif attr.data_type == 'script_location':
             if not attr.name in target:
                 target[attr.name] = ''
+        elif attr.data_type == 'room_id':
+            if not attr.name in target:
+                target[attr.name] = 'room_default'
         else:
             print('could not generate default for ' + attr.data_type)
             continue
@@ -425,6 +462,7 @@ class CreateGameObjectPanel(bpy.types.Panel):
 _classes = [
     NODE_OT_game_object_item_type,
     NODE_OT_game_object_scripts,
+    NODE_OT_game_object_room_id,
     NODE_OT_game_objects_clear_script,
     NODE_OT_game_object_entry_points,
     NODE_MT_game_object_add,
