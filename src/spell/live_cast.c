@@ -36,6 +36,10 @@ bool live_cast_has_pending_spell(struct live_cast* live_cast) {
     return live_cast->current_spell_output > 0 || live_cast->last_spell != NULL;
 }
 
+bool live_cast_is_typing(struct live_cast* live_cast) {
+    return live_cast->current_spell_output > 0;
+}
+
 struct spell* live_cast_extract_active_spell(struct live_cast* live_cast) {
     if (live_cast->current_spell_output == 0) {
         return &live_cast->last_spell->spell;

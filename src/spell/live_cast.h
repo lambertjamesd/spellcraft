@@ -24,6 +24,7 @@ void live_cast_init(struct live_cast* live_cast);
 void live_cast_destroy(struct live_cast* live_cast);
 
 bool live_cast_has_pending_spell(struct live_cast* live_cast);
+bool live_cast_is_typing(struct live_cast* live_cast);
 
 struct spell* live_cast_extract_active_spell(struct live_cast* live_cast);
 

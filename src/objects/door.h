@@ -26,6 +26,8 @@ struct door {
     struct door_animations animations;
     struct animator animator;
     struct dynamic_object collider;
+
+    room_id next_room;
 };
 
 void door_init(struct door* door, struct door_definition* definition);

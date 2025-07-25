@@ -14,8 +14,6 @@
 #include "camera_controller.h"
 #include "camera_animation.h"
 
-#define ROOM_NONE   0xFFFF
-
 typedef void(*entity_init)(void* entity, void* definition);
 typedef void(*entity_destroy)(void* entity);
 

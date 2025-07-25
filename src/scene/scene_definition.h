@@ -53,6 +53,8 @@ enum inventory_item_type {
 
 typedef uint32_t collectable_sub_type;
 
+#define ROOM_NONE 0xFFFF
+
 typedef uint16_t room_id;
 
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT

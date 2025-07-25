@@ -73,4 +73,5 @@ bool cutscene_actor_is_moving(struct cutscene_actor* actor);
 // return true if actor cutscene is active
 bool cutscene_actor_update(struct cutscene_actor* actor);
 
+
 #endif

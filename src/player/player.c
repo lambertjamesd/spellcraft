@@ -39,7 +39,7 @@ static struct dynamic_object_type player_visual_shape = {
 
 static struct cutscene_actor_def player_actor_def = {
     .eye_level = 1.26273f,
-    .move_speed = 1.0f,
+    .move_speed = 2.0f,
     .rotate_speed = 2.0f,
     .half_height = 0.75f,
     .collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
@@ -94,9 +94,9 @@ void player_loop_animation(struct player* player, struct animation_clip* clip, f
 }
 
 void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
-    bool* did_intersect = (bool*)data;
+    bool* did_interact = (bool*)data;
 
-    if (*did_intersect) {
+    if (*did_interact) {
         return;
     }
 
@@ -106,8 +106,8 @@ void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
         return;
     }
     
-    *did_intersect = true;
-    interactable->callback(interactable, 0);
+    *did_interact = true;
+    interactable->callback(interactable, ENTITY_ID_PLAYER);
 }
 
 void player_get_input_direction(struct player* player, struct Vector3* target_direction) {
@@ -188,14 +188,15 @@ void player_handle_air_movement(struct player* player) {
     player->cutscene_actor.collider.velocity.y = prev_y;
 }
 
-void player_handle_a_action(struct player* player) {
+bool player_handle_a_action(struct player* player) {
     struct Vector3 query_center = player->cutscene_actor.transform.position;
     struct Vector3 query_offset;
     vector2ToLookDir(&player->cutscene_actor.transform.rotation, &query_offset);
     vector3AddScaled(&query_center, &query_offset, 1.0f, &query_center);
     query_center.y += player_visual_shape.data.cylinder.half_height;
-    bool did_intersect = false;
-    collision_scene_query(&player_visual_shape, &query_center, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_intersect);
+    bool did_interact = false;
+    collision_scene_query(&player_visual_shape, &query_center, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_interact);
+    return did_interact;
 }
 
 bool player_check_for_casting(struct player* player) {
@@ -208,7 +209,6 @@ bool player_check_for_casting(struct player* player) {
     }
 
     if (live_cast_has_pending_spell(&player->live_cast) && pressed.a) {
-
         spell_exec_start(&player->spell_exec, 4, live_cast_extract_active_spell(&player->live_cast), source);
 
         if (source->request_animation) {
@@ -323,8 +323,14 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
-    if (!player_check_for_casting(player) && pressed.a) {
-        player_handle_a_action(player);
+    bool should_cast = true;
+
+    if (pressed.a && !live_cast_is_typing(&player->live_cast) && player_handle_a_action(player)) {
+        should_cast = false;
+    }
+
+    if (should_cast) {
+        player_check_for_casting(player);
     }
 
     if (player->last_spell_animation && animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
@@ -547,7 +553,9 @@ void player_knockback(struct player* player) {
 float player_on_damage(void* data, struct damage_info* damage) {
     struct player* player = (struct player*)data;
 
-    if (player->state == PLAYER_KNOCKBACK || player->state == PLAYER_GETTING_UP) {
+    if (player->state == PLAYER_KNOCKBACK || 
+        player->state == PLAYER_GETTING_UP ||
+        cutscene_actor_is_moving(&player->cutscene_actor)) {
         return 0.0f;
     }
 
