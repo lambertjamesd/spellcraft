@@ -215,6 +215,8 @@ def process_scene():
     enums = {}
     room_collection = entities.room.room_collection()
 
+    room_collection.get_room_index('room_default')
+
     with open('src/scene/scene_definition.h', 'r') as file:
         file_content = file.read()
         definitions = parse.struct_parse.find_structs(file_content)
