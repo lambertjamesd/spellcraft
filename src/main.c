@@ -31,10 +31,14 @@ void setup() {
     init_engine();
     savefile_new();
 
-    current_scene = scene_load("rom:/scenes/fire_trials.scene");
-    // current_scene = scene_load("rom:/scenes/ability_testing.scene");
-    //  current_scene = scene_load("rom:/scenes/material_testing.scene");
-    //  current_scene = scene_load("rom:/scenes/playerhome_outside.scene");
+    scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    // scene_queue_next("rom:/scenes/ability_testing.scene");
+    // scene_queue_next("rom:/scenes/material_testing.scene");
+    // scene_queue_next("rom:/scenes/playerhome_outside.scene");
+
+    current_scene = scene_load(scene_get_next());
+
+    scene_clear_next();
 }
 
 static struct frame_memory_pool frame_memory_pools[2];

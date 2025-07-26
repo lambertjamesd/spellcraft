@@ -88,6 +88,7 @@ struct dynamic_object {
     uint16_t under_water: 2;
     uint16_t has_ice_dash: 2;
     uint16_t density_class: 2;
+    uint16_t weight_class: 2;
     uint16_t collision_layers;
     uint16_t collision_group;
     struct contact* active_contacts;

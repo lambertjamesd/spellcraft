@@ -12,7 +12,9 @@ static struct dynamic_object_type crate_collision_type = {
         .box = {
             .half_size = {0.5f, 0.5f, 0.5f},
         }
-    }
+    },
+    .friction = 0.9,
+    .bounce = 0.0f,
 };
 
 void crate_update(struct crate* crate) {
@@ -36,6 +38,8 @@ void crate_init(struct crate* crate, struct crate_definition* definition) {
         &crate->transform.position, 
         &crate->transform.rotation
     );
+    crate->dynamic_object.scale = definition->scale;
+    crate->dynamic_object.weight_class = 2;
 
     update_add(crate, (update_callback)crate_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
 

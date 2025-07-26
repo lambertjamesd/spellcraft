@@ -207,9 +207,14 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
                 write_vector2_rotation(file, obj)
                 return offset + 8
         if definition == 'float':
-            value = _get_value(obj, field_name, 0)
-            file.write(struct.pack(">f", value))
-            return offset + 4
+            if field_name == 'scale':
+                value = get_scale(obj)
+                file.write(struct.pack(">f", value.x))
+                return offset + 4
+            else:
+                value = _get_value(obj, field_name, 0)
+                file.write(struct.pack(">f", value))
+                return offset + 4
         if definition in struct_formats:
             value = _get_value(obj, field_name, 0)
 

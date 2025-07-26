@@ -187,11 +187,14 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
         float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;
     
-        // TODO better ratio depending on object weights
-        float overlap_ratio = 0.5f;
-    
-        correct_overlap(b, &result, overlap_ratio - 1.0f, b->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
-        correct_overlap(a, &result, overlap_ratio, a->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
+        if (a->weight_class == b->weight_class) {
+            correct_overlap(b, &result, 0.5f, b->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
+            correct_overlap(a, &result, 0.5f, a->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
+        } else if (a->weight_class < b->weight_class) {
+            correct_overlap(a, &result, 1.0f, a->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
+        } else {
+            correct_overlap(b, &result, 1.0f, b->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
+        }
     }
 
 

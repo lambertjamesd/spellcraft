@@ -26,6 +26,7 @@ enum entity_type_id {
 struct crate_definition {
     struct Vector3 position;
     struct Vector2 rotation;
+    float scale;
 };
 
 enum collectable_type {

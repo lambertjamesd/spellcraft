@@ -625,6 +625,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     );
 
     player->cutscene_actor.collider.density_class = DYNAMIC_DENSITY_MEDIUM;
+    player->cutscene_actor.collider.weight_class = 1;
 
     spell_exec_init(&player->spell_exec);
     mana_pool_set_entity_id(&player->spell_exec.spell_sources.mana_pool, ENTITY_ID_PLAYER);

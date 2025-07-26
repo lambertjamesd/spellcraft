@@ -29,6 +29,7 @@ void dynamic_object_init(
     object->is_jumping = 0;
     object->under_water = 0;
     object->density_class = DYNAMIC_DENSITY_LIGHT;
+    object->weight_class = 0;
     object->has_ice_dash = 0;
     object->collision_layers = collision_layers;
     object->collision_group = 0;
