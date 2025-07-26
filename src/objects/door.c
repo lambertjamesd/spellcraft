@@ -61,11 +61,17 @@ void door_interact(struct interactable* interactable, entity_id from) {
     cutscene_builder_delay(&builder, 0.5f);
     cutscene_builder_interact_position(
         &builder, 
-        INTERACTION_MOVE_WAIT, 
+        INTERACTION_MOVE, 
         (union cutscene_actor_id) {
             .npc_type = NPC_TYPE_PLAYER,
         },
         &target
+    );
+    cutscene_builder_npc_wait(
+        &builder, 
+        (union cutscene_actor_id) {
+            .npc_type = NPC_TYPE_PLAYER,
+        }
     );
     cutscene_builder_pause(&builder, false, false, UPDATE_LAYER_WORLD);
 

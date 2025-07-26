@@ -27,6 +27,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_INTERACT_WITH_LOCATION,
     CUTSCENE_STEP_FADE,
     CUTSCENE_STEP_INTERACT_WITH_POSITION,
+    CUTSCENE_STEP_NPC_WAIT,
 };
 
 struct cutscene_step;
@@ -98,6 +99,9 @@ union cutscene_step_data {
         union cutscene_actor_id subject;
         struct Vector3 position;
     } interact_with_position;
+    struct {
+        union cutscene_actor_id subject;
+    } npc_wait;
 };
 
 struct cutscene_step {
@@ -133,6 +137,10 @@ void cutscene_builder_interact_position(
     enum interaction_type type,
     union cutscene_actor_id subject,
     struct Vector3* position
+);
+void cutscene_builder_npc_wait(
+    struct cutscene_builder* builder,
+    union cutscene_actor_id subject
 );
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder);

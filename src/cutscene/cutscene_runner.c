@@ -212,6 +212,9 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             );
             break;
         }
+        case CUTSCENE_STEP_NPC_WAIT: {
+            break;
+        }
     }
 }
 
@@ -243,16 +246,10 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
             return cutscene_runner.active_step_data.delay.time <= 0.0f;
         case CUTSCENE_STEP_CAMERA_WAIT:
             return !camera_is_animating(&current_scene->camera_controller);
-        case CUTSCENE_STEP_INTERACT_WITH_NPC:
-        case CUTSCENE_STEP_INTERACT_WITH_LOCATION:
-        case CUTSCENE_STEP_INTERACT_WITH_POSITION: {
-            if (HAS_FLAG(step->data.interact_with_npc.type, INTERACTION_WAIT)) {
-                cutscene_actor_id_t subject_id = step->data.interact_with_npc.subject;
-                struct cutscene_actor* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
-                return !subject || !cutscene_actor_is_moving(subject); 
-            }
-
-            return true;
+        case CUTSCENE_STEP_NPC_WAIT: {
+            cutscene_actor_id_t subject_id = step->data.npc_wait.subject;
+            struct cutscene_actor* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
+            return !subject || !cutscene_actor_is_moving(subject);
         }
         default:
             return true;

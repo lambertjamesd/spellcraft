@@ -25,6 +25,8 @@ CUTSCENE_STEP_CAMERA_ANIMATE = 14
 CUTSCENE_STEP_CAMERA_WAIT = 15
 CUTSCENE_STEP_INTERACT_WITH_LOCATION = 16
 CUTSCENE_STEP_FADE = 17
+CUTSCENE_STEP_INTERACT_WITH_POSITION = 18
+CUTSCENE_STEP_NPC_WAIT = 19
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -44,6 +46,8 @@ _step_args = {
     "cam_wait": [],
     "interact_with_location": [ParameterType("int", True), ParameterType("int", True), ParameterType("str", True)],
     "fade": [ParameterType("int", True), ParameterType("float", True)],
+    "interact_with_position": [ParameterType("int", True), ParameterType("int", True), ParameterType("float", True), ParameterType("float", True), ParameterType("float", True)],
+    "npc_wait": [ParameterType("int", True)],
 }
 
 _step_ids = {
@@ -59,11 +63,14 @@ _step_ids = {
     "cam_wait": CUTSCENE_STEP_CAMERA_WAIT,
     "interact_with_location": CUTSCENE_STEP_INTERACT_WITH_LOCATION,
     "fade": CUTSCENE_STEP_FADE,
+    "interact_with_position": CUTSCENE_STEP_INTERACT_WITH_POSITION,
+    "npc_wait": CUTSCENE_STEP_NPC_WAIT,
 }
 
 _steps_that_need_idle = {
     "interact_with_npc",
     "interact_with_location",
+    "interact_with_position",
 }
 
 def _encode_string(string: str) -> bytes:

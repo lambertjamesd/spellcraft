@@ -128,6 +128,16 @@ struct cutscene* cutscene_load(char* filename) {
                 fread(&step->data.fade.color, 4, 1, file);
                 fread(&step->data.fade.duration, 4, 1, file);
                 break;
+            case CUTSCENE_STEP_INTERACT_WITH_POSITION: {
+                fread(&step->data.interact_with_position.type, 4, 1, file);
+                fread(&step->data.interact_with_position.subject, 4, 1, file);
+                fread(&step->data.interact_with_position.position, 12, 1, file);
+                break;
+            }
+            case CUTSCENE_STEP_NPC_WAIT: {
+                fread(&step->data.npc_wait.subject, 4, 1, file);
+                break;
+            }
         }
     }
 
@@ -296,6 +306,22 @@ void cutscene_builder_interact_position(
                 .type = type,
                 .subject = subject,
                 .position = *position,
+            },
+        },
+    };
+}
+
+void cutscene_builder_npc_wait(
+    struct cutscene_builder* builder,
+    union cutscene_actor_id subject
+) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_NPC_WAIT,
+        .data = {
+            .npc_wait = {
+                .subject = subject,
             },
         },
     };
