@@ -27,7 +27,7 @@ static struct spatial_trigger_type mana_gem_trigger_type = {
 void mana_gem_render(void* data, struct render_batch* batch) {
     struct mana_gem* gem = (struct mana_gem*)data;
 
-    T3DMat4FP* mtxfp = render_batch_transformfp_from_sa(batch, &gem->transform, gem->radius);
+    T3DMat4FP* mtxfp = render_batch_transformfp_from_sa(batch, &gem->transform);
 
     if (!mtxfp) {
         return;
@@ -116,12 +116,11 @@ void mana_gem_update(void* data) {
 }
 
 void mana_gem_init(struct mana_gem* gem, struct Vector3* position, float mana_amount) {
-    gem->transform.position = *position;
-    gem->transform.rotation = gRight2;
     gem->velocity = gZeroVec;
-    gem->radius = maxf(sqrtf(mana_amount) * RADIUS_SCALE, MIN_RADIUS);
+    float radius = maxf(sqrtf(mana_amount) * RADIUS_SCALE, MIN_RADIUS);
     gem->mana_amount = mana_amount;
-    render_scene_add(&gem->transform.position, gem->radius, mana_gem_render, gem);
+    transformSaInit(&gem->transform, position, &gRight2, radius);
+    render_scene_add(&gem->transform.position, radius, mana_gem_render, gem);
 
     spatial_trigger_init(&gem->trigger, &gem->transform, &mana_gem_trigger_type, COLLISION_LAYER_DAMAGE_PLAYER);
     collision_scene_add_trigger(&gem->trigger);

@@ -54,8 +54,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
     struct npc_information* information = &npc_information[definiton->npc_type];
 
     struct TransformSingleAxis transform;
-    transform.position = definiton->position;
-    transform.rotation = definiton->rotation;
+    transformSaInit(&transform, &definiton->position, &definiton->rotation, 1.0f);
     renderable_single_axis_init(&npc->renderable, &npc->cutscene_actor.transform, information->mesh);
 
     render_scene_add_renderable(&npc->renderable, 2.0f);

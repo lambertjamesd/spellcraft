@@ -125,8 +125,7 @@ void biter_update(struct biter* biter) {
 }
 
 void biter_init(struct biter* biter, struct biter_definition* definition) {
-    biter->transform.position = definition->position;
-    biter->transform.rotation = definition->rotation;
+    transformSaInit(&biter->transform, &definition->position, &definition->rotation, 1.0f);
 
     entity_id id = entity_id_new();
 

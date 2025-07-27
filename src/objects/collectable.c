@@ -48,8 +48,7 @@ void collectable_assets_load() {
 void collectable_init(struct collectable* collectable, struct collectable_definition* definition) {
     collectable->collectable_type = definition->collectable_type;
     collectable->collectable_sub_type = definition->collectable_sub_type;
-    collectable->transform.position = definition->position;
-    collectable->transform.rotation = definition->rotation;
+    transformSaInit(&collectable->transform, &definition->position, &definition->rotation, 1.0f);
     
     dynamic_object_init(
         entity_id_new(), 

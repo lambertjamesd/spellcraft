@@ -49,8 +49,7 @@ void treasure_chest_update(void* data) {
 
 void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition) {
     treasure_chest->item_type = definition->item;
-    treasure_chest->transform.position = definition->position;
-    treasure_chest->transform.rotation = definition->rotation;
+    transformSaInit(&treasure_chest->transform, &definition->position, &definition->rotation, 1.0f);
 
     renderable_single_axis_init(&treasure_chest->renderable, &treasure_chest->transform, "rom:/meshes/objects/treasurechest.tmesh");
     render_scene_add_renderable(&treasure_chest->renderable, 0.8f);

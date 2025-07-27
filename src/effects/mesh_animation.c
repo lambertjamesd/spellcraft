@@ -7,8 +7,7 @@
 struct mesh_animation* mesh_animation_new(struct Vector3* position, struct Vector2* rotation, struct tmesh* mesh, struct animation_clip* clip) {
     struct mesh_animation* result = effect_malloc(sizeof(struct mesh_animation));
 
-    result->transform.position = *position;
-    result->transform.rotation = *rotation;
+    transformSaInit(&result->transform, position, rotation, 1.0f);
 
     result->renderable.mesh = mesh;
     result->renderable.force_material = NULL;

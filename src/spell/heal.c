@@ -37,7 +37,8 @@ void spell_heal_render(void* data, struct render_batch* batch) {
     struct TransformSingleAxis transform;
     transform.position = heal->data_source->position;
     transform.rotation = gRight2;
-    transformSAToMatrix(&transform, mtx, AEO_SCALE);
+    transform.scale = AEO_SCALE;
+    transformSAToMatrix(&transform, mtx);
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 

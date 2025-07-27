@@ -72,8 +72,7 @@ void water_cube_update(void* data) {
 }
 
 void water_cube_init(struct water_cube* cube, struct water_cube_definition* definition) {
-    cube->transform.position = definition->position;
-    cube->transform.rotation = definition->rotation;
+    transformSaInit(&cube->transform, &definition->position, &definition->rotation, 1.0f);
     cube->trigger_type = (struct spatial_trigger_type){
         SPATIAL_TRIGGER_BOX(definition->scale.x, definition->scale.y, definition->scale.z)
     };

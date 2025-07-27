@@ -29,7 +29,7 @@ static struct spatial_trigger_type mana_plant_grab_trigger = {
 void mana_plant_render(void* data, struct render_batch* batch) {
     struct mana_plant* plant = (struct mana_plant*)data;
 
-    T3DMat4FP* mtxfp = render_batch_transformfp_from_sa(batch, &plant->transform, 1.0f);
+    T3DMat4FP* mtxfp = render_batch_transformfp_from_sa(batch, &plant->transform);
 
     if (!mtxfp) {
         return;
@@ -56,7 +56,8 @@ void mana_plant_render(void* data, struct render_batch* batch) {
 
     struct TransformSingleAxis gem_transform = plant->transform;
     gem_transform.position.y += GEM_OFFSET;
-    T3DMat4FP* gem_mtx = render_batch_transformfp_from_sa(batch, &gem_transform, grow_scale);
+    gem_transform.scale = grow_scale;
+    T3DMat4FP* gem_mtx = render_batch_transformfp_from_sa(batch, &gem_transform);
 
     if (!gem_mtx) {
         return;
@@ -93,9 +94,8 @@ void mana_plant_update(void* data) {
 }
 
 void mana_plant_init(struct mana_plant* plant, struct mana_plant_definition* definition) {
-    plant->transform.position = definition->position;
-    plant->transform.rotation = definition->rotation;
     plant->respawn_timer = 0.0f;
+    transformSaInit(&plant->transform, &definition->position, &definition->rotation, 1.0f);
 
     plant->mesh = tmesh_cache_load("rom:/meshes/pickups/mana_plant.tmesh");
     render_scene_add(&plant->transform.position, 1.73f, mana_plant_render, plant);

@@ -38,7 +38,7 @@ void scale_in_fade_out_render(void* data, struct render_batch* batch) {
     }
 
     mat4x4 mtx;
-    transformSAToMatrix(&effect->transform, mtx, effect->radius * scale);
+    effect->transform.scale = effect->radius * scale;
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
@@ -61,6 +61,7 @@ struct scale_in_fade_out* scale_in_fade_out_new(struct tmesh* mesh, struct Vecto
 
     result->transform.position = *pos;
     vector2LookDir(&result->transform.rotation, direction);
+    result->transform.scale = 0.0f;
     result->radius = radius;
 
     result->mesh = mesh;

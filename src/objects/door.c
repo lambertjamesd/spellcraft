@@ -94,8 +94,7 @@ void door_update(void* data) {
 }
 
 void door_init(struct door* door, struct door_definition* definition) {
-    door->transform.position = definition->position;
-    door->transform.rotation = definition->rotation;
+    transformSaInit(&door->transform, &definition->position, &definition->rotation, 1.0f);
     door->room_a = definition->room_a;
     door->room_b = definition->room_b;
     door->next_room = ROOM_NONE;

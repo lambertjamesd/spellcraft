@@ -5,10 +5,17 @@
 void transformSaInitIdentity(struct TransformSingleAxis* transform) {
     transform->position = gZeroVec;
     transform->rotation = gRight2;
+    transform->scale = 1.0f;
 }
 
-void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix, float scale) {
-    scale *= MODEL_WORLD_SCALE;
+void transformSaInit(struct TransformSingleAxis* transform, struct Vector3* pos, struct Vector2* rot, float scale) {
+    transform->position = *pos;
+    transform->rotation = *rot;
+    transform->scale = scale;
+}
+
+void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix) {
+    float scale = transform->scale * MODEL_WORLD_SCALE;
 
     matrix[0][0] = transform->rotation.x * scale;
     matrix[0][1] = 0.0f;

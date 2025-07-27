@@ -64,7 +64,8 @@ void living_sprite_render(void* data, struct render_batch* batch) {
         }
     
         mat4x4 mtx;
-        transformSAToMatrix(&living_sprite->transform, mtx, living_sprite_exploision.data.sphere.radius);
+        living_sprite->transform.scale = living_sprite_exploision.data.sphere.radius;
+        transformSAToMatrix(&living_sprite->transform, mtx);
         render_batch_relative_mtx(batch, mtx);
         t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
@@ -102,6 +103,7 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
 
     vector3AddScaled(&source->position, &source->direction, 0.5f, &living_sprite->transform.position);
     living_sprite->transform.rotation = gRight2;
+    living_sprite->transform.scale = 1.0f;
 
     living_sprite->target = source->target;
 

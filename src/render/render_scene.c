@@ -55,7 +55,7 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
     }
 
     mat4x4 mtx;
-    transformSAToMatrix(renderable->transform.transform, mtx, 1.0f);
+    transformSAToMatrix(renderable->transform.transform, mtx);
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 

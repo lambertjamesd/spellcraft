@@ -24,8 +24,7 @@ void crate_update(struct crate* crate) {
 }
 
 void crate_init(struct crate* crate, struct crate_definition* definition) {
-    crate->transform.position = definition->position;
-    crate->transform.rotation = definition->rotation;
+    transformSaInit(&crate->transform, &definition->position, &definition->rotation, definition->scale);
 
     entity_id id = entity_id_new();
 

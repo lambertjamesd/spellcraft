@@ -229,7 +229,7 @@ void jelly_render(void* data, struct render_batch* batch) {
     }
 
     mat4x4 mtx;
-    transformSAToMatrix(&jelly->transform, mtx, jelly->collider.scale);
+    transformSAToMatrix(&jelly->transform, mtx);
 
     if (!jelly->is_frozen) {
         struct Vector3 shear_direction;
@@ -268,6 +268,7 @@ void jelly_update(void* data) {
 
     if (jelly->needs_new_radius) {
         dynamic_object_set_scale(&jelly->collider, jelly_recalc_radius(jelly));
+        jelly->transform.scale = jelly->collider.scale;
         jelly->needs_new_radius = 0;
     }
 
@@ -288,8 +289,7 @@ void jelly_update(void* data) {
 void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
     entity_id entity_id = entity_id_new();
 
-    jelly->transform.position = definition->position;
-    jelly->transform.rotation = definition->rotation;
+    transformSaInit(&jelly->transform, &definition->position, &definition->rotation, 1.0f);
 
     jelly->mesh = tmesh_cache_load("rom:/meshes/enemies/water_jelly.tmesh");
     jelly->ice_mesh = tmesh_cache_load("rom:/meshes/enemies/ice_jelly.tmesh");
@@ -320,6 +320,7 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
 
     jelly->collider.density_class = DYNAMIC_DENSITY_NEUTRAL;
     jelly->collider.scale = jelly_recalc_radius(jelly);
+    jelly->transform.scale = jelly->collider.scale;
     jelly->collider.center.y = 1.0f;
     jelly->jump_timer = 0.0f;
     jelly->current_target = 0;

@@ -331,8 +331,7 @@ void jelly_king_update(void* data) {
 void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition) {
     entity_id entity_id = entity_id_new();
 
-    jelly_king->transform.position = definition->position;
-    jelly_king->transform.rotation = definition->rotation;
+    transformSaInit(&jelly_king->transform, &definition->position, &definition->rotation, 1.0f);
 
     renderable_single_axis_init(&jelly_king->renderable, &jelly_king->transform, "rom:/meshes/enemies/jelly_king.tmesh");
 

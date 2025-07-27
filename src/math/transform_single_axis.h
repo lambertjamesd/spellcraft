@@ -8,9 +8,11 @@
 struct TransformSingleAxis {
     struct Vector3 position;
     struct Vector2 rotation;
+    float scale;
 };
 
 void transformSaInitIdentity(struct TransformSingleAxis* transform);
-void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix, float scale);
+void transformSaInit(struct TransformSingleAxis* transform, struct Vector3* pos, struct Vector2* rot, float scale);
+void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix);
 
 #endif

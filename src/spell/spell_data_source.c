@@ -64,6 +64,8 @@ void spell_data_source_apply_transform_sa(struct spell_data_source* data_source,
     transform->rotation.y = -data_source->direction.x;
 
     vector2Normalize(&transform->rotation, &transform->rotation);
+
+    transform->scale = 1.0f;
 }
 
 enum element_type spell_data_source_determine_element(union spell_modifier_flags flags) {

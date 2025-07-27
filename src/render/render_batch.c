@@ -154,7 +154,7 @@ T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch) {
     return UncachedAddr(frame_malloc(batch->pool, sizeof(T3DMat4FP)));
 }
 
-T3DMat4FP* render_batch_transformfp_from_sa(struct render_batch* batch, struct TransformSingleAxis* transform, float scale) {
+T3DMat4FP* render_batch_transformfp_from_sa(struct render_batch* batch, struct TransformSingleAxis* transform) {
     T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
     if (!mtxfp) {
@@ -162,7 +162,7 @@ T3DMat4FP* render_batch_transformfp_from_sa(struct render_batch* batch, struct T
     }
 
     mat4x4 mtx;
-    transformSAToMatrix(transform, mtx, scale);
+    transformSAToMatrix(transform, mtx);
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 

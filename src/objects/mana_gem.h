@@ -11,7 +11,6 @@ struct mana_gem {
     struct spatial_trigger trigger;
     struct Vector3 velocity;
     float mana_amount;
-    float radius;
 };
 
 struct mana_gem* mana_gem_new(struct Vector3* position, float mana_amount);

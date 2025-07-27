@@ -611,6 +611,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     struct TransformSingleAxis transform = {
         .position = definition->location,
         .rotation = definition->rotation,
+        .scale = 1.0f,
     };
 
     cutscene_actor_init(
