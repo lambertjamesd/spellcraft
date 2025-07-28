@@ -7,40 +7,42 @@ from . import static_evaluator
 
 EXPRESSION_TYPE_END = 0
 EXPRESSION_TYPE_LOAD_LOCAL = 1
-EXPRESSION_TYPE_LOAD_GLOBAL = 2
-EXPRESSION_TYPE_LOAD_LITERAL = 3
+EXPRESSION_TYPE_LOAD_SCENE_VAR = 2
+EXPRESSION_TYPE_LOAD_GLOBAL = 3
+EXPRESSION_TYPE_LOAD_LITERAL = 4
 
-EXPRESSION_TYPE_AND = 4
-EXPRESSION_TYPE_OR = 5
-EXPRESSION_TYPE_NOT = 6
+EXPRESSION_TYPE_AND = 5
+EXPRESSION_TYPE_OR = 6
+EXPRESSION_TYPE_NOT = 7
 
-EXPRESSION_TYPE_EQ = 7
-EXPRESSION_TYPE_NEQ = 8
-EXPRESSION_TYPE_GT = 9
-EXPRESSION_TYPE_GTE = 10
+EXPRESSION_TYPE_EQ = 8
+EXPRESSION_TYPE_NEQ = 9
+EXPRESSION_TYPE_GT = 10
+EXPRESSION_TYPE_GTE = 11
 
-EXPRESSION_TYPE_ADD = 11
-EXPRESSION_TYPE_SUB = 12
-EXPRESSION_TYPE_MUL = 13
-EXPRESSION_TYPE_DIV = 14
-EXPRESSION_TYPE_NEGATE = 15
+EXPRESSION_TYPE_ADD = 12
+EXPRESSION_TYPE_SUB = 13
+EXPRESSION_TYPE_MUL = 14
+EXPRESSION_TYPE_DIV = 15
+EXPRESSION_TYPE_NEGATE = 16
 
-EXPRESSION_TYPE_GTF = 16
-EXPRESSION_TYPE_GTEF = 17
+EXPRESSION_TYPE_GTF = 17
+EXPRESSION_TYPE_GTEF = 18
 
-EXPRESSION_TYPE_ADDF = 18
-EXPRESSION_TYPE_SUBF = 19
-EXPRESSION_TYPE_MULF = 20
-EXPRESSION_TYPE_DIVF = 21
-EXPRESSION_TYPE_NEGATEF = 22
+EXPRESSION_TYPE_ADDF = 19
+EXPRESSION_TYPE_SUBF = 20
+EXPRESSION_TYPE_MULF = 21
+EXPRESSION_TYPE_DIVF = 22
+EXPRESSION_TYPE_NEGATEF = 23
 
-EXPRESSION_TYPE_ITOF = 23
-EXPRESSION_TYPE_FTOI = 24
+EXPRESSION_TYPE_ITOF = 24
+EXPRESSION_TYPE_FTOI = 25
 
 command_to_name = {}
 
 command_to_name[EXPRESSION_TYPE_END] = 'end'
 command_to_name[EXPRESSION_TYPE_LOAD_LOCAL] = 'local'
+command_to_name[EXPRESSION_TYPE_LOAD_SCENE_VAR] = 'scene'
 command_to_name[EXPRESSION_TYPE_LOAD_GLOBAL] = 'global'
 command_to_name[EXPRESSION_TYPE_LOAD_LITERAL] = 'literal'
 
@@ -102,16 +104,14 @@ def generate_variable_address(data_type: str, bit_offset: int) -> bytes:
 # script
 
 class ExpresionScriptLoad():
-    def __init__(self, is_global: bool, name: str, data_type: str, bit_offset: int):
-        self.command: int = EXPRESSION_TYPE_LOAD_LOCAL
-        if is_global:
-            self.command = EXPRESSION_TYPE_LOAD_GLOBAL
+    def __init__(self, source: bool, name: str, data_type: str, bit_offset: int):
+        self.command: int = source
         self.name: str = name
         self.data_type: str = data_type
         self.bit_offset: int = bit_offset
 
     def __str__(self):
-        location = 'local' if self.command == EXPRESSION_TYPE_LOAD_LOCAL else 'global'
+        location = command_to_name[self.command]
         return '{0} {1}: {2} 0x{3:08x}'.format(location, self.name, self.data_type, self.bit_offset)
     
     def has_data(self) -> bool:
@@ -435,7 +435,17 @@ class ExpressionGenerator():
 
         if isinstance(expression, parser.Identifier):
             name = expression.name.value
-            is_global = not self.context.is_local(name)
+            source = EXPRESSION_TYPE_LOAD_GLOBAL
+
+            if self.context.is_local(name):
+                source = EXPRESSION_TYPE_LOAD_LOCAL
+            elif self.context.is_global(name):
+                source = EXPRESSION_TYPE_LOAD_GLOBAL
+            elif self.context.is_scene_var(name):
+                source = EXPRESSION_TYPE_LOAD_SCENE_VAR
+            else:
+                raise Exception(expression.name.format_message('Variable not found'))
+
             data_type = self.context.get_variable_type(name)
 
             if not data_type:
@@ -443,7 +453,7 @@ class ExpressionGenerator():
             
             offset = self.context.get_variable_offset(name)
 
-            script.steps.append(ExpresionScriptLoad(is_global, name, data_type, offset))
+            script.steps.append(ExpresionScriptLoad(source, name, data_type, offset))
 
 
 def generate_script(expression, context: variable_layout.VariableContext, expected_type: str | None = None) -> ExpressionScript | None:

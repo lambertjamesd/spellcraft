@@ -90,7 +90,6 @@ class VariableDefinition():
     def __str__(self):
         return f"{self.name.value}: {self.type};"
 
-
 class IfStatement():
     def __init__(self, condition, statements: list, else_block: list):
         self.condition = condition
@@ -188,10 +187,18 @@ class BinaryOperator():
 
     def __str__(self):
         return f"({self.a} {self.operator.value} {self.b})"
+    
+class UseSceneDefinition():
+    def __init__(self, filename: String):
+        self.filename: String = filename
+
+    def __str__(self):
+        return f"use scene {str(self.filename)};"
 
 class Cutscene():
     def __init__(self):
         self.globals: list[VariableDefinition] = []
+        self.scene_vars: list[VariableDefinition] = []
         self.locals: list[VariableDefinition] = []
         self.statements = []
 
@@ -234,6 +241,9 @@ def _maybe_parse_cutscene_def(parse_state: _ParseState, into: Cutscene) -> bool:
 
     if next.value == 'global':
         into.globals.append(_parse_variable_definition(parse_state, 'global'))
+        return True
+    if next.value == 'scene':
+        into.scene_vars.append(_parse_variable_definition(parse_state, 'scene'))
         return True
     if next.value == 'local':
         into.locals.append(_parse_variable_definition(parse_state, 'local'))
@@ -424,6 +434,11 @@ def _parse_if(parse_state: _ParseState, if_token = 'if'):
 
     return IfStatement(condition, body, else_block)
     
+def _parse_use(parse_state: _ParseState):
+    parse_state.require('identifier', 'use')
+    parse_state.require('identifier', 'scene')
+    filename = _parse_string(parse_state)
+    return UseSceneDefinition(filename)
 
 def _is_assignment(parse_state: _ParseState):
     return parse_state.peek(0).token_type == 'identifier' and parse_state.peek(1).token_type == '='
@@ -452,6 +467,9 @@ def _parse_statement(parse_state: _ParseState):
 
     if next.value == 'if':
         return _parse_if(parse_state)
+    
+    if next.value == 'use':
+        return _parse_use(parse_state)
     
     if _is_assignment(parse_state):
         return _parse_assignment(parse_state)

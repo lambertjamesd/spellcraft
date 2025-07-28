@@ -55,6 +55,7 @@ fixed_sizes = {
     'collectable_sub_type': 4,
     'room_id': 2,
     'bool': 1,
+    'variable_location': 2,
 }
 
 fixed_alignments = {
@@ -74,6 +75,7 @@ fixed_alignments = {
     'collectable_sub_type': 4,
     'room_id': 2,
     'bool': 1,
+    'variable_location': 2,
 }
 
 struct_formats = {
@@ -90,6 +92,7 @@ struct_formats = {
     'collectable_sub_type': 'I',
     'room_id': 'H',
     'bool': 'B',
+    'variable_location': 'H',
 }
 
 _string_aliases = {

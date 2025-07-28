@@ -60,6 +60,8 @@ typedef uint16_t room_id;
 
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT
 
+typedef uint16_t variable_location;
+
 struct collectable_definition {
     struct Vector3 position;
     struct Vector2 rotation;
@@ -86,6 +88,7 @@ struct biter_definition {
 struct ground_torch_definition {
     struct Vector3 position;
     bool is_lit;
+    variable_location lit_source;
 };
 
 struct water_cube_definition {

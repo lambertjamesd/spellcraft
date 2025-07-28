@@ -1,0 +1,7 @@
+
+scene elevator_room_active: bool;
+scene spin_torch_0: bool;
+scene spin_torch_1: bool;
+scene spin_torch_2: bool;
+scene spin_torch_3: bool;
+scene spin_torch_solved: bool;

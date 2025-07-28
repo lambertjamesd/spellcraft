@@ -34,7 +34,14 @@ if __name__ == "__main__":
 
     locals = local_builder.build()
 
-    context = cutscene.variable_layout.VariableContext(globals, locals)
+    scene_builder = cutscene.variable_layout.VariableLayoutBuilder()
+
+    for scene_var in result.scene_vars:
+        scene_builder.add_variable(scene_var)
+
+    scene_vars = scene_builder.build()
+
+    context = cutscene.variable_layout.VariableContext(globals, scene_vars, locals)
 
     errors: list[str] = []
     cutscene.step_generator.validate_steps(result.statements, errors, context)

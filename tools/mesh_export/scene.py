@@ -203,6 +203,27 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
 
     return True
     
+def load_cutscene_vars(input_filename: str):
+    scene_vars_builder = cutscene.variable_layout.VariableLayoutBuilder()
+
+    scene_vars_name = input_filename[:-6] + '.script'
+
+    success = True
+
+    if os.path.exists(scene_vars_name):
+        with open(scene_vars_name) as scene_vars_file:
+            scene_vars_parse_tree = cutscene.parser.parse(scene_vars_file.read(), scene_vars_name)
+
+            for var in scene_vars_parse_tree.scene_vars:
+                success = scene_vars_builder.add_variable(var) and success
+
+    if not success:
+        sys.exit(1)
+
+    return scene_vars_builder.build()
+
+
+
 def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-2]
@@ -240,7 +261,10 @@ def process_scene():
     with open('build/assets/scripts/globals.json') as file:
         globals.deserialize(file)
 
-    variable_context = cutscene.variable_layout.VariableContext(globals, cutscene.variable_layout.VariableLayout())
+    # todo
+    scene_vars = load_cutscene_vars(input_filename)
+
+    variable_context = cutscene.variable_layout.VariableContext(globals, scene_vars, cutscene.variable_layout.VariableLayout())
 
     context = parse.struct_serialize.SerializeContext(enums)
 

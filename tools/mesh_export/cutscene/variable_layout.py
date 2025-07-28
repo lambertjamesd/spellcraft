@@ -225,12 +225,19 @@ class VariableLayoutBuilder():
         return result
 
 class VariableContext():
-    def __init__(self, globals: VariableLayout, locals: VariableLayout):
+    def __init__(self, globals: VariableLayout, scene_vars: VariableLayout, locals: VariableLayout):
         self.globals: VariableLayout = globals
+        self.scene_vars: VariableLayout = scene_vars
         self.locals: VariableLayout = locals
 
     def is_local(self, name: str) -> bool:
         return self.locals.has_variable(name)
+    
+    def is_global(self, name: str) -> bool:
+        return self.globals.has_variable(name)
+    
+    def is_scene_var(self, name: str) -> bool:
+        return self.scene_vars.has_variable(name)
     
     def get_variable_offset(self, name: str) -> int:
         if self.locals.has_variable(name):
@@ -239,4 +246,4 @@ class VariableContext():
         return self.globals.get_variable_offset(name)
     
     def get_variable_type(self, name: str) -> str | None:
-        return self.locals.get_variable_type(name) or self.globals.get_variable_type(name)
+        return self.locals.get_variable_type(name) or self.scene_vars.get_variable_type(name) or self.globals.get_variable_type(name)

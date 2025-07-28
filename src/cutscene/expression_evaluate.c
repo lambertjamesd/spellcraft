@@ -2,6 +2,12 @@
 
 #include "../savefile/savefile.h"
 
+static void* scene_variables;
+
+void expression_set_scene_variables(void* variables) {
+    scene_variables = variables;
+}
+
 void expression_evaluate(struct evaluation_context* context, struct expression* expression) {
     uint8_t* current = expression->expression_program;
 
@@ -17,6 +23,13 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
                 memcpy(&data, current, sizeof(union expression_data));
                 
                 evaluation_context_push(context, evaluation_context_load(context->local_varaibles, data.load_variable.data_type, data.load_variable.word_offset));
+                current += sizeof(union expression_data);
+                break;
+            case EXPRESSION_TYPE_LOAD_SCENE_VAR:
+                // this avoids alignment issues
+                memcpy(&data, current, sizeof(union expression_data));
+
+                evaluation_context_push(context, evaluation_context_load(scene_variables, data.load_variable.data_type, data.load_variable.word_offset));
                 current += sizeof(union expression_data);
                 break;
             case EXPRESSION_TYPE_LOAD_GLOBAL:
