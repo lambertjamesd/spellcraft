@@ -205,6 +205,14 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
             if field_name == 'scale':
                 write_vector3_scale(file, obj)
                 return offset + 12
+            
+            value = _get_value(obj, field_name, 0)
+            if isinstance(value, str):
+                if value.startswith('obj '):
+                    write_vector3_position(file, bpy.data.objects[value[len('obj '):]])
+                else:
+                    file.write(struct.pack('>fff', 0, 0, 0))
+                return offset + 12
         if definition == 'struct Vector2':
             if field_name == 'rotation':
                 write_vector2_rotation(file, obj)

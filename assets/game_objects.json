@@ -79,6 +79,12 @@
             "type": "mana_plant"
         },
         {
+            "name": "puzzle_elevator",
+            "description": "",
+            "mesh": "meshes/puzzle/elevator.blend#elevator",
+            "type": "elevator"
+        },
+        {
             "name": "puzzle_timed_torch",
             "description": "",
             "mesh": "meshes/puzzle/timed_torch.blend#timed_torch",

@@ -302,7 +302,7 @@ def process_scene():
             scene.locations.append(LocationEntry(obj, entities.entry_point.get_entry_point(obj)))
             continue
 
-        if 'type' in obj or 'type' in obj.data:
+        if 'type' in obj or (obj.data and 'type' in obj.data):
             scene.objects.append(process_linked_object(obj, obj.data, definitions))
             continue
 

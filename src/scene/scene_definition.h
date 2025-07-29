@@ -22,6 +22,7 @@ enum entity_type_id {
     ENTITY_TYPE_jelly_king,
     ENTITY_TYPE_door,
     ENTITY_TYPE_timed_torch_puzzle,
+    ENTITY_TYPE_elevator,
 };
 
 struct crate_definition {
@@ -132,6 +133,15 @@ struct timed_torch_puzzle_definition {
     boolean_variable input_4;
     boolean_variable input_5;
     boolean_variable input_6;
+};
+
+struct elevator_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    struct Vector3 target;
+
+    boolean_variable enabled;
+    bool inv_enabled;
 };
 
 enum npc_type {
