@@ -46,6 +46,8 @@ bool health_is_frozen(struct health* health);
 bool health_is_shocked(struct health* health);
 bool health_is_alive(struct health* health);
 
+void health_clear_status(struct health* health);
+
 void health_add_shield(struct health* health, struct health_shield* health_shield);
 void health_remove_shield(struct health* health, struct health_shield* health_shield);
 

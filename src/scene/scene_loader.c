@@ -27,6 +27,8 @@
 #include "../objects/empty.h"
 #include "../objects/water_cube.h"
 
+#include "../puzzle/timed_torch.h"
+
 #include "../pickups/mana_plant.h"
 
 #include "../collision/collision_scene.h"
@@ -61,6 +63,7 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(jelly, fields_empty),
     ENTITY_DEFINITION(jelly_king, fields_empty),
     ENTITY_DEFINITION(door, fields_empty),
+    ENTITY_DEFINITION(timed_torch_puzzle, fields_empty),
 };
 
 // WRLD

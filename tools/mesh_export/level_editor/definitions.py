@@ -93,7 +93,7 @@ class Definitions:
         globals_location = os.path.join(repo_path, 'assets/scripts/globals.script')
         scene_location = bpy.data.filepath[:-len('.blend')] + '.script'
 
-        booleans = []
+        booleans = ['disconnected']
 
         try:
             with open(globals_location) as global_file:

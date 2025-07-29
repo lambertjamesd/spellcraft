@@ -21,6 +21,7 @@ enum entity_type_id {
     ENTITY_TYPE_jelly,
     ENTITY_TYPE_jelly_king,
     ENTITY_TYPE_door,
+    ENTITY_TYPE_timed_torch_puzzle,
 };
 
 struct crate_definition {
@@ -59,6 +60,8 @@ typedef uint32_t collectable_sub_type;
 typedef uint16_t room_id;
 
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT
+
+#define VARIABLE_DISCONNECTED   0xFFFF
 
 typedef uint16_t boolean_variable;
 
@@ -116,6 +119,19 @@ struct door_definition {
     struct Vector2 rotation;
     room_id room_a;
     room_id room_b;
+};
+
+struct timed_torch_puzzle_definition {
+    struct Vector3 position;
+    float torch_time;
+    boolean_variable output;
+    boolean_variable input_0;
+    boolean_variable input_1;
+    boolean_variable input_2;
+    boolean_variable input_3;
+    boolean_variable input_4;
+    boolean_variable input_5;
+    boolean_variable input_6;
 };
 
 enum npc_type {

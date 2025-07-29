@@ -233,6 +233,8 @@ def build_variable_enum(enums: dict, globals: cutscene.variable_layout.VariableL
         if entry.type_name == 'bool':
             boolean_enum[f"scene {entry.name}: bool"] = entry.offset | 0x8000
 
+    boolean_enum['disconnected'] = 0xFFFF
+
     enums['boolean_variable'] = parse.struct_parse.UnorderedEnum('boolean_variable', boolean_enum)
         
 

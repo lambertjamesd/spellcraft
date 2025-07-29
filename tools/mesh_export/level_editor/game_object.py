@@ -199,6 +199,9 @@ def _init_default_properties(target):
         if attr.data_type == 'bool':
             if not attr.name in target:
                 target[attr.name] = False
+        elif attr.data_type == 'float':
+            if not attr.name in target:
+                target[attr.name] = 0.0
         elif attr.data_type.startswith('enum '):
             if not attr.name in target:
                 default_value = ''
@@ -217,7 +220,7 @@ def _init_default_properties(target):
                 target[attr.name] = 'room_default'
         elif attr.data_type == 'boolean_variable':
             if not attr.name in target:
-                target[attr.name] = ''
+                target[attr.name] = 'disconnected'
         else:
             print('could not generate default for ' + attr.data_type)
             continue

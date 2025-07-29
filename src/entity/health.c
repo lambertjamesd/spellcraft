@@ -182,6 +182,11 @@ bool health_is_alive(struct health* health) {
     return health->current_health > 0.0f;
 }
 
+void health_clear_status(struct health* health) {
+    health->current_health = 0.0f;
+    health->current_status = 0;
+}
+
 void health_add_shield(struct health* health, struct health_shield* health_shield) {
     health->health_shield = health_shield;
 }

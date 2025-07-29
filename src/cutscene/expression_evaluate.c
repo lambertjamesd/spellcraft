@@ -11,6 +11,10 @@ void expression_set_scene_variables(void* variables) {
 }
 
 bool expression_get_bool(boolean_variable variable) {
+    if (variable == VARIABLE_DISCONNECTED) {
+        return false;
+    }
+
     if (SCENE_VARIABLE_FLAG & variable) {
         return evaluation_context_load(scene_variables, DATA_TYPE_BOOL, variable ^ SCENE_VARIABLE_FLAG);
     } else {
@@ -19,6 +23,10 @@ bool expression_get_bool(boolean_variable variable) {
 }
 
 void expression_set_bool(boolean_variable variable, bool value) {
+    if (variable == VARIABLE_DISCONNECTED) {
+        return;
+    }
+
     if (SCENE_VARIABLE_FLAG & variable) {
         evaluation_context_save(scene_variables, DATA_TYPE_BOOL, variable ^ SCENE_VARIABLE_FLAG, value);
     } else {

@@ -28,10 +28,12 @@ void ground_torch_update(void* data) {
 
     if (health_is_burning(&torch->health)) {
         expression_set_bool(torch->lit_source, true);
+        health_clear_status(&torch->health);
     }
 
     if (health_is_frozen(&torch->health)) {
         expression_set_bool(torch->lit_source, false);
+        health_clear_status(&torch->health);
     }
 }
 
