@@ -222,7 +222,19 @@ def load_cutscene_vars(input_filename: str):
 
     return scene_vars_builder.build()
 
+def build_variable_enum(enums: dict, globals: cutscene.variable_layout.VariableLayout, scene: cutscene.variable_layout.VariableLayout):
+    boolean_enum: dict[str, int] = {}
 
+    for entry in globals.get_all_entries():
+        if entry.type_name == 'bool':
+            boolean_enum[f"global {entry.name}: bool"] = entry.offset
+
+    for entry in scene.get_all_entries():
+        if entry.type_name == 'bool':
+            boolean_enum[f"scene {entry.name}: bool"] = entry.offset | 0x8000
+
+    enums['boolean_variable'] = parse.struct_parse.UnorderedEnum('boolean_variable', boolean_enum)
+        
 
 def process_scene():
     input_filename = sys.argv[1]
@@ -261,8 +273,9 @@ def process_scene():
     with open('build/assets/scripts/globals.json') as file:
         globals.deserialize(file)
 
-    # todo
     scene_vars = load_cutscene_vars(input_filename)
+
+    build_variable_enum(enums, globals, scene_vars)
 
     variable_context = cutscene.variable_layout.VariableContext(globals, scene_vars, cutscene.variable_layout.VariableLayout())
 
@@ -378,6 +391,8 @@ def process_scene():
             file.write(b'\0')
 
         entities.camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
+
+        scene_vars.write_default_values(file)
             
 
 process_scene()

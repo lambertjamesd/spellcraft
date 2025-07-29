@@ -15,7 +15,7 @@ struct ground_torch {
     struct dynamic_object dynamic_object;
     struct health health;
 
-    uint16_t is_lit: 1;
+    boolean_variable lit_source;
 };
 
 void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition);

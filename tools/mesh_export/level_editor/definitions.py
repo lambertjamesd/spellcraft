@@ -5,6 +5,7 @@ import os.path
 import json
 from ..parse.struct_parse import find_structs, find_enums
 from ..entities import entry_point
+from ..cutscene import parser
 
 class Definitions:
     def __init__(self):
@@ -16,6 +17,7 @@ class Definitions:
         self.objects = None
         self.scripts = []
         self.entry_points = []
+        self.boolean_variables = []
 
         self._objects_for_library_path = {}
 
@@ -86,6 +88,37 @@ class Definitions:
         result.sort()
 
         return result
+    
+    def _load_variables(self, repo_path):
+        globals_location = os.path.join(repo_path, 'assets/scripts/globals.script')
+        scene_location = bpy.data.filepath[:-len('.blend')] + '.script'
+
+        booleans = []
+
+        try:
+            with open(globals_location) as global_file:
+                parse_tree = parser.parse(global_file.read(), globals_location)
+
+                for var in parse_tree.globals:
+                    if var.type.name.value == 'bool':
+                        booleans.append(f"global {var.name.value}: bool")
+        except Exception as e:
+            print(f"failed to load global {e}")
+
+        if os.path.exists(scene_location):
+            try:
+                with open(scene_location) as scene_file:
+                    parse_tree = parser.parse(scene_file.read(), scene_location)
+
+                    for var in parse_tree.scene_vars:
+                        if var.type.name.value == 'bool':
+                            booleans.append(f"scene {var.name.value}: bool")
+            except Exception as e:
+                print(f"failed to load scene script {e}")
+
+        self.boolean_variables = booleans
+
+
 
     def load(self):
         current_path = bpy.data.filepath
@@ -138,6 +171,8 @@ class Definitions:
 
         self.scripts = self._search_scripts(os.path.join(repo_path, 'assets'))
         self.entry_points = self._search_entry_points(os.path.join(repo_path, 'assets'))
+        self._load_variables(repo_path)
+        
 
 
     def _find_repo_path(self):
@@ -181,6 +216,10 @@ class Definitions:
     def get_objects_list(self):
         self.load()
         return self.objects["objects"]
+    
+    def get_boolean_variables(self):
+        self.load()
+        return self.boolean_variables
 
     def get_object_for_library_path(self, path):
         self.load()
@@ -218,6 +257,9 @@ class Definitions:
     def get_entry_points(self):
         self.load()
         return self.entry_points
+    
+    def reload(self):
+        self.loaded_path = None
 
 
 object_definitions = Definitions()

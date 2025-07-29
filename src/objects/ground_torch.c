@@ -7,6 +7,7 @@
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
 #include "../time/time.h"
+#include "../cutscene/expression_evaluate.h"
 #include <memory.h>
 
 #define TORCH_HEIGHT    0.84124f
@@ -26,11 +27,11 @@ void ground_torch_update(void* data) {
     struct ground_torch* torch = (struct ground_torch*)data;
 
     if (health_is_burning(&torch->health)) {
-        torch->is_lit = 1;
+        expression_set_bool(torch->lit_source, true);
     }
 
     if (health_is_frozen(&torch->health)) {
-        torch->is_lit = 0;
+        expression_set_bool(torch->lit_source, false);
     }
 }
 
@@ -52,7 +53,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
 
     render_batch_add_tmesh(batch, torch->base_mesh, mtxfp, 1, NULL, NULL);
 
-    if (!torch->is_lit) {
+    if (!expression_get_bool(torch->lit_source)) {
         return;
     }
         
@@ -65,7 +66,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     memcpy(mtx, &batch->camera_matrix, sizeof(mat4x4));
     matrixApplyScaledPos(mtx, &torch->position, WORLD_SCALE);
     matrixApplyScale(mtx, MODEL_WORLD_SCALE);
-    mtx[3][1] += TORCH_HEIGHT;
+    mtx[3][1] += TORCH_HEIGHT * WORLD_SCALE;
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
@@ -96,7 +97,7 @@ void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_de
     health_init(&ground_torch->health, id, 0.0f);
     update_add(ground_torch, ground_torch_update, 1, UPDATE_LAYER_WORLD);
 
-    ground_torch->is_lit = definition->is_lit;
+    ground_torch->lit_source = definition->lit_source;
 }
 
 void ground_torch_destroy(struct ground_torch* ground_torch) {

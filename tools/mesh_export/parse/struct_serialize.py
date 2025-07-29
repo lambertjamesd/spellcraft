@@ -55,7 +55,7 @@ fixed_sizes = {
     'collectable_sub_type': 4,
     'room_id': 2,
     'bool': 1,
-    'variable_location': 2,
+    'boolean_variable': 2,
 }
 
 fixed_alignments = {
@@ -75,7 +75,7 @@ fixed_alignments = {
     'collectable_sub_type': 4,
     'room_id': 2,
     'bool': 1,
-    'variable_location': 2,
+    'boolean_variable': 2,
 }
 
 struct_formats = {
@@ -92,7 +92,7 @@ struct_formats = {
     'collectable_sub_type': 'I',
     'room_id': 'H',
     'bool': 'B',
-    'variable_location': 'H',
+    'boolean_variable': 'H',
 }
 
 _string_aliases = {
@@ -158,10 +158,10 @@ def obj_determine_alignment(definition, context: SerializeContext) -> int:
         return 4
     
     if isinstance(definition, str):
-        if definition in context.enums:
-            return 4
         if definition in fixed_alignments:
             return fixed_alignments[definition]
+        if definition in context.enums:
+            return 4
         raise Exception(f"{definition} doesn't have a known alignment")
     
     if isinstance(definition, struct_parse.PointerType):
@@ -267,13 +267,13 @@ def _obj_gather_types(definition, context: SerializeContext, current_offset: int
         return current_offset + 4
     
     if isinstance(definition, str):
+        if definition in fixed_sizes:
+            return current_offset + fixed_sizes[definition]
+
         if definition in context.enums:
             return current_offset + 4
 
-        if not definition in fixed_sizes:
-            raise Exception(f"{definition} is not a known size")
-
-        return current_offset + fixed_sizes[definition]
+        raise Exception(f"{definition} is not a known size")
     
     if isinstance(definition, struct_parse.PointerType):
         return current_offset + 4, 4

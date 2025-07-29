@@ -91,6 +91,7 @@ struct scene {
     uint16_t preview_room;
 
     char* string_table;
+    char* scene_vars;
 
     struct camera_animation_list camera_animations;
 };

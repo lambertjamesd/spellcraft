@@ -4,8 +4,26 @@
 
 static void* scene_variables;
 
+#define SCENE_VARIABLE_FLAG 0x8000
+
 void expression_set_scene_variables(void* variables) {
     scene_variables = variables;
+}
+
+bool expression_get_bool(boolean_variable variable) {
+    if (SCENE_VARIABLE_FLAG & variable) {
+        return evaluation_context_load(scene_variables, DATA_TYPE_BOOL, variable ^ SCENE_VARIABLE_FLAG);
+    } else {
+        return evaluation_context_load(savefile_get_globals(), DATA_TYPE_BOOL, variable);
+    }
+}
+
+void expression_set_bool(boolean_variable variable, bool value) {
+    if (SCENE_VARIABLE_FLAG & variable) {
+        evaluation_context_save(scene_variables, DATA_TYPE_BOOL, variable ^ SCENE_VARIABLE_FLAG, value);
+    } else {
+        evaluation_context_save(savefile_get_globals(), DATA_TYPE_BOOL, variable, value);
+    }
 }
 
 void expression_evaluate(struct evaluation_context* context, struct expression* expression) {

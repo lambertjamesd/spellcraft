@@ -316,6 +316,13 @@ struct scene* scene_load(const char* filename) {
 
     scene_load_camera_animations(&scene->camera_animations, filename, file);
 
+    uint16_t scene_var_length;
+    fread(&scene_var_length, 2, 1, file);
+    void* scene_vars = malloc(scene_var_length);
+    fread(scene_vars, scene_var_length, 1, file);
+    scene->scene_vars = scene_vars;
+    expression_set_scene_variables(scene->scene_vars);
+
     fclose(file);
 
     render_scene_add(NULL, 0.0f, scene_render, scene);
@@ -372,6 +379,9 @@ void scene_release(struct scene* scene) {
     free(scene->named_locations);
 
     camera_animation_list_destroy(&scene->camera_animations);
+
+    free(scene->scene_vars);
+    expression_set_scene_variables(NULL);
 
     free(scene);
 }

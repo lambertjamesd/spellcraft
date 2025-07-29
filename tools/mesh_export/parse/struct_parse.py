@@ -52,6 +52,34 @@ class EnumInfo:
         for idx, name in enumerate(self._values):
             dict[name] = idx
 
+class UnorderedEnum:
+    def __init__(self, name: str, values: dict[str, int]):
+        self.name = name
+        self._values: dict[str, int] = values
+
+        flipped = {}
+
+        for name, val in values.items():
+            flipped[val] = name
+
+        self._flipped: dict[int, str] = flipped
+
+    def str_to_int(self, value: str):
+        return self._values[value]
+    
+    def int_to_str(self, value: int):
+        return self._flipped[value]
+    
+    def all_values(self) -> list[str]:
+        return list(self._values.keys())
+    
+    def is_defined(self, name: str) -> bool:
+        return name in self._values
+    
+    def populate_dict(self, dict: dict[str, int]):
+        for name, idx in self._values.items():
+            dict[name] = idx
+
 class Token:
     def __init__(self, value: str, token_type: str, at: int):
         self.value: str = value
