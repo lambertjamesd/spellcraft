@@ -53,7 +53,7 @@ void water_cube_update(void* data) {
             float target_pos = water_top + obj->position->y - obj->bounding_box.min.y;
 
             obj->position->y = mathfMoveTowards(obj->position->y, target_pos, MAX_MOVE_AMOUNT * fixed_time_step);
-            correct_velocity(obj, &gUp, -1.0f, 0.01f, 0.0f);
+            correct_velocity(&obj->velocity, &gUp, -1.0f, 0.01f, 0.0f);
 
             continue;   
         }

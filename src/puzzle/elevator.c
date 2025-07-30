@@ -5,13 +5,19 @@
 #include "../collision/shapes/box.h"
 #include "../time/time.h"
 #include "../cutscene/expression_evaluate.h"
+#include "../physics/move_towards.h"
 
 #define END_DELAY_TIME  3.0f
 #define MOVE_SPEED      3.0f
 
+static struct move_towards_parameters move_parameters = {
+    .max_speed = 5.0f,
+    .max_accel = 4.0f,
+};
+
 static struct dynamic_object_type elevator_collision_type = {
     BOX_COLLIDER(1.5f, 1.5f, 1.5f),
-    .friction = 0.9,
+    .friction = 0.9f,
     .bounce = 0.0f,
 };
 
@@ -24,11 +30,11 @@ void elevator_update(void* data) {
     }
 
     if (!enabled) {
-        vector3MoveTowards(
+        move_towards(
             &elevator->transform.position, 
+            &elevator->speed, 
             &elevator->start_position, 
-            fixed_time_step * MOVE_SPEED, 
-            &elevator->transform.position
+            &move_parameters
         );
         elevator->timer = 0.0f;
         return;
@@ -41,15 +47,20 @@ void elevator_update(void* data) {
 
     struct Vector3 move_to = elevator->is_returning ? elevator->start_position : elevator->end_position;
 
-    if (vector3MoveTowards(
+    struct Vector3 before = elevator->transform.position;
+
+    if (move_towards(
         &elevator->transform.position, 
+        &elevator->speed, 
         &move_to, 
-        fixed_time_step * MOVE_SPEED, 
-        &elevator->transform.position)
+        &move_parameters)
     ) {
         elevator->timer = END_DELAY_TIME;
         elevator->is_returning = !elevator->is_returning;
     }
+
+    vector3Sub(&elevator->transform.position, &before, &elevator->collision.velocity);
+    vector3Scale(&elevator->collision.velocity, &elevator->collision.velocity, 1.0f / fixed_time_step);
 }
 
 void elevator_init(struct elevator* elevator, struct elevator_definition* definition) {
@@ -78,6 +89,7 @@ void elevator_init(struct elevator* elevator, struct elevator_definition* defini
     elevator->enabled = definition->enabled;
     elevator->inv_enabled = definition->inv_enabled;
     elevator->is_returning = false;
+    elevator->speed = 0.0f;
 
     collision_scene_add(&elevator->collision);
 

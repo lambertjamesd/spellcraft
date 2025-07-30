@@ -13,23 +13,24 @@ int surface_type_collision_layers[] = {
     COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
 };
 
-void correct_velocity(struct dynamic_object* object, struct Vector3* normal, float ratio, float friction, float bounce) {
-    float velocityDot = vector3Dot(&object->velocity, normal);
+bool correct_velocity(struct Vector3* velocity, struct Vector3* normal, float ratio, float friction, float bounce) {
+    float velocityDot = vector3Dot(velocity, normal);
 
     if ((velocityDot < 0) == (ratio < 0)) {
         struct Vector3 tangentVelocity;
 
-        vector3AddScaled(&object->velocity, normal, -velocityDot, &tangentVelocity);
+        vector3AddScaled(velocity, normal, -velocityDot, &tangentVelocity);
         vector3Scale(&tangentVelocity, &tangentVelocity, 1.0f - friction);
-        vector3AddScaled(&tangentVelocity, normal, velocityDot * -bounce, &object->velocity);
+        vector3AddScaled(&tangentVelocity, normal, velocityDot * -bounce, velocity);
+        return true;
     }
+    return false;
 }
 
 void correct_overlap_no_slide(
     struct dynamic_object* object, 
     float penetration, 
     float slope_amount, 
-    float ratio, 
     float friction, 
     float bounce
 ) {
@@ -56,13 +57,12 @@ void correct_overlap(struct dynamic_object* object, struct EpaResult* result, fl
 
     if (dynamic_object_should_slide(object->type->max_stable_slope, slope_amount, surface_type)) {
         vector3AddScaled(object->position, &result->normal, result->penetration * ratio, object->position);
-        correct_velocity(object, &result->normal, ratio, friction, bounce);
+        correct_velocity(&object->velocity, &result->normal, ratio, friction, bounce);
     } else {
         correct_overlap_no_slide(
             object,
             result->penetration,
             slope_amount,
-            ratio,
             friction,
             bounce
         );
@@ -185,15 +185,56 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
 
     if (should_push) {
         float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
-        float bounce = a->type->friction > b->type->friction ? a->type->friction : b->type->friction;
-    
+        float bounce = a->type->bounce > b->type->bounce ? a->type->bounce : b->type->bounce;
+
+        struct Vector3 momentum_center;
+
         if (a->weight_class == b->weight_class) {
-            correct_overlap(b, &result, 0.5f, b->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
-            correct_overlap(a, &result, 0.5f, a->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
         } else if (a->weight_class < b->weight_class) {
-            correct_overlap(a, &result, 1.0f, a->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
+            momentum_center = b->velocity;
         } else {
-            correct_overlap(b, &result, 1.0f, b->disable_friction ? 0.0f : friction, bounce, SURFACE_TYPE_DEFAULT);
+            momentum_center = a->velocity;
+        }
+
+        struct Vector3 relative_velocity;
+        vector3Sub(&a->velocity, &b->velocity, &relative_velocity);
+        bool should_correct_velocity = correct_velocity(&relative_velocity, &result.normal, 1.0f, friction, bounce);
+
+        if (a->weight_class == b->weight_class) {
+            struct Vector3 momentum_center;
+            vector3Add(&a->velocity, &b->velocity, &momentum_center);
+            vector3Scale(&momentum_center, &momentum_center, 0.5f);
+
+            if (!b->is_fixed) {
+                vector3AddScaled(b->position, &result.normal, -result.penetration * 0.5f, b->position);
+
+                if (should_correct_velocity) {
+                    vector3AddScaled(&momentum_center, &relative_velocity, -0.5f, &b->velocity);
+                }
+            }
+            if (!a->is_fixed) {
+                vector3AddScaled(a->position, &result.normal, result.penetration * 0.5f, a->position);
+
+                if (should_correct_velocity) {
+                    vector3AddScaled(&momentum_center, &relative_velocity, 0.5f, &a->velocity);
+                }
+            }
+        } else if (a->weight_class < b->weight_class) {
+            if (!a->is_fixed) {
+                vector3AddScaled(a->position, &result.normal, result.penetration, a->position);
+
+                if (should_correct_velocity) {
+                    vector3Add(&b->velocity, &relative_velocity, &a->velocity);
+                }
+            }
+        } else {
+            if (!b->is_fixed) {
+                vector3AddScaled(b->position, &result.normal, -result.penetration, b->position);
+
+                if (should_correct_velocity) {
+                    vector3Sub(&a->velocity, &relative_velocity, &b->velocity);
+                }
+            }
         }
     }
 

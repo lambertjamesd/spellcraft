@@ -13,7 +13,7 @@
 
 // sqrtf(stop_distance * a * 2)
 
-void move_towards(
+bool move_towards(
     struct Vector3* position,
     float* speed,
     struct Vector3* target,
@@ -38,4 +38,6 @@ void move_towards(
     }
 
     *speed = speed_value;
+
+    return distance < 0.0001f;
 }

@@ -110,11 +110,12 @@ void door_init(struct door* door, struct door_definition* definition) {
         &door_collision, 
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
         &door->transform.position, 
-        0
+        &door->transform.rotation
     );
 
     door->collider.center.y = door_collision.data.box.half_size.y;
     door->collider.is_fixed = true;
+    door->collider.weight_class = 2;
 
     collision_scene_add(&door->collider);
 

@@ -13,6 +13,7 @@ struct elevator {
     struct Vector3 start_position;
     struct Vector3 end_position;
     float timer;
+    float speed;
     boolean_variable enabled;
     bool inv_enabled;
     bool is_returning;

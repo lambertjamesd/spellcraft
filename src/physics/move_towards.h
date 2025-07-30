@@ -2,14 +2,14 @@
 #define __PHYSICS_MOVE_TOWARDS_H__
 
 #include "../math/vector3.h"
+#include <stdbool.h>
 
 struct move_towards_parameters {
     float max_speed;
     float max_accel;
-    float damping;
 };
 
-void move_towards(
+bool move_towards(
     struct Vector3* position,
     float* speed,
     struct Vector3* target,

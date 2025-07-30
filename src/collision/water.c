@@ -41,7 +41,7 @@ void water_apply(struct dynamic_object* object) {
         float target_pos = water_top + object->position->y - object->bounding_box.min.y;
 
         object->position->y = mathfMoveTowards(object->position->y, target_pos, MAX_MOVE_AMOUNT * fixed_time_step);
-        correct_velocity(object, &gUp, -1.0f, 0.01f, 0.0f);
+        correct_velocity(&object->velocity, &gUp, -1.0f, 0.01f, 0.0f);
 
         return;   
     }
