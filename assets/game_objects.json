@@ -79,6 +79,12 @@
             "type": "mana_plant"
         },
         {
+            "name": "puzzle_electric_torch",
+            "description": "",
+            "mesh": "meshes/puzzle/electric_torch.blend#electric_torch",
+            "type": "ground_torch"
+        },
+        {
             "name": "puzzle_elevator",
             "description": "",
             "mesh": "meshes/puzzle/elevator.blend#elevator",
