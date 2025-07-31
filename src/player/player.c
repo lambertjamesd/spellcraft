@@ -157,8 +157,7 @@ void player_handle_ground_movement(struct player* player, struct contact* ground
     }
 
     if (vector3MagSqrd(&target_direction) < 0.001f) {
-        player->cutscene_actor.collider.velocity.x = 0.0f;
-        player->cutscene_actor.collider.velocity.z = 0.0f;
+        player->cutscene_actor.collider.velocity = gZeroVec;
     } else {
         struct Vector3 projected_target_direction;
         vector3ProjectPlane(&target_direction, &ground_contact->normal, &projected_target_direction);
@@ -170,8 +169,7 @@ void player_handle_ground_movement(struct player* player, struct contact* ground
 
         vector3Scale(&projected_target_direction, &projected_target_direction, 1.0f / sqrtf(vector3MagSqrd(&projected_normalized)));
 
-        player->cutscene_actor.collider.velocity.x = projected_target_direction.x * PLAYER_MAX_SPEED;
-        player->cutscene_actor.collider.velocity.z = projected_target_direction.z * PLAYER_MAX_SPEED;
+        vector3Scale(&projected_target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
     }
 }
 

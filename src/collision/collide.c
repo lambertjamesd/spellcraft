@@ -184,7 +184,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     bool should_push = DYNAMIC_OBJECT_SHOULD_PUSH(a) && DYNAMIC_OBJECT_SHOULD_PUSH(b);
 
     if (should_push) {
-        float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
+        float friction = 1.0f;//a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
         float bounce = a->type->bounce > b->type->bounce ? a->type->bounce : b->type->bounce;
 
         struct Vector3 momentum_center;
