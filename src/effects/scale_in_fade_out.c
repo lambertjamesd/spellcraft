@@ -39,6 +39,7 @@ void scale_in_fade_out_render(void* data, struct render_batch* batch) {
 
     mat4x4 mtx;
     effect->transform.scale = effect->radius * scale;
+    transformSAToMatrix(&effect->transform, mtx);
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
