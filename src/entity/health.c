@@ -178,6 +178,10 @@ bool health_is_shocked(struct health* health) {
     return health->status_timer > 0.0f && health->current_status == DAMAGE_TYPE_LIGHTING;
 }
 
+bool health_has_status(struct health* health, enum damage_type damage_type) {
+    return health->status_timer > 0.0f && (health->current_status & damage_type) != 0;
+}
+
 bool health_is_alive(struct health* health) {
     return health->current_health > 0.0f;
 }

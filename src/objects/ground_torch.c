@@ -12,6 +12,28 @@
 
 #define TORCH_HEIGHT    0.84124f
 
+struct torch_type_def {
+    char* mesh_filename;
+    char* active_effect;
+    enum damage_type start_damage;
+    enum damage_type stop_damage;
+};
+
+static struct torch_type_def torch_defs[] = {
+    [GROUND_TORCH_FIRE] = {
+        .mesh_filename = "rom:/meshes/objects/torch.tmesh",
+        .active_effect = "rom:/meshes/objects/torch_flame.tmesh",
+        .start_damage = DAMAGE_TYPE_FIRE,
+        .stop_damage = DAMAGE_TYPE_ICE | DAMAGE_TYPE_WATER,
+    },
+    [GROUND_TORCH_LIGHTNING] = {
+        .mesh_filename = "rom:/meshes/puzzle/electric_torch.tmesh",
+        .active_effect = "rom:/meshes/objects/torch_lightning.tmesh",
+        .start_damage = DAMAGE_TYPE_LIGHTING,
+        .stop_damage = DAMAGE_TYPE_WATER,
+    },
+};
+
 static struct dynamic_object_type ground_torch_collision_type = {
     .minkowsi_sum = capsule_minkowski_sum,
     .bounding_box = capsule_bounding_box,
@@ -26,12 +48,14 @@ static struct dynamic_object_type ground_torch_collision_type = {
 void ground_torch_update(void* data) {
     struct ground_torch* torch = (struct ground_torch*)data;
 
-    if (health_is_burning(&torch->health)) {
+    struct torch_type_def* def = &torch_defs[torch->torch_type];
+
+    if (health_has_status(&torch->health, def->start_damage)) {
         expression_set_bool(torch->lit_source, true);
         health_clear_status(&torch->health);
     }
 
-    if (health_is_frozen(&torch->health)) {
+    if (health_has_status(&torch->health, def->stop_damage)) {
         expression_set_bool(torch->lit_source, false);
         health_clear_status(&torch->health);
     }
@@ -92,8 +116,10 @@ void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_de
     ground_torch->dynamic_object.is_fixed = 1;
     ground_torch->dynamic_object.weight_class = 2;
 
-    ground_torch->base_mesh = tmesh_cache_load("rom:/meshes/objects/torch.tmesh");
-    ground_torch->flame_mesh = tmesh_cache_load("rom:/meshes/objects/torch_flame.tmesh");
+    ground_torch->torch_type = definition->torch_type;
+
+    ground_torch->base_mesh = tmesh_cache_load(torch_defs[definition->torch_type].mesh_filename);
+    ground_torch->flame_mesh = tmesh_cache_load(torch_defs[definition->torch_type].active_effect);
 
     render_scene_add(&ground_torch->position, 1.73f, ground_torch_render, ground_torch);
     collision_scene_add(&ground_torch->dynamic_object);

@@ -15,6 +15,8 @@ struct ground_torch {
     struct dynamic_object dynamic_object;
     struct health health;
 
+    enum ground_torch_type torch_type;
+
     boolean_variable lit_source;
 };
 
