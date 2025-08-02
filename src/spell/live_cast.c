@@ -60,6 +60,29 @@ struct spell* live_cast_extract_active_spell(struct live_cast* live_cast) {
     return &spell->spell;
 }
 
+void live_cast_get_current_block(struct live_cast* live_cast, struct live_cast_block* block) {
+    *block = (struct live_cast_block){ .primary_rune = ITEM_TYPE_NONE, .secondary_runes = 0 };
+
+    int prev = live_cast->current_spell_output - 1;
+
+    for (; prev >= 0; prev -= 1) {
+        struct spell_symbol curr_symbol = spell_get_symbol(&live_cast->pending_spell, prev, 0);
+
+        if (curr_symbol.type == SPELL_SYMBOL_BREAK) {
+            break;
+        }
+
+        block->secondary_runes |= 1 << curr_symbol.type;
+    }
+
+    if (prev + 1 == live_cast->current_spell_output) {
+        return;
+    }
+
+    block->primary_rune = spell_get_symbol(&live_cast->pending_spell, prev + 1, 0).type;
+    block->length = live_cast->current_spell_output - (prev + 1);
+}
+
 bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_type symbol_type) {
     if (live_cast->current_spell_output >= MAX_COLS) {
         return false;

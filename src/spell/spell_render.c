@@ -140,6 +140,18 @@ void spell_render_border(struct spell_block* spell_blocks, int block_count, int 
     }
 }
 
+void spell_render_icon(enum inventory_item_type type, int x, int y) {
+    int source_x = type == SPELL_SYMBOL_RECAST ? 216 : (type - 1) * 24;
+
+    rdpq_texture_rectangle_scaled(
+        TILE0,
+        x, y,
+        x + 24, y + 24,
+        source_x, 0,
+        source_x + 24, 24
+    );
+}
+
 void spell_render(struct spell* spell, int left, int top, struct spell_render_animation* animation) {
     struct spell_block spell_blocks[MAX_BLOCKS];
     int block_count = spell_block_layout(spell_blocks, spell);
@@ -162,15 +174,7 @@ void spell_render(struct spell* spell, int left, int top, struct spell_render_an
             final_top += spell_render_offset(animation);
         }
 
-        int source_x = current_block->primary_rune == SPELL_SYMBOL_RECAST ? 216 : (current_block->primary_rune - 1) * 24;
-
-        rdpq_texture_rectangle_scaled(
-            TILE0,
-            x + 2, final_top + 4,
-            x + 2 + 24, final_top + 4 + 24,
-            source_x, 0,
-            source_x + 24, 24
-        );
+        spell_render_icon(current_block->primary_rune, x + 2, x + 4);
     }
 
     rdpq_sync_pipe();

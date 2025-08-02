@@ -5,6 +5,7 @@
 #include "menu_common.h"
 #include "../cutscene/cutscene_runner.h"
 #include "../spell/spell_render.h"
+#include "../spell/assets.h"
 
 #define SPELL_SLOT_LOCATION_X   232
 #define SPELL_SLOT_LOCATION_Y   152
@@ -23,6 +24,27 @@
 
 static color_t mana_color = {80, 0, 240, 200};
 static color_t health_color = {240, 80, 0, 200};
+
+static color_t spell_active_colors[] = {
+    [ITEM_TYPE_NONE] = { 255, 255, 255, 255 },
+    [SPELL_SYMBOL_FIRE] = { 240, 100, 10, 255 },
+    [SPELL_SYMBOL_ICE] = { 10, 100, 240, 255 },
+    [SPELL_SYMBOL_EARTH] = { 10, 200, 40, 255 },
+    [SPELL_SYMBOL_AIR] = { 200, 200, 10, 255 },
+};
+
+static color_t inactive_color = { 255, 255, 255, 128 };
+
+struct slot_offset {
+    uint8_t x, y;
+};
+
+static struct slot_offset slot_offsets[] = {
+    [SPELL_SYMBOL_FIRE] = { SPELL_SLOT_OFFSET * 2, SPELL_SLOT_OFFSET },
+    [SPELL_SYMBOL_ICE] = { 0, SPELL_SLOT_OFFSET },
+    [SPELL_SYMBOL_EARTH] = { SPELL_SLOT_OFFSET, SPELL_SLOT_OFFSET * 2 },
+    [SPELL_SYMBOL_AIR] = { SPELL_SLOT_OFFSET, 0 },
+};
 
 void hud_render_spell_icon(struct spell* spell, int x, int y) {
     if (!spell) {
@@ -103,29 +125,61 @@ void hud_render(void *data) {
         0, 0
     );
 
-    hud_render_spell_icon(
-        inventory_get_equipped_spell(0), 
-        SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
-        SPELL_SLOT_LOCATION_Y + 4
-    );
+    rspq_block_run(spell_assets_get()->spell_symbols->block);
 
-    hud_render_spell_icon(
-        inventory_get_equipped_spell(1), 
-        SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
-        SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET * 2 + 4
-    );
+    struct live_cast_block block;
+    live_cast_get_current_block(&hud->player->live_cast, &block);
 
-    hud_render_spell_icon(
-        inventory_get_equipped_spell(2), 
-        SPELL_SLOT_LOCATION_X + 4,
-        SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
-    );
+    for (int i = SPELL_SYMBOL_FIRE; i <= SPELL_SYMBOL_AIR; i += 1) {
+        rdpq_sync_pipe();
+        int symbol_level = inventory_get_item_level(i);
+        if (block.primary_rune == ITEM_TYPE_NONE) {
+            if (symbol_level > 0) {
+                rdpq_set_prim_color(spell_active_colors[ITEM_TYPE_NONE]);
+            } else {
+                rdpq_set_prim_color(inactive_color);
+            }
+        } else {
+            if (i == block.primary_rune) {
+                rdpq_set_prim_color(spell_active_colors[i]);
+            } else if (block.length < symbol_level) {
+                rdpq_set_prim_color(spell_active_colors[ITEM_TYPE_NONE]);
+            } else {
+                rdpq_set_prim_color(inactive_color);
+            }
+        }
 
-    hud_render_spell_icon(
-        inventory_get_equipped_spell(3), 
-        SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET * 2 + 4,
-        SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
-    );
+        spell_render_icon(
+            i, 
+            SPELL_SLOT_LOCATION_X + 4 + slot_offsets[i].x, 
+            SPELL_SLOT_LOCATION_Y + 4 + slot_offsets[i].y
+        );
+    }
+ 
+
+    // hud_render_spell_icon(
+    //     inventory_get_equipped_spell(0), 
+    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
+    //     SPELL_SLOT_LOCATION_Y + 4
+    // );
+
+    // hud_render_spell_icon(
+    //     inventory_get_equipped_spell(1), 
+    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
+    //     SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET * 2 + 4
+    // );
+
+    // hud_render_spell_icon(
+    //     inventory_get_equipped_spell(2), 
+    //     SPELL_SLOT_LOCATION_X + 4,
+    //     SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
+    // );
+
+    // hud_render_spell_icon(
+    //     inventory_get_equipped_spell(3), 
+    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET * 2 + 4,
+    //     SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
+    // );
 
     hud_draw_bar(
         MANA_TO_SIZE(spell_exec_max_mana(&hud->player->spell_exec)),
