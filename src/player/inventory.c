@@ -109,6 +109,10 @@ bool inventory_has_item(enum inventory_item_type type) {
     return evaluation_context_load(savefile_get_globals(), global->data_type, global->word_offset);
 }
 
+bool inventory_is_upgrade_item(enum inventory_item_type type) {
+    return type >= SPELL_SYMBOL_FIRE && type <= SPELL_SYMBOL_LIFE;
+}
+
 void inventory_unlock_item(enum inventory_item_type type) {
     if (type >= ITEM_TYPE_COUNT) {
         return;
@@ -118,7 +122,21 @@ void inventory_unlock_item(enum inventory_item_type type) {
 
     assert(global->data_type);
 
-    evaluation_context_save(savefile_get_globals(), global->data_type, global->word_offset, true);
+    if (inventory_is_upgrade_item(type)) {
+        int prev = evaluation_context_load(savefile_get_globals(), global->data_type, global->word_offset);
+        evaluation_context_save(savefile_get_globals(), global->data_type, global->word_offset, prev + 1);
+    } else {
+        evaluation_context_save(savefile_get_globals(), global->data_type, global->word_offset, true);
+    }
+}
+
+int inventory_get_item_level(enum inventory_item_type type) {
+    if (!inventory_is_upgrade_item(type)) {
+        return 0;
+    }
+
+    struct global_location* global = &inventory_item_locations[type];
+    return evaluation_context_load(savefile_get_globals(), global->data_type, global->word_offset);
 }
 
 struct staff_stats* inventory_equipped_staff() {

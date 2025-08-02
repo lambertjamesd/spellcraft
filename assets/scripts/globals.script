@@ -1,12 +1,14 @@
 
-global has_fire_rune: bool;
-global has_ice_rune: bool;
-global has_earth_rune: bool;
-global has_air_rune: bool;
-global has_life_rune: bool;
-global has_recast_rune: bool;
 global has_staff_default: bool;
 global has_talked_outside: bool;
+
+global fire_rune_level: i8 = 1;
+global ice_rune_level: i8 = 0;
+global earth_rune_level: i8 = 0;
+global air_rune_level: i8 = 0;
+global life_rune_level: i8 = 0;
+
+global recast_rune_level: i8 = 0;
 
 global player_name: char[8] = "Carl";
 global intro_played: bool;

@@ -185,7 +185,7 @@ class VariableLayoutBuilder():
             else:
                 value = eval.check_for_literals(variable.initializer)
 
-                if not value:
+                if value is None:
                     print(variable.initializer.at.format_message('variables can only be initialized with a constant'))
                     sys.exit()
 

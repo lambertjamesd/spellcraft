@@ -4,10 +4,21 @@
 #include "../menu/menu_common.h"
 #include "../math/mathf.h"
 #include "../resource/material_cache.h"
+#include "../player/inventory.h"
 
 #define RUNE_SHOW_TIME              3.0f
 #define RUNE_FADE_TIME              0.25f
 #define RUNE_FLASH_TIME             2.0f
+
+static const char* tablet_images[] = {
+    "rom:/images/menu/tablets/tablet_level_1.sprite",
+    "rom:/images/menu/tablets/tablet_level_2.sprite",
+    "rom:/images/menu/tablets/tablet_level_3.sprite",
+    "rom:/images/menu/tablets/tablet_level_4.sprite",
+    "rom:/images/menu/tablets/tablet_level_5.sprite",
+};
+
+static const char* symbol_material = "rom:/materials/spell/symbols.mat";
 
 static const char* item_icon_materials[] = {
     [SPELL_SYMBOL_FIRE] = "rom:/materials/spell/symbols.mat",
@@ -54,8 +65,26 @@ static const char image_width_x[] = {
     [ITEM_TYPE_STAFF_DEFAULT] = 64,
 };
 
+struct offset_rect {
+    int8_t x, y;
+    uint8_t w, h;
+};
+
+static const struct offset_rect level_offset_rects[] = {
+    { 10, 11, 20, 20 },
+    { 10, 11, 20, 20 },
+    { 10, 13, 20, 20 },
+    { 7, 7, 16, 16 },
+    { 7, 7, 14, 14 },
+};
+
+bool show_item_is_spell(enum inventory_item_type type) {
+    return type >= SPELL_SYMBOL_FIRE && type <= SPELL_SYMBOL_LIFE;
+}
+
 void show_item_init(struct show_item* show_item) {
     show_item->item_material = NULL;
+    show_item->item_sprite = NULL;
     show_item->should_show = 0;
     show_item->show_item_timer = 0.0f;
     show_item->showing_item = 0;
@@ -65,9 +94,26 @@ void show_item_start(struct show_item* show_item, union cutscene_step_data* data
     show_item->should_show = data->show_item.should_show;
 
     if (data->show_item.should_show) {
-        show_item->showing_item = data->show_item.item;
-        show_item->show_item_timer = 0.0f;
-        show_item->item_material = material_cache_load(item_icon_materials[show_item->showing_item]);
+        if (show_item_is_spell(data->show_item.item)) {
+            int level = inventory_get_item_level(data->show_item.item) - 1;
+
+            if (level < 0) {
+                level = 0;
+            } else if (level >= 5) {
+                level = 4;
+            }
+
+            show_item->showing_item = data->show_item.item;
+            show_item->show_item_timer = 0.0f;
+            show_item->item_material = material_cache_load(symbol_material);
+            show_item->item_sprite = sprite_load(tablet_images[level]);
+
+        } else {
+            show_item->showing_item = data->show_item.item;
+            show_item->show_item_timer = 0.0f;
+            show_item->item_material = material_cache_load(item_icon_materials[show_item->showing_item]);
+            show_item->item_sprite = NULL;
+        }
     } else {
         show_item->show_item_timer = RUNE_FADE_TIME;
     }
@@ -86,8 +132,13 @@ bool show_item_update(struct show_item* show_item, union cutscene_step_data* dat
     bool result = show_item->show_item_timer == target;
 
     if (result && target == 0) {
-        material_cache_release(show_item->item_material);
+        if (show_item->item_material) {
+            material_cache_release(show_item->item_material);
+        }
         show_item->item_material = NULL;
+        if (show_item->item_sprite) {
+            sprite_free(show_item->item_sprite);
+        }
     }
 
     return result;
@@ -119,7 +170,34 @@ void show_item_render(struct show_item* show_item) {
             32, 32
         );
 
-        if (show_item->item_material && (!show_item->showing_item || show_item->show_item_timer > RUNE_FADE_TIME)) {
+        bool is_showing = !show_item->showing_item || show_item->show_item_timer > RUNE_FADE_TIME;
+
+        int x = 160 - 24;
+        int y = 80 - 24;
+        int w = 48;
+        int h = 48;
+
+        if (show_item->item_sprite && is_showing) {
+            rspq_block_run(sprite_blit->block);
+            rdpq_sprite_blit(show_item->item_sprite, 160 - 24, 80 - 24, NULL);
+
+            int level = inventory_get_item_level(show_item->showing_item) - 1;
+
+            if (level < 0) {
+                level = 0;
+            } else if (level >= 5) {
+                level = 4;
+            }
+
+            const struct offset_rect* offsets = &level_offset_rects[level];
+
+            x += offsets->x;
+            y += offsets->y;
+            w = offsets->w;
+            h = offsets->h;
+        }
+
+        if (show_item->item_material && is_showing) {
             rspq_block_run(show_item->item_material->block);
 
             if (!show_item->showing_item) {
@@ -132,8 +210,8 @@ void show_item_render(struct show_item* show_item) {
 
             rdpq_texture_rectangle_scaled(
                 TILE0, 
-                160 - 24, 80 - 24,
-                160 + 24, 80 + 24,
+                x, y,
+                x + w, y + h,
                 offset, 0,
                 size + offset, show_item->item_material->tex0.sprite->height
             );

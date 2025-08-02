@@ -5,12 +5,12 @@ import cutscene.parser
 import cutscene.variable_layout
 
 mapping = {
-    "has_fire_rune": 'SPELL_SYMBOL_FIRE',
-    "has_ice_rune": 'SPELL_SYMBOL_ICE',
-    "has_earth_rune": 'SPELL_SYMBOL_EARTH',
-    "has_air_rune": 'SPELL_SYMBOL_AIR',
-    "has_life_rune": 'SPELL_SYMBOL_LIFE',
-    "has_recast_rune": 'SPELL_SYMBOL_RECAST',
+    "fire_rune_level": 'SPELL_SYMBOL_FIRE',
+    "ice_rune_level": 'SPELL_SYMBOL_ICE',
+    "earth_rune_level": 'SPELL_SYMBOL_EARTH',
+    "air_rune_level": 'SPELL_SYMBOL_AIR',
+    "life_rune_level": 'SPELL_SYMBOL_LIFE',
+    "recast_rune_level": 'SPELL_SYMBOL_RECAST',
     "has_staff_default": 'ITEM_TYPE_STAFF_DEFAULT',
 }
 

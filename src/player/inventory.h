@@ -40,6 +40,8 @@ void inventory_destroy();
 bool inventory_has_item(enum inventory_item_type type);
 void inventory_unlock_item(enum inventory_item_type type);
 
+int inventory_get_item_level(enum inventory_item_type type);
+
 struct staff_stats* inventory_equipped_staff();
 void inventory_equip_staff(enum inventory_item_type type);
 

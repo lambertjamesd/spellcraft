@@ -9,6 +9,7 @@
 
 struct show_item {
     struct material* item_material;
+    sprite_t* item_sprite;
     uint16_t showing_item;
     uint16_t should_show;
     float show_item_timer;
