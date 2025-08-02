@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "assets.h"
 #include "../time/time.h"
+#include "../player/inventory.h"
 
 #define MAX_MODIFIER_COUNT  4
 
@@ -72,6 +73,10 @@ int spell_block_layout(struct spell_block* spell_blocks, struct spell* spell) {
     }
 
     current_block->modfiier_count = MAX_MODIFIER_COUNT;
+
+    if (current_block->primary_rune) {
+        current_block->modfiier_count = inventory_get_item_level(current_block->primary_rune) - 1;
+    }
 
     ++current_block;
 

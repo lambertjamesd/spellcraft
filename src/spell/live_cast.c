@@ -2,6 +2,7 @@
 
 #include <malloc.h>
 #include "../time/time.h"
+#include "../player/inventory.h"
 
 #define MAX_COLS    32
 
@@ -71,7 +72,9 @@ bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_ty
         return false;
     }
 
-    for (int prev = live_cast->current_spell_output - 1; prev >= 0; prev -= 1) {
+    int prev = live_cast->current_spell_output - 1;
+
+    for (; prev >= 0; prev -= 1) {
         struct spell_symbol curr_symbol = spell_get_symbol(&live_cast->pending_spell, prev, 0);
 
         if (curr_symbol.type == symbol_type) {
@@ -81,6 +84,16 @@ bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_ty
             }
         } else if (curr_symbol.type == SPELL_SYMBOL_BREAK) {
             break;
+        }
+    }
+
+    if (symbol_type >= SPELL_SYMBOL_FIRE && symbol_type <= SPELL_SYMBOL_LIFE) {
+        struct spell_symbol base_symbol = spell_get_symbol(&live_cast->pending_spell, prev + 1, 0);
+        int current_level = inventory_get_item_level(live_cast->current_spell_output - 1 == prev ? symbol_type : base_symbol.type);
+        int needed_level = live_cast->current_spell_output - prev;
+
+        if (current_level < needed_level) {
+            return false;
         }
     }
 
