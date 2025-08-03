@@ -224,7 +224,7 @@ void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause,
     };
 }
 
-void cutscene_builder_dialog(struct cutscene_builder* builder, char* message) {
+void cutscene_builder_dialog(struct cutscene_builder* builder, const char* message) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
 
     char* message_copy = malloc(strlen(message) + 1);

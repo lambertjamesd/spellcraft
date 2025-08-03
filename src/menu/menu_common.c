@@ -50,6 +50,7 @@ void menu_common_init() {
 }
 
 void menu_common_render_background(int x, int y, int w, int h) {
+    rdpq_sync_pipe();
     rspq_block_run(menu_border_material->block);
 
     rdpq_texture_rectangle(
@@ -112,6 +113,7 @@ void menu_common_render_background(int x, int y, int w, int h) {
         3, 1
     );
 
+    rdpq_sync_pipe();
     rspq_block_run(menu_background_material->block);
 
     rdpq_texture_rectangle_scaled(

@@ -21,16 +21,46 @@ static const char* tablet_images[] = {
 static const char* symbol_material = "rom:/materials/spell/symbols.mat";
 
 static const char* item_icon_materials[] = {
-    [SPELL_SYMBOL_FIRE] = "rom:/materials/spell/symbols.mat",
-    [SPELL_SYMBOL_ICE] = "rom:/materials/spell/symbols.mat",
-    [SPELL_SYMBOL_EARTH] = "rom:/materials/spell/symbols.mat",
-    [SPELL_SYMBOL_AIR] = "rom:/materials/spell/symbols.mat",
-    [SPELL_SYMBOL_LIFE] = "rom:/materials/spell/symbols.mat",
-
     [SPELL_SYMBOL_RECAST] = "rom:/materials/spell/symbols.mat",
     // SPELL_SYMBOL_PASS_DOWN,
 
     [ITEM_TYPE_STAFF_DEFAULT] = "rom:/materials/objects/icons/default_staff_icon.mat",
+};
+
+struct spell_level_messages {
+    const char* messages[5];
+};
+
+static struct spell_level_messages spell_level_message[] = {
+    [SPELL_SYMBOL_FIRE] = {
+        .messages = {
+            "You got the fire rune tablet!\n\nPress C-right to activate it then A to cast flame sword",
+            "You upgraded the fire rune tablet!\n\nPress C-right followed by a another C button to combine elements. Press A to cast the spell",
+            "You upgraded the fire rune tablet!\n\nYou can now combine up to 2 additional elements with the fire rune.",
+            "You upgraded the fire rune tablet!\n\nYou can now combine up to 3 elements with the fire rune.",
+            "You mastered the fire rune tablet!\n\nYou can now combine all 4 additional elements and fire spells are stronger.",
+        },
+    },
+    [SPELL_SYMBOL_ICE] = {
+        .messages = {
+            "You got the ice rune tablet!\n\nPress C-left to cast ice sword",
+        },
+    },
+    [SPELL_SYMBOL_EARTH] = {
+        .messages = {
+            "You got the ice rune tablet!\n\nPress C-left to cast ice sword",
+        },
+    },
+    [SPELL_SYMBOL_AIR] = {
+        .messages = {
+            "You got the ice rune tablet!\n\nPress C-left to cast ice sword",
+        },
+    },
+    [SPELL_SYMBOL_LIFE] = {
+        .messages = {
+            "You got the ice rune tablet!\n\nPress C-left to cast ice sword",
+        },
+    },
 };
 
 static char* item_get_message[] = {
@@ -234,9 +264,17 @@ void show_item_render(struct show_item* show_item) {
 void show_item_in_cutscene(struct cutscene_builder* cutscene_builder, enum inventory_item_type item) {
     cutscene_builder_pause(cutscene_builder, true, true, UPDATE_LAYER_WORLD);
     cutscene_builder_show_item(cutscene_builder, item, true);
+
+    const char* message = NULL;
+
+    if (show_item_is_spell(item)) {
+        message = spell_level_message[item].messages[inventory_get_item_level(item)];
+    } else {
+        message = item_get_message[item];
+    }
     
-    if (item_get_message[item]) {
-        cutscene_builder_dialog(cutscene_builder, item_get_message[item]);
+    if (message) {
+        cutscene_builder_dialog(cutscene_builder, message);
     }
 
     cutscene_builder_show_item(cutscene_builder, 1, false);

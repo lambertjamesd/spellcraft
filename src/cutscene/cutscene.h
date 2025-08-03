@@ -123,7 +123,7 @@ struct cutscene* cutscene_load(char* filename);
 void cutscene_builder_init(struct cutscene_builder* builder);
 
 void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode, int layers);
-void cutscene_builder_dialog(struct cutscene_builder* builder, char* message);
+void cutscene_builder_dialog(struct cutscene_builder* builder, const char* message);
 void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type item, bool should_show);
 void cutscene_builder_delay(struct cutscene_builder* builder, float delay);
 void cutscene_builder_interact_npc(

@@ -132,8 +132,8 @@ void hud_render(void *data) {
 
     for (int i = SPELL_SYMBOL_FIRE; i <= SPELL_SYMBOL_AIR; i += 1) {
         rdpq_sync_pipe();
-        int symbol_level = inventory_get_item_level(i);
         if (block.primary_rune == ITEM_TYPE_NONE) {
+            int symbol_level = inventory_get_item_level(i);
             if (symbol_level > 0) {
                 rdpq_set_prim_color(spell_active_colors[ITEM_TYPE_NONE]);
             } else {
@@ -142,7 +142,7 @@ void hud_render(void *data) {
         } else {
             if (i == block.primary_rune) {
                 rdpq_set_prim_color(spell_active_colors[i]);
-            } else if (block.length < symbol_level) {
+            } else if (block.length < inventory_get_item_level(block.primary_rune)) {
                 rdpq_set_prim_color(spell_active_colors[ITEM_TYPE_NONE]);
             } else {
                 rdpq_set_prim_color(inactive_color);

@@ -50,5 +50,6 @@ void inventory_set_equipped_spell(unsigned index, struct spell* spell);
 
 struct spell* inventory_get_built_in_spell(unsigned x, unsigned y);
 struct spell* inventory_get_custom_spell(unsigned index);
+bool inventory_is_upgrade_item(enum inventory_item_type type);
 
 #endif

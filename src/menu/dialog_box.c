@@ -63,6 +63,8 @@ void dialog_box_render(void* data) {
         53
     );
 
+    rdpq_sync_pipe();
+
     rdpq_text_printn(&(rdpq_textparms_t){
             // .line_spacing = -3,
             .align = ALIGN_LEFT,
