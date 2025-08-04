@@ -74,6 +74,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
 
     treasure_chest->animation_set = animation_cache_load("rom:/meshes/objects/treasurechest.anim");
     treasure_chest->animations.open = animation_set_find_clip(treasure_chest->animation_set, "open");
+    treasure_chest->animations.idle = animation_set_find_clip(treasure_chest->animation_set, "idle");
 
     animator_init(&treasure_chest->animator, treasure_chest->renderable.armature.bone_count);
     update_add(treasure_chest, treasure_chest_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
@@ -81,6 +82,8 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
     if (inventory_has_item(definition->item) && !inventory_is_upgrade_item(definition->item)) {
         animator_run_clip(&treasure_chest->animator, treasure_chest->animations.open, animation_clip_get_duration(treasure_chest->animations.open), false);
         treasure_chest->item_type = ITEM_TYPE_NONE;
+    } else {
+        animator_run_clip(&treasure_chest->animator, treasure_chest->animations.idle, 0.0f, false);
     }
 }
 

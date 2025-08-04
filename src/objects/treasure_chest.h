@@ -11,6 +11,7 @@
 
 struct treasure_animations {
     struct animation_clip* open;
+    struct animation_clip* idle;
 };
 
 struct treasure_chest {
