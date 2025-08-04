@@ -20,8 +20,7 @@ struct animation_clip {
     uint16_t frame_size;
 
     uint16_t has_events: 1;
-    uint16_t has_frame_0: 1;
-    uint16_t has_frame_1: 1;
+    uint16_t has_image_frames: 1;
     uint16_t has_prim_color: 1;
 
     uint32_t frames_rom_address;

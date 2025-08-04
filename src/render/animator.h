@@ -19,6 +19,8 @@ struct animator {
     uint16_t loop: 1;
     uint16_t done: 1;
     uint16_t events;
+    uint8_t image_frame_0;
+    uint8_t image_frame_1;
 };
 
 void animator_init(struct animator* animator, int bone_count);

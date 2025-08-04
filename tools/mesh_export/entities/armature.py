@@ -60,8 +60,7 @@ class ArmatureAttributes():
             self.bone_attributes.append(BoneAttributes())
 
         self.has_events: bool = False
-        self.has_frame_0: bool = False
-        self.has_frame_1: bool = False
+        self.has_image_frames: bool = False
         self.has_prim_color: bool = False
 
     def determine_attribute_list_size(self) -> int:
@@ -73,6 +72,9 @@ class ArmatureAttributes():
         if self.has_events:
             result += 2
 
+        if self.has_image_frames:
+            result += 2
+
         return result
     
     def determine_used_flags(self) -> int:
@@ -81,14 +83,11 @@ class ArmatureAttributes():
         if self.has_events:
             result |= 1 << 15
         
-        if self.has_frame_0:
+        if self.has_image_frames:
             result |= 1 << 14
 
-        if self.has_frame_1:
-            result |= 1 << 13
-
         if self.has_prim_color:
-            result |= 1 << 12
+            result |= 1 << 13
 
         return result
 
@@ -155,18 +154,24 @@ class PackedEventData():
             result |= 1 << 0
         
         return result
+    
+class PackedImageFrameData():
+    def __init__(self):
+        self.image_frame_0 = None
+        self.image_frame_1 = None
 
 class PackedFrame():
-    def __init__(self, pose: list[PackedArmatureData], events: PackedEventData):
+    def __init__(self, pose: list[PackedArmatureData], events: PackedEventData, image_data: PackedImageFrameData):
         self.pose: list[PackedArmatureData] = pose
         self.events: PackedEventData = events
+        self.image_data: PackedImageFrameData = image_data
 
 class PackedAnimation():
     def __init__(self):
         self._frames: list[PackedFrame] = []
 
-    def add_frame(self, frame: list[PackedArmatureData], events: PackedEventData):
-        self._frames.append(PackedFrame(frame, events))
+    def add_frame(self, frame: list[PackedArmatureData], events: PackedEventData, image_data: PackedImageFrameData):
+        self._frames.append(PackedFrame(frame, events, image_data))
 
     def frame_count(self):
         return len(self._frames)
@@ -183,6 +188,8 @@ class PackedAnimation():
         for frame in self._frames:
             if frame.events.attack_event:
                 result.has_events = True
+            if frame.image_data.image_frame_0 != None or frame.image_data.image_frame_1 != None:
+                result.has_image_frames = True
 
         return result
     
@@ -193,6 +200,8 @@ class PackedAnimation():
 
             if attributes.has_events:
                 file.write(frame.events.pack().to_bytes(2, 'big'))
+            if attributes.has_image_frames:
+                file.write(struct.pack('>BB', frame.image_data.image_frame_0 or 0, frame.image_data.image_frame_1 or 0))
 
 
 class ArmatureBone:
@@ -340,6 +349,16 @@ class ArmatureData:
 
         if 'event_attack' in self.obj and self.obj['event_attack']:
             result.attack_event = True
+
+        return result
+    
+    def generate_image_frame_data(self) -> PackedImageFrameData:
+        result: PackedImageFrameData = PackedImageFrameData()
+
+        if 'image_frame_0' in self.obj:
+            result.image_frame_0 = self.obj['image_frame_0']
+        if 'image_frame_1' in self.obj:
+            result.image_frame_0 = self.obj['image_frame_1']
 
         return result
 

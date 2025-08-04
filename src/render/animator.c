@@ -161,6 +161,13 @@ void animator_blend_transform(struct animator* animator, int16_t* frame, struct 
         animator->events |= (uint16_t)*frame;
         frame += 1;
     }
+
+    if (animator->current_clip->has_image_frames) {
+        uint16_t frames = (uint16_t)*frame;
+        animator->image_frame_0 = (uint8_t)(frames >> 8);
+        animator->image_frame_1 = (uint8_t)(frames & 0xFF);
+        frame += 1;
+    }
 }
 
 void animator_read_transform_with_weight(struct animator* animator, struct Transform* transforms, float weight) {
