@@ -63,6 +63,7 @@ RUN apt-get install -y \
     libxxf86vm1 \
     libxrandr2 \
     libxkbcommon0 \
+    python3 \
     && apt-get clean
 
 WORKDIR /spellcraft
