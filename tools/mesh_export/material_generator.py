@@ -43,7 +43,12 @@ def generate_tex_node(node_cache: dict[str, bpy.types.NodeSocket], material: bpy
         image.location = (-1000, -400)
 
     if with_tex:
-        image_path = os.path.join(os.getcwd(), with_tex.filename)
+        filename = with_tex.filename
+
+        if not filename and with_tex.frames:
+            filename = with_tex.frames[0]
+
+        image_path = os.path.join(os.getcwd(), filename)
         image.image = bpy.data.images.load(image_path)
         if with_tex.s.mirror or with_tex.t.mirror:
             image.extension = "MIRROR"

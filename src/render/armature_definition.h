@@ -2,6 +2,7 @@
 #define __RENDER_ARMATURE_DEFINITION_H__
 
 #include <stdint.h>
+#include <t3d/t3d.h>
 
 #define ARM_NO_PARENT_LINK  0xff
 
@@ -15,6 +16,9 @@ struct armature_definition {
     uint8_t* parent_linkage;
     struct armature_packed_transform* default_pose;
     uint16_t bone_count;
+    uint8_t image_frames_0;
+    uint8_t image_frames_1;
+    sprite_t** frames;
 };
 
 #endif

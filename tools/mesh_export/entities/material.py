@@ -339,7 +339,7 @@ class Tex():
         self.mag_filter = "linear"
         self.s = TexAxis()
         self.t = TexAxis()
-        self.sequence_length: int = 0
+        self.frames: list[str] | None = None
         self.palette_data = None
         self.fmt = 'FMT_NONE'
         self.width = 128
@@ -356,7 +356,7 @@ class Tex():
         result.mag_filter = self.mag_filter
         result.s = self.s
         result.t = self.t
-        result.sequence_length = self.sequence_length
+        result.frames = self.frames
         result.palette_data = self.palette_data
         result.fmt = self.fmt
         result.width = self.width
@@ -371,6 +371,15 @@ class Tex():
             self._png_metadata = None
 
         self._png_metadata = PngMetadata(filename)
+        self.fmt = self._png_metadata.fmt
+        self.width = self._png_metadata.width
+        self.height = self._png_metadata.height
+        self.palette_data = self._png_metadata.palette
+
+    def set_frames(self, frames):
+        self.frames = frames
+
+        self._png_metadata = PngMetadata(frames[0])
         self.fmt = self._png_metadata.fmt
         self.width = self._png_metadata.width
         self.height = self._png_metadata.height
@@ -393,11 +402,14 @@ class Tex():
         return bool(self_palette_info) and self_palette_info == other_palette_info
     
     def has_only_palette(self):
-        return bool(self.palette_data) and not self.filename
+        return bool(self.palette_data) and not self.filename and self.frames
 
     def rom_filename(self) -> str:
         return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
         
+    def frame_filenames(self) -> list[str]:
+        return list(map(lambda x: f"rom:{x[len('assets'):-len('.png')]}.sprite", self.frames))
+
     def byte_size(self) -> int:
         return _fmt_bit_size[self.fmt] * self.width * self.height // 8
     
@@ -413,7 +425,8 @@ class Tex():
             self.width == value.width and \
             self.height == value.height and \
             self.s == value.s and \
-            self.t == value.t
+            self.t == value.t and \
+            self.frames == value.frames
                 
 
     def __str__(self):
@@ -947,11 +960,12 @@ def _parse_tex(json_data, key_path, relative_to):
         result.t.max = result.height << 2
         result.t.mask = log_pow_2(result.height)
     else:
-        if not 'filename' in json_data:
-            raise Exception(f"{key_path}.filename must be defined")
+        if not 'filename' in json_data and not 'frames' in json_data:
+            raise Exception(f"{key_path}.filename or .frames must be defined")
         
-        _check_is_string(json_data['filename'], f"{key_path}.filename")
-        result.set_filename(_resolve_tex(json_data['filename'], relative_to))
+        if 'filename' in json_data:
+            _check_is_string(json_data['filename'], f"{key_path}.filename")
+            result.set_filename(_resolve_tex(json_data['filename'], relative_to))
 
         if 'tmemAddr' in json_data:
             _check_is_int(json_data['tmemAddr'], f"{key_path}.tmemAddr", 0, 4096)
@@ -971,8 +985,8 @@ def _parse_tex(json_data, key_path, relative_to):
         if 't' in json_data:
             _parse_tex_axis(json_data['t'], result.height, result.t, f"{key_path}.t")
 
-        if 'sequenceLength' in json_data:
-            result.sequence_length = _check_is_int(json_data['sequenceLength'], f"{key_path}.sequenceLength", 0, 64)
+        if 'frames' in json_data:
+            result.set_frames(list(map(lambda x: _resolve_tex(x, relative_to), json_data['frames'])))
 
     return result
 

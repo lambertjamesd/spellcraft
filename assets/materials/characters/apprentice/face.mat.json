@@ -1,7 +1,9 @@
 {
     "tex0": {
-        "filename": "../../../images/characters/apprentice/face_expression-0001.png",
-        "sequenceLength": 2
+        "frames": [
+            "../../../images/characters/apprentice/face_expression-0001.png",
+            "../../../images/characters/apprentice/face_expression-0002.png"
+        ]
     },
     "combineMode": [{
         "color": ["TEX0", "0", "SHADE", "0"],

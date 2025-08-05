@@ -16,6 +16,9 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
     if start.palette_data == end.palette_data:
         result.palette_data = None
 
+    if start.frames == end.frames:
+        result.frames = None
+
     return result
 
 def determine_fog_delta(start: material.Fog | None, end: material.Fog | None) -> material.Fog | None:
@@ -80,7 +83,7 @@ def determine_texture_cost(tex: material.Tex | None) -> float:
 
     result = 2
 
-    if tex.filename:
+    if tex.filename or tex.frames:
         result += tex.byte_size() * 0.0072
     elif tex.palette_data:
         result += len(tex.palette_data) * 2 * 0.0072
@@ -139,13 +142,15 @@ def apply_tex_delta(delta: material.Tex, into: material.Tex | None) -> material.
     if delta.palette_data:
         result.palette_data = delta.palette_data
 
+    if delta.frames:
+        result.frames = delta.frames
+
     result.tmem_addr = delta.tmem_addr
     result.palette = delta.palette
     result.min_filter = delta.min_filter
     result.mag_filter = delta.mag_filter
     result.s = delta.s
     result.t = delta.t
-    result.sequence_length = delta.sequence_length
     result.fmt = delta.fmt
     result.width = delta.width
     result.height = delta.height

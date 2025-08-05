@@ -337,6 +337,13 @@ def _serialize_tex(file, tex: material.Tex, prev_tex: material.Tex = None):
     file.write(tex.width.to_bytes(2, 'big'))
     file.write(tex.height.to_bytes(2, 'big'))
 
+    if tex.frames:
+        file.write(len(tex.frames).to_bytes(2, 'big'))
+        for frame in tex.frame_filenames():
+            _serialze_string(file, frame)
+    else:
+        file.write(b'\0\0')
+
     file.write(struct.pack('>ff', tex.s.scroll, -tex.t.scroll))
 
 def _serialize_palette(file, palette: list, palette_offset: int):

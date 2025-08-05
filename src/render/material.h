@@ -17,11 +17,11 @@ struct material_tex {
     uint16_t tmem_addr;
     uint16_t fmt;
     uint16_t width, height;
+    uint16_t num_frames;
+    sprite_t** frames;
     float scroll_x, scroll_y;
     // rdpq_set_lookup_address
     // surface_make_placeholder_linear
-    // sprite_t** frames;
-    // uint16_t num_frames;
 };
 
 struct material_palette {

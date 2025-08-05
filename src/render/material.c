@@ -24,9 +24,21 @@ void material_init(struct material* material) {
 void material_destroy(struct material* material) {
     if (material->tex0.sprite) {
         sprite_cache_release(material->tex0.sprite);
+
+        for (int i = 0; i < material->tex0.num_frames; i += 1) {
+            sprite_cache_release(material->tex0.frames[i]);
+        }
+
+        free(material->tex0.frames);
     }
     if (material->tex1.sprite) {
         sprite_cache_release(material->tex1.sprite);
+
+        for (int i = 0; i < material->tex1.num_frames; i += 1) {
+            sprite_cache_release(material->tex1.frames[i]);
+        }
+
+        free(material->tex1.frames);
     }
     rspq_block_free(material->block);
     free(material->palette.tlut);
@@ -83,6 +95,25 @@ void material_load_tex(struct material_tex* tex, FILE* file) {
 
     fread(&tex->width, 2, 1, file);
     fread(&tex->height, 2, 1, file);
+    
+    fread(&tex->num_frames, 2, 1, file);
+
+    if (tex->num_frames) {
+        tex->frames = malloc(sizeof(sprite_t*) * tex->num_frames);
+
+        for (int i = 0; i < tex->num_frames; i += 1) {
+            uint8_t frame_len;
+            fread(&frame_len, 1, 1, file);
+
+            char frame[frame_len + 1];
+            fread(frame, 1, frame_len, file);
+            frame[frame_len] = '\0';
+
+            tex->frames[i] = sprite_cache_load(frame);
+        }
+    } else {
+        tex->frames = NULL;
+    }
 
     fread(&tex->scroll_x, sizeof(float), 1, file);
     fread(&tex->scroll_y, sizeof(float), 1, file);
@@ -107,6 +138,15 @@ int material_size_to_clamp(int size) {
 
 void material_upload_tex(rdpq_tile_t tile, struct material_tex* tex) {
     surface_t surf = sprite_get_pixels(tex->sprite);
+    rdpq_texparms_t tex_parms = {
+        .palette = tex->params.palette,
+        .tmem_addr = tex->tmem_addr,
+    };
+    rdpq_tex_upload(tile, &surf, &tex_parms);
+}
+
+void material_upload_placeholder(rdpq_tile_t tile, struct material_tex* tex) {
+    surface_t surf = surface_make_placeholder_linear(tile + 1, tex->fmt, tex->width, tex->height);
     rdpq_texparms_t tex_parms = {
         .palette = tex->params.palette,
         .tmem_addr = tex->tmem_addr,
@@ -294,6 +334,8 @@ void material_load(struct material* into, FILE* material_file) {
     if (into->tex0.texture_enabled) {
         if (into->tex0.sprite) {
             material_upload_tex(TILE0, &into->tex0);
+        } else if (into->tex0.num_frames) {
+            material_upload_placeholder(TILE0, &into->tex0);
         }
 
         material_use_tex(TILE0, &into->tex0);
@@ -301,6 +343,8 @@ void material_load(struct material* into, FILE* material_file) {
     if (into->tex1.texture_enabled) {
         if (into->tex1.sprite) {
             material_upload_tex(TILE1, &into->tex1);
+        } else if (into->tex1.num_frames) {
+            material_upload_placeholder(TILE1, &into->tex1);
         }
 
         material_use_tex(TILE1, &into->tex1);

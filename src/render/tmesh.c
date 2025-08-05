@@ -1,6 +1,7 @@
 #include "tmesh.h"
 
 #include "../resource/material_cache.h"
+#include "../resource/sprite_cache.h"
 
 // T3MS
 #define EXPECTED_HEADER 0x54334D53
@@ -110,6 +111,30 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     armature_definition_init(&tmesh->armature, bone_count);
     fread(tmesh->armature.parent_linkage, 1, bone_count, file);
     fread(tmesh->armature.default_pose, sizeof(struct armature_packed_transform), bone_count, file);
+
+    if (tmesh->armature.bone_count) {
+        fread(&tmesh->armature.image_frames_0, 1, 1, file);
+        fread(&tmesh->armature.image_frames_1, 1, 1, file);
+    } else {
+        tmesh->armature.image_frames_0 = 0;
+        tmesh->armature.image_frames_1 = 0;
+    }
+
+    int total_images = tmesh->armature.image_frames_0 + tmesh->armature.image_frames_1;
+
+    if (total_images) {
+        tmesh->armature.frames = malloc(sizeof(sprite_t*) * total_images);
+        for (int i = 0; i < total_images; i += 1) {
+            uint8_t filename_len;
+            fread(&filename_len, 1, 1, file);
+            char filename[filename_len + 1];
+            fread(filename, filename_len, 1, file);
+            filename[filename_len] = '\0';
+            tmesh->armature.frames[i] = sprite_cache_load(filename);
+        }
+    } else {
+        tmesh->armature.frames = NULL;
+    }
 
     // load attatchments
     fread(&tmesh->attatchment_count, 2, 1, file);
@@ -227,4 +252,14 @@ void tmesh_release(struct tmesh* tmesh) {
         }
         free(tmesh->attatchments);
     }
+
+    int total_frames = tmesh->armature.image_frames_0 + tmesh->armature.image_frames_1;
+
+    for (int i = 0; i < total_frames; i += 1) {
+        sprite_cache_release(tmesh->armature.frames[i]);
+    }
+
+    free(tmesh->armature.frames);
+
+    armature_definition_destroy(&tmesh->armature);
 }

@@ -8,6 +8,7 @@ import math
 sys.path.append(os.path.dirname(__file__))
 
 from . import export_settings
+from . import material_extract
 
 class BoneLinkage():
     def __init__(self, name: str, bone_index: int, transform: mathutils.Matrix):
@@ -239,6 +240,8 @@ class ArmatureData:
 
         self._filtered_bones: dict[str, ArmatureBone] = {}
         self._ordered_bones: list[ArmatureBone] = []
+        self.image_frame_list_0: list[str] = []
+        self.image_frame_list_1: list[str] = []
 
     def check_connected_mesh_object(self, obj: bpy.types.Object):
         if obj.type != "MESH":
@@ -260,6 +263,14 @@ class ArmatureData:
                 
         for group_index in used_group_indices:
             self.mark_bone_used(obj.vertex_groups[group_index].name)
+
+        for material in mesh.materials:
+            parsed_filename = material_extract.load_material_with_name(material)
+
+            if parsed_filename.tex0 and parsed_filename.tex0.frames:
+                self.image_frame_list_0 = parsed_filename.tex0.frame_filenames()
+            if parsed_filename.tex1 and parsed_filename.tex1.frames:
+                self.image_frame_list_1 = parsed_filename.tex1.frame_filenames()
 
 
     def mark_bone_used(self, name: str | None):
@@ -412,3 +423,10 @@ def write_armature(file, arm: ArmatureData | None, settings: export_settings.Exp
 
     for bone_pose in default_pose:
         bone_pose.write_to_file(file)
+
+    file.write(struct.pack('>BB', len(arm.image_frame_list_0), len(arm.image_frame_list_1)))
+
+    for image in (arm.image_frame_list_0 + arm.image_frame_list_1):
+        encoded = image.encode()
+        file.write(len(encoded).to_bytes(1, 'big'))
+        file.write(encoded)
