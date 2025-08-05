@@ -28,7 +28,7 @@ static struct torch_type_def torch_defs[] = {
     },
     [GROUND_TORCH_LIGHTNING] = {
         .mesh_filename = "rom:/meshes/puzzle/electric_torch.tmesh",
-        .active_effect = "rom:/meshes/objects/torch_lightning.tmesh",
+        .active_effect = "rom:/meshes/puzzle/torch_lightning.tmesh",
         .start_damage = DAMAGE_TYPE_LIGHTING,
         .stop_damage = DAMAGE_TYPE_WATER,
     },
