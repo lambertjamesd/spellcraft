@@ -31,9 +31,9 @@ void setup() {
     init_engine();
     savefile_new();
 
-    scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    // scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    scene_queue_next("rom:/scenes/overworld_test.scene");
     // scene_queue_next("rom:/scenes/ability_testing.scene");
-    // scene_queue_next("rom:/scenes/material_testing.scene");
     // scene_queue_next("rom:/scenes/playerhome_outside.scene");
 
     current_scene = scene_load(scene_get_next());
