@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "armature_definition.h"
 #include "animation_clip.h"
+#include "armature.h"
 #include "../math/transform.h"
 
 struct animator {
@@ -25,7 +26,7 @@ struct animator {
 
 void animator_init(struct animator* animator, int bone_count);
 void animator_destroy(struct animator* animator);
-void animator_update(struct animator* animator, struct Transform* transforms, float delta_time);
+void animator_update(struct animator* animator, struct armature* armature, float delta_time);
 void animator_run_clip(struct animator* animator, struct animation_clip* clip, float start_time, bool loop);
 int animator_is_running(struct animator* animator);
 bool animator_is_running_clip(struct animator* animator, struct animation_clip* clip);

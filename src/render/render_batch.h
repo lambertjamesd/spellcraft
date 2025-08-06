@@ -38,6 +38,29 @@ struct render_batch;
 
 typedef void (*RenderCallback)(void* data, struct render_batch* batch);
 
+enum element_attr_type {
+    ELEMENT_ATTR_NONE,
+    ELEMENT_ATTR_POSE,
+    ELEMENT_ATTR_IMAGE,
+    ELEMENT_ATTR_PRIM_COLOR,
+};
+
+struct element_attr {
+    uint8_t type;
+    uint8_t offset;
+    union {
+        struct {
+            T3DMat4FP* pose;
+        } pose;
+        struct {
+            sprite_t* sprite;
+        } image;
+        struct {
+            color_t color;
+        } prim;
+    };
+};
+
 struct render_batch_element {
     struct material* material;
     uint16_t type;
@@ -47,9 +70,9 @@ struct render_batch_element {
             rspq_block_t* block;
             // T3DMat4FP* if transform_count == 1, T3DMat4FP** if > 1
             void* transform;
-            T3DMat4FP* pose;
-            short bone_count;
             short transform_count;
+            uint8_t attr_count;
+            struct element_attr* attrs;
             color_t color;
             uint8_t use_prim_color;
         } mesh;

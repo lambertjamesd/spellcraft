@@ -299,7 +299,7 @@ void jelly_king_attack_aeo(struct jelly_king* jelly_king) {
 
 void jelly_king_update(void* data) {
     struct jelly_king* jelly_king = (struct jelly_king*)data;
-    animator_update(&jelly_king->animator, jelly_king->renderable.armature.pose, fixed_time_step);
+    animator_update(&jelly_king->animator, &jelly_king->renderable.armature, fixed_time_step);
 
     jelly_king->collider_type.data.cylinder.half_height = jelly_king_collider.data.cylinder.half_height * jelly_king->renderable.armature.pose[0].scale.y;
     jelly_king->collider.center.y = jelly_king->collider_type.data.cylinder.half_height;

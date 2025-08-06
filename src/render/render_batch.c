@@ -24,7 +24,8 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->mesh.block = 0;
     result->mesh.transform = NULL;
     result->mesh.transform_count = 0;
-    result->mesh.pose = NULL;
+    result->mesh.attr_count = 0;
+    result->mesh.attrs = NULL;
     result->mesh.color = (color_t){255, 255, 255, 255};
     result->mesh.use_prim_color = 0;
     result->light_source = 0;
@@ -70,44 +71,83 @@ struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, 
     element->light_source = mesh->light_source;
     element->mesh.transform = transform;
     element->mesh.transform_count = transform_count;
-    element->mesh.pose = NULL;
+    element->mesh.attr_count = 0;
+    element->mesh.attrs = NULL;
 
-    if (armature && armature->bone_count) {
-        T3DMat4* pose = armature_build_pose(armature, batch->pool);
-        element->mesh.bone_count = armature->bone_count;
-        element->mesh.pose = render_batch_build_pose(pose, armature->bone_count);
+    if (armature) {
+        if (armature->bone_count) {
+            ++element->mesh.attr_count;
+        }
 
+        if (armature->image_frame_0 != NO_IMAGE_FRAME) {
+            ++element->mesh.attr_count;
+        }
+    }
 
-        if (attachments && mesh->attatchments) {
-            for (int i = 0; i < mesh->attatchment_count; i += 1) {
-                if (!attachments[i]) {
-                    continue;
-                }
+    if (element->mesh.attr_count) {
+        element->mesh.attrs = frame_malloc(batch->pool, sizeof(struct element_attr) * element->mesh.attr_count);
+    
+        if (!element->mesh.attrs) {
+            element->mesh.attr_count = 0;
+            return NULL;
+        }
+    }
 
-                T3DMat4FP** matrices = frame_malloc(batch->pool, sizeof(T3DMat4FP*) * (transform_count + 2));
+    struct element_attr* attr = element->mesh.attrs;
 
-                if (!matrices) {
-                    continue;
-                }
-
-                int matrix_index = 0;
-
-                if (transform_count > 1) {
-                    for (matrix_index = 0; matrix_index < transform_count; matrix_index += 1) {
-                        matrices[matrix_index] = ((T3DMat4FP**)transform)[matrix_index];
+    if (armature) {
+        if (armature->bone_count) {
+            T3DMat4* pose = armature_build_pose(armature, batch->pool);
+    
+            T3DMat4FP* pose_fp = render_batch_build_pose(pose, armature->bone_count);
+            
+            attr->type = ELEMENT_ATTR_POSE;
+            attr->offset = 0;
+            attr->pose.pose = pose_fp;
+    
+            if (attachments && mesh->attatchments) {
+                for (int i = 0; i < mesh->attatchment_count; i += 1) {
+                    if (!attachments[i]) {
+                        continue;
                     }
-                } else {
-                    matrices[matrix_index++] = transform;
+    
+                    T3DMat4FP** matrices = frame_malloc(batch->pool, sizeof(T3DMat4FP*) * (transform_count + 2));
+    
+                    if (!matrices) {
+                        continue;
+                    }
+    
+                    int matrix_index = 0;
+    
+                    if (transform_count > 1) {
+                        for (matrix_index = 0; matrix_index < transform_count; matrix_index += 1) {
+                            matrices[matrix_index] = ((T3DMat4FP**)transform)[matrix_index];
+                        }
+                    } else {
+                        matrices[matrix_index++] = transform;
+                    }
+    
+    
+                    struct armature_attatchment* linkage = &mesh->attatchments[i];
+    
+                    matrices[matrix_index++] = &pose_fp[linkage->bone_index];
+                    matrices[matrix_index++] = &linkage->local_transform;
+    
+                    render_batch_add_tmesh(batch, attachments[i], matrices, transform_count + 2, NULL, NULL);
                 }
-
-
-                struct armature_attatchment* linkage = &mesh->attatchments[i];
-
-                matrices[matrix_index++] = &element->mesh.pose[linkage->bone_index];
-                matrices[matrix_index++] = &linkage->local_transform;
-
-                render_batch_add_tmesh(batch, attachments[i], matrices, transform_count + 2, NULL, NULL);
             }
+            ++attr;
+        }
+
+        if (armature->image_frame_0 != NO_IMAGE_FRAME) {
+            if (armature->image_frame_0 < armature->definition->image_frames_0) {
+                attr->type = ELEMENT_ATTR_IMAGE;
+                attr->offset = 0;
+                attr->image.sprite = armature->definition->frames[armature->image_frame_0];
+            } else {
+                attr->type = ELEMENT_ATTR_NONE;
+            }
+            ++attr;
         }
     }
 
@@ -360,8 +400,20 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 continue;
             }
 
-            if (element->mesh.pose) {
-                t3d_segment_set(T3D_SEGMENT_SKELETON, element->mesh.pose);
+            struct element_attr* end = element->mesh.attrs + element->mesh.attr_count;
+
+            for (struct element_attr* attr = element->mesh.attrs; attr < end; ++attr) {
+                switch (attr->type) {
+                    case ELEMENT_ATTR_POSE:
+                        t3d_segment_set(T3D_SEGMENT_SKELETON, attr->pose.pose);
+                        break;
+                    case ELEMENT_ATTR_IMAGE:
+                        rdpq_set_lookup_address(attr->offset+1, (void*)PhysicalAddr(attr->image.sprite->data));
+                        break;
+                    case ELEMENT_ATTR_PRIM_COLOR:
+                        rdpq_set_prim_color(attr->prim.color);
+                        break;
+                }
             }
 
             if (element->mesh.transform_count) {

@@ -87,7 +87,7 @@ bool cutscene_actor_is_moving(struct cutscene_actor* actor) {
 }
 
 bool cutscene_actor_update(struct cutscene_actor* actor) {
-    animator_update(&actor->animator, actor->armature->pose, fixed_time_step * actor->animate_speed);
+    animator_update(&actor->animator, actor->armature, fixed_time_step * actor->animate_speed);
 
     if (!cutscene_actor_is_moving(actor)) {
         return false;

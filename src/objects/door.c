@@ -84,7 +84,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
 
 void door_update(void* data) {
     struct door* door = (struct door*)data;
-    animator_update(&door->animator, door->renderable.armature.pose, fixed_time_step);
+    animator_update(&door->animator, &door->renderable.armature, fixed_time_step);
 
     if (door->next_room != ROOM_NONE && !animator_is_running(&door->animator)) {
         current_scene->current_room = door->next_room;

@@ -115,7 +115,7 @@ void biter_update_target(struct biter* biter) {
 }
 
 void biter_update(struct biter* biter) {
-    animator_update(&biter->animator, biter->renderable.armature.pose, fixed_time_step);
+    animator_update(&biter->animator, &biter->renderable.armature, fixed_time_step);
 
     biter_update_target(biter);
 

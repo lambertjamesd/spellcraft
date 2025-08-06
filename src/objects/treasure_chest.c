@@ -44,7 +44,7 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
 
 void treasure_chest_update(void* data) {
     struct treasure_chest* treasure_chest = (struct treasure_chest*)data;
-    animator_update(&treasure_chest->animator, treasure_chest->renderable.armature.pose, fixed_time_step);
+    animator_update(&treasure_chest->animator, &treasure_chest->renderable.armature, fixed_time_step);
 }
 
 void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition) {

@@ -25,7 +25,7 @@ struct mesh_animation* mesh_animation_new(struct Vector3* position, struct Vecto
 }
 
 bool mesh_animation_update(struct mesh_animation* mesh_animation) {
-    animator_update(&mesh_animation->animtor, mesh_animation->renderable.armature.pose, fixed_time_step);
+    animator_update(&mesh_animation->animtor, &mesh_animation->renderable.armature, fixed_time_step);
     return animator_is_running(&mesh_animation->animtor);
 }
 

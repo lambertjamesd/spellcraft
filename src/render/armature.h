@@ -9,9 +9,10 @@
 #include "../render/frame_alloc.h"
 
 #define NO_BONE_PARENT  0xFF
+#define NO_IMAGE_FRAME  0xFF
 
 struct armature {
-    uint8_t* parent_linkage;
+    struct armature_definition* definition;
     struct Transform* pose;
     uint16_t bone_count;
     uint8_t image_frame_0;

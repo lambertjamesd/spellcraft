@@ -138,12 +138,14 @@ def apply_tex_delta(delta: material.Tex, into: material.Tex | None) -> material.
     
     if delta.filename:
         result.filename = delta.filename
+        result.frames = None
 
     if delta.palette_data:
         result.palette_data = delta.palette_data
 
     if delta.frames:
         result.frames = delta.frames
+        result.filename = None
 
     result.tmem_addr = delta.tmem_addr
     result.palette = delta.palette

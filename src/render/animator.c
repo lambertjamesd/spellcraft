@@ -32,6 +32,8 @@ void animator_init(struct animator* animator, int bone_count) {
     animator->next_frame_state_index = -1;
     animator->bone_count = bone_count;
     animator->events = 0;
+    animator->image_frame_0 = NO_IMAGE_FRAME;
+    animator->image_frame_1 = NO_IMAGE_FRAME;
 }
 
 void animator_destroy(struct animator* animator) {
@@ -291,14 +293,14 @@ void animator_step(struct animator* animator, float delta_time) {
     }
 }
 
-void animator_update(struct animator* animator, struct Transform* transforms, float delta_time) {
+void animator_update(struct animator* animator, struct armature* armature, float delta_time) {
     struct animation_clip* current_clip = animator->current_clip;
 
     if (!current_clip) {
         return;
     }
 
-    animator_read_transform(animator, transforms);
+    animator_read_transform(animator, armature->pose);
 
     if (animator->done) {
         animator->current_clip = NULL;
@@ -306,6 +308,8 @@ void animator_update(struct animator* animator, struct Transform* transforms, fl
     }
 
     animator_step(animator, delta_time);
+    armature->image_frame_0 = animator->image_frame_0;
+    armature->image_frame_1 = animator->image_frame_1;
 }
 
 void animator_run_clip(struct animator* animator, struct animation_clip* clip, float start_time, bool loop) {
