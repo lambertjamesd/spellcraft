@@ -162,6 +162,7 @@ void camera_controller_update(struct camera_controller* controller) {
 void camera_controller_init(struct camera_controller* controller, struct Camera* camera, struct player* player) {
     controller->camera = camera;
     controller->player = player;
+    controller->state = CAMERA_STATE_FOLLOW;
 
     update_add(controller, (update_callback)camera_controller_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
