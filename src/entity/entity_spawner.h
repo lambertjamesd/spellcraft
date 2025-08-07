@@ -29,6 +29,7 @@ struct entity_definition {
 
 entity_id entity_spawn(enum entity_type_id type, void* definition);
 void entity_despawn(entity_id entity_id);
+void entity_despawn_all();
 
 struct entity_definition* entity_find_def(const char* name);
 struct entity_definition* entity_def_get(unsigned index);

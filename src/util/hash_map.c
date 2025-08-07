@@ -7,7 +7,7 @@
 #define MAGIC_PRIME 2748002342
 #define MIN_CAPACITY    32
 
-void hash_map_init(struct hash_map* hash_map, int capacity) {
+bool hash_map_init(struct hash_map* hash_map, int capacity) {
     if (capacity < MIN_CAPACITY) {
         capacity = MIN_CAPACITY;
     }
@@ -15,14 +15,24 @@ void hash_map_init(struct hash_map* hash_map, int capacity) {
     capacity *= 2;
 
     hash_map->entries = malloc(sizeof(struct hash_map_entry) * capacity);
+
+    if (!hash_map->entries) {
+        return false;
+    }
+
     hash_map->capacity = capacity;
     hash_map->count = 0;
 
     memset(hash_map->entries, 0, sizeof(struct hash_map_entry) * capacity);
+
+    return true;
 }
 
 void hash_map_destroy(struct hash_map* hash_map) {
     free(hash_map->entries);
+    hash_map->entries = NULL;
+    hash_map->capacity = 0;
+    hash_map->count = 0;
 }
 
 struct hash_map_entry* hash_map_find_entry(struct hash_map_entry* entries, int capacity, int key) {
@@ -43,9 +53,14 @@ struct hash_map_entry* hash_map_find_entry(struct hash_map_entry* entries, int c
     return NULL;
 }
 
-void hash_map_resize(struct hash_map* hash_map) {
+bool hash_map_resize(struct hash_map* hash_map) {
     int new_capacity = hash_map->capacity * 2;
     struct hash_map_entry* new_entries = malloc(sizeof(struct hash_map_entry) * new_capacity);
+
+    if (!new_entries) {
+        return false;
+    }
+
     memset(new_entries, 0, sizeof(struct hash_map_entry) * new_capacity);
 
     for (int i = 0; i < hash_map->capacity; i += 1) {
@@ -59,6 +74,8 @@ void hash_map_resize(struct hash_map* hash_map) {
     free(hash_map->entries);
     hash_map->entries = new_entries;
     hash_map->capacity = new_capacity;
+
+    return true;
 }
 
 void* hash_map_get(struct hash_map* hash_map, int key) {
@@ -71,12 +88,14 @@ void* hash_map_get(struct hash_map* hash_map, int key) {
     return NULL;
 }
 
-void hash_map_set(struct hash_map* hash_map, int key, void* value) {
+bool hash_map_set(struct hash_map* hash_map, int key, void* value) {
     struct hash_map_entry* result = hash_map_find_entry(hash_map->entries, hash_map->capacity, key);
 
     // check if the hash map should be grown
     if (result->key != key && (hash_map->count << 1) >= hash_map->capacity) {
-        hash_map_resize(hash_map);
+        if (!hash_map_resize(hash_map)) {
+            return false;
+        }
 
         result = hash_map_find_entry(hash_map->entries, hash_map->capacity, key);
     }
@@ -88,6 +107,8 @@ void hash_map_set(struct hash_map* hash_map, int key, void* value) {
         result->value = value;
         hash_map->count += 1;
     }
+
+    return true;
 }
 
 void hash_map_delete(struct hash_map* hash_map, int key) {
@@ -98,4 +119,21 @@ void hash_map_delete(struct hash_map* hash_map, int key) {
         entry->key = 0;
         entry->value = 0;
     }
+}
+
+struct hash_map_entry* hash_map_next(struct hash_map* hash_map, struct hash_map_entry* curr) {
+    if (!curr) {
+        curr = hash_map->entries - 1;
+    }
+
+    struct hash_map_entry* end = hash_map->entries + hash_map->capacity;
+
+    do {
+        ++curr;
+        if (curr->value) {
+            return curr;
+        }
+    } while (curr < end);
+
+    return NULL;
 }

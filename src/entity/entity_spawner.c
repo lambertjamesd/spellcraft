@@ -3,6 +3,7 @@
 #include "../enemies/biter.h"
 #include "../enemies/jelly.h"
 #include "../enemies/jelly_king.h"
+#include "../util/hash_map.h"
 
 #include "../npc/npc.h"
 
@@ -71,4 +72,66 @@ struct entity_definition* entity_def_get(unsigned index) {
     }
 
     return &scene_entity_definitions[index];
+}
+
+static struct hash_map entity_mapping;
+
+#define ENTITY_STARTING_CAPACITY    32
+
+struct entity_header {
+    struct entity_definition* entity_def;
+    entity_id id;
+};
+
+entity_id entity_spawn(enum entity_type_id type, void* definition) {
+    struct entity_definition* entity_def = entity_def_get(type);
+
+    if (!entity_def) {
+        return 0;
+    }
+
+    if (!entity_mapping.entries) {
+        if (!hash_map_init(&entity_mapping, ENTITY_STARTING_CAPACITY)) {
+            return 0;
+        }
+    }
+   
+    entity_id result = entity_id_new();
+    void* entity = malloc(entity_def->entity_size + sizeof(struct entity_header));
+    
+    if (!hash_map_set(&entity_mapping, result, entity)) {
+        free(entity);
+        return 0;
+    }
+
+    struct entity_header* header = entity;
+    header->entity_def = entity_def;
+    header->id = result; 
+
+    entity_def->init(header + 1, definition, result);
+    return result;
+}
+
+void entity_despawn(entity_id entity_id) {
+    void* entity = hash_map_get(&entity_mapping, entity_id);
+
+    if (!entity) {
+        return;
+    }
+
+    struct entity_header* header = entity;
+    header->entity_def->destroy(header + 1);
+    free(entity);
+
+    hash_map_delete(&entity_mapping, entity_id);
+}
+
+void entity_despawn_all() {
+    for (struct hash_map_entry* entry = hash_map_next(&entity_mapping, NULL); entry; entry = hash_map_next(&entity_mapping, entry)) {
+        struct entity_header* header = entry->value;
+        header->entity_def->destroy(header + 1);
+        free(entry->value);   
+    }
+
+    hash_map_destroy(&entity_mapping);
 }
