@@ -99,10 +99,8 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     render_batch_add_tmesh(batch, torch->flame_mesh, mtxfp, 1, NULL, NULL);
 }
 
-void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition) {
+void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition, entity_id id) {
     ground_torch->position = definition->position;
-
-    entity_id id = entity_id_new();
 
     dynamic_object_init(
         id, 

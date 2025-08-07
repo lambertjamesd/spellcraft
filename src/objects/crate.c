@@ -23,10 +23,8 @@ void crate_update(struct crate* crate) {
     }
 }
 
-void crate_init(struct crate* crate, struct crate_definition* definition) {
+void crate_init(struct crate* crate, struct crate_definition* definition, entity_id id) {
     transformSaInit(&crate->transform, &definition->position, &definition->rotation, definition->scale);
-
-    entity_id id = entity_id_new();
 
     renderable_single_axis_init(&crate->renderable, &crate->transform, "rom:/meshes/objects/crate.tmesh");
     dynamic_object_init(

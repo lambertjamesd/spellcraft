@@ -360,7 +360,7 @@ struct overworld_actor* overworld_actor_spawn(struct overworld* overworld, struc
     result->entity_type_id = entity_type_id;
     result->next = overworld->next_active_actor;
     overworld->next_active_actor = result;
-    entity_def->init(result->entity, info->entity_def);
+    entity_def->init(result->entity, info->entity_def, entity_id_new());
     hash_map_set(&overworld->loaded_actors, spawn_id, result);
 
     return result;

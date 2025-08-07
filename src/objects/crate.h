@@ -15,7 +15,7 @@ struct crate {
     struct health health;
 };
 
-void crate_init(struct crate* crate, struct crate_definition* definition);
+void crate_init(struct crate* crate, struct crate_definition* definition, entity_id id);
 void crate_destroy(struct crate* crate);
 
 #endif

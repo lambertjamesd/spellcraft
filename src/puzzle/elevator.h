@@ -19,7 +19,7 @@ struct elevator {
     bool is_returning;
 };
 
-void elevator_init(struct elevator* elevator, struct elevator_definition* definition);
+void elevator_init(struct elevator* elevator, struct elevator_definition* definition, entity_id id);
 void elevator_destroy(struct elevator* elevator);
 
 #endif

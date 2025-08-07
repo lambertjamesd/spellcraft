@@ -93,7 +93,7 @@ void door_update(void* data) {
     }
 }
 
-void door_init(struct door* door, struct door_definition* definition) {
+void door_init(struct door* door, struct door_definition* definition, entity_id id) {
     transformSaInit(&door->transform, &definition->position, &definition->rotation, 1.0f);
     door->room_a = definition->room_a;
     door->room_b = definition->room_b;
@@ -102,10 +102,8 @@ void door_init(struct door* door, struct door_definition* definition) {
     renderable_single_axis_init(&door->renderable, &door->transform, "rom:/meshes/objects/doors/door.tmesh");
     render_scene_add_renderable(&door->renderable, 0.8f);
 
-    entity_id entity_id = entity_id_new();
-
     dynamic_object_init(
-        entity_id, 
+        id, 
         &door->collider, 
         &door_collision, 
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
@@ -119,7 +117,7 @@ void door_init(struct door* door, struct door_definition* definition) {
 
     collision_scene_add(&door->collider);
 
-    interactable_init(&door->interactable, entity_id, door_interact, door);
+    interactable_init(&door->interactable, id, door_interact, door);
 
     door->animation_set = animation_cache_load("rom:/meshes/objects/doors/door.anim");
     door->animations.open = animation_set_find_clip(door->animation_set, "open");

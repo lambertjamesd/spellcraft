@@ -110,9 +110,7 @@ float training_dummy_on_hit(void* data, struct damage_info* damage) {
     return damage->amount;
 }
 
-void training_dummy_init(struct training_dummy* dummy, struct training_dummy_definition* definition) {
-    entity_id entity_id = entity_id_new();
-
+void training_dummy_init(struct training_dummy* dummy, struct training_dummy_definition* definition, entity_id id) {
     transformInitIdentity(&dummy->transform);
     dummy->transform.position = definition->position;
     quatAxisComplex(&gUp, &definition->rotation, &dummy->transform.rotation);
@@ -122,7 +120,7 @@ void training_dummy_init(struct training_dummy* dummy, struct training_dummy_def
     render_scene_add_renderable(&dummy->renderable, 2.0f);
 
     dynamic_object_init(
-        entity_id,
+        id,
         &dummy->collision,
         &dummy_collision,
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,
@@ -139,7 +137,7 @@ void training_dummy_init(struct training_dummy* dummy, struct training_dummy_def
 
     dummy->collision.is_fixed = true;
 
-    health_init(&dummy->health, entity_id, 0.0f);
+    health_init(&dummy->health, id, 0.0f);
     health_set_callback(&dummy->health, training_dummy_on_hit, dummy);
     update_add(dummy, training_dummy_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
 

@@ -20,7 +20,7 @@ struct training_dummy {
     uint16_t shock_timer;
 };
 
-void training_dummy_init(struct training_dummy* dummy, struct training_dummy_definition* definition);
+void training_dummy_init(struct training_dummy* dummy, struct training_dummy_definition* definition, entity_id id);
 void training_dummy_destroy(struct training_dummy* dummy);
 
 #endif

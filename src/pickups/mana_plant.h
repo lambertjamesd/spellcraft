@@ -13,7 +13,7 @@ struct mana_plant {
     float respawn_timer;
 };
 
-void mana_plant_init(struct mana_plant* plant, struct mana_plant_definition* definition);
+void mana_plant_init(struct mana_plant* plant, struct mana_plant_definition* definition, entity_id id);
 void mana_plant_destroy(struct mana_plant* plant);
 
 #endif

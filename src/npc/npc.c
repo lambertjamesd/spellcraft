@@ -48,9 +48,7 @@ void npc_update(void *data) {
     cutscene_actor_update(&npc->cutscene_actor);
 }
 
-void npc_init(struct npc* npc, struct npc_definition* definiton) {
-    entity_id entity_id = entity_id_new();
-
+void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id) {
     struct npc_information* information = &npc_information[definiton->npc_type];
 
     struct TransformSingleAxis transform;
@@ -64,7 +62,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
     cutscene_actor_init(
         &npc->cutscene_actor, 
         &information->actor,
-        entity_id,
+        id,
         &transform, 
         definiton->npc_type, 
         0, 
@@ -72,7 +70,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton) {
         information->animations
     );
 
-    interactable_init(&npc->interactable, entity_id, npc_interact, npc);
+    interactable_init(&npc->interactable, id, npc_interact, npc);
 
     if (*definiton->dialog) {
         npc->talk_to_cutscene = cutscene_load(definiton->dialog);

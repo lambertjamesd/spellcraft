@@ -47,17 +47,15 @@ void treasure_chest_update(void* data) {
     animator_update(&treasure_chest->animator, &treasure_chest->renderable.armature, fixed_time_step);
 }
 
-void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition) {
+void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition, entity_id id) {
     treasure_chest->item_type = definition->item;
     transformSaInit(&treasure_chest->transform, &definition->position, &definition->rotation, 1.0f);
 
     renderable_single_axis_init(&treasure_chest->renderable, &treasure_chest->transform, "rom:/meshes/objects/treasurechest.tmesh");
     render_scene_add_renderable(&treasure_chest->renderable, 0.8f);
 
-    entity_id entity_id = entity_id_new();
-
     dynamic_object_init(
-        entity_id, 
+        id, 
         &treasure_chest->dynamic_object, 
         &treasure_chest_collision, 
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
@@ -70,7 +68,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
 
     collision_scene_add(&treasure_chest->dynamic_object);
 
-    interactable_init(&treasure_chest->interactable, entity_id, treasure_chest_interact, treasure_chest);
+    interactable_init(&treasure_chest->interactable, id, treasure_chest_interact, treasure_chest);
 
     treasure_chest->animation_set = animation_cache_load("rom:/meshes/objects/treasurechest.anim");
     treasure_chest->animations.open = animation_set_find_clip(treasure_chest->animation_set, "open");

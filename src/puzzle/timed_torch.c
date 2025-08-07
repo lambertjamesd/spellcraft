@@ -49,7 +49,7 @@ void timed_torch_puzzle_update(void* data) {
     }
 }
 
-void timed_torch_puzzle_init(struct timed_torch_puzzle* torch_puzzle, struct timed_torch_puzzle_definition* definition) {
+void timed_torch_puzzle_init(struct timed_torch_puzzle* torch_puzzle, struct timed_torch_puzzle_definition* definition, entity_id id) {
     torch_puzzle->position = definition->position;
     torch_puzzle->torch_time = definition->torch_time;
     torch_puzzle->output = definition->output;

@@ -14,7 +14,7 @@
 #include "camera_controller.h"
 #include "camera_animation.h"
 
-typedef void(*entity_init)(void* entity, void* definition);
+typedef void(*entity_init)(void* entity, void* definition, entity_id id);
 typedef void(*entity_destroy)(void* entity);
 
 struct entity_field_type_location {

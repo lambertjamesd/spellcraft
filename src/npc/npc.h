@@ -24,7 +24,7 @@ struct npc {
     struct cutscene* talk_to_cutscene;
 };
 
-void npc_init(struct npc* npc, struct npc_definition* definiton);
+void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id);
 void npc_destroy(struct npc* npc);
 
 #endif

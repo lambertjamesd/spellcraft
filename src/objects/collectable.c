@@ -45,13 +45,13 @@ void collectable_assets_load() {
     hash_map_init(&collectable_hash_map, 8);
 }
 
-void collectable_init(struct collectable* collectable, struct collectable_definition* definition) {
+void collectable_init(struct collectable* collectable, struct collectable_definition* definition, entity_id id) {
     collectable->collectable_type = definition->collectable_type;
     collectable->collectable_sub_type = definition->collectable_sub_type;
     transformSaInit(&collectable->transform, &definition->position, &definition->rotation, 1.0f);
     
     dynamic_object_init(
-        entity_id_new(), 
+        id, 
         &collectable->dynamic_object, 
         &collectable_collision, 
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,

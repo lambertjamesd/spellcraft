@@ -190,7 +190,7 @@ void jelly_king_fire_jelly(struct jelly_king* jelly_king) {
     struct jelly_definition definition;
     definition.position = jelly_king->transform.position;
     definition.rotation = jelly_king->transform.rotation;
-    jelly_init(jelly, &definition);
+    jelly_init(jelly, &definition, entity_id_new());
 
     struct contact* nearest_target = dynamic_object_nearest_contact(jelly_king->vision.active_contacts, &jelly_king->transform.position);
 
@@ -328,9 +328,7 @@ void jelly_king_update(void* data) {
     }
 }
 
-void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition) {
-    entity_id entity_id = entity_id_new();
-
+void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition, entity_id id) {
     transformSaInit(&jelly_king->transform, &definition->position, &definition->rotation, 1.0f);
 
     renderable_single_axis_init(&jelly_king->renderable, &jelly_king->transform, "rom:/meshes/enemies/jelly_king.tmesh");
@@ -351,7 +349,7 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
     jelly_king->collider_type = jelly_king_collider;
 
     dynamic_object_init(
-        entity_id,
+        id,
         &jelly_king->collider,
         &jelly_king->collider_type,
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,
@@ -359,13 +357,13 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
         &jelly_king->transform.rotation
     );
     jelly_king->collider.center.y = jelly_king_collider.data.cylinder.half_height;
-    jelly_king->collider.collision_group = entity_id;
+    jelly_king->collider.collision_group = id;
     jelly_king->next_minion = 0;
     jelly_king->last_minion = 0;
 
     collision_scene_add(&jelly_king->collider);
 
-    health_init(&jelly_king->health, entity_id, MAX_HEALTH);
+    health_init(&jelly_king->health, id, MAX_HEALTH);
 
     spatial_trigger_init(&jelly_king->vision, &jelly_king->transform, &jelly_king_vision_type, COLLISION_LAYER_DAMAGE_PLAYER);
     collision_scene_add_trigger(&jelly_king->vision);

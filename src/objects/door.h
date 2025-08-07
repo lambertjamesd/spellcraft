@@ -30,7 +30,7 @@ struct door {
     room_id next_room;
 };
 
-void door_init(struct door* door, struct door_definition* definition);
+void door_init(struct door* door, struct door_definition* definition, entity_id id);
 void door_destroy(struct door* door);
 
 #endif

@@ -11,7 +11,7 @@ struct water_cube {
     struct spatial_trigger_type trigger_type;
 };
 
-void water_cube_init(struct water_cube* cube, struct water_cube_definition* definition);
+void water_cube_init(struct water_cube* cube, struct water_cube_definition* definition, entity_id id);
 void water_cube_destroy(struct water_cube* cube);
 
 #endif

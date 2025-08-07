@@ -60,7 +60,7 @@ struct jelly_king {
     uint8_t last_minion;
 };
 
-void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition);
+void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition, entity_id id);
 void jelly_king_destroy(struct jelly_king* jelly_king);
 
 #endif

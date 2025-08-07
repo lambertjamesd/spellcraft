@@ -63,8 +63,7 @@ void elevator_update(void* data) {
     vector3Scale(&elevator->collision.velocity, &elevator->collision.velocity, 1.0f / fixed_time_step);
 }
 
-void elevator_init(struct elevator* elevator, struct elevator_definition* definition) {
-    entity_id entity_id = entity_id_new();
+void elevator_init(struct elevator* elevator, struct elevator_definition* definition, entity_id id) {
     transformSaInit(&elevator->transform, &definition->position, &definition->rotation, 1.0f);
     elevator->start_position = definition->position;
     elevator->end_position = definition->target;
@@ -74,7 +73,7 @@ void elevator_init(struct elevator* elevator, struct elevator_definition* defini
     render_scene_add_renderable(&elevator->renderable, 2.0f);
 
     dynamic_object_init(
-        entity_id, 
+        id, 
         &elevator->collision, 
         &elevator_collision_type,
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,

@@ -17,7 +17,7 @@ struct collectable {
 
 void collectable_assets_load();
 
-void collectable_init(struct collectable* collectable, struct collectable_definition* definition);
+void collectable_init(struct collectable* collectable, struct collectable_definition* definition, entity_id id);
 void collectable_collected(struct collectable* collectable);
 void collectable_destroy(struct collectable* collectable);
 

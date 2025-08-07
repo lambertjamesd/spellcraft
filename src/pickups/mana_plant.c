@@ -93,7 +93,7 @@ void mana_plant_update(void* data) {
     }
 }
 
-void mana_plant_init(struct mana_plant* plant, struct mana_plant_definition* definition) {
+void mana_plant_init(struct mana_plant* plant, struct mana_plant_definition* definition, entity_id id) {
     plant->respawn_timer = 0.0f;
     transformSaInit(&plant->transform, &definition->position, &definition->rotation, 1.0f);
 

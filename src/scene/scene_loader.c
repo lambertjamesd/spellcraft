@@ -135,7 +135,7 @@ void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FIL
     for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
         if (scene_load_check_condition(file)) {
             scene_entity_apply_types(entity_def, scene->string_table, def->fields, def->field_count);
-            def->init(entity, entity_def);
+            def->init(entity, entity_def, entity_id_new());
             entity += def->entity_size;
             final_count += 1;
         }

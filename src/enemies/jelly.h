@@ -38,7 +38,7 @@ struct jelly {
     struct drop_shadow drop_shadow;
 };
 
-void jelly_init(struct jelly* jelly, struct jelly_definition* definition);
+void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity_id id);
 void jelly_destroy(struct jelly* jelly);
 
 bool jelly_get_is_active(struct jelly* jelly);

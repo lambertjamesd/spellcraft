@@ -20,7 +20,7 @@ struct ground_torch {
     boolean_variable lit_source;
 };
 
-void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition);
+void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition, entity_id id);
 void ground_torch_destroy(struct ground_torch* ground_torch);
 
 #endif

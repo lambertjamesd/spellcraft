@@ -286,9 +286,7 @@ void jelly_update(void* data) {
     }
 }
 
-void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
-    entity_id entity_id = entity_id_new();
-
+void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity_id id) {
     transformSaInit(&jelly->transform, &definition->position, &definition->rotation, 1.0f);
 
     jelly->mesh = tmesh_cache_load("rom:/meshes/enemies/water_jelly.tmesh");
@@ -296,7 +294,7 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
 
     render_scene_add(&jelly->transform.position, 1.0f, jelly_render, jelly);
 
-    health_init(&jelly->health, entity_id, MAX_HEALTH);
+    health_init(&jelly->health, id, MAX_HEALTH);
     health_set_callback(&jelly->health, jelly_on_hit, jelly);
     jelly->health.current_health = STARTING_HEALTH;
     jelly->needs_new_radius = 0;
@@ -310,7 +308,7 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition) {
     jelly->shear_velocity = gZeroVec;
 
     dynamic_object_init(
-        entity_id, 
+        id, 
         &jelly->collider, 
         &jelly_collider, 
         COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,

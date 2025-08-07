@@ -25,7 +25,7 @@ struct treasure_chest {
     struct animator animator;
 };
 
-void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition);
+void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition, entity_id id);
 void treasure_chest_destroy(struct treasure_chest* treasure_chest);
 
 #endif
