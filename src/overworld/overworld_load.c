@@ -10,6 +10,7 @@
 #include "../resource/tmesh_cache.h"
 #include "../scene/scene_loader.h"
 #include "../scene/scene.h"
+#include "../entity/entity_spawner.h"
 #include "overworld_render.h"
 #include <assert.h>
 #include <malloc.h>
@@ -148,7 +149,7 @@ void overworld_actor_tile_load_entities(struct overworld_actor_tile* tile, FILE*
         uint16_t entity_type_id;
         fread(&entity_type_id, sizeof(uint16_t), 1, file);
 
-        struct entity_definition* def = scene_get_entity(entity_type_id);
+        struct entity_definition* def = entity_def_get(entity_type_id);
         assert(def);
         curr->entity_type_id = entity_type_id;
 
@@ -345,7 +346,7 @@ struct overworld_actor* overworld_actor_spawn(struct overworld* overworld, struc
     evaluation_context_destroy(&context);
 
     int entity_type_id = should_spawn ? info->entity_type_id : ENTITY_TYPE_empty;
-    struct entity_definition* entity_def = scene_get_entity(entity_type_id);
+    struct entity_definition* entity_def = entity_def_get(entity_type_id);
 
     if (!entity_def) {
         return NULL;
@@ -400,7 +401,7 @@ void overworld_check_tile_spawns(struct overworld* overworld, struct overworld_a
 }
 
 bool overworld_despawn_actor(struct overworld* overworld, struct overworld_actor* current, struct Vector3* player_pos) {
-    struct entity_definition* entity_def = scene_get_entity(current->entity_type_id);
+    struct entity_definition* entity_def = entity_def_get(current->entity_type_id);
     assert(entity_def);
 
     entity_def->destroy(current->entity);

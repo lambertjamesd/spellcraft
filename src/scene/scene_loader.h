@@ -6,6 +6,4 @@
 struct scene* scene_load(const char* filename);
 void scene_release(struct scene* scene);
 
-struct entity_definition* scene_get_entity(unsigned index);
-
 #endif
