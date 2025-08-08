@@ -327,4 +327,6 @@ void scene_release(struct scene* scene) {
     expression_set_scene_variables(NULL);
 
     free(scene);
+
+    entity_despawn_all();
 }

@@ -122,6 +122,10 @@ void hash_map_delete(struct hash_map* hash_map, int key) {
 }
 
 struct hash_map_entry* hash_map_next(struct hash_map* hash_map, struct hash_map_entry* curr) {
+    if (!hash_map->entries || !hash_map->count) {
+        return NULL;
+    }
+
     if (!curr) {
         curr = hash_map->entries - 1;
     }
