@@ -10,6 +10,7 @@
 #include "../render/render_scene.h"
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
+#include "../entity/entity_spawner.h"
 #include "vision.h"
 
 #define MAX_HEALTH      400.0f
@@ -282,7 +283,7 @@ void jelly_update(void* data) {
 
 
     if (jelly->health.current_health <= 0.0f || (!jelly->is_frozen && jelly->collider.under_water)) {
-        jelly_destroy(jelly);
+        entity_despawn(jelly->health.entity_id);
     }
 }
 

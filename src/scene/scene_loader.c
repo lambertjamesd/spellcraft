@@ -57,12 +57,12 @@ void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FIL
     fread(&definition_size, 2, 1, file);
     assert(definition_size == def->definition_size);
 
-    char* entity = malloc(def->entity_size * entity_data->entity_count);
+    entity_id* entity_ids = malloc(sizeof(entity_id) * entity_data->entity_count);
     char entity_def_data[definition_size * entity_data->entity_count];
     char* entity_def = entity_def_data;
 
     entity_data->definition = def;
-    entity_data->entities = entity;
+    entity_data->entity_ids = entity_ids;
 
     fread(entity_def_data, definition_size, entity_data->entity_count, file);
 
@@ -71,26 +71,28 @@ void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FIL
     for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
         if (scene_load_check_condition(file)) {
             scene_entity_apply_types(entity_def, scene->string_table, def->fields, def->field_count);
-            def->init(entity, entity_def, entity_id_new());
-            entity += def->entity_size;
+            *entity_ids = entity_spawn(entity_type_id, entity_def);
             final_count += 1;
+        } else {
+            *entity_ids = 0;
         }
 
         entity_def += def->definition_size;
+        entity_ids += 1;
     }
 
     entity_data->entity_count = final_count;
 }
 
 void scene_destroy_entity(struct entity_data* entity_data) {
-    char* entity = entity_data->entities;
+    entity_id* entity_ids = entity_data->entity_ids;
 
     for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
-        entity_data->definition->destroy(entity);
-        entity += entity_data->definition->entity_size;
+        entity_despawn(*entity_ids);
+        ++entity_ids;
     }
 
-    free(entity_data->entities);
+    free(entity_data->entity_ids);
 }
 
 void scene_load_camera_animations(struct camera_animation_list* list, const char* filename, FILE* file) {

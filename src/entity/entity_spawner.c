@@ -135,3 +135,8 @@ void entity_despawn_all() {
 
     hash_map_destroy(&entity_mapping);
 }
+
+void* entity_get(entity_id entity_id) {
+    struct entity_header* header = hash_map_get(&entity_mapping, entity_id);
+    return header + 1;
+}

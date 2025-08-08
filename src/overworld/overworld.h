@@ -6,6 +6,7 @@
 #include "../math/vector2.h"
 #include "../render/tmesh.h"
 #include "../util/hash_map.h"
+#include "../entity/entity_id.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <t3d/t3d.h>
@@ -39,9 +40,7 @@ struct overworld_actor_spawn_location {
 
 struct overworld_actor {
     struct overworld_actor* next;
-    uint32_t x, y;
-    void* entity;
-    uint16_t entity_type_id;
+    entity_id entity_id;
     uint32_t spawn_id;
 };
 

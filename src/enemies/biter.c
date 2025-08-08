@@ -7,6 +7,7 @@
 #include "../resource/animation_cache.h"
 #include "../time/time.h"
 #include "../math/constants.h"
+#include "../entity/entity_spawner.h"
 #include "vision.h"
 
 #define VISION_DISTANCE     8.0f
@@ -120,7 +121,7 @@ void biter_update(struct biter* biter) {
     biter_update_target(biter);
 
     if (biter->health.current_health <= 0.0f) {
-        biter_destroy(biter);
+        entity_despawn(biter->health.entity_id);
     }
 }
 

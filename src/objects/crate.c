@@ -4,6 +4,7 @@
 #include "../collision/shapes/box.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
+#include "../entity/entity_spawner.h"
 
 static struct dynamic_object_type crate_collision_type = {
     .minkowsi_sum = box_minkowski_sum,
@@ -19,7 +20,7 @@ static struct dynamic_object_type crate_collision_type = {
 
 void crate_update(struct crate* crate) {
     if (crate->health.current_health <= 0.0f) {
-        crate_destroy(crate);
+        entity_despawn(crate->health.entity_id);
     }
 }
 

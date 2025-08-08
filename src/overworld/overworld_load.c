@@ -273,6 +273,17 @@ void overworld_free(struct overworld* overworld) {
         }
     }
 
+    for (
+        struct hash_map_entry* entry = hash_map_next(&overworld->loaded_actors, NULL);
+        entry;
+        entry = hash_map_next(&overworld->loaded_actors, NULL)
+    ) {
+        struct overworld_actor* actor = (struct overworld_actor*)entry->value;
+        entity_despawn(actor->entity_id);
+    }
+
+    hash_map_destroy(&overworld->loaded_actors);
+
     for (int i = 0; i < overworld->lod0.entry_count; i += 1) {
         tmesh_release(&overworld->lod0.entries[i].mesh);
     }
@@ -333,35 +344,34 @@ struct overworld_actor* overworld_malloc_actor(struct overworld* overworld) {
 struct overworld_actor* overworld_actor_spawn(struct overworld* overworld, struct overworld_actor_tile* tile, struct overworld_actor_spawn_location* spawn_location) {
     struct overworld_actor_spawn_information* info = &tile->spawn_information[spawn_location->spawn_id_offset];
 
-    struct overworld_actor* result = overworld_malloc_actor(overworld);
-
-    if (!result) {
-        return NULL;
-    }
-
     struct evaluation_context context;
     evaluation_context_init(&context, 0);
     expression_evaluate(&context, &info->expression);
     int should_spawn = evaluation_context_pop(&context);
     evaluation_context_destroy(&context);
 
-    int entity_type_id = should_spawn ? info->entity_type_id : ENTITY_TYPE_empty;
-    struct entity_definition* entity_def = entity_def_get(entity_type_id);
+    if (!should_spawn) {
+        return NULL;
+    }
+
+    struct entity_definition* entity_def = entity_def_get(info->entity_type_id);
 
     if (!entity_def) {
+        return NULL;
+    }
+
+    struct overworld_actor* result = overworld_malloc_actor(overworld);
+
+    if (!result) {
         return NULL;
     }
 
     int spawn_id =(int)tile->first_spawn_id + (int)spawn_location->spawn_id_offset;
 
     result->spawn_id = spawn_id;
-    result->x = (int)(tile->x << 8) + spawn_location->x;
-    result->y = (int)(tile->y << 8) + spawn_location->y;
-    result->entity = malloc(entity_def->entity_size);
-    result->entity_type_id = entity_type_id;
+    result->entity_id = entity_spawn(info->entity_type_id, info->entity_def);
     result->next = overworld->next_active_actor;
     overworld->next_active_actor = result;
-    entity_def->init(result->entity, info->entity_def, entity_id_new());
     hash_map_set(&overworld->loaded_actors, spawn_id, result);
 
     return result;
@@ -400,78 +410,42 @@ void overworld_check_tile_spawns(struct overworld* overworld, struct overworld_a
     tile->active_spawn_locations = end - tile->spawn_locations;
 }
 
-bool overworld_despawn_actor(struct overworld* overworld, struct overworld_actor* current, struct Vector3* player_pos) {
-    struct entity_definition* entity_def = entity_def_get(current->entity_type_id);
-    assert(entity_def);
-
-    entity_def->destroy(current->entity);
-    free(current->entity);
-
-    uint32_t tile_x = current->x >> 8;
-    uint32_t tile_y = current->y >> 8;
-
-    struct overworld_actor_tile* slot = overworld->loaded_actor_tiles[tile_x & 0x1][tile_y & 0x1];
-
-    if (slot->x != tile_x || slot->y != tile_y) {
-        return true;
-    }
-
-    uint16_t spawn_offset = current->spawn_id - slot->first_spawn_id;
-
-    struct overworld_actor_spawn_information* spawn_info = &slot->spawn_information[spawn_offset];
-
-    struct Vector3* spawn_pos = (struct Vector3*)spawn_info->entity_def;
-    float dx = spawn_pos->x - player_pos->x;
-    float dz = spawn_pos->z - player_pos->z;
-
-    if (dx * dx + dz * dz < SPAWN_IN_RADIUS * SPAWN_IN_RADIUS) {
-        current->entity_type_id = ENTITY_TYPE_empty;
-        current->entity = malloc(sizeof(struct Vector3));
-        memcpy(current->entity, spawn_pos, sizeof(struct Vector3));
-        return false;
-    }
-
-    assert(slot->active_spawn_locations < slot->total_spawn_locations);
-
-    struct overworld_actor_spawn_location* spawn_location = &slot->spawn_locations[slot->active_spawn_locations];
-
-    spawn_location->spawn_id_offset = spawn_offset;
-    spawn_location->x = current->x & 0xFF;
-    spawn_location->y = current->y & 0xFF;
-
-    ++slot->active_spawn_locations;
-
-    return true;
-}
-
 void overworld_check_actor_despawn(struct overworld* overworld, struct Vector3* player_pos) {
     struct overworld_actor* current = overworld->next_active_actor;
     struct overworld_actor* prev = NULL;
 
     while (current) {
-        // this is a bit hacky, right now all
-        // entities need to put their position
-        // first in the layout
-        struct Vector3* entity_pos = current->entity;
+        void* entity = entity_get(current->entity_id);
 
-        float dx = entity_pos->x - player_pos->x;
-        float dz = entity_pos->z - player_pos->z;
+        bool should_remove;
+
+        if (entity) {
+            should_remove = true;
+        } else {
+            // this is a bit hacky, right now all
+            // entities need to put their position
+            // first in the layout
+            struct Vector3* entity_pos = entity;
+
+            float dx = entity_pos->x - player_pos->x;
+            float dz = entity_pos->z - player_pos->z;
+
+            should_remove = dx * dx + dz * dz > DESPAWN_RADIUS * DESPAWN_RADIUS;
+        }
 
         struct overworld_actor* next = current->next;
 
-        if (dx * dx + dz * dz > DESPAWN_RADIUS * DESPAWN_RADIUS) {
-            if (overworld_despawn_actor(overworld, current, player_pos)) {
-                hash_map_delete(&overworld->loaded_actors, current->spawn_id);
-
-                if (prev) {
-                    prev->next = next;
-                } else {
-                    overworld->next_active_actor = next;
-                }
-                // return free actor
-                current->next = overworld->next_free_actor;
-                overworld->next_free_actor = current;
+        if (should_remove) {
+            entity_despawn(current->entity_id);
+            hash_map_delete(&overworld->loaded_actors, current->spawn_id);
+            if (prev) {
+                prev->next = next;
+            } else {
+                overworld->next_active_actor = next;
             }
+            // return free actor
+            current->next = overworld->next_free_actor;
+            overworld->next_free_actor = current;
         }
 
         current = next;

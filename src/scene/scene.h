@@ -17,7 +17,7 @@
 
 struct entity_data {
     struct entity_definition* definition;
-    void* entities;
+    entity_id* entity_ids;
     uint16_t entity_count;
 };
 
