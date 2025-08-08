@@ -19,6 +19,7 @@
 #include "time/game_mode.h"
 #include "render/tmesh.h"
 #include "util/init.h"
+#include "util/screen_debug.h"
 
 #include <libdragon.h>
 #include <n64sys.h>
@@ -39,6 +40,7 @@ void setup() {
     current_scene = scene_load(scene_get_next());
 
     scene_clear_next();
+    screen_debug_init();
 }
 
 static struct frame_memory_pool frame_memory_pools[2];
@@ -70,6 +72,7 @@ void render_menu() {
     rdpq_mode_persp(false);
     rdpq_set_mode_standard();
     menu_render();
+    screen_debug_render();
 }
 
 void render(surface_t* zbuffer) {
