@@ -302,7 +302,6 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity
     jelly->is_frozen = 0;
     jelly->is_jumping = 0;
     jelly->is_attacking = 0;
-    jelly->is_active = 1;
 
     jelly->freeze_timer = 0.0f;
     vector3Add(&definition->position, &gUp, &jelly->shear_spring);
@@ -343,12 +342,6 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity
 }
 
 void jelly_destroy(struct jelly* jelly) {
-    if (!jelly->is_active) {
-        return;
-    }
-
-    jelly->is_active = 0;
-
     render_scene_remove(jelly);
     health_destroy(&jelly->health);
     collision_scene_remove(&jelly->collider);
@@ -357,10 +350,6 @@ void jelly_destroy(struct jelly* jelly) {
     tmesh_cache_release(jelly->ice_mesh);
     collision_scene_remove_trigger(&jelly->vision);
     drop_shadow_destroy(&jelly->drop_shadow);
-}
-
-bool jelly_get_is_active(struct jelly* jelly) {
-    return jelly->is_active;
 }
 
 void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, int collision_group, entity_id target) {

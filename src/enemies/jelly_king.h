@@ -54,7 +54,7 @@ struct jelly_king {
         } chase;
     } state_data;
 
-    struct jelly minion[MAX_JELLY_MINIONS];
+    entity_id minion[MAX_JELLY_MINIONS];
 
     uint8_t next_minion;
     uint8_t last_minion;

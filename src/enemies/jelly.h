@@ -33,15 +33,12 @@ struct jelly {
     uint16_t is_frozen: 1;
     uint16_t is_jumping: 1; 
     uint16_t is_attacking: 1;
-    uint16_t is_active: 1;
 
     struct drop_shadow drop_shadow;
 };
 
 void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity_id id);
 void jelly_destroy(struct jelly* jelly);
-
-bool jelly_get_is_active(struct jelly* jelly);
 
 void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, int collision_group, entity_id target);
 

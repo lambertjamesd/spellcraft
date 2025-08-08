@@ -137,6 +137,10 @@ void entity_despawn_all() {
 }
 
 void* entity_get(entity_id entity_id) {
+    if (!entity_id) {
+        return NULL;
+    }
+
     struct entity_header* header = hash_map_get(&entity_mapping, entity_id);
     return header + 1;
 }

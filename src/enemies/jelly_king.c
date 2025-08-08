@@ -6,6 +6,7 @@
 #include "../time/time.h"
 #include "../collision/collision_scene.h"
 #include "../math/constants.h"
+#include "../entity/entity_spawner.h"
 
 #define VISION_DISTANCE 12.0f
 
@@ -67,7 +68,7 @@ bool jelly_king_rotate_to_target(struct jelly_king* jelly_king, struct contact* 
 
 bool jelly_king_can_fire_minion(struct jelly_king* jelly_king) {
     for (int i = 0; i < MAX_JELLY_MINIONS; i += 1) {
-        if (!jelly_get_is_active(&jelly_king->minion[i])) {
+        if (!entity_get(jelly_king->minion[i])) {
             return true;
         }
     }
@@ -168,29 +169,34 @@ void jelly_king_attack(struct jelly_king* jelly_king) {
 }
 
 void jelly_king_fire_jelly(struct jelly_king* jelly_king) {
-    struct jelly* jelly;
+    int jelly_index = -1;
 
     for (int i = 0; i < MAX_JELLY_MINIONS; i += 1) {
-        jelly = &jelly_king->minion[jelly_king->next_minion];
+        jelly_index = jelly_king->next_minion;
         jelly_king->last_minion = jelly_king->next_minion;
         jelly_king->next_minion = (jelly_king->next_minion == MAX_JELLY_MINIONS - 1) ? 0 : (jelly_king->next_minion + 1);
 
-        if (jelly_get_is_active(jelly)) {
-            jelly = NULL;
+        if (entity_get(jelly_king->minion[jelly_index])) {
+            jelly_index = -1;
             continue;
         }
 
         break;
     }
 
-    if (!jelly) {
+    if (jelly_index == -1) {
         return;
     }
 
     struct jelly_definition definition;
     definition.position = jelly_king->transform.position;
     definition.rotation = jelly_king->transform.rotation;
-    jelly_init(jelly, &definition, entity_id_new());
+
+    jelly_king->minion[jelly_index] = entity_spawn(ENTITY_TYPE_jelly, &definition);
+
+    if (!jelly_king->minion[jelly_index]) {
+        return;
+    }
 
     struct contact* nearest_target = dynamic_object_nearest_contact(jelly_king->vision.active_contacts, &jelly_king->transform.position);
 
@@ -235,7 +241,7 @@ void jelly_king_fire_jelly(struct jelly_king* jelly_king) {
     }
     
     jelly_launch_attack(
-        jelly, 
+        entity_get(jelly_king->minion[jelly_index]), 
         &attack_velocity, 
         jelly_king->collider.collision_group, 
         nearest_target ? nearest_target->other_object : 0
@@ -263,8 +269,8 @@ void jelly_king_attack_aiming(struct jelly_king* jelly_king) {
     if (animator_is_running_clip(&jelly_king->animator, jelly_king->animations.attack_ranged)) {
         return;
     } else if (!animator_is_running(&jelly_king->animator)) {
-        struct jelly* jelly = &jelly_king->minion[jelly_king->last_minion];
-        if (jelly_get_is_active(jelly)) {
+        struct jelly* jelly = entity_get(jelly_king->minion[jelly_king->last_minion]);
+        if (jelly) {
             jelly_reset_collision_group(jelly);
         }
         animator_run_clip(&jelly_king->animator, jelly_king->animations.idle, 0.0f, true);
@@ -381,6 +387,6 @@ void jelly_king_destroy(struct jelly_king* jelly_king) {
     collision_scene_remove_trigger(&jelly_king->vision);
 
     for (int i = 0; i < MAX_JELLY_MINIONS; i += 1) {
-        jelly_destroy(&jelly_king->minion[i]);
+        entity_despawn(jelly_king->minion[i]);
     }
 }
