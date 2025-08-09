@@ -36,12 +36,32 @@ struct static_entity_range {
     uint16_t end;
 };
 
-struct room_entities {
+struct room_entity_block {
     void* block;
+    uint16_t* shared_entity_index;
+    uint16_t block_size;
+    uint16_t shared_entity_count;
+};
+
+typedef struct room_entity_block room_entity_block_t;
+
+struct shared_room_entity {
+    entity_id entity_id;
+    uint16_t ref_count;
+    const void* block;
     uint16_t block_size;
 };
 
-typedef struct room_entities room_entities_t;
+typedef struct shared_room_entity shared_room_entity_t;
+
+struct shared_entity_block {
+    void* block;
+    shared_room_entity_t* entities;
+    uint16_t block_size;
+    uint16_t shared_entity_count;
+};
+
+typedef struct shared_entity_block shared_entity_block_t;
 
 #define ROOM_INDEX_NONE     0xFFFF
 
@@ -72,7 +92,8 @@ struct scene {
     struct named_location* named_locations;
     struct overworld* overworld;
 
-    room_entities_t* room_entities;
+    room_entity_block_t* room_entities;
+    shared_entity_block_t shared_entities;
 
     uint16_t room_count;
     uint16_t static_entity_count;

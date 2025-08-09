@@ -105,7 +105,7 @@ def _is_string_type(definition):
 coordinate_convert = mathutils.Matrix.Rotation(math.pi * 0.5, 4, 'X')
 coordinate_convert_invert = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
 
-def _get_value(obj: bpy.types.Object, key: str, default_value):
+def get_value(obj: bpy.types.Object, key: str, default_value):
     if key in obj:
         return obj[key]
     
@@ -127,7 +127,7 @@ def get_scale(obj: bpy.types.Object) -> mathutils.Vector:
 
 def layout_strings(obj: bpy.types.Object, definition, context: SerializeContext, field_name = None):
     if _is_string_type(definition):
-        context.get_string_offset(str(_get_value(obj, field_name, "")))
+        context.get_string_offset(str(get_value(obj, field_name, "")))
 
     if isinstance(definition, struct_parse.StructureInfo):
         for child in definition.children:
@@ -194,7 +194,7 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
     offset = _write_padding(file, offset, definition, context)
 
     if _is_string_type(definition):
-        file.write(struct.pack(">I", context.get_string_offset(str(_get_value(obj, field_name, "")))))
+        file.write(struct.pack(">I", context.get_string_offset(str(get_value(obj, field_name, "")))))
         return offset + 4
     
     if isinstance(definition, str):
@@ -206,7 +206,7 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
                 write_vector3_scale(file, obj)
                 return offset + 12
             
-            value = _get_value(obj, field_name, 0)
+            value = get_value(obj, field_name, 0)
             if isinstance(value, str):
                 if value.startswith('obj '):
                     write_vector3_position(file, bpy.data.objects[value[len('obj '):]])
@@ -223,11 +223,11 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
                 file.write(struct.pack(">f", value.x))
                 return offset + 4
             else:
-                value = _get_value(obj, field_name, 0)
+                value = get_value(obj, field_name, 0)
                 file.write(struct.pack(">f", value))
                 return offset + 4
         if definition in struct_formats:
-            value = _get_value(obj, field_name, 0)
+            value = get_value(obj, field_name, 0)
 
             if value == True:
                 value = 1
@@ -241,7 +241,7 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
             file.write(struct.pack(">" + struct_formats[definition], value))
             return offset + fixed_sizes[definition]
         if definition in context.enums:
-            value = _get_value(obj, field_name, None)
+            value = get_value(obj, field_name, None)
 
             if value == None:
                 value = 0

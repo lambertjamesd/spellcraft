@@ -10,5 +10,6 @@ typedef struct memory_stream memory_stream_t;
 
 void memory_stream_init(struct memory_stream* stream, const void* memory, int capacity);
 int memory_stream_read(struct memory_stream* stream, void* into, int amount);
+const void* memory_stream_curr(struct memory_stream* stream);
 
 #endif

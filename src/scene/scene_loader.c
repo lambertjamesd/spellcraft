@@ -11,6 +11,7 @@
 #include "../cutscene/evaluation_context.h"
 #include "../cutscene/expression_evaluate.h"
 #include "../overworld/overworld_load.h"
+#include "../util/memory_stream.h"
 
 #include "../collision/collision_scene.h"
 
@@ -70,6 +71,75 @@ void scene_load_camera_animations(struct camera_animation_list* list, const char
         fread(&animation->frame_count, sizeof(uint16_t), 1, file);
         fread(&animation->rom_offset, sizeof(uint32_t), 1, file);
         animation->rom_offset += list->rom_location;
+    }
+}
+
+room_entity_block_t* scene_load_entities(int room_count, FILE* file) {
+    room_entity_block_t* room_entities = malloc(sizeof(room_entity_block_t) * room_count);
+
+    for (int i = 0; i < room_count; i += 1) {
+        room_entity_block_t* room = &room_entities[i];
+        fread(&room->block_size, 2, 1, file);
+        room->block = room->block_size ? malloc(room->block_size) : NULL;
+        fread(room->block, room->block_size, 1, file);
+
+        fread(&room->shared_entity_count, 2, 1, file);
+        room->shared_entity_index = room->shared_entity_count ? malloc(room->shared_entity_count * sizeof(uint16_t)) : NULL;
+        fread(room->shared_entity_index, sizeof(uint16_t), room->shared_entity_count, file);
+    }
+
+    return room_entities;
+}
+
+void scene_load_shared_entities(shared_entity_block_t* shared_entities, FILE* file) {
+    fread(&shared_entities->shared_entity_count, 2, 1, file);
+    fread(&shared_entities->block_size, 2, 1, file);
+    shared_entities->block = malloc(shared_entities->block_size);
+    shared_entities->entities = malloc(sizeof(shared_room_entity_t) * shared_entities->shared_entity_count);
+
+    fread(shared_entities->block, shared_entities->block_size, 1, file);
+
+    memory_stream_t stream;
+    memory_stream_init(&stream, shared_entities->block, shared_entities->block_size);
+    
+    uint16_t entity_count;
+    memory_stream_read(&stream, &entity_count, 2); 
+    assert(entity_count == shared_entities->shared_entity_count);
+
+    shared_room_entity_t* entity = shared_entities->entities;
+
+    for (int i = 0; i < entity_count; i += 1) {
+        entity->block = memory_stream_curr(&stream);
+        entity->entity_id = 0;
+        entity->ref_count = 0;
+
+        uint32_t expression_header;
+        memory_stream_read(&stream, &expression_header, sizeof(uint32_t));
+        assert(expression_header == EXPECTED_EXPR_HEADER);
+
+        uint16_t expression_size;
+        memory_stream_read(&stream, &expression_size, sizeof(uint16_t));
+        memory_stream_read(&stream, NULL, expression_size);
+
+        memory_stream_read(&stream, NULL, sizeof(uint16_t)); // entity_type
+        uint16_t def_size;
+        memory_stream_read(&stream, &def_size, sizeof(uint16_t));
+        memory_stream_read(&stream, NULL, def_size);
+
+        entity->block_size = (const char*)memory_stream_curr(&stream) - (const char*)entity->block;
+
+        ++entity;
+    }
+}
+
+void scene_load_loading_zones(struct scene* scene, FILE* file) {
+    fread(&scene->loading_zone_count, 2, 1, file);
+
+    scene->loading_zones = malloc(sizeof(struct loading_zone) * scene->loading_zone_count);
+    fread(scene->loading_zones, sizeof(struct loading_zone), scene->loading_zone_count, file);
+
+    for (int i = 0; i < scene->loading_zone_count; i += 1) {
+        scene->loading_zones[i].scene_name += (int)scene->string_table;
     }
 }
 
@@ -182,24 +252,10 @@ struct scene* scene_load(const char* filename) {
     scene->string_table = malloc(strings_length);
     fread(scene->string_table, strings_length, 1, file);
 
-    scene->room_entities = malloc(sizeof(loaded_room_t) * room_count);
+    scene->room_entities = scene_load_entities(room_count, file);
+    scene_load_shared_entities(&scene->shared_entities, file);
 
-    for (int i = 0; i < room_count; i += 1) {
-        uint16_t room_size;
-        fread(&room_size, 2, 1, file);
-        scene->room_entities[i].block = room_size ? malloc(room_size) : NULL;
-        scene->room_entities[i].block_size = room_size;
-        fread(scene->room_entities[i].block, room_size, 1, file);
-    }
-
-    fread(&scene->loading_zone_count, 2, 1, file);
-
-    scene->loading_zones = malloc(sizeof(struct loading_zone) * scene->loading_zone_count);
-    fread(scene->loading_zones, sizeof(struct loading_zone), scene->loading_zone_count, file);
-
-    for (int i = 0; i < scene->loading_zone_count; i += 1) {
-        scene->loading_zones[i].scene_name += (int)scene->string_table;
-    }
+    scene_load_loading_zones(scene, file);
 
     uint8_t overworld_filename_length;
     fread(&overworld_filename_length, 1, 1, file);
@@ -235,6 +291,23 @@ struct scene* scene_load(const char* filename) {
     return scene;
 }
 
+void scene_release_room_entities(room_entity_block_t* room_entities, int room_count) {
+    for (int i = 0; i < room_count; i += 1) {
+        free(room_entities[i].block);
+        free(room_entities[i].shared_entity_index);
+    }
+
+    free(room_entities);
+}
+
+void scene_release_shared_entities(shared_entity_block_t* entities) {
+    for (int i = 0; i < entities->shared_entity_count; i += 1) {
+        entity_despawn(entities->entities[i].entity_id);
+    }
+    free(entities->block);
+    free(entities->entities);
+}
+
 void scene_release(struct scene* scene) {
     if (!scene) {
         return;
@@ -248,11 +321,8 @@ void scene_release(struct scene* scene) {
         }
     }
 
-    for (int i = 0; i < scene->room_count; i += 1) {
-        free(scene->room_entities[i].block);
-    }
-
-    free(scene->room_entities);
+    scene_release_room_entities(scene->room_entities, scene->room_count);  
+    scene_release_shared_entities(&scene->shared_entities);  
 
     for (int i = 0; i < scene->static_entity_count; ++i) {
         struct static_entity* entity = &scene->static_entities[i];

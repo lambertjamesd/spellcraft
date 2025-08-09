@@ -113,6 +113,10 @@ entity_id entity_spawn(enum entity_type_id type, void* definition) {
 }
 
 void entity_despawn(entity_id entity_id) {
+    if (!entity_id) {
+        return;
+    }
+
     void* entity = hash_map_get(&entity_mapping, entity_id);
 
     if (!entity) {

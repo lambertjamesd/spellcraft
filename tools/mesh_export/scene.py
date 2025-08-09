@@ -257,6 +257,40 @@ def build_room_entity_block(objects: list[ObjectEntry], variable_context, contex
 
     return block.getvalue()
 
+def write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file):
+    for room_index in range(len(room_collection.rooms)):
+        if room_index in grouped:
+            objects = grouped[room_index]
+        else:
+            objects = []
+
+        room_block = build_room_entity_block(objects, variable_context, context, enums)
+
+        file.write(struct.pack('>H', len(room_block)))
+        file.write(room_block)
+        
+        if room_index in shared_entity_index:
+            indices = shared_entity_index[room_index]
+            file.write(struct.pack('>H', len(indices)))
+            for index in indices:
+                file.write(struct.pack('>H', index))
+        else:
+            file.write(struct.pack('>H', 0))
+
+def write_shared_entities(shared_entities, variable_context, context, enums, file):
+    shared_block = build_room_entity_block(shared_entities, variable_context, context, enums)
+    file.write(struct.pack('>HH', len(shared_entities), len(shared_block)))
+    file.write(shared_block)
+
+def write_loading_zones(scene, base_transform, context, file):
+    file.write(struct.pack(">H", len(scene.loading_zones)))
+
+    for loading_zone in scene.loading_zones:
+        bb_min, bb_max = loading_zone.bounding_box(base_transform)
+        file.write(struct.pack(">fff", bb_min.x, bb_min.y, bb_min.z))
+        file.write(struct.pack(">fff", bb_max.x, bb_max.y, bb_max.z))
+        file.write(struct.pack(">I", context.get_string_offset(loading_zone.target)))
+
 def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-2]
@@ -362,11 +396,28 @@ def process_scene():
         scene.scene_mesh_collider.write_out(file)
 
         grouped: dict[int, list[ObjectEntry]] = {}
+        shared_entity_index: dict[int, list[int]] = {}
+        shared_entities: list[ObjectEntry] = []
 
         for object in scene.objects:
             parse.struct_serialize.layout_strings(object.obj, object.def_type, context, None)
 
             key = object.room_index
+
+            multiroom_ids = object.get_multiroom_ids(context)
+
+            if len(multiroom_ids):
+                entity_index = len(shared_entities)
+
+                for room_id in multiroom_ids:
+                    if room_id in shared_entity_index:
+                        shared_entity_index[room_id].append(entity_index)
+                    else:
+                        shared_entity_index[room_id] = [entity_index]
+
+                shared_entities.append(object)
+                continue
+
             if key in grouped:
                 grouped[key].append(object)
             else:
@@ -377,24 +428,11 @@ def process_scene():
 
         context.write_strings(file)
 
-        for room_index in range(len(room_collection.rooms)):
-            if room_index in grouped:
-                objects = grouped[room_index]
-            else:
-                objects = []
+        write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file)
 
-            room_block = build_room_entity_block(objects, variable_context, context, enums)
+        write_shared_entities(shared_entities, variable_context, context, enums, file)
 
-            file.write(struct.pack('>H', len(room_block)))
-            file.write(room_block)
-
-        file.write(struct.pack(">H", len(scene.loading_zones)))
-
-        for loading_zone in scene.loading_zones:
-            bb_min, bb_max = loading_zone.bounding_box(base_transform)
-            file.write(struct.pack(">fff", bb_min.x, bb_min.y, bb_min.z))
-            file.write(struct.pack(">fff", bb_max.x, bb_max.y, bb_max.z))
-            file.write(struct.pack(">I", context.get_string_offset(loading_zone.target)))
+        write_loading_zones(scene, base_transform, context, file)
 
         if has_overworld:
             overworld_romname = overworld_filename.replace('filesystem/', 'rom:/')

@@ -24,6 +24,8 @@ struct evaluation_context {
     void* local_varaibles;
 };
 
+typedef struct evaluation_context evaluation_context_t;
+
 void evaluation_context_init(struct evaluation_context* context, int locals_size);
 void evaluation_context_destroy(struct evaluation_context* context);
 

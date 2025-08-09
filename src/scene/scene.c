@@ -83,8 +83,72 @@ void scene_clear_next() {
     next_scene_name[0] = '\0';
 }
 
+entity_id scene_load_entity(struct scene* scene, memory_stream_t* stream, evaluation_context_t* eval_context) {
+    uint32_t expression_header;
+    memory_stream_read(stream, &expression_header, sizeof(uint32_t));
+    assert(expression_header == EXPECTED_EXPR_HEADER);
+    uint16_t expression_size;
+    memory_stream_read(stream, &expression_size, sizeof(uint16_t));
+    char expresion_program[expression_size];
+    memory_stream_read(stream, expresion_program, expression_size);
+    struct expression expression;
+    expression.expression_program = expresion_program;
+
+    expression_evaluate(eval_context, &expression);
+
+    int should_spawn = evaluation_context_pop(eval_context);
+
+    uint16_t entity_type;
+    uint16_t def_size;
+    memory_stream_read(stream, &entity_type, sizeof(uint16_t));
+    memory_stream_read(stream, &def_size, sizeof(uint16_t));
+    struct entity_definition* def = entity_def_get(entity_type);
+    assert(def->definition_size == def_size);
+
+    if (should_spawn) {
+        char def_data[def_size] __attribute__((aligned(8)));
+        memory_stream_read(stream, def_data, def_size);
+        // maybe todo, the types could be applied once on scene load
+        // instead of on each time the entity is loaded
+        scene_entity_apply_types(def, scene->string_table, def->fields, def->field_count);
+        return entity_spawn(entity_type, def_data);
+    } else {
+        memory_stream_read(stream, NULL, def_size);
+        return 0;
+    }
+}
+
+void scene_remove_shared_reference(struct scene* scene, int entity_index) {
+    assert(entity_index >= 0 && entity_index < scene->shared_entities.shared_entity_count);
+
+    shared_room_entity_t* entity = &scene->shared_entities.entities[entity_index];
+    --entity->ref_count; 
+
+    if (entity->ref_count > 0) {
+        return;
+    }
+
+    entity_despawn(entity->entity_id);
+    entity->entity_id = 0;
+}
+
+void scene_add_shared_reference(struct scene* scene, int entity_index, evaluation_context_t* eval_context) {
+    assert(entity_index >= 0 && entity_index < scene->shared_entities.shared_entity_count);
+
+    shared_room_entity_t* entity = &scene->shared_entities.entities[entity_index];
+    ++entity->ref_count;
+
+    if (entity->ref_count > 1) {
+        return;
+    }
+
+    memory_stream_t stream;
+    memory_stream_init(&stream, entity->block, entity->block_size);
+    entity->entity_id = scene_load_entity(scene, &stream, eval_context);
+}
+
 void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
-    room_entities_t* room_source = &scene->room_entities[room_index];
+    room_entity_block_t* room_source = &scene->room_entities[room_index];
 
     if (room_source->block == NULL) {
         room->entity_count = 0;
@@ -98,53 +162,21 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
     uint16_t entity_count;
     memory_stream_read(&stream, &entity_count, sizeof(entity_count));
 
-    if (entity_count == 0) {
-        room->entity_count = 0;
-        room->entity_ids = NULL;
-        return;
-    }
+    room->entity_count = entity_count;
+    room->entity_ids = entity_count ? malloc(sizeof(entity_id) * entity_count) : NULL;
 
-    entity_id* entity_ids = malloc(sizeof(entity_id) * entity_count);
-    
     struct evaluation_context eval_context;
     evaluation_context_init(&eval_context, 0); 
 
     for (int i = 0; i < entity_count; i += 1) {
-        uint32_t expression_header;
-        memory_stream_read(&stream, &expression_header, sizeof(uint32_t));
-        assert(expression_header == EXPECTED_EXPR_HEADER);
-        uint16_t expression_size;
-        memory_stream_read(&stream, &expression_size, sizeof(uint16_t));
-        char expresion_program[expression_size];
-        memory_stream_read(&stream, expresion_program, expression_size);
-        struct expression expression;
-        expression.expression_program = expresion_program;
+        room->entity_ids[i] = scene_load_entity(scene, &stream, &eval_context);
+    }
 
-        expression_evaluate(&eval_context, &expression);
-
-        int should_spawn = evaluation_context_pop(&eval_context);
-
-        uint16_t entity_type;
-        uint16_t def_size;
-        memory_stream_read(&stream, &entity_type, sizeof(uint16_t));
-        memory_stream_read(&stream, &def_size, sizeof(uint16_t));
-        struct entity_definition* def = entity_def_get(entity_type);
-        assert(def->definition_size == def_size);
-
-        if (should_spawn) {
-            char def_data[def_size] __attribute__((aligned(8)));
-            memory_stream_read(&stream, def_data, def_size);
-            scene_entity_apply_types(def, scene->string_table, def->fields, def->field_count);
-            entity_ids[i] = entity_spawn(entity_type, def_data);
-        } else {
-            memory_stream_read(&stream, NULL, def_size);
-            entity_ids[i] = 0;
-        }
+    for (int i = 0; i < room_source->shared_entity_count; i += 1) {
+        scene_add_shared_reference(scene, room_source->shared_entity_index[i], &eval_context);
     }
 
     evaluation_context_destroy(&eval_context);
-    room->entity_count = entity_count;
-    room->entity_ids = entity_ids;
 }
 
 bool scene_show_room(struct scene* scene, int room_index) {
@@ -177,6 +209,12 @@ void scene_hide_room(struct scene* scene, int room_index) {
             free(room->entity_ids);
             room->entity_ids = 0;
             room->room_index = ROOM_INDEX_NONE;
+
+
+            room_entity_block_t* room_source = &scene->room_entities[room_index];
+            for (int i = 0; i < room_source->shared_entity_count; i += 1) {
+                scene_remove_shared_reference(scene, room_source->shared_entity_index[i]);
+            }
             break;
         }
     }

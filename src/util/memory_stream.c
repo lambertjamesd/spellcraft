@@ -25,3 +25,7 @@ int memory_stream_read(struct memory_stream* stream, void* into, int amount) {
 
     return amount;
 }
+
+const void* memory_stream_curr(struct memory_stream* stream) {
+    return stream->curr; 
+}

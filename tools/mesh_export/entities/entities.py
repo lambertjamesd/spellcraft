@@ -7,11 +7,13 @@ import sys
 sys.path.append("..")
 
 from parse.struct_parse import StructureInfo, EnumInfo
-from parse.struct_serialize import layout_strings, SerializeContext, write_obj, get_position
+from parse.struct_serialize import layout_strings, SerializeContext, write_obj, get_position, get_value
 
 from cutscene.parser import parse_expression
 from cutscene.expresion_generator import generate_script
 from cutscene.variable_layout import VariableContext
+
+MULTIROOM_ATTRIBUTE = {"door": ["room_a", "room_b"]}
 
 class ObjectEntry():
     def __init__(self, obj: bpy.types.Object, name: str, def_type: StructureInfo, room_index: int):
@@ -20,6 +22,24 @@ class ObjectEntry():
         self.def_type: StructureInfo = def_type
         self.position: mathutils.Vector = get_position(obj)
         self.room_index: int = room_index
+
+    def get_multiroom_ids(self, context: SerializeContext):
+        if not (self.name in MULTIROOM_ATTRIBUTE):
+            return []
+        
+        attrs = MULTIROOM_ATTRIBUTE[self.name]
+
+        result = []
+
+        for attr in attrs:
+            room = get_value(self.obj, attr, 0)
+
+            if isinstance(room, str):
+                room = context.search_enums(room)
+
+            result.append(room)
+
+        return result
 
     def write_condition(self, variable_context: VariableContext, file):
         condition_text = self.obj['condition'] if 'condition' in self.obj else 'true'
