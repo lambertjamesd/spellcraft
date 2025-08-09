@@ -132,6 +132,10 @@ struct scene* scene_load(const char* filename) {
 
     struct scene* scene = malloc(sizeof(struct scene));
 
+    for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
+        scene->loaded_rooms[i].room_index = ROOM_INDEX_NONE;
+    }
+
     struct player_definition player_def;
     player_def.location = gZeroVec;
     player_def.rotation = gRight2;
@@ -146,8 +150,7 @@ struct scene* scene_load(const char* filename) {
     struct named_location* named_locations = malloc(sizeof(struct named_location) * location_count);
     struct named_location* end = named_locations + location_count;
 
-    scene->current_room = 0;
-    scene->preview_room = ROOM_NONE;
+    uint16_t current_room = 0;
     
     for (struct named_location* curr = named_locations; curr < end; ++curr) {
         uint8_t name_length;
@@ -173,13 +176,13 @@ struct scene* scene_load(const char* filename) {
         if (strcmp(curr->name, "default") == 0) {
             player_def.location = curr->position;
             player_def.rotation = curr->rotation;
-            scene->current_room = curr->room_index;
+            current_room = curr->room_index;
         }
 
         if (strcmp(curr->name, scene_get_next_entry()) == 0) {
             player_def.location = curr->position;
             player_def.rotation = curr->rotation;
-            scene->current_room = curr->room_index;
+            current_room = curr->room_index;
             found_entry = true;
 
             if (on_enter_length) {
@@ -219,6 +222,15 @@ struct scene* scene_load(const char* filename) {
 
     scene->room_static_ranges = malloc(sizeof(struct static_entity_range) * room_count);
     fread(scene->room_static_ranges, sizeof(struct static_entity_range), room_count, file);
+
+    scene->room_entities = malloc(sizeof(loaded_room_t) * room_count);
+
+    for (int i = 0; i < room_count; i += 1) {
+        uint16_t room_size;
+        fread(&room_size, 2, 1, file);
+        scene->room_entities[i].block = room_size ? malloc(room_size) : NULL;
+        fread(scene->room_entities[i].block, room_size, 1, file);
+    }
 
     mesh_collider_load(&scene->mesh_collider, file);
     collision_scene_add_static_mesh(&scene->mesh_collider);
@@ -271,6 +283,8 @@ struct scene* scene_load(const char* filename) {
     render_scene_add(NULL, 0.0f, scene_render, scene);
     update_add(scene, scene_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD);
 
+    scene_show_room(scene, current_room);
+
     if (starting_cutscene) {
         cutscene_runner_run(starting_cutscene, cutscene_runner_free_on_finish(), NULL);
     }
@@ -282,6 +296,20 @@ void scene_release(struct scene* scene) {
     if (!scene) {
         return;
     }
+
+    for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
+        loaded_room_t* room = &scene->loaded_rooms[i];
+
+        if (room->room_index != ROOM_INDEX_NONE) {
+            scene_hide_room(scene, room->room_index);
+        }
+    }
+
+    for (int i = 0; i < scene->room_count; i += 1) {
+        free(scene->room_entities[i].block);
+    }
+
+    free(scene->room_entities);
 
     for (int i = 0; i < scene->static_entity_count; ++i) {
         struct static_entity* entity = &scene->static_entities[i];

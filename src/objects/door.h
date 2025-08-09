@@ -28,6 +28,7 @@ struct door {
     struct dynamic_object collider;
 
     room_id next_room;
+    room_id preview_room;
 };
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id);

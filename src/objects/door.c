@@ -21,7 +21,7 @@ void door_cuscene_finish(struct cutscene* cutscene, void* data) {
 
     animator_run_clip(&door->animator, door->animations.close, 0.0f, false);
     
-    door->next_room = current_scene->current_room == door->room_a ? door->room_b : door->room_a;
+    door->next_room = door->preview_room;
     door->collider.collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE;
 
     cutscene_free(cutscene);
@@ -36,8 +36,9 @@ void door_interact(struct interactable* interactable, entity_id from) {
 
     struct door* door = (struct door*)interactable->data;
 
-    room_id other_room = current_scene->current_room == door->room_a ? door->room_b : door->room_a;
-    current_scene->preview_room = other_room;
+    room_id other_room = scene_is_showing_room(current_scene, door->room_a) ? door->room_b : door->room_a;
+    scene_show_room(current_scene, other_room);
+    door->preview_room = other_room;
 
     struct cutscene_builder builder;
     cutscene_builder_init(&builder);
@@ -87,9 +88,9 @@ void door_update(void* data) {
     animator_update(&door->animator, &door->renderable.armature, fixed_time_step);
 
     if (door->next_room != ROOM_NONE && !animator_is_running(&door->animator)) {
-        current_scene->current_room = door->next_room;
-        current_scene->preview_room = ROOM_NONE;
+        scene_hide_room(current_scene, door->next_room == door->room_a ? door->room_b : door->room_a);
         door->next_room = ROOM_NONE;
+        door->preview_room = ROOM_NONE;
     }
 }
 
@@ -98,6 +99,7 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
     door->room_a = definition->room_a;
     door->room_b = definition->room_b;
     door->next_room = ROOM_NONE;
+    door->preview_room = ROOM_NONE;
 
     renderable_single_axis_init(&door->renderable, &door->transform, "rom:/meshes/objects/doors/door.tmesh");
     render_scene_add_renderable(&door->renderable, 0.8f);

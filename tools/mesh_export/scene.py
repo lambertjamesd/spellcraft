@@ -134,6 +134,9 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
         file.write(struct.pack('>HH', index_start, index_start + len(room_meshes)))
         index_start += len(room_meshes)
 
+    for i in range(room_count):
+        file.write(struct.pack('>H', 0))
+
 def find_static_blacklist():
     result = set()
 

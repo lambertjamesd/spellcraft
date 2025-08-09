@@ -2,6 +2,10 @@
 
 #include "../render/render_batch.h"
 #include "../overworld/overworld_load.h"
+#include "../util/memory_stream.h"
+#include "../entity/entity_spawner.h"
+#include "../cutscene/evaluation_context.h"
+#include "../cutscene/expression_evaluate.h"
 
 struct scene* current_scene;
 
@@ -26,8 +30,13 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
 void scene_render(void* data, struct render_batch* batch) {
     struct scene* scene = (struct scene*)data;
     
-    scene_render_room(scene, scene->current_room, batch);
-    scene_render_room(scene, scene->preview_room, batch);
+    for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
+        if (scene->loaded_rooms[i].room_index == ROOM_INDEX_NONE) {
+            continue;
+        }
+
+        scene_render_room(scene, scene->loaded_rooms[i].room_index, batch);
+    }
 }
 
 void scene_update(void* data) {
@@ -72,6 +81,111 @@ void scene_queue_next(char* scene_name) {
 
 void scene_clear_next() {
     next_scene_name[0] = '\0';
+}
+
+void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
+    if (scene->room_entities[room_index].block == NULL) {
+        room->entity_count = 0;
+        room->entity_ids = NULL;
+        return;
+    }
+
+    memory_stream_t stream;
+    memory_stream_init(&stream, scene->room_entities[room_index].block, 0);
+
+    uint16_t entity_count;
+    memory_stream_read(&stream, &entity_count, sizeof(entity_count));
+
+    if (entity_count == 0) {
+        room->entity_count = 0;
+        room->entity_ids = NULL;
+        return;
+    }
+
+    entity_id* entity_ids = malloc(sizeof(entity_id) * entity_count);
+    
+    struct evaluation_context eval_context;
+    evaluation_context_init(&eval_context, 0); 
+
+    for (int i = 0; i < entity_count; i += 1) {
+        uint16_t expression_size;
+        memory_stream_read(&stream, &expression_size, sizeof(uint16_t));
+        char expresion_program[expression_size];
+        memory_stream_read(&stream, expresion_program, sizeof(uint16_t));
+        struct expression expression;
+        expression.expression_program = expresion_program;
+
+        expression_evaluate(&eval_context, &expression);
+
+        int should_spawn = evaluation_context_pop(&eval_context);
+
+        uint16_t def_size;
+        uint16_t entity_type;
+        memory_stream_read(&stream, &def_size, sizeof(uint16_t));
+        memory_stream_read(&stream, &entity_type, sizeof(uint16_t));
+
+        if (should_spawn) {
+            char def[def_size] __attribute__((aligned(8)));
+            memory_stream_read(&stream, def, def_size);
+            assert(entity_def_get(entity_type)->definition_size == def_size);
+            entity_ids[i] = entity_spawn(entity_type, def);
+        } else {
+            memory_stream_read(&stream, NULL, def_size);
+            entity_ids[i] = 0;
+        }
+    }
+
+    evaluation_context_destroy(&eval_context);
+    room->entity_count = entity_count;
+    room->entity_ids = entity_ids;
+}
+
+bool scene_show_room(struct scene* scene, int room_index) {
+    if (scene_is_showing_room(scene, room_index)) {
+        return true;
+    }
+
+    for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
+        loaded_room_t* room = &scene->loaded_rooms[i];
+
+        if (room->room_index != ROOM_INDEX_NONE) {
+            continue;
+        }
+
+        room->room_index = room_index;
+        scene_load_room(scene, room, room_index);
+    }
+
+    return false;
+}
+
+void scene_hide_room(struct scene* scene, int room_index) {
+    for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
+        loaded_room_t* room = &scene->loaded_rooms[i];
+
+        if (room->room_index == room_index) {
+            for (int entity_index = 0; entity_index < room->entity_count; entity_index += 1) {
+                entity_despawn(room->entity_ids[entity_index]);
+            }
+            free(room->entity_ids);
+            room->entity_ids = 0;
+            room->room_index = ROOM_INDEX_NONE;
+            break;
+        }
+    }
+}
+
+
+bool scene_is_showing_room(struct scene* scene, int room_index) {
+    for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
+        loaded_room_t* room = &scene->loaded_rooms[i];
+
+        if (room->room_index == room_index) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool scene_has_next() {

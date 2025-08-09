@@ -42,6 +42,24 @@ struct static_entity_range {
     uint16_t end;
 };
 
+struct room_entities {
+    void* block;
+};
+
+typedef struct room_entities room_entities_t;
+
+#define ROOM_INDEX_NONE     0xFFFF
+
+struct loaded_room {
+    uint16_t room_index;
+    uint16_t entity_count;
+    entity_id* entity_ids;
+};
+
+typedef struct loaded_room loaded_room_t;
+
+#define MAX_LOADED_ROOM 4
+
 struct scene {
     struct static_entity* static_entities;
     struct static_entity_range* room_static_ranges;
@@ -60,14 +78,15 @@ struct scene {
     struct named_location* named_locations;
     struct overworld* overworld;
 
+    room_entities_t* room_entities;
+
     uint16_t room_count;
     uint16_t static_entity_count;
     uint16_t entity_data_count;
     uint16_t loading_zone_count;
     uint16_t named_location_count;
 
-    uint16_t current_room;
-    uint16_t preview_room;
+    loaded_room_t loaded_rooms[MAX_LOADED_ROOM];
 
     char* string_table;
     char* scene_vars;
@@ -82,6 +101,11 @@ void scene_update(void* data);
 
 void scene_queue_next(char* scene_name);
 void scene_clear_next();
+
+bool scene_show_room(struct scene* scene, int room_index);
+void scene_hide_room(struct scene* scene, int room_index);
+
+bool scene_is_showing_room(struct scene* scene, int room_index);
 
 bool scene_has_next();
 
