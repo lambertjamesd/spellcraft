@@ -187,12 +187,11 @@ bool scene_show_room(struct scene* scene, int room_index) {
     for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
         loaded_room_t* room = &scene->loaded_rooms[i];
 
-        if (room->room_index != ROOM_INDEX_NONE) {
-            continue;
+        if (room->room_index == ROOM_INDEX_NONE) {
+            room->room_index = room_index;
+            scene_load_room(scene, room, room_index);
+            return true;
         }
-
-        room->room_index = room_index;
-        scene_load_room(scene, room, room_index);
     }
 
     return false;
