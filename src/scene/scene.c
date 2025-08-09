@@ -108,6 +108,9 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
     evaluation_context_init(&eval_context, 0); 
 
     for (int i = 0; i < entity_count; i += 1) {
+        uint32_t expression_header;
+        memory_stream_read(&stream, &expression_header, sizeof(uint32_t));
+        assert(expression_header == EXPECTED_EXPR_HEADER);
         uint16_t expression_size;
         memory_stream_read(&stream, &expression_size, sizeof(uint16_t));
         char expresion_program[expression_size];
@@ -123,12 +126,14 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
         uint16_t entity_type;
         memory_stream_read(&stream, &def_size, sizeof(uint16_t));
         memory_stream_read(&stream, &entity_type, sizeof(uint16_t));
+        struct entity_definition* def = entity_def_get(entity_type);
+        assert(def->definition_size == def_size);
 
         if (should_spawn) {
-            char def[def_size] __attribute__((aligned(8)));
-            memory_stream_read(&stream, def, def_size);
-            assert(entity_def_get(entity_type)->definition_size == def_size);
-            entity_ids[i] = entity_spawn(entity_type, def);
+            char def_data[def_size] __attribute__((aligned(8)));
+            memory_stream_read(&stream, def_data, def_size);
+            scene_entity_apply_types(def, scene->string_table, def->fields, def->field_count);
+            entity_ids[i] = entity_spawn(entity_type, def_data);
         } else {
             memory_stream_read(&stream, NULL, def_size);
             entity_ids[i] = 0;

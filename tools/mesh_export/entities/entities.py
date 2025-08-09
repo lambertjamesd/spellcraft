@@ -14,11 +14,12 @@ from cutscene.expresion_generator import generate_script
 from cutscene.variable_layout import VariableContext
 
 class ObjectEntry():
-    def __init__(self, obj: bpy.types.Object, name: str, def_type: StructureInfo):
+    def __init__(self, obj: bpy.types.Object, name: str, def_type: StructureInfo, room_index: int):
         self.obj: bpy.types.Object = obj
         self.name: str = name
         self.def_type: StructureInfo = def_type
         self.position: mathutils.Vector = get_position(obj)
+        self.room_index: int = room_index
 
     def write_condition(self, variable_context: VariableContext, file):
         condition_text = self.obj['condition'] if 'condition' in self.obj else 'true'

@@ -45,56 +45,6 @@ bool scene_load_check_condition(FILE* file) {
     return result != 0;
 }
 
-void scene_load_entity(struct scene* scene, struct entity_data* entity_data, FILE* file) {
-    uint16_t entity_type_id;
-    fread(&entity_type_id, 2, 1, file);
-    struct entity_definition* def = entity_def_get(entity_type_id);
-
-    assert(def);
-
-    fread(&entity_data->entity_count, 2, 1, file);
-    uint16_t definition_size;
-    fread(&definition_size, 2, 1, file);
-    assert(definition_size == def->definition_size);
-
-    entity_id* entity_ids = malloc(sizeof(entity_id) * entity_data->entity_count);
-    char entity_def_data[definition_size * entity_data->entity_count];
-    char* entity_def = entity_def_data;
-
-    entity_data->definition = def;
-    entity_data->entity_ids = entity_ids;
-
-    fread(entity_def_data, definition_size, entity_data->entity_count, file);
-
-    int final_count = 0;
-
-    for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
-        if (scene_load_check_condition(file)) {
-            scene_entity_apply_types(entity_def, scene->string_table, def->fields, def->field_count);
-            *entity_ids = entity_spawn(entity_type_id, entity_def);
-            final_count += 1;
-        } else {
-            *entity_ids = 0;
-        }
-
-        entity_def += def->definition_size;
-        entity_ids += 1;
-    }
-
-    entity_data->entity_count = final_count;
-}
-
-void scene_destroy_entity(struct entity_data* entity_data) {
-    entity_id* entity_ids = entity_data->entity_ids;
-
-    for (int entity_index = 0; entity_index < entity_data->entity_count; entity_index += 1) {
-        entity_despawn(*entity_ids);
-        ++entity_ids;
-    }
-
-    free(entity_data->entity_ids);
-}
-
 void scene_load_camera_animations(struct camera_animation_list* list, const char* filename, FILE* file) {
     uint16_t count;
     fread(&count, sizeof(count), 1, file);
@@ -223,15 +173,6 @@ struct scene* scene_load(const char* filename) {
     scene->room_static_ranges = malloc(sizeof(struct static_entity_range) * room_count);
     fread(scene->room_static_ranges, sizeof(struct static_entity_range), room_count, file);
 
-    scene->room_entities = malloc(sizeof(loaded_room_t) * room_count);
-
-    for (int i = 0; i < room_count; i += 1) {
-        uint16_t room_size;
-        fread(&room_size, 2, 1, file);
-        scene->room_entities[i].block = room_size ? malloc(room_size) : NULL;
-        fread(scene->room_entities[i].block, room_size, 1, file);
-    }
-
     mesh_collider_load(&scene->mesh_collider, file);
     collision_scene_add_static_mesh(&scene->mesh_collider);
 
@@ -241,12 +182,13 @@ struct scene* scene_load(const char* filename) {
     scene->string_table = malloc(strings_length);
     fread(scene->string_table, strings_length, 1, file);
 
-    fread(&scene->entity_data_count, 2, 1, file);
+    scene->room_entities = malloc(sizeof(loaded_room_t) * room_count);
 
-    scene->entity_data = malloc(sizeof(struct entity_data) * scene->entity_data_count);
-
-    for (int i = 0; i < scene->entity_data_count; i += 1) {
-        scene_load_entity(scene, &scene->entity_data[i], file);
+    for (int i = 0; i < room_count; i += 1) {
+        uint16_t room_size;
+        fread(&room_size, 2, 1, file);
+        scene->room_entities[i].block = room_size ? malloc(room_size) : NULL;
+        fread(scene->room_entities[i].block, room_size, 1, file);
     }
 
     fread(&scene->loading_zone_count, 2, 1, file);
@@ -331,16 +273,10 @@ void scene_release(struct scene* scene) {
     collision_scene_remove_static_mesh(&scene->mesh_collider);
     mesh_collider_release(&scene->mesh_collider);
 
-    for (int i = 0; i < scene->entity_data_count; i += 1) {
-        scene_destroy_entity(&scene->entity_data[i]);
-    }
-
     if (scene->overworld) {
         overworld_free(scene->overworld);
     }
     
-    free(scene->entity_data);
-
     free(scene->string_table);
     free(scene->loading_zones);
 

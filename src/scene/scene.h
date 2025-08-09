@@ -15,12 +15,6 @@
 #include "camera_animation.h"
 #include "../entity/entity_spawner.h"
 
-struct entity_data {
-    struct entity_definition* definition;
-    entity_id* entity_ids;
-    uint16_t entity_count;
-};
-
 struct static_entity {
     struct tmesh tmesh;
 };
@@ -73,7 +67,6 @@ struct scene {
     struct pause_menu pause_menu;
     struct hud hud;
     
-    struct entity_data* entity_data;
     struct loading_zone* loading_zones;
     struct named_location* named_locations;
     struct overworld* overworld;
@@ -82,7 +75,6 @@ struct scene {
 
     uint16_t room_count;
     uint16_t static_entity_count;
-    uint16_t entity_data_count;
     uint16_t loading_zone_count;
     uint16_t named_location_count;
 

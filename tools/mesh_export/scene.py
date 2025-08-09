@@ -4,6 +4,7 @@ import os
 import mathutils
 import math
 import struct
+import io
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -69,7 +70,7 @@ class Scene():
         self.loading_zones: list[LoadingZone] = []
         self.scene_mesh_collider = entities.mesh_collider.MeshCollider()
 
-def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo]):
+def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo], room_index: int):
     type = None
 
     if 'type' in mesh:
@@ -88,7 +89,7 @@ def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitio
     
     print(f"found object {obj.name} of type {def_type_name}")
 
-    return ObjectEntry(obj, type, definitions[def_type_name])
+    return ObjectEntry(obj, type, definitions[def_type_name], room_index)
 
 def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection: entities.room.room_collection, file):
     settings = entities.export_settings.ExportSettings()
@@ -134,9 +135,6 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
         file.write(struct.pack('>HH', index_start, index_start + len(room_meshes)))
         index_start += len(room_meshes)
 
-    for i in range(room_count):
-        file.write(struct.pack('>H', 0))
-
 def find_static_blacklist():
     result = set()
 
@@ -167,7 +165,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
             continue
 
         if 'type' in obj or 'type' in obj.data:
-            entity_list.append(process_linked_object(obj, obj.data, definitions))
+            entity_list.append(process_linked_object(obj, obj.data, definitions, 0))
             continue
 
         mesh: bpy.types.Mesh = obj.data
@@ -241,6 +239,24 @@ def build_variable_enum(enums: dict, globals: cutscene.variable_layout.VariableL
     enums['boolean_variable'] = parse.struct_parse.UnorderedEnum('boolean_variable', boolean_enum)
         
 
+def build_room_entity_block(objects: list[ObjectEntry], variable_context, context, enums) -> bytes:
+    block = io.BytesIO()
+
+    block.write(len(objects).to_bytes(2, 'big'))
+
+    for object in objects:
+        object.write_condition(variable_context, block)
+
+        def_type = enums['enum entity_type_id'].str_to_int('ENTITY_TYPE_' + object.name)
+        block.write(def_type.to_bytes(2, 'big'))
+
+        struct_size = parse.struct_serialize.obj_gather_types(object.def_type, context)
+        block.write(struct_size.to_bytes(2, 'big'))
+    
+        object.write_definition(context, block)
+
+    return block.getvalue()
+
 def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-2]
@@ -306,7 +322,7 @@ def process_scene():
             continue
 
         if 'type' in obj or (obj.data and 'type' in obj.data):
-            scene.objects.append(process_linked_object(obj, obj.data, definitions))
+            scene.objects.append(process_linked_object(obj, obj.data, definitions, room_collection.get_obj_room_index(obj)))
             continue
 
         if obj.type != "MESH":
@@ -345,13 +361,12 @@ def process_scene():
 
         scene.scene_mesh_collider.write_out(file)
 
-        grouped: dict[str, list[ObjectEntry]] = {}
+        grouped: dict[int, list[ObjectEntry]] = {}
 
         for object in scene.objects:
-            key = object.name
-
             parse.struct_serialize.layout_strings(object.obj, object.def_type, context, None)
 
+            key = object.room_index
             if key in grouped:
                 grouped[key].append(object)
             else:
@@ -362,23 +377,16 @@ def process_scene():
 
         context.write_strings(file)
 
-        grouped_list = sorted(list(grouped.items()), key=lambda x: x[0])
+        for room_index in range(len(room_collection.rooms)):
+            if room_index in grouped:
+                objects = grouped[room_index]
+            else:
+                objects = []
 
-        file.write(len(grouped_list).to_bytes(2, 'big'))
+            room_block = build_room_entity_block(objects, variable_context, context, enums)
 
-        for item in grouped_list:
-            def_type = enums['enum entity_type_id'].str_to_int('ENTITY_TYPE_' + item[0])
-            file.write(def_type.to_bytes(2, 'big'))
-
-            file.write(len(item[1]).to_bytes(2, 'big'))
-            struct_size = parse.struct_serialize.obj_gather_types(item[1][0].def_type, context)
-            file.write(struct_size.to_bytes(2, 'big'))
-            
-            for entry in item[1]:
-                entry.write_definition(context, file)
-
-            for entry in item[1]:
-                entry.write_condition(variable_context, file)
+            file.write(struct.pack('>H', len(room_block)))
+            file.write(room_block)
 
         file.write(struct.pack(">H", len(scene.loading_zones)))
 
