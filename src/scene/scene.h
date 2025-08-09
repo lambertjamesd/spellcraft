@@ -38,6 +38,7 @@ struct static_entity_range {
 
 struct room_entities {
     void* block;
+    uint16_t block_size;
 };
 
 typedef struct room_entities room_entities_t;

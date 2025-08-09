@@ -188,6 +188,7 @@ struct scene* scene_load(const char* filename) {
         uint16_t room_size;
         fread(&room_size, 2, 1, file);
         scene->room_entities[i].block = room_size ? malloc(room_size) : NULL;
+        scene->room_entities[i].block_size = room_size;
         fread(scene->room_entities[i].block, room_size, 1, file);
     }
 

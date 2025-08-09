@@ -84,14 +84,16 @@ void scene_clear_next() {
 }
 
 void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
-    if (scene->room_entities[room_index].block == NULL) {
+    room_entities_t* room_source = &scene->room_entities[room_index];
+
+    if (room_source->block == NULL) {
         room->entity_count = 0;
         room->entity_ids = NULL;
         return;
     }
 
     memory_stream_t stream;
-    memory_stream_init(&stream, scene->room_entities[room_index].block, 0);
+    memory_stream_init(&stream, room_source->block, room_source->block_size);
 
     uint16_t entity_count;
     memory_stream_read(&stream, &entity_count, sizeof(entity_count));
@@ -114,7 +116,7 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
         uint16_t expression_size;
         memory_stream_read(&stream, &expression_size, sizeof(uint16_t));
         char expresion_program[expression_size];
-        memory_stream_read(&stream, expresion_program, sizeof(uint16_t));
+        memory_stream_read(&stream, expresion_program, expression_size);
         struct expression expression;
         expression.expression_program = expresion_program;
 
@@ -122,10 +124,10 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
 
         int should_spawn = evaluation_context_pop(&eval_context);
 
-        uint16_t def_size;
         uint16_t entity_type;
-        memory_stream_read(&stream, &def_size, sizeof(uint16_t));
+        uint16_t def_size;
         memory_stream_read(&stream, &entity_type, sizeof(uint16_t));
+        memory_stream_read(&stream, &def_size, sizeof(uint16_t));
         struct entity_definition* def = entity_def_get(entity_type);
         assert(def->definition_size == def_size);
 
