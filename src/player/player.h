@@ -81,6 +81,8 @@ struct player {
     
     struct drop_shadow drop_shadow;
 
+    struct Vector3 last_good_footing;
+
     enum player_state state;
 };
 

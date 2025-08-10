@@ -461,6 +461,7 @@ void collision_scene_collide() {
             kill_entity = object->entity_id;
             object->position->y = g_scene.kill_plane;
             object->velocity.y = 0.0f;
+            object->hit_kill_plane = 1;
         }
     }
 

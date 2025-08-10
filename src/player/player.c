@@ -178,6 +178,8 @@ void player_handle_ground_movement(struct player* player, struct contact* ground
         if (ground_object) {
             vector3Add(&player->cutscene_actor.collider.velocity, &ground_object->velocity, &player->cutscene_actor.collider.velocity);
         }
+    } else {
+        player->last_good_footing = player->cutscene_actor.transform.position;
     }
 }
 
@@ -551,6 +553,12 @@ void player_update(struct player* player) {
     player_update_state(player, ground);
 
     live_cast_cleanup_unused_spells(&player->live_cast, &player->spell_exec);
+
+    if (player->cutscene_actor.collider.hit_kill_plane) {
+        player->cutscene_actor.transform.position = player->last_good_footing;
+        player->cutscene_actor.collider.velocity = gZeroVec;
+        player->cutscene_actor.collider.hit_kill_plane = 0;
+    }
 }
 
 void player_knockback(struct player* player) {
@@ -610,6 +618,8 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     player->cutscene_actor.transform.position = definition->location;
     player->cutscene_actor.transform.rotation = definition->rotation;
+
+    player->last_good_footing = definition->location;
 
     render_scene_add_renderable(&player->renderable, 2.0f);
     update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);

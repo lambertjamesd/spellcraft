@@ -28,7 +28,7 @@ struct entity_definition {
 
 
 entity_id entity_spawn(enum entity_type_id type, void* definition);
-void entity_despawn(entity_id entity_id);
+bool entity_despawn(entity_id entity_id);
 void entity_despawn_all();
 void* entity_get(entity_id entity_id);
 

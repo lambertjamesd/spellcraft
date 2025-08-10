@@ -44,7 +44,6 @@ static struct dynamic_object_type jelly_ice_collider = {
     BOX_COLLIDER(1.0f, 1.0f, 1.0f),
     .friction = 0.025f,
     .bounce = 0.1f,
-    // about a 40 degree slope
     .max_stable_slope = 0.0f,
 };
 

@@ -113,15 +113,15 @@ entity_id entity_spawn(enum entity_type_id type, void* definition) {
     return result;
 }
 
-void entity_despawn(entity_id entity_id) {
+bool entity_despawn(entity_id entity_id) {
     if (!entity_id) {
-        return;
+        return false;
     }
 
     void* entity = hash_map_get(&entity_mapping, entity_id);
 
     if (!entity) {
-        return;
+        return false;
     }
 
     struct entity_header* header = entity;
@@ -130,6 +130,8 @@ void entity_despawn(entity_id entity_id) {
 
     hash_map_delete(&entity_mapping, entity_id);
     last_despwned_id = entity_id;
+
+    return true;
 }
 
 void entity_despawn_all() {
