@@ -14,8 +14,10 @@
 #include <memory.h>
 #include "../math/constants.h"
 #include "water.h"
+#include "../entity/entity_spawner.h"
 
 #define MAX_SNAP_TO_GROUND_ANGLE    30.0f
+#define KILL_PLANE                  -10.0f
 
 struct collision_scene g_scene;
 static struct Vector2 max_ground_snap_angle;
@@ -45,6 +47,7 @@ void collision_scene_reset() {
     g_scene.count = 0;
     g_scene.all_contacts = malloc(sizeof(struct contact) * MAX_ACTIVE_CONTACTS);
     g_scene.next_free_contact = &g_scene.all_contacts[0];
+    g_scene.kill_plane = KILL_PLANE;
 
     for (int i = 0; i + 1 < MAX_ACTIVE_CONTACTS; ++i) {
         g_scene.all_contacts[i].next = &g_scene.all_contacts[i + 1];
@@ -96,8 +99,6 @@ void collision_scene_return_contacts(struct contact* active_contacts) {
 }
 
 void collision_scene_remove_any(void* object) {
-    bool has_found = false;
-
     for (int i = 0; i < g_scene.count; ++i) {
         if (object == g_scene.elements[i].object) {
             if (g_scene.elements[i].type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
@@ -109,16 +110,11 @@ void collision_scene_remove_any(void* object) {
                 collision_scene_return_contacts(trigger->active_contacts);
                 trigger->active_contacts = NULL;
             }
-            has_found = true;
-        }
 
-        if (has_found) {
-            g_scene.elements[i] = g_scene.elements[i + 1];
+            g_scene.count -= 1;
+            g_scene.elements[i] = g_scene.elements[g_scene.count];
+            return;
         }
-    }
-
-    if (has_found) {
-        g_scene.count -= 1;
     }
 }
 
@@ -136,6 +132,12 @@ void collision_scene_remove_trigger(struct spatial_trigger* trigger) {
 }
 
 void collision_scene_add_static_mesh(struct mesh_collider* collider) {
+    float kill_plane = collider->index.min.y + KILL_PLANE;
+
+    if (kill_plane < g_scene.kill_plane) {
+        g_scene.kill_plane = kill_plane;
+    }
+
     for (int i = 0; i < MAX_STATIC_MESHES; i += 1) {
         if (g_scene.mesh_colliders[i] == NULL) {
             g_scene.mesh_colliders[i] = collider;
@@ -147,6 +149,8 @@ void collision_scene_add_static_mesh(struct mesh_collider* collider) {
 }
 
 void collision_scene_remove_static_mesh(struct mesh_collider* collider) {
+    g_scene.kill_plane = KILL_PLANE;
+
     int write_index = 0;
     for (int read_index = 0; read_index < MAX_STATIC_MESHES; read_index += 1) {
         if (write_index != read_index) {
@@ -155,6 +159,12 @@ void collision_scene_remove_static_mesh(struct mesh_collider* collider) {
         
         if (g_scene.mesh_colliders[read_index] != collider) {
             write_index += 1;
+
+            float kill_plane = g_scene.mesh_colliders[read_index]->index.min.y + KILL_PLANE;
+
+            if (kill_plane < g_scene.kill_plane) {
+                g_scene.kill_plane = kill_plane;
+            }
         } else {
             g_scene.mesh_collider_count -= 1;
         }
@@ -411,6 +421,8 @@ void collision_scene_collide() {
 
     collision_scene_collide_dynamic();
 
+    entity_id kill_entity = 0;
+
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
 
@@ -444,6 +456,18 @@ void collision_scene_collide() {
         if (!is_grounded && prev_was_grounded[i] && !object->is_jumping) {
             collision_scene_snap_to_ground(object, &prev_pos[i]);
         }
+
+        if (object->position->y < g_scene.kill_plane) {
+            kill_entity = object->entity_id;
+            object->position->y = g_scene.kill_plane;
+            object->velocity.y = 0.0f;
+        }
+    }
+
+    // kill the entity outide the loop since despawing an entity
+    // could mess with the element list
+    if (kill_entity) {
+        entity_despawn(kill_entity);
     }
 }
 

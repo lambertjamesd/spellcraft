@@ -35,6 +35,8 @@ struct collision_scene {
     uint16_t capacity;
     uint16_t mesh_collider_count;
 
+    float kill_plane;
+
     struct mesh_collider* mesh_colliders[8];
 };
 
