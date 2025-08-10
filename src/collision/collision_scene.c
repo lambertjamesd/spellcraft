@@ -430,7 +430,7 @@ void collision_scene_collide() {
 
             if (contact) {
                 contact->next = NULL;
-                contact->normal = shadow.normal;
+                vector3Normalize(&shadow.normal, &contact->normal);
                 contact->other_object = 0;
                 contact->point = *object->position;
                 contact->point.y = shadow.y;

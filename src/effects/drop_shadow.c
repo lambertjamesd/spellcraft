@@ -18,7 +18,7 @@ void drop_shadow_render(void* data, struct render_batch* batch) {
         contact = drop_shadow->target->shadow_contact;
     }
 
-    if (!contact || contact->surface_type == SURFACE_TYPE_WATER || contact->normal.y < 0.0001f) {
+    if (!contact || contact->surface_type == SURFACE_TYPE_WATER || contact->normal.y < 0.1f) {
         return;
     }
     
