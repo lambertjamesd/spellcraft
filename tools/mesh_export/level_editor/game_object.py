@@ -2,6 +2,7 @@ import bpy
 from .definitions import object_definitions
 import os
 from ..entities import entry_point
+from ..parse import struct_parse
 import bmesh
 import mathutils
 
@@ -199,6 +200,11 @@ _enum_mapping = {
     'struct Vector3': NODE_OT_game_object_positions.bl_idname,
 }
 
+global_attributes = [
+    struct_parse.StructureAttribute("condition", "string"),
+    struct_parse.StructureAttribute("on_despawn", "boolean_variable"),
+]
+
 def _get_obj_def(current_object):
     if not current_object:
         return None
@@ -219,7 +225,7 @@ def _init_default_properties(target):
     if not structure:
         return
 
-    for attr in structure.children:
+    for attr in structure.children + global_attributes:
         if attr.name == 'position' or \
             attr.name == 'rotation':
             continue
@@ -227,35 +233,32 @@ def _init_default_properties(target):
         if attr.name in target.data:
             target[attr.name] = target.data[attr.name]
             continue
+
+        if attr.name in target:
+            continue
         
         if attr.data_type == 'bool':
-            if not attr.name in target:
-                target[attr.name] = False
+            target[attr.name] = False
         elif attr.data_type == 'float':
-            if not attr.name in target:
-                target[attr.name] = 0.0
+            target[attr.name] = 0.0
+        elif attr.data_type == 'string':
+            target[attr.name] = ''
         elif attr.data_type.startswith('enum '):
-            if not attr.name in target:
-                default_value = ''
-                if attr.data_type in object_definitions.enums:
-                    default_value = object_definitions.enums[attr.data_type].int_to_str(0)
+            default_value = ''
+            if attr.data_type in object_definitions.enums:
+                default_value = object_definitions.enums[attr.data_type].int_to_str(0)
 
-                target[attr.name] = default_value
+            target[attr.name] = default_value
         elif attr.data_type == 'collectable_sub_type':
-            if not attr.name in target:
-                target[attr.name] = 'ITEM_TYPE_NONE'
+            target[attr.name] = 'ITEM_TYPE_NONE'
         elif attr.data_type == 'script_location':
-            if not attr.name in target:
-                target[attr.name] = ''
+            target[attr.name] = ''
         elif attr.data_type == 'room_id':
-            if not attr.name in target:
-                target[attr.name] = 'room_default'
+            target[attr.name] = 'room_default'
         elif attr.data_type == 'boolean_variable':
-            if not attr.name in target:
-                target[attr.name] = 'disconnected'
+            target[attr.name] = 'disconnected'
         elif attr.data_type == 'struct Vector3':
-            if not attr.name in target:
-                target[attr.name] = ''
+            target[attr.name] = ''
         else:
             print('could not generate default for ' + attr.data_type)
             continue
@@ -360,7 +363,7 @@ class GameObjectPanel(bpy.types.Panel):
 
         is_mising_props = False
 
-        for attr in structure.children:
+        for attr in structure.children + global_attributes:
             if attr.name == 'position' or \
                 attr.name == 'rotation':
                 continue

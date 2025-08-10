@@ -39,6 +39,35 @@ void scene_render(void* data, struct render_batch* batch) {
     }
 }
 
+void scene_check_despawns(struct scene* scene) {
+    entity_id last_despawn = entity_get_last_despawned();
+
+    if (last_despawn == scene->last_despawn_check) {
+        return;
+    }
+
+    scene->last_despawn_check = last_despawn;
+
+    for (int room_index = 0; room_index < MAX_LOADED_ROOM; room_index += 1) {
+        loaded_room_t* room = &scene->loaded_rooms[room_index];
+
+        if (room->room_index == ROOM_INDEX_NONE) {
+            continue;
+        }
+
+        for (int entity_index = 0; entity_index < room->entity_count; entity_index += 1) {
+            loaded_entity_t* entity = &room->entities[entity_index];
+
+            if (!entity->id || entity_get(entity->id)) {
+                continue;
+            }
+
+            entity->id = 0;
+            expression_set_bool(entity->on_despawn, true);
+        }
+    }
+}
+
 void scene_update(void* data) {
     struct scene* scene = (struct scene*)data;
 
@@ -55,6 +84,8 @@ void scene_update(void* data) {
         overworld_check_loaded_tiles(scene->overworld);
         overworld_check_collider_tiles(scene->overworld, player_get_position(&scene->player));
     }
+
+    scene_check_despawns(scene);
 }
 
 void scene_queue_next(char* scene_name) {
@@ -83,7 +114,7 @@ void scene_clear_next() {
     next_scene_name[0] = '\0';
 }
 
-entity_id scene_load_entity(struct scene* scene, memory_stream_t* stream, evaluation_context_t* eval_context) {
+loaded_entity_t scene_load_entity(struct scene* scene, memory_stream_t* stream, evaluation_context_t* eval_context) {
     uint32_t expression_header;
     memory_stream_read(stream, &expression_header, sizeof(uint32_t));
     assert(expression_header == EXPECTED_EXPR_HEADER);
@@ -98,6 +129,9 @@ entity_id scene_load_entity(struct scene* scene, memory_stream_t* stream, evalua
 
     int should_spawn = evaluation_context_pop(eval_context);
 
+    uint16_t on_despawn;
+    memory_stream_read(stream, &on_despawn, sizeof(uint16_t));
+
     uint16_t entity_type;
     uint16_t def_size;
     memory_stream_read(stream, &entity_type, sizeof(uint16_t));
@@ -111,10 +145,16 @@ entity_id scene_load_entity(struct scene* scene, memory_stream_t* stream, evalua
         // maybe todo, the types could be applied once on scene load
         // instead of on each time the entity is loaded
         scene_entity_apply_types(def, scene->string_table, def->fields, def->field_count);
-        return entity_spawn(entity_type, def_data);
+        return (loaded_entity_t){
+            .id = entity_spawn(entity_type, def_data),
+            .on_despawn = on_despawn,
+        };
     } else {
         memory_stream_read(stream, NULL, def_size);
-        return 0;
+        return (loaded_entity_t){
+            .id = 0,
+            .on_despawn = VARIABLE_DISCONNECTED,
+        };
     }
 }
 
@@ -144,7 +184,7 @@ void scene_add_shared_reference(struct scene* scene, int entity_index, evaluatio
 
     memory_stream_t stream;
     memory_stream_init(&stream, entity->block, entity->block_size);
-    entity->entity_id = scene_load_entity(scene, &stream, eval_context);
+    entity->entity_id = scene_load_entity(scene, &stream, eval_context).id;
 }
 
 void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
@@ -152,7 +192,7 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
 
     if (room_source->block == NULL) {
         room->entity_count = 0;
-        room->entity_ids = NULL;
+        room->entities = NULL;
         return;
     }
 
@@ -163,13 +203,13 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
     memory_stream_read(&stream, &entity_count, sizeof(entity_count));
 
     room->entity_count = entity_count;
-    room->entity_ids = entity_count ? malloc(sizeof(entity_id) * entity_count) : NULL;
+    room->entities = entity_count ? malloc(sizeof(loaded_entity_t) * entity_count) : NULL;
 
     struct evaluation_context eval_context;
     evaluation_context_init(&eval_context, 0); 
 
     for (int i = 0; i < entity_count; i += 1) {
-        room->entity_ids[i] = scene_load_entity(scene, &stream, &eval_context);
+        room->entities[i] = scene_load_entity(scene, &stream, &eval_context);
     }
 
     for (int i = 0; i < room_source->shared_entity_count; i += 1) {
@@ -203,10 +243,10 @@ void scene_hide_room(struct scene* scene, int room_index) {
 
         if (room->room_index == room_index) {
             for (int entity_index = 0; entity_index < room->entity_count; entity_index += 1) {
-                entity_despawn(room->entity_ids[entity_index]);
+                entity_despawn(room->entities[entity_index].id);
             }
-            free(room->entity_ids);
-            room->entity_ids = 0;
+            free(room->entities);
+            room->entities = NULL;
             room->room_index = ROOM_INDEX_NONE;
 
 

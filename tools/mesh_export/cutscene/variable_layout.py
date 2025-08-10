@@ -4,6 +4,7 @@ import struct
 import base64
 from . import parser
 from . import static_evaluator
+from . import tokenizer
 
 _type_bit_sizes = {
     'char': 8,
@@ -152,6 +153,13 @@ class VariableLayoutBuilder():
     def __str__(self):
         entries = self._layout()
         return '\n'.join(["0x{0:04x} {1} : {2}".format(entry[1], entry[0].name, entry[0].type_name) for entry in entries])
+    
+    def add_generated_variable(self, name: str, type: str) -> bool:
+        return self.add_variable(parser.VariableDefinition(
+            tokenizer.Token("identifier", name, 0, None),
+            parser.DataType(tokenizer.Token("identifier", type, 0, None)),
+            None
+        ))
 
     def add_variable(self, variable: parser.VariableDefinition) -> bool:
         name_str = variable.name.value
@@ -242,6 +250,9 @@ class VariableContext():
     def get_variable_offset(self, name: str) -> int:
         if self.locals.has_variable(name):
             return self.locals.get_variable_offset(name)
+        
+        if self.scene_vars.has_variable(name):
+            return self.scene_vars.get_variable_offset(name)
         
         return self.globals.get_variable_offset(name)
     

@@ -32,6 +32,8 @@ void entity_despawn(entity_id entity_id);
 void entity_despawn_all();
 void* entity_get(entity_id entity_id);
 
+entity_id entity_get_last_despawned();
+
 struct entity_definition* entity_find_def(const char* name);
 struct entity_definition* entity_def_get(unsigned index);
 

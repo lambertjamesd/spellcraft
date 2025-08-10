@@ -75,6 +75,7 @@ struct entity_definition* entity_def_get(unsigned index) {
 }
 
 static struct hash_map entity_mapping;
+static entity_id last_despwned_id;
 
 #define ENTITY_STARTING_CAPACITY    32
 
@@ -128,6 +129,7 @@ void entity_despawn(entity_id entity_id) {
     free(entity);
 
     hash_map_delete(&entity_mapping, entity_id);
+    last_despwned_id = entity_id;
 }
 
 void entity_despawn_all() {
@@ -138,6 +140,7 @@ void entity_despawn_all() {
     }
 
     hash_map_destroy(&entity_mapping);
+    last_despwned_id = 0;
 }
 
 void* entity_get(entity_id entity_id) {
@@ -146,5 +149,14 @@ void* entity_get(entity_id entity_id) {
     }
 
     struct entity_header* header = hash_map_get(&entity_mapping, entity_id);
+
+    if (!header) {
+        return NULL;
+    }
+
     return header + 1;
+}
+
+entity_id entity_get_last_despawned() {
+    return last_despwned_id;
 }

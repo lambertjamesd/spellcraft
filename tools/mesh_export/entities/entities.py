@@ -15,6 +15,8 @@ from cutscene.variable_layout import VariableContext
 
 MULTIROOM_ATTRIBUTE = {"door": ["room_a", "room_b"]}
 
+SHOULD_AUTO_GEN_CONDITION = {"biter", "jelly"}
+
 class ObjectEntry():
     def __init__(self, obj: bpy.types.Object, name: str, def_type: StructureInfo, room_index: int):
         self.obj: bpy.types.Object = obj
@@ -22,6 +24,9 @@ class ObjectEntry():
         self.def_type: StructureInfo = def_type
         self.position: mathutils.Vector = get_position(obj)
         self.room_index: int = room_index
+
+        self.condition = obj['condition'] if 'condition' in obj else None
+        self.on_despawn = obj['on_despawn'] if 'on_despawn' in obj else None
 
     def get_multiroom_ids(self, context: SerializeContext):
         if not (self.name in MULTIROOM_ATTRIBUTE):
@@ -42,13 +47,30 @@ class ObjectEntry():
         return result
 
     def write_condition(self, variable_context: VariableContext, file):
-        condition_text = self.obj['condition'] if 'condition' in self.obj else 'true'
+        condition_text = self.condition or 'true'
         condition = parse_expression(condition_text, self.obj.name + ".condition")
         script = generate_script(condition, variable_context, 'int')
         script.serialize(file)
 
     def write_definition(self, context: SerializeContext, file):
         write_obj(file, self.obj, self.def_type, context)
+
+    def should_auto_gen_condition(self):
+        if  not (self.name in SHOULD_AUTO_GEN_CONDITION):
+            return False
+        
+        if self.condition != None and len(self.condition) > 0:
+            return False
+        
+        if self.on_despawn != None and self.on_despawn != 'disconnected':
+            return False
+        
+        return True
+    
+    def generate_spawn_condition(self, variable_name):
+        self.condition = f"not {variable_name}"
+        self.on_despawn = f"scene {variable_name}: bool"
+
 
 def to_cell_pos(value: float, min_pos: float, max_pos: float) -> int:
     norm_value = (value - min_pos) / (max_pos - min_pos)

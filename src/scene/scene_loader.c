@@ -121,6 +121,8 @@ void scene_load_shared_entities(shared_entity_block_t* shared_entities, FILE* fi
         memory_stream_read(&stream, &expression_size, sizeof(uint16_t));
         memory_stream_read(&stream, NULL, expression_size);
 
+        memory_stream_read(&stream, NULL, sizeof(uint16_t)); // on_despawn
+
         memory_stream_read(&stream, NULL, sizeof(uint16_t)); // entity_type
         uint16_t def_size;
         memory_stream_read(&stream, &def_size, sizeof(uint16_t));
@@ -213,6 +215,7 @@ struct scene* scene_load(const char* filename) {
 
     scene->named_locations = named_locations;
     scene->named_location_count = location_count;
+    scene->last_despawn_check = 0;
 
     inventory_init();
     camera_init(&scene->camera, 70.0f, 1.0f, 125.0f);

@@ -20,6 +20,7 @@ import parse.struct_parse
 import parse.struct_serialize
 import cutscene.expresion_generator
 import cutscene.parser
+import cutscene.tokenizer
 import cutscene.variable_layout
 import entities.camera_animation
 import entities.room
@@ -204,7 +205,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
 
     return True
     
-def load_cutscene_vars(input_filename: str):
+def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
     scene_vars_builder = cutscene.variable_layout.VariableLayoutBuilder()
 
     scene_vars_name = input_filename[:-6] + '.script'
@@ -218,8 +219,14 @@ def load_cutscene_vars(input_filename: str):
             for var in scene_vars_parse_tree.scene_vars:
                 success = scene_vars_builder.add_variable(var) and success
 
+    for bool_name in generated_bools:
+        scene_vars_builder.add_generated_variable(bool_name, "bool")
+
     if not success:
         sys.exit(1)
+
+    with open(var_json_path, 'w') as file:
+        scene_vars_builder.serialize(file)
 
     return scene_vars_builder.build()
 
@@ -246,6 +253,8 @@ def build_room_entity_block(objects: list[ObjectEntry], variable_context, contex
 
     for object in objects:
         object.write_condition(variable_context, block)
+        on_despawn = enums['boolean_variable'].str_to_int(object.on_despawn or "disconnected")
+        block.write(struct.pack('>H', on_despawn))
 
         def_type = enums['enum entity_type_id'].str_to_int('ENTITY_TYPE_' + object.name)
         block.write(def_type.to_bytes(2, 'big'))
@@ -256,6 +265,41 @@ def build_room_entity_block(objects: list[ObjectEntry], variable_context, contex
         object.write_definition(context, block)
 
     return block.getvalue()
+
+def find_scene_objects(scene, definitions, room_collection, base_transform):
+    object_blacklist = find_static_blacklist()
+
+    for obj in bpy.data.objects:
+        if obj.name.startswith('fast64_f3d_material_library_'):
+            continue
+
+        if obj in object_blacklist:
+            continue
+
+        if 'loading_zone' in obj:
+            scene.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
+            continue
+
+        if entities.entry_point.is_entry_point(obj):
+            scene.locations.append(LocationEntry(obj, entities.entry_point.get_entry_point(obj)))
+            continue
+
+        if 'type' in obj or (obj.data and 'type' in obj.data):
+            scene.objects.append(process_linked_object(obj, obj.data, definitions, room_collection.get_obj_room_index(obj)))
+            continue
+
+        if obj.type != "MESH":
+            continue
+
+        final_transform = base_transform @ obj.matrix_world
+
+        mesh: bpy.types.Mesh = obj.data
+
+        if len(mesh.materials) > 0 and not obj.name.startswith('collision'):
+            scene.static.append(StaticEntry(obj, mesh, final_transform))
+
+        if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH' or obj.name.startswith('collision'):
+            scene.scene_mesh_collider.append(mesh, final_transform)
 
 def write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file):
     for room_index in range(len(room_collection.rooms)):
@@ -327,8 +371,25 @@ def process_scene():
 
     with open('build/assets/scripts/globals.json') as file:
         globals.deserialize(file)
+        
+    find_scene_objects(scene, definitions, room_collection, base_transform)
 
-    scene_vars = load_cutscene_vars(input_filename)
+    generated_bools = []
+
+    for obj in scene.objects:
+        if not obj.should_auto_gen_condition():
+            continue
+
+        variable_name = f"_auto_bool_{len(generated_bools)}"
+        obj.generate_spawn_condition(variable_name)
+
+        generated_bools.append(variable_name)
+
+    scene_vars = load_cutscene_vars(
+        input_filename, 
+        generated_bools,
+        f"{output_filename[:-len('.scene')]}.json"
+    )
 
     build_variable_enum(enums, globals, scene_vars)
 
@@ -336,41 +397,7 @@ def process_scene():
 
     context = parse.struct_serialize.SerializeContext(enums)
 
-    object_blacklist = find_static_blacklist()
-
     has_overworld = check_for_overworld(base_transform, overworld_filename, definitions, enums, variable_context)
-
-    for obj in bpy.data.objects:
-        if obj.name.startswith('fast64_f3d_material_library_'):
-            continue
-
-        if obj in object_blacklist:
-            continue
-
-        if 'loading_zone' in obj:
-            scene.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
-            continue
-
-        if entities.entry_point.is_entry_point(obj):
-            scene.locations.append(LocationEntry(obj, entities.entry_point.get_entry_point(obj)))
-            continue
-
-        if 'type' in obj or (obj.data and 'type' in obj.data):
-            scene.objects.append(process_linked_object(obj, obj.data, definitions, room_collection.get_obj_room_index(obj)))
-            continue
-
-        if obj.type != "MESH":
-            continue
-
-        final_transform = base_transform @ obj.matrix_world
-
-        mesh: bpy.types.Mesh = obj.data
-
-        if len(mesh.materials) > 0 and not obj.name.startswith('collision'):
-            scene.static.append(StaticEntry(obj, mesh, final_transform))
-
-        if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH' or obj.name.startswith('collision'):
-            scene.scene_mesh_collider.append(mesh, final_transform)
 
     with open(output_filename, 'wb') as file:
         file.write('WRLD'.encode())

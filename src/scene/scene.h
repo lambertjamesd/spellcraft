@@ -65,10 +65,17 @@ typedef struct shared_entity_block shared_entity_block_t;
 
 #define ROOM_INDEX_NONE     0xFFFF
 
+struct loaded_entity {
+    entity_id id;
+    boolean_variable on_despawn;
+};
+
+typedef struct loaded_entity loaded_entity_t;
+
 struct loaded_room {
     uint16_t room_index;
     uint16_t entity_count;
-    entity_id* entity_ids;
+    loaded_entity_t* entities;
 };
 
 typedef struct loaded_room loaded_room_t;
@@ -99,6 +106,8 @@ struct scene {
     uint16_t static_entity_count;
     uint16_t loading_zone_count;
     uint16_t named_location_count;
+
+    entity_id last_despawn_check;
 
     loaded_room_t loaded_rooms[MAX_LOADED_ROOM];
 
