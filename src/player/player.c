@@ -171,6 +171,14 @@ void player_handle_ground_movement(struct player* player, struct contact* ground
 
         vector3Scale(&projected_target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
     }
+
+    if (ground_contact->other_object) {
+        struct dynamic_object* ground_object = collision_scene_find_object(ground_contact->other_object);
+
+        if (ground_object) {
+            vector3Add(&player->cutscene_actor.collider.velocity, &ground_object->velocity, &player->cutscene_actor.collider.velocity);
+        }
+    }
 }
 
 void player_handle_air_movement(struct player* player) {
