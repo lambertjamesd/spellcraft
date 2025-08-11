@@ -32,7 +32,7 @@ void setup() {
     init_engine();
     savefile_new();
 
-    scene_queue_next("rom:/scenes/fire_trials.scene");
+    scene_queue_next("rom:/scenes/fire_trials.scene#default");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
     // scene_queue_next("rom:/scenes/ability_testing.scene");
     // scene_queue_next("rom:/scenes/playerhome_outside.scene");

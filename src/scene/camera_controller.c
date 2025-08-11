@@ -4,6 +4,7 @@
 #include "../math/transform_single_axis.h"
 #include "../physics/move_towards.h"
 #include "../math/mathf.h"
+#include "../math/constants.h"
 #include <math.h>
 
 #define CAMERA_FOLLOW_DISTANCE  3.4f
@@ -147,8 +148,20 @@ void camera_controller_update(struct camera_controller* controller) {
         );
 
         controller->camera->transform.position = anim_frame_buffer.position;
-        quatUnpack(anim_frame_buffer.rotation, &controller->camera->transform.rotation);
-        controller->camera->fov = 180.0f * (1.0f / 0xFFFF) * anim_frame_buffer.fov;
+        controller->camera->transform.rotation.x = anim_frame_buffer.rotation[0];
+        controller->camera->transform.rotation.y = anim_frame_buffer.rotation[1];
+        controller->camera->transform.rotation.z = anim_frame_buffer.rotation[2];
+
+        float neg_w = controller->camera->transform.rotation.x * controller->camera->transform.rotation.x 
+            + controller->camera->transform.rotation.y * controller->camera->transform.rotation.y 
+            + controller->camera->transform.rotation.z * controller->camera->transform.rotation.z;
+
+        if (neg_w > 1.0f) {
+            neg_w = 1.0f;
+        }
+
+        controller->camera->transform.rotation.w = sqrtf(1.0f - neg_w);
+        controller->camera->fov = (180.0f / M_PI) * anim_frame_buffer.fov;
         controller->current_frame += 1;
 
         return;

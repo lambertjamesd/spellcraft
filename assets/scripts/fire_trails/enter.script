@@ -1,0 +1,20 @@
+
+global has_entered_fire_trials: bool;
+
+if has_entered_fire_trials then
+    exit;
+end
+
+pause true, false;
+
+cam_animate "enter";
+
+delay 2.5;
+
+interact_with_location INTERACTION_MOVE, NPC_TYPE_PLAYER, "enter_run_target";
+npc_wait NPC_TYPE_PLAYER;
+
+cam_wait;
+cam_return;
+
+pause false, false;

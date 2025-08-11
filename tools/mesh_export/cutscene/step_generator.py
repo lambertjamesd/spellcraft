@@ -213,6 +213,9 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
 def _validate_step(step, errors: list[str], context: variable_layout.VariableContext):
     if isinstance(step, parser.CutsceneStep):
+        if step.name.value == 'exit':
+            return
+
         if not step.name.value in _step_args:
             errors.append(step.name.format_message(f'{step.name.value} is not a valid step name'))
             return
@@ -300,6 +303,10 @@ def validate_steps(statements: list, errors: list[str], context: variable_layout
 
 def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableContext):
     if isinstance(step, parser.CutsceneStep):
+        if step.name.value == 'exit':
+            cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, '$exit', step.name))
+            return
+
         _generate_function_step(cutscene, step, _step_args[step.name.value], context)
 
     if isinstance(step, parser.IfStatement):

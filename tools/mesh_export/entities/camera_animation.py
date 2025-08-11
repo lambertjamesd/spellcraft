@@ -47,12 +47,18 @@ class camera_animation_frame:
         
     def pack(self):
         position = base_transform @ self.location
-        rotation = armature.pack_quaternion(base_rotation @ self.get_rotation())
+        rotation = base_rotation @ self.get_rotation()
+
+        if rotation.w < 0:
+            rotation = -rotation
+        else:
+            rotation = rotation
+            
         return struct.pack(
-            '>fffhhhH',
+            '>fffffff',
             position.x, position.y, position.z,
-            rotation[0], rotation[1], rotation[2],
-            round(0xffff * self.fov / math.pi)
+            rotation.x, rotation.y, rotation.z,
+            round(self.fov)
         )
 
 class camera_animation:
@@ -62,10 +68,10 @@ class camera_animation:
         self.lens_action: bpy.types.Action | None = None
 
     def start_frame(self):
-        return math.floor(min(self.movement_action.frame_start, self.lens_action.frame_start))
+        return math.floor(min(self.movement_action.frame_range[0], self.lens_action.frame_range[0]))
 
     def end_frame(self):
-        return math.ceil(max(self.movement_action.frame_end, self.lens_action.frame_end))
+        return math.ceil(max(self.movement_action.frame_range[1], self.lens_action.frame_range[1]))
     
     def evaluate(self, frame) -> camera_animation_frame:
         result = camera_animation_frame()

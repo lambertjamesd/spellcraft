@@ -2,10 +2,10 @@
 global has_staff_default: bool;
 global has_talked_outside: bool;
 
-global fire_rune_level: i8 = 1;
-global ice_rune_level: i8 = 0;
-global earth_rune_level: i8 = 0;
-global air_rune_level: i8 = 0;
+global fire_rune_level: i8 = 4;
+global ice_rune_level: i8 = 4;
+global earth_rune_level: i8 = 4;
+global air_rune_level: i8 = 4;
 global life_rune_level: i8 = 0;
 
 global recast_rune_level: i8 = 0;
@@ -14,3 +14,5 @@ global player_name: char[8] = "Carl";
 global intro_played: bool;
 
 global talk_count: i16;
+
+global has_entered_fire_trials: bool;
