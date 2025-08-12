@@ -27,7 +27,7 @@ void area_title_render(void* data) {
             .wrap = WRAP_WORD,
         }, 
         2, 
-        0, 160, 
+        0, 40, 
         g_title.message,
         strlen(g_title.message)
     );
@@ -53,6 +53,7 @@ void area_title_show(const char* title) {
     g_title.font = font_cache_load("rom:/fonts/HeavyEquipment.font64");
     rdpq_text_register_font(2, g_title.font);
     menu_add_callback(area_title_render, &g_title, MENU_PRIORITY_TITLE);
+    update_add(&g_title, area_title_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_CUTSCENE);
 }
 
 void area_title_hide() {
@@ -62,5 +63,6 @@ void area_title_hide() {
         font_cache_release(g_title.font);
         g_title.font = NULL;
         menu_remove_callback(&g_title);
+        update_remove(&g_title);
     }
 }

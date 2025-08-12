@@ -12,6 +12,7 @@
 #include "../cutscene/expression_evaluate.h"
 #include "../overworld/overworld_load.h"
 #include "../util/memory_stream.h"
+#include "../effects/area_title.h"
 
 #include "../collision/collision_scene.h"
 
@@ -289,6 +290,7 @@ struct scene* scene_load(const char* filename) {
 
     if (starting_cutscene) {
         cutscene_runner_run(starting_cutscene, cutscene_runner_free_on_finish(), NULL);
+        area_title_show("FIRE TRIALS");
     }
 
     return scene;
