@@ -22,6 +22,7 @@ enum actor_state {
 struct cutscene_actor_animations {
     struct animation_clip* idle;
     struct animation_clip* walk;
+    struct animation_clip* run;
 };
 
 union cutscene_actor_id {
@@ -38,6 +39,8 @@ typedef union cutscene_actor_id cutscene_actor_id_t;
 struct cutscene_actor_def {
     float eye_level;
     float move_speed;
+    float run_speed;
+    float run_threshold;
     float rotate_speed;
     struct dynamic_object_type collider;
     float half_height;
@@ -54,6 +57,7 @@ struct cutscene_actor {
     struct armature* armature;
     struct Vector3 target;
     float animate_speed;
+    float move_speed;
     enum actor_state state;
     cutscene_actor_id_t id;
     struct cutscene_actor_def* def;
@@ -67,6 +71,7 @@ struct cutscene_actor* cutscene_actor_find(enum npc_type npc_type, int index);
 
 void cutscene_actor_interact_with(struct cutscene_actor* actor, enum interaction_type interaction, struct Vector3* at);
 void cutscene_actor_idle(struct cutscene_actor* actor);
+void cutscene_actor_set_speed(struct cutscene_actor* actor, float speed);
 
 bool cutscene_actor_is_moving(struct cutscene_actor* actor);
 

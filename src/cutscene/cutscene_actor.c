@@ -25,6 +25,7 @@ void cutscene_actor_init(
     actor->animation_set = animations_path ? animation_cache_load(animations_path) : NULL;
     actor->animations.idle = animation_set_find_clip(actor->animation_set, "idle");
     actor->animations.walk = animation_set_find_clip(actor->animation_set, "walk");
+    actor->animations.run = animation_set_find_clip(actor->animation_set, "run");
 
     animator_init(&actor->animator, armature ? armature->bone_count : 0);
     actor->armature = armature;
@@ -34,6 +35,7 @@ void cutscene_actor_init(
     actor->id.npc_type = npc_type;
     actor->id.index = index;
     actor->def = def;
+    actor->move_speed = def->move_speed;
 
     hash_map_set(&cutscene_actor_hash_map, actor->id.unique_id, actor);
 
@@ -82,6 +84,10 @@ void cutscene_actor_idle(struct cutscene_actor* actor) {
     actor->state = ACTOR_STATE_IDLE;
 }
 
+void cutscene_actor_set_speed(struct cutscene_actor* actor, float speed) {
+    actor->move_speed = speed;
+}
+
 bool cutscene_actor_is_moving(struct cutscene_actor* actor) {
     return (actor->state & (ACTOR_STATE_LOOKING | ACTOR_STATE_MOVING | ACTOR_STATE_SPACE)) != 0;
 }
@@ -106,13 +112,23 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
             actor->collider.velocity.x = 0.0f;
             actor->collider.velocity.z = 0.0f;
             animator_run_clip(&actor->animator, actor->animations.idle, 0.0f, true);
+            actor->animate_speed = 1.0f;
         } else {
-            float inv = actor->def->move_speed / sqrtf(distSqrd);
+            float inv = actor->move_speed / sqrtf(distSqrd);
             actor->collider.velocity.x = offset.x * inv;
             actor->collider.velocity.z = offset.z * inv;
 
-            if (actor->animator.current_clip != actor->animations.walk) {
-                animator_run_clip(&actor->animator, actor->animations.walk, 0.0f, true);
+            struct animation_clip* use_clip = actor->animations.walk;
+            float target_move_speed = actor->def->move_speed;
+
+            if (actor->move_speed > actor->def->run_threshold && actor->animations.run) {
+                use_clip = actor->animations.run;
+                target_move_speed = actor->def->run_speed;
+            }
+
+            if (!animator_is_running_clip(&actor->animator, use_clip)) {
+                animator_run_clip(&actor->animator, use_clip, 0.0f, true);
+                actor->animate_speed = actor->move_speed / target_move_speed;
             }
         }
     }
@@ -135,9 +151,9 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
 
         if (distSqrd < SPACING_DISTANCE * SPACING_DISTANCE) {
             if (distSqrd < 0.000001f) {
-                vector3AddScaled(&actor->transform.position, &gRight, actor->def->move_speed * fixed_time_step, &actor->transform.position);
+                vector3AddScaled(&actor->transform.position, &gRight, actor->move_speed * fixed_time_step, &actor->transform.position);
             } else {
-                vector3AddScaled(&actor->transform.position, &offset, actor->def->move_speed * fixed_time_step / sqrtf(distSqrd), &actor->transform.position);
+                vector3AddScaled(&actor->transform.position, &offset, actor->move_speed * fixed_time_step / sqrtf(distSqrd), &actor->transform.position);
             }
         } else {
             CLEAR_FLAG(actor->state, ACTOR_STATE_SPACE);

@@ -138,6 +138,11 @@ struct cutscene* cutscene_load(char* filename) {
                 fread(&step->data.npc_wait.subject, 4, 1, file);
                 break;
             }
+            case CUTSCENE_STEP_NPC_SET_SPEED: {
+                fread(&step->data.npc_set_speed.subject, 4, 1, file);
+                fread(&step->data.npc_set_speed.speed, 4, 1, file);
+                break;
+            }
         }
     }
 

@@ -8,7 +8,7 @@
 struct camera_animation_frame {
     struct Vector3 position;
     float rotation[3];
-    uint16_t fov;
+    float fov;
 };
 
 struct camera_animation {

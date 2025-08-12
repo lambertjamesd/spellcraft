@@ -20,6 +20,7 @@
 #include "render/tmesh.h"
 #include "util/init.h"
 #include "util/screen_debug.h"
+#include "effects/area_title.h"
 
 #include <libdragon.h>
 #include <n64sys.h>
@@ -41,6 +42,10 @@ void setup() {
 
     scene_clear_next();
     screen_debug_init();
+}
+
+void reset() {
+    area_title_hide();
 }
 
 static struct frame_memory_pool frame_memory_pools[2];
@@ -115,6 +120,7 @@ bool check_scene_load() {
     }
 
     scene_release(current_scene);
+    reset();
     current_scene = scene_load(scene_get_next());
     scene_clear_next();
 

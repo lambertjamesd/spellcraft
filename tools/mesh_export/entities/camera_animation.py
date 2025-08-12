@@ -58,7 +58,7 @@ class camera_animation_frame:
             '>fffffff',
             position.x, position.y, position.z,
             rotation.x, rotation.y, rotation.z,
-            round(self.fov)
+            self.fov
         )
 
 class camera_animation:

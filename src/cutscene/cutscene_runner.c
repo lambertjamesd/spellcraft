@@ -215,6 +215,14 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         case CUTSCENE_STEP_NPC_WAIT: {
             break;
         }
+        case CUTSCENE_STEP_NPC_SET_SPEED: {
+            cutscene_actor_id_t subject_id = step->data.npc_set_speed.subject;
+            struct cutscene_actor* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
+            if (!subject) {
+                break;
+            }
+            cutscene_actor_set_speed(subject, step->data.npc_set_speed.speed);
+        }
     }
 }
 

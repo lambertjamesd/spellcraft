@@ -145,5 +145,6 @@ void dialog_box_hide() {
 }
 
 void dialog_box_destroy() {
+    rdpq_text_unregister_font(1);
     font_cache_release(dialog_box.font);
 }

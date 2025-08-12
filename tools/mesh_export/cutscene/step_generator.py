@@ -27,6 +27,7 @@ CUTSCENE_STEP_INTERACT_WITH_LOCATION = 16
 CUTSCENE_STEP_FADE = 17
 CUTSCENE_STEP_INTERACT_WITH_POSITION = 18
 CUTSCENE_STEP_NPC_WAIT = 19
+CUTSCENE_STEP_NPC_SET_SPEED = 20
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -46,8 +47,10 @@ _step_args = {
     "cam_wait": [],
     "interact_with_location": [ParameterType("int", True), ParameterType("int", True), ParameterType("str", True)],
     "fade": [ParameterType("int", True), ParameterType("float", True)],
-    "interact_with_position": [ParameterType("int", True), ParameterType("int", True), ParameterType("float", True), ParameterType("float", True), ParameterType("float", True)],
+    "interact_with_position": [ParameterType("int",
+     True), ParameterType("int", True), ParameterType("float", True), ParameterType("float", True), ParameterType("float", True)],
     "npc_wait": [ParameterType("int", True)],
+    "npc_set_speed": [ParameterType("int", True), ParameterType("float", True)],
 }
 
 _step_ids = {
@@ -65,6 +68,7 @@ _step_ids = {
     "fade": CUTSCENE_STEP_FADE,
     "interact_with_position": CUTSCENE_STEP_INTERACT_WITH_POSITION,
     "npc_wait": CUTSCENE_STEP_NPC_WAIT,
+    "npc_set_speed": CUTSCENE_STEP_NPC_SET_SPEED,
 }
 
 _steps_that_need_idle = {

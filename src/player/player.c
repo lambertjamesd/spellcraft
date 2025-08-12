@@ -39,7 +39,9 @@ static struct dynamic_object_type player_visual_shape = {
 
 static struct cutscene_actor_def player_actor_def = {
     .eye_level = 1.26273f,
-    .move_speed = 2.0f,
+    .move_speed = PLAYER_WALK_ANIM_SPEED,
+    .run_speed = PLAYER_RUN_ANIM_SPEED,
+    .run_threshold = PLAYER_RUN_THRESHOLD,
     .rotate_speed = 2.0f,
     .half_height = 0.75f,
     .collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
