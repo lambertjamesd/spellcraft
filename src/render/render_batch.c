@@ -22,9 +22,6 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->material = NULL;
     result->type = RENDER_BATCH_MESH;
     result->mesh.block = 0;
-    result->mesh.transform = NULL;
-    result->mesh.transform_count = 0;
-    result->mesh.attr_count = 0;
     result->mesh.attrs = NULL;
     result->light_source = 0;
 
@@ -58,11 +55,10 @@ void render_batch_relative_mtx(struct render_batch* batch, mat4x4 into) {
 struct render_batch_element* render_batch_add_tmesh(
     struct render_batch* batch, 
     struct tmesh* mesh, 
-    void* transform, 
-    int transform_count, 
+    void* transform,
     struct armature* armature, 
     struct tmesh** attachments,
-    struct element_attr* attrs
+    struct element_attr* additional_attrs
 ) {
     struct render_batch_element* element = render_batch_add(batch);
 
@@ -70,49 +66,57 @@ struct render_batch_element* render_batch_add_tmesh(
         return NULL;
     }
 
-    assert(!transform == !transform_count);
-
     element->mesh.block = mesh->block;
     element->material = mesh->material;
     element->light_source = mesh->light_source;
-    element->mesh.transform = transform;
-    element->mesh.transform_count = transform_count;
-    element->mesh.attr_count = 0;
+    int attr_count = 0;
     element->mesh.attrs = NULL;
 
-    if (attrs) {
-        struct element_attr* curr = attrs;
+    if (additional_attrs) {
+        struct element_attr* curr = additional_attrs;
         while (curr->type != ELEMENT_ATTR_NONE) {
-            ++element->mesh.attr_count;
+            ++attr_count;
             ++curr;
         }
     }
 
+    if (transform) {
+        ++attr_count;
+    }
+
     if (armature) {
         if (armature->bone_count) {
-            ++element->mesh.attr_count;
+            ++attr_count;
         }
 
         if (armature->image_frame_0 != NO_IMAGE_FRAME) {
-            ++element->mesh.attr_count;
+            ++attr_count;
         }
     }
 
-    if (element->mesh.attr_count) {
-        element->mesh.attrs = frame_malloc(batch->pool, sizeof(struct element_attr) * element->mesh.attr_count);
+    if (attr_count) {
+        element->mesh.attrs = frame_malloc(batch->pool, sizeof(struct element_attr) * (attr_count + 1));
     
         if (!element->mesh.attrs) {
-            element->mesh.attr_count = 0;
+            element->mesh.attrs = 0;
             return NULL;
         }
+    } else {
+        return element;
     }
 
     struct element_attr* attr = element->mesh.attrs;
 
-    while (attrs && attrs->type != ELEMENT_ATTR_NONE) {
-        *attr = *attrs;
+    while (additional_attrs && additional_attrs->type != ELEMENT_ATTR_NONE) {
+        *attr = *additional_attrs;
         ++attr;
-        ++attrs;
+        ++additional_attrs;
+    }
+
+    if (transform) {
+        attr->type = ELEMENT_ATTR_TRANSFORM;
+        attr->transform = transform;
+        ++attr;
     }
 
     if (armature) {
@@ -131,44 +135,42 @@ struct render_batch_element* render_batch_add_tmesh(
                         continue;
                     }
     
-                    T3DMat4FP** matrices = frame_malloc(batch->pool, sizeof(T3DMat4FP*) * (transform_count + 2));
+                    T3DMat4FP** matrices = frame_malloc(batch->pool, sizeof(T3DMat4FP*) * 3);
     
                     if (!matrices) {
                         continue;
                     }
     
-                    int matrix_index = 0;
-    
-                    if (transform_count > 1) {
-                        for (matrix_index = 0; matrix_index < transform_count; matrix_index += 1) {
-                            matrices[matrix_index] = ((T3DMat4FP**)transform)[matrix_index];
-                        }
-                    } else {
-                        matrices[matrix_index++] = transform;
-                    }
-    
-    
+                    int matrix_index = 0;                
+                    
                     struct armature_attatchment* linkage = &mesh->attatchments[i];
-    
+                    
+                    matrices[matrix_index++] = transform;
                     matrices[matrix_index++] = &pose_fp[linkage->bone_index];
                     matrices[matrix_index++] = &linkage->local_transform;
+
+                    struct element_attr attachment_attrs[2];
+                    attachment_attrs[0].type = ELEMENT_ATTR_TRANSFORM_LIST;
+                    attachment_attrs[0].offset = 2;
+                    attachment_attrs[0].transform_list = matrices;
+                    attachment_attrs[1].type = ELEMENT_ATTR_NONE;
     
-                    render_batch_add_tmesh(batch, attachments[i], matrices, transform_count + 2, NULL, NULL, NULL);
+                    render_batch_add_tmesh(batch, attachments[i], matrices, NULL, NULL, attachment_attrs);
                 }
             }
             ++attr;
         }
 
-        if (armature->image_frame_0 != NO_IMAGE_FRAME) {
-            if (armature->image_frame_0 < armature->definition->image_frames_0) {
-                attr->type = ELEMENT_ATTR_IMAGE;
-                attr->offset = 0;
-                attr->image.sprite = armature->definition->frames[armature->image_frame_0];
-            } else {
-                attr->type = ELEMENT_ATTR_NONE;
-            }
+        if (armature->image_frame_0 != NO_IMAGE_FRAME && armature->image_frame_0 < armature->definition->image_frames_0) {
+            attr->type = ELEMENT_ATTR_IMAGE;
+            attr->offset = 0;
+            attr->image.sprite = armature->definition->frames[armature->image_frame_0];
             ++attr;
         }
+    }
+    
+    if (attr) {
+        attr->type = ELEMENT_ATTR_NONE;
     }
 
     return element;
@@ -420,9 +422,9 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 continue;
             }
 
-            struct element_attr* end = element->mesh.attrs + element->mesh.attr_count;
+            int transform_count = 0;
 
-            for (struct element_attr* attr = element->mesh.attrs; attr < end; ++attr) {
+            for (struct element_attr* attr = element->mesh.attrs; attr && attr->type != ELEMENT_ATTR_NONE; ++attr) {
                 switch (attr->type) {
                     case ELEMENT_ATTR_POSE:
                         t3d_segment_set(T3D_SEGMENT_SKELETON, attr->pose.pose);
@@ -433,28 +435,29 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                     case ELEMENT_ATTR_PRIM_COLOR:
                         rdpq_set_prim_color(attr->prim.color);
                         break;
+                    case ELEMENT_ATTR_TRANSFORM:
+                        t3d_matrix_push(attr->transform);
+                        transform_count = 1;
+                        break;
+                    case ELEMENT_ATTR_TRANSFORM_LIST: {
+                        for (int mtx_index = 0; mtx_index < attr->offset; mtx_index += 1) {
+                            t3d_matrix_push(attr->transform_list[mtx_index]);
+                        }
+                        transform_count = attr->offset;
+                        break;
+                    }
                 }
             }
 
-            if (element->mesh.transform_count) {
-                assert(element->mesh.transform);
-                if (element->mesh.transform_count == 1) {
-                    t3d_matrix_push(element->mesh.transform);
-                } else {
-                    for (int mtx_index = 0; mtx_index < element->mesh.transform_count; mtx_index += 1) {
-                        t3d_matrix_push(((T3DMat4FP**)element->mesh.transform)[mtx_index]);
-                    }
-                }
-            } else if (default_mtx) {
+            if (transform_count == 0 && default_mtx) {
                 t3d_matrix_push(default_mtx);
+                transform_count = 1;
             }
 
             rspq_block_run(element->mesh.block);
 
-            if (element->mesh.transform_count) {
-                t3d_matrix_pop(element->mesh.transform_count);
-            } else if (default_mtx) {
-                t3d_matrix_pop(1);
+            if (transform_count) {
+                t3d_matrix_pop(transform_count);
             }
         } else if (element->type == RENDER_BATCH_BILLBOARD) {
             for (int sprite_index = 0; sprite_index < element->billboard.sprite_count; ++sprite_index) {

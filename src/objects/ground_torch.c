@@ -77,7 +77,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, torch->base_mesh, mtxfp, 1, NULL, NULL, NULL);
+    render_batch_add_tmesh(batch, torch->base_mesh, mtxfp, NULL, NULL, NULL);
 
     if (!expression_get_bool(torch->lit_source)) {
         return;
@@ -96,7 +96,7 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, torch->flame_mesh, mtxfp, 1, NULL, NULL, NULL);
+    render_batch_add_tmesh(batch, torch->flame_mesh, mtxfp, NULL, NULL, NULL);
 }
 
 void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition, entity_id id) {

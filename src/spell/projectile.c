@@ -77,7 +77,7 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
             break;
     }
 
-    render_batch_add_tmesh(batch, mesh, mtxfp, 1, NULL, NULL, NULL);
+    render_batch_add_tmesh(batch, mesh, mtxfp, NULL, NULL, NULL);
 }
 
 void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, union spell_modifier_flags modifiers, struct spell_event_options event_options, enum element_type element) {

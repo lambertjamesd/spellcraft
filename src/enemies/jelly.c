@@ -256,8 +256,7 @@ void jelly_render(void* data, struct render_batch* batch) {
     render_batch_add_tmesh(
         batch, 
         jelly->is_frozen ? jelly->ice_mesh : jelly->mesh, 
-        mtxfp, 
-        1, 
+        mtxfp,
         NULL, 
         NULL,
         NULL

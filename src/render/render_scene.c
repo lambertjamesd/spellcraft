@@ -42,7 +42,6 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
         batch, 
         renderable->mesh, 
         mtxfp, 
-        1, 
         &renderable->armature, 
         renderable->attachments,
         NULL
@@ -71,7 +70,6 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
         batch, 
         renderable->mesh, 
         mtxfp, 
-        1, 
         &renderable->armature, 
         renderable->attachments,
         NULL

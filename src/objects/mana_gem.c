@@ -37,7 +37,6 @@ void mana_gem_render(void* data, struct render_batch* batch) {
         batch, 
         object_assets_get()->mana_gem_mesh,
         mtxfp,
-        1,
         NULL,
         NULL, 
         NULL

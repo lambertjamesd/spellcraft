@@ -39,7 +39,6 @@ void mana_plant_render(void* data, struct render_batch* batch) {
         batch, 
         plant->mesh,
         mtxfp,
-        1,
         NULL,
         NULL, 
         NULL
@@ -68,7 +67,6 @@ void mana_plant_render(void* data, struct render_batch* batch) {
         batch, 
         object_assets_get()->mana_gem_mesh,
         gem_mtx,
-        1,
         NULL,
         NULL, 
         NULL

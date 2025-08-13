@@ -43,6 +43,8 @@ enum element_attr_type {
     ELEMENT_ATTR_POSE,
     ELEMENT_ATTR_IMAGE,
     ELEMENT_ATTR_PRIM_COLOR,
+    ELEMENT_ATTR_TRANSFORM,
+    ELEMENT_ATTR_TRANSFORM_LIST,
 };
 
 struct element_attr {
@@ -58,6 +60,8 @@ struct element_attr {
         struct {
             color_t color;
         } prim;
+        T3DMat4FP* transform;
+        T3DMat4FP** transform_list;
     };
 };
 
@@ -70,10 +74,6 @@ struct render_batch_element {
     union {
         struct {
             rspq_block_t* block;
-            // T3DMat4FP* if transform_count == 1, T3DMat4FP** if > 1
-            void* transform;
-            short transform_count;
-            uint8_t attr_count;
             struct element_attr* attrs;
         } mesh;
         struct render_batch_billboard_element billboard;
@@ -98,11 +98,10 @@ struct render_batch_element* render_batch_add(struct render_batch* batch);
 struct render_batch_element* render_batch_add_tmesh(
     struct render_batch* batch, 
     struct tmesh* mesh, 
-    void* transform, 
-    int transform_count, 
+    void* transform,
     struct armature* armature, 
     struct tmesh** attachments,
-    struct element_attr* attrs
+    struct element_attr* additional_attrs
 );
 
 void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data);

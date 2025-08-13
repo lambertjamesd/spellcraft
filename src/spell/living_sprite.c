@@ -92,7 +92,7 @@ void living_sprite_render(void* data, struct render_batch* batch) {
                 break;
         }
     
-        render_batch_add_tmesh(batch, display_mesh, mtxfp, 1, NULL, NULL, NULL);
+        render_batch_add_tmesh(batch, display_mesh, mtxfp, NULL, NULL, NULL);
     } else {
         render_scene_render_renderable_single_axis(&living_sprite->renderable, batch);
     }
