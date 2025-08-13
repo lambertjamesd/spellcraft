@@ -4,5 +4,6 @@
         "alpha": ["0", "0", "0", "PRIM"]
     }],
     "blendMode": "TRANSPARENT",
-    "primColor": [255, 255, 255, 255]
+    "primColor": [255, 255, 255, 255],
+    "culling": false
 }

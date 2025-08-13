@@ -4,6 +4,7 @@
 #include "../math/transform.h"
 #include "../math/transform_single_axis.h"
 #include "../math/transform_mixed.h"
+#include "../render/render_batch.h"
 #include "armature.h"
 
 struct renderable {
@@ -13,6 +14,7 @@ struct renderable {
     struct material* force_material;
     struct tmesh** attachments;
     enum transform_type type;
+    struct element_attr* attrs;
 };
 
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename);

@@ -5,6 +5,7 @@
 
 void _renderable_init(struct renderable* renderable) {
     renderable->force_material = NULL;
+    renderable->attrs = NULL;
     armature_init(&renderable->armature, &renderable->mesh->armature);
 
     if (renderable->mesh->attatchment_count) {

@@ -49,6 +49,12 @@
             "type": "collectable"
         },
         {
+            "name": "objects_room_portal",
+            "description": "",
+            "mesh": "meshes/objects/room_portal.blend#room_portal",
+            "type": "room_portal"
+        },
+        {
             "name": "objects_torch",
             "description": "",
             "mesh": "meshes/objects/torch.blend#groundtorch",

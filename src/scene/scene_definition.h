@@ -23,6 +23,7 @@ enum entity_type_id {
     ENTITY_TYPE_door,
     ENTITY_TYPE_timed_torch_puzzle,
     ENTITY_TYPE_elevator,
+    ENTITY_TYPE_room_portal,
 };
 
 struct crate_definition {

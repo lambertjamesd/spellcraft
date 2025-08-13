@@ -44,7 +44,7 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
         mtxfp, 
         &renderable->armature, 
         renderable->attachments,
-        NULL
+        renderable->attrs
     );
 
     if (element && renderable->force_material) {
@@ -72,7 +72,7 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
         mtxfp, 
         &renderable->armature, 
         renderable->attachments,
-        NULL
+        renderable->attrs
     );
 
     if (element && renderable->force_material) {

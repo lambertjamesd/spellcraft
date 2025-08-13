@@ -10,6 +10,8 @@ struct room_portal {
     struct renderable renderable;
     room_id room_a;
     room_id room_b;
+
+    struct element_attr attrs[2];
 };
 
 void room_portal_init(struct room_portal* portal, struct room_portal_definition* definition);
