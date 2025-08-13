@@ -290,7 +290,6 @@ struct scene* scene_load(const char* filename) {
 
     if (starting_cutscene) {
         cutscene_runner_run(starting_cutscene, cutscene_runner_free_on_finish(), NULL);
-        area_title_show("FIRE TRIALS");
     }
 
     return scene;

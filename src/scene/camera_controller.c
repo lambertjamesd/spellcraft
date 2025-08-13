@@ -130,40 +130,43 @@ void camera_controller_return_target(struct camera_controller* controller, struc
 
 static struct camera_animation_frame __attribute__((aligned(16))) anim_frame_buffer;
 
+void camera_controller_update_animation(struct camera_controller* controller) {
+    if (!controller->animation || controller->current_frame >= controller->animation->frame_count) {
+        return;
+    }
+
+    data_cache_hit_invalidate((void*)&anim_frame_buffer, 16);
+    dma_read(
+        &anim_frame_buffer, 
+        controller->animation->rom_offset + sizeof(struct camera_animation_frame) * controller->current_frame, 
+        sizeof(struct camera_animation_frame)
+    );
+
+    controller->camera->transform.position = anim_frame_buffer.position;
+    controller->camera->transform.rotation.x = anim_frame_buffer.rotation[0];
+    controller->camera->transform.rotation.y = anim_frame_buffer.rotation[1];
+    controller->camera->transform.rotation.z = anim_frame_buffer.rotation[2];
+
+    float neg_w = controller->camera->transform.rotation.x * controller->camera->transform.rotation.x 
+        + controller->camera->transform.rotation.y * controller->camera->transform.rotation.y 
+        + controller->camera->transform.rotation.z * controller->camera->transform.rotation.z;
+
+    if (neg_w > 1.0f) {
+        neg_w = 1.0f;
+    }
+
+    controller->camera->transform.rotation.w = sqrtf(1.0f - neg_w);
+    controller->camera->fov = (180.0f / M_PI) * anim_frame_buffer.fov;
+    controller->current_frame += 1;
+}
+
 void camera_controller_update(struct camera_controller* controller) {
     if (controller->state == CAMERA_STATE_FOLLOW) {
         camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);
     } else if (controller->state == CAMERA_STATE_LOOK_AT_WITH_PLAYER) {
         camera_controller_determine_two_target_position(controller, &controller->target);
     } else if (controller->state == CAMERA_STATE_ANIMATE) {
-        if (!controller->animation || controller->current_frame >= controller->animation->frame_count) {
-            return;
-        }
-
-        data_cache_hit_invalidate((void*)&anim_frame_buffer, 16);
-        dma_read(
-            &anim_frame_buffer, 
-            controller->animation->rom_offset + sizeof(struct camera_animation_frame) * controller->current_frame, 
-            sizeof(struct camera_animation_frame)
-        );
-
-        controller->camera->transform.position = anim_frame_buffer.position;
-        controller->camera->transform.rotation.x = anim_frame_buffer.rotation[0];
-        controller->camera->transform.rotation.y = anim_frame_buffer.rotation[1];
-        controller->camera->transform.rotation.z = anim_frame_buffer.rotation[2];
-
-        float neg_w = controller->camera->transform.rotation.x * controller->camera->transform.rotation.x 
-            + controller->camera->transform.rotation.y * controller->camera->transform.rotation.y 
-            + controller->camera->transform.rotation.z * controller->camera->transform.rotation.z;
-
-        if (neg_w > 1.0f) {
-            neg_w = 1.0f;
-        }
-
-        controller->camera->transform.rotation.w = sqrtf(1.0f - neg_w);
-        controller->camera->fov = (180.0f / M_PI) * anim_frame_buffer.fov;
-        controller->current_frame += 1;
-
+        camera_controller_update_animation(controller);
         return;
     } else if (controller->state == CAMERA_STATE_RETURN_TO_PLAYER) {
         camera_controller_return_target(controller, &controller->target);

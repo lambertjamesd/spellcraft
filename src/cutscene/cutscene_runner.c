@@ -14,6 +14,7 @@
 #include "show_item.h"
 #include "../savefile/savefile.h"
 #include "../effects/fade_effect.h"
+#include "../effects/area_title.h"
 #include <assert.h>
 
 #define MAX_QUEUED_CUTSCENES   4
@@ -222,6 +223,11 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
                 break;
             }
             cutscene_actor_set_speed(subject, step->data.npc_set_speed.speed);
+            break;
+        }
+        case CUTSCENE_STEP_SHOW_TITLE: {
+            area_title_show(step->data.show_title.message);
+            break;
         }
     }
 }

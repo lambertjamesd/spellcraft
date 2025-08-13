@@ -10,9 +10,12 @@ pause true, false;
 cam_animate "enter";
 
 interact_with_location INTERACTION_MOVE, NPC_TYPE_PLAYER, "enter_run_target";
-npc_set_speed NPC_TYPE_PLAYER, 4.0;
-npc_wait NPC_TYPE_PLAYER;
+npc_set_speed NPC_TYPE_PLAYER, 2.0;
 
+delay 7.8;
+show_title "FIRE TRIALS";
+
+npc_wait NPC_TYPE_PLAYER;
 cam_wait;
 cam_return;
 

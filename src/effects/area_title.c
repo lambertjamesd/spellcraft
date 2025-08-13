@@ -6,7 +6,7 @@
 #include "../menu/menu_rendering.h"
 
 #define MAX_TITLE_LEN   16
-#define TITLE_SHOW_TIME 4.0f
+#define TITLE_SHOW_TIME 6.0f
 #define TITLE_FADE_TIME 1.0f
 
 struct area_title {
@@ -17,7 +17,39 @@ struct area_title {
 
 static struct area_title g_title;
 
+int area_title_measure() {
+    const char* curr = g_title.message;
+
+    int result = 0;
+
+    while (*curr) {
+        rdpq_font_gmetrics_t metrics;
+        rdpq_font_get_glyph_metrics(g_title.font, *curr, &metrics);
+        ++curr;
+
+        result += metrics.xadvance;
+    }
+    
+    return result;
+}
+
 void area_title_render(void* data) {
+    float alpha = 1.0f;
+
+    if (g_title.time_left < TITLE_FADE_TIME) {
+        alpha = g_title.time_left * (1.0f / TITLE_FADE_TIME);
+    }
+
+    if (g_title.time_left > TITLE_SHOW_TIME - TITLE_FADE_TIME) {
+        alpha = (TITLE_SHOW_TIME - g_title.time_left) * (1.0f / TITLE_FADE_TIME);
+    }
+
+    rdpq_font_style(g_title.font, 0, &(rdpq_fontstyle_t) {
+        .color = {255, 255, 255, (uint8_t)(alpha * 255.0f)},
+        .custom = NULL,
+        .custom_arg = NULL,
+        .outline_color = {255, 255, 255, 255},
+    });
     rdpq_text_printn(&(rdpq_textparms_t){
             // .line_spacing = -3,
             .align = ALIGN_CENTER,
@@ -31,6 +63,14 @@ void area_title_render(void* data) {
         g_title.message,
         strlen(g_title.message)
     );
+
+    int half_width = area_title_measure() >> 1;
+
+    rdpq_sync_pipe();
+    rdpq_mode_combiner(RDPQ_COMBINER1((0,0,0,PRIM), (0,0,0,PRIM)));
+
+    rdpq_texture_rectangle(TILE0, 160 - half_width, 36, 160 + half_width, 37, 0, 0);
+    rdpq_texture_rectangle(TILE0, 160 - half_width, 72, 160 + half_width, 73, 0, 0);
 }
 
 void area_title_update(void* data) {

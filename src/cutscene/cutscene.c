@@ -143,6 +143,10 @@ struct cutscene* cutscene_load(char* filename) {
                 fread(&step->data.npc_set_speed.speed, 4, 1, file);
                 break;
             }
+            case CUTSCENE_STEP_SHOW_TITLE: {
+                step->data.show_title.message = string_load(file);
+                break;
+            }
         }
     }
 
@@ -178,6 +182,9 @@ void cutscene_destroy(struct cutscene* cutscene) {
                 break;
             case CUTSCENE_STEP_INTERACT_WITH_LOCATION:
                 free(step->data.interact_with_location.location_name);
+                break;
+            case CUTSCENE_STEP_SHOW_TITLE:
+                free(step->data.show_title.message);
                 break;
             default:
                 break;

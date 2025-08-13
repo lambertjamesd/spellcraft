@@ -29,6 +29,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_INTERACT_WITH_POSITION,
     CUTSCENE_STEP_NPC_WAIT,
     CUTSCENE_STEP_NPC_SET_SPEED,
+    CUTSCENE_STEP_SHOW_TITLE,
 };
 
 struct cutscene_step;
@@ -107,6 +108,9 @@ union cutscene_step_data {
         union cutscene_actor_id subject;
         float speed;
     } npc_set_speed;
+    struct {
+        char* message;
+    } show_title;
 };
 
 struct cutscene_step {
