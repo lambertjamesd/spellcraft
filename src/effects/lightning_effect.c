@@ -22,7 +22,7 @@ void lightning_effect_render(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, spell_assets_get()->lightning_mesh, mtxfp, 1, &effect->armature, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->lightning_mesh, mtxfp, 1, &effect->armature, NULL, NULL);
 }
 
 struct lightning_effect* lightning_effect_new(struct Vector3* position, struct lightning_effect_def* def) {

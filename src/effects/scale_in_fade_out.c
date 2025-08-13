@@ -43,10 +43,12 @@ void scale_in_fade_out_render(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    struct render_batch_element* element = render_batch_add_tmesh(batch, effect->mesh, mtxfp, 1, NULL, NULL);
+    element_attr_t attrs[2];
+    attrs[0].type = ELEMENT_ATTR_PRIM_COLOR;
+    attrs[0].prim.color = (color_t){255, 255, 255, (uint8_t)(255.0f * alpha)};
+    attrs[1].type = ELEMENT_ATTR_NONE;
 
-    element->mesh.color.a = (uint8_t)(255.0f * alpha);
-    element->mesh.use_prim_color = 1;
+    render_batch_add_tmesh(batch, effect->mesh, mtxfp, 1, NULL, NULL, attrs);
 }
 
 void scale_in_fade_out_free(struct scale_in_fade_out* effect) {

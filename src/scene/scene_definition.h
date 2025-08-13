@@ -128,6 +128,14 @@ struct door_definition {
     room_id room_b;
 };
 
+struct room_portal_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    float scale;
+    room_id room_a;
+    room_id room_b;
+};
+
 struct timed_torch_puzzle_definition {
     struct Vector3 position;
     float torch_time;

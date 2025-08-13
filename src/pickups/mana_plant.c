@@ -41,6 +41,7 @@ void mana_plant_render(void* data, struct render_batch* batch) {
         mtxfp,
         1,
         NULL,
+        NULL, 
         NULL
     );
 
@@ -69,6 +70,7 @@ void mana_plant_render(void* data, struct render_batch* batch) {
         gem_mtx,
         1,
         NULL,
+        NULL, 
         NULL
     );
 }

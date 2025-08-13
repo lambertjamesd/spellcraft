@@ -259,6 +259,7 @@ void jelly_render(void* data, struct render_batch* batch) {
         mtxfp, 
         1, 
         NULL, 
+        NULL,
         NULL
     );
 }

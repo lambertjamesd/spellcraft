@@ -40,9 +40,12 @@ void hit_effect_render(void* data, struct render_batch* batch) {
         return;
     }
 
-    struct render_batch_element* element = render_batch_add_tmesh(batch, effect_assets_get()->hit_effect, mtxfp, 1, NULL, NULL);
-    element->mesh.color = (color_t){0, 255, 0, alpha};
-    element->mesh.use_prim_color = 1;
+    element_attr_t attrs[2];
+    attrs[0].type = ELEMENT_ATTR_PRIM_COLOR;
+    attrs[0].prim.color = (color_t){0, 255, 0, alpha};
+    attrs[1].type = ELEMENT_ATTR_NONE;
+
+    render_batch_add_tmesh(batch, effect_assets_get()->hit_effect, mtxfp, 1, NULL, NULL, attrs);
 }
 
 void hit_effect_update(void* data) {

@@ -26,8 +26,6 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->mesh.transform_count = 0;
     result->mesh.attr_count = 0;
     result->mesh.attrs = NULL;
-    result->mesh.color = (color_t){255, 255, 255, 255};
-    result->mesh.use_prim_color = 0;
     result->light_source = 0;
 
     return result;
@@ -57,7 +55,15 @@ void render_batch_relative_mtx(struct render_batch* batch, mat4x4 into) {
     into[3][2] -= batch->camera_matrix[3][2] * WORLD_SCALE;
 }
 
-struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, void* transform, int transform_count, struct armature* armature, struct tmesh** attachments) {
+struct render_batch_element* render_batch_add_tmesh(
+    struct render_batch* batch, 
+    struct tmesh* mesh, 
+    void* transform, 
+    int transform_count, 
+    struct armature* armature, 
+    struct tmesh** attachments,
+    struct element_attr* attrs
+) {
     struct render_batch_element* element = render_batch_add(batch);
 
     if (!element) {
@@ -73,6 +79,14 @@ struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, 
     element->mesh.transform_count = transform_count;
     element->mesh.attr_count = 0;
     element->mesh.attrs = NULL;
+
+    if (attrs) {
+        struct element_attr* curr = attrs;
+        while (curr->type != ELEMENT_ATTR_NONE) {
+            ++element->mesh.attr_count;
+            ++curr;
+        }
+    }
 
     if (armature) {
         if (armature->bone_count) {
@@ -94,6 +108,12 @@ struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, 
     }
 
     struct element_attr* attr = element->mesh.attrs;
+
+    while (attrs && attrs->type != ELEMENT_ATTR_NONE) {
+        *attr = *attrs;
+        ++attr;
+        ++attrs;
+    }
 
     if (armature) {
         if (armature->bone_count) {
@@ -133,7 +153,7 @@ struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, 
                     matrices[matrix_index++] = &pose_fp[linkage->bone_index];
                     matrices[matrix_index++] = &linkage->local_transform;
     
-                    render_batch_add_tmesh(batch, attachments[i], matrices, transform_count + 2, NULL, NULL);
+                    render_batch_add_tmesh(batch, attachments[i], matrices, transform_count + 2, NULL, NULL, NULL);
                 }
             }
             ++attr;
@@ -427,10 +447,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 }
             } else if (default_mtx) {
                 t3d_matrix_push(default_mtx);
-            }
-
-            if (element->mesh.use_prim_color) {
-                rdpq_set_prim_color(element->mesh.color);
             }
 
             rspq_block_run(element->mesh.block);

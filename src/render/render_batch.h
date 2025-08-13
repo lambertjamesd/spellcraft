@@ -61,6 +61,8 @@ struct element_attr {
     };
 };
 
+typedef struct element_attr element_attr_t;
+
 struct render_batch_element {
     struct material* material;
     uint16_t type;
@@ -73,8 +75,6 @@ struct render_batch_element {
             short transform_count;
             uint8_t attr_count;
             struct element_attr* attrs;
-            color_t color;
-            uint8_t use_prim_color;
         } mesh;
         struct render_batch_billboard_element billboard;
         struct {
@@ -95,7 +95,15 @@ void render_batch_init(struct render_batch* batch, struct Transform* camera_tran
 
 struct render_batch_element* render_batch_add(struct render_batch* batch);
 
-struct render_batch_element* render_batch_add_tmesh(struct render_batch* batch, struct tmesh* mesh, void* transform, int transform_count, struct armature* armature, struct tmesh** attachments);
+struct render_batch_element* render_batch_add_tmesh(
+    struct render_batch* batch, 
+    struct tmesh* mesh, 
+    void* transform, 
+    int transform_count, 
+    struct armature* armature, 
+    struct tmesh** attachments,
+    struct element_attr* attrs
+);
 
 void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data);
 // caller is responsible for populating sprite list

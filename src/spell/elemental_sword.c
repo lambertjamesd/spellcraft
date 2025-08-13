@@ -55,7 +55,7 @@ void elemental_sword_render(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, sword->mesh, mtxfp, 1, NULL, NULL);
+    render_batch_add_tmesh(batch, sword->mesh, mtxfp, 1, NULL, NULL, NULL);
 }
 
 void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element_type) {

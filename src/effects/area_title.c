@@ -64,7 +64,7 @@ void area_title_render(void* data) {
         strlen(g_title.message)
     );
 
-    int half_width = area_title_measure() >> 1;
+    int half_width = (int)((area_title_measure() >> 1) * alpha);
 
     rdpq_sync_pipe();
     rdpq_mode_combiner(RDPQ_COMBINER1((0,0,0,PRIM), (0,0,0,PRIM)));

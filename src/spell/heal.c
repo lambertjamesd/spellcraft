@@ -42,7 +42,7 @@ void spell_heal_render(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, spell_assets_get()->heal_aoe_mesh, mtxfp, 1, NULL, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->heal_aoe_mesh, mtxfp, 1, NULL, NULL, NULL);
 }
 
 void spell_heal_init(struct spell_heal* heal, struct spell_data_source* source, struct spell_event_options event_options) {

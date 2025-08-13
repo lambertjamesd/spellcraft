@@ -23,7 +23,7 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
     struct static_entity* end = scene->static_entities + range.end;
 
     for (; curr < end; ++curr) {
-        render_batch_add_tmesh(batch, &curr->tmesh, NULL, 0, NULL, NULL);
+        render_batch_add_tmesh(batch, &curr->tmesh, NULL, 0, NULL, NULL, NULL);
     }
 }
 

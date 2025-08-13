@@ -38,7 +38,15 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    struct render_batch_element* element = render_batch_add_tmesh(batch, renderable->mesh, mtxfp, 1, &renderable->armature, renderable->attachments);
+    struct render_batch_element* element = render_batch_add_tmesh(
+        batch, 
+        renderable->mesh, 
+        mtxfp, 
+        1, 
+        &renderable->armature, 
+        renderable->attachments,
+        NULL
+    );
 
     if (element && renderable->force_material) {
         element->material = renderable->force_material;
@@ -59,7 +67,15 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    struct render_batch_element* element = render_batch_add_tmesh(batch, renderable->mesh, mtxfp, 1, &renderable->armature, renderable->attachments);
+    struct render_batch_element* element = render_batch_add_tmesh(
+        batch, 
+        renderable->mesh, 
+        mtxfp, 
+        1, 
+        &renderable->armature, 
+        renderable->attachments,
+        NULL
+    );
 
     if (element && renderable->force_material) {
         element->material = renderable->force_material;

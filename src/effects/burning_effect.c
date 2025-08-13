@@ -42,7 +42,7 @@ void burning_effect_render(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, spell_assets_get()->flame_mesh, mtxfp, 1, NULL, NULL);
+    render_batch_add_tmesh(batch, spell_assets_get()->flame_mesh, mtxfp, 1, NULL, NULL, NULL);
 }
 
 struct burning_effect* burning_effect_new(struct Vector3* position, float size, float duration) {
