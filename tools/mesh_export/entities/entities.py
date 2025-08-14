@@ -13,7 +13,10 @@ from cutscene.parser import parse_expression
 from cutscene.expresion_generator import generate_script
 from cutscene.variable_layout import VariableContext
 
-MULTIROOM_ATTRIBUTE = {"door": ["room_a", "room_b"]}
+MULTIROOM_ATTRIBUTE = {
+    "door": ["room_a", "room_b"],
+    "room_portal": ["room_a", "room_b"],
+}
 
 SHOULD_AUTO_GEN_CONDITION = {"biter", "jelly"}
 

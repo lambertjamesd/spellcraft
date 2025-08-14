@@ -25,6 +25,12 @@
             "type": "jelly_king"
         },
         {
+            "name": "objects_burning_thorns",
+            "description": "",
+            "mesh": "meshes/objects/burning_thorns.blend#Plane",
+            "type": "burning_thorns"
+        },
+        {
             "name": "objects_crate",
             "description": "",
             "mesh": "meshes/objects/crate.blend#@crate",

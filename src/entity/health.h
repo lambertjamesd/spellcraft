@@ -24,6 +24,8 @@ struct health {
     struct health_shield* health_shield;
 };
 
+typedef struct health health_t;
+
 struct dynamic_object;
 
 void health_reset();

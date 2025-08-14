@@ -16,6 +16,7 @@
 #include "../objects/empty.h"
 #include "../objects/water_cube.h"
 #include "../objects/room_portal.h"
+#include "../objects/burning_thorns.h"
 
 #include "../puzzle/timed_torch.h"
 #include "../puzzle/elevator.h"
@@ -54,6 +55,7 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(timed_torch_puzzle, fields_empty),
     ENTITY_DEFINITION(elevator, fields_empty),
     ENTITY_DEFINITION(room_portal, fields_empty),
+    ENTITY_DEFINITION(burning_thorns, fields_empty),
 };
 
 struct entity_definition* entity_find_def(const char* name) {

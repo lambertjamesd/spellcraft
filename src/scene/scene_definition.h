@@ -24,6 +24,7 @@ enum entity_type_id {
     ENTITY_TYPE_timed_torch_puzzle,
     ENTITY_TYPE_elevator,
     ENTITY_TYPE_room_portal,
+    ENTITY_TYPE_burning_thorns,
 };
 
 struct crate_definition {
@@ -135,6 +136,12 @@ struct room_portal_definition {
     float scale;
     room_id room_a;
     room_id room_b;
+};
+
+struct burning_thorns_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    float scale;
 };
 
 struct timed_torch_puzzle_definition {

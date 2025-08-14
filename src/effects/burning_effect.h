@@ -11,6 +11,8 @@ struct burning_effect {
     float current_time;
 };
 
+typedef struct burning_effect burning_effect_t;
+
 struct burning_effect* burning_effect_new(struct Vector3* position, float size, float duration);
 void bunring_effect_set_position(struct burning_effect* effect, struct Vector3* position);
 void burning_effect_refresh(struct burning_effect* effect, float duration);

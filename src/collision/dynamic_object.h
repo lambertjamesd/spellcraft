@@ -96,6 +96,8 @@ struct dynamic_object {
     struct contact* shadow_contact;
 };
 
+typedef struct dynamic_object dynamic_object_t;
+
 void dynamic_object_init(
     entity_id entity_id,
     struct dynamic_object* object, 
