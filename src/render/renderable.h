@@ -15,6 +15,7 @@ struct renderable {
     struct tmesh** attachments;
     enum transform_type type;
     struct element_attr* attrs;
+    uint16_t hide: 1;
 };
 
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename);

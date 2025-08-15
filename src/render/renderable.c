@@ -14,6 +14,7 @@ void _renderable_init(struct renderable* renderable) {
     } else {
         renderable->attachments = NULL;
     }
+    renderable->hide = 0;
 }
 
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename) {

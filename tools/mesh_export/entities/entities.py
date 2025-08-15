@@ -18,7 +18,7 @@ MULTIROOM_ATTRIBUTE = {
     "room_portal": ["room_a", "room_b"],
 }
 
-SHOULD_AUTO_GEN_CONDITION = {"biter", "jelly"}
+SHOULD_AUTO_GEN_CONDITION = {"biter", "jelly", "burning_thorns"}
 
 class ObjectEntry():
     def __init__(self, obj: bpy.types.Object, name: str, def_type: StructureInfo, room_index: int):

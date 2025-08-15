@@ -27,6 +27,10 @@ void render_scene_add(struct Vector3* center, float radius, render_scene_callbac
 void render_scene_render_renderable(void* data, struct render_batch* batch) {
     struct renderable* renderable = (struct renderable*)data;
 
+    if (renderable->hide) {
+        return;
+    }
+    
     T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
     if (!mtxfp) {
@@ -54,6 +58,10 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
 
 void render_scene_render_renderable_single_axis(void* data, struct render_batch* batch) {
     struct renderable* renderable = (struct renderable*)data;
+
+    if (renderable->hide) {
+        return;
+    }
 
     T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 

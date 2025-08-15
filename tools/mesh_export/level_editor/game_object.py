@@ -227,7 +227,8 @@ def _init_default_properties(target):
 
     for attr in structure.children + global_attributes:
         if attr.name == 'position' or \
-            attr.name == 'rotation':
+            attr.name == 'rotation' or \
+            attr.name == 'scale':
             continue
 
         if attr.name in target.data:
@@ -365,7 +366,8 @@ class GameObjectPanel(bpy.types.Panel):
 
         for attr in structure.children + global_attributes:
             if attr.name == 'position' or \
-                attr.name == 'rotation':
+                attr.name == 'rotation' or \
+                attr.name == 'scale':
                 continue
 
             if attr.name in target.data:

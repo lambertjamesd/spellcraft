@@ -10,6 +10,9 @@ struct room_portal {
     struct renderable renderable;
     room_id room_a;
     room_id room_b;
+    float last_player_distance;
+
+    room_id current_room;
 
     struct element_attr attrs[2];
 };

@@ -80,6 +80,7 @@ void burning_thorns_destroy(burning_thorns_t* thorns) {
     renderable_destroy(&thorns->renderable);
     update_remove(thorns);
     collision_scene_remove(&thorns->collider);
+    health_destroy(&thorns->health);
 
     if (thorns->burning_effect) {
         burning_effect_free(thorns->burning_effect);
