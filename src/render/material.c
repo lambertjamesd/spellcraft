@@ -62,6 +62,8 @@ void material_destroy(struct material* material) {
 #define COMMAND_FOG_RANGE   0x0B
 #define COMMAND_LIGHT_COUNT 0x0C
 
+#define BIGGEST_MIN_VALUE   (int)(0x3FFF / WORLD_SCALE)
+
 static GLenum material_filter_modes[] = {
     GL_NEAREST,
     GL_LINEAR,
@@ -316,6 +318,12 @@ void material_load(struct material* into, FILE* material_file) {
                     uint16_t max;
                     fread(&min, sizeof(min), 1, material_file);
                     fread(&max, sizeof(max), 1, material_file);
+
+                    // higher than this crashes
+                    if (min > BIGGEST_MIN_VALUE) {
+                        min = BIGGEST_MIN_VALUE;
+                    }
+
                     t3d_fog_set_range(min * WORLD_SCALE, max * WORLD_SCALE);
                 }
                 break;
