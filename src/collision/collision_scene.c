@@ -160,10 +160,12 @@ void collision_scene_remove_static_mesh(struct mesh_collider* collider) {
         if (g_scene.mesh_colliders[read_index] != collider) {
             write_index += 1;
 
-            float kill_plane = g_scene.mesh_colliders[read_index]->index.min.y + KILL_PLANE;
-
-            if (kill_plane < g_scene.kill_plane) {
-                g_scene.kill_plane = kill_plane;
+            if (g_scene.mesh_colliders[read_index]) {
+                float kill_plane = g_scene.mesh_colliders[read_index]->index.min.y + KILL_PLANE;
+    
+                if (kill_plane < g_scene.kill_plane) {
+                    g_scene.kill_plane = kill_plane;
+                }
             }
         } else {
             g_scene.mesh_collider_count -= 1;
