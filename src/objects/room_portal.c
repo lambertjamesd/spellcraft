@@ -6,7 +6,7 @@
 #include "../time/time.h"
 
 #define MAX_DISTANCE    4.0f
-#define FADE_DISTANCE   2.0f
+#define FADE_DISTANCE   3.0f
 
 #define room_portal_other_room(portal, room)    ((portal)->room_a == (room) ? (portal)->room_b : (portal)->room_a)
 
@@ -32,7 +32,7 @@ void room_portal_update(void* data) {
     int did_fade = fabsf(portal->last_player_distance) < MAX_DISTANCE;
 
     if (should_fade) {
-        float alpha = (distance - FADE_DISTANCE) * (1.0f / (MAX_DISTANCE - FADE_DISTANCE));
+        float alpha = (fabsf(distance) - FADE_DISTANCE) * (1.0f / (MAX_DISTANCE - FADE_DISTANCE));
         if (alpha < 0.0f) {
             alpha = 0.0f;
         }
