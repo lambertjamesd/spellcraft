@@ -2,6 +2,7 @@
 
 #include <malloc.h>
 #include <memory.h>
+#include <stdio.h>
 
 #include "../util/flags.h"
 #include "../util/blist.h"
@@ -104,7 +105,7 @@ void update_dispatch() {
     for (int i = 0; i < g_update_state.callbacks.count; ++i) {
         struct update_element* element = callback_element_get_data(current);
 
-        if (element->mask & g_update_state.enabled_layers) {
+        if ((element->mask & g_update_state.enabled_layers) != 0 && current->id) {
             ((update_callback)current->callback)(element->data);
         }
         

@@ -100,7 +100,7 @@ void area_title_hide() {
     g_title.time_left = 0;
 
     if (g_title.font) {
-        font_cache_release(g_title.font);
+        rspq_call_deferred((void (*)(void*))font_cache_release, g_title.font);
         g_title.font = NULL;
         menu_remove_callback(&g_title);
         update_remove(&g_title);
