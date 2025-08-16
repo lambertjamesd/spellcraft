@@ -30,7 +30,7 @@ void renderable_destroy_direct(struct renderable* renderable) {
 }
 
 void renderable_destroy(struct renderable* renderable) {
-    tmesh_cache_release(renderable->mesh);
+    rspq_call_deferred((void (*)(void*))tmesh_cache_release, renderable->mesh);
     renderable_destroy_direct(renderable);
 }
 

@@ -99,4 +99,5 @@ void elevator_destroy(struct elevator* elevator) {
     collision_scene_remove(&elevator->collision);
     render_scene_remove(&elevator->renderable);
     renderable_destroy(&elevator->renderable);
+    update_remove(elevator);
 }

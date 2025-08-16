@@ -21,6 +21,7 @@
 #include "util/init.h"
 #include "util/screen_debug.h"
 #include "effects/area_title.h"
+#include "effects/fade_effect.h"
 
 #include <libdragon.h>
 #include <n64sys.h>
@@ -32,6 +33,9 @@ void setup() {
     // fprintf(stderr, "This is how to talk");
     init_engine();
     savefile_new();
+
+    fade_effect_set((struct Coloru8){0, 0, 0, 255}, 0.0f);
+    fade_effect_set((struct Coloru8){0, 0, 0, 0}, 3.0f);
 
     scene_queue_next("rom:/scenes/fire_trials.scene#default");
     // scene_queue_next("rom:/scenes/overworld_test.scene");

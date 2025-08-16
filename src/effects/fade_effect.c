@@ -13,7 +13,7 @@ static float current_time;
 static bool is_active;
 
 struct Coloru8 fade_effect_calculate_color() {
-    if (current_time <= 0.0f) {
+    if (current_time <= 0.0f && lerp_time > 0.0f) {
         return start_color;
     }
 

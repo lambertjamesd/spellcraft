@@ -39,23 +39,25 @@ void room_portal_update(void* data) {
         portal->attrs[0].prim.color = (color_t){0, 0, 0, (uint8_t)(255.0f * alpha)};
     }
 
-    if (!did_fade && should_fade) {
-        if (scene_is_showing_room(current_scene, portal->room_a)) {
-            scene_show_room(current_scene, portal->room_b);
-            portal->current_room = portal->room_a;
-        } else {
-            scene_show_room(current_scene, portal->room_a);
-            portal->current_room = portal->room_b;
+    if (portal->last_player_distance) {
+        if (!did_fade && should_fade) {
+            if (scene_is_showing_room(current_scene, portal->room_a)) {
+                scene_show_room(current_scene, portal->room_b);
+                portal->current_room = portal->room_a;
+            } else {
+                scene_show_room(current_scene, portal->room_a);
+                portal->current_room = portal->room_b;
+            }
+        } else if (did_fade && !should_fade) {
+            scene_hide_room(current_scene, room_portal_other_room(portal, portal->current_room));
+            portal->attrs[0].prim.color = (color_t){0, 0, 0, 255};
         }
-    } else if (did_fade && !should_fade) {
-        scene_hide_room(current_scene, room_portal_other_room(portal, portal->current_room));
-        portal->attrs[0].prim.color = (color_t){0, 0, 0, 255};
-    }
-
-    if (side_a != last_side_a &&
-        fabsf(local_offset.x) < portal->transform.scale &&
-        fabsf(local_offset.y) < portal->transform.scale) {
-        portal->current_room = room_portal_other_room(portal, portal->current_room);
+    
+        if (side_a != last_side_a &&
+            fabsf(local_offset.x) < portal->transform.scale &&
+            fabsf(local_offset.y) < portal->transform.scale) {
+            portal->current_room = room_portal_other_room(portal, portal->current_room);
+        }
     }
 
     if (distance != 0.0f) {
@@ -78,6 +80,7 @@ void room_portal_init(struct room_portal* portal, struct room_portal_definition*
     portal->attrs[1].type = ELEMENT_ATTR_NONE;
 
     portal->renderable.attrs = portal->attrs;
+    portal->last_player_distance = 0.0f;
 }
 
 void room_portal_destroy(struct room_portal* portal) {

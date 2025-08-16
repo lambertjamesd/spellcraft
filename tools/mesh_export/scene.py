@@ -380,10 +380,14 @@ def process_scene():
         if not obj.should_auto_gen_condition():
             continue
 
-        variable_name = f"_auto_bool_{len(generated_bools)}"
+        variable_name = obj.get_on_despawn()
+
+        if variable_name == None:
+            variable_name = f"_auto_bool_{len(generated_bools)}"
+            generated_bools.append(variable_name)
+
         obj.generate_spawn_condition(variable_name)
 
-        generated_bools.append(variable_name)
 
     scene_vars = load_cutscene_vars(
         input_filename, 

@@ -25,6 +25,7 @@ enum entity_type_id {
     ENTITY_TYPE_elevator,
     ENTITY_TYPE_room_portal,
     ENTITY_TYPE_burning_thorns,
+    ENTITY_TYPE_bool_and_logic
 };
 
 struct crate_definition {
@@ -164,6 +165,26 @@ struct elevator_definition {
 
     boolean_variable enabled;
     bool inv_enabled;
+};
+
+struct bool_and_logic_definition {
+    struct Vector3 position;
+    boolean_variable output;
+    boolean_variable input_0;
+    boolean_variable input_1;
+    boolean_variable input_2;
+    boolean_variable input_3;
+    boolean_variable input_4;
+    boolean_variable input_5;
+    boolean_variable input_6;
+    bool should_unset;
+    bool input_0_invert;
+    bool input_1_invert;
+    bool input_2_invert;
+    bool input_3_invert;
+    bool input_4_invert;
+    bool input_5_invert;
+    bool input_6_invert;
 };
 
 enum npc_type {

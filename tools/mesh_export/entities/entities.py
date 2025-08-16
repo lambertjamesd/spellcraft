@@ -3,6 +3,7 @@ import io
 import mathutils
 import struct
 import sys
+import re
 
 sys.path.append("..")
 
@@ -62,17 +63,32 @@ class ObjectEntry():
         if  not (self.name in SHOULD_AUTO_GEN_CONDITION):
             return False
         
-        if self.condition != None and len(self.condition) > 0:
+        if self.condition == None or len(self.condition) == 0:
+            return True
+        
+        if self.on_despawn == None or self.on_despawn == 'disconnected':
             return False
         
-        if self.on_despawn != None and self.on_despawn != 'disconnected':
-            return False
+        return False
+    
+    def get_on_despawn(self):
+        if self.on_despawn == None or self.on_despawn == 'disconnected':
+            return None
         
-        return True
+        if self.on_despawn.startswith('global '):
+            return self.on_despawn[len('global '): -len(': bool')]
+        
+        if self.on_despawn.startswith('scene '):
+            return self.on_despawn[len('scene '): -len(': bool')]
+        
+        return None
+
     
     def generate_spawn_condition(self, variable_name):
-        self.condition = f"not {variable_name}"
-        self.on_despawn = f"scene {variable_name}: bool"
+        if self.condition == None or len(self.condition) == 0:
+            self.condition = f"not {variable_name}"
+        if self.on_despawn == None or self.on_despawn == 'disconnected':
+            self.on_despawn = f"scene {variable_name}: bool"
 
 
 def to_cell_pos(value: float, min_pos: float, max_pos: float) -> int:
