@@ -223,6 +223,7 @@ def _get_obj_def(current_object):
 
     return None
         
+AUTO_PROPERTIES = {'position', 'rotation', 'scale', 'fov'}
 
 def _init_default_properties(target):
     obj_def = _get_obj_def(target)
@@ -233,9 +234,7 @@ def _init_default_properties(target):
         return
 
     for attr in structure.children + global_attributes:
-        if attr.name == 'position' or \
-            attr.name == 'rotation' or \
-            attr.name == 'scale':
+        if attr.name in AUTO_PROPERTIES:
             continue
 
         if attr.name in target.data:
@@ -371,9 +370,7 @@ class GameObjectPanel(bpy.types.Panel):
         is_mising_props = False
 
         for attr in structure.children + global_attributes:
-            if attr.name == 'position' or \
-                attr.name == 'rotation' or \
-                attr.name == 'scale':
+            if attr.name in AUTO_PROPERTIES:
                 continue
 
             if attr.name in target.data:

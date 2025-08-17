@@ -8,6 +8,8 @@ scene spin_torch_solved: bool;
 scene crossing_jelly_0_died: bool;
 scene crossing_jelly_1_died: bool;
 scene crossing_jelly_2_died: bool;
-scene crosing_jelly_all_died: bool;
+scene crossing_jelly_all_died: bool;
+
+scene crossing_door_open: bool;
 
 scene elevator_active: bool;

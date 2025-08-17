@@ -99,6 +99,8 @@ _string_aliases = {
     'script_location',
 }
 
+SENSOR_SIZE = 36
+
 def _is_string_type(definition):
     return isinstance(definition, struct_parse.PointerType) and definition.sub_type == 'char' or definition in _string_aliases
 
@@ -115,6 +117,8 @@ def get_value(obj: bpy.types.Object, key: str, default_value):
     return default_value
 
 def _get_transform(obj: bpy.types.Object) -> mathutils.Matrix:
+    if obj.type == 'CAMERA':
+        return coordinate_convert_invert @ obj.matrix_world
     return coordinate_convert_invert @ obj.matrix_world @ coordinate_convert
 
 def get_position(obj: bpy.types.Object) -> mathutils.Vector:
@@ -227,13 +231,13 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
                 return offset + 16
         if definition == 'float':
             if field_name == 'scale':
-                value = get_scale(obj)
-                file.write(struct.pack(">f", value.x))
-                return offset + 4
+                value = get_scale(obj).x
+            elif field_name == 'fov' and obj.type == 'CAMERA':
+                value = obj.data.angle_y * 180 / math.pi
             else:
                 value = get_value(obj, field_name, 0)
-                file.write(struct.pack(">f", value))
-                return offset + 4
+            file.write(struct.pack(">f", value))
+            return offset + 4
         if definition in struct_formats:
             value = get_value(obj, field_name, 0)
 

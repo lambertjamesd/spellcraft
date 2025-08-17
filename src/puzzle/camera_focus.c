@@ -28,9 +28,8 @@ void camera_focus_update(void* data) {
     camera_set_fixed(
         &current_scene->camera_controller, 
         &camera_focus->position, 
-        &camera_focus->rotation, 
-        70.0f
-        // camera_focus->fov
+        &camera_focus->rotation,
+        camera_focus->fov
     );
     camera_focus->did_fire = true;
     
