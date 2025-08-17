@@ -15,6 +15,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_JUMP_IF_NOT,
     CUTSCENE_STEP_JUMP,
     CUTSCENE_STEP_SET_LOCAL,
+    CUTSCENE_STEP_SET_SCENE,
     CUTSCENE_STEP_SET_GLOBAL,
     CUTSCENE_STEP_DELAY,
     CUTSCENE_STEP_INTERACT_WITH_NPC,
@@ -151,6 +152,8 @@ void cutscene_builder_npc_wait(
     struct cutscene_builder* builder,
     union cutscene_actor_id subject
 );
+void cutscene_builder_camera_return(struct cutscene_builder* builder);
+void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value);
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder);
 

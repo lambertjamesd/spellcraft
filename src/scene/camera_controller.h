@@ -10,6 +10,7 @@ enum camera_controller_state {
     CAMERA_STATE_LOOK_AT_WITH_PLAYER,
     CAMERA_STATE_ANIMATE,
     CAMERA_STATE_RETURN_TO_PLAYER,
+    CAMERA_STATE_FIXED,
 };
 
 struct camera_cached_calcuations {
@@ -40,6 +41,7 @@ void camera_look_at(struct camera_controller* controller, struct Vector3* target
 void camera_follow_player(struct camera_controller* controller);
 void camera_return(struct camera_controller* controller);
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation);
+void camera_set_fixed(struct camera_controller* controller, struct Vector3* position, struct Quaternion* rotation, float fov);
 
 bool camera_is_animating(struct camera_controller* controller);
 

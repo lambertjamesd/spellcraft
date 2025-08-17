@@ -209,13 +209,20 @@ def _get_obj_def(current_object):
     if not current_object:
         return None
 
-    if current_object.type != 'MESH':
+    if current_object.type != 'MESH' and current_object.type != 'CAMERA':
         return None
 
-    if not current_object.data or not current_object.data.library:
+    if not current_object.data:
         return None
+    
+    if current_object.data.library:
+        return object_definitions.get_object_for_library_path(current_object.data.library.filepath)
+    
+    if 'type' in current_object:
+        return object_definitions.get_object_for_type(current_object['type'])
+
+    return None
         
-    return object_definitions.get_object_for_library_path(current_object.data.library.filepath)
 
 def _init_default_properties(target):
     obj_def = _get_obj_def(target)
@@ -351,7 +358,6 @@ class GameObjectPanel(bpy.types.Panel):
     
     def draw(self, context):
         obj_def = _get_obj_def(context.object)
-
         structure = object_definitions.get_struct_info(obj_def['type'])
 
         if not structure:

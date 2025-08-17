@@ -171,6 +171,8 @@ void camera_controller_update(struct camera_controller* controller) {
     } else if (controller->state == CAMERA_STATE_RETURN_TO_PLAYER) {
         camera_controller_return_target(controller, &controller->target);
         return;
+    } else if (controller->state == CAMERA_STATE_FIXED) {
+        return;
     }
     camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
 }
@@ -221,6 +223,13 @@ void camera_play_animation(struct camera_controller* controller, struct camera_a
     controller->state = CAMERA_STATE_ANIMATE;
     controller->animation = animation;
     controller->current_frame = 0;
+}
+
+void camera_set_fixed(struct camera_controller* controller, struct Vector3* position, struct Quaternion* rotation, float fov) {
+    controller->state = CAMERA_STATE_FIXED;
+    controller->camera->transform.position = *position;
+    controller->camera->transform.rotation = *rotation;
+    controller->camera->fov = fov;
 }
 
 bool camera_is_animating(struct camera_controller* controller) {

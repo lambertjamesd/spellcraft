@@ -9,6 +9,7 @@
 void expression_evaluate(struct evaluation_context* context, struct expression* expression);
 
 void expression_set_scene_variables(void* variables);
+void* expression_get_scene_variables();
 
 bool expression_get_bool(boolean_variable variable);
 void expression_set_bool(boolean_variable variable, bool value);

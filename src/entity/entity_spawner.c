@@ -21,6 +21,7 @@
 #include "../puzzle/timed_torch.h"
 #include "../puzzle/elevator.h"
 #include "../puzzle/bool_and_logic.h"
+#include "../puzzle/camera_focus.h"
 
 #include "../pickups/mana_plant.h"
 
@@ -58,6 +59,7 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(room_portal, fields_empty),
     ENTITY_DEFINITION(burning_thorns, fields_empty),
     ENTITY_DEFINITION(bool_and_logic, fields_empty),
+    ENTITY_DEFINITION(camera_focus, fields_empty),
 };
 
 struct entity_definition* entity_find_def(const char* name) {

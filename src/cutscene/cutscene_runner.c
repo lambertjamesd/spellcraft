@@ -15,6 +15,7 @@
 #include "../savefile/savefile.h"
 #include "../effects/fade_effect.h"
 #include "../effects/area_title.h"
+#include "expression_evaluate.h"
 #include <assert.h>
 
 #define MAX_QUEUED_CUTSCENES   4
@@ -99,6 +100,17 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
 
             evaluation_context_save(
                 context->local_varaibles,
+                step->data.store_variable.data_type,
+                step->data.store_variable.word_offset,
+                evaluation_context_pop(context)
+            );
+            break;
+        }
+        case CUTSCENE_STEP_SET_SCENE: {
+            struct evaluation_context* context = &cutscene->context;
+
+            evaluation_context_save(
+                expression_get_scene_variables(),
                 step->data.store_variable.data_type,
                 step->data.store_variable.word_offset,
                 evaluation_context_pop(context)

@@ -113,6 +113,12 @@
             "description": "",
             "mesh": "meshes/puzzle/timed_torch.blend#timed_torch",
             "type": "timed_torch_puzzle"
+        },
+        {
+            "name": "puzzle_camera_focus",
+            "description": "",
+            "mesh": "camera",
+            "type": "camera_focus"
         }
     ]
 }

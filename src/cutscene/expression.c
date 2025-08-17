@@ -19,3 +19,11 @@ void expression_destroy(struct expression* expression) {
     free(expression->expression_program);
     expression->expression_program = NULL;
 }
+
+void expression_load_literal(struct expression* expression, int literal) {
+    expression->expression_program = malloc(6);
+    char* program = expression->expression_program;
+    ((char*)program)[0] = EXPRESSION_TYPE_LOAD_LITERAL;
+    memcpy(&program[1], &literal, 4);
+    program[5] = EXPRESSION_TYPE_END;
+}

@@ -145,12 +145,14 @@ class Definitions:
         for obj in self.objects["objects"]:
             library_path_parts = obj['mesh'].split('#', 1)
 
-            library_path = os.path.join(repo_path, "assets", library_path_parts[0])
-            relative_path = '//' + os.path.relpath(library_path, os.path.dirname(bpy.data.filepath))
-            obj['library'] = relative_path
-            obj['mesh_name'] = library_path_parts[1]
+            if library_path_parts[0] != "camera":
+                library_path = os.path.join(repo_path, "assets", library_path_parts[0])
+                relative_path = '//' + os.path.relpath(library_path, os.path.dirname(bpy.data.filepath))
+                obj['library'] = relative_path
+                obj['mesh_name'] = library_path_parts[1]
 
             self._objects_for_library_path[relative_path] = obj
+            self._objects_for_library_path[obj['type']] = obj
 
 
         print("Found repo path at " + str(repo_path))
@@ -230,6 +232,11 @@ class Definitions:
         if path in self._objects_for_library_path:
             return self._objects_for_library_path[path]
 
+        return None
+    
+    def get_object_for_type(self, type):
+        if type in self._objects_for_library_path:
+            return self._objects_for_library_path[type]
         return None
     
     def get_struct_info(self, type):

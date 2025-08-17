@@ -80,8 +80,8 @@ def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitio
     if 'type' in obj:
         type = obj['type']
 
-    if not 'type' in mesh:
-        return
+    if not type:
+        return None
     
     def_type_name = f"{type}_definition" 
 

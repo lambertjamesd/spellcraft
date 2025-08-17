@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include "../time/time.h"
+#include "evaluation_context.h"
 
 #define EXPECTED_HEADER 0x4354534E
 
@@ -97,6 +98,7 @@ struct cutscene* cutscene_load(char* filename) {
                 break;
             }
             case CUTSCENE_STEP_SET_LOCAL:
+            case CUTSCENE_STEP_SET_SCENE:
             case CUTSCENE_STEP_SET_GLOBAL:
                 fread(&step->data.store_variable, 4, 1, file);
                 break;
@@ -337,6 +339,46 @@ void cutscene_builder_npc_wait(
             },
         },
     };
+}
+
+void cutscene_builder_camera_return(struct cutscene_builder* builder) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_CAMERA_RETURN,
+    };
+}
+
+void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value) {
+    struct cutscene_step* expression = cutscene_builder_next_step(builder);
+    struct cutscene_step* set = cutscene_builder_next_step(builder);
+
+    *expression = (struct cutscene_step){
+        .type = CUTSCENE_STEP_EXPRESSION,
+    };
+    expression_load_literal(&expression->data.expression.expression, value);
+
+    if (SCENE_VARIABLE_FLAG & variable) {
+        *set = (struct cutscene_step){
+            .type = CUTSCENE_STEP_SET_SCENE,
+            .data = {
+                .store_variable = {
+                    .data_type = DATA_TYPE_BOOL,
+                    .word_offset = variable & SCENE_VARIABLE_FLAG,
+                },
+            },
+        };
+    } else {
+        *set = (struct cutscene_step){
+            .type = CUTSCENE_STEP_SET_GLOBAL,
+            .data = {
+                .store_variable = {
+                    .data_type = DATA_TYPE_BOOL,
+                    .word_offset = variable,
+                },
+            },
+        };
+    }
 }
 
 // release with cutscene_free()

@@ -3,6 +3,7 @@
 
 #include "../math/vector3.h"
 #include "../math/vector2.h"
+#include "../math/quaternion.h"
 #include "../cutscene/expression.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -25,7 +26,8 @@ enum entity_type_id {
     ENTITY_TYPE_elevator,
     ENTITY_TYPE_room_portal,
     ENTITY_TYPE_burning_thorns,
-    ENTITY_TYPE_bool_and_logic
+    ENTITY_TYPE_bool_and_logic,
+    ENTITY_TYPE_camera_focus
 };
 
 struct crate_definition {
@@ -66,6 +68,7 @@ typedef uint16_t room_id;
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT
 
 #define VARIABLE_DISCONNECTED   0xFFFF
+#define SCENE_VARIABLE_FLAG 0x8000
 
 typedef uint16_t boolean_variable;
 
@@ -185,6 +188,15 @@ struct bool_and_logic_definition {
     bool input_4_invert;
     bool input_5_invert;
     bool input_6_invert;
+};
+
+struct camera_focus_definition {
+    struct Vector3 position;
+    struct Quaternion rotation;
+    float fov;
+    boolean_variable input;
+    boolean_variable output;
+    bool repeat;
 };
 
 enum npc_type {

@@ -62,4 +62,6 @@ struct __attribute__((packed)) expression_header {
 void expression_load(struct expression* expression, FILE* file);
 void expression_destroy(struct expression* expression);
 
+void expression_load_literal(struct expression* expression, int literal);
+
 #endif

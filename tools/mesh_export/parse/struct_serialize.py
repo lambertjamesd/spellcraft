@@ -150,6 +150,10 @@ def write_vector2_rotation(file, obj: bpy.types.Object):
 
     file.write(struct.pack(">ff", final_right.x, final_right.z))
 
+def write_quaternion_rotation(file, obj: bpy.types.Object):
+    loc, rot, scale = _get_transform(obj).decompose()
+    file.write(struct.pack(">ffff", rot.x, rot.y, rot.z, rot.w))
+
 def _apply_alignment(current_offset: int, alignment: int) -> int:
     return (current_offset + alignment - 1) & ~(alignment - 1)
 
@@ -217,6 +221,10 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
             if field_name == 'rotation':
                 write_vector2_rotation(file, obj)
                 return offset + 8
+        if definition == 'struct Quaternion':
+            if field_name == 'rotation':
+                write_quaternion_rotation(file, obj)
+                return offset + 16
         if definition == 'float':
             if field_name == 'scale':
                 value = get_scale(obj)
