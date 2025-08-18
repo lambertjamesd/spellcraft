@@ -95,6 +95,10 @@ struct_formats = {
     'boolean_variable': 'H',
 }
 
+struct_format_defaults = {
+    'boolean_variable': 0xFFFF,
+}
+
 _string_aliases = {
     'script_location',
 }
@@ -239,7 +243,7 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
             file.write(struct.pack(">f", value))
             return offset + 4
         if definition in struct_formats:
-            value = get_value(obj, field_name, 0)
+            value = get_value(obj, field_name, struct_format_defaults[definition] if definition in struct_format_defaults else 0)
 
             if value == True:
                 value = 1

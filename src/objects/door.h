@@ -21,14 +21,18 @@ struct door {
     struct renderable renderable;
     room_id room_a;
     room_id room_b;
+    boolean_variable unlocked;
     struct interactable interactable;
     struct animation_set* animation_set;
     struct door_animations animations;
     struct animator animator;
     struct dynamic_object collider;
+    struct tmesh* lock_model;
 
     room_id next_room;
     room_id preview_room;
+
+    bool is_unlocked;
 };
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id);

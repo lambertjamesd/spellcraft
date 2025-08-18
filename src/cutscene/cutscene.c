@@ -364,7 +364,7 @@ void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_vari
             .data = {
                 .store_variable = {
                     .data_type = DATA_TYPE_BOOL,
-                    .word_offset = variable & SCENE_VARIABLE_FLAG,
+                    .word_offset = variable ^ SCENE_VARIABLE_FLAG,
                 },
             },
         };

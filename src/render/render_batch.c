@@ -55,7 +55,7 @@ void render_batch_relative_mtx(struct render_batch* batch, mat4x4 into) {
 struct render_batch_element* render_batch_add_tmesh(
     struct render_batch* batch, 
     struct tmesh* mesh, 
-    void* transform,
+    T3DMat4FP* transform,
     struct armature* armature, 
     struct tmesh** attachments,
     struct element_attr* additional_attrs
@@ -155,7 +155,7 @@ struct render_batch_element* render_batch_add_tmesh(
                     attachment_attrs[0].transform_list = matrices;
                     attachment_attrs[1].type = ELEMENT_ATTR_NONE;
     
-                    render_batch_add_tmesh(batch, attachments[i], matrices, NULL, NULL, attachment_attrs);
+                    render_batch_add_tmesh(batch, attachments[i], NULL, NULL, NULL, attachment_attrs);
                 }
             }
             ++attr;

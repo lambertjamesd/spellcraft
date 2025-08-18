@@ -132,6 +132,7 @@ struct door_definition {
     struct Vector2 rotation;
     room_id room_a;
     room_id room_b;
+    boolean_variable unlocked;
 };
 
 struct room_portal_definition {

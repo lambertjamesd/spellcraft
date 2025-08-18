@@ -6,7 +6,9 @@
 #include "../time/time.h"
 #include "../resource/animation_cache.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../cutscene/expression_evaluate.h"
 #include "../scene/scene.h"
+#include "../resource/tmesh_cache.h"
 
 #define DOOR_EXIT_SPACING   1.0f
 
@@ -15,6 +17,29 @@ static struct dynamic_object_type door_collision = {
     .bounce = 0.2f,
     .friction = 0.25f,
 };
+
+void door_render(void* data, struct render_batch* batch) {
+    struct door* door = (struct door*)data;
+    
+    render_scene_render_renderable_single_axis(&door->renderable, batch);
+
+    if (door->is_unlocked) {
+        return;
+    }
+
+    T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
+
+    if (!mtxfp) {
+        return;
+    }
+
+    mat4x4 mtx;
+    transformSAToMatrix(&door->transform, mtx);
+    render_batch_relative_mtx(batch, mtx);
+    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
+
+    render_batch_add_tmesh(batch, door->lock_model, mtxfp, NULL, NULL, NULL);
+}
 
 void door_cuscene_finish(struct cutscene* cutscene, void* data) {
     struct door* door = (struct door*)data;
@@ -35,6 +60,10 @@ void door_interact(struct interactable* interactable, entity_id from) {
     }
 
     struct door* door = (struct door*)interactable->data;
+
+    if (!door->is_unlocked) {
+        return;
+    }
 
     room_id other_room = scene_is_showing_room(current_scene, door->room_a) ? door->room_b : door->room_a;
     scene_show_room(current_scene, other_room);
@@ -92,17 +121,20 @@ void door_update(void* data) {
         door->next_room = ROOM_NONE;
         door->preview_room = ROOM_NONE;
     }
+    
+    door->is_unlocked = door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
 }
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id) {
     transformSaInit(&door->transform, &definition->position, &definition->rotation, 1.0f);
     door->room_a = definition->room_a;
     door->room_b = definition->room_b;
+    door->unlocked = definition->unlocked;
     door->next_room = ROOM_NONE;
     door->preview_room = ROOM_NONE;
 
     renderable_single_axis_init(&door->renderable, &door->transform, "rom:/meshes/objects/doors/door.tmesh");
-    render_scene_add_renderable(&door->renderable, 0.8f);
+    render_scene_add(&door->transform.position, 1.4f, door_render, door);
 
     dynamic_object_init(
         id, 
@@ -116,6 +148,7 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
     door->collider.center.y = door_collision.data.box.half_size.y;
     door->collider.is_fixed = true;
     door->collider.weight_class = 2;
+    door->lock_model = tmesh_cache_load("rom:/meshes/objects/doors/lock.tmesh");
 
     collision_scene_add(&door->collider);
 
@@ -127,13 +160,16 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
 
     animator_init(&door->animator, door->renderable.armature.bone_count);
     update_add(door, door_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
+
+    door->is_unlocked = door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
 }
 
 void door_destroy(struct door* door) {
     renderable_destroy(&door->renderable);
-    render_scene_remove(&door->renderable);
+    render_scene_remove(door);
     collision_scene_remove(&door->collider);
     animator_destroy(&door->animator);
     animation_cache_release(door->animation_set);
     update_remove(door);
+    tmesh_cache_release(door->lock_model);
 }

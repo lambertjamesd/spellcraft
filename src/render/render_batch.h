@@ -98,7 +98,7 @@ struct render_batch_element* render_batch_add(struct render_batch* batch);
 struct render_batch_element* render_batch_add_tmesh(
     struct render_batch* batch, 
     struct tmesh* mesh, 
-    void* transform,
+    T3DMat4FP* transform,
     struct armature* armature, 
     struct tmesh** attachments,
     struct element_attr* additional_attrs
