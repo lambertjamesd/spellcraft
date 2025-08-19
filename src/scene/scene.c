@@ -144,7 +144,7 @@ loaded_entity_t scene_load_entity(struct scene* scene, memory_stream_t* stream, 
         memory_stream_read(stream, def_data, def_size);
         // maybe todo, the types could be applied once on scene load
         // instead of on each time the entity is loaded
-        scene_entity_apply_types(def, scene->string_table, def->fields, def->field_count);
+        scene_entity_apply_types(def_data, scene->string_table, def->fields, def->field_count);
         return (loaded_entity_t){
             .id = entity_spawn(entity_type, def_data),
             .on_despawn = on_despawn,
