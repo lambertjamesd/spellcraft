@@ -28,20 +28,23 @@
 
 #define RDPQ_VALIDATE_DETACH_ADDR    0x00800000
 
+
 void setup() {
     debug_init_isviewer();
     // fprintf(stderr, "This is how to talk");
     init_engine();
     savefile_new();
 
+
     fade_effect_set((struct Coloru8){0, 0, 0, 255}, 0.0f);
     fade_effect_set((struct Coloru8){0, 0, 0, 0}, 3.0f);
 
-    scene_queue_next("rom:/scenes/fire_trials.scene");
+    // scene_queue_next("rom:/scenes/fire_trials.scene");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
     // scene_queue_next("rom:/scenes/ability_testing.scene");
     // scene_queue_next("rom:/scenes/playerhome_outside.scene");
     // scene_queue_next("rom:/scenes/StartArea_ForestWest.scene");
+    scene_queue_next("rom:/scenes/StartArea_TempleOutside.scene");
 
     current_scene = scene_load(scene_get_next());
 
@@ -61,7 +64,7 @@ void render_3d() {
 
     t3d_frame_start();
 
-    t3d_screen_clear_color(RGBA32(100, 0, 100, 0));
+	t3d_screen_clear_color(RGBA32(100, 0, 100, 0));
     t3d_screen_clear_depth();
 
     t3d_light_set_ambient(colorAmbient); // one global ambient light, always active
@@ -136,14 +139,16 @@ bool check_scene_load() {
 
 int main(void)
 {
-    display_init(RESOLUTION_320x240, DEPTH_32_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
-    rdpq_init();
+	resolution_t custom_res = {320, 240, false};
+    display_init(custom_res, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
+	// *(volatile uint32_t*)0xA4400000 |= 0x300;
+	rdpq_init();
     t3d_init((T3DInitParams){});
     dfs_init(DFS_DEFAULT_LOCATION);
     joypad_init();
 
-    surface_t zbuffer = surface_alloc(FMT_RGBA16, 320, 240);
-
+    surface_t zbuffer = surface_alloc(FMT_RGBA16, custom_res.width, custom_res.height);
+	
     debug_init_usblog();
     console_set_debug(true);
 
