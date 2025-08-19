@@ -174,7 +174,7 @@ void spell_render(struct spell* spell, int left, int top, struct spell_render_an
             final_top += spell_render_offset(animation);
         }
 
-        spell_render_icon(current_block->primary_rune, x + 2, x + 4);
+        spell_render_icon(current_block->primary_rune, x + 2, final_top + 4);
     }
 
     rdpq_sync_pipe();
@@ -191,17 +191,19 @@ void spell_render(struct spell* spell, int left, int top, struct spell_render_an
                 break;
             }
 
+            int final_top = top;
+
             if (index + 1 == block_count && 
                 (modifier + 1 == current_block->modfiier_count || !current_block->modifier_runes[modifier + 1]) && 
                 animation) {
-                top += spell_render_offset(animation);
+                final_top += spell_render_offset(animation);
             }
 
             int source_x = 120 + MODIFIER_WIDTH * (type - 1);
             rdpq_texture_rectangle_scaled(
                 TILE0,
-                x, top + 12,
-                x + 16, top + 12 + 16,
+                x, final_top + 12,
+                x + 16, final_top + 12 + 16,
                 source_x, 0,
                 source_x + MODIFIER_WIDTH, MODIFIER_WIDTH
             );

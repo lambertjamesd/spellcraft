@@ -48,9 +48,6 @@ void spell_slot_init(
             } else if (modifier_flags.windy) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
                 wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE, modifier_flags.earthy));
-            } else if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
-                slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
-                explosion_init(&slot->data.explosion, input, event_options, modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE);
             } else {
                 if (!modifier_flags.icy) {
                     slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;

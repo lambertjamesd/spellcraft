@@ -211,6 +211,28 @@ bool player_handle_a_action(struct player* player) {
     return did_interact;
 }
 
+void player_check_for_animation_request(struct player* player, struct spell_data_source* source) {
+    if (source->request_animation) {
+        source->flags.is_animating = 1;
+
+        struct animation_clip* to_play = NULL;
+        switch (source->request_animation) {
+            case SPELL_ANIMATION_SWING:
+                to_play = player->animations.swing_attack;
+                break;
+            case SPELL_ANIMATION_SPIN:
+                to_play = player->animations.spin_attack;
+                break;
+        }
+        
+        if (to_play) {
+            player_run_clip(player, to_play);
+        }
+        player->last_spell_animation = to_play;
+        source->request_animation = 0;
+    }
+}
+
 bool player_check_for_casting(struct player* player) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
@@ -218,31 +240,13 @@ bool player_check_for_casting(struct player* player) {
     
     if (source->flags.is_animating) {
         return true;
+    } else {
+        player_check_for_animation_request(player, source);
     }
 
     if (live_cast_has_pending_spell(&player->live_cast) && pressed.a) {
         spell_exec_start(&player->spell_exec, 4, live_cast_extract_active_spell(&player->live_cast), source);
-
-        if (source->request_animation) {
-            source->flags.is_animating = 1;
-
-            struct animation_clip* to_play = NULL;
-            switch (source->request_animation) {
-                case SPELL_ANIMATION_SWING:
-                    to_play = player->animations.swing_attack;
-                    break;
-                case SPELL_ANIMATION_SPIN:
-                    to_play = player->animations.spin_attack;
-                    break;
-            }
-            
-            if (to_play) {
-                player_run_clip(player, to_play);
-            }
-            player->last_spell_animation = to_play;
-            source->request_animation = 0;
-        }
-
+        player_check_for_animation_request(player, source);
         return true;
     }
 

@@ -1,3 +1,4 @@
+
 #include "room_portal.h"
 
 #include <stdio.h>
@@ -5,8 +6,8 @@
 #include "../scene/scene.h"
 #include "../time/time.h"
 
-#define MAX_DISTANCE    4.0f
-#define FADE_DISTANCE   3.0f
+#define MAX_DISTANCE    3.0f
+#define FADE_DISTANCE   2.0f
 
 #define room_portal_other_room(portal, room)    ((portal)->room_a == (room) ? (portal)->room_b : (portal)->room_a)
 

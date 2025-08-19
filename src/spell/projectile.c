@@ -97,7 +97,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
         entity_id_new(), 
         &projectile->dynamic_object, 
         &projectile_collision, 
-        COLLISION_LAYER_DAMAGE_ENEMY,
+        COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
         &projectile->pos, 
         NULL
     );

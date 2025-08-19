@@ -5,6 +5,7 @@
 #include "../math/transform.h"
 #include "../collision/collision_scene.h"
 #include "../entity/health.h"
+#include "../time/time.h"
 
 static struct elemental_sword_definition swing_definitions[] = {
     [ELEMENT_TYPE_FIRE] = {
@@ -16,6 +17,10 @@ static struct elemental_sword_definition swing_definitions[] = {
         .animation = SPELL_ANIMATION_SWING,
         .sword_length = 1.0f,
         .mana_cost = 1.0f,
+
+        .free_swing_time = 1.0f,
+        .free_swing_angle = -0.7853975f,
+        .free_swing_velocity = 1.570795f,
     }
 };
 
@@ -29,6 +34,10 @@ static struct elemental_sword_definition spin_definitions[] = {
         .animation = SPELL_ANIMATION_SPIN,
         .sword_length = 1.5f,
         .mana_cost = 3.0f,
+
+        .free_swing_time = 2.0f,
+        .free_swing_angle = -0.7853975f,
+        .free_swing_velocity = 6.28318f,
     }
 };
 
@@ -65,7 +74,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
         &spin_definitions[element_type] :
         &swing_definitions[element_type];
 
-    spell_data_source_request_animation(source, elemental_sword->definition->animation);
+    elemental_sword->has_animation = spell_data_source_request_animation(source, elemental_sword->definition->animation);
 
     render_scene_add(&source->position, 1.0f, elemental_sword_render, elemental_sword);
 
@@ -101,6 +110,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
 
     elemental_sword->needs_mana_check = 1;
     elemental_sword->power_ratio = 0.0f;
+    elemental_sword->animation_time = 0.0f;
 }
 
 void elemental_sword_destroy(struct elemental_sword* elemental_sword) {
@@ -117,19 +127,51 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
         elemental_sword->needs_mana_check = 0;
     }
 
-    if (elemental_sword->power_ratio > 0.0f && elemental_sword->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
+    bool is_active = false;
+    bool is_attacking = false;
+
+    struct Vector3 pos;
+    struct Vector3 dir;
+
+    if (elemental_sword->has_animation) {
+        is_active = elemental_sword->data_source->flags.is_animating;
+        is_attacking = elemental_sword->power_ratio > 0.0f && elemental_sword->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE;
+        pos = elemental_sword->data_source->position;
+        dir = elemental_sword->data_source->direction;
+    } else {
+        is_active = elemental_sword->animation_time < elemental_sword->definition->free_swing_time;
+        is_attacking = true;
+        pos = elemental_sword->data_source->position;
+        struct Vector3 up_vec;
+        vector3Cross(&elemental_sword->data_source->direction, &gRight, &up_vec);
+        vector3Normalize(&up_vec, &up_vec);
+        struct Quaternion rotate_amount;
+        quatAxisAngle(
+            &up_vec, 
+            elemental_sword->definition->free_swing_angle + elemental_sword->definition->free_swing_velocity * elemental_sword->animation_time,
+            &rotate_amount
+        );
+        quatMultVector(&rotate_amount, &elemental_sword->data_source->direction, &dir);
+        elemental_sword->animation_time += fixed_time_step;
+    }
+
+    if (is_attacking) {
         struct Vector3 tip;
         vector3AddScaled(
-            &elemental_sword->data_source->position, 
-            &elemental_sword->data_source->direction, 
+            &pos, 
+            &dir, 
             elemental_sword->definition->sword_length * elemental_sword->power_ratio, 
             &tip
         );
-        sword_trail_move(elemental_sword->trail, &elemental_sword->data_source->position, &tip);
-        swing_shape_add(&elemental_sword->swing_shape, &elemental_sword->data_source->position, &tip);
+        sword_trail_move(elemental_sword->trail, &pos, &tip);
+        swing_shape_add(&elemental_sword->swing_shape, &pos, &tip);
 
         health_apply_contact_damage(&elemental_sword->collider, &elemental_sword->definition->damage_source, &elemental_sword->damaged_set);
     }
 
-    return elemental_sword->data_source->flags.is_animating;
+    if (!is_active) {
+        spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, elemental_sword->data_source, 0.0f);
+    }
+
+    return is_active;
 }
