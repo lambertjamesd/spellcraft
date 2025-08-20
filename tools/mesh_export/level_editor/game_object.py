@@ -401,6 +401,14 @@ class GameObjectPanel(bpy.types.Panel):
         if is_mising_props:
             layout.operator('node.game_object_init', text='Add missing properties')
 
+def _get_objects(self, context):
+    object_definitions.load()
+    result = []
+    for game_object_def in object_definitions.get_objects_list():
+        result.append((game_object_def["name"], game_object_def["name"], game_object_def["description"]))
+    print(result)
+    return result
+
 class NODE_OT_game_object_add(bpy.types.Operator):
     """Add a game object"""
     bl_idname = "node.game_object_add"
@@ -408,9 +416,10 @@ class NODE_OT_game_object_add(bpy.types.Operator):
     bl_description = "Add a game object"
     bl_options = {'REGISTER', 'UNDO'}
 
-    name: bpy.props.StringProperty()
-    filepath: bpy.props.StringProperty(
-        subtype='FILE_PATH',
+    name: bpy.props.EnumProperty(
+        name="Game object",
+        description="Pick a game object from the list",
+        items=_get_objects
     )
 
     def search_for_mesh(self, absolute_path, relative_path, mesh_name):
@@ -434,7 +443,20 @@ class NODE_OT_game_object_add(bpy.types.Operator):
         return self.search_for_mesh(absolute_path, relative_path, mesh_name)
 
     def execute(self, context):
-        parts = self.filepath.split('#', 1)
+        object_def = None
+
+        for game_object_def in object_definitions.get_objects_list():
+            if game_object_def["name"] == self.name:
+                object_def = game_object_def
+                break;
+
+        if not object_def:
+            return {'ERROR'}
+        
+        filepath = os.path.join("assets", object_def["mesh"])
+        name = game_object_def["name"]
+
+        parts = filepath.split('#', 1)
         absolute_path = os.path.join(object_definitions.get_repo_path(), parts[0])
 
         mesh = self.get_or_link_mesh(absolute_path, parts[1])
@@ -442,7 +464,7 @@ class NODE_OT_game_object_add(bpy.types.Operator):
         if not mesh:
             return {'ERROR'}
 
-        object = bpy.data.objects.new(self.name, mesh)
+        object = bpy.data.objects.new(name, mesh)
         _init_default_properties(object)
 
         object.location = context.scene.cursor.location
@@ -495,29 +517,6 @@ class NODE_OT_game_object_add_loading_zone(bpy.types.Operator):
 
         return {'FINISHED'}
 
-
-class NODE_MT_game_object_add(bpy.types.Menu):
-    bl_label = "Game Object"
-
-    def draw(self, context):
-        object_definitions.load()
-        layout = self.layout
-
-        for game_object_def in object_definitions.get_objects_list():
-            props = layout.operator(
-                NODE_OT_game_object_add.bl_idname,
-                text=game_object_def["name"],
-            )
-            props.filepath = os.path.join("assets", game_object_def["mesh"])
-            props.name = game_object_def["name"]
-
-def menu_function(self, context):
-    self.layout.menu(
-        NODE_MT_game_object_add.__name__,
-        text="Game Object",
-        icon='PLUGIN',
-    )
-
 class CreateGameObjectPanel(bpy.types.Panel):
     bl_idname = "GO_PT_create_game_object"
     bl_label = "Create game object"
@@ -530,8 +529,10 @@ class CreateGameObjectPanel(bpy.types.Panel):
         return object_definitions.get_repo_path() != None
     
     def draw(self, context):
+        object_definitions.load()
         col = self.layout.column()
-        col.menu(NODE_MT_game_object_add.__name__, text="Create game object")
+        # col.prop(context.scene, "selected_game_object")
+        col.operator_menu_enum(NODE_OT_game_object_add.bl_idname, "name", text="Create game object")
         col.operator(NODE_OT_game_object_add_entry_point.bl_idname, text="Add entry point")
         col.operator(NODE_OT_game_object_add_loading_zone.bl_idname, text="Add loading zone")
 
@@ -542,7 +543,6 @@ _classes = [
     NODE_OT_game_object_boolean_variable,
     NODE_OT_game_objects_clear_script,
     NODE_OT_game_object_entry_points,
-    NODE_MT_game_object_add,
     NODE_OT_game_object_add,
     NODE_OT_game_object_add_entry_point,
     NODE_OT_game_object_add_loading_zone,
@@ -557,11 +557,15 @@ _classes = [
 def register():
     for cls in _classes:
         bpy.utils.register_class(cls)
-        
-    bpy.types.TOPBAR_MT_file.append(menu_function)
+
+    # bpy.types.Scene.selected_game_object = bpy.props.EnumProperty(
+    #     name="Game object",
+    #     description="Pick a game object from the list",
+    #     items=_get_objects
+    # )
 
 def unregister():
     for cls in _classes:
         bpy.utils.unregister_class(cls)
-    
-    bpy.types.TOPBAR_MT_file.remove(menu_function)
+
+    # del bpy.types.Scene.selected_game_object
