@@ -35,6 +35,13 @@ def _get_positions(self, context):
 
     return list(map(lambda x: (x, x, ''), result))
 
+def _get_objects(self, context):
+    object_definitions.load()
+    result = []
+    for game_object_def in object_definitions.get_objects_list():
+        result.append((game_object_def["name"], game_object_def["name"], game_object_def["description"]))
+    return result
+
 class NODE_OT_game_object_item_type(bpy.types.Operator):
     """Set custom property"""
     bl_idname = "node.game_object_item_type"
@@ -401,19 +408,12 @@ class GameObjectPanel(bpy.types.Panel):
         if is_mising_props:
             layout.operator('node.game_object_init', text='Add missing properties')
 
-def _get_objects(self, context):
-    object_definitions.load()
-    result = []
-    for game_object_def in object_definitions.get_objects_list():
-        result.append((game_object_def["name"], game_object_def["name"], game_object_def["description"]))
-    print(result)
-    return result
-
 class NODE_OT_game_object_add(bpy.types.Operator):
     """Add a game object"""
     bl_idname = "node.game_object_add"
     bl_label = "Add a game object"
     bl_description = "Add a game object"
+    bl_property = "name"
     bl_options = {'REGISTER', 'UNDO'}
 
     name: bpy.props.EnumProperty(
@@ -421,6 +421,10 @@ class NODE_OT_game_object_add(bpy.types.Operator):
         description="Pick a game object from the list",
         items=_get_objects
     )
+    
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
 
     def search_for_mesh(self, absolute_path, relative_path, mesh_name):
         for mesh in bpy.data.meshes:
@@ -531,8 +535,7 @@ class CreateGameObjectPanel(bpy.types.Panel):
     def draw(self, context):
         object_definitions.load()
         col = self.layout.column()
-        # col.prop(context.scene, "selected_game_object")
-        col.operator_menu_enum(NODE_OT_game_object_add.bl_idname, "name", text="Create game object")
+        col.operator(NODE_OT_game_object_add.bl_idname, text="Create game object")
         col.operator(NODE_OT_game_object_add_entry_point.bl_idname, text="Add entry point")
         col.operator(NODE_OT_game_object_add_loading_zone.bl_idname, text="Add loading zone")
 
@@ -558,14 +561,6 @@ def register():
     for cls in _classes:
         bpy.utils.register_class(cls)
 
-    # bpy.types.Scene.selected_game_object = bpy.props.EnumProperty(
-    #     name="Game object",
-    #     description="Pick a game object from the list",
-    #     items=_get_objects
-    # )
-
 def unregister():
     for cls in _classes:
         bpy.utils.unregister_class(cls)
-
-    # del bpy.types.Scene.selected_game_object
