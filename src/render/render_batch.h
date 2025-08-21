@@ -3,6 +3,7 @@
 
 #include <libdragon.h>
 #include <t3d/t3d.h>
+#include <t3d/tpx.h>
 
 #include "tmesh.h"
 #include "armature.h"
@@ -17,21 +18,16 @@
 #define RENDER_BATCH_TRANSFORM_COUNT    64
 #define MAX_BILLBOARD_SPRITES           128
 
-struct render_billboard_sprite {
-    struct Vector3 position;
-    float radius;
-    color_t color;
-};
-
 enum render_batch_type {
     RENDER_BATCH_MESH,
-    RENDER_BATCH_BILLBOARD,
+    RENDER_BATCH_PARTICLES,
     RENDER_BATCH_CALLBACK,
 };
 
-struct render_batch_billboard_element {
-    struct render_billboard_sprite* sprites;
-    uint16_t sprite_count;
+struct render_batch_particle_element {
+    TPXParticle* particles;
+    T3DMat4FP* transform;
+    uint16_t particle_count;
 };
 
 struct render_batch;
@@ -76,7 +72,7 @@ struct render_batch_element {
             rspq_block_t* block;
             struct element_attr* attrs;
         } mesh;
-        struct render_batch_billboard_element billboard;
+        struct render_batch_particle_element particles;
         struct {
             RenderCallback callback;
             void* data;
@@ -107,9 +103,9 @@ struct render_batch_element* render_batch_add_tmesh(
 void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data);
 // caller is responsible for populating sprite list
 // the sprite count returned may be less than the sprite count requested
-struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count);
+struct render_batch_particle_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count);
 
-struct render_batch_billboard_element render_batch_get_sprites(struct render_batch* batch, int count);
+struct render_batch_particle_element render_batch_falloc_particles(struct render_batch* batch, int count);
 mat4x4* render_batch_get_transform(struct render_batch* batch);
 T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch);
 T3DMat4FP* render_batch_transformfp_from_sa(struct render_batch* batch, struct TransformSingleAxis* transform);

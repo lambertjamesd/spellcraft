@@ -162,7 +162,8 @@ void camera_controller_update_animation(struct camera_controller* controller) {
 
 void camera_controller_update(struct camera_controller* controller) {
     if (controller->state == CAMERA_STATE_FOLLOW) {
-        camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);
+        camera_controller_determine_player_move_target(controller, &controller->target, false);
+        // camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);
     } else if (controller->state == CAMERA_STATE_LOOK_AT_WITH_PLAYER) {
         camera_controller_determine_two_target_position(controller, &controller->target);
     } else if (controller->state == CAMERA_STATE_ANIMATE) {

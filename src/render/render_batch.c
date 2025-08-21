@@ -189,21 +189,21 @@ void render_batch_add_callback(struct render_batch* batch, struct material* mate
     element->callback.data = data;
 }
 
-struct render_batch_billboard_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count) {
+struct render_batch_particle_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count) {
     struct render_batch_element* result = render_batch_add(batch);
 
-    result->type = RENDER_BATCH_BILLBOARD;
+    result->type = RENDER_BATCH_PARTICLES;
     result->material = material;
-    result->billboard = render_batch_get_sprites(batch, count);
+    result->particles = render_batch_falloc_particles(batch, count);
 
-    return &result->billboard;
+    return &result->particles;
 }
 
-struct render_batch_billboard_element render_batch_get_sprites(struct render_batch* batch, int count) {
-    struct render_batch_billboard_element result;
+struct render_batch_particle_element render_batch_falloc_particles(struct render_batch* batch, int count) {
+    struct render_batch_particle_element result;
 
-    result.sprites = frame_malloc(batch->pool, count * sizeof(struct render_billboard_sprite));
-    result.sprite_count = count;
+    result.particles = frame_malloc(batch->pool, ((count + 1) >> 1) * sizeof(TPXParticle));
+    result.particle_count = count;
 
     return result;
 }
@@ -293,7 +293,7 @@ void render_batch_check_texture_scroll(int tile, struct material_tex* tex) {
 
 static bool element_type_2d[] = {
     [RENDER_BATCH_MESH] = false,
-    [RENDER_BATCH_BILLBOARD] = true,
+    [RENDER_BATCH_PARTICLES] = true,
     [RENDER_BATCH_CALLBACK] = false,
 };
 
@@ -460,60 +460,14 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             if (transform_count) {
                 t3d_matrix_pop(transform_count);
             }
-        } else if (element->type == RENDER_BATCH_BILLBOARD) {
-            for (int sprite_index = 0; sprite_index < element->billboard.sprite_count; ++sprite_index) {
-                struct render_billboard_sprite sprite = element->billboard.sprites[sprite_index];
-
-                struct Vector4 transformed;
-                struct Vector3 scaled;
-                vector3Scale(&sprite.position, &scaled, WORLD_SCALE);
-                matrixVec3Mul(view_proj_matrix, &scaled, &transformed);
-
-                if (transformed.w < 0.0f) {
-                    continue;
-                }
-
-                float wInv = 1.0f / transformed.w;
-
-                float x = (transformed.x * wInv + 1.0f) * 0.5f * 4.0f;
-                float y = (-transformed.y * wInv + 1.0f) * 0.5f * 4.0f;
-                float z = transformed.z * wInv * 0.5f + 0.5f;
-
-                float size = sprite.radius * wInv * WORLD_SCALE;
-
-                if (z < 0.0f || z > 1.0f) {
-                    continue;
-                }
-
-                rdpq_mode_zoverride(true, z, 0);
-
-                int screen_x = (int)(x * (viewport->size[0])) + viewport->offset[0] * 4;
-                int screen_y = (int)(y * (viewport->size[1])) + viewport->offset[1] * 4;
-
-                int half_screen_width = (int)(size * scale_x * viewport->size[0]);
-                int half_screen_height = (int)(size * scale_y * viewport->size[1]);
-
-                int image_w = 32;
-                int image_h = 32;
-
-                if (current_mat && current_mat->tex0.sprite) {
-                    image_w = current_mat->tex0.sprite->width * 32;
-                    image_h = current_mat->tex0.sprite->height * 32;
-                }
-
-                rdpq_set_prim_color(sprite.color);
-                __rdpq_texture_rectangle_scaled_fx(
-                    TILE0, 
-                    screen_x - half_screen_width, 
-                    screen_y - half_screen_height, 
-                    screen_x + half_screen_width, 
-                    screen_y + half_screen_height, 
-                    0,
-                    0,
-                    image_w,
-                    image_h
-                );
+        } else if (element->type == RENDER_BATCH_PARTICLES) {
+            tpx_matrix_push(element->particles.transform);
+            if (current_mat != NULL && current_mat->tex0.sprite) {
+                tpx_particle_draw_tex(element->particles.particles, element->particles.particle_count);
+            } else {
+                tpx_particle_draw(element->particles.particles, element->particles.particle_count);
             }
+            tpx_matrix_pop(1);
         } else if (element->type == RENDER_BATCH_CALLBACK) {
             element->callback.callback(element->callback.data, batch);
         }

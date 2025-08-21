@@ -9,7 +9,6 @@
 
 #include "../math/vector3.h"
 #include "element_emitter.h"
-#include "explosion.h"
 #include "mana_pool.h"
 #include "projectile.h"
 #include "push.h"
@@ -30,7 +29,6 @@ union spell_exec_data {
     struct projectile projectile;
     struct shield shield;
     struct element_emitter element_emitter;
-    struct explosion explosion;
     struct recast recast;
     struct push push;
     struct jump jump;
@@ -47,7 +45,6 @@ enum spell_exec_slot_type {
     SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER,
     SPELL_EXEC_SLOT_TYPE_PROJECTILE,
     SPELL_EXEC_SLOT_TYPE_SHEILD,
-    SPELL_EXEC_SLOT_TYPE_EXPLOSION,
     SPELL_EXEC_SLOT_TYPE_PUSH,
     SPELL_EXEC_SLOT_TYPE_JUMP,
     SPELL_EXEC_SLOT_TYPE_RECAST,

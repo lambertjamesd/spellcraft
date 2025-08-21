@@ -67,9 +67,6 @@ void spell_slot_init(
             } else if (modifier_flags.windy) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
                 wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(modifier_flags.flaming ? ELEMENT_TYPE_NONE : ELEMENT_TYPE_ICE, modifier_flags.earthy));
-            } else if (input->flags.cast_state == SPELL_CAST_STATE_INSTANT) {
-                slot->type = SPELL_EXEC_SLOT_TYPE_EXPLOSION;
-                explosion_init(&slot->data.explosion, input, event_options, modifier_flags.flaming ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_ICE);
             } else {
                 struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, modifier_flags.earthy, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
@@ -154,9 +151,6 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
             element_emitter_destroy(&slot->data.element_emitter);
             break;
-        case SPELL_EXEC_SLOT_TYPE_EXPLOSION:
-            explosion_destroy(&slot->data.explosion);
-            break;
         case SPELL_EXEC_SLOT_TYPE_RECAST:
             recast_destroy(&slot->data.recast);
             remove_recast = &slot->data.recast;
@@ -228,9 +222,6 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
             isActive = element_emitter_update(&slot->data.element_emitter, &event_listener, &exec->spell_sources);
-            break;
-        case SPELL_EXEC_SLOT_TYPE_EXPLOSION:
-            isActive = explosion_update(&slot->data.explosion, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_RECAST:
             isActive = recast_update(&slot->data.recast, &event_listener, &exec->spell_sources);
