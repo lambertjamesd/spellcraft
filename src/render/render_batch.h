@@ -24,11 +24,17 @@ enum render_batch_type {
     RENDER_BATCH_CALLBACK,
 };
 
-struct render_batch_particle_element {
+#define UNPACK_SCALE(scale) ((float)(scale) * (float)0xFFFF)
+
+struct render_batch_particles {
     TPXParticle* particles;
-    T3DMat4FP* transform;
     uint16_t particle_count;
+    uint16_t particle_size;
+    uint16_t particle_scale_width;
+    uint16_t particle_scale_height;
 };
+
+typedef struct render_batch_particles render_batch_particles_t;
 
 struct render_batch;
 
@@ -72,7 +78,10 @@ struct render_batch_element {
             rspq_block_t* block;
             struct element_attr* attrs;
         } mesh;
-        struct render_batch_particle_element particles;
+        struct {
+            render_batch_particles_t* particles;
+            T3DMat4FP* transform;
+        } particles;
         struct {
             RenderCallback callback;
             void* data;
@@ -101,11 +110,14 @@ struct render_batch_element* render_batch_add_tmesh(
 );
 
 void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data);
-// caller is responsible for populating sprite list
-// the sprite count returned may be less than the sprite count requested
-struct render_batch_particle_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count);
 
-struct render_batch_particle_element render_batch_falloc_particles(struct render_batch* batch, int count);
+struct render_batch_element* render_batch_add_particles(
+    struct render_batch* batch, 
+    struct material* material, 
+    render_batch_particles_t* particles, 
+    T3DMat4FP* mtx
+);
+
 mat4x4* render_batch_get_transform(struct render_batch* batch);
 T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch);
 T3DMat4FP* render_batch_transformfp_from_sa(struct render_batch* batch, struct TransformSingleAxis* transform);

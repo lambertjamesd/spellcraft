@@ -189,21 +189,18 @@ void render_batch_add_callback(struct render_batch* batch, struct material* mate
     element->callback.data = data;
 }
 
-struct render_batch_particle_element* render_batch_add_particles(struct render_batch* batch, struct material* material, int count) {
+struct render_batch_element* render_batch_add_particles(
+    struct render_batch* batch, 
+    struct material* material, 
+    render_batch_particles_t* particles, 
+    T3DMat4FP* mtx
+) {
     struct render_batch_element* result = render_batch_add(batch);
 
     result->type = RENDER_BATCH_PARTICLES;
     result->material = material;
-    result->particles = render_batch_falloc_particles(batch, count);
-
-    return &result->particles;
-}
-
-struct render_batch_particle_element render_batch_falloc_particles(struct render_batch* batch, int count) {
-    struct render_batch_particle_element result;
-
-    result.particles = frame_malloc(batch->pool, ((count + 1) >> 1) * sizeof(TPXParticle));
-    result.particle_count = count;
+    result->particles.particles = particles;
+    result->particles.transform = mtx;
 
     return result;
 }
@@ -409,6 +406,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
         if (should_sprite_mode != is_sprite_mode) {
             if (should_sprite_mode) {
+                tpx_state_from_t3d();
                 rdpq_mode_persp(false);
             } else {
                 rdpq_mode_zoverride(false, 0, 0);
@@ -461,11 +459,19 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 t3d_matrix_pop(transform_count);
             }
         } else if (element->type == RENDER_BATCH_PARTICLES) {
+            render_batch_particles_t* particles = element->particles.particles;
+
             tpx_matrix_push(element->particles.transform);
+            tpx_state_set_base_size(particles->particle_size);
+            tpx_state_set_scale(
+                UNPACK_SCALE(particles->particle_scale_width),
+                UNPACK_SCALE(particles->particle_scale_height)
+            );
+            tpx_state_set_tex_params(0, 0);
             if (current_mat != NULL && current_mat->tex0.sprite) {
-                tpx_particle_draw_tex(element->particles.particles, element->particles.particle_count);
+                tpx_particle_draw_tex(particles->particles, particles->particle_count);
             } else {
-                tpx_particle_draw(element->particles.particles, element->particles.particle_count);
+                tpx_particle_draw(particles->particles, particles->particle_count);
             }
             tpx_matrix_pop(1);
         } else if (element->type == RENDER_BATCH_CALLBACK) {

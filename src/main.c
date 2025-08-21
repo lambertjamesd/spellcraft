@@ -144,6 +144,7 @@ int main(void)
 	// *(volatile uint32_t*)0xA4400000 |= 0x300;
 	rdpq_init();
     t3d_init((T3DInitParams){});
+    tpx_init((TPXInitParams){});
     dfs_init(DFS_DEFAULT_LOCATION);
     joypad_init();
 
