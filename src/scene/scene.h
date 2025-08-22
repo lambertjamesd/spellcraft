@@ -19,6 +19,14 @@ struct static_entity {
     struct tmesh tmesh;
 };
 
+struct static_particles {
+    struct material* material;
+    T3DMat4FP mtx;
+    struct render_batch_particles particles;
+};
+
+typedef struct static_particles static_particles_t;
+
 struct loading_zone {
     struct Box3D bounding_box;
     char* scene_name;
@@ -85,6 +93,8 @@ typedef struct loaded_room loaded_room_t;
 struct scene {
     struct static_entity* static_entities;
     struct static_entity_range* room_static_ranges;
+    static_particles_t* static_particles;
+    struct static_entity_range* room_particle_ranges;
 
     struct mesh_collider mesh_collider;
 
@@ -104,6 +114,7 @@ struct scene {
 
     uint16_t room_count;
     uint16_t static_entity_count;
+    uint16_t static_particles_count;
     uint16_t loading_zone_count;
     uint16_t named_location_count;
 
@@ -113,9 +124,12 @@ struct scene {
 
     char* string_table;
     char* scene_vars;
+    TPXParticle* all_particles;
 
     struct camera_animation_list camera_animations;
 };
+
+typedef struct scene scene_t;
 
 extern struct scene* current_scene;
 

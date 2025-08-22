@@ -30,6 +30,10 @@ class StaticEntry():
         self.obj = obj
         self.mesh = mesh
 
+class ParticlesEntry():
+    def __init__(self, obj: bpy.types.Object):
+        self.obj = obj
+
 class LocationEntry():
     def __init__(self, obj: bpy.types.Object, name: str):
         self.obj: bpy.types.Object = obj
@@ -67,18 +71,22 @@ class Scene():
     def __init__(self):
         self.static:list[StaticEntry] = []
         self.objects: list[ObjectEntry] = []
+        self.particles: list[ParticlesEntry] = []
         self.locations: list[LocationEntry] = []
         self.loading_zones: list[LoadingZone] = []
         self.scene_mesh_collider = entities.mesh_collider.MeshCollider()
 
-def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo], room_index: int):
-    type = None
-
-    if 'type' in mesh:
-        type = mesh['type']
-
+def get_object_type(obj: bpy.types.Object) -> str:
     if 'type' in obj:
-        type = obj['type']
+        return obj['type']
+    
+    if obj.data != None and 'type' in obj.data:
+        return obj.data['type']
+    
+    return None
+
+def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo], room_index: int):
+    type = get_object_type(obj)
 
     if not type:
         return None
@@ -136,6 +144,12 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
         file.write(struct.pack('>HH', index_start, index_start + len(room_meshes)))
         index_start += len(room_meshes)
 
+def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collection: entities.room.room_collection, file):
+    file.write(struct.pack('>IH', 0, 0))
+
+    for room_meshes in room_collection.rooms:
+        file.write(struct.pack('>HH', 0, 0))
+
 def find_static_blacklist():
     result = set()
 
@@ -165,7 +179,9 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
         if obj.type != "MESH":
             continue
 
-        if 'type' in obj or 'type' in obj.data:
+        obj_type = get_object_type(obj)
+
+        if obj_type != None:
             entity_list.append(process_linked_object(obj, obj.data, definitions, 0))
             continue
 
@@ -284,8 +300,13 @@ def find_scene_objects(scene, definitions, room_collection, base_transform):
             scene.locations.append(LocationEntry(obj, entities.entry_point.get_entry_point(obj)))
             continue
 
-        if 'type' in obj or (obj.data and 'type' in obj.data):
-            scene.objects.append(process_linked_object(obj, obj.data, definitions, room_collection.get_obj_room_index(obj)))
+        obj_type = get_object_type(obj)
+
+        if obj_type != None:
+            if obj_type == 'static_particles':
+                scene.particles.append(ParticlesEntry(obj))
+            else:
+                scene.objects.append(process_linked_object(obj, obj.data, definitions, room_collection.get_obj_room_index(obj)))
             continue
 
         if obj.type != "MESH":

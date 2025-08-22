@@ -5,6 +5,7 @@
 #include <libdragon.h>
 #include "../resource/mesh_collider.h"
 #include "../resource/tmesh_cache.h"
+#include "../resource/material_cache.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
 #include "../cutscene/cutscene_runner.h"
@@ -45,6 +46,47 @@ bool scene_load_check_condition(FILE* file) {
     evaluation_context_destroy(&eval_context);
 
     return result != 0;
+}
+
+void scene_load_static_particles(scene_t* scene, int room_count, FILE* file) {
+    uint32_t total_particle_count;
+    fread(&total_particle_count, sizeof(uint32_t), 1, file);
+
+    scene->all_particles = malloc(sizeof(TPXParticle) * total_particle_count);
+
+    uint16_t static_particle_count;
+    fread(&static_particle_count, sizeof(uint16_t), 1, file);
+
+    scene->static_particles = malloc(sizeof(static_particles_t) * static_particle_count);
+
+    TPXParticle* curr = scene->all_particles;
+
+    for (int i = 0; i < static_particle_count; i += 1) {
+        static_particles_t* particles = &scene->static_particles[i];
+
+        particles->material = material_cache_load_from_file(file);
+
+        struct Transform transform;
+        fread(&transform.position, sizeof(struct Vector3), 1, file);
+        quatIdent(&transform.rotation);
+        fread(&transform.scale, sizeof(struct Vector3), 1, file);
+
+        mat4x4 mtx;
+        transformToWorldMatrix(&transform, mtx);
+        t3d_mat4_to_fixed_3x4(&particles->mtx, (T3DMat4*)&mtx);
+
+        particles->particles.particles = curr;
+
+        fread(&particles->particles.particle_count, sizeof(uint16_t), 1, file);
+        fread(&particles->particles.particle_size, sizeof(uint16_t), 1, file);
+        fread(&particles->particles.particle_scale_width, sizeof(uint16_t), 1, file);
+        fread(&particles->particles.particle_scale_height, sizeof(uint16_t), 1, file);
+
+        curr += (particles->particles.particle_count + 1) >> 1;
+    }
+
+    scene->room_particle_ranges = malloc(sizeof(struct static_entity_range) * room_count);
+    fread(scene->room_particle_ranges, sizeof(struct static_entity_range), room_count, file);
 }
 
 void scene_load_camera_animations(struct camera_animation_list* list, const char* filename, FILE* file) {
@@ -247,6 +289,8 @@ struct scene* scene_load(const char* filename) {
     scene->room_static_ranges = malloc(sizeof(struct static_entity_range) * room_count);
     fread(scene->room_static_ranges, sizeof(struct static_entity_range), room_count, file);
 
+    scene_load_static_particles(scene, room_count, file);
+
     mesh_collider_load(&scene->mesh_collider, file);
     collision_scene_add_static_mesh(&scene->mesh_collider);
 
@@ -295,6 +339,16 @@ struct scene* scene_load(const char* filename) {
     return scene;
 }
 
+void scene_release_particles(scene_t* scene) {
+    for (int i = 0; i < scene->static_particles_count; i += 1) {
+        material_release(scene->static_particles[i].material);
+    }
+    
+    free(scene->all_particles);
+    free(scene->static_particles);
+    free(scene->room_particle_ranges);
+}
+
 void scene_release_room_entities(room_entity_block_t* room_entities, int room_count) {
     for (int i = 0; i < room_count; i += 1) {
         free(room_entities[i].block);
@@ -334,6 +388,8 @@ void scene_release(struct scene* scene) {
     }
     free(scene->static_entities);
     free(scene->room_static_ranges);
+
+    scene_release_particles(scene);
 
     render_scene_remove(scene);
     update_remove(scene);

@@ -30,3 +30,18 @@ void material_cache_release(struct material* material) {
         free(material);
     }
 }
+
+struct material* material_cache_load_from_file(FILE* file) {
+    uint8_t material_name_length;
+    fread(&material_name_length, 1, 1, file);
+
+    if (!material_name_length) {
+        return NULL;
+    }
+
+    char material_name[material_name_length + 1];
+    fread(&material_name[0], 1, material_name_length, file);
+    material_name[material_name_length] = '\0';
+
+    return material_cache_load(material_name);
+}

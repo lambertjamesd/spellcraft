@@ -24,11 +24,13 @@ enum render_batch_type {
     RENDER_BATCH_CALLBACK,
 };
 
-#define UNPACK_SCALE(scale) ((float)(scale) * (float)0xFFFF)
+#define UNPACK_SCALE(scale) ((float)(scale) * (1.0f / 0xFFFF))
 
 struct render_batch_particles {
     TPXParticle* particles;
     uint16_t particle_count;
+    // particle_size = WORLD_SCALE is a radius of 1
+    // when particle_scale = 0xFFFF and particle_size = 127
     uint16_t particle_size;
     uint16_t particle_scale_width;
     uint16_t particle_scale_height;

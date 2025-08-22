@@ -25,6 +25,20 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
     for (; curr < end; ++curr) {
         render_batch_add_tmesh(batch, &curr->tmesh, NULL, NULL, NULL, NULL);
     }
+
+    range = scene->room_particle_ranges[room_index];
+    
+    static_particles_t* curr_particle = scene->static_particles + range.start;
+    static_particles_t* end_particle = scene->static_particles + range.end;
+
+    for (; curr_particle < end_particle; ++curr_particle) {
+        render_batch_add_particles(
+            batch,
+            curr_particle->material,
+            &curr_particle->particles,
+            &curr_particle->mtx
+        );
+    }
 }
 
 void scene_render(void* data, struct render_batch* batch) {

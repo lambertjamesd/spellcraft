@@ -66,19 +66,7 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     assert(header == EXPECTED_HEADER);
 
     // load material
-
-    uint8_t material_name_length;
-    fread(&material_name_length, 1, 1, file);
-
-    char material_name[material_name_length + 1];
-    fread(&material_name[0], 1, material_name_length, file);
-    material_name[material_name_length] = '\0';
-
-    if (material_name_length) {
-        tmesh->material = material_cache_load(material_name);
-    } else {
-        tmesh->material = NULL;
-    }
+    tmesh->material = material_cache_load_from_file(file);
 
     // load vertices
 
