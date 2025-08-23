@@ -49,10 +49,11 @@ bool scene_load_check_condition(FILE* file) {
 }
 
 void scene_load_static_particles(scene_t* scene, int room_count, FILE* file) {
-    uint32_t total_particle_count;
-    fread(&total_particle_count, sizeof(uint32_t), 1, file);
+    uint32_t total_particle_size;
+    fread(&total_particle_size, sizeof(uint32_t), 1, file);
 
-    scene->all_particles = malloc(sizeof(TPXParticle) * total_particle_count);
+    scene->all_particles = malloc(total_particle_size);
+    fread(scene->all_particles, total_particle_size, 1, file);
 
     uint16_t static_particle_count;
     fread(&static_particle_count, sizeof(uint16_t), 1, file);

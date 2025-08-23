@@ -14,6 +14,7 @@ import entities.tiny3d_mesh_writer
 import entities.mesh_optimizer
 import entities.material_extract
 import entities.entry_point
+import entities.particles
 from entities.entities import ObjectEntry
 import entities.overworld
 import parse.struct_parse
@@ -145,10 +146,47 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
         index_start += len(room_meshes)
 
 def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collection: entities.room.room_collection, file):
-    file.write(struct.pack('>IH', 0, 0))
+    room_to_particle: list[list[entities.particles.Particles]] = []
+
+    for room in room_collection.rooms:
+        room_to_particle.append([])
+        
+    count = 0
+
+    for particles in scene.particles:
+        built = entities.particles.build_particles(particles.obj, base_transform)
+
+        if not built:
+            continue
+
+        room_index = room_collection.get_obj_room_index(particles.obj)
+        room_to_particle[room_index].append(built)
+        count = count + 1
+
+    particle_data = io.BytesIO()
+
+    for room_index in range(len(room_collection.rooms)):
+        particles = room_to_particle[room_index]
+
+        for built in particles:
+            particle_data.write(built.particles)
+
+    particle_data_bytes = particle_data.getvalue()
+
+    file.write(struct.pack('>IH', len(particle_data_bytes), count))
+
+    for room_index in range(len(room_collection.rooms)):
+        particles = room_to_particle[room_index]
+
+        for built in particles:
+            built.write_into(file)
+
+    offset = 0
 
     for room_meshes in room_collection.rooms:
-        file.write(struct.pack('>HH', 0, 0))
+        particles = room_to_particle[room_index]
+        file.write(struct.pack('>HH', offset, offset + len(particles)))
+        offset += len(particles)
 
 def find_static_blacklist():
     result = set()
@@ -444,6 +482,7 @@ def process_scene():
             file.write(struct.pack('>H', room_collection.get_obj_room_index(location.obj)))
 
         write_static(scene, base_transform, room_collection, file)
+        write_particles(scene, base_transform, room_collection, file)
 
         scene.scene_mesh_collider.write_out(file)
 

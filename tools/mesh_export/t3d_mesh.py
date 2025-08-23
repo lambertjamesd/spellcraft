@@ -21,6 +21,7 @@ def replace_extension(filename: str, ext: str) -> str:
 APPLIED_MODIFIERS = {
     "MIRROR",
     "SIMPLE_DEFORM",
+    "SHRINKWRAP",
 }
 
 def process_scene():
