@@ -174,6 +174,7 @@ def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collect
     particle_data_bytes = particle_data.getvalue()
 
     file.write(struct.pack('>IH', len(particle_data_bytes), count))
+    file.write(particle_data_bytes)
 
     for room_index in range(len(room_collection.rooms)):
         particles = room_to_particle[room_index]
@@ -341,6 +342,8 @@ def find_scene_objects(scene, definitions, room_collection, base_transform):
         obj_type = get_object_type(obj)
 
         if obj_type != None:
+            if obj_type == 'none':
+                continue
             if obj_type == 'static_particles':
                 scene.particles.append(ParticlesEntry(obj))
             else:

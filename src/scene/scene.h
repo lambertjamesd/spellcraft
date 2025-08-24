@@ -21,7 +21,8 @@ struct static_entity {
 
 struct static_particles {
     struct material* material;
-    T3DMat4FP mtx;
+    struct Vector3 center;
+    struct Vector3 size;
     struct render_batch_particles particles;
 };
 

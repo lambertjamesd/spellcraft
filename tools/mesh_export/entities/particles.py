@@ -4,6 +4,8 @@ import io
 import struct
 import math
 
+from . import material_extract
+
 def find_mesh_instance(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, mathutils.Vector | None]:
     for modifier in obj.modifiers:
         if not isinstance(modifier, bpy.types.NodesModifier):
@@ -57,6 +59,7 @@ class Particles:
         self.particle_scale_width: int = 0
         self.particle_scale_height: int = 0
         self.particles: bytes
+        self.material: bpy.types.Material
 
     def set_dimensions(self, dimensions: mathutils.Vector):
         scaled = dimensions * 32
@@ -65,9 +68,24 @@ class Particles:
         self.particle_scale_height = math.floor(0xFFFF * scaled.y / self.particle_size)
 
     def write_into(self, file):
+        material_filename = material_extract.material_romname(self.material).encode()
+        file.write(len(material_filename).to_bytes(1, 'big'))
+        file.write(material_filename)
         file.write(struct.pack('>fff', self.center.x, self.center.y, self.center.z))
         file.write(struct.pack('>fff', self.scale.x, self.scale.y, self.scale.z))
         file.write(struct.pack('>HHHH', self.particle_count, self.particle_count, self.particle_scale_width, self.particle_scale_height))
+
+def convert_channel(value):
+    return round(255 * value)
+
+def pack_color(col):
+    return struct.pack(
+        '>BBBB', 
+        convert_channel(col[0]),
+        convert_channel(col[1]),
+        convert_channel(col[2]),
+        convert_channel(col[3])
+    )
 
 def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> Particles | None:
     if obj.type != 'MESH':
@@ -109,9 +127,9 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
     scale = (max_pos - min_pos) * 0.5
 
     scale_inv = mathutils.Vector((
-        127 / scale.x,
-        127 / scale.y,
-        127 / scale.z
+        127 / scale.x if scale.x > 0 else 1,
+        127 / scale.y if scale.y > 0 else 1,
+        127 / scale.z if scale.z > 0 else 1
     ))
 
     mid_point = (max_pos + min_pos) * 0.5
@@ -124,6 +142,23 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
     result.scale = scale
     result.particle_count = len(mesh.vertices)
     result.set_dimensions(dimensions)
+    result.material = mesh.materials[0]
+
+    color = None
+    alpha = None
+    any_color = None
+
+    for attr in mesh.attributes:
+        if attr.data_type == 'BYTE_COLOR' or attr.data_type == 'FLOAT_COLOR':
+            if attr.name.lower().startswith('col'):
+                color = attr
+            elif attr.name.lower() == 'alpha':
+                alpha = attr
+            else:
+                any_color = attr
+
+    if not color and any_color:
+        color = any_color
 
     for index in range(0, len(mesh.vertices), 2):
         vertex = mesh.vertices[index]
@@ -146,15 +181,20 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
             int(posB.x), int(posB.y), int(posB.z), 127
         ))
 
-        # TODO color
-        particle_data.write(struct.pack(
-            '>BBBB', 
-            255, 255, 255, 255
-        ))
-        particle_data.write(struct.pack(
-            '>BBBB', 
-            255, 255, 255, 255
-        ))
+        if color and color.domain == 'POINT':
+            particle_data.write(pack_color(color.data[index].color))
+        else:
+            particle_data.write(struct.pack(
+                '>BBBB', 
+                255, 255, 255, 255
+            ))
+        if index + 1 < len(mesh.vertices) and color and color.domain == 'POINT':
+            particle_data.write(pack_color(color.data[index+1].color))
+        else:
+            particle_data.write(struct.pack(
+                '>BBBB', 
+                255, 255, 255, 255
+            ))
 
     result.particles = particle_data.getvalue()
 

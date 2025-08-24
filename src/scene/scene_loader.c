@@ -51,12 +51,11 @@ bool scene_load_check_condition(FILE* file) {
 void scene_load_static_particles(scene_t* scene, int room_count, FILE* file) {
     uint32_t total_particle_size;
     fread(&total_particle_size, sizeof(uint32_t), 1, file);
+    uint16_t static_particle_count;
+    fread(&static_particle_count, sizeof(uint16_t), 1, file);
 
     scene->all_particles = malloc(total_particle_size);
     fread(scene->all_particles, total_particle_size, 1, file);
-
-    uint16_t static_particle_count;
-    fread(&static_particle_count, sizeof(uint16_t), 1, file);
 
     scene->static_particles = malloc(sizeof(static_particles_t) * static_particle_count);
 
@@ -67,15 +66,8 @@ void scene_load_static_particles(scene_t* scene, int room_count, FILE* file) {
 
         particles->material = material_cache_load_from_file(file);
 
-        struct Transform transform;
-        fread(&transform.position, sizeof(struct Vector3), 1, file);
-        quatIdent(&transform.rotation);
-        fread(&transform.scale, sizeof(struct Vector3), 1, file);
-
-        mat4x4 mtx;
-        transformToWorldMatrix(&transform, mtx);
-        t3d_mat4_to_fixed_3x4(&particles->mtx, (T3DMat4*)&mtx);
-
+        fread(&particles->center, sizeof(struct Vector3), 1, file);
+        fread(&particles->size, sizeof(struct Vector3), 1, file);
         particles->particles.particles = curr;
 
         fread(&particles->particles.particle_count, sizeof(uint16_t), 1, file);

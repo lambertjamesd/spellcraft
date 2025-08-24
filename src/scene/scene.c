@@ -32,11 +32,22 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
     static_particles_t* end_particle = scene->static_particles + range.end;
 
     for (; curr_particle < end_particle; ++curr_particle) {
+        struct Transform transform;
+        transform.position = curr_particle->center;
+        transform.scale = curr_particle->size;
+        quatIdent(&transform.rotation);
+
+        T3DMat4FP* mtx = render_batch_transformfp_from_full(batch, &transform);
+
+        if (!mtx) {
+            break;
+        }
+
         render_batch_add_particles(
             batch,
             curr_particle->material,
             &curr_particle->particles,
-            &curr_particle->mtx
+            mtx
         );
     }
 }
