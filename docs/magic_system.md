@@ -121,7 +121,7 @@ Progress indiciators
 
 | Primary | Modifiers | Effect                           | Trigger          | Progress  |
 |---------|-----------|----------------------------------|------------------|-----------|
-| Fire    |           | Shoot flames                     | On kill          | F M       |
+| Fire    |           | Fire sword                       | On kill          | F M       |
 | Fire    | I         | Shoot lightning                  | On kill          | F M       |
 | Fire    | I A       | Lightning push (teleports)       | On dash through  | F         |
 | Fire    | I A E     | Lightning push out (teleports)   | On impact        | F         |
@@ -134,7 +134,7 @@ Progress indiciators
 | Fire    | A E       | Fire puh outward                 |                  | F         |
 | Fire    | A E L     | Shoot AEO fire sprite            | On sprite attack | F         |
 | Fire    | A L       | Shoots a fire sprite             | On sprite attack | F         |
-| Fire    | E         | AEO explosion                    | On kill          | F M       |
+| Fire    | E         | Sword spin attack                | On kill          | F M       |
 | Fire    | E L       | AEO fire sprite                  | On sprite attack | F         |
 | Fire    | L         | Fire sprite                      | On sprite attack | F         |
 | Ice     |           | Shoot ice                        | On ice shatter   | F         |
@@ -146,8 +146,8 @@ Progress indiciators
 | Ice     | F E       | Water explosion                  | On contact       | F         |
 | Ice     | F E L     | AEO water sprite                 | On sprite attack | F         |
 | Ice     | F L       | Water sprite                     | On sprite attack | F         |
-| Ice     | A         | Ice push                         | On impact        | F M       |
-| Ice     | A E       | Ice push outward                 | On ice shatter   | F M       |
+| Ice     | A         | Ice pull                         | On impact        | F M       |
+| Ice     | A E       | Ice push inward                  | On ice shatter   | F M       |
 | Ice     | A E L     | Shoot AEO ice sprite             | On ice shatter   | F         |
 | Ice     | A L       | Shoots a ice sprite              | On ice shatter   | F         |
 | Ice     | E         | AEO explosion                    | On ice shatter   | F         |
@@ -201,3 +201,40 @@ Progress indiciators
 | Life    | A         | healing sprite                   |                  | F         |
 | Life    | A E       | healing aeo sprite               |                  | F         |
 | Life    | E         | aeo heal                         |                  | F         |
+
+Idea to play with
+
+* holding vs tapping cast for some spells (ie holding attack for fire sword does a heavy attack)
+
+### Life rune spells
+
+Ideas
+
+* Control clone
+* Command clone to come
+* Command clone to attack
+* Command clone to run away
+* Command clone to mirror player
+* Dimiss clone (reclaim some mana)
+* Heal clone
+* Give clone mana
+
+| Primary | Modifiers | Effect                           | Trigger          | Progress  |
+|---------|-----------|----------------------------------|------------------|-----------|
+| Life    |           | healing                          |                  | F         |
+| Life    | F         | instant                          |                  | F         |
+| Life    | F I       | instant convert health to mana   |                  | F         |
+| Life    | F I A     | shoot life steal sprite          |                  | F         |
+| Life    | F I A E   | take control of clone            |                  | F         |
+| Life    | F I E     | aeo life steal                   |                  | F         |
+| Life    | F A       | shoot healing sprite             |                  | F         |
+| Life    | F A E     | shoot healing aeo sprite         |                  | F         |
+| Life    | F E       | instant aeo healing              |                  | F         |
+| Life    | I         | convert health to mana           |                  | F         |
+| Life    | I A       | create mana steal sprite         | On mana steal    | F         |
+| Life    | I A E     | create aeo mana steal sprite     | On mana steal    | F         |
+| Life    | I E       | aeo mana steal                   | On mana steal    | F         |
+| Life    | A         | tell clone to attack             |                  | F         |
+| Life    | A E       | call clone towards player        |                  | F         |
+| Life    | E         | aeo heal                         |                  | F         |
+
