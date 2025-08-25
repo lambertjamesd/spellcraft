@@ -73,19 +73,10 @@ Have earth + life be recast
 
 ## TODO
 
-- open world rendering
--  subdivide mesh into pieces
+- z targeting
+- direct camera control
+- particle rendering
 - figure out if player model could be rendered more effeciently
-- fix globals.dat build issues
 - camera logic
 -  do a better job with camera tracking logic
 -  implement automatic camera framing when talking to npc
-- build out puzzle elements
--  build out spell system some more
--  switch
-- build out enemy
-- spells
--  spell shape variants
--  shield
--  sprite
--  tracking projectile
