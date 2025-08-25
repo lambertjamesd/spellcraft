@@ -407,6 +407,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         if (should_sprite_mode != is_sprite_mode) {
             if (should_sprite_mode) {
                 tpx_state_from_t3d();
+                rdpq_mode_zoverride(true, 0, 0);
                 rdpq_mode_persp(false);
             } else {
                 rdpq_mode_zoverride(false, 0, 0);

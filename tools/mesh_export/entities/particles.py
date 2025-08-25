@@ -87,6 +87,16 @@ def pack_color(col):
         convert_channel(col[3])
     )
 
+def extract_color(index, color, alpha, has_texture):
+    result = list(color.data[index].color)
+
+    if has_texture:
+        result[3] = 0
+    elif alpha:
+        result[3] = alpha.data[index].color[0]
+
+    return pack_color(result)
+
 def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> Particles | None:
     if obj.type != 'MESH':
         return None
@@ -144,6 +154,9 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
     result.set_dimensions(dimensions)
     result.material = mesh.materials[0]
 
+    material = material_extract.load_material_with_name(mesh.materials[0])
+    has_texture = material.tex0 != None
+
     color = None
     alpha = None
     any_color = None
@@ -157,43 +170,52 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
             else:
                 any_color = attr
 
+    size = obj.vertex_groups.get("Size")
+
     if not color and any_color:
         color = any_color
 
     for index in range(0, len(mesh.vertices), 2):
+        has_b = index + 1 < len(mesh.vertices)
+
         vertex = mesh.vertices[index]
+        next_vertex = mesh.vertices[index + 1] if has_b else None
         pos = ((full_transform @ vertex.co) - mid_point) * scale_inv
 
         posA = transform_particle(full_transform @ vertex.co, mid_point, scale_inv)
 
-        if index + 1 < len(mesh.vertices):
-            posB = transform_particle(full_transform @ vertex.co, mid_point, scale_inv)
+        if next_vertex:
+            posB = transform_particle(full_transform @ next_vertex.co, mid_point, scale_inv)
         else:
             posB = mathutils.Vector()
 
-        particle_data.write(struct.pack(
-            '>bbbb', 
-            int(posA.x), int(posA.y), int(posA.z), 127
-        ))
+        size_a = vertex.groups[size.index].weight if size else 1
 
         particle_data.write(struct.pack(
             '>bbbb', 
-            int(posB.x), int(posB.y), int(posB.z), 127
+            int(posA.x), int(posA.y), int(posA.z), round(127 * size_a)
+        ))
+
+        size_b = next_vertex.groups[size.index].weight if next_vertex and size else 1
+
+        particle_data.write(struct.pack(
+            '>bbbb', 
+            int(posB.x), int(posB.y), int(posB.z), round(127 * size_b)
         ))
 
         if color and color.domain == 'POINT':
-            particle_data.write(pack_color(color.data[index].color))
+            particle_data.write(extract_color(index, color, alpha, has_texture))
         else:
             particle_data.write(struct.pack(
                 '>BBBB', 
-                255, 255, 255, 255
+                255, 255, 255, 0 if has_texture else 255
             ))
-        if index + 1 < len(mesh.vertices) and color and color.domain == 'POINT':
-            particle_data.write(pack_color(color.data[index+1].color))
+        if has_b and color and color.domain == 'POINT':
+            particle_data.write(extract_color(index + 1, color, alpha, has_texture))
         else:
             particle_data.write(struct.pack(
                 '>BBBB', 
-                255, 255, 255, 255
+                255, 255, 255, 0 if has_texture else 255
             ))
 
     result.particles = particle_data.getvalue()
