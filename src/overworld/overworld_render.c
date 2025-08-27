@@ -349,6 +349,20 @@ void overworld_render_tile(struct overworld* overworld, struct Camera* camera, s
             if (distance >= MAX_PARTICLE_DISTANCE) {
                 continue;
             }
+
+            render_batch_particles_t* batch_particles = &particles->particles;
+
+            if (distance >= PARTICLE_FADE_DISTANCE) {
+                render_batch_particles_t* fade_particles = frame_malloc(pool, sizeof(render_batch_particles_t));
+
+                if (fade_particles) {
+                    *fade_particles = *batch_particles;
+                    uint32_t scale = (uint32_t)((0xFFFF / (MAX_PARTICLE_DISTANCE - PARTICLE_FADE_DISTANCE)) * (MAX_PARTICLE_DISTANCE - distance));
+                    batch_particles = fade_particles;
+                    batch_particles->particle_scale_width = (uint16_t)((uint32_t)(scale * batch_particles->particle_scale_width) >> 16);
+                    batch_particles->particle_scale_height = (uint16_t)((uint32_t)(scale * batch_particles->particle_scale_height) >> 16);
+                }
+            }
     
             if (curr_material != particles->material) {
                 rspq_block_run(particles->material->block);
@@ -358,7 +372,8 @@ void overworld_render_tile(struct overworld* overworld, struct Camera* camera, s
     
             transform.position = particles->center;
             vector3Sub(&particles->center, camera_position, &transform.position);
-            transform.scale = particles->size;
+            vector3Scale(&particles->size, &transform.scale, MODEL_WORLD_SCALE);
+            vector3Scale(&transform.position, &transform.position, WORLD_SCALE);
     
             T3DMat4FP* mtxfp = frame_pool_get_transformfp(pool);
     
@@ -370,7 +385,7 @@ void overworld_render_tile(struct overworld* overworld, struct Camera* camera, s
             transformToMatrix(&transform, mtx);
             t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
     
-            static_particles_render(&particles->particles, mtxfp, particles->material->tex0.sprite != NULL);
+            static_particles_render(batch_particles, mtxfp, particles->material->tex0.sprite != NULL);
         }
         static_particles_end();
     }

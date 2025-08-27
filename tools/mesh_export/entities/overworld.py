@@ -138,6 +138,8 @@ def generate_overworld_tile(
             data.write(struct.pack('>ffff', rot.x, rot.y, rot.z, rot.w))
             data.write(struct.pack('>fff', scale.x, scale.y, scale.z))
 
+    particle_list = sorted(particle_list, key = lambda x: x.material.name)
+
     particles.write_particles(particle_list, data)
 
     return OverworldCell(data.getvalue(), cell_bb[0].y)
