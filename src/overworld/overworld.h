@@ -7,6 +7,7 @@
 #include "../render/tmesh.h"
 #include "../util/hash_map.h"
 #include "../entity/entity_id.h"
+#include "../particles/static_particles.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <t3d/t3d.h>
@@ -24,7 +25,9 @@ struct overworld_tile {
     uint16_t terrain_mesh_count;
     uint16_t detail_mesh_count;
     uint16_t detail_count;
+    uint16_t static_particle_count;
     T3DMat4FP* detail_matrices;
+    static_particles_t* static_particles;
 };
 
 struct overworld_actor_spawn_information {
@@ -61,6 +64,7 @@ struct overworld_actor_tile {
 
 struct overworld_tile_render_block {
     rspq_block_t** render_blocks;
+    struct overworld_tile* tile;
     float starting_y;
     uint8_t x;
     uint8_t z;

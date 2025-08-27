@@ -2,6 +2,7 @@
 
 #include "../util/sort.h"
 #include "../time/time.h"
+#include "../particles/static_particles.h"
 #include "defs.h"
 
 void render_batch_init(struct render_batch* batch, struct Transform* camera_transform, struct frame_memory_pool* pool) {
@@ -406,12 +407,9 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
         if (should_sprite_mode != is_sprite_mode) {
             if (should_sprite_mode) {
-                tpx_state_from_t3d();
-                rdpq_mode_zoverride(true, 0, 0);
-                rdpq_mode_persp(false);
+                static_particles_start();
             } else {
-                rdpq_mode_zoverride(false, 0, 0);
-                rdpq_mode_persp(true);
+                static_particles_end();
             }
 
             is_sprite_mode = should_sprite_mode;
@@ -460,21 +458,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 t3d_matrix_pop(transform_count);
             }
         } else if (element->type == RENDER_BATCH_PARTICLES) {
-            render_batch_particles_t* particles = element->particles.particles;
-
-            tpx_matrix_push(element->particles.transform);
-            tpx_state_set_base_size(particles->particle_size);
-            tpx_state_set_scale(
-                UNPACK_SCALE(particles->particle_scale_width),
-                UNPACK_SCALE(particles->particle_scale_height)
-            );
-            tpx_state_set_tex_params(0, 0);
-            if (current_mat != NULL && current_mat->tex0.sprite) {
-                tpx_particle_draw_tex(particles->particles, particles->particle_count);
-            } else {
-                tpx_particle_draw(particles->particles, particles->particle_count);
-            }
-            tpx_matrix_pop(1);
+            static_particles_render(element->particles.particles, element->particles.transform, current_mat != NULL && current_mat->tex0.sprite != NULL);
         } else if (element->type == RENDER_BATCH_CALLBACK) {
             element->callback.callback(element->callback.data, batch);
         }

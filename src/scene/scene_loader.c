@@ -49,34 +49,7 @@ bool scene_load_check_condition(FILE* file) {
 }
 
 void scene_load_static_particles(scene_t* scene, int room_count, FILE* file) {
-    uint32_t total_particle_size;
-    fread(&total_particle_size, sizeof(uint32_t), 1, file);
-    uint16_t static_particle_count;
-    fread(&static_particle_count, sizeof(uint16_t), 1, file);
-
-    scene->all_particles = malloc(total_particle_size);
-    fread(scene->all_particles, total_particle_size, 1, file);
-
-    scene->static_particles = malloc(sizeof(static_particles_t) * static_particle_count);
-
-    TPXParticle* curr = scene->all_particles;
-
-    for (int i = 0; i < static_particle_count; i += 1) {
-        static_particles_t* particles = &scene->static_particles[i];
-
-        particles->material = material_cache_load_from_file(file);
-
-        fread(&particles->center, sizeof(struct Vector3), 1, file);
-        fread(&particles->size, sizeof(struct Vector3), 1, file);
-        particles->particles.particles = curr;
-
-        fread(&particles->particles.particle_count, sizeof(uint16_t), 1, file);
-        fread(&particles->particles.particle_size, sizeof(uint16_t), 1, file);
-        fread(&particles->particles.particle_scale_width, sizeof(uint16_t), 1, file);
-        fread(&particles->particles.particle_scale_height, sizeof(uint16_t), 1, file);
-
-        curr += (particles->particles.particle_count + 1) >> 1;
-    }
+    scene->static_particles = static_particles_load(&scene->static_particles_count, file);
 
     scene->room_particle_ranges = malloc(sizeof(struct static_entity_range) * room_count);
     fread(scene->room_particle_ranges, sizeof(struct static_entity_range), room_count, file);
@@ -333,12 +306,7 @@ struct scene* scene_load(const char* filename) {
 }
 
 void scene_release_particles(scene_t* scene) {
-    for (int i = 0; i < scene->static_particles_count; i += 1) {
-        material_release(scene->static_particles[i].material);
-    }
-    
-    free(scene->all_particles);
-    free(scene->static_particles);
+    static_particles_release(scene->static_particles, scene->static_particles_count);
     free(scene->room_particle_ranges);
 }
 

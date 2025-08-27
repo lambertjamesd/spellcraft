@@ -24,8 +24,6 @@ enum render_batch_type {
     RENDER_BATCH_CALLBACK,
 };
 
-#define UNPACK_SCALE(scale) ((float)(scale) * (1.0f / 0xFFFF))
-
 struct render_batch_particles {
     TPXParticle* particles;
     uint16_t particle_count;

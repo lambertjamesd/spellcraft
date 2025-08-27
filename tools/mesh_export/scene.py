@@ -209,6 +209,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
     mesh_list = entities.mesh.mesh_list(base_transform)
     detail_list: list[entities.overworld.OverworldDetail] = []
     entity_list: list[entities.entities.ObjectEntry] = []
+    particle_list: list[entities.particles.Particles] = [];
 
     collider = entities.mesh_collider.MeshCollider()
 
@@ -221,7 +222,14 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
         obj_type = get_object_type(obj)
 
         if obj_type != None:
-            entity_list.append(process_linked_object(obj, obj.data, definitions, 0))
+            if obj_type == 'none':
+                continue
+            elif obj_type == 'static_particles':
+                particles = entities.particles.build_particles(obj, base_transform)
+
+                particle_list.append(particles)
+            else:
+                entity_list.append(process_linked_object(obj, obj.data, definitions, 0))
             continue
 
         mesh: bpy.types.Mesh = obj.data
@@ -251,6 +259,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
         collider, 
         detail_list, 
         entity_list,
+        particle_list,
         subdivisions, 
         settings, 
         base_transform,

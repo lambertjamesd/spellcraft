@@ -280,6 +280,9 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
     rdpq_mode_zbuf(true, true);
 } 
 
+#define MAX_PARTICLE_DISTANCE 20.0f
+#define PARTICLE_FADE_DISTANCE 15.0f
+
 void overworld_render_tile(struct overworld* overworld, struct Camera* camera, struct frame_memory_pool* pool, int x, int z) {
     struct overworld_tile_render_block* block = &overworld->render_blocks[x & 0x3][z & 0x3];
     struct Vector3* camera_position = &camera->transform.position;
@@ -331,6 +334,45 @@ void overworld_render_tile(struct overworld* overworld, struct Camera* camera, s
         t3d_matrix_pop(1);
 
         mtx.m[3][1] += overworld->tile_size * WORLD_SCALE;
+    }
+
+    if (block->tile->static_particle_count) {
+        static_particles_start();
+        struct Transform transform;
+        quatIdent(&transform.rotation);
+        material_t* curr_material = NULL;
+        
+        for (int i = 0; i < block->tile->static_particle_count; i += 1) {
+            static_particles_t* particles = &block->tile->static_particles[i];
+            float distance = sqrtf(vector3DistSqrd(&particles->center, camera_position));
+    
+            if (distance >= MAX_PARTICLE_DISTANCE) {
+                continue;
+            }
+    
+            if (curr_material != particles->material) {
+                rspq_block_run(particles->material->block);
+                curr_material = particles->material;
+            }
+    
+    
+            transform.position = particles->center;
+            vector3Sub(&particles->center, camera_position, &transform.position);
+            transform.scale = particles->size;
+    
+            T3DMat4FP* mtxfp = frame_pool_get_transformfp(pool);
+    
+            if (!mtxfp) {
+                break;
+            }
+    
+            mat4x4 mtx;
+            transformToMatrix(&transform, mtx);
+            t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
+    
+            static_particles_render(&particles->particles, mtxfp, particles->material->tex0.sprite != NULL);
+        }
+        static_particles_end();
     }
 }
 

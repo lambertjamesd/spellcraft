@@ -22,3 +22,7 @@ void* frame_malloc(struct frame_memory_pool* pool, int bytes) {
 
     return result;
 }
+
+T3DMat4FP* frame_pool_get_transformfp(struct frame_memory_pool* pool) {
+    return UncachedAddr(frame_malloc(pool, sizeof(T3DMat4FP)));
+}

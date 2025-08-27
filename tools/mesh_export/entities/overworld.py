@@ -13,6 +13,7 @@ from . import export_settings
 from . import material_extract
 from . import filename
 from . import entities
+from . import particles
 
 def subdivide_mesh_list(meshes: list[mesh.mesh_data], normal: mathutils.Vector, start_pos: float, distance_step: float, subdivisions: int) -> list[list[mesh.mesh_data]]:
     result = []
@@ -76,7 +77,14 @@ def subdivide_detail_list(detail_list: list, normal: mathutils.Vector, start_pos
 
     return result
 
-def generate_overworld_tile(cell: list[mesh.mesh_data], details: list[OverworldDetail], side_length: float, x: int, z: int, map_min: mathutils.Vector, settings: export_settings.ExportSettings):
+def generate_overworld_tile(
+        cell: list[mesh.mesh_data], 
+        details: list[OverworldDetail], 
+        particle_list: list[particles.Particles], 
+        side_length: float, 
+        x: int, z: int, 
+        map_min: mathutils.Vector, 
+        settings: export_settings.ExportSettings):
     cell_bb = cell[0].bounding_box()
 
     for i in range(1, len(cell)):
@@ -130,6 +138,8 @@ def generate_overworld_tile(cell: list[mesh.mesh_data], details: list[OverworldD
             data.write(struct.pack('>ffff', rot.x, rot.y, rot.z, rot.w))
             data.write(struct.pack('>fff', scale.x, scale.y, scale.z))
 
+    particles.write_particles(particle_list, data)
+
     return OverworldCell(data.getvalue(), cell_bb[0].y)
 
 def generate_lod0(lod_0_objects: list[bpy.types.Object], subdivisions: int, settings: export_settings.ExportSettings, base_transform: mathutils.Matrix, file):
@@ -180,6 +190,7 @@ def generate_overworld(
         collider: mesh_collider.MeshCollider, 
         detail_list: list[OverworldDetail], 
         entity_list: list[entities.ObjectEntry],
+        particles_list: list[particles.Particles], 
         subdivisions: int, 
         settings: export_settings.ExportSettings, 
         base_transform: mathutils.Matrix,
@@ -223,6 +234,9 @@ def generate_overworld(
     entity_columns = subdivide_detail_list(entity_list, mathutils.Vector((0, 0, 1)), mesh_bb[0].z, side_length, subdivisions)
     entity_cells: list[list[list[entities.ObjectEntry]]] = list(map(lambda column: subdivide_detail_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].x, side_length, subdivisions), entity_columns))
 
+    particle_columns = subdivide_detail_list(particles_list, mathutils.Vector((0, 0, 1)), mesh_bb[0].z, side_length, subdivisions)
+    particle_cells: list[list[list[particles.Particles]]] = list(map(lambda column: subdivide_detail_list(column, mathutils.Vector((1, 0, 0)), mesh_bb[0].x, side_length, subdivisions), particle_columns))
+
     cell_data: list[OverworldCell] = []
     collider_cell_data: list[bytes] = []
 
@@ -236,6 +250,7 @@ def generate_overworld(
             cell_data.append(generate_overworld_tile(
                 cell,
                 detail_cells[z][x],
+                particle_cells[z][x],
                 side_length,
                 x,
                 z,

@@ -12,6 +12,9 @@ struct scene* current_scene;
 static char next_scene_name[64];
 static char next_entrance_name[16];
 
+#define MAX_PARTICLE_DISTANCE 20.0f
+#define PARTICLE_FADE_DISTANCE 15.0f
+
 void scene_render_room(struct scene* scene, int room_index, struct render_batch* batch) {
     if (room_index < 0 || room_index >= scene->room_count) {
         return;
@@ -32,6 +35,27 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
     static_particles_t* end_particle = scene->static_particles + range.end;
 
     for (; curr_particle < end_particle; ++curr_particle) {
+        render_batch_particles_t* particles = &curr_particle->particles;
+
+        float distance = fabsf((curr_particle->center.x - batch->camera_matrix[3][0]) * batch->camera_matrix[2][0] +
+            (curr_particle->center.z - batch->camera_matrix[3][2]) * batch->camera_matrix[2][2]);
+
+        if (distance > MAX_PARTICLE_DISTANCE) {
+            continue;
+        }
+
+        if (distance > PARTICLE_FADE_DISTANCE) {
+            render_batch_particles_t* fade_particles = frame_malloc(batch->pool, sizeof(render_batch_particles_t));
+
+            if (fade_particles) {
+                *fade_particles = *particles;
+                uint32_t scale = (uint32_t)((0xFFFF / (MAX_PARTICLE_DISTANCE - PARTICLE_FADE_DISTANCE)) * (MAX_PARTICLE_DISTANCE - distance));
+                particles = fade_particles;
+                particles->particle_scale_width = (uint16_t)((uint32_t)(scale * particles->particle_scale_width) >> 16);
+                particles->particle_scale_height = (uint16_t)((uint32_t)(scale * particles->particle_scale_height) >> 16);
+            }
+        }
+
         struct Transform transform;
         transform.position = curr_particle->center;
         transform.scale = curr_particle->size;
@@ -46,7 +70,7 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
         render_batch_add_particles(
             batch,
             curr_particle->material,
-            &curr_particle->particles,
+            particles,
             mtx
         );
     }

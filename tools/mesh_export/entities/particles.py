@@ -52,7 +52,7 @@ def transform_particle(point: mathutils.Vector, mid_point: mathutils.Vector, sca
 class Particles:
     def __init__(self, obj: bpy.types.Object):
         self.obj: bpy.types.Object = obj
-        self.center: mathutils.Vector = mathutils.Vector()
+        self.position: mathutils.Vector = mathutils.Vector()
         self.scale: mathutils.Vector = mathutils.Vector()
         self.particle_count: int = 0
         self.particle_size: int = 0
@@ -71,7 +71,7 @@ class Particles:
         material_filename = material_extract.material_romname(self.material).encode()
         file.write(len(material_filename).to_bytes(1, 'big'))
         file.write(material_filename)
-        file.write(struct.pack('>fff', self.center.x, self.center.y, self.center.z))
+        file.write(struct.pack('>fff', self.position.x, self.position.y, self.position.z))
         file.write(struct.pack('>fff', self.scale.x, self.scale.y, self.scale.z))
         file.write(struct.pack('>HHHH', self.particle_count, self.particle_count, self.particle_scale_width, self.particle_scale_height))
 
@@ -148,7 +148,7 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
 
     result = Particles(obj)
 
-    result.center = mid_point
+    result.position = mid_point
     result.scale = scale
     result.particle_count = len(mesh.vertices)
     result.set_dimensions(dimensions)
@@ -221,3 +221,17 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
     result.particles = particle_data.getvalue()
 
     return result
+
+def write_particles(particle_list: list[Particles], file):
+    particle_data = io.BytesIO()
+
+    for particles in particle_list:
+        particle_data.write(particles.particles)
+
+    particle_data_bytes = particle_data.getvalue()
+
+    file.write(struct.pack('>IH', len(particle_data_bytes), len(particle_list)))
+    file.write(particle_data_bytes)
+
+    for particles in particle_list:
+        particles.write_into(file)

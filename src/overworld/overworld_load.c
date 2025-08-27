@@ -90,6 +90,8 @@ struct overworld_tile* overworld_tile_load(FILE* file) {
         result->render_blocks[i] = rspq_block_end();
     }
 
+    result->static_particles = static_particles_load(&result->static_particle_count, file);
+
     return result;
 }
 
@@ -100,6 +102,7 @@ void overworld_tile_free(struct overworld_tile* tile) {
     for (int i = 0; i < tile->detail_mesh_count; i += 1) {
         tmesh_cache_release(tile->detail_meshes[i]);
     }
+    static_particles_release(tile->static_particles, tile->static_particle_count);
     free(tile->detail_matrices);
     free(tile);
 }
@@ -314,6 +317,7 @@ void overworld_check_loaded_tiles(struct overworld* overworld) {
     overworld->loaded_tiles[slot_x][slot_y] = tile;
     overworld->render_blocks[slot_x][slot_y] = (struct overworld_tile_render_block){
         .render_blocks = tile->render_blocks,
+        .tile = tile,
         .x = overworld->load_next.x,
         .z = overworld->load_next.y,
         .y_height = tile->terrain_mesh_count,

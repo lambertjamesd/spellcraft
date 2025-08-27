@@ -42,6 +42,8 @@ struct material {
     uint16_t flags;
 };
 
+typedef struct material material_t;
+
 void material_init(struct material* material);
 void material_destroy(struct material* material);
 

@@ -14,19 +14,11 @@
 #include "camera_controller.h"
 #include "camera_animation.h"
 #include "../entity/entity_spawner.h"
+#include "../particles/static_particles.h"
 
 struct static_entity {
     struct tmesh tmesh;
 };
-
-struct static_particles {
-    struct material* material;
-    struct Vector3 center;
-    struct Vector3 size;
-    struct render_batch_particles particles;
-};
-
-typedef struct static_particles static_particles_t;
 
 struct loading_zone {
     struct Box3D bounding_box;
@@ -125,7 +117,6 @@ struct scene {
 
     char* string_table;
     char* scene_vars;
-    TPXParticle* all_particles;
 
     struct camera_animation_list camera_animations;
 };
