@@ -71,10 +71,10 @@ class Particles:
         self.material: bpy.types.Material
 
     def set_dimensions(self, dimensions: mathutils.Vector):
-        scaled = dimensions * 32
+        scaled = dimensions * 16
         self.particle_size = math.ceil(max(scaled.x, scaled.y))
-        self.particle_scale_width = math.floor(0xFFFF * scaled.x / self.particle_size)
-        self.particle_scale_height = math.floor(0xFFFF * scaled.y / self.particle_size)
+        self.particle_scale_width = math.floor(0x7FFF * scaled.x / self.particle_size)
+        self.particle_scale_height = math.floor(0x7FFF * scaled.y / self.particle_size)
 
     def write_into(self, file):
         material_filename = material_extract.material_romname(self.material).encode()
@@ -82,7 +82,7 @@ class Particles:
         file.write(material_filename)
         file.write(struct.pack('>fff', self.position.x, self.position.y, self.position.z))
         file.write(struct.pack('>fff', self.scale.x, self.scale.y, self.scale.z))
-        file.write(struct.pack('>HHHH', self.particle_count, self.particle_count, self.particle_scale_width, self.particle_scale_height))
+        file.write(struct.pack('>HHHH', self.particle_count, self.particle_size, self.particle_scale_width, self.particle_scale_height))
 
 def convert_channel(value):
     return round(255 * value)
