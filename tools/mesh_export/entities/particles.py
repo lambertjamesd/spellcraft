@@ -6,7 +6,7 @@ import math
 
 from . import material_extract
 
-def find_mesh_instance(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, mathutils.Vector | None]:
+def find_mesh_instance(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, mathutils.Vector | None, float]:
     for modifier in obj.modifiers:
         if not isinstance(modifier, bpy.types.NodesModifier):
             continue
@@ -36,12 +36,21 @@ def find_mesh_instance(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, ma
             if mesh == None or not isinstance(mesh, bpy.types.Mesh):
                 continue
 
-            return mesh, default_value.dimensions
+            bb = default_value.bound_box
 
-    return None, None
+            min_y = bb[0][1]
+            max_y = min_y
 
-def transform_particle(point: mathutils.Vector, mid_point: mathutils.Vector, scale_inv: mathutils.Vector) -> mathutils.Vector:
-    pos = (point - mid_point) * scale_inv
+            for vertex in bb:
+                min_y = min(min_y, vertex[1])
+                max_y = max(max_y, vertex[1])
+
+            return mesh, default_value.dimensions, (min_y + max_y) * 0.5
+
+    return None, None, None
+
+def transform_particle(point: mathutils.Vector, mid_point: mathutils.Vector, scale_inv: mathutils.Vector, center_offset: float) -> mathutils.Vector:
+    pos = (point + mathutils.Vector((0, center_offset, 0)) - mid_point) * scale_inv
 
     return mathutils.Vector((
         round(pos.x),
@@ -101,7 +110,7 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
     if obj.type != 'MESH':
         return None
     
-    instance, dimensions = find_mesh_instance(obj)
+    instance, dimensions, center_offset = find_mesh_instance(obj)
 
     if not instance or not dimensions:
         return None
@@ -115,6 +124,8 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
 
     for vertex in mesh.vertices:
         pos = full_transform @ vertex.co
+
+        pos.y += center_offset
         
         if min_pos is None:
             min_pos = pos
@@ -149,7 +160,7 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
     result = Particles(obj)
 
     result.position = mid_point
-    result.scale = scale
+    result.scale = scale * 0.5
     result.particle_count = len(mesh.vertices)
     result.set_dimensions(dimensions)
     result.material = mesh.materials[0]
@@ -180,12 +191,11 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
 
         vertex = mesh.vertices[index]
         next_vertex = mesh.vertices[index + 1] if has_b else None
-        pos = ((full_transform @ vertex.co) - mid_point) * scale_inv
 
-        posA = transform_particle(full_transform @ vertex.co, mid_point, scale_inv)
+        posA = transform_particle(full_transform @ vertex.co, mid_point, scale_inv, center_offset)
 
         if next_vertex:
-            posB = transform_particle(full_transform @ next_vertex.co, mid_point, scale_inv)
+            posB = transform_particle(full_transform @ next_vertex.co, mid_point, scale_inv, center_offset)
         else:
             posB = mathutils.Vector()
 
