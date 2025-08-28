@@ -123,6 +123,8 @@ class Definitions:
     def load(self):
         current_path = bpy.data.filepath
 
+        print('current_path', current_path, self.loaded_path)
+
         if current_path == self.loaded_path:
             return
         

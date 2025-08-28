@@ -18,6 +18,8 @@ struct renderable {
     uint16_t hide: 1;
 };
 
+typedef struct renderable renderable_t;
+
 void renderable_init(struct renderable* renderable, struct Transform* transform, const char* mesh_filename);
 void renderable_single_axis_init(struct renderable* renderable, struct TransformSingleAxis* transform, const char* mesh_filename);
 

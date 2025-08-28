@@ -17,6 +17,7 @@
 #include "../objects/water_cube.h"
 #include "../objects/room_portal.h"
 #include "../objects/burning_thorns.h"
+#include "../objects/sign.h"
 
 #include "../puzzle/timed_torch.h"
 #include "../puzzle/elevator.h"
@@ -39,6 +40,9 @@ static struct entity_field_type_location fields_empty[] = {};
 static struct entity_field_type_location fields_npc[] = {
     { .offset = offsetof(struct npc_definition, dialog), .type = ENTITY_FIELD_TYPE_STRING },
 };
+static struct entity_field_type_location fields_sign[] = {
+    { .offset = offsetof(struct sign_definition, message), .type = ENTITY_FIELD_TYPE_STRING },
+};
 
 static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(empty, fields_empty),
@@ -60,6 +64,7 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(burning_thorns, fields_empty),
     ENTITY_DEFINITION(bool_and_logic, fields_empty),
     ENTITY_DEFINITION(camera_focus, fields_empty),
+    ENTITY_DEFINITION(sign, fields_sign),
 };
 
 struct entity_definition* entity_find_def(const char* name) {

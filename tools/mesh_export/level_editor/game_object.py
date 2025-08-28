@@ -530,6 +530,8 @@ class CreateGameObjectPanel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
+        result = object_definitions.get_repo_path() != None
+        print('CreateGameObjectPanel.poll', result)
         return object_definitions.get_repo_path() != None
     
     def draw(self, context):
@@ -558,6 +560,7 @@ _classes = [
 ]
 
 def register():
+    print('register')
     for cls in _classes:
         bpy.utils.register_class(cls)
 

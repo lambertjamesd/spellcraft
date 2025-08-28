@@ -27,7 +27,8 @@ enum entity_type_id {
     ENTITY_TYPE_room_portal,
     ENTITY_TYPE_burning_thorns,
     ENTITY_TYPE_bool_and_logic,
-    ENTITY_TYPE_camera_focus
+    ENTITY_TYPE_camera_focus,
+    ENTITY_TYPE_sign
 };
 
 struct crate_definition {
@@ -71,6 +72,8 @@ typedef uint16_t room_id;
 #define SCENE_VARIABLE_FLAG 0x8000
 
 typedef uint16_t boolean_variable;
+
+typedef char* script_location;
 
 struct collectable_definition {
     struct Vector3 position;
@@ -200,6 +203,12 @@ struct camera_focus_definition {
     bool repeat;
 };
 
+struct sign_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    script_location message;
+};
+
 enum npc_type {
     NPC_TYPE_NONE,
     NPC_TYPE_PLAYER,
@@ -224,8 +233,6 @@ enum fade_colors {
     FADE_COLOR_BLACK,
     FADE_COLOR_WHITE,
 };
-
-typedef char* script_location;
 
 struct npc_definition {
     struct Vector3 position;

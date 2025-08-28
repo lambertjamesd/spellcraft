@@ -25,6 +25,8 @@ static_particles_t* static_particles_load(uint16_t* count, FILE* file) {
 
         fread(&particles->center, sizeof(struct Vector3), 1, file);
         fread(&particles->size, sizeof(struct Vector3), 1, file);
+        particles->size = gOneVec;
+        particles->size.z = 8.0f;
         particles->particles.particles = curr;
 
         fread(&particles->particles.particle_count, sizeof(uint16_t), 1, file);
