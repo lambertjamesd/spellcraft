@@ -38,12 +38,14 @@ struct cutscene_queue_entry {
     struct cutscene* cutscene;
     cutscene_finish_callback finish_callback;
     void* data;
+    entity_id subject;
 };
 
 struct cutscene_active_entry {
     struct cutscene* cutscene;
     cutscene_finish_callback finish_callback;
     void* data;
+    entity_id subject;
     struct evaluation_context context;
     int16_t current_instruction;
 };
@@ -64,7 +66,7 @@ struct cutscene_runner {
 
 static struct cutscene_runner cutscene_runner;
 
-void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data);
+void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data, entity_id subject);
 
 void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cutscene_step* step) {
     switch (step->type)
@@ -241,6 +243,14 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             area_title_show(step->data.show_title.message);
             break;
         }
+        case CUTSCENE_STEP_LOOK_AT_SUBJECT: {
+            struct dynamic_object* subject = collision_scene_find_object(cutscene->subject);
+            if (!subject) {
+                break;
+            }
+            cutscene_actor_interact_with(&current_scene->player.cutscene_actor, INTERACTION_LOOK_SPACE, subject->position);
+            break;
+        }
     }
 }
 
@@ -282,7 +292,7 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
     }
 }
 
-void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data) {
+void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
     if (cutscene->step_count == 0) {
         return;
     }
@@ -294,6 +304,7 @@ void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback fi
     next->cutscene = cutscene;
     next->finish_callback = finish_callback;
     next->data = data;
+    next->subject = subject;
     next->current_instruction = 0;
     evaluation_context_init(&next->context, cutscene->locals_size);
 
@@ -344,7 +355,7 @@ void cutscene_runner_update(void* data) {
         cutscene_runner.next_cutscene = 0;
     }
 
-    cuscene_runner_start(queue_entry->cutscene, queue_entry->finish_callback, queue_entry->data);
+    cuscene_runner_start(queue_entry->cutscene, queue_entry->finish_callback, queue_entry->data, queue_entry->subject);
     queue_entry->cutscene = NULL;
 }
 
@@ -368,9 +379,9 @@ void cutscene_runner_init() {
     }
 }
 
-void cutscene_runner_run(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data) {
+void cutscene_runner_run(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
     if (cutscene_runner.current_cutscene == -1) {
-        cuscene_runner_start(cutscene, finish_callback, data);
+        cuscene_runner_start(cutscene, finish_callback, data, subject);
         return;
     }
 
@@ -389,6 +400,7 @@ void cutscene_runner_run(struct cutscene* cutscene, cutscene_finish_callback fin
     queue_entry->cutscene = cutscene;
     queue_entry->finish_callback = finish_callback;
     queue_entry->data = data;
+    queue_entry->subject = subject;
 }
 
 bool cutscene_runner_is_running() {

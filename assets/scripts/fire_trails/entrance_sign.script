@@ -1,0 +1,10 @@
+
+// sign_start;
+
+pause true, false;
+look_at_subject;
+
+say "warning: flammable vines";
+
+pause false, false;
+// sign_end;

@@ -43,7 +43,7 @@ void camera_focus_update(void* data) {
     cutscene_builder_camera_return(&builder);
 
     struct cutscene* cutscene = cutscene_builder_finish(&builder);
-    cutscene_runner_run(cutscene, cutscene_runner_free_on_finish(), NULL);
+    cutscene_runner_run(cutscene, cutscene_runner_free_on_finish(), NULL, 0);
 }
 
 void camera_focus_init(camera_focus_t* camera_focus, struct camera_focus_definition* definition, entity_id entity_id) {

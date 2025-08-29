@@ -108,7 +108,8 @@ void door_interact(struct interactable* interactable, entity_id from) {
     cutscene_runner_run(
         cutscene_builder_finish(&builder),
         door_cuscene_finish,
-        door
+        door,
+        0
     );
 }
 

@@ -35,7 +35,8 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
     cutscene_runner_run(
         cutscene_builder_finish(&builder),
         cutscene_runner_free_on_finish(),
-        NULL
+        NULL,
+        treasure_chest->dynamic_object.entity_id
     );
 
     inventory_unlock_item(treasure_chest->item_type);

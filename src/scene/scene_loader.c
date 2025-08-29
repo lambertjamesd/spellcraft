@@ -299,7 +299,7 @@ struct scene* scene_load(const char* filename) {
     scene_show_room(scene, current_room);
 
     if (starting_cutscene) {
-        cutscene_runner_run(starting_cutscene, cutscene_runner_free_on_finish(), NULL);
+        cutscene_runner_run(starting_cutscene, cutscene_runner_free_on_finish(), NULL, 0);
     }
 
     return scene;

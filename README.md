@@ -75,7 +75,8 @@ Have earth + life be recast
 
 - z targeting
 - direct camera control
-- particle rendering
+- load on background thread
+- particle rendering in mesh
 - figure out if player model could be rendered more effeciently
 - camera logic
 -  do a better job with camera tracking logic

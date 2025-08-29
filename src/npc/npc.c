@@ -38,7 +38,7 @@ void npc_interact(struct interactable* interactable, entity_id from) {
     struct npc* npc = (struct npc*)interactable->data;
 
     if (npc->talk_to_cutscene) {
-        cutscene_runner_run(npc->talk_to_cutscene, NULL, NULL);
+        cutscene_runner_run(npc->talk_to_cutscene, NULL, NULL, npc->cutscene_actor.collider.entity_id);
     }
 }
 

@@ -94,8 +94,18 @@ def _less_than_state(current: str):
         return _emit_token_state('<='), None
     return _default_state(current), '<'
 
+def _comment_state(current: str):
+    if current == '\n':
+        return _whitespace_state, 'comment'
+    return _comment_state, None
+
+def _comment_start_state(current: str):
+    if current == '/':
+        return _comment_state, None
+    return _default_state(current), '/'
+
 _single_character_tokens = {
-    '+', '-', '*', '/', '\\',
+    '+', '-', '*', '\\',
     ':', '[', ']', '(', ')', '{', '}', ',',
     ';', '"',
 }
@@ -109,6 +119,10 @@ def _default_state(current: str):
         return _emit_token_state(current)
     if current.isdigit():
         return _integer_state
+    if current == '/':
+        return _comment_start_state
+    if current == '#':
+        return _comment_state
     if current == '.':
         return _float_state
     if current == '=':

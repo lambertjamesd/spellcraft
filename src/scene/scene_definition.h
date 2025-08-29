@@ -203,9 +203,15 @@ struct camera_focus_definition {
     bool repeat;
 };
 
+enum sign_type {
+    SIGN_TYPE_WOOD,
+    SIGN_TYPE_STONE,
+};
+
 struct sign_definition {
     struct Vector3 position;
     struct Vector2 rotation;
+    enum sign_type sign_type;
     script_location message;
 };
 

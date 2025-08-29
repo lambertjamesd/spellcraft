@@ -1,6 +1,7 @@
 import sys
 from . import tokenizer
 
+skippable = {'whitespace', 'comment'}
 
 class _ParseState():
     def __init__(self, tokens: list[tokenizer.Token], content: str, filename: str):
@@ -23,7 +24,7 @@ class _ParseState():
             
             result = self._tokens[index]
 
-            if not include_whitespace and result.token_type == 'whitespace':
+            if not include_whitespace and result.token_type in skippable:
                 index += 1
             elif skip_count == 0:
                 return result
@@ -35,7 +36,7 @@ class _ParseState():
         
     
     def advance(self, include_whitespace = False):
-        if not include_whitespace and self.peek(include_whitespace=True).token_type == 'whitespace':
+        while not include_whitespace and self.peek(include_whitespace=True).token_type in skippable:
             self.current += 1
 
         self.current += 1
