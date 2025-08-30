@@ -37,6 +37,11 @@ class ParameterType():
         self.name: str = name
         self.is_static: bool = is_static
 
+class Alias():
+    def __init__(self, source: str, parameters: list[ParameterType] = []):
+        self.source: str = source
+        self.parameters: list[ParameterType] = parameters
+
 _step_args = {
     "say": [ParameterType("tstr", True)],
     "pause": [ParameterType("bool", True), ParameterType("bool", True)],
@@ -82,6 +87,11 @@ _steps_that_need_idle = {
     "interact_with_npc",
     "interact_with_location",
     "interact_with_position",
+}
+
+_aliases: dict[str, Alias] = {
+    "sign_start": Alias("pause true, false; look_at_subject;"),
+    "sign_end": Alias("pause false, false;"),
 }
 
 def _encode_string(string: str) -> bytes:
@@ -220,18 +230,28 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
             data.write(struct.pack('>f', float(static_value)))
 
     cutscene.steps.append(CutsceneStep(_step_ids[step.name.value], data.getvalue()))
-            
+
+def _generate_alias(cutscene: Cutscene, step: parser.CutsceneStep, alias: Alias, context:variable_layout.VariableContext):
+    cutscene_alias = parser.parse(alias.source, "alias")
+
+    for step in cutscene_alias.statements:
+        _generate_step(cutscene, step, context)
 
 def _validate_step(step, errors: list[str], context: variable_layout.VariableContext):
     if isinstance(step, parser.CutsceneStep):
         if step.name.value == 'exit':
             return
+        
+        args = None
 
-        if not step.name.value in _step_args:
+        if step.name.value in _step_args:
+            args = _step_args[step.name.value]
+        elif step.name.value in _aliases:
+            args = _aliases[step.name.value].parameters
+
+        if args == None:
             errors.append(step.name.format_message(f'{step.name.value} is not a valid step name'))
             return
-        
-        args = _step_args[step.name.value]
 
         if len(args) != len(step.parameters):
             errors.append(step.name.format_message(f'incorrect number of parameters got {len(step.parameters)} expected {len(args)}'))
@@ -316,6 +336,10 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
     if isinstance(step, parser.CutsceneStep):
         if step.name.value == 'exit':
             cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, '$exit', step.name))
+            return
+        
+        if step.name.value in _aliases:
+            _generate_alias(cutscene, step, _aliases[step.name.value], context)
             return
 
         _generate_function_step(cutscene, step, _step_args[step.name.value], context)

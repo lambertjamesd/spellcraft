@@ -25,16 +25,14 @@
 #define PLAYER_WALK_ANIM_SPEED   0.64f
 
 static struct Vector2 player_max_rotation;
+static struct Vector2 z_target_rotation;
 
-static struct dynamic_object_type player_visual_shape = {
-    .minkowsi_sum = cylinder_minkowski_sum,
-    .bounding_box = cylinder_bounding_box,
-    .data = {
-        .cylinder = {
-            .half_height = 0.5f,
-            .radius = 0.75f,
-        }
-    }
+static struct spatial_trigger_type player_visual_shape = {
+    SPATIAL_TRIGGER_WEDGE(1.0f, 0.5f, 0.707f, 0.707f),
+};
+
+static struct spatial_trigger_type player_z_trigger_shape = {
+    SPATIAL_TRIGGER_WEDGE(15.0f, 7.0f, 0.707f, 0.707f),
 };
 
 static struct cutscene_actor_def player_actor_def = {
@@ -201,13 +199,17 @@ void player_handle_air_movement(struct player* player) {
 }
 
 bool player_handle_a_action(struct player* player) {
-    struct Vector3 query_center = player->cutscene_actor.transform.position;
-    struct Vector3 query_offset;
-    vector2ToLookDir(&player->cutscene_actor.transform.rotation, &query_offset);
-    vector3AddScaled(&query_center, &query_offset, 1.0f, &query_center);
-    query_center.y += player_visual_shape.data.cylinder.half_height;
     bool did_interact = false;
-    collision_scene_query(&player_visual_shape, &query_center, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_interact);
+
+    if (player->z_target) {
+        struct interactable* interactable = interactable_get(player->z_target);
+
+        if (interactable) {
+            interactable->callback(interactable, ENTITY_ID_PLAYER);
+        }
+    }
+
+    collision_scene_query_trigger(&player_visual_shape, &player->cutscene_actor.transform, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_interact);
     return did_interact;
 }
 
@@ -537,6 +539,51 @@ void player_check_collectables(struct player* player) {
     }
 }
 
+void player_handle_z_target(struct player* player, bool z_pressed, bool z_down) {
+    if (z_pressed) {
+        struct contact* contact = player->z_target_trigger.active_contacts;
+        struct contact* nearest_target = NULL;
+        float nearest_distance = 0.0f;
+
+        while (contact) {
+            float distance = vector3DistSqrd(&contact->point, &player->cutscene_actor.transform.position);
+
+            if (nearest_target == NULL || distance < nearest_distance) {
+                nearest_target = contact;
+                nearest_distance = distance;
+            }
+
+            contact = contact->next;
+        }
+
+        if (nearest_target) {
+            player->z_target = nearest_target->other_object;
+        }
+    }
+
+    if (!player->z_target) {
+        player->z_target_visual.hide = 1;
+        return;
+    }
+
+    struct dynamic_object* obj = collision_scene_find_object(player->z_target);
+
+    if (!z_down || !obj) {
+        player->z_target = 0;
+        player->z_target_visual.hide = 1;
+        return;
+    }
+
+    player->z_target_visual.hide = 0;
+    player->z_target_transform.position = *obj->position;
+    struct Vector3 top_of_target;
+    dynamic_object_minkowski_sum(obj, &gUp, &top_of_target);
+    player->z_target_transform.position.y = top_of_target.y + 0.25f;
+    struct Vector2 new_rotation;
+    vector2ComplexMul(&player->z_target_transform.rotation, &z_target_rotation, &new_rotation);
+    player->z_target_transform.rotation = new_rotation;
+}
+
 void player_update(struct player* player) {
     joypad_inputs_t input = joypad_get_inputs(0);
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
@@ -546,6 +593,8 @@ void player_update(struct player* player) {
     } else if (pressed.d_down) {
         debug_collider_disable();
     }
+
+    player_handle_z_target(player, pressed.z, input.btn.z);
 
     player_update_spells(player, input, pressed);
     player_check_collectables(player);
@@ -631,6 +680,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     vector2ComplexFromAngle(fixed_time_step * 7.0f, &player_max_rotation);
+    vector2ComplexFromAngle(fixed_time_step * 2.0f, &z_target_rotation);
 
     struct TransformSingleAxis transform = {
         .position = definition->location,
@@ -680,6 +730,14 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->assets.staffs[3] = NULL;
 
     drop_shadow_init(&player->drop_shadow, &player->cutscene_actor.collider);
+
+    spatial_trigger_init(&player->z_target_trigger, &player->cutscene_actor.transform, &player_z_trigger_shape, COLLISION_LAYER_Z_TARGET);
+    collision_scene_add_trigger(&player->z_target_trigger);
+    player->z_target_transform = player->cutscene_actor.transform;
+    renderable_single_axis_init(&player->z_target_visual, &player->z_target_transform, "rom:/meshes/player/z_cursor.tmesh");
+    render_scene_add_renderable(&player->z_target_visual, 1.0f);
+    player->z_target = 0;
+    player->z_target_visual.hide = 1;
 }
 
 void player_destroy(struct player* player) {
@@ -695,6 +753,10 @@ void player_destroy(struct player* player) {
 
     tmesh_cache_release(player->assets.staffs[0]);
     drop_shadow_destroy(&player->drop_shadow);
+
+    collision_scene_remove_trigger(&player->z_target_trigger);
+    render_scene_remove(&player->z_target_visual);
+    renderable_destroy(&player->z_target_visual);
 }
 
 struct Vector3* player_get_position(struct player* player) {

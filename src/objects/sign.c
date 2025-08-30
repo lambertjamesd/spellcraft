@@ -28,7 +28,7 @@ void sign_init(sign_t* sign, struct sign_definition* def, entity_id entity_id) {
         entity_id,
         &sign->dynamic_object,
         &sign_collider,
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_Z_TARGET,
         &sign->transform.position,
         &sign->transform.rotation
     );

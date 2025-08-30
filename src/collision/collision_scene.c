@@ -536,6 +536,45 @@ void collision_scene_query(struct dynamic_object_type* shape, struct Vector3* ce
     }
 }
 
+void collision_scene_query_trigger(
+    struct spatial_trigger_type* shape, 
+    struct TransformSingleAxis* transform, 
+    int collision_layers, 
+    collision_scene_query_callback callback, 
+    void* callback_data) {
+
+    struct spatial_trigger trigger = {
+        .type = shape,
+        .transform = transform,
+    };
+
+    spatial_trigger_recalc_bb(&trigger);
+
+    for (int i = 0; i < g_scene.count; ++i) {
+        struct collision_scene_element* element = &g_scene.elements[i];
+
+        if (element->type == COLLISION_ELEMENT_TYPE_TRIGGER) {
+            continue;
+        }
+
+        struct dynamic_object* object = element->object;
+
+        if (!(object->collision_layers & collision_layers)) {
+            continue;
+        }
+
+        if (!box3DHasOverlap(&trigger.bounding_box, &object->bounding_box)) {
+            continue;
+        }
+
+        if (!spatial_trigger_does_contain_point(&trigger, object->position)) {
+            continue;
+        }
+
+        callback(callback_data, object);
+    }
+}
+
 bool collision_scene_shadow_cast(struct Vector3* starting_point, struct mesh_shadow_cast_result* result) {
     bool did_hit = false;
 

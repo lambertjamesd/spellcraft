@@ -59,6 +59,7 @@ struct contact* collision_scene_new_contact();
 typedef void (*collision_scene_query_callback)(void* data, struct dynamic_object* overlaps);
 
 void collision_scene_query(struct dynamic_object_type* shape, struct Vector3* center, int collision_layers, collision_scene_query_callback callback, void* callback_data);
+void collision_scene_query_trigger(struct spatial_trigger_type* shape, struct TransformSingleAxis* transform, int collision_layers, collision_scene_query_callback callback, void* callback_data);
 bool collision_scene_shadow_cast(struct Vector3* starting_point, struct mesh_shadow_cast_result* result);
 
 int collision_scene_get_count();

@@ -1,10 +1,6 @@
 
-// sign_start;
-
-pause true, false;
-look_at_subject;
+sign_start;
 
 say "warning: flammable vines";
 
-pause false, false;
-// sign_end;
+sign_end;

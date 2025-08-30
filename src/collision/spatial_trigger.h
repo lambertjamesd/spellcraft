@@ -39,10 +39,12 @@ struct spatial_trigger {
 };
 
 #define SPATIAL_TRIGGER_BOX(x, y, z) .type = SPATIAL_TRIGGER_BOX, .data = {.box = {.half_size = {x,y,z}}}
+#define SPATIAL_TRIGGER_WEDGE(radius, half_height, angle_x, angle_y) .type = SPATIAL_TRIGGER_WEDGE, .data = {.wedge = {radius, half_height, {angle_x, angle_y}}}
 
 void spatial_trigger_init(struct spatial_trigger* trigger, struct TransformSingleAxis* transform, struct spatial_trigger_type* type, uint16_t collision_layers);
 
 void spatial_trigger_recalc_bb(struct spatial_trigger* trigger);
+void spatial_trigger_type_recalc_bb(struct spatial_trigger_type* type, struct TransformSingleAxis* transform, struct Box3D* result);
 bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct Vector3* point);
 
 #endif

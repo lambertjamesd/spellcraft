@@ -17,15 +17,20 @@ void spatial_trigger_init(struct spatial_trigger* trigger, struct TransformSingl
 
 void spatial_trigger_recalc_bb(struct spatial_trigger* trigger) {
     union spatial_trigger_data* data = &trigger->type->data; 
-    switch (trigger->type->type) {
+    spatial_trigger_type_recalc_bb(trigger->type, trigger->transform, &trigger->bounding_box);
+}
+
+void spatial_trigger_type_recalc_bb(struct spatial_trigger_type* type, struct TransformSingleAxis* transform, struct Box3D* result) {
+    union spatial_trigger_data* data = &type->data; 
+    switch (type->type) {
         case SPATIAL_TRIGGER_SPHERE:
-            sphere_bounding_box(data, &trigger->transform->rotation, &trigger->bounding_box);
+            sphere_bounding_box(data, &transform->rotation, result);
             break;
         case SPATIAL_TRIGGER_CYLINDER:
-            cylinder_bounding_box(data, &trigger->transform->rotation, &trigger->bounding_box);
+            cylinder_bounding_box(data, &transform->rotation, result);
             break;
         case SPATIAL_TRIGGER_BOX:
-            box_bounding_box(data, &trigger->transform->rotation, &trigger->bounding_box);
+            box_bounding_box(data, &transform->rotation, result);
             break;
         case SPATIAL_TRIGGER_WEDGE: {
             struct Box3D unrotated = {
@@ -33,12 +38,12 @@ void spatial_trigger_recalc_bb(struct spatial_trigger* trigger) {
                 .max = {data->wedge.angle.y * data->wedge.radius, data->wedge.half_height, data->wedge.radius},
             };
 
-            box3DRotate2D(&unrotated, &trigger->transform->rotation, &trigger->bounding_box);
+            box3DRotate2D(&unrotated, &transform->rotation, result);
             break;
         }
     }
-    vector3Add(&trigger->bounding_box.min, &trigger->transform->position, &trigger->bounding_box.min);
-    vector3Add(&trigger->bounding_box.max, &trigger->transform->position, &trigger->bounding_box.max);
+    vector3Add(&result->min, &transform->position, &result->min);
+    vector3Add(&result->max, &transform->position, &result->max);
 }
 
 bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct Vector3* point) {

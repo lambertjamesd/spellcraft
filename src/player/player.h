@@ -6,6 +6,7 @@
 #include "../render/render_batch.h"
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
+#include "../collision/spatial_trigger.h"
 #include "../render/animation_clip.h"
 #include "../render/animator.h"
 #include "../cutscene/cutscene_actor.h"
@@ -84,6 +85,12 @@ struct player {
     struct Vector3 last_good_footing;
 
     enum player_state state;
+
+    struct spatial_trigger z_target_trigger;
+    struct TransformSingleAxis z_target_transform;
+    struct renderable z_target_visual;
+
+    entity_id z_target;
 };
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform);
