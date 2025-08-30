@@ -133,7 +133,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition, entity
         id, 
         &biter->dynamic_object, 
         &biter_collision_type, 
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_Z_TARGET,
         &biter->transform.position, 
         &biter->transform.rotation
     );

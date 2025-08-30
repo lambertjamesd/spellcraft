@@ -358,8 +358,8 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
         id,
         &jelly_king->collider,
         &jelly_king->collider_type,
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,
-        &jelly_king->transform.position,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_Z_TARGET,
+        &jelly_king->transform.position, 
         &jelly_king->transform.rotation
     );
     jelly_king->collider.center.y = jelly_king_collider.data.cylinder.half_height;

@@ -141,6 +141,21 @@ void player_look_towards(struct player* player, struct Vector3* target_direction
     }
 }
 
+void player_handle_look(struct player* player, struct Vector3* look_direction) {
+    if (player->z_target) {
+        dynamic_object_t* obj = collision_scene_find_object(player->z_target);
+
+        if (obj) {
+            struct Vector3 offset;
+            vector3Sub(obj->position, &player->cutscene_actor.transform.position, &offset);
+            player_look_towards(player, &offset);
+            return;
+        }
+    }
+
+    player_look_towards(player, look_direction);
+}
+
 void player_handle_ground_movement(struct player* player, struct contact* ground_contact) {
     struct Vector3 target_direction;
     player_get_input_direction(player, &target_direction);
@@ -150,7 +165,7 @@ void player_handle_ground_movement(struct player* player, struct contact* ground
         return;
     }
 
-    player_look_towards(player, &target_direction);
+    player_handle_look(player, &target_direction);
 
     if (player->cutscene_actor.collider.is_pushed) {
         return;
@@ -191,7 +206,7 @@ void player_handle_air_movement(struct player* player) {
     struct Vector3 target_direction;
     player_get_input_direction(player, &target_direction);
 
-    player_look_towards(player, &target_direction);
+    player_handle_look(player, &target_direction);
 
     float prev_y = player->cutscene_actor.collider.velocity.y;
     vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
@@ -539,29 +554,34 @@ void player_check_collectables(struct player* player) {
     }
 }
 
-void player_handle_z_target(struct player* player, bool z_pressed, bool z_down) {
-    if (z_pressed) {
-        struct contact* contact = player->z_target_trigger.active_contacts;
-        struct contact* nearest_target = NULL;
-        float nearest_distance = 0.0f;
+void player_find_z_target(struct player* player) {
+    struct contact* contact = player->z_target_trigger.active_contacts;
+    struct contact* nearest_target = NULL;
+    float nearest_distance = 0.0f;
 
-        while (contact) {
-            float distance = vector3DistSqrd(&contact->point, &player->cutscene_actor.transform.position);
+    while (contact) {
+        float distance = vector3DistSqrd(&contact->point, &player->cutscene_actor.transform.position);
 
-            if (nearest_target == NULL || distance < nearest_distance) {
-                nearest_target = contact;
-                nearest_distance = distance;
-            }
-
-            contact = contact->next;
+        if (nearest_target == NULL || distance < nearest_distance) {
+            nearest_target = contact;
+            nearest_distance = distance;
         }
 
-        if (nearest_target) {
-            player->z_target = nearest_target->other_object;
-        }
+        contact = contact->next;
     }
 
-    if (!player->z_target) {
+    if (nearest_target) {
+        player->z_target = nearest_target->other_object;
+    }
+}
+
+void player_handle_z_target(struct player* player, bool z_pressed, bool z_down) {
+    if (z_pressed) {
+        player_find_z_target(player);
+    }
+
+    if (!player->z_target || !z_down) {
+        player->z_target = 0;
         player->z_target_visual.hide = 1;
         return;
     }
@@ -571,6 +591,7 @@ void player_handle_z_target(struct player* player, bool z_pressed, bool z_down) 
     if (!z_down || !obj) {
         player->z_target = 0;
         player->z_target_visual.hide = 1;
+        player_find_z_target(player);
         return;
     }
 

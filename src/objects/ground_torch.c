@@ -106,7 +106,7 @@ void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_de
         id, 
         &ground_torch->dynamic_object, 
         &ground_torch_collision_type, 
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_Z_TARGET,
         &ground_torch->position, 
         NULL
     );

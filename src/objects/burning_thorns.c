@@ -62,7 +62,7 @@ void burning_thorns_init(burning_thorns_t* thorns, struct burning_thorns_definit
         id, 
         &thorns->collider, 
         &burning_object_shape, 
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY, 
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_Z_TARGET, 
         &thorns->transform.position, 
         &thorns->transform.rotation
     );

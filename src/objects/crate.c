@@ -32,7 +32,7 @@ void crate_init(struct crate* crate, struct crate_definition* definition, entity
         id, 
         &crate->dynamic_object, 
         &crate_collision_type, 
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY,
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_Z_TARGET,
         &crate->transform.position, 
         &crate->transform.rotation
     );
