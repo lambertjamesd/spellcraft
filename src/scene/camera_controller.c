@@ -5,6 +5,7 @@
 #include "../physics/move_towards.h"
 #include "../math/mathf.h"
 #include "../math/constants.h"
+#include "../render/defs.h"
 #include <math.h>
 
 #define CAMERA_FOLLOW_DISTANCE  3.4f
@@ -74,6 +75,89 @@ void camera_controller_determine_two_target_position(struct camera_controller* c
         vector3DistSqrd(&target_check, &controller->camera->transform.position)) {
         *result = target_check;
     }
+}
+
+#define DISTANCE_RATIO 2.57368228f
+
+void camera_controller_even_target(
+    struct camera_controller* controller, 
+    struct Vector2* player_to_target,
+    float target_distance) {
+    struct Vector3* player_pos = &controller->player->cutscene_actor.transform.position;
+    struct Vector3* camera_pos = &controller->camera->transform.position;
+
+    struct Vector2 cross_offset;
+    vector2Rotate90(player_to_target, &cross_offset);
+
+    controller->target = (struct Vector3){
+        .x = player_pos->x + (player_to_target->x - cross_offset.x * DISTANCE_RATIO) * target_distance * 0.5f,
+        .y = player_pos->y + CAMERA_FOLLOW_HEIGHT,
+        .z = player_pos->z + (player_to_target->y - cross_offset.y * DISTANCE_RATIO) * target_distance * 0.5f,
+    };
+
+    move_towards(camera_pos, &controller->speed, &controller->target, &camera_move_parameters);
+    struct Vector2 camera_rotation;
+    vector2Negate(player_to_target, &camera_rotation);
+    quatAxisComplex(&gUp, &camera_rotation, &controller->camera->transform.rotation);
+}
+
+void camera_controller_watch_target(struct camera_controller* controller, struct Vector3* target) {
+    struct Vector3* camera_pos = &controller->camera->transform.position;
+    struct Vector3* player_pos = &controller->player->cutscene_actor.transform.position;
+
+    struct Vector2 player_to_target = {
+        .x = target->x - player_pos->x,
+        .y = target->z - player_pos->z,
+    };
+
+    float target_distance = sqrtf(vector2MagSqr(&player_to_target));
+    float target_distance_inv = 1.0f / target_distance;
+
+    struct Vector2 rotation_amount = {
+        .y = DEFAULT_CAMERA_SIN_TRI_CORNER * CAMERA_FOLLOW_DISTANCE * target_distance_inv
+    };
+
+    if (rotation_amount.y > 1.0f) {
+        rotation_amount.y = 1.0f;
+        rotation_amount.x = 0.0f;
+    } else {
+        rotation_amount.x = sqrtf(1.0f - rotation_amount.y * rotation_amount.y);
+    }
+    rotation_amount.y = -rotation_amount.y;
+
+    struct Vector2 player_to_cam = {
+        .x = camera_pos->x - player_pos->x,
+        .y = camera_pos->z - player_pos->z,
+    };
+
+    player_to_target.x *= target_distance_inv;
+    player_to_target.y *= target_distance_inv;
+
+    struct Vector2 camera_offset = {
+        .x = DEFAULT_CAMERA_SIN_FOV_6 * CAMERA_FOLLOW_DISTANCE,
+        .y = DEFAULT_CAMERA_COS_FOV_6 * CAMERA_FOLLOW_DISTANCE,
+    };
+
+    if (vector2Cross(&player_to_cam, &player_to_target) > 0.0f) {
+        rotation_amount.y = -rotation_amount.y;
+        camera_offset.x = -camera_offset.x;
+    }
+
+    struct Vector2 camera_rotation;
+    vector2ComplexMul(&player_to_target, &rotation_amount, &camera_rotation);
+    vector2Rotate90(&camera_rotation, &camera_rotation);
+
+
+    struct Vector2 rotated_camera_offset;
+    vector2ComplexMul(&camera_rotation, &camera_offset, &rotated_camera_offset);
+
+    quatAxisComplex(&gUp, &camera_rotation, &controller->camera->transform.rotation);
+    controller->target = (struct Vector3){
+        .x = player_pos->x + rotated_camera_offset.x,
+        .y = player_pos->y + CAMERA_FOLLOW_HEIGHT,
+        .z = player_pos->z + rotated_camera_offset.y,
+    };
+    move_towards(&controller->camera->transform.position, &controller->speed, &controller->target, &camera_move_parameters);
 }
 
 void camera_controller_determine_player_move_target(struct camera_controller* controller, struct Vector3* result, bool behind_player) {
@@ -160,8 +244,19 @@ void camera_controller_update_animation(struct camera_controller* controller) {
     controller->current_frame += 1;
 }
 
+entity_id camera_determine_secondary_target(struct camera_controller* controller) {
+    return controller->player->z_target;
+}
+
 void camera_controller_update(struct camera_controller* controller) {
     if (controller->state == CAMERA_STATE_FOLLOW) {
+        dynamic_object_t* obj = collision_scene_find_object(camera_determine_secondary_target(controller));
+
+        if (obj) {
+            camera_controller_watch_target(controller, obj->position);
+            return;
+        }
+
         // camera_controller_determine_player_move_target(controller, &controller->target, false);
         camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);
     } else if (controller->state == CAMERA_STATE_LOOK_AT_WITH_PLAYER) {

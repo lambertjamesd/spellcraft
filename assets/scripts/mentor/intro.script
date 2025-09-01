@@ -1,7 +1,7 @@
 
 global has_staff_default: bool;
 
-pause true, false;
+world_pause;
 interact_with_npc INTERACTION_LOOK_SPACE, NPC_TYPE_PLAYER, NPC_TYPE_MENTOR;
 interact_with_npc INTERACTION_LOOK, NPC_TYPE_MENTOR, NPC_TYPE_PLAYER;
 npc_wait NPC_TYPE_MENTOR;
@@ -17,4 +17,4 @@ else
     ";
 end
 
-pause false, false;
+world_unpause;

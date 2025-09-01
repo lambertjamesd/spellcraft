@@ -92,6 +92,8 @@ _steps_that_need_idle = {
 _aliases: dict[str, Alias] = {
     "sign_start": Alias("pause true, false; look_at_subject;"),
     "sign_end": Alias("pause false, false;"),
+    "world_pause": Alias("pause true, false;"),
+    "world_unpause": Alias("pause false, false;"),
 }
 
 def _encode_string(string: str) -> bytes:

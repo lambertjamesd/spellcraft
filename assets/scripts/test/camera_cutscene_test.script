@@ -1,5 +1,5 @@
 
-pause true, false;
+world_pause;
 
 fade FADE_COLOR_BLACK, 1;
 delay 1;
@@ -10,4 +10,4 @@ cam_wait;
 
 cam_return;
 
-pause false, false;
+world_unpause;

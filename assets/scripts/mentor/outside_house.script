@@ -1,6 +1,6 @@
 global has_talked_outside: bool;
 
-pause true, false;
+world_pause;
 interact_with_npc INTERACTION_LOOK_SPACE, NPC_TYPE_PLAYER, NPC_TYPE_MENTOR;
 interact_with_npc INTERACTION_LOOK, NPC_TYPE_MENTOR, NPC_TYPE_PLAYER;
 npc_wait NPC_TYPE_MENTOR;
@@ -8,16 +8,16 @@ npc_wait NPC_TYPE_MENTOR;
 say "Hey {player_name}, I'll meet in in the basement of your house";
 has_talked_outside = true;
 
-pause false, false;
+world_unpause;
 
 interact_with_location INTERACTION_MOVE, NPC_TYPE_MENTOR, "default";
 npc_wait NPC_TYPE_MENTOR;
 
-pause true, false;
+world_pause;
 interact_with_npc INTERACTION_LOOK, NPC_TYPE_PLAYER, NPC_TYPE_MENTOR;
 interact_with_npc INTERACTION_LOOK, NPC_TYPE_MENTOR, NPC_TYPE_PLAYER;
 npc_wait NPC_TYPE_MENTOR;
 
 say "Are you coming?";
 
-pause false, false;
+world_unpause;

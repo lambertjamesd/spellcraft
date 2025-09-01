@@ -5,18 +5,21 @@ if has_entered_fire_trials then
     exit;
 end
 
-pause true, false;
+world_pause;
 
 cam_animate "enter";
 
 interact_with_location INTERACTION_MOVE, NPC_TYPE_PLAYER, "enter_run_target";
-npc_set_speed NPC_TYPE_PLAYER, 2.0;
+npc_set_speed NPC_TYPE_PLAYER, 0.65;
 
-delay 7.8;
+delay 15;
 show_title "FIRE TRIALS";
 
 npc_wait NPC_TYPE_PLAYER;
+interact_with_location INTERACTION_LOOK, NPC_TYPE_PLAYER, "temple";
 cam_wait;
 cam_return;
 
-pause false, false;
+world_unpause;
+
+has_entered_fire_trials = true;
