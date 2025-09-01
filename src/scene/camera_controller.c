@@ -34,6 +34,11 @@ void camera_cached_calcuations_check(struct camera_cached_calcuations* cache, st
     cache->sin_1_3_fov_horz = sinf(cache->fov_horz * 0.33333f);
 }
 
+void camera_look_at_from_rotation(struct camera_controller* controller) {
+    quatMultVector(&controller->camera->transform.rotation, &gForward, &controller->looking_at);
+    vector3AddScaled(&controller->camera->transform.position, &controller->looking_at, -CAMERA_FOLLOW_DISTANCE, &controller->looking_at);
+}
+
 #define MAX_SIN_ANGLE DEFAULT_CAMERA_COS_FOV_6
 #define MAX_COS_ANGLE DEFAULT_CAMERA_SIN_FOV_6
 
@@ -149,14 +154,13 @@ void camera_controller_return_target(struct camera_controller* controller, struc
     target->y += CAMERA_FOLLOW_HEIGHT;
 
     move_towards(&cam_transform->position, &controller->speed, &controller->target, &camera_move_parameters);
+    camera_look_at_from_rotation(controller);
 
     controller->camera->fov = mathfMoveTowards(controller->camera->fov, 70.0f, 20.0f * fixed_time_step);
 
     if (vector3DistSqrd(target, &cam_transform->position) < 0.0001f) {
         controller->state = CAMERA_STATE_FOLLOW;
         controller->camera->fov = 70.0f;
-        quatMultVector(&cam_transform->rotation, &gForward, &controller->looking_at);
-        vector3AddScaled(&cam_transform->position, &controller->looking_at, CAMERA_FOLLOW_DISTANCE, &controller->looking_at);
     }
 }
 
@@ -190,6 +194,7 @@ void camera_controller_update_animation(struct camera_controller* controller) {
     controller->camera->transform.rotation.w = sqrtf(1.0f - neg_w);
     controller->camera->fov = (180.0f / M_PI) * anim_frame_buffer.fov;
     controller->current_frame += 1;
+    camera_look_at_from_rotation(controller);
 }
 
 entity_id camera_determine_secondary_target(struct camera_controller* controller) {
