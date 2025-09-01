@@ -82,10 +82,10 @@ void camera_controller_watch_target(struct camera_controller* controller, struct
         .y = DEFAULT_CAMERA_COS_FOV_6 * follow_distance,
     };
 
-    // if (vector2Cross(&player_to_cam, &player_to_target) > 0.0f) {
-    //     rotation_amount.y = -rotation_amount.y;
-    //     camera_offset.x = -camera_offset.x;
-    // }
+    if (vector2Cross(&player_to_cam, &player_to_target) > 0.0f) {
+        rotation_amount.y = -rotation_amount.y;
+        camera_offset.x = -camera_offset.x;
+    }
 
     struct Vector2 camera_rotation;
     vector2ComplexMul(&player_to_target, &rotation_amount, &camera_rotation);
@@ -105,10 +105,8 @@ void camera_controller_watch_target(struct camera_controller* controller, struct
         .y = controller->target.y,
         .z = controller->target.z - camera_rotation.x * CAMERA_FOLLOW_DISTANCE,
     };
-    controller->looking_at = looking_at;
 
-    // fprintf(stderr, "%f, %f\n", rotated_camera_offset.x, rotated_camera_offset.y);
-    // move_towards(&controller->looking_at, &controller->looking_at_speed, &looking_at, &camera_move_parameters);
+    move_towards(&controller->looking_at, &controller->looking_at_speed, &looking_at, &camera_move_parameters);
 }
 
 void camera_controller_determine_player_move_target(struct camera_controller* controller, struct Vector3* result, bool behind_player) {
@@ -235,14 +233,15 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
 
     update_add(controller, (update_callback)camera_controller_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
+    controller->speed = 0.0f;
+    controller->looking_at = player->cutscene_actor.transform.position;
+    controller->looking_at_speed = 0.0f;
+    controller->look_target = gZeroVec;
     camera_controller_determine_player_move_target(controller, &controller->target, true);
     controller->follow_distace = 3.0f;
 
     controller->camera->transform.position = controller->target;
     controller->camera->transform.scale = gOneVec;
-    controller->speed = 0.0f;
-    controller->looking_at = player->cutscene_actor.transform.position;
-    controller->looking_at_speed = 0.0f;
     controller->_cache_calcluations.fov = 0.0f;
     quatAxisAngle(&gRight, 0.0f, &controller->camera->transform.rotation);
 
