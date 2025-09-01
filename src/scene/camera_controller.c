@@ -61,9 +61,9 @@ void camera_controller_watch_target(struct camera_controller* controller, struct
     float follow_distance = CAMERA_FOLLOW_DISTANCE;
 
     if (rotation_amount.y > MAX_SIN_ANGLE) {
-        rotation_amount.y = MAX_SIN_ANGLE;
         rotation_amount.x = MAX_COS_ANGLE;
-        follow_distance = target_distance * (MAX_SIN_ANGLE / DEFAULT_CAMERA_SIN_FOV_3);
+        rotation_amount.y = MAX_SIN_ANGLE;
+        follow_distance = target_distance * (MAX_SIN_ANGLE / DEFAULT_CAMERA_SIN_TRI_CORNER);
     } else {
         rotation_amount.x = sqrtf(1.0f - rotation_amount.y * rotation_amount.y);
     }
@@ -82,10 +82,10 @@ void camera_controller_watch_target(struct camera_controller* controller, struct
         .y = DEFAULT_CAMERA_COS_FOV_6 * follow_distance,
     };
 
-    if (vector2Cross(&player_to_cam, &player_to_target) > 0.0f) {
-        rotation_amount.y = -rotation_amount.y;
-        camera_offset.x = -camera_offset.x;
-    }
+    // if (vector2Cross(&player_to_cam, &player_to_target) > 0.0f) {
+    //     rotation_amount.y = -rotation_amount.y;
+    //     camera_offset.x = -camera_offset.x;
+    // }
 
     struct Vector2 camera_rotation;
     vector2ComplexMul(&player_to_target, &rotation_amount, &camera_rotation);
@@ -105,7 +105,10 @@ void camera_controller_watch_target(struct camera_controller* controller, struct
         .y = controller->target.y,
         .z = controller->target.z - camera_rotation.x * CAMERA_FOLLOW_DISTANCE,
     };
-    move_towards(&controller->looking_at, &controller->looking_at_speed, &looking_at, &camera_move_parameters);
+    controller->looking_at = looking_at;
+
+    // fprintf(stderr, "%f, %f\n", rotated_camera_offset.x, rotated_camera_offset.y);
+    // move_towards(&controller->looking_at, &controller->looking_at_speed, &looking_at, &camera_move_parameters);
 }
 
 void camera_controller_determine_player_move_target(struct camera_controller* controller, struct Vector3* result, bool behind_player) {
