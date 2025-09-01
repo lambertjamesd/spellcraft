@@ -27,6 +27,8 @@ struct camera_controller {
     float follow_distace;
     struct Vector3 target;
     float speed;
+    struct Vector3 looking_at;
+    float looking_at_speed;
     struct Vector3 look_target;
     enum camera_controller_state state;
     struct camera_animation* animation;
