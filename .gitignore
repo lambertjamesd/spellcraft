@@ -18,3 +18,7 @@ asset_builder/asset_builder
 
 # generated file
 src/player/inventory_mapping.c
+64drive_usb.exe
+build clean.bat
+build_load.bat
+load.bat

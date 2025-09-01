@@ -39,11 +39,11 @@ void setup() {
     fade_effect_set((struct Coloru8){0, 0, 0, 255}, 0.0f);
     fade_effect_set((struct Coloru8){0, 0, 0, 0}, 3.0f);
 
-    scene_queue_next("rom:/scenes/fire_trials.scene");
+    // scene_queue_next("rom:/scenes/fire_trials.scene");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
     // scene_queue_next("rom:/scenes/ability_testing.scene");
     // scene_queue_next("rom:/scenes/playerhome_outside.scene");
-    // scene_queue_next("rom:/scenes/StartArea_ForestWest.scene");
+    scene_queue_next("rom:/scenes/StartArea_ForestWest.scene");
     // scene_queue_next("rom:/scenes/StartArea_TempleOutside.scene");
 
     current_scene = scene_load(scene_get_next());
@@ -140,8 +140,14 @@ bool check_scene_load() {
 int main(void)
 {
 	resolution_t custom_res = {320, 240, false};
+
+	if (get_tv_type() == 0) //TEMP: if PAL, adjust vertical res
+	{
+		custom_res.height = 288;
+	}
+
     display_init(custom_res, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
-	// *(volatile uint32_t*)0xA4400000 |= 0x300;
+	// *(volatile uint32_t*)0xA4400000 |= 0x300; //disables resampling on the VI
 	rdpq_init();
     t3d_init((T3DInitParams){});
     tpx_init((TPXInitParams){});
