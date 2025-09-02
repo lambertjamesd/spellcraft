@@ -3,7 +3,7 @@ const fs = require('fs');
 const call_pairings = [
     ['malloc', 'free'],
     ['material_load', 'material_release'],
-    ['material_cache_load', 'material_cache_release'],
+    [['material_cache_load', 'material_cache_load_from_file'], 'material_cache_release'],
     [
         ['render_scene_add', 'render_scene_add_renderable', 'render_scene_add_renderable'], 
         'render_scene_remove'
@@ -20,6 +20,7 @@ const call_pairings = [
     ['health_init', 'health_destroy'],
     [['cutscene_load', 'cutscene_new', 'cutscene_builder_finish'], ['cutscene_free', 'cutscene_runner_free_on_finish']],
     ['tmesh_cache_load', 'tmesh_cache_release'],
+    ['static_particles_load', 'static_particles_release'],
 ];
 
 function populate_parings(mapping, curr, value) {

@@ -124,6 +124,8 @@ void show_item_start(struct show_item* show_item, union cutscene_step_data* data
     show_item->should_show = data->show_item.should_show;
 
     if (data->show_item.should_show) {
+        const char* filename;
+
         if (show_item_is_spell(data->show_item.item)) {
             int level = inventory_get_item_level(data->show_item.item) - 1;
 
@@ -135,15 +137,16 @@ void show_item_start(struct show_item* show_item, union cutscene_step_data* data
 
             show_item->showing_item = data->show_item.item;
             show_item->show_item_timer = 0.0f;
-            show_item->item_material = material_cache_load(symbol_material);
+            filename = symbol_material;
             show_item->item_sprite = sprite_load(tablet_images[level]);
 
         } else {
             show_item->showing_item = data->show_item.item;
             show_item->show_item_timer = 0.0f;
-            show_item->item_material = material_cache_load(item_icon_materials[show_item->showing_item]);
+            filename = item_icon_materials[show_item->showing_item];
             show_item->item_sprite = NULL;
         }
+        show_item->item_material = material_cache_load(filename);
     } else {
         show_item->show_item_timer = RUNE_FADE_TIME;
     }

@@ -115,4 +115,5 @@ void mana_plant_destroy(struct mana_plant* plant) {
     render_scene_remove(plant);
     update_remove(plant);
     collision_scene_remove_trigger(&plant->trigger);
+    tmesh_cache_release(plant->mesh);
 }
