@@ -346,7 +346,7 @@ def _pack_color(color):
         int(pow(color[0], 1 / 2.2) * 255),
         int(pow(color[1], 1 / 2.2) * 255),
         int(pow(color[2], 1 / 2.2) * 255),
-        int(pow(color[3], 1 / 2.2) * 255)
+        int(color[3] * 255)
     )
 
 def _pack_uv(uv, materail: material.Material):

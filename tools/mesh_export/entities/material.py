@@ -475,7 +475,6 @@ class Material():
         self.palette: int = 0
         self.culling: bool | None = None
         self.z_buffer: bool | None = None
-        self.vertex_gamma: float = 0.454545
         self.vtx_effect: str | None = None
         self.fog: Fog | None = None
         self.light_count: int | None = None
@@ -493,7 +492,6 @@ class Material():
         result.palette = self.palette
         result.culling = self.culling
         result.z_buffer = self.z_buffer
-        result.vertex_gamma = self.vertex_gamma
         result.vtx_effect = self.vtx_effect
         result.fog = self.fog.copy() if self.fog else None
         result.light_count = self.light_count
@@ -1017,8 +1015,6 @@ def parse_material(filename: str):
 
     result.culling = _optional_boolean(json_data, 'culling', 'culling', True)
     result.z_buffer = _optional_boolean(json_data, 'zBuffer', 'zBuffer', True)
-
-    result.vertex_gamma = _optional_number(json_data, 'vertexGamma', 'vertexGamma', 1)
 
     result.vtx_effect = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
 

@@ -52,9 +52,9 @@ def color_float_to_int(value):
 
 def color_array_to_color(array):
     return material.Color(
-        color_float_to_int(array[0]),
-        color_float_to_int(array[1]),
-        color_float_to_int(array[2]),
+        color_float_to_int(array[0] ** 0.454545),
+        color_float_to_int(array[1] ** 0.454545),
+        color_float_to_int(array[2] ** 0.454545),
         color_float_to_int(array[3])
     )
 
@@ -202,9 +202,9 @@ def _determine_blend_from_f3d(rdp_settings, index) -> material.BlendModeCycle:
 
 def _determine_color_from_f3d(color) -> material.Color:
     return material.Color(
-        int(color[0] * 255),
-        int(color[1] * 255),
-        int(color[2] * 255),
+        int((color[0] ** 0.454545) * 255),
+        int((color[1] ** 0.454545) * 255),
+        int((color[2] ** 0.454545) * 255),
         int(color[3] * 255)
     )
 
