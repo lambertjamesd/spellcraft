@@ -41,9 +41,9 @@ void setup() {
 
     // scene_queue_next("rom:/scenes/fire_trials.scene");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
-    // scene_queue_next("rom:/scenes/ability_testing.scene");
-    // scene_queue_next("rom:/scenes/playerhome_outside.scene");
-    scene_queue_next("rom:/scenes/StartArea_ForestWest.scene");
+    scene_queue_next("rom:/scenes/ability_testing.scene");
+    // scene_queue_next("rom:/scenes/playerhome_basement.scene");
+    // scene_queue_next("rom:/scenes/StartArea_ForestWest.scene#west");
     // scene_queue_next("rom:/scenes/StartArea_TempleOutside.scene");
 
     current_scene = scene_load(scene_get_next());
@@ -103,10 +103,13 @@ void render(surface_t* zbuffer) {
     render_menu();
 }
 
-volatile static int frame_happened = 0;
+#define VI_PER_FRAME 2
+volatile static uint8_t vi_delay;
 
 void on_vi_interrupt() {
-    frame_happened = 1;
+    if (vi_delay > 0) {
+        vi_delay -= 1;
+    }
 }
 
 bool check_scene_load() {
@@ -168,10 +171,10 @@ int main(void)
     register_VI_handler(on_vi_interrupt);
 
     while(1) {
-        while (!frame_happened) {
+        while (vi_delay > 0) {
             // TODO process low priority tasks
         }
-        frame_happened = 0;
+        vi_delay = VI_PER_FRAME;
 
         if (check_scene_load()) {
             continue;
