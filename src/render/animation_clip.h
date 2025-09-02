@@ -28,6 +28,8 @@ struct animation_clip {
     struct animation_used_attributes* used_bone_attributes;
 };
 
+typedef struct animation_clip animation_clip_t;
+
 struct animation_set {
     uint16_t clip_count;
     uint16_t bone_count;

@@ -32,6 +32,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_NPC_SET_SPEED,
     CUTSCENE_STEP_SHOW_TITLE,
     CUTSCENE_STEP_LOOK_AT_SUBJECT,
+    CUTSCENE_STEP_NPC_ANIMATE,
 };
 
 struct cutscene_step;
@@ -113,6 +114,11 @@ union cutscene_step_data {
     struct {
         char* message;
     } show_title;
+    struct {
+        cutscene_actor_id_t subject;
+        char* animation_name;
+        uint8_t loop;
+    } npc_animate;
 };
 
 struct cutscene_step {

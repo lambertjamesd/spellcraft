@@ -31,6 +31,8 @@ CUTSCENE_STEP_NPC_WAIT = 20
 CUTSCENE_STEP_NPC_SET_SPEED = 21
 CUTSCENE_STEP_SHOW_TITLE = 22
 CUTSCENE_STEP_LOOK_AT_SUBJECT = 23
+CUTSCENE_STEP_NPC_ANIMATE = 24
+
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -61,6 +63,7 @@ _step_args = {
     "npc_set_speed": [ParameterType("int", True), ParameterType("float", True)],
     "show_title": [ParameterType("str", True)],
     "look_at_subject": [],
+    "npc_animate": [ParameterType("int", True), ParameterType("str", True), ParameterType("bool", True)]
 }
 
 _step_ids = {
@@ -81,6 +84,7 @@ _step_ids = {
     "npc_set_speed": CUTSCENE_STEP_NPC_SET_SPEED,
     "show_title": CUTSCENE_STEP_SHOW_TITLE,
     "look_at_subject": CUTSCENE_STEP_LOOK_AT_SUBJECT,
+    "npc_animate": CUTSCENE_STEP_NPC_ANIMATE,
 }
 
 _steps_that_need_idle = {

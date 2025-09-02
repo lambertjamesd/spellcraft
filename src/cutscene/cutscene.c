@@ -149,6 +149,12 @@ struct cutscene* cutscene_load(char* filename) {
                 step->data.show_title.message = string_load(file);
                 break;
             }
+            case CUTSCENE_STEP_NPC_ANIMATE: {
+                fread(&step->data.npc_animate.subject, 4, 1, file);
+                step->data.npc_animate.animation_name = string_load(file);
+                fread(&step->data.npc_animate.loop, 1, 1, file);
+                break;
+            }
         }
     }
 

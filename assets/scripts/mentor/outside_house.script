@@ -10,7 +10,7 @@ has_talked_outside = true;
 
 world_unpause;
 
-interact_with_location INTERACTION_MOVE, NPC_TYPE_MENTOR, "default";
+interact_with_location INTERACTION_MOVE, NPC_TYPE_MENTOR, "from_playerhome";
 npc_wait NPC_TYPE_MENTOR;
 
 world_pause;

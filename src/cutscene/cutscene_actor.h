@@ -17,6 +17,7 @@ enum actor_state {
     ACTOR_STATE_MOVING = (1 << 1),
     ACTOR_STATE_SPACE = (1 << 2),
     ACTOR_STATE_ACTIVE = (1 << 3),
+    ACTOR_STATE_ANIMATING = (1 << 4),
 };
 
 struct cutscene_actor_animations {
@@ -63,6 +64,8 @@ struct cutscene_actor {
     struct cutscene_actor_def* def;
 };
 
+typedef struct cutscene_actor cutscene_actor_t;
+
 void cutscene_actor_init(struct cutscene_actor* actor, struct cutscene_actor_def* def, entity_id entity_id, struct TransformSingleAxis* transform, enum npc_type npc_type, int index, struct armature* armature, char* animations_path);
 
 void cutscene_actor_destroy(struct cutscene_actor* actor);
@@ -77,6 +80,8 @@ bool cutscene_actor_is_moving(struct cutscene_actor* actor);
 
 // return true if actor cutscene is active
 bool cutscene_actor_update(struct cutscene_actor* actor);
+
+void cutscene_actor_run_animation(struct cutscene_actor* actor, const char* name, bool loop);
 
 
 #endif

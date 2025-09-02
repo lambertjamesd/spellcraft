@@ -251,6 +251,15 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             cutscene_actor_interact_with(&current_scene->player.cutscene_actor, INTERACTION_LOOK_SPACE, subject->position);
             break;
         }
+        case CUTSCENE_STEP_NPC_ANIMATE: {
+            cutscene_actor_id_t subject_id = step->data.npc_animate.subject;
+            cutscene_actor_t* subject = cutscene_actor_find(subject_id.npc_type, subject_id.index);
+            if (!subject) {
+                break;
+            }
+            cutscene_actor_run_animation(subject, step->data.npc_animate.animation_name, step->data.npc_animate.loop);
+            break;
+        }
     }
 }
 

@@ -4,17 +4,34 @@ global has_staff_default: bool;
 world_pause;
 interact_with_npc INTERACTION_LOOK_SPACE, NPC_TYPE_PLAYER, NPC_TYPE_MENTOR;
 interact_with_npc INTERACTION_LOOK, NPC_TYPE_MENTOR, NPC_TYPE_PLAYER;
+cam_look_npc NPC_TYPE_MENTOR;
 npc_wait NPC_TYPE_MENTOR;
 
-
 if has_staff_default then
-    say "Good, you have found your fathers staff";
+    say "
+        Good, you have found your fathers staff
+
+        Oh by the way
+    ";
+
+    cam_return;
+
+    say "Fus ro dah";
+
+    npc_animate NPC_TYPE_PLAYER, "knock_over", false;
+
+    npc_wait NPC_TYPE_PLAYER;
 else
     say "
         Hey {player_name}, your fathers old staff is in that chest over there
     
         You should go and get it
+
+        Oh, and none of this art is final.
+
+        This is just to showcase the cutscene system
     ";
 end
 
+cam_return;
 world_unpause;

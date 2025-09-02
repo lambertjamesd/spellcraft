@@ -28,7 +28,7 @@ static struct Vector2 player_max_rotation;
 static struct Vector2 z_target_rotation;
 
 static struct spatial_trigger_type player_visual_shape = {
-    SPATIAL_TRIGGER_WEDGE(1.0f, 0.5f, 0.707f, 0.707f),
+    SPATIAL_TRIGGER_WEDGE(2.0f, 0.5f, 0.707f, 0.707f),
 };
 
 static struct spatial_trigger_type player_z_trigger_shape = {

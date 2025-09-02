@@ -89,7 +89,7 @@ void cutscene_actor_set_speed(struct cutscene_actor* actor, float speed) {
 }
 
 bool cutscene_actor_is_moving(struct cutscene_actor* actor) {
-    return (actor->state & (ACTOR_STATE_LOOKING | ACTOR_STATE_MOVING | ACTOR_STATE_SPACE)) != 0;
+    return (actor->state & (ACTOR_STATE_LOOKING | ACTOR_STATE_MOVING | ACTOR_STATE_SPACE | ACTOR_STATE_ANIMATING)) != 0;
 }
 
 bool cutscene_actor_update(struct cutscene_actor* actor) {
@@ -111,24 +111,28 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
             CLEAR_FLAG(actor->state, ACTOR_STATE_MOVING);
             actor->collider.velocity.x = 0.0f;
             actor->collider.velocity.z = 0.0f;
-            animator_run_clip(&actor->animator, actor->animations.idle, 0.0f, true);
-            actor->animate_speed = 1.0f;
+            if (!HAS_FLAG(actor->state, ACTOR_STATE_ANIMATING)) {
+                animator_run_clip(&actor->animator, actor->animations.idle, 0.0f, true);
+                actor->animate_speed = 1.0f;
+            }
         } else {
             float inv = actor->move_speed / sqrtf(distSqrd);
             actor->collider.velocity.x = offset.x * inv;
             actor->collider.velocity.z = offset.z * inv;
 
-            struct animation_clip* use_clip = actor->animations.walk;
-            float target_move_speed = actor->def->move_speed;
-
-            if (actor->move_speed > actor->def->run_threshold && actor->animations.run) {
-                use_clip = actor->animations.run;
-                target_move_speed = actor->def->run_speed;
-            }
-
-            if (!animator_is_running_clip(&actor->animator, use_clip)) {
-                animator_run_clip(&actor->animator, use_clip, 0.0f, true);
-                actor->animate_speed = actor->move_speed / target_move_speed;
+            if (!HAS_FLAG(actor->state, ACTOR_STATE_ANIMATING)) {
+                struct animation_clip* use_clip = actor->animations.walk;
+                float target_move_speed = actor->def->move_speed;
+    
+                if (actor->move_speed > actor->def->run_threshold && actor->animations.run) {
+                    use_clip = actor->animations.run;
+                    target_move_speed = actor->def->run_speed;
+                }
+    
+                if (!animator_is_running_clip(&actor->animator, use_clip)) {
+                    animator_run_clip(&actor->animator, use_clip, 0.0f, true);
+                    actor->animate_speed = actor->move_speed / target_move_speed;
+                }
             }
         }
     }
@@ -160,5 +164,28 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
         }
     }
 
+    if (HAS_FLAG(actor->state, ACTOR_STATE_ANIMATING)) {
+        if (!animator_is_running(&actor->animator)) {
+            CLEAR_FLAG(actor->state, ACTOR_STATE_ANIMATING);
+        }
+    }
+
     return true;
+}
+
+void cutscene_actor_run_animation(struct cutscene_actor* actor, const char* name, bool loop) {
+    if (*name == '\0') {
+        CLEAR_FLAG(actor->state, ACTOR_STATE_ANIMATING);
+        return;
+    }
+
+    animation_clip_t* clip = animation_set_find_clip(actor->animation_set, name);
+
+    if (!clip) {
+        return;
+    }
+
+    animator_run_clip(&actor->animator, clip, 0.0f, loop);
+    actor->animate_speed = 1.0f;
+    SET_FLAG(actor->state, ACTOR_STATE_ANIMATING);
 }
