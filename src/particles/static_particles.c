@@ -41,7 +41,7 @@ static_particles_t* static_particles_load(uint16_t* count, FILE* file) {
 
 void static_particles_release(static_particles_t* particles, int count) {
     for (int i = 0; i < count; i += 1) {
-        material_release(particles[i].material);
+        material_cache_release(particles[i].material);
     }
     if (count) {
         free(particles[0].particles.particles);
