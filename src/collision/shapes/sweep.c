@@ -3,6 +3,8 @@
 #include "../../math/minmax.h"
 #include "../dynamic_object.h"
 
+#include <libdragon.h>
+
 void sweep_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
     union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
 
@@ -44,17 +46,17 @@ void sweep_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box)
     for (int i = 0; i < 3; i += 1) {
         struct Vector2 extent;
         if (i == 2) {
-            extent = gRight2;
+            extent = gUp2;
         } else {
-            extent.x = shape_data->sweep.range.x;
-            extent.y = i == 0 ? shape_data->sweep.range.y : -shape_data->sweep.range.y;
+            extent.x = i == 0 ? shape_data->sweep.range.x : -shape_data->sweep.range.x;
+            extent.y = shape_data->sweep.range.y;
         }
         vector2ComplexMul(rotation, &extent, &extent);
-        box->min.x = MIN(box->min.x, extent.y);
-        box->min.z = MIN(box->min.z, extent.x);
+        box->min.x = MIN(box->min.x, extent.x);
+        box->min.z = MIN(box->min.z, extent.y);
 
-        box->max.x = MAX(box->max.x, extent.y);
-        box->max.z = MAX(box->max.z, extent.x);
+        box->max.x = MAX(box->max.x, extent.x);
+        box->max.z = MAX(box->max.z, extent.y);
     }
 
     box->min.x *= shape_data->sweep.radius;
