@@ -12,7 +12,7 @@ static struct elemental_sword_definition swing_definitions[] = {
         .damage_source = {
             .amount = 10.0f,
             .type = DAMAGE_TYPE_FIRE | DAMAGE_TYPE_KNOCKBACK,
-            .knockback_strength = 1.0f,
+            .knockback_strength = 2.0f,
         },
         .animation = SPELL_ANIMATION_SWING,
         .sword_length = 1.0f,
@@ -29,7 +29,7 @@ static struct elemental_sword_definition spin_definitions[] = {
         .damage_source = {
             .amount = 10.0f,
             .type = DAMAGE_TYPE_FIRE | DAMAGE_TYPE_KNOCKBACK,
-            .knockback_strength = 1.0f,
+            .knockback_strength = 3.0f,
         },
         .animation = SPELL_ANIMATION_SPIN,
         .sword_length = 1.5f,
