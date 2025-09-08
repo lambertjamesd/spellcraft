@@ -18,6 +18,7 @@ struct animation_clip_header {
     uint16_t has_events: 1;
     uint16_t has_image_frames: 1;
     uint16_t has_prim_color: 1;
+    uint16_t has_env_color: 1;
 };
 
 #define EXPECTED_HEADER 0x414E494D
@@ -82,6 +83,7 @@ struct animation_set* animation_set_load(const char* filename) {
         clip->has_events = clip_headers[i].has_events;
         clip->has_image_frames = clip_headers[i].has_image_frames;
         clip->has_prim_color = clip_headers[i].has_prim_color;
+        clip->has_env_color = clip_headers[i].has_env_color;
         clip->frames_rom_address = start_address + address_offset;
 
         clip->used_bone_attributes = attributes_buffer;

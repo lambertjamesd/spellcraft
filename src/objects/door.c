@@ -123,7 +123,7 @@ void door_update(void* data) {
         door->preview_room = ROOM_NONE;
     }
     
-    door->is_unlocked = door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
+    door->is_unlocked = true;// door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
 }
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id) {
@@ -161,6 +161,7 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
 
     animator_init(&door->animator, door->renderable.armature.bone_count);
     update_add(door, door_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
+    animator_run_clip(&door->animator, door->animations.close, animation_clip_get_duration(door->animations.close), false);
 
     door->is_unlocked = door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
 }

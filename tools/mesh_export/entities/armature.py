@@ -77,6 +77,12 @@ class ArmatureAttributes():
         if self.has_image_frames:
             result += 2
 
+        if self.has_prim_color:
+            result += 4
+
+        if self.has_env_color:
+            result += 4
+
         return result
     
     def determine_used_flags(self) -> int:
@@ -172,6 +178,9 @@ class PackedColorData():
         self.b = int((color[2] ** 0.454545) * 255)
         self.a = int(color[3] * 255)
 
+    def write_to_file(self, file):
+        file.write(struct.pack('>BBBB', self.r, self.g, self.b, self.a))
+
 class PackedFrame():
     def __init__(self, pose: list[PackedArmatureData], events: PackedEventData, image_data: PackedImageFrameData, prim_color: PackedColorData | None, env_color: PackedColorData | None):
         self.pose: list[PackedArmatureData] = pose
@@ -220,7 +229,10 @@ class PackedAnimation():
                 file.write(frame.events.pack().to_bytes(2, 'big'))
             if attributes.has_image_frames:
                 file.write(struct.pack('>BB', frame.image_data.image_frame_0 or 0, frame.image_data.image_frame_1 or 0))
-
+            if attributes.has_prim_color:
+                frame.prim_color.write_to_file(file)
+            if attributes.has_env_color:
+                frame.env_color.write_to_file(file)
 
 class ArmatureBone:
     def __init__(self, index: int, bone: bpy.types.Bone, pose_bone: bpy.types.PoseBone, armature_transform: mathutils.Matrix):

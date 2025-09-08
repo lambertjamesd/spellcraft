@@ -173,12 +173,12 @@ void animator_blend_transform(struct animator* animator, int16_t* frame, struct 
 
     if (animator->current_clip->has_prim_color) {
         memcpy(&animator->prim_color, frame, sizeof(color_t));
-        frame += sizeof(color_t) / sizeof(uint16_t);
+        frame += 2;
     }
 
     if (animator->current_clip->has_env_color) {
         memcpy(&animator->env_color, frame, sizeof(color_t));
-        frame += sizeof(color_t) / sizeof(uint16_t);
+        frame += 2;
     }
 }
 
@@ -320,6 +320,8 @@ void animator_update(struct animator* animator, struct armature* armature, float
     animator_step(animator, delta_time);
     armature->image_frame_0 = animator->image_frame_0;
     armature->image_frame_1 = animator->image_frame_1;
+    armature->prim_color = animator->prim_color;
+    armature->env_color = animator->env_color;
 }
 
 void animator_run_clip(struct animator* animator, struct animation_clip* clip, float start_time, bool loop) {
