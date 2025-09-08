@@ -11,6 +11,8 @@ struct TransformSingleAxis {
     float scale;
 };
 
+typedef struct TransformSingleAxis transform_sa_t;
+
 void transformSaInitIdentity(struct TransformSingleAxis* transform);
 void transformSaInit(struct TransformSingleAxis* transform, struct Vector3* pos, struct Vector2* rot, float scale);
 void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix);

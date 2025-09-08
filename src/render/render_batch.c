@@ -93,6 +93,14 @@ struct render_batch_element* render_batch_add_tmesh(
         if (armature->image_frame_0 != NO_IMAGE_FRAME) {
             ++attr_count;
         }
+
+        if (armature->has_prim_color) {
+            attr_count += 1;
+        }
+
+        if (armature->has_env_color) {
+            attr_count += 1;
+        }
     }
 
     if (attr_count) {
@@ -166,6 +174,18 @@ struct render_batch_element* render_batch_add_tmesh(
             attr->type = ELEMENT_ATTR_IMAGE;
             attr->offset = 0;
             attr->image.sprite = armature->definition->frames[armature->image_frame_0];
+            ++attr;
+        }
+
+        if (armature->has_prim_color) {
+            attr->type = ELEMENT_ATTR_PRIM_COLOR;
+            attr->color = armature->prim_color;
+            ++attr;
+        }
+
+        if (armature->has_env_color) {
+            attr->type = ELEMENT_ATTR_ENV_COLOR;
+            attr->color = armature->env_color;
             ++attr;
         }
     }
@@ -433,7 +453,10 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         rdpq_set_lookup_address(attr->offset+1, (void*)PhysicalAddr(attr->image.sprite->data));
                         break;
                     case ELEMENT_ATTR_PRIM_COLOR:
-                        rdpq_set_prim_color(attr->prim.color);
+                        rdpq_set_prim_color(attr->color);
+                        break;
+                    case ELEMENT_ATTR_ENV_COLOR:
+                        rdpq_set_env_color(attr->color);
                         break;
                     case ELEMENT_ATTR_TRANSFORM:
                         t3d_matrix_push(attr->transform);

@@ -23,9 +23,9 @@ void burning_thorns_update(void* data) {
     thorns->burn_time -= fixed_time_step;
 
     uint8_t color_value = (uint8_t)((255.0f / BURN_TIME) * thorns->burn_time);
-    thorns->attrs[0].prim.color.r = color_value;
-    thorns->attrs[0].prim.color.g = color_value;
-    thorns->attrs[0].prim.color.b = color_value;
+    thorns->attrs[0].color.r = color_value;
+    thorns->attrs[0].color.g = color_value;
+    thorns->attrs[0].color.b = color_value;
 
     if (thorns->burn_time <= 0.0f) {
         entity_despawn(thorns->health.entity_id);
@@ -49,7 +49,7 @@ void burning_thorns_init(burning_thorns_t* thorns, struct burning_thorns_definit
     render_scene_add_renderable(&thorns->renderable, 1.4f);
 
     thorns->attrs[0].type = ELEMENT_ATTR_PRIM_COLOR;
-    thorns->attrs[0].prim.color = (color_t){255, 255, 255, 255};
+    thorns->attrs[0].color = (color_t){255, 255, 255, 255};
     thorns->attrs[1].type = ELEMENT_ATTR_NONE;
 
     thorns->renderable.attrs = thorns->attrs;

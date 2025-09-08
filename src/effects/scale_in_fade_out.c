@@ -45,7 +45,7 @@ void scale_in_fade_out_render(void* data, struct render_batch* batch) {
 
     element_attr_t attrs[2];
     attrs[0].type = ELEMENT_ATTR_PRIM_COLOR;
-    attrs[0].prim.color = (color_t){255, 255, 255, (uint8_t)(255.0f * alpha)};
+    attrs[0].color = (color_t){255, 255, 255, (uint8_t)(255.0f * alpha)};
     attrs[1].type = ELEMENT_ATTR_NONE;
 
     render_batch_add_tmesh(batch, effect->mesh, mtxfp, NULL, NULL, attrs);

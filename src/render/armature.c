@@ -4,6 +4,7 @@
 #include <memory.h>
 #include <math.h>
 #include "../math/matrix.h"
+#include "../util/flags.h"
 
 #define POSITION_SCALE      (1.0f / 256.0f)
 #define QUATERNION_SCALE    (1.0f / 32767.0f)
@@ -35,6 +36,8 @@ void armature_definition_init(struct armature_definition* definition, int bone_c
         definition->parent_linkage = 0;
         definition->default_pose = 0;
     }
+
+    definition->flags = 0;
 }
 
 void armature_definition_destroy(struct armature_definition* definition) {
@@ -49,6 +52,9 @@ void armature_init(struct armature* armature, struct armature_definition* defini
     armature->definition = definition;
     armature->image_frame_0 = NO_IMAGE_FRAME;
     armature->image_frame_1 = NO_IMAGE_FRAME;
+
+    armature->has_prim_color = HAS_FLAG(definition->flags, ARMATURE_DEF_FLAGS_HAS_PRIM);
+    armature->has_env_color = HAS_FLAG(definition->flags, ARMATURE_DEF_FLAGS_HAS_ENV);
 
     if (armature->bone_count) {
         armature->pose = malloc(sizeof(struct Transform) * definition->bone_count);

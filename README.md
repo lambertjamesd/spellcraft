@@ -73,6 +73,7 @@ Have earth + life be recast
 
 ## TODO
 
+- coyote time
 - z targeting
 - direct camera control
 - load on background thread

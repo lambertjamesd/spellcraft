@@ -45,6 +45,7 @@ enum element_attr_type {
     ELEMENT_ATTR_POSE,
     ELEMENT_ATTR_IMAGE,
     ELEMENT_ATTR_PRIM_COLOR,
+    ELEMENT_ATTR_ENV_COLOR,
     ELEMENT_ATTR_TRANSFORM,
     ELEMENT_ATTR_TRANSFORM_LIST,
 };
@@ -59,9 +60,7 @@ struct element_attr {
         struct {
             sprite_t* sprite;
         } image;
-        struct {
-            color_t color;
-        } prim;
+        color_t color;
         T3DMat4FP* transform;
         T3DMat4FP** transform_list;
     };
@@ -95,6 +94,8 @@ struct render_batch {
     struct render_batch_element elements[RENDER_BATCH_MAX_SIZE];
     short element_count;
 };
+
+typedef struct render_batch render_batch_t;
 
 void render_batch_init(struct render_batch* batch, struct Transform* camera_transform, struct frame_memory_pool* pool);
 

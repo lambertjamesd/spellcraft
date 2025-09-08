@@ -123,19 +123,19 @@ Progress indiciators
 | Fire    |           | Fire sword                       |                  | F M       |
 | Fire    | I         | Shoot lightning                  |                  | F M       |
 | Fire    | I A       | Lightning push (teleports)       |                  | F         |
-| Fire    | I A E     | Lightning push out (teleports)   |                  | F         |
+| Fire    | I A E     | Thunderstorm (also lifts enemies)|                  | F         |
 | Fire    | I E       | Lightning storm (circle aeo)     | On kill          | F M       |
 | Fire    | A         | Fire push                        |                  | F M       |
 | Fire    | A E       | Fire push outward                |                  | F         |
 | Fire    | E         | Sword spin attack                | On kill          | F M       |
-| Ice     |           | Shoot ice                        | On ice shatter   | F         |
-| Ice     | F         | Shoot water                      | On contact       | F         |
-| Ice     | F A       | Water push                       |                  | F M       |
+| Ice     |           | Ice sword                        | On ice shatter   | F         |
+| Ice     | F         | Water gun (no damage)            | On contact       | F         |
+| Ice     | F A       | Tidal wave                       |                  | F M       |
 | Ice     | F A E     | Hurricane                        |                  | F         |
-| Ice     | F E       | Water explosion                  | On contact       | F         |
+| Ice     | F E       | Water sprinkler                  | On contact       | F         |
 | Ice     | A         | Ice pull                         | On impact        | F M       |
 | Ice     | A E       | Ice pull inward                  | On ice shatter   | F M       |
-| Ice     | E         | AEO explosion                    | On ice shatter   | F         |
+| Ice     | E         | AEO ice explosion (spikes of ice)| On ice shatter   | F         |
 | Earth   |           | Shield                           | On parry         | F         |
 | Earth   | F         | Fire sheild                      | On parry         | F         |
 | Earth   | F I       | Lightning sheild                 | On taking damage |           |
@@ -148,10 +148,10 @@ Progress indiciators
 | Air     | F         | Fire dash                        | On dash end      | F         |
 | Air     | F I       | Lightning dash (teleports)       | On teleport end  | F         |
 | Air     | F I E     | Lightning jump (teleports)       | On teleport end  | F         |
-| Air     | F E       | Fire jump (or dop when in air)   | On jump release (or ground impact)  | F         |
+| Air     | F E       | Fire jump (or drop when in air)  | On jump release (or ground impact)  | F         |
 | Air     | I         | ice dash                         |                  | F         |
 | Air     | I E       | instant stop                     |                  | F         |
-| Air     | E         | jump                             |                  | F         |
+| Air     | E         | slow hover                       |                  | F         |
 
 Adding the life rune will spawn a copy of the player (or maybe a small sprite) that uses the spell instead of the player
 

@@ -32,6 +32,8 @@ struct damage_info {
     struct Vector3 direction;
 };
 
+typedef struct damage_info damage_info_t;
+
 #define MAX_DAMAGED_SET_SIZE    8
 
 struct damaged_set {

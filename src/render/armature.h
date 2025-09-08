@@ -19,6 +19,10 @@ struct armature {
     uint8_t image_frame_1;
     // frames can trigger events
     uint16_t active_events;
+    uint16_t has_prim_color: 1;
+    uint16_t has_env_color: 1;
+    color_t prim_color;
+    color_t env_color;
 };
 
 void armature_definition_init(struct armature_definition* definition, int boune_count);

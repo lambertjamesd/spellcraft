@@ -170,6 +170,16 @@ void animator_blend_transform(struct animator* animator, int16_t* frame, struct 
         animator->image_frame_1 = (uint8_t)(frames & 0xFF);
         frame += 1;
     }
+
+    if (animator->current_clip->has_prim_color) {
+        memcpy(&animator->prim_color, frame, sizeof(color_t));
+        frame += sizeof(color_t) / sizeof(uint16_t);
+    }
+
+    if (animator->current_clip->has_env_color) {
+        memcpy(&animator->env_color, frame, sizeof(color_t));
+        frame += sizeof(color_t) / sizeof(uint16_t);
+    }
 }
 
 void animator_read_transform_with_weight(struct animator* animator, struct Transform* transforms, float weight) {

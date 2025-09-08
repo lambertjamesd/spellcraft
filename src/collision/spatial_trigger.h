@@ -29,6 +29,8 @@ struct spatial_trigger_type {
     union spatial_trigger_data data;
 };
 
+typedef struct spatial_trigger_type spatial_trigger_type_t;
+
 struct spatial_trigger {
     struct TransformSingleAxis* transform;
     struct spatial_trigger_type* type;
@@ -38,6 +40,9 @@ struct spatial_trigger {
     uint16_t collision_group;
 };
 
+typedef struct spatial_trigger spatial_trigger_t;
+
+#define SPATIAL_TRIGGER_CYLINDER(radius, half_height)   .type = SPATIAL_TRIGGER_CYLINDER, .data = {.cylinder = {radius, half_height}}
 #define SPATIAL_TRIGGER_BOX(x, y, z) .type = SPATIAL_TRIGGER_BOX, .data = {.box = {.half_size = {x,y,z}}}
 #define SPATIAL_TRIGGER_WEDGE(radius, half_height, angle_x, angle_y) .type = SPATIAL_TRIGGER_WEDGE, .data = {.wedge = {radius, half_height, {angle_x, angle_y}}}
 

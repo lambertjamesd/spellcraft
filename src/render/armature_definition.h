@@ -6,6 +6,9 @@
 
 #define ARM_NO_PARENT_LINK  0xff
 
+#define ARMATURE_DEF_FLAGS_HAS_PRIM     (1 << 15)
+#define ARMATURE_DEF_FLAGS_HAS_ENV     (1 << 14)
+
 struct armature_packed_transform {
     int16_t x, y, z;
     int16_t rx, ry, rz; // w is derived from the other values
@@ -19,6 +22,7 @@ struct armature_definition {
     uint8_t image_frames_0;
     uint8_t image_frames_1;
     sprite_t** frames;
+    uint16_t flags;
 };
 
 #endif

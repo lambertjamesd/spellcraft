@@ -42,7 +42,7 @@ void hit_effect_render(void* data, struct render_batch* batch) {
 
     element_attr_t attrs[2];
     attrs[0].type = ELEMENT_ATTR_PRIM_COLOR;
-    attrs[0].prim.color = (color_t){0, 255, 0, alpha};
+    attrs[0].color = (color_t){0, 255, 0, alpha};
     attrs[1].type = ELEMENT_ATTR_NONE;
 
     render_batch_add_tmesh(batch, effect_assets_get()->hit_effect, mtxfp, NULL, NULL, attrs);

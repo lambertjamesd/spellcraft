@@ -22,6 +22,8 @@ struct animator {
     uint16_t events;
     uint8_t image_frame_0;
     uint8_t image_frame_1;
+    color_t prim_color;
+    color_t env_color;
 };
 
 void animator_init(struct animator* animator, int bone_count);

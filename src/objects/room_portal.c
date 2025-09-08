@@ -37,7 +37,7 @@ void room_portal_update(void* data) {
         if (alpha < 0.0f) {
             alpha = 0.0f;
         }
-        portal->attrs[0].prim.color = (color_t){0, 0, 0, (uint8_t)(255.0f * alpha)};
+        portal->attrs[0].color = (color_t){0, 0, 0, (uint8_t)(255.0f * alpha)};
     }
 
     if (portal->last_player_distance) {
@@ -51,7 +51,7 @@ void room_portal_update(void* data) {
             }
         } else if (did_fade && !should_fade) {
             scene_hide_room(current_scene, room_portal_other_room(portal, portal->current_room));
-            portal->attrs[0].prim.color = (color_t){0, 0, 0, 255};
+            portal->attrs[0].color = (color_t){0, 0, 0, 255};
         }
     
         if (side_a != last_side_a &&
@@ -77,7 +77,7 @@ void room_portal_init(struct room_portal* portal, struct room_portal_definition*
     portal->room_b = definition->room_b;
 
     portal->attrs[0].type = ELEMENT_ATTR_PRIM_COLOR;
-    portal->attrs[0].prim.color = (color_t){0, 0, 0, 255};
+    portal->attrs[0].color = (color_t){0, 0, 0, 255};
     portal->attrs[1].type = ELEMENT_ATTR_NONE;
 
     portal->renderable.attrs = portal->attrs;

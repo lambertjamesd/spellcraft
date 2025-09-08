@@ -63,6 +63,7 @@ class ArmatureAttributes():
         self.has_events: bool = False
         self.has_image_frames: bool = False
         self.has_prim_color: bool = False
+        self.has_env_color: bool = False
 
     def determine_attribute_list_size(self) -> int:
         result = 0
@@ -89,6 +90,9 @@ class ArmatureAttributes():
 
         if self.has_prim_color:
             result |= 1 << 13
+            
+        if self.has_env_color:
+            result |= 1 << 12
 
         return result
 
@@ -161,18 +165,27 @@ class PackedImageFrameData():
         self.image_frame_0 = None
         self.image_frame_1 = None
 
+class PackedColorData():
+    def __init__(self, color: list[float]):
+        self.r = int((color[0] ** 0.454545) * 255)
+        self.g = int((color[1] ** 0.454545) * 255)
+        self.b = int((color[2] ** 0.454545) * 255)
+        self.a = int(color[3] * 255)
+
 class PackedFrame():
-    def __init__(self, pose: list[PackedArmatureData], events: PackedEventData, image_data: PackedImageFrameData):
+    def __init__(self, pose: list[PackedArmatureData], events: PackedEventData, image_data: PackedImageFrameData, prim_color: PackedColorData | None, env_color: PackedColorData | None):
         self.pose: list[PackedArmatureData] = pose
         self.events: PackedEventData = events
         self.image_data: PackedImageFrameData = image_data
+        self.prim_color: PackedColorData | None = prim_color
+        self.env_color: PackedColorData | None = env_color
 
 class PackedAnimation():
     def __init__(self):
         self._frames: list[PackedFrame] = []
 
-    def add_frame(self, frame: list[PackedArmatureData], events: PackedEventData, image_data: PackedImageFrameData):
-        self._frames.append(PackedFrame(frame, events, image_data))
+    def add_frame(self, frame: list[PackedArmatureData], events: PackedEventData, image_data: PackedImageFrameData, prim_color: PackedColorData | None, env_color: PackedColorData | None):
+        self._frames.append(PackedFrame(frame, events, image_data, prim_color, env_color))
 
     def frame_count(self):
         return len(self._frames)
@@ -191,6 +204,10 @@ class PackedAnimation():
                 result.has_events = True
             if frame.image_data.image_frame_0 != None or frame.image_data.image_frame_1 != None:
                 result.has_image_frames = True
+            if frame.prim_color:
+                result.has_prim_color = True
+            if frame.env_color:
+                result.has_env_color = True
 
         return result
     
@@ -373,6 +390,18 @@ class ArmatureData:
 
         return result
 
+    def gemerate_prim_frame_data(self) -> PackedColorData:
+        if 'prim_color' in self.obj:
+            return PackedColorData(self.obj['prim_color'])
+
+        return None
+        
+    def gemerate_env_frame_data(self) -> PackedColorData:
+        if 'env_color' in self.obj:
+            return PackedColorData(self.obj['env_color'])
+
+        return None
+
 def get_channels(group: bpy.types.ActionGroup, suffix: str) -> list[bpy.types.FCurve]:
     result = []
 
@@ -430,3 +459,14 @@ def write_armature(file, arm: ArmatureData | None, settings: export_settings.Exp
         encoded = image.encode()
         file.write(len(encoded).to_bytes(1, 'big'))
         file.write(encoded)
+
+    flags = 0
+
+    if 'prim_color' in arm.obj:
+        flags |= 1 << 15
+
+    if 'env_color' in arm.obj:
+        flags |= 1 << 14
+
+    file.write(struct.pack('>H', flags))
+    

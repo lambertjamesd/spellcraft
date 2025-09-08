@@ -59,6 +59,41 @@ void tmesh_load_attachment(struct armature_attatchment* attatchment, FILE* file)
     data_cache_hit_writeback_invalidate(&attatchment->local_transform, sizeof(T3DMat4FP));
 }
 
+void tmesh_load_armature(struct tmesh* tmesh, FILE* file) {
+    uint16_t bone_count;
+    fread(&bone_count, 2, 1, file);
+
+    armature_definition_init(&tmesh->armature, bone_count);
+    fread(tmesh->armature.parent_linkage, 1, bone_count, file);
+    fread(tmesh->armature.default_pose, sizeof(struct armature_packed_transform), bone_count, file);
+
+    if (tmesh->armature.bone_count) {
+        fread(&tmesh->armature.image_frames_0, 1, 1, file);
+        fread(&tmesh->armature.image_frames_1, 1, 1, file);
+    } else {
+        tmesh->armature.image_frames_0 = 0;
+        tmesh->armature.image_frames_1 = 0;
+    }
+
+    int total_images = tmesh->armature.image_frames_0 + tmesh->armature.image_frames_1;
+
+    if (total_images) {
+        tmesh->armature.frames = malloc(sizeof(sprite_t*) * total_images);
+        for (int i = 0; i < total_images; i += 1) {
+            uint8_t filename_len;
+            fread(&filename_len, 1, 1, file);
+            char filename[filename_len + 1];
+            fread(filename, filename_len, 1, file);
+            filename[filename_len] = '\0';
+            tmesh->armature.frames[i] = sprite_cache_load(filename);
+        }
+    } else {
+        tmesh->armature.frames = NULL;
+    }
+
+    fread(&tmesh->armature.flags, sizeof(uint16_t), 1, file);
+}
+
 void tmesh_load(struct tmesh* tmesh, FILE* file) {
     int header;
 
@@ -91,38 +126,7 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
         tmesh->transition_materials = NULL;
     }
 
-    // load armature
-
-    uint16_t bone_count;
-    fread(&bone_count, 2, 1, file);
-
-    armature_definition_init(&tmesh->armature, bone_count);
-    fread(tmesh->armature.parent_linkage, 1, bone_count, file);
-    fread(tmesh->armature.default_pose, sizeof(struct armature_packed_transform), bone_count, file);
-
-    if (tmesh->armature.bone_count) {
-        fread(&tmesh->armature.image_frames_0, 1, 1, file);
-        fread(&tmesh->armature.image_frames_1, 1, 1, file);
-    } else {
-        tmesh->armature.image_frames_0 = 0;
-        tmesh->armature.image_frames_1 = 0;
-    }
-
-    int total_images = tmesh->armature.image_frames_0 + tmesh->armature.image_frames_1;
-
-    if (total_images) {
-        tmesh->armature.frames = malloc(sizeof(sprite_t*) * total_images);
-        for (int i = 0; i < total_images; i += 1) {
-            uint8_t filename_len;
-            fread(&filename_len, 1, 1, file);
-            char filename[filename_len + 1];
-            fread(filename, filename_len, 1, file);
-            filename[filename_len] = '\0';
-            tmesh->armature.frames[i] = sprite_cache_load(filename);
-        }
-    } else {
-        tmesh->armature.frames = NULL;
-    }
+    tmesh_load_armature(tmesh, file);
 
     // load attatchments
     fread(&tmesh->attatchment_count, 2, 1, file);
