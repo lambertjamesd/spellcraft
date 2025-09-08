@@ -64,16 +64,16 @@ void tmesh_load_armature(struct tmesh* tmesh, FILE* file) {
     fread(&bone_count, 2, 1, file);
 
     armature_definition_init(&tmesh->armature, bone_count);
+
+    if (!bone_count) {
+        return;
+    }
+
     fread(tmesh->armature.parent_linkage, 1, bone_count, file);
     fread(tmesh->armature.default_pose, sizeof(struct armature_packed_transform), bone_count, file);
 
-    if (tmesh->armature.bone_count) {
-        fread(&tmesh->armature.image_frames_0, 1, 1, file);
-        fread(&tmesh->armature.image_frames_1, 1, 1, file);
-    } else {
-        tmesh->armature.image_frames_0 = 0;
-        tmesh->armature.image_frames_1 = 0;
-    }
+    fread(&tmesh->armature.image_frames_0, 1, 1, file);
+    fread(&tmesh->armature.image_frames_1, 1, 1, file);
 
     int total_images = tmesh->armature.image_frames_0 + tmesh->armature.image_frames_1;
 

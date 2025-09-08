@@ -37,6 +37,9 @@ void armature_definition_init(struct armature_definition* definition, int bone_c
         definition->default_pose = 0;
     }
 
+    definition->image_frames_0 = 0;
+    definition->image_frames_1 = 0;
+
     definition->flags = 0;
 }
 
