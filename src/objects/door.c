@@ -123,7 +123,7 @@ void door_update(void* data) {
         door->preview_room = ROOM_NONE;
     }
     
-    door->is_unlocked = true;// door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
+    door->is_unlocked = door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
 }
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id) {

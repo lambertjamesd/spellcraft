@@ -40,6 +40,8 @@ void armature_definition_init(struct armature_definition* definition, int bone_c
     definition->image_frames_0 = 0;
     definition->image_frames_1 = 0;
 
+    definition->frames = NULL;
+
     definition->flags = 0;
 }
 
