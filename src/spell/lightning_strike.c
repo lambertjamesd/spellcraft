@@ -7,9 +7,9 @@
 #include "assets.h"
 #include <t3d/t3dmath.h>
 
-#define STRIKE_DELAY 0.5f
+#define STRIKE_DELAY 0.25f
 #define STRIKE_RANGE 0.5f
-#define STRIKE_LIFETIME 1.5f
+#define STRIKE_LIFETIME 0.75f
 
 static damage_info_t strike_damage = {
     .amount = 10.0f,
@@ -18,47 +18,27 @@ static damage_info_t strike_damage = {
     .type = DAMAGE_TYPE_LIGHTING,
 };
 
-void lightning_strike_start(struct lightning_strike* strike, struct Vector3* position, float delay, entity_id target) {
+void lightning_strike_start(struct lightning_strike* strike, struct Vector3* position) {
     strike->position = *position;
-    strike->timer = -delay;
-    strike->target = target;
+    strike->timer = 0.0f;
 }
 
-void lightning_strike_damage_target(struct lightning_strike* strike) {
-    health_t* health = health_get(strike->target);
-    
-    if (!health) {
-        return;
-    }
-
-    dynamic_object_t* obj = collision_scene_find_object(strike->target);
-    
-    if (obj && vector3DistSqrd(obj->position, &strike->position) > STRIKE_RANGE * STRIKE_RANGE) {
-        // target moved out of range
-        return;
-    }
-
-    health_damage(health, &strike_damage);
-}
-
-void lightning_strike_update(struct lightning_strike* strike) {
+bool lightning_strike_update(struct lightning_strike* strike) {
     float start_time = strike->timer;
     strike->timer += fixed_time_step;
 
-    if (strike->timer >= STRIKE_DELAY && start_time < STRIKE_DELAY) {
-
-    }
+    return strike->timer >= STRIKE_DELAY && start_time < STRIKE_DELAY;
 }
 
 void lightning_strike_render(struct lightning_strike* strike, render_batch_t* batch) {
-    if (strike->target < STRIKE_DELAY || strike->target > STRIKE_LIFETIME) {
+    if (strike->timer < STRIKE_DELAY || strike->timer > STRIKE_LIFETIME) {
         return;
     }
 
     transform_sa_t transform = {
         .position = strike->position,
         .rotation = gRight2,
-        .scale = 1.0f,
+        .scale = 2.0f,
     };
 
     T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &transform);

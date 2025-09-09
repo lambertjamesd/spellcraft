@@ -9,24 +9,26 @@
 
 #define LIGHTNING_STORM_ACTIVE_STRIKE_COUNT  5
 
-#define MAX_STRIKE_COUNT                     16
+#define LIGHTNING_STORM_MAX_STRIKE_COUNT                     16
 
 struct lightning_storm {
     transform_sa_t transform;
     struct spell_data_source* data_source;
     spatial_trigger_t trigger;
     lightning_strike_t strikes[LIGHTNING_STORM_ACTIVE_STRIKE_COUNT];
-    uint8_t next_strike;
-    uint8_t last_strike;
-    uint8_t remaining_strike_count;
-    uint8_t next_target_index;
+    uint8_t first_active_strike;
+    uint8_t next_target_strike;
+    uint8_t active_strike_count;
     uint8_t total_target_count;
-    entity_id targets[MAX_STRIKE_COUNT];
+    float strike_timer;
+    entity_id targets[LIGHTNING_STORM_MAX_STRIKE_COUNT];
 };
 
-void lightning_storm_init(struct lightning_storm* storm, struct spell_data_source* source, struct spell_event_options event_options);
-void lightning_storm_destroy(struct lightning_storm* storm);
+typedef struct lightning_storm lightning_storm_t;
 
-bool lightning_storm_update(struct lightning_storm* storm);
+void lightning_storm_init(lightning_storm_t* storm, struct spell_data_source* source, struct spell_event_options event_options);
+void lightning_storm_destroy(lightning_storm_t* storm);
+
+bool lightning_storm_update(lightning_storm_t* storm);
 
 #endif

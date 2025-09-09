@@ -15,4 +15,6 @@ struct contact {
     enum surface_type surface_type;
 };
 
+typedef struct contact contact_t;
+
 #endif
