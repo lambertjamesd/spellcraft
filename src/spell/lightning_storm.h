@@ -7,15 +7,16 @@
 #include "../collision/spatial_trigger.h"
 #include "./lightning_strike.h"
 
-#define LIGHTNING_STORM_ACTIVE_STRIKE_COUNT  5
+#define LIGHTNING_STORM_MAX_ACTIVE_STRIKE_COUNT  8
 
 #define LIGHTNING_STORM_MAX_STRIKE_COUNT                     16
 
 struct lightning_storm {
     transform_sa_t transform;
+    transform_sa_t trigger_transform;
     struct spell_data_source* data_source;
     spatial_trigger_t trigger;
-    lightning_strike_t strikes[LIGHTNING_STORM_ACTIVE_STRIKE_COUNT];
+    lightning_strike_t strikes[LIGHTNING_STORM_MAX_ACTIVE_STRIKE_COUNT];
     uint8_t first_active_strike;
     uint8_t next_target_strike;
     uint8_t active_strike_count;

@@ -11,8 +11,8 @@
 static spatial_trigger_type_t lightning_storm_shape = {SPATIAL_TRIGGER_CYLINDER(2.0f, 2.0f)};
 static spatial_trigger_type_t lightning_storm_damage_shape = {SPATIAL_TRIGGER_CYLINDER(0.25f, 0.25f)};
 
-#define MIN_STRIKE_INTERVAL 0.125f
-#define MAX_STRIKE_INTERVAL 0.25f
+#define MIN_STRIKE_INTERVAL 0.1f
+#define MAX_STRIKE_INTERVAL 0.2f
 
 #define MTX_SCALE   4.0f
 
@@ -46,13 +46,7 @@ void lightning_storm_render(void* data, render_batch_t* batch) {
         strike = lightning_advance_strike(storm, strike);
     }
 
-    transform_sa_t transform = {
-        .position = storm->data_source->position,
-        .rotation = gRight2,
-        .scale = MTX_SCALE,
-    };
-
-    T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &transform);
+    T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &storm->transform);
 
     render_batch_element_t* element = render_batch_add_dynamic_particles(
         batch, 
@@ -60,18 +54,17 @@ void lightning_storm_render(void* data, render_batch_t* batch) {
         storm->active_strike_count, 
         &(struct render_batch_particle_size){
             .particle_size = 16,
-            .particle_scale_height = 0xFFFF,
+            .particle_scale_height = 0xBFFF,
             .particle_scale_width = 0xFFFF,
         }, 
         mtx
     );
-
     
     strike = &storm->strikes[storm->first_active_strike];
     TPXParticle* particle = element->particles.particles->particles;
     for (int i = 0; i < storm->active_strike_count; i += 2) {
         struct Vector3 offset;
-        vector3Sub(&strike->position, &storm->data_source->position, &offset);
+        vector3Sub(&strike->position, &storm->transform.position, &offset);
         offset.y += 2.0f;
 
         particle->posA[0] = lightning_pack_particle(offset.x);
@@ -86,7 +79,8 @@ void lightning_storm_render(void* data, render_batch_t* batch) {
         strike = lightning_advance_strike(storm, strike);
 
         if (i + 1 < storm->active_strike_count) {
-            vector3Sub(&strike->position, &storm->data_source->position, &offset);
+            vector3Sub(&strike->position, &storm->transform.position, &offset);
+            offset.y += 2.0f;
 
             particle->posB[0] = lightning_pack_particle(offset.x);
             particle->posB[1] = lightning_pack_particle(offset.y);
@@ -96,8 +90,6 @@ void lightning_storm_render(void* data, render_batch_t* batch) {
             particle->colorB[1] = 255;
             particle->colorB[2] = 255;
             particle->colorB[3] = 0;
-            
-            strike = lightning_advance_strike(storm, strike);
         } else {
             particle->posB[0] = 0;
             particle->posB[1] = 0;
@@ -108,12 +100,14 @@ void lightning_storm_render(void* data, render_batch_t* batch) {
             particle->colorB[2] = 255;
             particle->colorB[3] = 0;
         }
+        strike = lightning_advance_strike(storm, strike);
     }
 }
 
 void lightning_storm_init(lightning_storm_t* storm, struct spell_data_source* source, struct spell_event_options event_options) {
-    transformSaInit(&storm->transform, &source->position, &gRight2, 1.0f);
-    spatial_trigger_init(&storm->trigger, &storm->transform, &lightning_storm_shape, COLLISION_LAYER_DAMAGE_ENEMY);
+    transformSaInit(&storm->transform, &source->position, &gRight2, MTX_SCALE);
+    transformSaInit(&storm->trigger_transform, &source->position, &gRight2, 1.0f);
+    spatial_trigger_init(&storm->trigger, &storm->trigger_transform, &lightning_storm_shape, COLLISION_LAYER_DAMAGE_ENEMY);
     collision_scene_add_trigger(&storm->trigger);
 
     storm->data_source = spell_data_source_retain(source);
@@ -135,11 +129,11 @@ void lightning_storm_destroy(lightning_storm_t* storm) {
 }
 
 void lightning_storm_setup_target(lightning_storm_t* storm) {
-    storm->transform.position = storm->strikes[storm->next_target_strike].position;
+    storm->trigger_transform.position = storm->strikes[storm->next_target_strike].position;
 }
 
 void lightning_storm_start_strike(lightning_storm_t* storm) {
-    if (storm->active_strike_count >= LIGHTNING_STORM_ACTIVE_STRIKE_COUNT || storm->total_target_count == 0) {
+    if (storm->active_strike_count >= LIGHTNING_STORM_MAX_ACTIVE_STRIKE_COUNT || storm->total_target_count == 0) {
         return;
     }
 
@@ -147,8 +141,8 @@ void lightning_storm_start_strike(lightning_storm_t* storm) {
 
     uint8_t next_index = storm->first_active_strike + storm->active_strike_count;
 
-    if (next_index >= LIGHTNING_STORM_ACTIVE_STRIKE_COUNT) {
-        next_index -= LIGHTNING_STORM_ACTIVE_STRIKE_COUNT;
+    if (next_index >= LIGHTNING_STORM_MAX_ACTIVE_STRIKE_COUNT) {
+        next_index -= LIGHTNING_STORM_MAX_ACTIVE_STRIKE_COUNT;
     }
 
     lightning_strike_t* strike = &storm->strikes[next_index];
@@ -230,11 +224,11 @@ bool lightning_storm_update(lightning_storm_t* storm) {
         if (lightning_strike_update(strike) && next == strike) {
             // apply damage
 
-            ++storm->next_target_strike;
-            if (storm->next_target_strike == LIGHTNING_STORM_ACTIVE_STRIKE_COUNT) {
-                storm->next_target_strike = 0;
-            }
-            lightning_storm_setup_target(storm);
+            // ++storm->next_target_strike;
+            // if (storm->next_target_strike == LIGHTNING_STORM_MAX_ACTIVE_STRIKE_COUNT) {
+            //     storm->next_target_strike = 0;
+            // }
+            // lightning_storm_setup_target(storm);
         }
 
         ++strike;
@@ -243,13 +237,13 @@ bool lightning_storm_update(lightning_storm_t* storm) {
         }
     }
 
-    if (!lightning_strike_is_active(&storm->strikes[storm->first_active_strike])) {
+    if (storm->active_strike_count > 0 && !lightning_strike_is_active(&storm->strikes[storm->first_active_strike])) {
         ++storm->first_active_strike;
         --storm->active_strike_count;
-        if (storm->first_active_strike == LIGHTNING_STORM_ACTIVE_STRIKE_COUNT) {
+        if (storm->first_active_strike == LIGHTNING_STORM_MAX_ACTIVE_STRIKE_COUNT) {
             storm->first_active_strike = 0;
         }
     }
 
-    return storm->active_strike_count > 0;
+    return storm->active_strike_count > 0 || storm->total_target_count > 0;
 }

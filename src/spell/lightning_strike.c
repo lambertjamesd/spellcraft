@@ -64,5 +64,7 @@ float lightning_strike_cloud_size(struct lightning_strike* strike) {
         return 0.0f;
     }
 
+    // return 1.0f;
+
     return (STRIKE_LIFETIME - strike->timer) * (1.0f / (STRIKE_LIFETIME - STRIKE_DELAY));
 }
