@@ -24,6 +24,14 @@ enum render_batch_type {
     RENDER_BATCH_CALLBACK,
 };
 
+struct render_batch_particle_size {
+    // particle_size = WORLD_SCALE is a radius of 1
+    // when particle_scale = 0xFFFF and particle_size = 127
+    uint16_t particle_size;
+    uint16_t particle_scale_width;
+    uint16_t particle_scale_height;
+};
+
 struct render_batch_particles {
     TPXParticle* particles;
     uint16_t particle_count;
@@ -88,6 +96,8 @@ struct render_batch_element {
     };
 };
 
+typedef struct render_batch_element render_batch_element_t;
+
 struct render_batch {
     mat4x4 camera_matrix;
     struct frame_memory_pool* pool;
@@ -116,6 +126,14 @@ struct render_batch_element* render_batch_add_particles(
     struct render_batch* batch, 
     struct material* material, 
     render_batch_particles_t* particles, 
+    T3DMat4FP* mtx
+);
+
+struct render_batch_element* render_batch_add_dynamic_particles(
+    struct render_batch* batch, 
+    struct material* material, 
+    int count, 
+    const struct render_batch_particle_size* size,
     T3DMat4FP* mtx
 );
 

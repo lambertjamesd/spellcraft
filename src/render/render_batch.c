@@ -226,6 +226,32 @@ struct render_batch_element* render_batch_add_particles(
     return result;
 }
 
+
+struct render_batch_element* render_batch_add_dynamic_particles(
+    struct render_batch* batch, 
+    struct material* material, 
+    int count, 
+    const struct render_batch_particle_size* size,
+    T3DMat4FP* mtx
+) {
+    int aligned_count = (count + 1) & ~1;
+    render_batch_particles_t* particles = frame_malloc(batch->pool, ALIGN_16(sizeof(render_batch_particles_t)) + sizeof(TPXParticle) * (aligned_count >> 1));
+
+    TPXParticle* tpx_particles = (TPXParticle*)(ALIGN_16((int)(particles + 1)));
+    particles->particles = tpx_particles;
+    particles->particle_count = aligned_count;
+    particles->particle_size = size->particle_size;
+    particles->particle_scale_width = size->particle_scale_width;
+    particles->particle_scale_height = size->particle_scale_height;
+
+    if (aligned_count != count) {
+        TPXParticle* last = &tpx_particles[(aligned_count >> 1) - 1];
+        last->sizeB = 0;
+    }
+
+    return render_batch_add_particles(batch, material, particles, mtx);
+}
+
 mat4x4* render_batch_get_transform(struct render_batch* batch) {
     return frame_malloc(batch->pool, sizeof(mat4x4));
 }

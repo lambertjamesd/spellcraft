@@ -17,5 +17,6 @@ void lightning_strike_start(struct lightning_strike* strike, struct Vector3* pos
 bool lightning_strike_update(struct lightning_strike* strike);
 void lightning_strike_render(struct lightning_strike* strike, render_batch_t* batch);
 bool lightning_strike_is_active(struct lightning_strike* strike);
+float lightning_strike_cloud_size(struct lightning_strike* strike);
 
 #endif

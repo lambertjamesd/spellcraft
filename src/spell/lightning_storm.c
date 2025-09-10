@@ -3,24 +3,110 @@
 #include "../collision/collision_scene.h"
 #include "../render/render_batch.h"
 #include "../render/render_scene.h"
+#include "../render/defs.h"
 #include "../math/mathf.h"
 #include "../time/time.h"
+#include "assets.h"
 
 static spatial_trigger_type_t lightning_storm_shape = {SPATIAL_TRIGGER_CYLINDER(2.0f, 2.0f)};
 static spatial_trigger_type_t lightning_storm_damage_shape = {SPATIAL_TRIGGER_CYLINDER(0.25f, 0.25f)};
 
-#define MIN_STRIKE_INTERVAL 0.25f
-#define MAX_STRIKE_INTERVAL 0.35f
+#define MIN_STRIKE_INTERVAL 0.125f
+#define MAX_STRIKE_INTERVAL 0.25f
+
+#define MTX_SCALE   4.0f
+
+lightning_strike_t* lightning_advance_strike(lightning_storm_t* storm, lightning_strike_t* strike) {
+    ++strike;
+    if (strike == &storm->strikes[LIGHTNING_STORM_MAX_STRIKE_COUNT]) {
+        return storm->strikes;
+    }
+    return strike;
+}
+
+int8_t lightning_pack_particle(float value) {
+    float result = (1.0f / MTX_SCALE) * MODEL_SCALE * value;
+
+    if (result > 127.0f) {
+        return 127;
+    }
+
+    if (result < -128.0f) {
+        return -128;
+    }
+
+    return (uint8_t)result;
+}
 
 void lightning_storm_render(void* data, render_batch_t* batch) {
     lightning_storm_t* storm = (lightning_storm_t*)data;
     lightning_strike_t* strike = &storm->strikes[storm->first_active_strike];
     for (int i = 0; i < storm->active_strike_count; i += 1) {
         lightning_strike_render(strike, batch);
+        strike = lightning_advance_strike(storm, strike);
+    }
 
-        ++strike;
-        if (strike == &storm->strikes[LIGHTNING_STORM_MAX_STRIKE_COUNT]) {
-            strike = storm->strikes;
+    transform_sa_t transform = {
+        .position = storm->data_source->position,
+        .rotation = gRight2,
+        .scale = MTX_SCALE,
+    };
+
+    T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &transform);
+
+    render_batch_element_t* element = render_batch_add_dynamic_particles(
+        batch, 
+        spell_assets_get()->thunder_cloud, 
+        storm->active_strike_count, 
+        &(struct render_batch_particle_size){
+            .particle_size = 16,
+            .particle_scale_height = 0xFFFF,
+            .particle_scale_width = 0xFFFF,
+        }, 
+        mtx
+    );
+
+    
+    strike = &storm->strikes[storm->first_active_strike];
+    TPXParticle* particle = element->particles.particles->particles;
+    for (int i = 0; i < storm->active_strike_count; i += 2) {
+        struct Vector3 offset;
+        vector3Sub(&strike->position, &storm->data_source->position, &offset);
+        offset.y += 2.0f;
+
+        particle->posA[0] = lightning_pack_particle(offset.x);
+        particle->posA[1] = lightning_pack_particle(offset.y);
+        particle->posA[2] = lightning_pack_particle(offset.z);
+        particle->sizeA = (int8_t)(lightning_strike_cloud_size(strike) * 127.0f);
+        particle->colorA[0] = 255;
+        particle->colorA[1] = 255;
+        particle->colorA[2] = 255;
+        particle->colorA[3] = 0;
+
+        strike = lightning_advance_strike(storm, strike);
+
+        if (i + 1 < storm->active_strike_count) {
+            vector3Sub(&strike->position, &storm->data_source->position, &offset);
+
+            particle->posB[0] = lightning_pack_particle(offset.x);
+            particle->posB[1] = lightning_pack_particle(offset.y);
+            particle->posB[2] = lightning_pack_particle(offset.z);
+            particle->sizeB = (int8_t)(lightning_strike_cloud_size(strike) * 127.0f);
+            particle->colorB[0] = 255;
+            particle->colorB[1] = 255;
+            particle->colorB[2] = 255;
+            particle->colorB[3] = 0;
+            
+            strike = lightning_advance_strike(storm, strike);
+        } else {
+            particle->posB[0] = 0;
+            particle->posB[1] = 0;
+            particle->posB[2] = 0;
+            particle->sizeB = 0;
+            particle->colorB[0] = 255;
+            particle->colorB[1] = 255;
+            particle->colorB[2] = 255;
+            particle->colorB[3] = 0;
         }
     }
 }
@@ -75,9 +161,9 @@ void lightning_storm_start_strike(lightning_storm_t* storm) {
         struct Vector2 randomPos;
         vector2RandomUnitCircle(&randomPos);
 
-        position.x = randomPos.x * lightning_storm_shape.data.cylinder.radius;
+        position.x = storm->data_source->position.x + randomPos.x * lightning_storm_shape.data.cylinder.radius;
         position.y = storm->data_source->position.y + 1.0f;
-        position.z = randomPos.y * lightning_storm_shape.data.cylinder.radius;
+        position.z = storm->data_source->position.z + randomPos.y * lightning_storm_shape.data.cylinder.radius;
 
         struct mesh_shadow_cast_result cast_result;
         if (collision_scene_shadow_cast(&position, &cast_result)) {

@@ -30,6 +30,7 @@ struct spell_assets {
     struct tmesh* lightning_around_mesh;
     struct tmesh* lightning_mesh;
     struct tmesh* lightning_strike;
+    struct material* thunder_cloud;
     
     struct material* spell_symbols;
     struct material* casting_border;

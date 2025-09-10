@@ -7,9 +7,10 @@
 #include "assets.h"
 #include <t3d/t3dmath.h>
 
-#define STRIKE_DELAY 0.25f
+#define STRIKE_DELAY 0.125f
 #define STRIKE_RANGE 0.5f
-#define STRIKE_LIFETIME 0.75f
+#define STRIKE_LIFETIME 0.5f
+#define BOLT_TIME       0.1f
 
 static damage_info_t strike_damage = {
     .amount = 10.0f,
@@ -31,7 +32,7 @@ bool lightning_strike_update(struct lightning_strike* strike) {
 }
 
 void lightning_strike_render(struct lightning_strike* strike, render_batch_t* batch) {
-    if (strike->timer < STRIKE_DELAY || strike->timer > STRIKE_LIFETIME) {
+    if (strike->timer < STRIKE_DELAY || strike->timer > STRIKE_DELAY + BOLT_TIME) {
         return;
     }
 
@@ -48,4 +49,20 @@ void lightning_strike_render(struct lightning_strike* strike, render_batch_t* ba
 
 bool lightning_strike_is_active(struct lightning_strike* strike) {
     return strike->timer < STRIKE_LIFETIME;
+}
+
+float lightning_strike_cloud_size(struct lightning_strike* strike) {
+    if (strike->timer < 0.0f) {
+        return 0.0f;
+    }
+
+    if (strike->timer < STRIKE_DELAY) {
+        return strike->timer * (1.0f / STRIKE_DELAY);
+    }
+
+    if (strike->timer >= STRIKE_LIFETIME) {
+        return 0.0f;
+    }
+
+    return (STRIKE_LIFETIME - strike->timer) * (1.0f / (STRIKE_LIFETIME - STRIKE_DELAY));
 }
