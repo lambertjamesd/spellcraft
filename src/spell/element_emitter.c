@@ -80,7 +80,7 @@ bool element_emitter_update(struct element_emitter* element_emitter, struct spel
         };
 
         health_apply_contact_damage(
-            &element_emitter->dynamic_object, 
+            element_emitter->dynamic_object.active_contacts, 
             &source, 
             NULL
         );

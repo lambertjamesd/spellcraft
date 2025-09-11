@@ -8,6 +8,7 @@
 #include "../math/vector3.h"
 #include "damage.h"
 #include "health_shield.h"
+#include "../collision/contact.h"
 
 typedef float (*health_damage_callback)(void* data, struct damage_info* damage);
 
@@ -26,8 +27,6 @@ struct health {
 
 typedef struct health health_t;
 
-struct dynamic_object;
-
 void health_reset();
 
 void health_init(struct health* health, entity_id id, float max_health);
@@ -39,7 +38,7 @@ float health_damage_id(entity_id target, struct damage_info* damage, struct dama
 
 void health_heal(struct health* health, float amount);
 
-bool health_apply_contact_damage(struct dynamic_object* damage_source, struct damage_source* damage, struct damaged_set* set);
+bool health_apply_contact_damage(contact_t* first_contact, struct damage_source* damage, struct damaged_set* set);
 
 struct health* health_get(entity_id id);
 

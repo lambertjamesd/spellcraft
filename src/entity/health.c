@@ -129,8 +129,8 @@ void health_heal(struct health* health, float amount) {
     health->current_health = minf(health->max_health, health->current_health + amount);
 }
 
-bool health_apply_contact_damage(struct dynamic_object* damage_source, struct damage_source* source, struct damaged_set* set) {
-    struct contact* curr = damage_source->active_contacts;
+bool health_apply_contact_damage(contact_t* first_contact, struct damage_source* source, struct damaged_set* set) {
+    struct contact* curr = first_contact;
 
     struct damage_info damage;
     damage.amount = source->amount;

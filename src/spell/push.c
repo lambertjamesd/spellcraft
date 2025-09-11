@@ -111,7 +111,7 @@ bool push_update(struct push* push, struct spell_event_listener* event_listener,
             .amount = push->definition->contact_damage,
             .type = health_determine_damage_type(push->definition->damage_type),
         };
-        health_apply_contact_damage(target, &source, NULL);
+        health_apply_contact_damage(target->active_contacts, &source, NULL);
     }
 
     if (is_bursty && push->mana_regulator.burst_mana_rate == 0.0f) {

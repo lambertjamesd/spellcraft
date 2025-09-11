@@ -23,6 +23,8 @@ struct damage_source {
     float knockback_strength;
 };
 
+typedef struct damage_source damage_source_t;
+
 struct damage_info {
     float amount;
     enum damage_type type;

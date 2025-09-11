@@ -6,10 +6,19 @@
 #include "../render/defs.h"
 #include "../math/mathf.h"
 #include "../time/time.h"
+#include "../entity/health.h"
+#include "../entity/damage.h"
 #include "assets.h"
 
 static spatial_trigger_type_t lightning_storm_shape = {SPATIAL_TRIGGER_CYLINDER(2.0f, 2.0f)};
 static spatial_trigger_type_t lightning_storm_damage_shape = {SPATIAL_TRIGGER_CYLINDER(0.25f, 0.25f)};
+
+static damage_source_t lightning_damage = {
+    .amount = 10.0f,
+    .type = DAMAGE_TYPE_LIGHTING,
+    .knockback_strength = 0.0f,
+} ;
+
 
 #define MIN_STRIKE_INTERVAL 0.1f
 #define MAX_STRIKE_INTERVAL 0.2f
@@ -102,6 +111,8 @@ void lightning_storm_render(void* data, render_batch_t* batch) {
         }
         strike = lightning_advance_strike(storm, strike);
     }
+
+    data_cache_hit_writeback_invalidate(element->particles.particles->particles, sizeof(TPXParticle) * ((storm->active_strike_count + 1) >> 1));
 }
 
 void lightning_storm_init(lightning_storm_t* storm, struct spell_data_source* source, struct spell_event_options event_options) {
@@ -221,14 +232,15 @@ bool lightning_storm_update(lightning_storm_t* storm) {
     lightning_strike_t* strike = &storm->strikes[storm->first_active_strike];
     lightning_strike_t* next = &storm->strikes[storm->next_target_strike];
     for (int i = 0; i < storm->active_strike_count; i += 1) {
-        if (lightning_strike_update(strike) && next == strike) {
+        if (lightning_strike_update(strike) && strike == next) {
             // apply damage
+            health_apply_contact_damage(storm->trigger.active_contacts, &lightning_damage, NULL);
 
-            // ++storm->next_target_strike;
-            // if (storm->next_target_strike == LIGHTNING_STORM_MAX_ACTIVE_STRIKE_COUNT) {
-            //     storm->next_target_strike = 0;
-            // }
-            // lightning_storm_setup_target(storm);
+            ++storm->next_target_strike;
+            if (storm->next_target_strike == LIGHTNING_STORM_MAX_ACTIVE_STRIKE_COUNT) {
+                storm->next_target_strike = 0;
+            }
+            lightning_storm_setup_target(storm);
         }
 
         ++strike;
@@ -236,6 +248,7 @@ bool lightning_storm_update(lightning_storm_t* storm) {
             strike = storm->strikes;
         }
     }
+    
 
     if (storm->active_strike_count > 0 && !lightning_strike_is_active(&storm->strikes[storm->first_active_strike])) {
         ++storm->first_active_strike;

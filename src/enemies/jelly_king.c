@@ -299,7 +299,7 @@ void jelly_king_attack_aeo(struct jelly_king* jelly_king) {
     }
 
     if (jelly_king->animator.events) {
-        health_apply_contact_damage(&jelly_king->collider, &aeo_attack, NULL);
+        health_apply_contact_damage(jelly_king->collider.active_contacts, &aeo_attack, NULL);
     }
 }
 

@@ -166,7 +166,7 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
         sword_trail_move(elemental_sword->trail, &pos, &tip);
         swing_shape_add(&elemental_sword->swing_shape, &pos, &tip);
 
-        health_apply_contact_damage(&elemental_sword->collider, &elemental_sword->definition->damage_source, &elemental_sword->damaged_set);
+        health_apply_contact_damage(elemental_sword->collider.active_contacts, &elemental_sword->definition->damage_source, &elemental_sword->damaged_set);
     }
 
     if (!is_active) {
