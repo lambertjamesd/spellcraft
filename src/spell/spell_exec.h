@@ -23,6 +23,7 @@
 #include "wind.h"
 #include "elemental_sword.h"
 #include "lightning_storm.h"
+#include "tidal_wave.h"
 
 typedef uint32_t spell_slot_id;
 
@@ -40,6 +41,7 @@ union spell_exec_data {
     struct wind wind;
     struct elemental_sword sword;
     lightning_storm_t lightning_storm; 
+    tidal_wave_t tidal_wave;
 };
 
 enum spell_exec_slot_type {
@@ -57,6 +59,7 @@ enum spell_exec_slot_type {
     SPELL_EXEC_SLOT_TYPE_WIND,
     SPELL_EXEC_SLOT_TYPE_SWORD,
     SPELL_EXEC_SLOT_TYPE_LIGHTNING_STORM,
+    SPELL_EXEC_SLOT_TYPE_TIDAL_WAVE,
 };
 
 struct spell_exec_slot {

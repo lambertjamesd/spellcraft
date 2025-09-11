@@ -68,8 +68,13 @@ void spell_slot_init(
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
             } else if (modifier_flags.windy) {
-                slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
-                wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(modifier_flags.flaming ? ELEMENT_TYPE_NONE : ELEMENT_TYPE_ICE, modifier_flags.earthy));
+                if (modifier_flags.flaming && !modifier_flags.earthy) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_TIDAL_WAVE;
+                    tidal_wave_init(&slot->data.tidal_wave, input, event_options);
+                } else {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
+                    wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(modifier_flags.flaming ? ELEMENT_TYPE_NONE : ELEMENT_TYPE_ICE, modifier_flags.earthy));
+                }
             } else {
                 struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, modifier_flags.earthy, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
@@ -185,6 +190,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_LIGHTNING_STORM:
             lightning_storm_destroy(&slot->data.lightning_storm);
             break;
+        case SPELL_EXEC_SLOT_TYPE_TIDAL_WAVE:
+            tidal_wave_destroy(&slot->data.tidal_wave);
+            break;
         default:
             break;
     }
@@ -258,6 +266,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_LIGHTNING_STORM:
             isActive = lightning_storm_update(&slot->data.lightning_storm);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_TIDAL_WAVE:
+            isActive = tidal_wave_update(&slot->data.tidal_wave);
             break;
         default:
             break;
