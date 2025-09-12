@@ -3,6 +3,7 @@
 
 #include "../math/transform_single_axis.h"
 #include "../render/renderable.h"
+#include "../collision/spatial_trigger.h"
 
 #include "spell_sources.h"
 #include "spell_event.h"
@@ -10,7 +11,9 @@
 struct tidal_wave {
     transform_sa_t transform;
     renderable_t renderable;
-   float timer; 
+    spatial_trigger_t trigger;
+    float timer; 
+    float max_scale;
 };
 
 typedef struct tidal_wave tidal_wave_t;

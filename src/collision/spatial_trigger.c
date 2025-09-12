@@ -42,6 +42,7 @@ void spatial_trigger_type_recalc_bb(struct spatial_trigger_type* type, struct Tr
             break;
         }
     }
+    vector3Scale(&result->min, &result->min, transform->scale);
     vector3Add(&result->min, &transform->position, &result->min);
     vector3Add(&result->max, &transform->position, &result->max);
 }
@@ -58,19 +59,23 @@ bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct 
 
     switch (trigger->type->type)
     {
-        case SPATIAL_TRIGGER_SPHERE:
-            return vector3MagSqrd(&relative_pos) < data->sphere.radius * data->sphere.radius;
-        case SPATIAL_TRIGGER_CYLINDER:
-            return fabsf(relative_pos.y) < data->cylinder.half_height && 
+        case SPATIAL_TRIGGER_SPHERE: {
+            float scaled_radius = data->sphere.radius * trigger->transform->scale;
+            return vector3MagSqrd(&relative_pos) < scaled_radius * scaled_radius;
+        }
+        case SPATIAL_TRIGGER_CYLINDER: {
+            float scaled_radius = data->cylinder.radius * trigger->transform->scale;
+            return fabsf(relative_pos.y) < data->cylinder.half_height * trigger->transform->scale && 
                 relative_pos.x * relative_pos.x + relative_pos.z * relative_pos.z < 
-                data->cylinder.radius * data->cylinder.radius;
+                scaled_radius * scaled_radius;
+        }
         case SPATIAL_TRIGGER_BOX: {
             struct Vector3 unrotated;
             vector3RotateWith2Inv(&relative_pos, &trigger->transform->rotation, &unrotated);
 
-            return fabsf(unrotated.x) < data->box.half_size.x &&
-                fabsf(unrotated.y) < data->box.half_size.y &&
-                fabsf(unrotated.z) < data->box.half_size.z;
+            return fabsf(unrotated.x) < data->box.half_size.x * trigger->transform->scale &&
+                fabsf(unrotated.y) < data->box.half_size.y * trigger->transform->scale &&
+                fabsf(unrotated.z) < data->box.half_size.z * trigger->transform->scale;
         }
         case SPATIAL_TRIGGER_WEDGE: {
             if (fabsf(relative_pos.y) > data->wedge.half_height) {
@@ -78,7 +83,8 @@ bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct 
             }
             
             relative_pos.y = 0.0f;
-            if (vector3MagSqrd(&relative_pos) >= data->wedge.radius * data->wedge.radius) {
+            float scaled_radius = data->wedge.radius * trigger->transform->scale;
+            if (vector3MagSqrd(&relative_pos) >= scaled_radius * scaled_radius) {
                 return false;
             }
 
