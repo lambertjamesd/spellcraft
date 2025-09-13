@@ -41,12 +41,16 @@ struct spell_data_source {
     entity_id target;
 };
 
+typedef struct spell_data_source spell_data_source_t;
+
 struct spell_event_options {
     uint16_t has_primary_event: 1;
     uint16_t has_secondary_event: 1;
     union spell_modifier_flags modifiers;
     float burst_mana;
 };
+
+typedef struct spell_event_options spell_event_options_t;
 
 struct spell_data_source_pool {
     struct spell_data_source data_sources[MAX_SPELL_DATA_SOURCES];

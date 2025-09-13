@@ -68,9 +68,14 @@ void spell_slot_init(
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
             } else if (modifier_flags.windy) {
-                if (modifier_flags.flaming && !modifier_flags.earthy) {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_TIDAL_WAVE;
-                    tidal_wave_init(&slot->data.tidal_wave, input, event_options);
+                if (modifier_flags.flaming) {
+                    if (modifier_flags.earthy) {
+                        slot->type = SPELL_EXEC_SLOT_TYPE_HURRICANE;
+                        hurricane_init(&slot->data.hurricane, input, event_options);
+                    } else {
+                        slot->type = SPELL_EXEC_SLOT_TYPE_TIDAL_WAVE;
+                        tidal_wave_init(&slot->data.tidal_wave, input, event_options);
+                    }
                 } else {
                     slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
                     wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(modifier_flags.flaming ? ELEMENT_TYPE_NONE : ELEMENT_TYPE_ICE, modifier_flags.earthy));
@@ -193,6 +198,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_TIDAL_WAVE:
             tidal_wave_destroy(&slot->data.tidal_wave);
             break;
+        case SPELL_EXEC_SLOT_TYPE_HURRICANE:
+            hurricane_destroy(&slot->data.hurricane);
+            break;
         default:
             break;
     }
@@ -269,6 +277,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_TIDAL_WAVE:
             isActive = tidal_wave_update(&slot->data.tidal_wave);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_HURRICANE:
+            isActive = hurricane_update(&slot->data.hurricane);
             break;
         default:
             break;
