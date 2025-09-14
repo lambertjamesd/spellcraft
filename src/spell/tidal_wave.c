@@ -5,6 +5,7 @@
 #include "../collision/collision_scene.h"
 #include "../entity/damage.h"
 #include "../entity/health.h"
+#include "ground_movement.h"
 
 #define MOVE_SPEED  4.0f
 #define MOVE_ACCEL  16.0f
@@ -24,31 +25,11 @@ static damage_info_t tidal_wave_damage_source = {
     .knockback_strength = 0.0f,
 };
 
-bool tidal_wave_move(tidal_wave_t* tidal_wave, float max_downward_movement) {
-    struct Vector3 cast_from;
-    
-    vector2ToLookDir(&tidal_wave->transform.rotation, &cast_from);
-    vector3Scale(&cast_from, &cast_from, MOVE_SPEED * fixed_time_step);
-    vector3Add(&cast_from, &tidal_wave->transform.position, &cast_from);
-
-    cast_from.y += MAX_VERTICAL_MOVEMENT;
-
-    struct mesh_shadow_cast_result cast_result;
-
-    if (!collision_scene_shadow_cast(&cast_from, &cast_result)) {
-        return false;
-    }
-
-    if (cast_from.y - cast_result.y > max_downward_movement + MAX_VERTICAL_MOVEMENT) {
-        return false;
-    }
-
-    tidal_wave->transform.position.x = cast_from.x;
-    tidal_wave->transform.position.y = cast_result.y;
-    tidal_wave->transform.position.z = cast_from.z;
-
-    return true;
-}
+static move_over_ground_def_t move_def = {
+    .move_speed = MOVE_SPEED,
+    .max_upward_movment = MAX_VERTICAL_MOVEMENT,
+    .can_fly = false,
+};
 
 void tidal_wave_init(tidal_wave_t* tidal_wave, struct spell_data_source* source, struct spell_event_options event_options) {
     struct Vector2 rotation;
@@ -63,7 +44,7 @@ void tidal_wave_init(tidal_wave_t* tidal_wave, struct spell_data_source* source,
     spatial_trigger_init(&tidal_wave->trigger, &tidal_wave->transform, &tidal_wave_trigger, COLLISION_LAYER_DAMAGE_ENEMY);
     collision_scene_add_trigger(&tidal_wave->trigger);
 
-    if (tidal_wave_move(tidal_wave, 2.0f)) {
+    if (move_over_ground(&tidal_wave->transform.position, &source->direction, &move_def, 2.0f)) {
         tidal_wave->timer = 0.0f;
     } else {
         tidal_wave->timer = WAVE_LIFETIME;
@@ -98,7 +79,10 @@ void tidal_wave_damage_and_push(tidal_wave_t* tidal_wave) {
 }
 
 bool tidal_wave_update(tidal_wave_t* tidal_wave) {
-    if (!tidal_wave_move(tidal_wave, MAX_VERTICAL_MOVEMENT) && tidal_wave->timer < SCALE_DOWN_TIME) {
+    struct Vector3 direction;
+    vector2ToLookDir(&tidal_wave->transform.rotation, &direction);
+
+    if (!move_over_ground(&tidal_wave->transform.position, &direction, &move_def, MAX_VERTICAL_MOVEMENT) && tidal_wave->timer < SCALE_DOWN_TIME) {
         tidal_wave->timer = SCALE_DOWN_TIME;
     }
 

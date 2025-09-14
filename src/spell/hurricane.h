@@ -13,6 +13,7 @@ struct hurricane {
     renderable_t renderable;
     spatial_trigger_t trigger;
     float timer;
+    struct Vector3 direction;
     element_attr_t attrs[2];
 };
 

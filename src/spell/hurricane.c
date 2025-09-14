@@ -4,6 +4,7 @@
 #include "../render/render_scene.h"
 #include "../time/time.h"
 #include "../entity/health.h"
+#include "ground_movement.h"
 
 static spatial_trigger_type_t hurricate_trigger = {
     SPATIAL_TRIGGER_CYLINDER(4.0f, 1.2f),
@@ -12,8 +13,15 @@ static spatial_trigger_type_t hurricate_trigger = {
 static struct Vector2 hurricane_rotate_rate;
 
 static damage_info_t hurricane_damage = {
-    .amount = 0.1f,
+    .amount = 0.2f,
     .type = DAMAGE_TYPE_WATER,  
+};
+
+static move_over_ground_def_t move_def = {
+    .move_speed = 2.0f,
+    .max_upward_movment = 0.1f,
+    .height_offset = 1.0f,
+    .can_fly = true,
 };
 
 #define ROTATE_RATE 2.9f
@@ -21,8 +29,8 @@ static damage_info_t hurricane_damage = {
 #define SCALE_IN_TIME       0.5f
 #define SPELL_LIFETIME      6.0f
 #define FADE_OUT_TIME       4.0f
-#define PUSH_FORCE          20.0f
-#define INWARD_PUSH_RATIO   0.7f
+#define PUSH_FORCE          5.0f
+#define TANGENT_FORCE_RATIO 0.1f
 
 void hurricane_init(hurricane_t* hurricane, spell_data_source_t* source, spell_event_options_t event_options) {
     transformSaInit(&hurricane->transform, &source->position, &gRight2, 0.0f);
@@ -41,6 +49,10 @@ void hurricane_init(hurricane_t* hurricane, spell_data_source_t* source, spell_e
     hurricane->attrs[0].type = ELEMENT_ATTR_PRIM_COLOR;
     hurricane->attrs[0].color = (color_t){255, 255, 255, 255};
     hurricane->attrs[1].type = ELEMENT_ATTR_NONE;
+
+    hurricane->direction = source->direction;
+
+    move_over_ground(&hurricane->transform.position, &source->direction, &move_def, 2.0f);
 }
 
 void hurricane_damage_targets(hurricane_t* hurricane) {
@@ -58,11 +70,15 @@ void hurricane_damage_targets(hurricane_t* hurricane) {
             vector2Normalize(&offset, &offset);
 
             float offset_x = offset.x;
-            offset.x += offset.y * INWARD_PUSH_RATIO;
-            offset.y += offset_x * -INWARD_PUSH_RATIO;
+            offset.x += offset.y * TANGENT_FORCE_RATIO;
+            offset.y += offset_x * -TANGENT_FORCE_RATIO;
 
+            obj->velocity.x *= 0.9f;
+            obj->velocity.z *= 0.9f;
             obj->velocity.x += PUSH_FORCE * offset.x * fixed_time_step;
-            obj->velocity.y -= (GRAVITY_CONSTANT * 1.1f) * fixed_time_step;
+            if (obj->position->y < hurricane->transform.position.y) {
+                obj->velocity.y -= (GRAVITY_CONSTANT * 1.2f) * fixed_time_step;
+            }
             obj->velocity.z += PUSH_FORCE * offset.y * fixed_time_step;
         }
 
@@ -75,6 +91,8 @@ void hurricane_damage_targets(hurricane_t* hurricane) {
 }
 
 bool hurricane_update(hurricane_t* hurricane) {
+    move_over_ground(&hurricane->transform.position, &hurricane->direction, &move_def, 2.0f);
+
     vector2ComplexMul(&hurricane->transform.rotation, &hurricane_rotate_rate, &hurricane->transform.rotation);
 
     hurricane->timer += fixed_time_step;
