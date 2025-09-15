@@ -193,6 +193,8 @@ void material_load(struct material* into, FILE* material_file) {
 
     rdpq_mode_filter(FILTER_BILINEAR);
 
+    bool has_palette = false;
+
     while (has_more) {
         uint8_t nextCommand;
         fread(&nextCommand, 1, 1, material_file);
@@ -281,6 +283,7 @@ void material_load(struct material* into, FILE* material_file) {
                     fread(into->palette.tlut, sizeof(uint16_t), into->palette.size, material_file);
                     data_cache_index_writeback_invalidate(into->palette.tlut, sizeof(uint16_t) * into->palette.size);
                     rdpq_tex_upload_tlut(into->palette.tlut, into->palette.idx, into->palette.size);
+                    has_palette = true;
                 }
                 break;
             case COMMAND_UV_GEN:
@@ -344,6 +347,10 @@ void material_load(struct material* into, FILE* material_file) {
             material_upload_tex(TILE0, &into->tex0);
         } else if (into->tex0.num_frames) {
             material_upload_placeholder(TILE0, &into->tex0);
+        }
+
+        if (!has_palette && into->tex0.sprite && sprite_get_palette(into->tex0.sprite)) {
+            rdpq_tex_upload_tlut(sprite_get_palette(into->tex0.sprite), 0, 16);
         }
 
         material_use_tex(TILE0, &into->tex0);

@@ -115,4 +115,5 @@ bool hurricane_update(hurricane_t* hurricane) {
 void hurricane_destroy(hurricane_t* hurricane) {
     render_scene_remove(&hurricane->renderable);
     renderable_destroy(&hurricane->renderable);
+    collision_scene_remove_trigger(&hurricane->trigger);
 }
