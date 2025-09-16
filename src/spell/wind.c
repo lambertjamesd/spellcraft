@@ -37,7 +37,7 @@ static struct wind_definition wind_definitions[] = {
             .bursty = false,
         },
         .base_scale = 1.0f,
-        .icy = true,
+        .pull = true,
     },
     [ELEMENT_TYPE_LIGHTNING] = {
         .push = {
@@ -80,7 +80,7 @@ static struct wind_definition wind_sphere_definitions[] = {
         },
         .base_scale = 1.0f,
         .sphere = true,
-        .icy = true,
+        .pull = true,
     },
     [ELEMENT_TYPE_LIGHTNING] = {
         .push = {
@@ -167,10 +167,11 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
 }
 
 void wind_apply_push_velocity_with_dir(struct wind_definition* definition, struct dynamic_object* obj, struct Vector3* wind_direction)  {
-    single_push_apply_velocity_with_dir(&definition->push, obj, wind_direction);
-    if (definition->icy) {
-        DYNAMIC_OBJECT_MARK_DISABLE_FRICTION(obj);
+    if (definition->pull) {
+        vector3Negate(wind_direction, wind_direction);
     }
+
+    single_push_apply_velocity_with_dir(&definition->push, obj, wind_direction);
 }
 
 void wind_apply_push_velocity(struct wind* wind) {

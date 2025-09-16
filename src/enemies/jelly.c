@@ -110,7 +110,9 @@ void jelly_update_spring(struct jelly* jelly, struct Vector3* jump_dir) {
 
 void jelly_update_handle_damage(struct jelly* jelly, bool is_grounded) {
     if (jelly->is_attacking) {
-        health_apply_contact_damage(jelly->collider.active_contacts, &damage_source, NULL);
+        if (health_apply_contact_damage(jelly->collider.active_contacts, &damage_source, NULL)) {
+            jelly->is_attacking = 0;
+        }
     }
 
     if (!is_grounded) {

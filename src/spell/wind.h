@@ -12,7 +12,7 @@
 struct wind_definition {
     struct push_single_definition push;
     uint8_t sphere: 1;
-    uint8_t icy: 1;
+    uint8_t pull: 1;
     uint8_t lightning: 1;
     float base_scale;
 };
