@@ -26,6 +26,8 @@ void spell_assets_init() {
     assets.ice_particle_mesh = material_cache_load("rom:/materials/spell/ice_particle.mat");
     // material_cache_release() never called
     assets.dash_trail_material = material_cache_load("rom:/materials/spell/dash_trail.mat");
+    // material_cache_release() never called
+    assets.sword_trail_material = material_cache_load("rom:/materials/spell/sword_trail.mat");
 
     // material_cache_release() never called
     assets.ice_material = material_cache_load("rom:/materials/objects/ice.mat");
@@ -78,6 +80,11 @@ void spell_assets_init() {
     assets.heal_aoe_mesh = tmesh_cache_load("rom:/meshes/spell/heal_aeo.tmesh");
     // tmesh_cache_release() never called
     assets.life_sprite = tmesh_cache_load("rom:/meshes/spell/life_sprite.tmesh");
+
+    // tmesh_cache_release() never called
+    assets.fire_sword = tmesh_cache_load("rom:/meshes/spell/fire_sword.tmesh");
+    // tmesh_cache_release() never called
+    assets.ice_sword = tmesh_cache_load("rom:/meshes/spell/ice_sword.tmesh");
 }
 
 struct spell_assets* spell_assets_get() {

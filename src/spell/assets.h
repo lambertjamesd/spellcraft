@@ -14,6 +14,7 @@ struct spell_assets {
     struct material* fire_particle_mesh;
     struct material* ice_particle_mesh;
     struct material* dash_trail_material;
+    struct material* sword_trail_material;
 
     struct material* ice_material;
     struct material* shock_material;
@@ -42,6 +43,9 @@ struct spell_assets {
 
     struct tmesh* heal_aoe_mesh;
     struct tmesh* life_sprite;
+
+    struct tmesh* fire_sword;
+    struct tmesh* ice_sword;
 };
 
 void spell_assets_init();

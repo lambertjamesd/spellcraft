@@ -18,6 +18,7 @@ struct elemental_sword_definition {
     float free_swing_time;
     float free_swing_angle;
     float free_swing_velocity;
+    color_t color;
 };
 
 struct elemental_sword {

@@ -25,6 +25,9 @@ void sword_trail_render_callback(void* data, struct render_batch* batch) {
 
     struct Vector3 effect_origin;
 
+    uint32_t color_a = trail->color | 0x40;
+    uint32_t color_b = trail->color | 0x80;
+
     for (int i = 0; i < trail->vertex_count; i += 1) {
         struct Vector3* input = trail->trail_halves[curr];
 
@@ -36,8 +39,8 @@ void sword_trail_render_callback(void* data, struct render_batch* batch) {
 
         output->normA = 0;
         output->normB = 0;
-        output->rgbaA = 0xFFFFFFFF;
-        output->rgbaB = 0xFFFFFFFF;
+        output->rgbaA = color_a;
+        output->rgbaB = color_b;
         output->stA[0] = 0;
         output->stA[1] = 0;
         output->stB[0] = 0;
@@ -88,7 +91,7 @@ void sword_trail_render_callback(void* data, struct render_batch* batch) {
 }
 
 void sword_trail_render(void* data, struct render_batch* batch) {
-    render_batch_add_callback(batch, spell_assets_get()->dash_trail_material, sword_trail_render_callback, data);
+    render_batch_add_callback(batch, spell_assets_get()->sword_trail_material, sword_trail_render_callback, data);
 }
 
 void sword_trail_update(void* data) {
@@ -104,7 +107,7 @@ void sword_trail_update(void* data) {
     }
 }
 
-struct sword_trail* sword_trail_new() {
+struct sword_trail* sword_trail_new(color_t color) {
     struct sword_trail* trail = effect_malloc(sizeof(struct sword_trail));
 
     if (!trail) {
@@ -117,6 +120,8 @@ struct sword_trail* sword_trail_new() {
     render_scene_add(&trail->trail_halves[0][0], 1.0f, sword_trail_render, trail);
 
     trail->trail_halves[0][0] = gZeroVec;
+
+    memcpy(&trail->color, &color, sizeof(color_t));
 
     return trail;
 }

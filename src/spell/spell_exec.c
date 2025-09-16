@@ -81,9 +81,14 @@ void spell_slot_init(
                     wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(modifier_flags.flaming ? ELEMENT_TYPE_NONE : ELEMENT_TYPE_ICE, modifier_flags.earthy));
                 }
             } else {
-                struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, modifier_flags.earthy, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
-                slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
-                element_emitter_init(&slot->data.element_emitter, input, event_options, def);
+                if (!modifier_flags.flaming) {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
+                    elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_ICE);
+                } else {
+                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, modifier_flags.earthy, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+                    slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                    element_emitter_init(&slot->data.element_emitter, input, event_options, def);
+                }
             }
             break;
         case SPELL_SYMBOL_BREAK:

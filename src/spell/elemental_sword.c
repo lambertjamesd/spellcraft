@@ -6,6 +6,7 @@
 #include "../collision/collision_scene.h"
 #include "../entity/health.h"
 #include "../time/time.h"
+#include "assets.h"
 
 static struct elemental_sword_definition swing_definitions[] = {
     [ELEMENT_TYPE_FIRE] = {
@@ -21,7 +22,23 @@ static struct elemental_sword_definition swing_definitions[] = {
         .free_swing_time = 1.0f,
         .free_swing_angle = -0.7853975f,
         .free_swing_velocity = 1.570795f,
-    }
+        .color = { 200, 50, 20, 0 },
+    },
+    [ELEMENT_TYPE_ICE] = {
+        .damage_source = {
+            .amount = 10.0f,
+            .type = DAMAGE_TYPE_ICE | DAMAGE_TYPE_KNOCKBACK,
+            .knockback_strength = 2.0f,
+        },
+        .animation = SPELL_ANIMATION_SWING,
+        .sword_length = 1.0f,
+        .mana_cost = 1.0f,
+
+        .free_swing_time = 1.0f,
+        .free_swing_angle = -0.7853975f,
+        .free_swing_velocity = 1.570795f,
+        .color = { 50, 180, 200, 0 },
+    },
 };
 
 static struct elemental_sword_definition spin_definitions[] = {
@@ -38,7 +55,23 @@ static struct elemental_sword_definition spin_definitions[] = {
         .free_swing_time = 2.0f,
         .free_swing_angle = -0.7853975f,
         .free_swing_velocity = 6.28318f,
-    }
+        .color = { 200, 50, 20, 0 },
+    },
+    [ELEMENT_TYPE_ICE] = {
+        .damage_source = {
+            .amount = 10.0f,
+            .type = DAMAGE_TYPE_ICE | DAMAGE_TYPE_KNOCKBACK,
+            .knockback_strength = 3.0f,
+        },
+        .animation = SPELL_ANIMATION_SPIN,
+        .sword_length = 1.5f,
+        .mana_cost = 3.0f,
+
+        .free_swing_time = 2.0f,
+        .free_swing_angle = -0.7853975f,
+        .free_swing_velocity = 6.28318f,
+        .color = { 50, 180, 200, 0 },
+    },
 };
 
 void elemental_sword_render(void* data, struct render_batch* batch) {
@@ -78,9 +111,9 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
 
     render_scene_add(&source->position, 1.0f, elemental_sword_render, elemental_sword);
 
-    elemental_sword->mesh = tmesh_cache_load("rom:/meshes/spell/fire_sword.tmesh");
+    elemental_sword->mesh = element_type == ELEMENT_TYPE_ICE ? spell_assets_get()->ice_sword : spell_assets_get()->fire_sword;
 
-    elemental_sword->trail = sword_trail_new();
+    elemental_sword->trail = sword_trail_new(elemental_sword->definition->color);
 
     elemental_sword->collider_type = (struct dynamic_object_type){
         .minkowsi_sum = swing_shape_minkowski_sum,
