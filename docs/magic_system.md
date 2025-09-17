@@ -128,7 +128,7 @@ Progress indiciators
 | Fire    | A         | Fire push                        |                  | F M       |
 | Fire    | A E       | Fire push outward                |                  | F         |
 | Fire    | E         | Sword spin attack                | On kill          | F M       |
-| Ice     |           | Ice sword                        | On ice shatter   | F         |
+| Ice     |           | Ice sword                        | On ice shatter   | F M       |
 | Ice     | F         | Water gun (no damage)            | On contact       | F         |
 | Ice     | F A       | Tidal wave                       |                  | F M       |
 | Ice     | F A E     | Hurricane                        |                  | F         |

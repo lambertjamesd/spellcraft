@@ -148,7 +148,6 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
 
 void elemental_sword_destroy(struct elemental_sword* elemental_sword) {
     spell_data_source_release(elemental_sword->data_source);
-    tmesh_cache_release(elemental_sword->mesh);
     render_scene_remove(elemental_sword);
     sword_trail_stop(elemental_sword->trail);
     collision_scene_remove(&elemental_sword->collider);
@@ -198,7 +197,7 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
         );
         sword_trail_move(elemental_sword->trail, &pos, &tip);
         swing_shape_add(&elemental_sword->swing_shape, &pos, &tip);
-
+        
         health_apply_contact_damage(elemental_sword->collider.active_contacts, &elemental_sword->definition->damage_source, &elemental_sword->damaged_set);
     }
 
