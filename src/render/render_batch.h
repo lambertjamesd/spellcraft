@@ -56,6 +56,7 @@ enum element_attr_type {
     ELEMENT_ATTR_ENV_COLOR,
     ELEMENT_ATTR_TRANSFORM,
     ELEMENT_ATTR_TRANSFORM_LIST,
+    ELEMENT_ATTR_SCROLL,
 };
 
 struct element_attr {
@@ -71,6 +72,9 @@ struct element_attr {
         color_t color;
         T3DMat4FP* transform;
         T3DMat4FP** transform_list;
+        struct {
+            int16_t x, y;
+        } scroll;
     };
 };
 

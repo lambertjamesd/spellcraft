@@ -54,65 +54,6 @@ void lightning_storm_render(void* data, render_batch_t* batch) {
         lightning_strike_render(strike, batch);
         strike = lightning_advance_strike(storm, strike);
     }
-
-    T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &storm->transform);
-
-    render_batch_element_t* element = render_batch_add_dynamic_particles(
-        batch, 
-        spell_assets_get()->thunder_cloud, 
-        storm->active_strike_count, 
-        &(struct render_batch_particle_size){
-            .particle_size = 16,
-            .particle_scale_height = 0xBFFF,
-            .particle_scale_width = 0xFFFF,
-        }, 
-        mtx
-    );
-    
-    strike = &storm->strikes[storm->first_active_strike];
-    TPXParticle* particle = element->particles.particles->particles;
-    for (int i = 0; i < storm->active_strike_count; i += 2) {
-        struct Vector3 offset;
-        vector3Sub(&strike->position, &storm->transform.position, &offset);
-        offset.y += 2.0f;
-
-        particle->posA[0] = lightning_pack_particle(offset.x);
-        particle->posA[1] = lightning_pack_particle(offset.y);
-        particle->posA[2] = lightning_pack_particle(offset.z);
-        particle->sizeA = (int8_t)(lightning_strike_cloud_size(strike) * 127.0f);
-        particle->colorA[0] = 255;
-        particle->colorA[1] = 255;
-        particle->colorA[2] = 255;
-        particle->colorA[3] = 0;
-
-        strike = lightning_advance_strike(storm, strike);
-
-        if (i + 1 < storm->active_strike_count) {
-            vector3Sub(&strike->position, &storm->transform.position, &offset);
-            offset.y += 2.0f;
-
-            particle->posB[0] = lightning_pack_particle(offset.x);
-            particle->posB[1] = lightning_pack_particle(offset.y);
-            particle->posB[2] = lightning_pack_particle(offset.z);
-            particle->sizeB = (int8_t)(lightning_strike_cloud_size(strike) * 127.0f);
-            particle->colorB[0] = 255;
-            particle->colorB[1] = 255;
-            particle->colorB[2] = 255;
-            particle->colorB[3] = 0;
-        } else {
-            particle->posB[0] = 0;
-            particle->posB[1] = 0;
-            particle->posB[2] = 0;
-            particle->sizeB = 0;
-            particle->colorB[0] = 255;
-            particle->colorB[1] = 255;
-            particle->colorB[2] = 255;
-            particle->colorB[3] = 0;
-        }
-        strike = lightning_advance_strike(storm, strike);
-    }
-
-    data_cache_hit_writeback_invalidate(element->particles.particles->particles, sizeof(TPXParticle) * ((storm->active_strike_count + 1) >> 1));
 }
 
 void lightning_storm_init(lightning_storm_t* storm, struct spell_data_source* source, struct spell_event_options event_options) {
@@ -161,6 +102,7 @@ void lightning_storm_start_strike(lightning_storm_t* storm) {
     dynamic_object_t* obj = collision_scene_find_object(storm->total_target_count);
 
     struct Vector3 position;
+    bool is_grounded;
 
     if (!obj) {
         struct Vector2 randomPos;
@@ -173,14 +115,22 @@ void lightning_storm_start_strike(lightning_storm_t* storm) {
         struct mesh_shadow_cast_result cast_result;
         if (collision_scene_shadow_cast(&position, &cast_result)) {
             position.y = cast_result.y;
+            is_grounded = true;
         } else {
             position.y -= 1.0f;
+            is_grounded = false;
         }
     } else {
-        position = *obj->position;
+        if (obj->shadow_contact) {
+            position = obj->shadow_contact->point;
+            is_grounded = true;
+        } else {
+            position = *obj->position;
+            is_grounded = false;
+        }
     }
 
-    lightning_strike_start(strike, &position);
+    lightning_strike_start(strike, &position, is_grounded);
     storm->trigger.type = &lightning_storm_damage_shape;
     lightning_storm_setup_target(storm);
 

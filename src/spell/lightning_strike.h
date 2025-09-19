@@ -9,11 +9,12 @@
 struct lightning_strike {
     struct Vector3 position;
     float timer;
+    bool is_grounded;
 };
 
 typedef struct lightning_strike lightning_strike_t;
 
-void lightning_strike_start(struct lightning_strike* strike, struct Vector3* position);
+void lightning_strike_start(struct lightning_strike* strike, struct Vector3* position, bool is_grounded);
 bool lightning_strike_update(struct lightning_strike* strike);
 void lightning_strike_render(struct lightning_strike* strike, render_batch_t* batch);
 bool lightning_strike_is_active(struct lightning_strike* strike);

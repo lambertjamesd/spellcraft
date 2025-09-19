@@ -488,6 +488,16 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         t3d_matrix_push(attr->transform);
                         transform_count = 1;
                         break;
+                    case ELEMENT_ATTR_SCROLL:
+                        if (current_mat) {
+                            struct material_tex* tex = &current_mat->tex0;
+                            rdpq_set_tile_size_fx(
+                                TILE0, 
+                                attr->scroll.x + tex->s0, attr->scroll.y + tex->t0, 
+                                attr->scroll.x + tex->s1, attr->scroll.y + tex->t1
+                            );
+                        }
+                        break;
                     case ELEMENT_ATTR_TRANSFORM_LIST: {
                         for (int mtx_index = 0; mtx_index < attr->offset; mtx_index += 1) {
                             t3d_matrix_push(attr->transform_list[mtx_index]);

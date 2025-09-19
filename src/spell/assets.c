@@ -58,8 +58,10 @@ void spell_assets_init() {
     assets.lightning_mesh = tmesh_cache_load("rom:/meshes/spell/lightning.tmesh");
     // tmesh_cache_release() never called
     assets.lightning_strike = tmesh_cache_load("rom:/meshes/spell/lightning-strike.tmesh");
+    // tmesh_cache_release() never called
+    assets.lightning_cloud = tmesh_cache_load("rom:/meshes/spell/lightning-cloud.tmesh");
     // material_cache_release() never called
-    assets.thunder_cloud = material_cache_load("rom:/materials/spell/thundercloud.mat");
+    assets.thunder_cloud = material_cache_load("rom:/materials/spell/lightning_cloud.mat");
 
     // material_cache_release() never called
     assets.spell_symbols = material_cache_load("rom:/materials/spell/symbols.mat");
