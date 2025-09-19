@@ -28,7 +28,8 @@ enum entity_type_id {
     ENTITY_TYPE_burning_thorns,
     ENTITY_TYPE_bool_and_logic,
     ENTITY_TYPE_camera_focus,
-    ENTITY_TYPE_sign
+    ENTITY_TYPE_sign,
+    ENTITY_TYPE_electric_ball,
 };
 
 struct crate_definition {
@@ -213,6 +214,11 @@ struct sign_definition {
     struct Vector2 rotation;
     enum sign_type sign_type;
     script_location message;
+};
+
+struct electric_ball_definition {
+    struct Vector3 position;
+    bool is_energized;
 };
 
 enum npc_type {

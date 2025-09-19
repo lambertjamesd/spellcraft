@@ -43,6 +43,12 @@
             "type": "door"
         },
         {
+            "name": "objects_fireforest_burning_tree_1",
+            "description": "",
+            "mesh": "meshes/objects/fireforest/burning_tree_1.blend#burningtree1_mesh",
+            "type": "training_dummy"
+        },
+        {
             "name": "objects_pickups_heart",
             "description": "",
             "mesh": "meshes/objects/pickups/heart.blend#heart",
@@ -107,6 +113,12 @@
             "description": "",
             "mesh": "camera",
             "type": "camera_focus"
+        },
+        {
+            "name": "puzzle_electric_ball",
+            "description": "",
+            "mesh": "meshes/puzzle/electric_ball.blend#Sphere.001",
+            "type": "electric_ball"
         },
         {
             "name": "puzzle_electric_torch",
