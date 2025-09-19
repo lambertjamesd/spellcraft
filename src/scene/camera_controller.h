@@ -47,4 +47,6 @@ void camera_set_fixed(struct camera_controller* controller, struct Vector3* posi
 
 bool camera_is_animating(struct camera_controller* controller);
 
+void camera_shake(struct camera_controller* controller, float strength);
+
 #endif

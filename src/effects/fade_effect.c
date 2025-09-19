@@ -12,7 +12,15 @@ static float lerp_time;
 static float current_time;
 static bool is_active;
 
+static struct Coloru8 flash_color;
+
 struct Coloru8 fade_effect_calculate_color() {
+    if (flash_color.a != 0) {
+        struct Coloru8 result = flash_color;
+        flash_color.a = 0;
+        return result;
+    }
+
     if (current_time <= 0.0f && lerp_time > 0.0f) {
         return start_color;
     }
@@ -34,6 +42,10 @@ void fade_effect_render(void* data) {
     rspq_block_run(solid_primitive_material->block);
 
     struct Coloru8 color = fade_effect_calculate_color();
+
+    if (color.a == 0) {
+        return;
+    }
 
     rdpq_set_prim_color((color_t){color.r, color.g, color.b, color.a});
     rdpq_texture_rectangle(
@@ -69,5 +81,10 @@ void fade_effect_set(struct Coloru8 color, float time) {
     lerp_time = time;
     current_time = 0.0f;
 
+    fade_effect_activate();
+}
+
+void fade_effect_flash(struct Coloru8 color) {
+    flash_color = color;
     fade_effect_activate();
 }

@@ -4,6 +4,8 @@
 #include "../collision/collision_scene.h"
 #include "../entity/health.h"
 #include "../math/transform_single_axis.h"
+#include "../effects/fade_effect.h"
+#include "../scene/scene.h"
 #include "assets.h"
 #include <t3d/t3dmath.h>
 
@@ -33,7 +35,19 @@ bool lightning_strike_update(struct lightning_strike* strike) {
     float start_time = strike->timer;
     strike->timer += fixed_time_step;
 
-    return strike->timer >= STRIKE_DELAY && start_time < STRIKE_DELAY;
+    bool result = strike->timer >= STRIKE_DELAY && start_time < STRIKE_DELAY;
+
+    if (result) {
+        fade_effect_flash((struct Coloru8){
+            .r = 0xFF,
+            .g = 0xFF,
+            .b = 0xFF,
+            .a = 0x40,
+        });
+        // camera_shake(&current_scene->camera_controller, 0.1f);
+    }
+
+    return result;
 }
 
 void lightning_strike_render(struct lightning_strike* strike, render_batch_t* batch) {

@@ -287,3 +287,10 @@ void camera_set_fixed(struct camera_controller* controller, struct Vector3* posi
 bool camera_is_animating(struct camera_controller* controller) {
     return controller->animation != 0 && controller->current_frame < controller->animation->frame_count;
 }
+
+void camera_shake(struct camera_controller* controller, float strength) {
+    struct Transform* cam_transform = &controller->camera->transform;
+    cam_transform->position.x += randomInRangef(-strength, strength);
+    cam_transform->position.y += randomInRangef(-strength, strength);
+    cam_transform->position.z += randomInRangef(-strength, strength);
+}
