@@ -44,7 +44,7 @@ bool lightning_strike_update(struct lightning_strike* strike) {
             .b = 0xFF,
             .a = 0x40,
         });
-        // camera_shake(&current_scene->camera_controller, 0.1f);
+        camera_shake(&current_scene->camera_controller, 0.1f);
     }
 
     return result;
@@ -57,7 +57,7 @@ void lightning_strike_render(struct lightning_strike* strike, render_batch_t* ba
 
     transform_sa_t transform = {
         .position = strike->position,
-        .rotation = gRight2,
+        .rotation = batch->rotation_2d,
         .scale = 1.0f,
     };
 

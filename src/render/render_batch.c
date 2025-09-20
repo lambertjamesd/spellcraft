@@ -10,6 +10,10 @@ void render_batch_init(struct render_batch* batch, struct Transform* camera_tran
     batch->pool = pool;
 
     transformToMatrix(camera_transform, batch->camera_matrix);
+
+    batch->rotation_2d.x = batch->camera_matrix[0][0];
+    batch->rotation_2d.y = batch->camera_matrix[0][2];
+    vector2Normalize(&batch->rotation_2d, &batch->rotation_2d);
 }
 
 struct render_batch_element* render_batch_add(struct render_batch* batch) {

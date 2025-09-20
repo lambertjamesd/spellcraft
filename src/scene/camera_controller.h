@@ -22,6 +22,7 @@ struct camera_cached_calcuations {
 
 struct camera_controller {
     struct Camera* camera;
+    struct Vector3 stable_position;
     struct player* player;
     struct camera_cached_calcuations _cache_calcluations;
     float follow_distace;
@@ -30,6 +31,8 @@ struct camera_controller {
     struct Vector3 looking_at;
     float looking_at_speed;
     struct Vector3 look_target;
+    struct Vector3 shake_offset;
+    struct Vector3 shake_velocity;
     enum camera_controller_state state;
     struct camera_animation* animation;
     uint16_t current_frame;

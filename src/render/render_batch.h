@@ -104,6 +104,7 @@ typedef struct render_batch_element render_batch_element_t;
 
 struct render_batch {
     mat4x4 camera_matrix;
+    struct Vector2 rotation_2d;
     struct frame_memory_pool* pool;
     struct render_batch_element elements[RENDER_BATCH_MAX_SIZE];
     short element_count;
