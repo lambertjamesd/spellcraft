@@ -33,6 +33,12 @@ struct color_keyframe {
     float time;
 };
 
+static struct color_keyframe bolt_keyframes[] = {
+    {{ 0x00, 0x85, 0xFF, 0xFF }, STRIKE_DELAY},
+    {{ 0x00, 0x85, 0xFF, 0x00 }, STRIKE_DELAY + BOLT_TIME},
+
+};
+
 static struct color_keyframe cloud_keyframes[] = {
     {{ 0x0D, 0x16, 0x15, 0x00 }, 0.0f},
     {{ 0x14, 0x41, 0x4F, 0xFF }, STRIKE_DELAY},
@@ -119,14 +125,12 @@ void lightning_strike_render(struct lightning_strike* strike, render_batch_t* ba
         render_batch_add_tmesh(batch, spell_assets_get()->lightning_cloud, mtx, NULL, NULL, cloud_attrs);
     }
 
-    float bolt_transparency = (BOLT_END - strike->timer) * (1.0f / BOLT_TIME);
-
-    if (bolt_transparency >= 0.0f && bolt_transparency <= 1.0f) {
+    if (strike->timer >= STRIKE_DELAY && strike->timer < BOLT_END) {
         element_attr_t attrs[3];
-        attrs[0] = (element_attr_t){.type = ELEMENT_ATTR_PRIM_COLOR, .color = {0x00, 0x85, 0xFF, (uint8_t)(255.0f * bolt_transparency)}};
+        attrs[0] = (element_attr_t){.type = ELEMENT_ATTR_PRIM_COLOR, .color = LIGHTNING_EVAL_COLOR(bolt_keyframes, strike->timer)};
         attrs[1] = (element_attr_t){
             .type = ELEMENT_ATTR_SCROLL, 
-            .scroll = {(int16_t)(SCROLL_AMOUNT * (1.0f - bolt_transparency)), 0},
+            .scroll = {(int16_t)((SCROLL_AMOUNT / BOLT_TIME) * (strike->timer - STRIKE_DELAY)), 0},
         };
         attrs[2].type = ELEMENT_ATTR_NONE;
     
