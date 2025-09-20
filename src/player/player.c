@@ -240,6 +240,9 @@ void player_check_for_animation_request(struct player* player, struct spell_data
             case SPELL_ANIMATION_SPIN:
                 to_play = player->animations.spin_attack;
                 break;
+            case SPELL_ANIMATION_CAST_UP:
+                to_play = player->animations.cast_up;
+                break;
         }
         
         if (to_play) {
@@ -247,6 +250,7 @@ void player_check_for_animation_request(struct player* player, struct spell_data
         }
         player->last_spell_animation = to_play;
         source->request_animation = 0;
+        player->player_spell_sources[4].flags.cast_state = SPELL_CAST_STATE_INACTIVE;
     }
 }
 
@@ -684,6 +688,7 @@ void player_load_animation(struct player* player) {
 
     player->animations.swing_attack = animation_set_find_clip(player->cutscene_actor.animation_set, "swing_attack_0");
     player->animations.spin_attack = animation_set_find_clip(player->cutscene_actor.animation_set, "spin_attack");
+    player->animations.cast_up = animation_set_find_clip(player->cutscene_actor.animation_set, "cast_up");
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {

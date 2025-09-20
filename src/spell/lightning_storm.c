@@ -64,7 +64,7 @@ void lightning_storm_init(lightning_storm_t* storm, struct spell_data_source* so
 
     storm->data_source = spell_data_source_retain(source);
 
-    spell_data_source_request_animation(source, SPELL_ANIMATION_SWING);
+    spell_data_source_request_animation(source, SPELL_ANIMATION_CAST_UP);
     render_scene_add(&storm->transform.position, 2.0f, lightning_storm_render, storm);
 
     storm->first_active_strike = 0;
@@ -169,7 +169,7 @@ void lightning_storm_find_targets(lightning_storm_t* storm, int strike_count) {
 
 bool lightning_storm_update(lightning_storm_t* storm) {
     if (storm->total_target_count == 0 && storm->active_strike_count == 0) {
-        if (storm->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
+        if (storm->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE && storm->data_source->flags.is_animating) {
             lightning_storm_find_targets(storm, 8);
         }
         return true;

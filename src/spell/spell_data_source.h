@@ -21,6 +21,7 @@ enum spell_animation {
     SPELL_ANIMATION_NONE,
     SPELL_ANIMATION_SWING,
     SPELL_ANIMATION_SPIN,
+    SPELL_ANIMATION_CAST_UP,
 };
 
 union spell_source_flags {

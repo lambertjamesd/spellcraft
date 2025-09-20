@@ -54,6 +54,7 @@ struct player_animations {
 
     struct animation_clip* swing_attack;
     struct animation_clip* spin_attack;
+    struct animation_clip* cast_up;
 };
 
 struct player_definition {
