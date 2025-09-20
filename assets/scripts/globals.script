@@ -1,5 +1,5 @@
 
-global has_staff_default: bool;
+global has_staff_default: bool = true;
 global has_talked_outside: bool;
 
 global fire_rune_level: i8 = 4;
