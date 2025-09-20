@@ -60,6 +60,8 @@ void spell_assets_init() {
     assets.lightning_strike = tmesh_cache_load("rom:/meshes/spell/lightning-strike.tmesh");
     // tmesh_cache_release() never called
     assets.lightning_cloud = tmesh_cache_load("rom:/meshes/spell/lightning-cloud.tmesh");
+    // tmesh_cache_release() never called
+    assets.lightning_impact = tmesh_cache_load("rom:/meshes/spell/lightning-impact.tmesh");
     // material_cache_release() never called
     assets.thunder_cloud = material_cache_load("rom:/materials/spell/lightning_cloud.mat");
 

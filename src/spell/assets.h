@@ -32,6 +32,7 @@ struct spell_assets {
     struct tmesh* lightning_mesh;
     struct tmesh* lightning_strike;
     struct tmesh* lightning_cloud;
+    struct tmesh* lightning_impact;
     struct material* thunder_cloud;
     
     struct material* spell_symbols;
