@@ -102,7 +102,7 @@ void lightning_storm_start_strike(lightning_storm_t* storm) {
     dynamic_object_t* obj = collision_scene_find_object(storm->total_target_count);
 
     struct Vector3 position;
-    bool is_grounded;
+    struct Vector3 normal;
 
     if (!obj) {
         struct Vector2 randomPos;
@@ -115,22 +115,24 @@ void lightning_storm_start_strike(lightning_storm_t* storm) {
         struct mesh_shadow_cast_result cast_result;
         if (collision_scene_shadow_cast(&position, &cast_result)) {
             position.y = cast_result.y;
-            is_grounded = true;
+            normal = cast_result.normal;
         } else {
             position.y -= 1.0f;
-            is_grounded = false;
+            normal = gZeroVec;
         }
     } else {
-        if (obj->shadow_contact) {
+        struct contact* ground_contact = dynamic_object_get_ground(obj);
+
+        if (ground_contact) {
             position = obj->shadow_contact->point;
-            is_grounded = true;
+            normal = ground_contact->normal;
         } else {
             position = *obj->position;
-            is_grounded = false;
+            normal = gZeroVec;
         }
     }
 
-    lightning_strike_start(strike, &position, is_grounded);
+    lightning_strike_start(strike, &position, &normal);
     storm->trigger.type = &lightning_storm_damage_shape;
     lightning_storm_setup_target(storm);
 

@@ -28,16 +28,16 @@ void drop_shadow_render(void* data, struct render_batch* batch) {
         return;
     }
 
-    struct Vector3 skewScale;
-    vector3Scale(&contact->normal, &skewScale, SHADOW_SCALE / contact->normal.y);
+    struct Vector3 skew_scale;
+    vector3Scale(&contact->normal, &skew_scale, SHADOW_SCALE / contact->normal.y);
 
     struct Vector3 pos = contact->point;
     pos.y += 0.1f;
 
     mat4x4 mtx;
     matrixFromScale(mtx, SHADOW_SCALE);
-    mtx[0][1] = -skewScale.x;
-    mtx[2][1] = -skewScale.z;
+    mtx[0][1] = -skew_scale.x;
+    mtx[2][1] = -skew_scale.z;
     matrixApplyScaledPos(mtx, &pos, WORLD_SCALE);
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);

@@ -7,6 +7,7 @@
 #include "../effects/fade_effect.h"
 #include "../scene/scene.h"
 #include "../render/coloru8.h"
+#include "../render/defs.h"
 #include "assets.h"
 #include <t3d/t3dmath.h>
 
@@ -21,6 +22,8 @@
 
 #define SCROLL_AMOUNT   41.0f
 
+#define NOT_GROUNED     1000000.0f
+
 static damage_info_t strike_damage = {
     .amount = 10.0f,
     .knockback_strength = 0.0f,
@@ -34,21 +37,21 @@ struct color_keyframe {
 };
 
 static struct color_keyframe bolt_keyframes[] = {
-    {{ 0x00, 0x85, 0xFF, 0xFF }, STRIKE_DELAY},
-    {{ 0x00, 0x85, 0xFF, 0x00 }, STRIKE_DELAY + BOLT_TIME},
+    {{ 0x00, 0xBE, 0xFF, 0xFF }, STRIKE_DELAY},
+    {{ 0x00, 0xBE, 0xFF, 0x00 }, STRIKE_DELAY + BOLT_TIME},
 
 };
 
 static struct color_keyframe cloud_keyframes[] = {
-    {{ 0x0D, 0x16, 0x15, 0x00 }, 0.0f},
-    {{ 0x14, 0x41, 0x4F, 0xFF }, STRIKE_DELAY},
-    {{ 0x0D, 0x16, 0x15, 0xFF }, STRIKE_DELAY + CLOUD_COLOR_FADE_OUT},
-    {{ 0x0D, 0x16, 0x15, 0x00 }, CLOUD_GONE_TIME},
+    {{ 0x42, 0x54, 0x52, 0x00 }, 0.0f},
+    {{ 0x50, 0x89, 0x96, 0xFF }, STRIKE_DELAY},
+    {{ 0x42, 0x54, 0x52, 0xFF }, STRIKE_DELAY + CLOUD_COLOR_FADE_OUT},
+    {{ 0x42, 0x54, 0x52, 0x00 }, CLOUD_GONE_TIME},
 };
 
 static struct color_keyframe impact_keyframes[] = {
     {{ 0xFF, 0xFF, 0xFF, 0xFF }, STRIKE_DELAY},
-    {{ 0x00, 0x59, 0x6F, 0xFF }, STRIKE_DELAY + CLOUD_COLOR_FADE_OUT},
+    {{ 0x00, 0x9e, 0xaf, 0xFF }, STRIKE_DELAY + CLOUD_COLOR_FADE_OUT},
     {{ 0x00, 0x00, 0x00, 0xFF }, STRIKE_DELAY + BOLT_TIME + CLOUD_FADE_OUT},
     {{ 0x00, 0x00, 0x00, 0x00 }, STRIKE_DELAY + BOLT_TIME + CLOUD_FADE_OUT + IMPACT_FADE_OUT},
 };
@@ -76,10 +79,18 @@ color_t lightning_eval_color(struct color_keyframe* keyframes, int count, float 
 
 #define LIGHTNING_EVAL_COLOR(keyframes, time)   lightning_eval_color(keyframes, sizeof(keyframes) / sizeof(*keyframes), time)
 
-void lightning_strike_start(struct lightning_strike* strike, struct Vector3* position, bool is_grounded) {
+void lightning_strike_start(struct lightning_strike* strike, struct Vector3* position, struct Vector3* ground_normal) {
     strike->position = *position;
     strike->timer = 0.0f;
-    strike->is_grounded = is_grounded;
+
+    if (ground_normal->y < 0.0001f) {
+        strike->skew.x = NOT_GROUNED;
+    } else {
+        struct Vector3 skew_scale;
+        vector3Scale(ground_normal, &skew_scale, 0.5f / ground_normal->y);
+        strike->skew.x = -skew_scale.x;
+        strike->skew.y = -skew_scale.z;
+    }
 }
 
 bool lightning_strike_update(struct lightning_strike* strike) {
@@ -112,9 +123,9 @@ void lightning_strike_render(struct lightning_strike* strike, render_batch_t* ba
         .scale = 1.0f,
     };
 
-    T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &transform);
+    T3DMat4FP* mtxfp = render_batch_transformfp_from_sa(batch, &transform);
 
-    if (!mtx) {
+    if (!mtxfp) {
         return;
     }
 
@@ -122,7 +133,7 @@ void lightning_strike_render(struct lightning_strike* strike, render_batch_t* ba
         element_attr_t cloud_attrs[2];
         cloud_attrs[0] = (element_attr_t){.type = ELEMENT_ATTR_PRIM_COLOR, .color = LIGHTNING_EVAL_COLOR(cloud_keyframes, strike->timer)};
         cloud_attrs[1].type = ELEMENT_ATTR_NONE;
-        render_batch_add_tmesh(batch, spell_assets_get()->lightning_cloud, mtx, NULL, NULL, cloud_attrs);
+        render_batch_add_tmesh(batch, spell_assets_get()->lightning_cloud, mtxfp, NULL, NULL, cloud_attrs);
     }
 
     if (strike->timer >= STRIKE_DELAY && strike->timer < BOLT_END) {
@@ -134,20 +145,28 @@ void lightning_strike_render(struct lightning_strike* strike, render_batch_t* ba
         };
         attrs[2].type = ELEMENT_ATTR_NONE;
     
-        render_batch_add_tmesh(batch, spell_assets_get()->lightning_strike, mtx, NULL, NULL, attrs);
+        render_batch_add_tmesh(batch, spell_assets_get()->lightning_strike, mtxfp, NULL, NULL, attrs);
     }
 
-    if (!strike->is_grounded || strike->timer < STRIKE_DELAY) {
+    if (strike->skew.x == NOT_GROUNED || strike->timer < STRIKE_DELAY) {
         return;
     }
 
     transform.rotation = gRight2;
 
-    mtx = render_batch_transformfp_from_sa(batch, &transform);
+    mtxfp = render_batch_get_transformfp(batch);
 
-    if (!mtx) {
+    if (!mtxfp) {
         return;
     }
+
+    mat4x4 mtx;
+    matrixFromScale(mtx, 0.5f);
+    mtx[0][1] = strike->skew.x;
+    mtx[2][1] = strike->skew.y;
+    matrixApplyScaledPos(mtx, &strike->position, WORLD_SCALE);
+    render_batch_relative_mtx(batch, mtx);
+    t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
     element_attr_t impact_attrs[2];
     impact_attrs[0] = (element_attr_t){
@@ -155,7 +174,7 @@ void lightning_strike_render(struct lightning_strike* strike, render_batch_t* ba
         .color = LIGHTNING_EVAL_COLOR(impact_keyframes, strike->timer),
     };
     impact_attrs[1].type = ELEMENT_ATTR_NONE;
-    render_batch_add_tmesh(batch, spell_assets_get()->lightning_impact, mtx, NULL, NULL, impact_attrs);
+    render_batch_add_tmesh(batch, spell_assets_get()->lightning_impact, mtxfp, NULL, NULL, impact_attrs);
 }
 
 bool lightning_strike_is_active(struct lightning_strike* strike) {
