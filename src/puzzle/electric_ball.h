@@ -13,7 +13,7 @@ struct electric_ball {
     renderable_t renderable;
     dynamic_object_t collision;
     health_t health;
-    bool is_energized;
+    element_attr_t attrs[2];
 };
 
 typedef struct electric_ball electric_ball_t;

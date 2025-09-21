@@ -30,6 +30,7 @@ enum entity_type_id {
     ENTITY_TYPE_camera_focus,
     ENTITY_TYPE_sign,
     ENTITY_TYPE_electric_ball,
+    ENTITY_TYPE_electric_ball_grabber,
 };
 
 struct crate_definition {
@@ -219,6 +220,12 @@ struct sign_definition {
 struct electric_ball_definition {
     struct Vector3 position;
     bool is_energized;
+};
+
+struct electric_ball_grabber_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    boolean_variable output;
 };
 
 enum npc_type {

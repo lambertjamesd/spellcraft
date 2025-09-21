@@ -121,6 +121,12 @@
             "type": "electric_ball"
         },
         {
+            "name": "puzzle_electric_ball_grabber",
+            "description": "",
+            "mesh": "meshes/puzzle/electric_ball_grabber.blend#grabber",
+            "type": "electric_ball_grabber"
+        },
+        {
             "name": "puzzle_electric_torch",
             "description": "",
             "mesh": "meshes/puzzle/electric_torch.blend#electric_torch",

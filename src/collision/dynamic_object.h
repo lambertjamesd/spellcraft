@@ -19,6 +19,7 @@ enum collision_layers {
     COLLISION_LAYER_DAMAGE_PLAYER = (1 << 2),
     COLLISION_LAYER_DAMAGE_ENEMY = (1 << 3),
     COLLISION_LAYER_Z_TARGET = (1 << 4),
+    COLLISION_LAYER_LIGHTNING_BALL = (1 << 5),
 };
 
 enum collision_group {
