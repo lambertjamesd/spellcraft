@@ -13,6 +13,7 @@ struct electric_ball_grabber {
     spatial_trigger_t trigger;
     float has_ball_time;
     boolean_variable output;
+    entity_id entity_id;
     element_attr_t attrs[2];
 };
 

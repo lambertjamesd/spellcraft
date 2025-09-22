@@ -2,13 +2,19 @@
 #define __ENTITY_INTERACTABLE_H__
 
 #include "entity_id.h"
+#include <stdint.h>
 
 struct interactable;
 
 typedef void (*interaction_callback)(struct interactable* interactable, entity_id from);
 
+struct interactable_flags {
+    uint16_t grabbable: 1;
+};
+
 struct interactable {
     entity_id id;
+    struct interactable_flags flags;
     interaction_callback callback;
     void* data;
 };

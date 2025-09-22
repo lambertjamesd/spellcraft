@@ -4,6 +4,7 @@
 #include "../cutscene/expression_evaluate.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
+#include "electric_ball.h"
 
 #define CENTER_OFFSET       1.0f
 #define GRAB_TIME_DELAY     0.5f
@@ -74,6 +75,12 @@ void electric_ball_grabber_init(electric_ball_grabber_t* grabber, struct electri
     update_add(grabber, electric_ball_grabber_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
 
     grabber->has_ball_time = 0.0f;
+    grabber->output = definition->output;
+    grabber->entity_id = entity_id;
+
+    struct Vector3 ball_hover_pos = definition->position;
+    ball_hover_pos.y += CENTER_OFFSET;
+    electric_ball_request_ball(&ball_hover_pos, entity_id, expression_get_bool(grabber->output));
 }
 
 void electric_ball_grabber_destroy(electric_ball_grabber_t* grabber) {
@@ -81,4 +88,5 @@ void electric_ball_grabber_destroy(electric_ball_grabber_t* grabber) {
     renderable_destroy(&grabber->renderable);
     render_scene_remove(&grabber->renderable);
     update_remove(grabber);
+    electric_ball_remove_request(grabber->entity_id);
 }

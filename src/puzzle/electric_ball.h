@@ -21,4 +21,7 @@ typedef struct electric_ball electric_ball_t;
 void electric_ball_init(electric_ball_t* ball, struct electric_ball_definition* definition, entity_id entity_id);
 void electric_ball_destroy(electric_ball_t* ball);
 
+void electric_ball_request_ball(struct Vector3* at, entity_id entity_id, bool should_be_lit);
+void electric_ball_remove_request(entity_id entity_id);
+
 #endif
