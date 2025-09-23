@@ -80,7 +80,10 @@ void electric_ball_grabber_init(electric_ball_grabber_t* grabber, struct electri
 
     struct Vector3 ball_hover_pos = definition->position;
     ball_hover_pos.y += CENTER_OFFSET;
-    electric_ball_request_ball(&ball_hover_pos, entity_id, expression_get_bool(grabber->output));
+
+    if (expression_get_bool(grabber->output)) {
+        electric_ball_request_ball(&ball_hover_pos, entity_id, true);
+    }
 }
 
 void electric_ball_grabber_destroy(electric_ball_grabber_t* grabber) {

@@ -23,6 +23,7 @@
 #include "../puzzle/camera_focus.h"
 #include "../puzzle/electric_ball.h"
 #include "../puzzle/electric_ball_grabber.h"
+#include "../puzzle/electric_ball_dropper.h"
 #include "../puzzle/elevator.h"
 #include "../puzzle/timed_torch.h"
 
@@ -69,6 +70,7 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(sign, fields_sign),
     ENTITY_DEFINITION(electric_ball, fields_empty),
     ENTITY_DEFINITION(electric_ball_grabber, fields_empty),
+    ENTITY_DEFINITION(electric_ball_dropper, fields_empty),
 };
 
 struct entity_definition* entity_find_def(const char* name) {

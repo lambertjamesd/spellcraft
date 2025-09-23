@@ -13,3 +13,6 @@ scene crossing_jelly_all_died: bool;
 scene crossing_door_open: bool;
 
 scene elevator_active: bool;
+
+scene basement_entrance_solved: bool;
+scene basement_entrance_door_open: bool;

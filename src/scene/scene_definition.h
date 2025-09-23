@@ -31,6 +31,7 @@ enum entity_type_id {
     ENTITY_TYPE_sign,
     ENTITY_TYPE_electric_ball,
     ENTITY_TYPE_electric_ball_grabber,
+    ENTITY_TYPE_electric_ball_dropper,
 };
 
 struct crate_definition {
@@ -226,6 +227,11 @@ struct electric_ball_grabber_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     boolean_variable output;
+};
+
+struct electric_ball_dropper_definition {
+    struct Vector3 position;
+    boolean_variable is_active;
 };
 
 enum npc_type {
