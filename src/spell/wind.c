@@ -22,10 +22,10 @@ static struct wind_definition wind_definitions[] = {
     },
     [ELEMENT_TYPE_FIRE] = {
         .push = {
-            .acceleration = 0.0f,
+            .acceleration = 16.0f,
             .top_speed = 10.0f,
-            .time = 1.0f,
-            .bursty = true,
+            .time = 0.0f,
+            .bursty = false,
         },
         .base_scale = 1.0f,
     },
@@ -172,6 +172,10 @@ void wind_apply_push_velocity_with_dir(struct wind_definition* definition, struc
     }
 
     single_push_apply_velocity_with_dir(&definition->push, obj, wind_direction);
+
+    // if (!definition->lightning && obj->has_gravity) {
+    //     obj->velocity.y -= fixed_time_step * GRAVITY_CONSTANT;
+    // }
 }
 
 void wind_apply_push_velocity(struct wind* wind) {
