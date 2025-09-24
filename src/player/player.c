@@ -24,6 +24,10 @@
 #define PLAYER_RUN_ANIM_SPEED   4.2f
 #define PLAYER_WALK_ANIM_SPEED   0.64f
 
+#define SLIDE_DELAY 0.25f
+#define COYOTE_TIME 0.1f
+#define SHADOW_AS_GROUND_DISTANCE   0.15f
+
 static struct Vector2 player_max_rotation;
 static struct Vector2 z_target_rotation;
 
@@ -162,7 +166,13 @@ void player_handle_ground_movement(struct player* player, struct contact* ground
 
     if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
         // TODO handle sliding logic
-        return;
+        player->slide_timer += fixed_time_step;
+
+        if (player->slide_timer > SLIDE_DELAY) {
+            return;
+        }
+    } else {
+        player->slide_timer = 0.0f;
     }
 
     player_handle_look(player, &target_direction);
@@ -193,7 +203,7 @@ void player_handle_ground_movement(struct player* player, struct contact* ground
         if (ground_object) {
             vector3Add(&player->cutscene_actor.collider.velocity, &ground_object->velocity, &player->cutscene_actor.collider.velocity);
         }
-    } else {
+    } else if (ground_contact->surface_type != SURFACE_TYPE_COYOTE) {
         player->last_good_footing = player->cutscene_actor.transform.position;
     }
 }
@@ -380,8 +390,19 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
         return;
     }
 
-    if (ground_contact) {
-        player_handle_ground_movement(player, ground_contact);
+    if (ground_contact || player->coyote_time < COYOTE_TIME) {
+        if (ground_contact) {
+            player_handle_ground_movement(player, ground_contact);
+            player->coyote_time = 0.0f;
+        } else {
+            contact_t fake_contact = {
+                .normal = gUp,
+                .point = player->cutscene_actor.transform.position,
+                .surface_type = SURFACE_TYPE_COYOTE,
+            };
+            player_handle_ground_movement(player, &fake_contact);
+            player->coyote_time += fixed_time_step;
+        }
     } else {
         player_run_clip(player, player->animations.jump_peak);
         player->state = PLAYER_FALLING;

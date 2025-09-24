@@ -6,6 +6,7 @@ enum surface_type {
     SURFACE_TYPE_HOLEY,
     SURFACE_TYPE_WATER,
     SURFACE_TYPE_STICKY,
+    SURFACE_TYPE_COYOTE,
 };
 
 #endif

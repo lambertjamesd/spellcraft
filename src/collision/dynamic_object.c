@@ -181,6 +181,8 @@ bool dynamic_object_is_grounded(struct dynamic_object* object) {
     return false;
 }
 
+#define SHADOW_AS_GROUND_TOLERNACE  0.15f
+
 struct contact* dynamic_object_get_ground(struct dynamic_object* object) {
     struct contact* contact = object->active_contacts;
 
@@ -192,6 +194,10 @@ struct contact* dynamic_object_get_ground(struct dynamic_object* object) {
         }
 
         contact = contact->next;
+    }
+
+    if (!result && object->shadow_contact && object->shadow_contact->point.y + SHADOW_AS_GROUND_TOLERNACE > object->bounding_box.min.y) {
+        return object->shadow_contact;
     }
 
     return result;
