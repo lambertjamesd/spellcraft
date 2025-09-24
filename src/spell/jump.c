@@ -16,7 +16,7 @@ void jump_init(struct jump* jump, struct spell_data_source* source, struct spell
 }
 
 void jump_destroy(struct jump* jump) {
-
+    spell_data_source_release(jump->data_source);
 }
 
 bool jump_update(struct jump* jump, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
@@ -51,8 +51,8 @@ bool jump_update(struct jump* jump, struct spell_event_listener* event_listener,
 }
 
 struct jump_definition jump_def_fire = {
-    .initial_impulse = 3.0f,
-    .hover_accel = 10.0f,
+    .initial_impulse = 4.0f,
+    .hover_accel = 9.0f,
     .max_hover_time = 0.5f,
     .mana_per_second = 3.0f,
 };

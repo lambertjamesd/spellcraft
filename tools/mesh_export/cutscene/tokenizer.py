@@ -33,7 +33,7 @@ class Token():
         self.token_type: str = token_type
         self.value: str = value
         self.at: int = at
-        self._source: str = source
+        self._source: Source = source
 
     def __str__(self):
         return f"'{self.value}':{self.token_type}"

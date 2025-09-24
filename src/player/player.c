@@ -373,6 +373,12 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     if (player->last_spell_animation && animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
         return;
     }
+    
+    if (collider->is_jumping) {
+        player->state = PLAYER_JUMPING;
+        player_run_clip(player, player->animations.jump);
+        return;
+    }
 
     if (ground_contact) {
         player_handle_ground_movement(player, ground_contact);
@@ -398,12 +404,6 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
 
     if (player_is_running(player, player->animations.land)) {
-        return;
-    }
-
-    if (collider->is_jumping) {
-        player->state = PLAYER_JUMPING;
-        player_run_clip(player, player->animations.jump);
         return;
     }
 
