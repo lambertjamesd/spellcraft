@@ -39,9 +39,9 @@ void setup() {
     fade_effect_set((struct Coloru8){0, 0, 0, 255}, 0.0f);
     fade_effect_set((struct Coloru8){0, 0, 0, 0}, 3.0f);
 
-    scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    // scene_queue_next("rom:/scenes/fire_trials.scene");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
-    // scene_queue_next("rom:/scenes/ability_testing.scene");
+    scene_queue_next("rom:/scenes/ability_testing.scene");
     // scene_queue_next("rom:/scenes/playerhome_basement.scene");
     // scene_queue_next("rom:/scenes/StartArea_ForestWest.scene#west");
     // scene_queue_next("rom:/scenes/StartArea_TempleOutside.scene");

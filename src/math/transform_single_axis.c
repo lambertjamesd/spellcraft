@@ -37,3 +37,8 @@ void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix) {
     matrix[3][2] = transform->position.z * WORLD_SCALE;
     matrix[3][3] = 1.0f;
 }
+
+void transformSaTransformPoint(struct TransformSingleAxis* transform, struct Vector3* input, struct Vector3* output) {
+    vector3RotateWith2(input, &transform->rotation, output);
+    vector3AddScaled(&transform->position, output, transform->scale, output);
+}

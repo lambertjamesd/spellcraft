@@ -39,6 +39,24 @@ static struct spatial_trigger_type player_z_trigger_shape = {
     SPATIAL_TRIGGER_WEDGE(15.0f, 7.0f, 0.707f, 0.707f),
 };
 
+struct climb_up_data {
+    float max_climb_height;
+    float animation_height;
+    float start_jump_time;
+    float end_jump_time;
+};
+
+typedef struct climb_up_data climb_up_data_t;
+
+static struct climb_up_data climb_up_data[CLIMB_UP_COUNT] = {
+    {
+        .max_climb_height = 0.5f,
+        .animation_height = 0.4f,
+        .start_jump_time = 14.0f / 30.0f,
+        .end_jump_time = 23.0f / 30.0f,
+    },
+};
+
 static struct cutscene_actor_def player_actor_def = {
     .eye_level = 1.26273f,
     .move_speed = PLAYER_WALK_ANIM_SPEED,
@@ -84,6 +102,32 @@ void player_get_move_basis(struct Transform* transform, struct Vector3* forward,
 void player_run_clip(struct player* player, struct animation_clip* clip) {
     animator_run_clip(&player->cutscene_actor.animator, clip, 0.0f, false);
     player->cutscene_actor.animate_speed = 1.0f;
+}
+
+void player_run_clip_keep_translation(struct player* player, struct animation_clip* clip) {
+    struct Transform before;
+    armature_bone_transform(player->cutscene_actor.armature, 0, &before);
+    player_run_clip(player, clip);
+    animator_update(&player->cutscene_actor.animator, player->cutscene_actor.armature, fixed_time_step);
+    struct Transform after;
+    armature_bone_transform(player->cutscene_actor.armature, 0, &after);
+
+    struct Vector3 final_point;
+    transformSaTransformPoint(&player->cutscene_actor.transform, &before.position, &final_point);
+    vector3AddScaled(
+        &player->cutscene_actor.transform.position, 
+        &final_point, 
+        1.0f / MODEL_SCALE, 
+        &player->cutscene_actor.transform.position
+    );
+    
+    transformSaTransformPoint(&player->cutscene_actor.transform, &after.position, &final_point);
+    vector3AddScaled(
+        &player->cutscene_actor.transform.position, 
+        &final_point, 
+        -1.0f / MODEL_SCALE,
+        &player->cutscene_actor.transform.position
+    );
 }
 
 bool player_is_running(struct player* player, struct animation_clip* clip) {
@@ -160,16 +204,36 @@ void player_handle_look(struct player* player, struct Vector3* look_direction) {
     player_look_towards(player, look_direction);
 }
 
-void player_handle_ground_movement(struct player* player, struct contact* ground_contact) {
+bool player_handle_ground_movement(struct player* player, struct contact* ground_contact) {
     struct Vector3 target_direction;
     player_get_input_direction(player, &target_direction);
+
+    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction)) {
+        struct Vector3 target;
+        grab_checker_get_climb_to(&player->grab_checker, &target);
+
+        float height = target.y - player->cutscene_actor.transform.position.y;
+
+        for (int i = 0; i < CLIMB_UP_COUNT; i += 1) {
+            climb_up_data_t* data = &climb_up_data[i];
+
+            if (height < data->max_climb_height) {
+                player_run_clip(player, player->animations.climb_up[i]);
+                player->state = PLAYER_CLIMBING_UP;
+                player->state_data.climbing_up.timer = 0.0f;
+                player->state_data.climbing_up.target = target;
+                player->state_data.climbing_up.climb_up_index = 0;
+                return true;
+            }
+        }
+    }
 
     if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
         // TODO handle sliding logic
         player->slide_timer += fixed_time_step;
 
         if (player->slide_timer > SLIDE_DELAY) {
-            return;
+            return false;
         }
     } else {
         player->slide_timer = 0.0f;
@@ -178,7 +242,7 @@ void player_handle_ground_movement(struct player* player, struct contact* ground
     player_handle_look(player, &target_direction);
 
     if (player->cutscene_actor.collider.is_pushed) {
-        return;
+        return false;
     }
 
     if (vector3MagSqrd(&target_direction) < 0.001f) {
@@ -206,6 +270,8 @@ void player_handle_ground_movement(struct player* player, struct contact* ground
     } else if (ground_contact->surface_type != SURFACE_TYPE_COYOTE) {
         player->last_good_footing = player->cutscene_actor.transform.position;
     }
+
+    return false;
 }
 
 void player_handle_air_movement(struct player* player) {
@@ -346,6 +412,17 @@ void player_getting_up(struct player* player, struct contact* ground_contact) {
     }
 }
 
+void player_climbing_up(struct player* player, struct contact* ground_contact) {
+    struct climb_up_data* climb_up = &climb_up_data[player->state_data.climbing_up.climb_up_index];
+
+    if (player->state_data.climbing_up.timer > climb_up->end_jump_time && !player_is_running(player, player->animations.climb_up[0])) {
+        player->state = PLAYER_GROUNDED;
+        player_run_clip_keep_translation(player, player->animations.idle);
+    }
+
+    player->state_data.climbing_up.timer += fixed_time_step;
+}
+
 void player_update_knockback(struct player* player, struct contact* ground_contact) {
     if (ground_contact && player->cutscene_actor.collider.velocity.y < 0.1f) {
         player_run_clip(player, player->animations.knockback_land);
@@ -391,8 +468,9 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     }
 
     if (ground_contact || player->coyote_time < COYOTE_TIME) {
+        bool should_return;
         if (ground_contact) {
-            player_handle_ground_movement(player, ground_contact);
+            should_return = player_handle_ground_movement(player, ground_contact);
             player->coyote_time = 0.0f;
         } else {
             contact_t fake_contact = {
@@ -400,8 +478,12 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
                 .point = player->cutscene_actor.transform.position,
                 .surface_type = SURFACE_TYPE_COYOTE,
             };
-            player_handle_ground_movement(player, &fake_contact);
+            should_return = player_handle_ground_movement(player, &fake_contact);
             player->coyote_time += fixed_time_step;
+        }
+
+        if (should_return) {
+            return;
         }
     } else {
         player_run_clip(player, player->animations.jump_peak);
@@ -479,6 +561,9 @@ void player_update_state(struct player* player, struct contact* ground_contact) 
             break;
         case PLAYER_GETTING_UP:
             player_getting_up(player, ground_contact);
+            break;
+        case PLAYER_CLIMBING_UP:
+            player_climbing_up(player, ground_contact);
             break;
         default:
             player_update_grounded(player, ground_contact);
@@ -710,6 +795,8 @@ void player_load_animation(struct player* player) {
     player->animations.swing_attack = animation_set_find_clip(player->cutscene_actor.animation_set, "swing_attack_0");
     player->animations.spin_attack = animation_set_find_clip(player->cutscene_actor.animation_set, "spin_attack");
     player->animations.cast_up = animation_set_find_clip(player->cutscene_actor.animation_set, "cast_up");
+
+    player->animations.climb_up[0] = animation_set_find_clip(player->cutscene_actor.animation_set, "climb_0");
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
@@ -754,6 +841,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     live_cast_init(&player->live_cast);
     health_init(&player->health, ENTITY_ID_PLAYER, 100.0f);
     health_set_callback(&player->health, player_on_damage, player);
+    grab_checker_init(&player->grab_checker, &player_actor_def.collider);
 
     for (int i = 0; i < PLAYER_CAST_SOURCE_COUNT; i += 1) {
         struct spell_data_source* source = &player->player_spell_sources[i];
@@ -797,6 +885,7 @@ void player_destroy(struct player* player) {
     render_scene_remove(&player->renderable);
     update_remove(player);
     cutscene_actor_destroy(&player->cutscene_actor);
+    grab_checker_destroy(&player->grab_checker);
 
     tmesh_cache_release(player->assets.staffs[0]);
     drop_shadow_destroy(&player->drop_shadow);

@@ -232,6 +232,12 @@ void collision_scene_collide_dynamic() {
 
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
+
+        if (element->type == COLLISION_ELEMENT_TYPE_DYNAMIC && ((dynamic_object_t*)element->object)->is_ghost) {
+            edge_count -= 2;
+            continue;
+        }
+
         struct Box3D* bb = collision_scene_element_bounding_box(element);
 
         curr_edge->is_start_edge = 1;
@@ -439,7 +445,7 @@ void collision_scene_collide() {
         bool is_grounded = dynamic_object_get_ground(object) != NULL;
 
         struct mesh_shadow_cast_result shadow;
-        if (collision_scene_shadow_cast(object->position, &shadow)) {
+        if (!object->is_ghost && collision_scene_shadow_cast(object->position, &shadow)) {
             struct contact* contact = collision_scene_new_contact();
 
             if (contact) {

@@ -18,8 +18,10 @@
 #include "../entity/health.h"
 
 #include "inventory.h"
+#include "grab_checker.h"
 
 #define PLAYER_CAST_SOURCE_COUNT    5
+#define CLIMB_UP_COUNT              1
 
 enum player_state {
     PLAYER_GROUNDED,
@@ -28,6 +30,7 @@ enum player_state {
     PLAYER_SWIMMING,
     PLAYER_KNOCKBACK,
     PLAYER_GETTING_UP,
+    PLAYER_CLIMBING_UP,
 };
 
 struct player_animations {
@@ -55,6 +58,8 @@ struct player_animations {
     struct animation_clip* swing_attack;
     struct animation_clip* spin_attack;
     struct animation_clip* cast_up;
+    
+    struct animation_clip* climb_up[CLIMB_UP_COUNT];
 };
 
 struct player_definition {
@@ -64,6 +69,14 @@ struct player_definition {
 
 struct inventory_assets {
     struct tmesh* staffs[INV_STAFF_COUNT];
+};
+
+union state_data {
+    struct {
+        float timer;
+        struct Vector3 target;
+        uint8_t climb_up_index;
+    } climbing_up;
 };
 
 struct player {
@@ -76,6 +89,7 @@ struct player {
     
     struct spell_exec spell_exec;
     struct live_cast live_cast;
+    grab_checker_t grab_checker;
 
     struct player_animations animations;
     struct animation_clip* last_spell_animation;
@@ -88,6 +102,7 @@ struct player {
     float coyote_time;
 
     enum player_state state;
+    union state_data state_data;
 
     struct spatial_trigger z_target_trigger;
     struct TransformSingleAxis z_target_transform;

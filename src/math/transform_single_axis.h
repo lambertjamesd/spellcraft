@@ -17,4 +17,6 @@ void transformSaInitIdentity(struct TransformSingleAxis* transform);
 void transformSaInit(struct TransformSingleAxis* transform, struct Vector3* pos, struct Vector2* rot, float scale);
 void transformSAToMatrix(struct TransformSingleAxis* transform, mat4x4 matrix);
 
+void transformSaTransformPoint(struct TransformSingleAxis* transform, struct Vector3* input, struct Vector3* output);
+
 #endif

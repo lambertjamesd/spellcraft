@@ -33,6 +33,8 @@ struct tmesh {
     uint8_t light_source;
 };
 
+typedef struct tmesh tmesh_t;
+
 void tmesh_load(struct tmesh* tmesh, FILE* file);
 void tmesh_release(struct tmesh* tmesh);
 

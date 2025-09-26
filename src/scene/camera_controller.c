@@ -42,6 +42,20 @@ void camera_look_at_from_rotation(struct camera_controller* controller) {
 #define MAX_SIN_ANGLE DEFAULT_CAMERA_COS_FOV_6
 #define MAX_COS_ANGLE DEFAULT_CAMERA_SIN_FOV_6
 
+void camera_controller_direct_target(struct camera_controller* controller, struct Vector3* target) {
+    struct Vector3* player_pos = &controller->player->cutscene_actor.transform.position;
+    struct Vector3 offset;
+    vector3Sub(player_pos, target, &offset);
+
+    offset.y = 0.0f;
+    vector3Normalize(&offset, &offset);
+
+    vector3AddScaled(player_pos, &offset, CAMERA_FOLLOW_DISTANCE, &controller->target);
+    controller->target.y += CAMERA_FOLLOW_HEIGHT;
+
+    move_towards(&controller->looking_at, &controller->looking_at_speed, target, &camera_move_parameters);
+}
+
 void camera_controller_watch_target(struct camera_controller* controller, struct Vector3* target) {
     struct Vector3* camera_pos = &controller->stable_position;
     struct Vector3* player_pos = &controller->player->cutscene_actor.transform.position;
@@ -207,14 +221,16 @@ void camera_controller_update(struct camera_controller* controller) {
         dynamic_object_t* obj = collision_scene_find_object(camera_determine_secondary_target(controller));
 
         if (obj) {
-            camera_controller_watch_target(controller, obj->position);
+            // camera_controller_watch_target(controller, obj->position);
+            camera_controller_direct_target(controller, obj->position);
         } else {
             // camera_controller_determine_player_move_target(controller, &controller->target, false);
             camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);
         }
         camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
     } else if (controller->state == CAMERA_STATE_LOOK_AT_WITH_PLAYER) {
-        camera_controller_watch_target(controller, &controller->look_target);
+        // camera_controller_watch_target(controller, &controller->look_target);
+        camera_controller_direct_target(controller, &controller->look_target);
         camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
     } else if (controller->state == CAMERA_STATE_ANIMATE) {
         camera_controller_update_animation(controller);
