@@ -21,7 +21,7 @@
 #include "grab_checker.h"
 
 #define PLAYER_CAST_SOURCE_COUNT    5
-#define CLIMB_UP_COUNT              1
+#define CLIMB_UP_COUNT              2
 
 enum player_state {
     PLAYER_GROUNDED,
@@ -74,7 +74,8 @@ struct inventory_assets {
 union state_data {
     struct {
         float timer;
-        struct Vector3 target;
+        float y_velocity;
+        struct Vector3 start_pos;
         uint8_t climb_up_index;
     } climbing_up;
 };
