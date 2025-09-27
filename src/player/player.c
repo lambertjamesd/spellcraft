@@ -61,6 +61,12 @@ static struct climb_up_data climb_up_data[CLIMB_UP_COUNT] = {
         .start_jump_time = 6.0f / 30.0f,
         .end_jump_time = 13.0f / 30.0f,
     },
+    {
+        .max_climb_height = 1.8f,
+        .animation_height = 1.4f,
+        .start_jump_time = 6.0f / 30.0f,
+        .end_jump_time = 13.0f / 30.0f,
+    },
 };
 
 static struct cutscene_actor_def player_actor_def = {
@@ -230,6 +236,11 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
                 player->state_data.climbing_up.start_pos = player->cutscene_actor.transform.position;
                 player->state_data.climbing_up.climb_up_index = i;
                 player->state_data.climbing_up.y_velocity = (height - data->animation_height) / (data->end_jump_time - data->start_jump_time); 
+                
+                struct Vector3 offset;
+                vector3Sub(&target, &player->cutscene_actor.transform.position, &offset);
+                vector2LookDir(&player->state_data.climbing_up.target_rotation, &offset);
+
                 return true;
             }
         }
@@ -430,13 +441,16 @@ void player_climbing_up(struct player* player, struct contact* ground_contact) {
     }
 
     struct Vector3* pos = &player->cutscene_actor.transform.position;
+    *pos = state->climbing_up.start_pos;
+    player->cutscene_actor.collider.velocity = gZeroVec;
 
     if (state->climbing_up.timer > climb_up->end_jump_time) {
-        *pos = state->climbing_up.start_pos;
         pos->y += state->climbing_up.y_velocity * (climb_up->end_jump_time - climb_up->start_jump_time);
+        player->cutscene_actor.collider.velocity.y = state->climbing_up.y_velocity;
     } else if (state->climbing_up.timer > climb_up->start_jump_time) {
-        *pos = state->climbing_up.start_pos;
         pos->y += state->climbing_up.y_velocity * (state->climbing_up.timer - climb_up->start_jump_time);
+    } else {
+        vector2RotateTowards(&player->cutscene_actor.transform.rotation, &state->climbing_up.target_rotation, &player_max_rotation, &player->cutscene_actor.transform.rotation);
     }
 
     player->state_data.climbing_up.timer += fixed_time_step;
@@ -817,6 +831,7 @@ void player_load_animation(struct player* player) {
 
     player->animations.climb_up[0] = animation_set_find_clip(player->cutscene_actor.animation_set, "climb_0");
     player->animations.climb_up[1] = animation_set_find_clip(player->cutscene_actor.animation_set, "climb_1");
+    player->animations.climb_up[2] = animation_set_find_clip(player->cutscene_actor.animation_set, "climb_2");
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {

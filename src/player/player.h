@@ -21,7 +21,7 @@
 #include "grab_checker.h"
 
 #define PLAYER_CAST_SOURCE_COUNT    5
-#define CLIMB_UP_COUNT              2
+#define CLIMB_UP_COUNT              3
 
 enum player_state {
     PLAYER_GROUNDED,
@@ -76,6 +76,7 @@ union state_data {
         float timer;
         float y_velocity;
         struct Vector3 start_pos;
+        struct Vector2 target_rotation;
         uint8_t climb_up_index;
     } climbing_up;
 };
