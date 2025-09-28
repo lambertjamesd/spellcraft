@@ -6,6 +6,7 @@
 #include "../math/mathf.h"
 #include "../math/constants.h"
 #include "../render/defs.h"
+#include "../entity/interactable.h"
 #include <math.h>
 
 #define CAMERA_FOLLOW_DISTANCE  3.4f
@@ -218,11 +219,17 @@ entity_id camera_determine_secondary_target(struct camera_controller* controller
 
 void camera_controller_update(struct camera_controller* controller) {
     if (controller->state == CAMERA_STATE_FOLLOW) {
-        dynamic_object_t* obj = collision_scene_find_object(camera_determine_secondary_target(controller));
-
+        entity_id secondary = camera_determine_secondary_target(controller);
+        dynamic_object_t* obj = collision_scene_find_object(secondary);
+        
         if (obj) {
-            // camera_controller_watch_target(controller, obj->position);
-            camera_controller_direct_target(controller, obj->position);
+            interactable_t* interactable = interactable_get(secondary);
+
+            if (interactable && interactable->flags.target_straight_on) {
+                camera_controller_direct_target(controller, obj->position);
+            } else {
+                camera_controller_watch_target(controller, obj->position);
+            }
         } else {
             // camera_controller_determine_player_move_target(controller, &controller->target, false);
             camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);

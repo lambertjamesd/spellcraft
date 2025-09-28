@@ -7,6 +7,7 @@
 #include "../render/renderable.h"
 #include "../collision/dynamic_object.h"
 #include "../entity/health.h"
+#include "../entity/interactable.h"
 
 struct electric_ball {
     transform_sa_t transform;
@@ -14,6 +15,7 @@ struct electric_ball {
     dynamic_object_t collision;
     health_t health;
     element_attr_t attrs[2];
+    interactable_t interactable;
 };
 
 typedef struct electric_ball electric_ball_t;

@@ -31,6 +31,7 @@ enum player_state {
     PLAYER_KNOCKBACK,
     PLAYER_GETTING_UP,
     PLAYER_CLIMBING_UP,
+    PLAYER_CARRY,
 };
 
 struct player_animations {
@@ -60,6 +61,12 @@ struct player_animations {
     struct animation_clip* cast_up;
     
     struct animation_clip* climb_up[CLIMB_UP_COUNT];
+
+    struct animation_clip* carry_pickup;
+    struct animation_clip* carry_idle;
+    struct animation_clip* carry_run;
+    struct animation_clip* carry_walk;
+    struct animation_clip* carry_drop;
 };
 
 struct player_definition {
@@ -79,7 +86,14 @@ union state_data {
         struct Vector2 target_rotation;
         uint8_t climb_up_index;
     } climbing_up;
+    struct {
+        entity_id carrying;
+        float carry_offset;
+        bool should_carry;
+    } carrying;
 };
+
+typedef union state_data state_data_t;
 
 struct player {
     struct cutscene_actor cutscene_actor;
@@ -112,6 +126,8 @@ struct player {
 
     entity_id z_target;
 };
+
+typedef struct player player_t;
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform);
 

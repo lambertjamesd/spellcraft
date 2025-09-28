@@ -2,6 +2,7 @@
 #define __GJK_H___
 
 #include "../math/vector3.h"
+#include <stdbool.h>
 
 typedef void (*MinkowsiSum)(void* data, struct Vector3* direction, struct Vector3* output);
 
@@ -16,6 +17,6 @@ struct Simplex {
 void simplexInit(struct Simplex* simplex);
 int simplexCheck(struct Simplex* simplex, struct Vector3* nextDirection);
 
-int gjkCheckForOverlap(struct Simplex* simplex, void* objectA, MinkowsiSum objectASum, void* objectB, MinkowsiSum objectBSum, struct Vector3* firstDirection);
+bool gjkCheckForOverlap(struct Simplex* simplex, void* objectA, MinkowsiSum objectASum, void* objectB, MinkowsiSum objectBSum, struct Vector3* firstDirection);
 
 #endif

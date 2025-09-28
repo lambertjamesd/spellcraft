@@ -15,11 +15,11 @@ static struct dynamic_object_type treasure_chest_collision = {
     .friction = 0.25f,
 };
 
-void treasure_chest_interact(struct interactable* interactable, entity_id from) {
+bool treasure_chest_interact(struct interactable* interactable, entity_id from) {
     struct treasure_chest* treasure_chest = (struct treasure_chest*)interactable->data;
 
     if (!treasure_chest->item_type) {
-        return;
+        return false;
     }
 
     animator_run_clip(&treasure_chest->animator, treasure_chest->animations.open, 0.0f, false);
@@ -41,6 +41,8 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
 
     inventory_unlock_item(treasure_chest->item_type);
     treasure_chest->item_type = ITEM_TYPE_NONE;
+
+    return true;
 }
 
 void treasure_chest_update(void* data) {

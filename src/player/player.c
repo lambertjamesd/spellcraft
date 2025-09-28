@@ -27,6 +27,10 @@
 #define SLIDE_DELAY 0.25f
 #define COYOTE_TIME 0.1f
 #define SHADOW_AS_GROUND_DISTANCE   0.15f
+#define GRAB_RADIUS 0.75f
+
+#define CARRY_GRAB_TIME   (11.0f / 30.0f)
+#define CARRY_DROP_TIME   (11.0f / 30.0f)
 
 static struct Vector2 player_max_rotation;
 static struct Vector2 z_target_rotation;
@@ -153,21 +157,57 @@ void player_loop_animation(struct player* player, struct animation_clip* clip, f
     player->cutscene_actor.animate_speed = speed;
 }
 
-void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
-    bool* did_interact = (bool*)data;
-
-    if (*did_interact) {
-        return;
-    }
-
-    struct interactable* interactable = interactable_get(overlaps->entity_id);
+bool player_interact_with_entity(player_t* player,  entity_id entity) {
+    interactable_t* interactable = interactable_get(entity);
 
     if (!interactable) {
+        return false;
+    }
+
+    if (interactable->flags.grabbable) {
+        dynamic_object_t* obj = collision_scene_find_object(entity);
+
+        if (!obj) {
+            return false;
+        }
+
+        struct Vector3 offset;
+        vector3Sub(obj->position, player_get_position(player), &offset);
+
+        if (vector3MagSqrd2D(&offset) > GRAB_RADIUS * GRAB_RADIUS) {
+            return false;
+        }
+
+        float carry_offset = obj->position->y - obj->bounding_box.min.y;
+
+        player->state = PLAYER_CARRY;
+        player->state_data = (union state_data) {
+            .carrying = {
+                .carrying = entity,
+                .carry_offset = carry_offset,
+                .should_carry = false,
+            }
+        };
+        player_run_clip(player, player->animations.carry_pickup);
+        return true;
+    } else {
+        return interactable->callback(interactable, ENTITY_ID_PLAYER);
+    }
+}
+
+struct player_interaction {
+    struct player* player;
+    bool did_interact;
+};
+
+void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
+    struct player_interaction* interaction = (struct player_interaction*)data;
+
+    if (interaction->did_interact) {
         return;
     }
     
-    *did_interact = true;
-    interactable->callback(interactable, ENTITY_ID_PLAYER);
+    interaction->did_interact = player_interact_with_entity(interaction->player, overlaps->entity_id);
 }
 
 void player_get_input_direction(struct player* player, struct Vector3* target_direction) {
@@ -308,18 +348,19 @@ void player_handle_air_movement(struct player* player) {
 }
 
 bool player_handle_a_action(struct player* player) {
-    bool did_interact = false;
+    struct player_interaction interaction = {
+        .player = player,
+        .did_interact = false,
+    };
 
     if (player->z_target) {
-        struct interactable* interactable = interactable_get(player->z_target);
-
-        if (interactable) {
-            interactable->callback(interactable, ENTITY_ID_PLAYER);
+        if (player_interact_with_entity(player, player->z_target)) {
+            return true;
         }
     }
 
-    collision_scene_query_trigger(&player_visual_shape, &player->cutscene_actor.transform, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &did_interact);
-    return did_interact;
+    collision_scene_query_trigger(&player_visual_shape, &player->cutscene_actor.transform, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &interaction);
+    return interaction.did_interact;
 }
 
 void player_check_for_animation_request(struct player* player, struct spell_data_source* source) {
@@ -456,6 +497,60 @@ void player_climbing_up(struct player* player, struct contact* ground_contact) {
     player->state_data.climbing_up.timer += fixed_time_step;
 }
 
+void player_carry(player_t* player, contact_t* ground_contact) {
+    state_data_t* state_data = (state_data_t*)&player->state_data;
+
+    dynamic_object_t* obj = collision_scene_find_object(state_data->carrying.carrying);
+
+    if (!obj) {
+        player->state = ground_contact ? PLAYER_GROUNDED : PLAYER_FALLING;
+        return;
+    }
+
+
+
+    if (state_data->carrying.should_carry) {
+        transform_sa_t* player_transform = &player->cutscene_actor.transform;
+
+        struct Transform cast_transform;
+        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh->attatchments[0].bone_index, &cast_transform);
+
+        struct Vector3 position;
+        vector3Scale(&cast_transform.position, &cast_transform.position, 1.0f / MODEL_SCALE);
+
+        float offset = cast_transform.position.x * player_transform->rotation.x + 
+            cast_transform.position.z * player_transform->rotation.y;
+        cast_transform.position.x -= offset * player_transform->rotation.x;
+        cast_transform.position.z -= offset * player_transform->rotation.y;
+
+        transformSaTransformPoint(player_transform, &cast_transform.position, &position);
+        position.y += state_data->carrying.carry_offset;
+        *obj->position = position;
+        obj->velocity = player->cutscene_actor.collider.velocity;
+
+        if (obj->rotation) {
+            *obj->rotation = player_transform->rotation;
+        }
+    }
+
+    if (player_is_running(player, player->animations.carry_pickup)) {
+        if (animator_get_time(&player->cutscene_actor.animator) > CARRY_GRAB_TIME) {
+            player->state_data.carrying.should_carry = true;
+            obj->is_ghost = true;
+        }
+
+        return;
+    }
+
+    if (state_data->carrying.should_carry) {
+        if (!player_is_running(player, player->animations.carry_idle)) {
+            player_run_clip(player, player->animations.carry_idle);
+        }
+    } else {
+        // player->state = ground_contact ? PLAYER_GROUNDED : PLAYER_FALLING;
+    }
+}
+
 void player_update_knockback(struct player* player, struct contact* ground_contact) {
     if (ground_contact && player->cutscene_actor.collider.velocity.y < 0.1f) {
         player_run_clip(player, player->animations.knockback_land);
@@ -484,6 +579,10 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
 
     if (pressed.a && !live_cast_is_typing(&player->live_cast) && player_handle_a_action(player)) {
         should_cast = false;
+    }
+
+    if (player->state != PLAYER_GROUNDED) {
+        return;
     }
 
     if (should_cast) {
@@ -597,6 +696,9 @@ void player_update_state(struct player* player, struct contact* ground_contact) 
             break;
         case PLAYER_CLIMBING_UP:
             player_climbing_up(player, ground_contact);
+            break;
+        case PLAYER_CARRY:
+            player_carry(player, ground_contact);
             break;
         default:
             player_update_grounded(player, ground_contact);
@@ -832,6 +934,12 @@ void player_load_animation(struct player* player) {
     player->animations.climb_up[0] = animation_set_find_clip(player->cutscene_actor.animation_set, "climb_0");
     player->animations.climb_up[1] = animation_set_find_clip(player->cutscene_actor.animation_set, "climb_1");
     player->animations.climb_up[2] = animation_set_find_clip(player->cutscene_actor.animation_set, "climb_2");
+
+    player->animations.carry_pickup = animation_set_find_clip(player->cutscene_actor.animation_set, "carry_pickup");
+    player->animations.carry_idle = animation_set_find_clip(player->cutscene_actor.animation_set, "carry_idle");
+    player->animations.carry_run = animation_set_find_clip(player->cutscene_actor.animation_set, "carry_run");
+    player->animations.carry_walk = animation_set_find_clip(player->cutscene_actor.animation_set, "carry_walk");
+    player->animations.carry_drop = animation_set_find_clip(player->cutscene_actor.animation_set, "carry_drop");
 }
 
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {

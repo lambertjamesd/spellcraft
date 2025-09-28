@@ -52,17 +52,17 @@ void door_cuscene_finish(struct cutscene* cutscene, void* data) {
     cutscene_free(cutscene);
 }
 
-void door_interact(struct interactable* interactable, entity_id from) {
+bool door_interact(struct interactable* interactable, entity_id from) {
     struct dynamic_object* obj = collision_scene_find_object(from);
 
     if (!obj) {
-        return;
+        return false;
     }
 
     struct door* door = (struct door*)interactable->data;
 
     if (!door->is_unlocked) {
-        return;
+        return false;
     }
 
     room_id other_room = scene_is_showing_room(current_scene, door->room_a) ? door->room_b : door->room_a;
@@ -111,6 +111,8 @@ void door_interact(struct interactable* interactable, entity_id from) {
         door,
         0
     );
+
+    return true;
 }
 
 void door_update(void* data) {

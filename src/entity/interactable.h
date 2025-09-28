@@ -3,13 +3,15 @@
 
 #include "entity_id.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 struct interactable;
 
-typedef void (*interaction_callback)(struct interactable* interactable, entity_id from);
+typedef bool (*interaction_callback)(struct interactable* interactable, entity_id from);
 
 struct interactable_flags {
     uint16_t grabbable: 1;
+    uint16_t target_straight_on: 1;
 };
 
 struct interactable {

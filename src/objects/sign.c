@@ -9,11 +9,13 @@ static struct dynamic_object_type sign_collider = {
     BOX_COLLIDER(0.5f, 0.25f, 0.05f),
 };
 
-void sign_interact(struct interactable* interactable, entity_id from) {
+bool sign_interact(struct interactable* interactable, entity_id from) {
     sign_t* sign = (sign_t*)interactable->data;
     if (sign->read_cutscene) {
         cutscene_runner_run(sign->read_cutscene, NULL, NULL, sign->dynamic_object.entity_id);
+        return true;
     }
+    return false;
 }
 
 void sign_init(sign_t* sign, struct sign_definition* def, entity_id entity_id) {

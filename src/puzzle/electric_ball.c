@@ -102,6 +102,10 @@ float electric_ball_on_damage(void* data, struct damage_info* damage) {
     return 0.0f;
 }
 
+bool electric_ball_interact(struct interactable* interactable, entity_id from) {
+    return false;
+}
+
 void electric_ball_init(electric_ball_t* ball, struct electric_ball_definition* definition, entity_id entity_id) {
     transformSaInit(&ball->transform, &definition->position, &gRight2, 1.0f);
 
@@ -131,6 +135,10 @@ void electric_ball_init(electric_ball_t* ball, struct electric_ball_definition* 
 
     collision_scene_add(&ball->collision);
     electric_ball_fulfull_request(ball);
+
+    interactable_init(&ball->interactable, entity_id, electric_ball_interact, ball);
+    ball->interactable.flags.target_straight_on = true;
+    ball->interactable.flags.grabbable = true;
 }
 
 void electric_ball_destroy(electric_ball_t* ball) {
@@ -139,4 +147,5 @@ void electric_ball_destroy(electric_ball_t* ball) {
     collision_scene_remove(&ball->collision);
     health_destroy(&ball->health);
     electric_ball_remove_fulfullment(ball);
+    interactable_destroy(&ball->interactable);
 }
