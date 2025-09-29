@@ -34,6 +34,45 @@ enum player_state {
     PLAYER_CARRY,
 };
 
+enum player_animation {
+    PLAYER_ANIMATION_IDLE,
+    PLAYER_ANIMATION_RUN,
+    PLAYER_ANIMATION_WALK,
+    PLAYER_ANIMATION_DASH,
+    PLAYER_ANIMATION_ATTACK,
+    PLAYER_ANIMATION_ATTACK_HOLD,
+    PLAYER_ANIMATION_AIR_DASH,
+    PLAYER_ANIMATION_TAKE_DAMAGE,
+    
+    PLAYER_ANIMATION_TREAD_WATER,
+    PLAYER_ANIMATION_SWIM,
+    
+    PLAYER_ANIMATION_JUMP,
+    PLAYER_ANIMATION_JUMP_PEAK,
+    PLAYER_ANIMATION_FALL,
+    PLAYER_ANIMATION_LAND,
+
+    PLAYER_ANIMATION_KNOCKED_BACK,
+    PLAYER_ANIMATION_KNOCKBACK_FLY,
+    PLAYER_ANIMATION_KNOCKBACK_LAND,
+
+    PLAYER_ANIMATION_SWING_ATTACK,
+    PLAYER_ANIMATION_SPIN_ATTACK,
+    PLAYER_ANIMATION_CAST_UP,
+    
+    PLAYER_ANIMATION_CLIMB_UP_0,
+    PLAYER_ANIMATION_CLIMB_UP_1,
+    PLAYER_ANIMATION_CLIMB_UP_2,
+    
+    PLAYER_ANIMATION_CARRY_PICKUP,
+    PLAYER_ANIMATION_CARRY_IDLE,
+    PLAYER_ANIMATION_CARRY_RUN,
+    PLAYER_ANIMATION_CARRY_WALK,
+    PLAYER_ANIMATION_CARRY_DROP,
+
+    PLAYER_ANIMATION_COUNT,
+};
+
 struct player_animations {
     struct animation_clip* idle;
     struct animation_clip* run;
@@ -107,7 +146,7 @@ struct player {
     struct live_cast live_cast;
     grab_checker_t grab_checker;
 
-    struct player_animations animations;
+    animation_clip_t* animations[PLAYER_ANIMATION_COUNT];
     struct animation_clip* last_spell_animation;
     struct inventory_assets assets;
     
