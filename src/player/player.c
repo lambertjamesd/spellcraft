@@ -256,11 +256,8 @@ void player_handle_look(struct player* player, struct Vector3* look_direction) {
     player_look_towards(player, look_direction);
 }
 
-bool player_handle_ground_movement(struct player* player, struct contact* ground_contact) {
-    struct Vector3 target_direction;
-    player_get_input_direction(player, &target_direction);
-
-    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction)) {
+bool player_check_grab(struct player* player, struct Vector3* target_direction) {
+    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, target_direction)) {
         struct Vector3 target;
         grab_checker_get_climb_to(&player->grab_checker, &target);
 
@@ -285,32 +282,51 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
             }
         }
     }
+    
+    return false;
+}
+
+bool player_handle_ground_movement(struct player* player, struct contact* ground_contact, struct Vector3* target_direction, float* speed) {
+    contact_t fake_contact = {
+        .normal = gUp,
+        .point = player->cutscene_actor.transform.position,
+        .surface_type = SURFACE_TYPE_COYOTE,
+    };
+
+    if (ground_contact) {
+        player->coyote_time = 0.0f;
+    } else if (player->coyote_time < COYOTE_TIME) {
+        player->coyote_time += fixed_time_step;
+        ground_contact = &fake_contact;
+    } else {
+        return false;
+    }
 
     if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
         // TODO handle sliding logic
         player->slide_timer += fixed_time_step;
 
         if (player->slide_timer > SLIDE_DELAY) {
-            return false;
+            return true;
         }
     } else {
         player->slide_timer = 0.0f;
     }
 
-    player_handle_look(player, &target_direction);
+    player_handle_look(player, target_direction);
 
     if (player->cutscene_actor.collider.is_pushed) {
-        return false;
+        return true;
     }
 
-    if (vector3MagSqrd(&target_direction) < 0.001f) {
+    if (vector3MagSqrd(target_direction) < 0.001f) {
         player->cutscene_actor.collider.velocity = gZeroVec;
     } else {
         struct Vector3 projected_target_direction;
-        vector3ProjectPlane(&target_direction, &ground_contact->normal, &projected_target_direction);
+        vector3ProjectPlane(target_direction, &ground_contact->normal, &projected_target_direction);
 
         struct Vector3 normalized_direction;
-        vector3Normalize(&target_direction, &normalized_direction);
+        vector3Normalize(target_direction, &normalized_direction);
         struct Vector3 projected_normalized;
         vector3ProjectPlane(&normalized_direction, &ground_contact->normal, &projected_normalized);
 
@@ -318,6 +334,8 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
 
         vector3Scale(&projected_target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
     }
+
+    *speed = sqrtf(vector3MagSqrd2D(&player->cutscene_actor.collider.velocity));
 
     if (ground_contact->other_object) {
         struct dynamic_object* ground_object = collision_scene_find_object(ground_contact->other_object);
@@ -329,7 +347,7 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
         player->last_good_footing = player->cutscene_actor.transform.position;
     }
 
-    return false;
+    return true;
 }
 
 void player_handle_air_movement(struct player* player) {
@@ -509,8 +527,6 @@ void player_carry(player_t* player, contact_t* ground_contact) {
         return;
     }
 
-
-
     if (state_data->carrying.should_carry) {
         transform_sa_t* player_transform = &player->cutscene_actor.transform;
 
@@ -544,13 +560,49 @@ void player_carry(player_t* player, contact_t* ground_contact) {
         return;
     }
 
-    if (state_data->carrying.should_carry) {
-        if (!player_is_running(player, PLAYER_ANIMATION_CARRY_IDLE)) {
-            player_run_clip(player, PLAYER_ANIMATION_CARRY_IDLE);
+    if (player_is_running(player, PLAYER_ANIMATION_CARRY_DROP)) {
+        if (animator_get_time(&player->cutscene_actor.animator) > CARRY_DROP_TIME) {
+            player->state_data.carrying.should_carry = false;
+            obj->is_ghost = false;
         }
-    } else {
-        // player->state = ground_contact ? PLAYER_GROUNDED : PLAYER_FALLING;
+
+        return;
     }
+
+    if (!state_data->carrying.should_carry) {
+        player->state = ground_contact ? PLAYER_GROUNDED : PLAYER_FALLING;
+        return;
+    }
+
+    joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
+
+    if (pressed.a) {
+        player_run_clip(player, PLAYER_ANIMATION_CARRY_DROP);
+        return;
+    }
+    
+    struct Vector3 target_direction;
+    player_get_input_direction(player, &target_direction);
+
+    float speed;
+
+    if (!player_handle_ground_movement(player, ground_contact, &target_direction, &speed)) {
+        player_loop_animation(player, PLAYER_ANIMATION_CARRY_IDLE, 1.0f);
+        player->state = PLAYER_FALLING;
+        return;
+    }
+
+    if (speed < 0.2f) {
+        player_loop_animation(player, PLAYER_ANIMATION_CARRY_IDLE, 1.0f);
+        return;
+    }
+
+    if (speed < PLAYER_RUN_THRESHOLD) {
+        player_loop_animation(player, PLAYER_ANIMATION_CARRY_WALK, speed * (1.0f / PLAYER_WALK_ANIM_SPEED));
+        return;
+    }
+
+    player_loop_animation(player, PLAYER_ANIMATION_CARRY_RUN, speed * (1.0f / PLAYER_MAX_SPEED));
 }
 
 void player_update_knockback(struct player* player, struct contact* ground_contact) {
@@ -601,25 +653,15 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
         return;
     }
 
-    if (ground_contact || player->coyote_time < COYOTE_TIME) {
-        bool should_return;
-        if (ground_contact) {
-            should_return = player_handle_ground_movement(player, ground_contact);
-            player->coyote_time = 0.0f;
-        } else {
-            contact_t fake_contact = {
-                .normal = gUp,
-                .point = player->cutscene_actor.transform.position,
-                .surface_type = SURFACE_TYPE_COYOTE,
-            };
-            should_return = player_handle_ground_movement(player, &fake_contact);
-            player->coyote_time += fixed_time_step;
-        }
+    struct Vector3 target_direction;
+    player_get_input_direction(player, &target_direction);
 
-        if (should_return) {
-            return;
-        }
-    } else {
+    if (player_check_grab(player, &target_direction)) {
+        return;
+    }
+
+    float speed;
+    if (!player_handle_ground_movement(player, ground_contact, &target_direction, &speed)) {
         player_run_clip(player, PLAYER_ANIMATION_JUMP_PEAK);
         player->state = PLAYER_FALLING;
         return;
@@ -635,10 +677,6 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
             return;
         }
     }
-
-    struct Vector3 horizontal_velocity = collider->velocity;
-    horizontal_velocity.y = 0.0f;
-    float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
 
     if (player_is_running(player, PLAYER_ANIMATION_LAND)) {
         return;
