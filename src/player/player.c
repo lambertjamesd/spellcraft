@@ -36,7 +36,8 @@ static struct Vector2 player_max_rotation;
 static struct Vector2 z_target_rotation;
 
 static struct spatial_trigger_type player_visual_shape = {
-    SPATIAL_TRIGGER_WEDGE(2.0f, 0.5f, 0.707f, 0.707f),
+    SPATIAL_TRIGGER_WEDGE(2.0f, 0.75f, 0.707f, 0.707f),
+    .center = {0.0f, 0.5f, 0.0f},
 };
 
 static struct spatial_trigger_type player_z_trigger_shape = {
@@ -535,11 +536,7 @@ void player_carry(player_t* player, contact_t* ground_contact) {
 
         struct Vector3 position;
         vector3Scale(&cast_transform.position, &cast_transform.position, 1.0f / MODEL_SCALE);
-
-        float offset = cast_transform.position.x * player_transform->rotation.x + 
-            cast_transform.position.z * player_transform->rotation.y;
-        cast_transform.position.x -= offset * player_transform->rotation.x;
-        cast_transform.position.z -= offset * player_transform->rotation.y;
+        cast_transform.position.x = 0.0f;
 
         transformSaTransformPoint(player_transform, &cast_transform.position, &position);
         position.y += state_data->carrying.carry_offset;

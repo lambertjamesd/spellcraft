@@ -130,7 +130,7 @@ void electric_ball_init(electric_ball_t* ball, struct electric_ball_definition* 
             COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_Z_TARGET | COLLISION_LAYER_LIGHTNING_BALL : 
             COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_Z_TARGET,
         &ball->transform.position,
-        NULL
+        &ball->transform.rotation
     );
 
     collision_scene_add(&ball->collision);

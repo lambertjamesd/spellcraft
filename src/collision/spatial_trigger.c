@@ -42,9 +42,13 @@ void spatial_trigger_type_recalc_bb(struct spatial_trigger_type* type, struct Tr
             break;
         }
     }
+
+    struct Vector3 offset;
+    vector3Add(&transform->position, &type->center, &offset);
+
     vector3Scale(&result->min, &result->min, transform->scale);
-    vector3Add(&result->min, &transform->position, &result->min);
-    vector3Add(&result->max, &transform->position, &result->max);
+    vector3Add(&result->min, &offset, &result->min);
+    vector3Add(&result->max, &offset, &result->max);
 }
 
 bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct Vector3* point) {
@@ -54,6 +58,7 @@ bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct 
 
     struct Vector3 relative_pos;
     vector3Sub(point, &trigger->transform->position, &relative_pos);
+    vector3Sub(&relative_pos, &trigger->type->center, &relative_pos);
 
     union spatial_trigger_data* data = &trigger->type->data; 
 

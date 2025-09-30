@@ -569,10 +569,6 @@ void collision_scene_query_trigger(
             continue;
         }
 
-        if (!box3DHasOverlap(&trigger.bounding_box, &object->bounding_box)) {
-            continue;
-        }
-
         if (!spatial_trigger_does_contain_point(&trigger, object->position)) {
             continue;
         }
