@@ -1,5 +1,7 @@
 #include "gjk.h"
 
+#include <math.h>
+
 void simplexInit(struct Simplex* simplex) {
     simplex->nPoints = 0;
 }

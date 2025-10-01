@@ -27,7 +27,7 @@
 #define SLIDE_DELAY 0.25f
 #define COYOTE_TIME 0.1f
 #define SHADOW_AS_GROUND_DISTANCE   0.15f
-#define GRAB_RADIUS 0.75f
+#define GRAB_RADIUS 0.85f
 
 #define CARRY_GRAB_TIME   (11.0f / 30.0f)
 #define CARRY_DROP_TIME   (11.0f / 30.0f)
@@ -585,7 +585,6 @@ void player_carry(player_t* player, contact_t* ground_contact) {
 
     if (!player_handle_ground_movement(player, ground_contact, &target_direction, &speed)) {
         player_loop_animation(player, PLAYER_ANIMATION_CARRY_IDLE, 1.0f);
-        player->state = PLAYER_FALLING;
         return;
     }
 

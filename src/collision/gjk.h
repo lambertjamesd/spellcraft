@@ -19,4 +19,6 @@ int simplexCheck(struct Simplex* simplex, struct Vector3* nextDirection);
 
 bool gjkCheckForOverlap(struct Simplex* simplex, void* objectA, MinkowsiSum objectASum, void* objectB, MinkowsiSum objectBSum, struct Vector3* firstDirection);
 
+float gjkGetNearestDistance(struct Simplex* simplex);
+
 #endif
