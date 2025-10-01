@@ -7,8 +7,17 @@
 #include "../entity/entity_spawner.h"
 
 void electric_ball_dropper_check_for_drop(electric_ball_dropper_t* dropper) {
-    if (dropper->is_active != VARIABLE_DISCONNECTED && !expression_get_bool(dropper->is_active)) {
+    bool is_active = expression_get_bool(dropper->is_active);
+    bool rising_edge = is_active && !dropper->last_is_active;
+    dropper->last_is_active = is_active;
+
+    if (dropper->is_active != VARIABLE_DISCONNECTED && !is_active) {
         return;
+    }
+
+    if (rising_edge && dropper->current_ball) {
+        entity_despawn(dropper->current_ball);
+        dropper->current_ball = 0;
     }
 
     if (collision_scene_find_object(dropper->current_ball)) {
@@ -35,6 +44,7 @@ void electric_ball_dropper_init(electric_ball_dropper_t* dropper, struct electri
     update_add(dropper, electric_ball_dropper_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
     dropper->current_ball = 0;
     dropper->is_active = definition->is_active;
+    dropper->last_is_active = false;
     electric_ball_dropper_check_for_drop(dropper);
 }
 

@@ -73,6 +73,12 @@
             "type": "sign"
         },
         {
+            "name": "objects_step_switch",
+            "description": "",
+            "mesh": "meshes/objects/step_switch.blend#step_switch",
+            "type": "step_switch"
+        },
+        {
             "name": "objects_torch",
             "description": "",
             "mesh": "meshes/objects/torch.blend#groundtorch",

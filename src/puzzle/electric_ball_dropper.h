@@ -11,6 +11,7 @@ struct electric_ball_dropper {
     renderable_t renderable;
     entity_id current_ball;
     boolean_variable is_active;
+    bool last_is_active;
 };
 
 typedef struct electric_ball_dropper electric_ball_dropper_t;

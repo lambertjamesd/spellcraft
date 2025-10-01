@@ -16,3 +16,4 @@ scene elevator_active: bool;
 
 scene basement_entrance_solved: bool;
 scene basement_entrance_door_open: bool;
+scene basement_entrance_drop_ball: bool;

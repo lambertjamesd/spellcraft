@@ -32,6 +32,7 @@ enum entity_type_id {
     ENTITY_TYPE_electric_ball,
     ENTITY_TYPE_electric_ball_grabber,
     ENTITY_TYPE_electric_ball_dropper,
+    ENTITY_TYPE_step_switch,
 };
 
 struct crate_definition {
@@ -232,6 +233,11 @@ struct electric_ball_grabber_definition {
 struct electric_ball_dropper_definition {
     struct Vector3 position;
     boolean_variable is_active;
+};
+
+struct step_switch_definition {
+    struct Vector3 position;
+    boolean_variable output;
 };
 
 enum npc_type {
