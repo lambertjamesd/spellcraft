@@ -22,3 +22,5 @@ src/player/inventory_mapping.c
 build clean.bat
 build_load.bat
 load.bat
+load.bat
+build clean.bat

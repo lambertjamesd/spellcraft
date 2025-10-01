@@ -39,7 +39,8 @@ void setup() {
     fade_effect_set((struct Coloru8){0, 0, 0, 255}, 0.0f);
     fade_effect_set((struct Coloru8){0, 0, 0, 0}, 3.0f);
 
-    scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    // scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    scene_queue_next("rom:/scenes/fire_trials.scene");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
     // scene_queue_next("rom:/scenes/ability_testing.scene");
     // scene_queue_next("rom:/scenes/playerhome_basement.scene");
@@ -149,7 +150,7 @@ int main(void)
 		custom_res.height = 288;
 	}
 
-    display_init(custom_res, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
+    display_init(custom_res, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
 	// *(volatile uint32_t*)0xA4400000 |= 0x300; //disables resampling on the VI
 	rdpq_init();
     t3d_init((T3DInitParams){});
