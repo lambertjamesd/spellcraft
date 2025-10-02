@@ -11,7 +11,9 @@ struct step_switch {
     transform_sa_t transform;
     renderable_t renderable;
     dynamic_object_t collider;
+    float target_pos;
     boolean_variable output;
+    bool last_state;
 };
 
 typedef struct step_switch step_switch_t;

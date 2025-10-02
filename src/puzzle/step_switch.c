@@ -5,10 +5,14 @@
 #include "../collision/shapes/box.h"
 #include "../time/time.h"
 #include "../cutscene/expression_evaluate.h"
+#include "../math/mathf.h"
 
 static struct dynamic_object_type step_switch_type = {
     BOX_COLLIDER(0.5f, 0.1f, 0.5f),
 };
+
+#define PRESS_DISTANCE  0.1f
+#define MOVE_PER_FRAME  0.01f
 
 void step_switch_update(void* data) {
     step_switch_t* step_switch = (step_switch_t*)data;
@@ -21,7 +25,22 @@ void step_switch_update(void* data) {
         }
     }
 
-    expression_set_bool(step_switch->output, is_stepping);
+    step_switch->transform.position.y = mathfMoveTowards(
+        step_switch->transform.position.y,
+        step_switch->target_pos,
+        MOVE_PER_FRAME
+    );
+
+    if (is_stepping != step_switch->last_state) {
+        if (is_stepping) {
+            step_switch->target_pos -= PRESS_DISTANCE;
+        } else {
+            step_switch->target_pos += PRESS_DISTANCE;
+        }
+
+        expression_set_bool(step_switch->output, is_stepping);
+        step_switch->last_state = is_stepping;
+    }
 }
 
 void step_switch_init(step_switch_t* step_switch, struct step_switch_definition* definition, entity_id entity_id) {
@@ -39,10 +58,12 @@ void step_switch_init(step_switch_t* step_switch, struct step_switch_definition*
         NULL
     );
 
+    step_switch->target_pos = definition->position.y;
     step_switch->collider.center.y = 0.1f,
     step_switch->collider.is_fixed = 1;
     step_switch->collider.weight_class = 2;
     step_switch->output = definition->output;
+    step_switch->last_state = false;
 
     collision_scene_add(&step_switch->collider);
 
