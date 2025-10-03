@@ -69,6 +69,14 @@ enum dynamic_object_trigger_type {
     TRIGGER_TYPE_OVERLAP,
 };
 
+enum weight_class {
+    WEIGHT_CLASS_GHOST,
+    WEIGHT_CLASS_LIGHT,
+    WEIGHT_CLASS_MEDIUM,
+    WEIGHT_CLASS_HEAVY,
+    WEIGHT_CLASS_SUPER_HEAVY,
+};
+
 struct dynamic_object {
     entity_id entity_id;
     struct dynamic_object_type* type;
@@ -83,7 +91,6 @@ struct dynamic_object {
     uint16_t has_gravity: 1;
     uint16_t trigger_type: 2;
     uint16_t is_fixed: 1;
-    uint16_t is_ghost: 1;
     uint16_t is_out_of_bounds: 1;
     uint16_t is_pushed: 2;
     uint16_t is_jumping: 2;
@@ -91,7 +98,7 @@ struct dynamic_object {
     uint16_t under_water: 2;
     uint16_t has_ice_dash: 2;
     uint16_t density_class: 2;
-    uint16_t weight_class: 2;
+    uint16_t weight_class: 3;
     uint16_t hit_kill_plane: 1;
     uint16_t collision_layers;
     uint16_t collision_group;

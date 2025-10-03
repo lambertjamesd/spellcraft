@@ -52,7 +52,7 @@ void grab_checker_init(grab_checker_t* checker, struct dynamic_object_type* coll
         &checker->position, 
         NULL
     );
-    checker->collider.is_ghost = true;
+    checker->collider.weight_class = WEIGHT_CLASS_GHOST;
     checker->collider.center.y = collider_type->data.capsule.inner_half_height + collider_type->data.capsule.radius;
     checker->position = gZeroVec;
     collision_scene_add(&checker->collider);

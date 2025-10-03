@@ -82,7 +82,7 @@ void elevator_init(struct elevator* elevator, struct elevator_definition* defini
     );
 
     elevator->collision.is_fixed = true;
-    elevator->collision.weight_class = 3;
+    elevator->collision.weight_class = WEIGHT_CLASS_SUPER_HEAVY;
 
     elevator->timer = 0.0f;
     elevator->enabled = definition->enabled;

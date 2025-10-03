@@ -551,7 +551,8 @@ void player_carry(player_t* player, contact_t* ground_contact) {
     if (player_is_running(player, PLAYER_ANIMATION_CARRY_PICKUP)) {
         if (animator_get_time(&player->cutscene_actor.animator) > CARRY_GRAB_TIME) {
             player->state_data.carrying.should_carry = true;
-            obj->is_ghost = true;
+            obj->is_fixed = true;
+            obj->weight_class = WEIGHT_CLASS_GHOST;
         }
 
         return;
@@ -560,7 +561,8 @@ void player_carry(player_t* player, contact_t* ground_contact) {
     if (player_is_running(player, PLAYER_ANIMATION_CARRY_DROP)) {
         if (animator_get_time(&player->cutscene_actor.animator) > CARRY_DROP_TIME) {
             player->state_data.carrying.should_carry = false;
-            obj->is_ghost = false;
+            obj->is_fixed = false;
+            obj->weight_class =  WEIGHT_CLASS_LIGHT;
         }
 
         return;
@@ -1019,7 +1021,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     );
 
     player->cutscene_actor.collider.density_class = DYNAMIC_DENSITY_MEDIUM;
-    player->cutscene_actor.collider.weight_class = 1;
+    player->cutscene_actor.collider.weight_class = WEIGHT_CLASS_MEDIUM;
 
     spell_exec_init(&player->spell_exec);
     mana_pool_set_entity_id(&player->spell_exec.spell_sources.mana_pool, ENTITY_ID_PLAYER);

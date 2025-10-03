@@ -68,7 +68,7 @@ void burning_thorns_init(burning_thorns_t* thorns, struct burning_thorns_definit
     );
     thorns->collider.scale = definition->scale;
     thorns->collider.is_fixed = 1;
-    thorns->collider.weight_class = 3;
+    thorns->collider.weight_class = WEIGHT_CLASS_SUPER_HEAVY;
     collision_scene_add(&thorns->collider);
 
     health_init(&thorns->health, id, 10.0f);

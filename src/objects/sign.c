@@ -37,7 +37,7 @@ void sign_init(sign_t* sign, struct sign_definition* def, entity_id entity_id) {
 
     sign->dynamic_object.center.y = 1.0f;
     sign->dynamic_object.is_fixed = 1;
-    sign->dynamic_object.weight_class = 3;
+    sign->dynamic_object.weight_class = WEIGHT_CLASS_SUPER_HEAVY;
 
     collision_scene_add(&sign->dynamic_object);
 

@@ -61,7 +61,7 @@ void step_switch_init(step_switch_t* step_switch, struct step_switch_definition*
     step_switch->target_pos = definition->position.y;
     step_switch->collider.center.y = 0.1f,
     step_switch->collider.is_fixed = 1;
-    step_switch->collider.weight_class = 2;
+    step_switch->collider.weight_class = WEIGHT_CLASS_HEAVY;
     step_switch->output = definition->output;
     step_switch->last_state = false;
 

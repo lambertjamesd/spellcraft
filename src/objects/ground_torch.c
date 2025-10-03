@@ -112,7 +112,7 @@ void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_de
     );
     ground_torch->dynamic_object.center.y = 0.8f;
     ground_torch->dynamic_object.is_fixed = 1;
-    ground_torch->dynamic_object.weight_class = 2;
+    ground_torch->dynamic_object.weight_class = WEIGHT_CLASS_SUPER_HEAVY;
 
     ground_torch->torch_type = definition->torch_type;
 

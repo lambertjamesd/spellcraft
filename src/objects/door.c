@@ -150,7 +150,7 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
 
     door->collider.center.y = door_collision.data.box.half_size.y;
     door->collider.is_fixed = true;
-    door->collider.weight_class = 2;
+    door->collider.weight_class = WEIGHT_CLASS_HEAVY;
     door->lock_model = tmesh_cache_load("rom:/meshes/objects/doors/lock.tmesh");
 
     collision_scene_add(&door->collider);
