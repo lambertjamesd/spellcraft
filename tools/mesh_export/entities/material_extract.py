@@ -217,7 +217,6 @@ def _determine_tex_axis_from_f3d(axis, image_size, uv_scroll, result: material.T
     
     if 'mirror' in axis and axis['mirror']:
         result.mirror = True
-        result.mask = material.log_pow_2(image_size)
 
     if uv_scroll and uv_scroll['animType'] == 1:
         result.scroll = uv_scroll['speed'] if 'speed' in uv_scroll else 1

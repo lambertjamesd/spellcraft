@@ -922,11 +922,10 @@ def _parse_tex_axis(json_data, image_size, into: TexAxis, key_path):
     into.scroll = _optional_number(json_data, 'scroll', key_path, into.scroll)
 
     repeats = _optional_number(json_data, 'repeats', key_path, 2048)
+    into.mask = log_pow_2(image_size)
     if repeats:
-        into.mask = log_pow_2(image_size * (2 if into.mirror else 1))
         into.clamp = False
     else:
-        into.mask = log_pow_2(image_size)
         into.clamp = True
 
 def _resolve_tex(filename: str, relative_to: str) -> str:
