@@ -264,7 +264,7 @@ void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_obj
 
     if (!epaSolveSwept(
         &simplex, 
-        &a, 
+        a, 
         dynamic_object_minkowski_sum, 
         &swept, 
         swept_dynamic_object_minkowski_sum, 

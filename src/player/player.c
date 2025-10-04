@@ -293,6 +293,8 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
         .point = player->cutscene_actor.transform.position,
         .surface_type = SURFACE_TYPE_COYOTE,
     };
+    
+    *speed = sqrtf(vector3MagSqrd2D(&player->cutscene_actor.collider.velocity));
 
     if (ground_contact) {
         player->coyote_time = 0.0f;
@@ -335,8 +337,6 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
 
         vector3Scale(&projected_target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
     }
-
-    *speed = sqrtf(vector3MagSqrd2D(&player->cutscene_actor.collider.velocity));
 
     if (ground_contact->other_object) {
         struct dynamic_object* ground_object = collision_scene_find_object(ground_contact->other_object);
