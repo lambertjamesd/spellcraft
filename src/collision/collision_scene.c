@@ -223,7 +223,7 @@ void collide_edge_sort(struct collide_edge* edges, struct collide_edge* tmp, int
     }
 }
 
-void collision_scene_collide_dynamic() {
+void collision_scene_collide_dynamic(struct Vector3* prev_positions) {
     int edge_count = g_scene.count * 2;
 
     struct collide_edge collide_edges[edge_count];
@@ -267,7 +267,16 @@ void collision_scene_collide_dynamic() {
                     struct dynamic_object* a_obj = a->object;
                     struct dynamic_object* b_obj = b->object;
                     if (box3DHasOverlap(&a_obj->bounding_box, &b_obj->bounding_box)) {
-                        collide_object_to_object(a_obj, b_obj);
+                        if (a_obj->should_sweep_collide || b_obj->should_sweep_collide) {
+                            collide_object_to_object_swept(
+                                a_obj, 
+                                b_obj, 
+                                &prev_positions[edge.object_index], 
+                                &prev_positions[active_objects[active_index]]
+                            );
+                        } else {
+                            collide_object_to_object(a_obj, b_obj);
+                        }
                     }
                 } else if (a->type == COLLISION_ELEMENT_TYPE_DYNAMIC && b->type == COLLISION_ELEMENT_TYPE_TRIGGER) {
                     collide_object_to_trigger(a->object, b->object);
@@ -303,16 +312,6 @@ void collision_scene_collide_dynamic() {
 void collision_scene_collide_single(struct dynamic_object* object, struct Vector3* prev_pos) {
     object->is_out_of_bounds = 1;
     for (int i = 0; i < MAX_SWEPT_ITERATIONS; i += 1) {
-        struct Vector3 offset;
-        vector3Sub(object->position, prev_pos, &offset);
-        struct Vector3 bbSize;
-        vector3Sub(&object->bounding_box.max, &object->bounding_box.min, &bbSize);
-        vector3Scale(&bbSize, &bbSize, 0.5f);
-
-        bool should_sweep = fabs(offset.x) > bbSize.x ||
-            fabs(offset.y) > bbSize.y ||
-            fabs(offset.z) > bbSize.z;
-
         for (int mesh_index = 0; mesh_index < g_scene.mesh_collider_count; mesh_index += 1) {
             struct mesh_collider* mesh = g_scene.mesh_colliders[mesh_index];
             bool is_contained = mesh_index_is_contained(&mesh->index, object->position);
@@ -323,7 +322,7 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
             }
         }
 
-        if (should_sweep) {
+        if (object->should_sweep_collide) {
             bool did_hit = collide_object_to_multiple_mesh_swept(object, g_scene.mesh_colliders, g_scene.mesh_collider_count, prev_pos);
             if (!did_hit) {
                 return;
@@ -418,11 +417,21 @@ void collision_scene_collide() {
         }
 
         dynamic_object_update(object);
+        
+        struct Vector3 offset;
+        vector3Sub(object->position, prev_pos, &offset);
+        struct Vector3 bbSize;
+        vector3Sub(&object->bounding_box.max, &object->bounding_box.min, &bbSize);
+        vector3Scale(&bbSize, &bbSize, 0.5f);
+
+        object->should_sweep_collide = fabs(offset.x) > bbSize.x ||
+            fabs(offset.y) > bbSize.y ||
+            fabs(offset.z) > bbSize.z;
 
         dynamic_object_recalc_bb(object);
     }
 
-    collision_scene_collide_dynamic();
+    collision_scene_collide_dynamic(prev_pos);
 
     entity_id kill_entity = 0;
 

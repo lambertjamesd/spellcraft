@@ -127,6 +127,16 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
     mesh_index_lookup_triangle_indices(&mesh->index, &object->bounding_box, collide_object_to_triangle, &collide_data, object->collision_layers);
 }
 
+void collide_adjust_collision(struct dynamic_object* object, struct EpaResult* result, struct Vector3* momentum_center, struct Vector3* relative_velocity, float factor) {
+    if (!object->is_fixed) {
+        vector3AddScaled(object->position, &result->normal, result->penetration * factor, object->position);
+
+        if (relative_velocity) {
+            vector3AddScaled(momentum_center, relative_velocity, factor, &object->velocity);
+        }
+    }
+}
+
 void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b) {
     if (!(a->collision_layers & b->collision_layers)) {
         return;
@@ -184,57 +194,25 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     bool should_push = DYNAMIC_OBJECT_SHOULD_PUSH(a) && DYNAMIC_OBJECT_SHOULD_PUSH(b);
 
     if (should_push) {
-        float friction = 1.0f;//a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
+        float friction = a->type->friction < b->type->friction ? a->type->friction : b->type->friction;
         float bounce = a->type->bounce > b->type->bounce ? a->type->bounce : b->type->bounce;
-
-        struct Vector3 momentum_center;
-
-        if (a->weight_class == b->weight_class) {
-        } else if (a->weight_class < b->weight_class) {
-            momentum_center = b->velocity;
-        } else {
-            momentum_center = a->velocity;
-        }
 
         struct Vector3 relative_velocity;
         vector3Sub(&a->velocity, &b->velocity, &relative_velocity);
         bool should_correct_velocity = correct_velocity(&relative_velocity, &result.normal, 1.0f, friction, bounce);
+        struct Vector3* relative_velocity_ptr = should_correct_velocity ? &relative_velocity : NULL;
 
         if (a->weight_class == b->weight_class) {
             struct Vector3 momentum_center;
             vector3Add(&a->velocity, &b->velocity, &momentum_center);
             vector3Scale(&momentum_center, &momentum_center, 0.5f);
 
-            if (!b->is_fixed) {
-                vector3AddScaled(b->position, &result.normal, -result.penetration * 0.5f, b->position);
-
-                if (should_correct_velocity) {
-                    vector3AddScaled(&momentum_center, &relative_velocity, -0.5f, &b->velocity);
-                }
-            }
-            if (!a->is_fixed) {
-                vector3AddScaled(a->position, &result.normal, result.penetration * 0.5f, a->position);
-
-                if (should_correct_velocity) {
-                    vector3AddScaled(&momentum_center, &relative_velocity, 0.5f, &a->velocity);
-                }
-            }
+            collide_adjust_collision(b, &result, &momentum_center, relative_velocity_ptr, -0.5f);
+            collide_adjust_collision(a, &result, &momentum_center, relative_velocity_ptr, 0.5f);
         } else if (a->weight_class < b->weight_class) {
-            if (!a->is_fixed) {
-                vector3AddScaled(a->position, &result.normal, result.penetration, a->position);
-
-                if (should_correct_velocity) {
-                    vector3Add(&b->velocity, &relative_velocity, &a->velocity);
-                }
-            }
+            collide_adjust_collision(a, &result, &b->velocity, relative_velocity_ptr, 1.0f);
         } else {
-            if (!b->is_fixed) {
-                vector3AddScaled(b->position, &result.normal, -result.penetration, b->position);
-
-                if (should_correct_velocity) {
-                    vector3Sub(&a->velocity, &relative_velocity, &b->velocity);
-                }
-            }
+            collide_adjust_collision(b, &result, &a->velocity, relative_velocity_ptr, -1.0f);
         }
     }
 

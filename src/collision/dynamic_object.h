@@ -100,6 +100,7 @@ struct dynamic_object {
     uint16_t density_class: 2;
     uint16_t weight_class: 3;
     uint16_t hit_kill_plane: 1;
+    uint16_t should_sweep_collide: 1;
     uint16_t collision_layers;
     uint16_t collision_group;
     struct contact* active_contacts;

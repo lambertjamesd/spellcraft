@@ -200,3 +200,130 @@ bool collide_object_to_multiple_mesh_swept(struct dynamic_object* object, struct
 
     return true;
 }
+
+void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_object* b, struct Vector3* prev_a, struct Vector3* prev_b) {
+    if (!(a->collision_layers & b->collision_layers)) {
+        return;
+    }
+
+    if (a->collision_group && a->collision_group == b->collision_group) {
+        return;
+    }
+
+    if (a->trigger_type != 0 && b->trigger_type != 0) {
+        return;
+    }
+
+    struct Vector3 relative_offset;
+    struct Vector3 prev_pos_b;
+    vector3Sub(a->position, prev_a, &relative_offset);
+    vector3Add(&relative_offset, prev_b, &prev_pos_b);
+    
+    struct swept_dynamic_object swept;
+    swept.object = b;
+    vector3Sub(&prev_pos_b, b->position, &swept.offset);
+
+    struct Simplex simplex;
+    if (!gjkCheckForOverlap(&simplex, a, dynamic_object_minkowski_sum, &swept, swept_dynamic_object_minkowski_sum, &gRight)) {
+        return;
+    }
+    
+    bool needs_overlap = DYNAMIC_OBJECT_NEEDS_OVERLAP(a) && DYNAMIC_OBJECT_NEEDS_OVERLAP(b);
+
+    if (!needs_overlap) {
+        struct contact* contact = collision_scene_new_contact();
+
+        if (!contact) {
+            return;
+        }
+
+        if (b->trigger_type == TRIGGER_TYPE_BASIC) {
+            contact->normal = gZeroVec;
+            contact->point = *a->position;
+            contact->other_object = a ? a->entity_id : 0;
+
+            contact->next = b->active_contacts;
+            b->active_contacts = contact;
+        } else {
+            contact->normal = gZeroVec;
+            contact->point = *b->position;
+            contact->other_object = b ? b->entity_id : 0;
+
+            contact->next = a->active_contacts;
+            a->active_contacts = contact;
+        }
+
+        contact->surface_type = 0;
+
+        return;
+    }
+    
+    struct EpaResult result;
+
+    struct Vector3 b_original_position = *b->position;
+
+    if (!epaSolveSwept(
+        &simplex, 
+        &a, 
+        dynamic_object_minkowski_sum, 
+        &swept, 
+        swept_dynamic_object_minkowski_sum, 
+        &prev_pos_b,
+        b->position,
+        &result
+    )) {
+        return;
+    }
+    
+    bool should_push = DYNAMIC_OBJECT_SHOULD_PUSH(a) && DYNAMIC_OBJECT_SHOULD_PUSH(b);
+    
+    struct Vector3 relative_movement;
+    vector3Sub(&b_original_position, &prev_pos_b, &relative_movement);
+    struct Vector3 moved_amount;
+    vector3Sub(b->position, &prev_pos_b, &moved_amount);
+
+    float lerp = vector3Dot(&relative_movement, &moved_amount) / vector3MagSqrd(&relative_movement);
+    vector3AddScaled(&result.contactA, &relative_offset, -lerp, &result.contactA);
+    vector3AddScaled(&result.contactB, &relative_offset, -lerp, &result.contactB);
+
+    if (should_push) {
+        vector3Lerp(prev_b, &b_original_position, lerp, b->position);
+        vector3Lerp(prev_a, a->position, lerp, a->position);
+        vector3ProjectPlane(&a->velocity, &result.normal, &a->velocity);
+        vector3ProjectPlane(&b->velocity, &result.normal, &b->velocity);
+    } else {
+        *b->position = b_original_position;
+    }
+
+    if (DYNAMIC_OBJECT_NEEDS_OVERLAP(b)) {
+        struct contact* contact = collision_scene_new_contact();
+    
+        if (!contact) {
+            return;
+        }
+    
+        contact->normal = result.normal;
+        contact->point = result.contactA;
+        contact->other_object = a ? a->entity_id : 0;
+        contact->surface_type = 0;
+    
+        contact->next = b->active_contacts;
+        b->active_contacts = contact;
+    }
+    
+    if (DYNAMIC_OBJECT_NEEDS_OVERLAP(a)) {
+        struct contact* contact = collision_scene_new_contact();
+    
+        if (!contact) {
+            return;
+        }
+        
+        vector3Negate(&result.normal, &contact->normal);
+        contact->point = result.contactB;
+        contact->other_object = b ? b->entity_id : 0;
+        contact->surface_type = 0;
+    
+        contact->next = a->active_contacts;
+        a->active_contacts = contact;
+    }
+}
