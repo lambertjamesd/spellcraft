@@ -66,4 +66,6 @@ int collision_scene_get_count();
 
 struct collision_scene_element* collision_scene_get_element(int index);
 
+void collision_scene_return_contacts(struct contact* active_contacts);
+
 #endif

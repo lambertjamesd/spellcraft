@@ -16,7 +16,7 @@ void test_collide_info_init(struct test_collide_info* info) {
     info->should_collide = true;
 }
 
-bool test_traingle_callback(struct mesh_index* index, void* data, int triangle_index) {
+bool test_traingle_callback(struct mesh_index* index, void* data, int triangle_index, int collision_layers) {
     struct test_collide_info* info = (struct test_collide_info*)data;
 
     info->collide_count += 1;
@@ -38,7 +38,8 @@ void test_mesh_index_lookup_triangle_indices(struct test_context* t) {
             {30.0f, 45.0f, 10.0f},
         },
         test_traingle_callback,
-        &info
+        &info,
+        COLLISION_LAYER_TANGIBLE
     );
 
     test_eqi(t, 2, info.collide_count);
@@ -58,7 +59,8 @@ void test_mesh_index_swept_lookup(struct test_context* t) {
         },
         &(struct Vector3){40.0f, 0.f, 0.0f},
         test_traingle_callback,
-        &info
+        &info,
+        COLLISION_LAYER_TANGIBLE
     );
 
     test_eqi(t, 2, info.collide_count);
@@ -74,7 +76,8 @@ void test_mesh_index_swept_lookup(struct test_context* t) {
         },
         &(struct Vector3){40.0f, 0.f, 0.0f},
         test_traingle_callback,
-        &lower_info
+        &lower_info,
+        COLLISION_LAYER_TANGIBLE
     );
 
     test_eqi(t, 6, lower_info.collide_count);
@@ -91,7 +94,8 @@ void test_mesh_index_swept_lookup(struct test_context* t) {
         },
         &(struct Vector3){40.0f, 0.f, 0.0f},
         test_traingle_callback,
-        &lower_info
+        &lower_info,
+        COLLISION_LAYER_TANGIBLE
     );
 
     test_eqi(t, 13, lower_info.collide_count);

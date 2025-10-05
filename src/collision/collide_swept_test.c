@@ -1,6 +1,7 @@
 #include "collide_swept.h"
 #include "../test/framework_test.h"
 #include "./shapes/box.h"
+#include "collision_scene.h"
 #include <stddef.h>
 
 void object_mesh_collide_data_init(
@@ -11,7 +12,6 @@ void object_mesh_collide_data_init(
 );
 
 bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int triangle_index);
-void collision_scene_return_contacts(struct dynamic_object* object);
 
 static struct mesh_collider single_traingle_mesh = {
     .vertices = (struct Vector3[]){
@@ -90,7 +90,8 @@ void test_collide_object_to_mesh_swept(struct test_context* t) {
     test_near_equalf(t, 0.0f, object.active_contacts->normal.y);
     test_near_equalf(t, -1.0f, object.active_contacts->normal.z);
 
-    collision_scene_return_contacts(&object);
+    collision_scene_return_contacts(object.active_contacts);
+    object.active_contacts = NULL;
     test_eqi(t, (int)NULL, (int)object.active_contacts);
 
     prev_pos = (struct Vector3){0.5f, 0.75f, -1.0f};

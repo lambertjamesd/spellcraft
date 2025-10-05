@@ -24,7 +24,7 @@ void test_training_dummy(struct test_context* t) {
         {1.0f, 0.0f},
     };
 
-    training_dummy_init(&dummy, &definition);
+    training_dummy_init(&dummy, &definition, entity_id_new());
 
     entity_id damage_source = entity_id_new();
     struct Vector3 projectile_pos = {0.0f, 1.0f, -1.0f};

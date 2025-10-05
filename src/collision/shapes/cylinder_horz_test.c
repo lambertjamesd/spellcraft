@@ -3,6 +3,7 @@
 #include "../../test/framework_test.h"
 #include "../dynamic_object.h"
 #include "../../math/constants.h"
+#include <libdragon.h>
 
 void test_cylinder_horz_minkowski_sum(struct test_context* t) {
     union dynamic_object_type_data data = {
