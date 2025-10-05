@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "../math/minmax.h"
 
+#include <libdragon.h>
+
 #define MAX_INDEX_SET_SIZE 64
 
 void mesh_triangle_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {

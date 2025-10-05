@@ -307,6 +307,18 @@ void collision_scene_collide_dynamic(struct Vector3* prev_positions) {
     }
 }
 
+bool collision_scene_should_sweep(dynamic_object_t* object, struct Vector3* prev_pos) {
+    struct Vector3 offset;
+    vector3Sub(object->position, prev_pos, &offset);
+    struct Vector3 bbSize;
+    vector3Sub(&object->bounding_box.max, &object->bounding_box.min, &bbSize);
+    vector3Scale(&bbSize, &bbSize, 0.5f);
+
+    return fabs(offset.x) > bbSize.x ||
+        fabs(offset.y) > bbSize.y ||
+        fabs(offset.z) > bbSize.z;
+}
+
 #define MAX_SWEPT_ITERATIONS    5
 
 void collision_scene_collide_single(struct dynamic_object* object, struct Vector3* prev_pos) {
@@ -322,7 +334,7 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
             }
         }
 
-        if (object->should_sweep_collide) {
+        if (collision_scene_should_sweep(object, prev_pos)) {
             bool did_hit = collide_object_to_multiple_mesh_swept(object, g_scene.mesh_colliders, g_scene.mesh_collider_count, prev_pos);
             if (!did_hit) {
                 return;
@@ -417,16 +429,7 @@ void collision_scene_collide() {
         }
 
         dynamic_object_update(object);
-        
-        struct Vector3 offset;
-        vector3Sub(object->position, prev_pos, &offset);
-        struct Vector3 bbSize;
-        vector3Sub(&object->bounding_box.max, &object->bounding_box.min, &bbSize);
-        vector3Scale(&bbSize, &bbSize, 0.5f);
-
-        object->should_sweep_collide = fabs(offset.x) > bbSize.x ||
-            fabs(offset.y) > bbSize.y ||
-            fabs(offset.z) > bbSize.z;
+        object->should_sweep_collide = collision_scene_should_sweep(object, prev_pos);
 
         dynamic_object_recalc_bb(object);
     }
