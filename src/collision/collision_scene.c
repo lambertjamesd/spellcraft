@@ -432,6 +432,12 @@ void collision_scene_collide() {
         object->should_sweep_collide = collision_scene_should_sweep(object, &prev_pos[i]);
 
         dynamic_object_recalc_bb(object);
+
+        if (object->should_sweep_collide) {
+            struct Vector3 move_amount;
+            vector3Sub(&prev_pos[i], object->position, &move_amount);
+            box3DExtendDirection(&object->bounding_box, &move_amount, &object->bounding_box);
+        }
     }
 
     collision_scene_collide_dynamic(prev_pos);
