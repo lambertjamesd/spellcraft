@@ -19,6 +19,7 @@ static struct dynamic_object_type crate_collision_type = {
 };
 
 void crate_update(struct crate* crate) {
+    debugf("crate vel = %f, %f, %f\n", crate->dynamic_object.velocity.x, crate->dynamic_object.velocity.y, crate->dynamic_object.velocity.z);
     if (crate->health.current_health <= 0.0f) {
         entity_despawn(crate->health.entity_id);
     }

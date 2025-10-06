@@ -267,13 +267,7 @@ void collision_scene_collide_dynamic(struct Vector3* prev_positions) {
                     struct dynamic_object* a_obj = a->object;
                     struct dynamic_object* b_obj = b->object;
                     if (box3DHasOverlap(&a_obj->bounding_box, &b_obj->bounding_box)) {
-                        bool should_debug = (a_obj->collision_group == 1 && a_obj->weight_class > WEIGHT_CLASS_GHOST) ||
-                            (b_obj->collision_group == 1 && b_obj->weight_class > WEIGHT_CLASS_GHOST);
-
                         if (a_obj->should_sweep_collide || b_obj->should_sweep_collide) {
-                            if (should_debug) {
-                                debugf("collide swept\n");
-                            }
                             collide_object_to_object_swept(
                                 a_obj, 
                                 b_obj, 
@@ -281,9 +275,6 @@ void collision_scene_collide_dynamic(struct Vector3* prev_positions) {
                                 &prev_positions[active_objects[active_index]]
                             );
                         } else {
-                            if (should_debug) {
-                                debugf("collide normal\n");
-                            }
                             collide_object_to_object(a_obj, b_obj);
                         }
                     }
@@ -438,7 +429,7 @@ void collision_scene_collide() {
         }
 
         dynamic_object_update(object);
-        object->should_sweep_collide = collision_scene_should_sweep(object, prev_pos);
+        object->should_sweep_collide = collision_scene_should_sweep(object, &prev_pos[i]);
 
         dynamic_object_recalc_bb(object);
     }
