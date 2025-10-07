@@ -192,4 +192,6 @@ check-pairings:
 
 tools/mesh_export.zip: tools/mesh_export/__init__.py
 	cd tools; zip -r mesh_export.zip mesh_export/
--include $(wildcard $(BUILD_DIR)/*.d)
+
+DEPENDENCY_FILES := $(wildcard $(BUILD_DIR)/**/*.d) $(wildcard $(BUILD_DIR)/*.d)
+-include $(DEPENDENCY_FILES)
