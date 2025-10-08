@@ -23,8 +23,9 @@ void test_cylinder_horz_bounding_box(struct test_context* t);
 void test_sphere_minkowski_sum(struct test_context* t);
 void test_cone_minkowski_sum(struct test_context* t);
 void test_cone_bounding_box(struct test_context* t);
+void test_kd_tree_lookup(struct test_context* t);
 
-#define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(500)
+#define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(1500)
 
 int main() {
     rdpq_init();
@@ -71,6 +72,8 @@ int main() {
     test_run(test_cone_minkowski_sum);
     test_run(test_cone_minkowski_sum);
     test_run(test_cone_bounding_box);
+
+    test_run(test_kd_tree_lookup);
 
     test_report_failures();
 

@@ -39,8 +39,8 @@ void setup() {
     fade_effect_set((struct Coloru8){0, 0, 0, 255}, 0.0f);
     fade_effect_set((struct Coloru8){0, 0, 0, 0}, 3.0f);
 
-    scene_queue_next("rom:/scenes/fire_trials.scene#test");
-    // scene_queue_next("rom:/scenes/fire_trials.scene");
+    // scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    scene_queue_next("rom:/scenes/fire_trials.scene");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
     // scene_queue_next("rom:/scenes/ability_testing.scene");
     // scene_queue_next("rom:/scenes/playerhome_basement.scene");
@@ -225,7 +225,9 @@ int main(void)
 
         joypad_poll();
         if (update_has_layer(UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE)) {
+            uint64_t start_time = get_ticks_us();
             collision_scene_collide();
+            debugf("collision_time = %f\n", (get_ticks_us() - start_time) / 1000.0f);
         }
         update_dispatch();
     }

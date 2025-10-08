@@ -7,11 +7,7 @@
 #include "../math/vector3.h"
 #include "../math/box3d.h"
 #include "surface_type.h"
-
-struct mesh_triangle_indices {
-    uint16_t indices[3];
-    uint16_t surface_type;
-};
+#include "mesh_index.h"
 
 struct mesh_index_block {
     uint16_t first_index;
@@ -38,12 +34,6 @@ struct mesh_collider {
 struct mesh_triangle {
     struct Vector3* vertices;
     struct mesh_triangle_indices triangle;
-};
-
-struct mesh_shadow_cast_result {
-    float y;
-    struct Vector3 normal;
-    enum surface_type surface_type;
 };
 
 typedef bool (*triangle_callback)(struct mesh_index* index, void* data, int triangle_index, int collision_layers);

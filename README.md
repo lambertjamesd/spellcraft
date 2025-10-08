@@ -71,6 +71,9 @@ Have earth + life be recast
 
 "basketball"
 
+Performance metric before kd tree
+56ms when touching mid room vines
+
 ## TODO
 
 - coyote time

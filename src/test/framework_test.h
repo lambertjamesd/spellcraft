@@ -3,6 +3,7 @@
 
 #include <setjmp.h>
 #include <stdbool.h>
+#include <libdragon.h>
 #include "../math/vector2.h"
 
 // two macros ensures any macro passed will
