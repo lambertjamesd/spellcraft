@@ -322,26 +322,15 @@ bool collision_scene_should_sweep(dynamic_object_t* object, struct Vector3* prev
 #define MAX_SWEPT_ITERATIONS    5
 
 void collision_scene_collide_single(struct dynamic_object* object, struct Vector3* prev_pos) {
-    object->is_out_of_bounds = 1;
     for (int i = 0; i < MAX_SWEPT_ITERATIONS; i += 1) {
-        for (int mesh_index = 0; mesh_index < g_scene.mesh_collider_count; mesh_index += 1) {
-            struct mesh_collider* mesh = g_scene.mesh_colliders[mesh_index];
-            bool is_contained = mesh_index_is_contained(&mesh->index, object->position);
-
-            if (is_contained) {
-                object->is_out_of_bounds = 0;
-                break;
-            }
-        }
-
         if (collision_scene_should_sweep(object, prev_pos)) {
             bool did_hit = collide_object_to_multiple_mesh_swept(object, g_scene.mesh_colliders, g_scene.mesh_collider_count, prev_pos);
             if (!did_hit) {
                 return;
             }
         } else {
-            for (int mesh_index = 0; mesh_index < g_scene.mesh_collider_count; mesh_index += 1) {
-                struct mesh_collider* mesh = g_scene.mesh_colliders[mesh_index];
+            for (int collider_index = 0; collider_index < g_scene.mesh_collider_count; collider_index += 1) {
+                struct mesh_collider* mesh = g_scene.mesh_colliders[collider_index];
                 collide_object_to_mesh(object, mesh);
             }
             return;
@@ -593,9 +582,9 @@ void collision_scene_query_trigger(
 bool collision_scene_shadow_cast(struct Vector3* starting_point, struct mesh_shadow_cast_result* result) {
     bool did_hit = false;
 
-    for (int mesh_index = 0; mesh_index < g_scene.mesh_collider_count; mesh_index += 1) {
+    for (int collider_index = 0; collider_index < g_scene.mesh_collider_count; collider_index += 1) {
         struct mesh_shadow_cast_result mesh_result;
-        if (mesh_collider_shadow_cast(g_scene.mesh_colliders[mesh_index], starting_point, &mesh_result)) {
+        if (mesh_collider_shadow_cast(g_scene.mesh_colliders[collider_index], starting_point, &mesh_result)) {
             if (!did_hit || result->y > mesh_result.y) {
                 *result = mesh_result;
                 did_hit = true;

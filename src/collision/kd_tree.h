@@ -19,7 +19,6 @@ struct kd_tree_branch {
     uint8_t axis;
     uint16_t a_max;
     uint16_t b_min;
-    uint16_t a_offset;
     uint16_t b_offset;
 };
 
@@ -50,9 +49,9 @@ struct kd_tree {
 
 typedef struct kd_tree kd_tree_t;
 
-typedef bool (*kd_triangle_callback)(kd_tree_t* index, void* data, int triangle_index, int collision_layers);
+typedef bool (*kd_triangle_callback)(void* data, int triangle_index, int collision_layers);
 
-void kd_tree_lookup(kd_tree_t* tree, struct Box3D* box, void *data, kd_triangle_callback callback, int collision_layers);
+bool kd_tree_lookup(kd_tree_t* tree, struct Box3D* box, void *data, kd_triangle_callback callback, int collision_layers);
 bool kd_tree_shadow_cast(kd_tree_t* tree, struct Vector3* starting_point, struct mesh_shadow_cast_result* result);
 
 #endif

@@ -15,6 +15,27 @@ class MeshColliderTriangle():
     def __init__(self, indices: list[int], surface_type: int = 0):
         self.indices: list[int] = indices
         self.surface_type = surface_type
+        self.centroid: mathutils.Vector | None = None
+        self.min: mathutils.Vector | None = None
+        self.max: mathutils.Vector | None = None
+
+    def serialize(self, file):
+        file.write(struct.pack(
+            ">HHHH",
+            self.indices[0],
+            self.indices[1],
+            self.indices[2],
+            self.surface_type,
+        ))
+
+    def calculate_bounds(self, vertices: list[mathutils.Vector]):
+        a = vertices[self.indices[0]]
+        b = vertices[self.indices[1]]
+        c = vertices[self.indices[2]]
+
+        self.centroid = (a + b + c) * (1.0 / 3.0)
+        self.min = _vector_min(a, _vector_min(b, c))
+        self.max = _vector_max(a, _vector_max(b, c))
 
 def _triangle_support_function(vertices: list[mathutils.Vector], triangle: MeshColliderTriangle, direction: mathutils.Vector):
     result_index = max(triangle.indices, key = lambda index: direction.dot(vertices[index]))
@@ -197,103 +218,108 @@ def _rasterize_triangle_3d(points: list[mathutils.Vector]) -> list[tuple[int, in
     _rasterize_loop_axis_3d(points, 0, result, None)
     return result
 
+KD_TREE_LEAF_NODE = 0
+KD_TREE_BRANCH_NODE = 1
 
-class MeshIndexBlock():
-    def __init__(self):
-        self.indices: list[int] = []
+def _transform_value(min, size_inv, value) -> int:
+    result = int((value - min) * size_inv)
 
-class MeshIndex():
-    def __init__(self, vertices: list[mathutils.Vector], triangles: list[MeshColliderTriangle], force_subdivisions: mathutils.Vector | None = None):
+    if result > 0xFFFF:
+        return 0xFFFF
+    if result < 0:
+        return 0
+    return result
+
+class KdNode():
+    def __init__(self, vertices: list[mathutils.Vector], triangles: list[MeshColliderTriangle]):
+        self.triangles: list[MeshColliderTriangle] | None = None
+        self.left = None
+        self.right = None
+        
+        min_point = triangles[0].min if len(triangles) > 0 else mathutils.Vector((0, 0, 0))
+        max_point = triangles[0].max if len(triangles) > 0 else mathutils.Vector((0, 0, 0))
+
+        for triangle in triangles:
+            min_point = _vector_min(min_point, triangle.min)
+            max_point = _vector_max(max_point, triangle.max)
+
+        self.min_point = min_point
+        self.max_point = max_point
+
+        size = max_point - min_point
+    
+        axis = 0
+
+        if size.y > size.x and size.y > size.z:
+            axis = 1
+        if size.z > size.x and size.z > size.y:
+            axis = 2
+
+        self.axis = axis
+
+        if len(triangles) < 4 or size[axis] < 0.5:
+            self.triangles = triangles[:256]
+            return
+
+        triangles = sorted(triangles, key = lambda x: x.centroid[axis])
+
+        half_index = len(triangles) // 2
+
+        self.left = KdNode(vertices, triangles[0:half_index])
+        self.right = KdNode(vertices, triangles[half_index:])
+        
+    def to_bytes(self, triangle_array, min, size_inv):
+        if self.triangles != None:
+            result = struct.pack(">BBH", KD_TREE_LEAF_NODE, len(self.triangles), len(triangle_array))
+            triangle_array.extend(self.triangles)
+            return result
+
+        left_bytes = self.left.to_bytes(triangle_array, min, size_inv)
+        right_bytes = self.right.to_bytes(triangle_array, min, size_inv)
+
+        return struct.pack(
+            ">BBHHH",
+            KD_TREE_BRANCH_NODE,
+            self.axis,
+            _transform_value(min[self.axis], size_inv[self.axis], self.left.max_point[self.axis]),
+            _transform_value(min[self.axis], size_inv[self.axis], self.right.max_point[self.axis]),
+            len(left_bytes) + 8
+        ) + left_bytes + right_bytes
+            
+
+class KdMeshIndex():
+    def __init__(self, vertices: list[mathutils.Vector], triangles: list[MeshColliderTriangle]):
         self.vertices: list[mathutils.Vector] = vertices
         self.triangles: list[MeshColliderTriangle] = triangles
 
-        self.blocks: list[MeshIndexBlock] = []
+        for triangle in self.triangles:
+            triangle.calculate_bounds(vertices)
 
-        min_point, stride_inv, block_count = _determine_index_indices(vertices, force_subdivisions = force_subdivisions)
-
-        self.min_point: mathutils.Vector = min_point
-        self.stride_inv: mathutils.Vector = stride_inv
-        self.block_count: mathutils.Vector = block_count
-
-        count = int(self.block_count.x * self.block_count.y * self.block_count.z)
-
-        for idx in range(count):
-            self.blocks.append(MeshIndexBlock())
-
-        for idx in range(len(self.triangles)):
-            self.check_triangle(idx)
-
-    def __str__(self):
-        block_indices = []
-
-        for block in self.blocks:
-            block_indices.append(', '.join([str(idx) for idx in block.indices]))
-
-        indices = '\n'.join(block_indices)
-
-        return f"min = {self.min_point}\nstride_inv = {self.stride_inv}\nblock_count = {self.block_count}\nblocks = {len(self.blocks)}\n{indices}"
-    
+        self.root = KdNode(self.vertices, self.triangles)
+        
     def serialize(self, file):
-        file.write(struct.pack(">fff", self.min_point.x, self.min_point.y, self.min_point.z))
-        file.write(struct.pack(">fff", self.stride_inv.x, self.stride_inv.y, self.stride_inv.z))
-        file.write(struct.pack(">BBB", int(self.block_count.x), int(self.block_count.y), int(self.block_count.z)))
+        triangles = []
+        min_point = self.root.min_point
+        size = self.root.max_point - min_point
 
-        index_count = 0
+        if size.x < 0.1:
+            size.x = 0.1
+        if size.y < 0.1:
+            size.y = 0.1
+        if size.z < 0.1:
+            size.z = 0.1
 
-        for block in self.blocks:
-            index_count += len(block.indices)
+        size_inv = 0xFFFF * mathutils.Vector((1 / size.x, 1 / size.y, 1 / size.z))
+        nodes_data = self.root.to_bytes(triangles, min_point, size_inv)
 
-        file.write(struct.pack(">H", index_count))
-
-        for block in self.blocks:
-            for index in block.indices:
-                file.write(struct.pack(">H", index))
-
-        current_index = 0
-
-        for block in self.blocks:
-            file.write(struct.pack(">HH", current_index, current_index + len(block.indices)))
-            current_index += len(block.indices)
-
-
-
-    def _block_coordinates(self, input: mathutils.Vector) -> mathutils.Vector:
-        return (input - self.min_point) * self.stride_inv
-    
-    def check_triangle_to_box(self, x: int, y: int, z: int, triangle: MeshColliderTriangle, triangle_index: int):
-        min_box = mathutils.Vector((
-            x * INDEX_BLOCK_SIZE_X + self.min_point.x,
-            y * INDEX_BLOCK_SIZE_Y + self.min_point.y,
-            z * INDEX_BLOCK_SIZE_Z + self.min_point.z,
-        ))
-
-        max_box = mathutils.Vector((
-            min_box.x + INDEX_BLOCK_SIZE_X,
-            min_box.y + INDEX_BLOCK_SIZE_Y,
-            min_box.z + INDEX_BLOCK_SIZE_Z,
-        ))
-
-        if not _does_overlap(self.vertices, triangle, min_box, max_box):
-            return
-        
-        index = int(x + ((y + z * self.block_count.y) * self.block_count.x))
-
-        self.blocks[index].indices.append(triangle_index)
-
-    def check_triangle(self, triangle_index: int):
-        triangle: MeshColliderTriangle = self.triangles[triangle_index]
-
-        block_vertices = list(map(lambda index: self._block_coordinates(self.vertices[index]), triangle.indices))
-        block_indices = _rasterize_triangle_3d(block_vertices)
-        
-        for cooridnate in block_indices:
-            if cooridnate[0] < 0 or cooridnate[0] >= self.block_count[0] or \
-                cooridnate[1] < 0 or cooridnate[1] >= self.block_count[1] or \
-                cooridnate[2] < 0 or cooridnate[2] >= self.block_count[2]:
-                continue
-
-            index = int(cooridnate[0] + ((cooridnate[1] + cooridnate[2] * self.block_count.y) * self.block_count.x))
-            self.blocks[index].indices.append(triangle_index)
+        file.write(struct.pack(">fff", min_point.x, min_point.y, min_point.z))
+        file.write(struct.pack(">fff", size_inv.x, size_inv.y, size_inv.z))
+        file.write(struct.pack(">HHH", len(nodes_data), len(triangles), len(self.vertices)))
+        file.write(nodes_data)
+        for triangle in triangles:
+            triangle.serialize(file)
+        for vertex in self.vertices:
+            file.write(struct.pack(">fff", vertex.x, vertex.y, vertex.z))
 
 class MeshCollider():
     def __init__(self):
@@ -335,29 +361,8 @@ class MeshCollider():
 
     def write_out(self, file, force_subdivisions: mathutils.Vector | None = None):
         file.write('CMSH'.encode())
-        file.write(len(self.vertices).to_bytes(2, 'big'))
-
-        for vert in self.vertices:
-            file.write(struct.pack(
-                ">fff",
-                vert.x,
-                vert.y,
-                vert.z
-            ))
-
-        file.write(len(self.triangles).to_bytes(2, 'big'))
-
-        for triangle in self.triangles:
-            file.write(struct.pack(
-                ">HHHH",
-                triangle.indices[0],
-                triangle.indices[1],
-                triangle.indices[2],
-                triangle.surface_type,
-            ))
-
-        index = MeshIndex(self.vertices, self.triangles, force_subdivisions = force_subdivisions)
-        index.serialize(file)
+        kd_tree = KdMeshIndex(self.vertices, self.triangles)
+        kd_tree.serialize(file)
 
     def is_empty(self):
         return len(self.triangles) == 0

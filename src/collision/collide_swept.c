@@ -33,12 +33,12 @@ void object_mesh_collide_data_init(
     data->object = object;
 }
 
-bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int triangle_index, int collision_layers) {
+bool collide_object_swept_to_triangle(void* data, int triangle_index, int collision_layers) {
     struct object_mesh_collide_data* collide_data = (struct object_mesh_collide_data*)data;
 
     struct mesh_triangle triangle;
-    triangle.vertices = collide_data->mesh->vertices;
-    triangle.triangle = collide_data->mesh->triangles[triangle_index];
+    triangle.vertices = collide_data->mesh->index.vertices;
+    triangle.triangle = collide_data->mesh->index.indices[triangle_index];
 
     if (!(surface_type_collision_layers[triangle.triangle.surface_type] & collision_layers)) {
         return false;
@@ -135,18 +135,10 @@ bool collide_object_to_mesh_swept(struct dynamic_object* object, struct mesh_col
     object_mesh_collide_data_init(&collide_data, prev_pos, mesh, object);
 
     struct Vector3 start_pos = *object->position;
-    struct Vector3 offset;
 
-    vector3Sub(
-        object->position, 
-        prev_pos, 
-        &offset
-    );
-
-    if (!mesh_index_swept_lookup(
-        &mesh->index, 
+    if (!mesh_collider_lookup_triangle_indices(
+        mesh, 
         &object->bounding_box, 
-        &offset, 
         collide_object_swept_to_triangle, 
         &collide_data,
         object->collision_layers
@@ -168,22 +160,14 @@ bool collide_object_to_multiple_mesh_swept(struct dynamic_object* object, struct
     object_mesh_collide_data_init(&collide_data, prev_pos, NULL, object);
 
     struct Vector3 start_pos = *object->position;
-    struct Vector3 offset;
-
-    vector3Sub(
-        object->position, 
-        prev_pos, 
-        &offset
-    );
 
     bool did_hit = false;
 
     for (int i = 0; i < mesh_count; i += 1) {
         collide_data.mesh = meshes[i];
-        if (mesh_index_swept_lookup(
-            &meshes[i]->index, 
+        if (mesh_collider_lookup_triangle_indices(
+            meshes[i], 
             &object->bounding_box, 
-            &offset, 
             collide_object_swept_to_triangle, 
             &collide_data,
             object->collision_layers

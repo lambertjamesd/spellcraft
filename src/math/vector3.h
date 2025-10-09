@@ -10,6 +10,8 @@ struct Vector3 {
     float x, y, z;
 };
 
+typedef struct Vector3 vector3_t;
+
 struct Vector3u8 {
     unsigned char x, y, z;
 };

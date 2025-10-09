@@ -120,10 +120,6 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 }
 
 bool projectile_is_active(struct projectile* projectile) {
-    // if (projectile->dynamic_object.is_out_of_bounds) {
-    //     return false;
-    // }
-
     if (projectile->has_primary_event || !projectile->has_secondary_event) {
         return !projectile->has_hit;
     }

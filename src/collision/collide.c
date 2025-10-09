@@ -76,10 +76,10 @@ struct object_mesh_collide_data {
     struct mesh_triangle triangle;
 };
 
-bool collide_object_to_triangle(struct mesh_index* index, void* data, int triangle_index, int collision_layers) {
+bool collide_object_to_triangle(void* data, int triangle_index, int collision_layers) {
     struct object_mesh_collide_data* collide_data = (struct object_mesh_collide_data*)data;
 
-    collide_data->triangle.triangle = collide_data->mesh->triangles[triangle_index];
+    collide_data->triangle.triangle = collide_data->mesh->index.indices[triangle_index];
     
     if (!(surface_type_collision_layers[collide_data->triangle.triangle.surface_type] & collision_layers)) {
         return false;
@@ -123,8 +123,8 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
     struct object_mesh_collide_data collide_data;
     collide_data.mesh = mesh;
     collide_data.object = object;
-    collide_data.triangle.vertices = mesh->vertices;
-    mesh_index_lookup_triangle_indices(&mesh->index, &object->bounding_box, collide_object_to_triangle, &collide_data, object->collision_layers);
+    collide_data.triangle.vertices = mesh->index.vertices;
+    mesh_collider_lookup_triangle_indices(mesh, &object->bounding_box, collide_object_to_triangle, &collide_data, object->collision_layers);
 }
 
 void collide_adjust_collision(struct dynamic_object* object, struct EpaResult* result, struct Vector3* momentum_center, struct Vector3* relative_velocity, float factor) {

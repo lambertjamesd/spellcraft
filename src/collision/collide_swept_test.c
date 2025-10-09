@@ -11,24 +11,27 @@ void object_mesh_collide_data_init(
     struct dynamic_object* object
 );
 
-bool collide_object_swept_to_triangle(struct mesh_index* index, void* data, int triangle_index);
+bool collide_object_swept_to_triangle(void* data, int triangle_index, int collision_layers);
+
+static kd_tree_leaf_t single_triangle_leaf = {
+    .node_type = KD_TREE_LEAF_NODE,
+    .triangle_count = 1,
+    .triangle_offset = 0,
+};
 
 static struct mesh_collider single_traingle_mesh = {
-    .vertices = (struct Vector3[]){
-        {0.0f, 0.0f, 0.0f},
-        {1.0f, 0.0f, 0.0f},
-        {1.0f, 1.0f, 0.0f},
-    },
-    .triangles = (struct mesh_triangle_indices[]){
-        {{0, 1, 2}},
-    },
-    .triangle_count = 1,
     .index = {
         .min = {0.0f, 0.0f, 0.0f},
-        .stride_inv = {1.0f, 1.0f, 1.0f},
-        .block_count = {1, 1, 1},
-        .blocks = (struct mesh_index_block[]){{0, 1}},
-        .index_indices = (uint16_t[]){0},
+        .size_inv = {1.0f, 1.0f, 1.0f},
+        .vertices = (struct Vector3[]){
+            {0.0f, 0.0f, 0.0f},
+            {1.0f, 0.0f, 0.0f},
+            {1.0f, 1.0f, 0.0f},
+        },
+        .indices = (struct mesh_triangle_indices[]){
+            {{0, 1, 2}},
+        },
+        .nodes = &single_triangle_leaf,
     },
 };
 
@@ -54,7 +57,7 @@ void test_collide_object_swept_to_triangle(struct test_context* t) {
 
     object_mesh_collide_data_init(&collide_data, &prev_pos, &single_traingle_mesh, &object);
 
-    bool did_hit = collide_object_swept_to_triangle(&single_traingle_mesh.index, &collide_data, 0);
+    bool did_hit = collide_object_swept_to_triangle(&collide_data, 0, COLLISION_LAYER_TANGIBLE);
 
     test_eqi(t, true, did_hit);
     test_ltf(t, position.z, -simple_cube_object.data.box.half_size.z);
@@ -65,7 +68,7 @@ void test_collide_object_swept_to_triangle(struct test_context* t) {
     prev_pos = (struct Vector3){0.5f, 0.75f, -1.0f};
     position = (struct Vector3){0.5f, 0.75f, 1.0f};
 
-    did_hit = collide_object_swept_to_triangle(&single_traingle_mesh.index, &collide_data, 0);
+    did_hit = collide_object_swept_to_triangle(&collide_data, 0, COLLISION_LAYER_TANGIBLE);
     test_eqi(t, false, did_hit);
 }
 

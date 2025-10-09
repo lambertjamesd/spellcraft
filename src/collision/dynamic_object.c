@@ -24,7 +24,6 @@ void dynamic_object_init(
     object->has_gravity = 1;
     object->trigger_type = TRIGGER_TYPE_NONE;
     object->is_fixed = 0;
-    object->is_out_of_bounds = 0;
     object->is_pushed = 0;
     object->is_jumping = 0;
     object->under_water = 0;

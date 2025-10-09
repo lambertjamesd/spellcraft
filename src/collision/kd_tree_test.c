@@ -6,47 +6,47 @@
 static uint16_t kd_tree_data[] = {
     PACK_BYTES(KD_TREE_BRANCH_NODE, 0),
     0x9000, 0x7000,
-    1 * sizeof(kd_tree_branch_t), 
-    2 * sizeof(kd_tree_branch_t),
+    4 * sizeof(kd_tree_branch_t) + sizeof(kd_tree_leaf_t),
 
     PACK_BYTES(KD_TREE_BRANCH_NODE, 1),
-    0x9000, 0x7000,
-    3 * sizeof(kd_tree_branch_t), 
-    4 * sizeof(kd_tree_branch_t),
-    PACK_BYTES(KD_TREE_BRANCH_NODE, 1),
-    0x9000, 0x7000,
-    5 * sizeof(kd_tree_branch_t), 
-    6 * sizeof(kd_tree_branch_t),
+    0x9000, 0x7000, 
+    2 * sizeof(kd_tree_branch_t) + sizeof(kd_tree_leaf_t),
     
     PACK_BYTES(KD_TREE_BRANCH_NODE, 2),
-    0x9000, 0x7000,
-    7 * sizeof(kd_tree_branch_t) + 0 * sizeof(kd_tree_leaf_t), 
-    7 * sizeof(kd_tree_branch_t) + 1 * sizeof(kd_tree_leaf_t),
-    PACK_BYTES(KD_TREE_BRANCH_NODE, 2),
-    0x9000, 0x7000,
-    7 * sizeof(kd_tree_branch_t) + 2 * sizeof(kd_tree_leaf_t), 
-    7 * sizeof(kd_tree_branch_t) + 3 * sizeof(kd_tree_leaf_t),
-    PACK_BYTES(KD_TREE_BRANCH_NODE, 2),
-    0x9000, 0x7000,
-    7 * sizeof(kd_tree_branch_t) + 4 * sizeof(kd_tree_leaf_t), 
-    7 * sizeof(kd_tree_branch_t) + 5 * sizeof(kd_tree_leaf_t),
-    PACK_BYTES(KD_TREE_BRANCH_NODE, 2),
-    0x9000, 0x7000,
-    7 * sizeof(kd_tree_branch_t) + 6 * sizeof(kd_tree_leaf_t), 
-    7 * sizeof(kd_tree_branch_t) + 7 * sizeof(kd_tree_leaf_t),
-
+    0x9000, 0x7000, 
+    sizeof(kd_tree_branch_t) + sizeof(kd_tree_leaf_t),
+    
     PACK_BYTES(KD_TREE_LEAF_NODE, 1),
     0,
     PACK_BYTES(KD_TREE_LEAF_NODE, 1),
     1,
+
+    PACK_BYTES(KD_TREE_BRANCH_NODE, 2),
+    0x9000, 0x7000,
+    sizeof(kd_tree_branch_t) + sizeof(kd_tree_leaf_t),
+    
     PACK_BYTES(KD_TREE_LEAF_NODE, 1),
     2,
     PACK_BYTES(KD_TREE_LEAF_NODE, 1),
     3,
+
+    PACK_BYTES(KD_TREE_BRANCH_NODE, 1),
+    0x9000, 0x7000,
+    2 * sizeof(kd_tree_branch_t) + sizeof(kd_tree_leaf_t),
+
+    PACK_BYTES(KD_TREE_BRANCH_NODE, 2),
+    0x9000, 0x7000,
+    sizeof(kd_tree_branch_t) + sizeof(kd_tree_leaf_t),
+    
     PACK_BYTES(KD_TREE_LEAF_NODE, 1),
     4,
     PACK_BYTES(KD_TREE_LEAF_NODE, 1),
     5,
+
+    PACK_BYTES(KD_TREE_BRANCH_NODE, 2),
+    0x9000, 0x7000,
+    sizeof(kd_tree_branch_t) + sizeof(kd_tree_leaf_t),
+
     PACK_BYTES(KD_TREE_LEAF_NODE, 1),
     6,
     PACK_BYTES(KD_TREE_LEAF_NODE, 1),
@@ -105,7 +105,7 @@ void test_kd_tree_result_init(struct test_kd_tree_result* result) {
     result->call_mask = 0;
 }
 
-bool test_kd_triangle_callback(kd_tree_t* index, void* data, int triangle_index, int collision_layers) {
+bool test_kd_triangle_callback(void* data, int triangle_index, int collision_layers) {
     struct test_kd_tree_result* result = (struct test_kd_tree_result*)data;
 
     result->call_count += 1;
