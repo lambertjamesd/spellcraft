@@ -2,8 +2,6 @@
 
 #include <math.h>
 
-int gjk_count = 0;
-
 void simplexInit(struct Simplex* simplex) {
     simplex->nPoints = 0;
 }
@@ -174,8 +172,6 @@ bool gjkCheckForOverlap(struct Simplex* simplex, void* objectA, MinkowsiSum obje
     struct Vector3 nextDirection;
 
     simplexInit(simplex);
-
-    ++gjk_count;
 
     if (vector3IsZero(firstDirection)) {
         objectASum(objectA, &gRight, &aPoint);

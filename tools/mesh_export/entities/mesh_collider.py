@@ -282,10 +282,18 @@ class KdNode():
             KD_TREE_BRANCH_NODE,
             self.axis,
             _transform_value(min[self.axis], size_inv[self.axis], self.left.max_point[self.axis]),
-            _transform_value(min[self.axis], size_inv[self.axis], self.right.max_point[self.axis]),
+            _transform_value(min[self.axis], size_inv[self.axis], self.right.min_point[self.axis]),
             len(left_bytes) + 8
         ) + left_bytes + right_bytes
             
+    def to_string(self, indent):
+        if self.triangles != None:
+            return indent + 'KD_TREE_LEAF_NODE ' + str(len(self.triangles)) + '\n'
+
+        return indent + 'KD_TREE_BRANCH_NODE ' + \
+            str(self.axis) + ', ' + str(self.left.max_point[self.axis]) + ', ' + str(self.right.min_point[self.axis]) + '\n' + \
+            self.left.to_string(indent + '  ') + \
+            self.right.to_string(indent + '  ')
 
 class KdMeshIndex():
     def __init__(self, vertices: list[mathutils.Vector], triangles: list[MeshColliderTriangle]):
@@ -320,6 +328,9 @@ class KdMeshIndex():
             triangle.serialize(file)
         for vertex in self.vertices:
             file.write(struct.pack(">fff", vertex.x, vertex.y, vertex.z))
+
+    def __str__(self):
+        return self.root.to_string('')
 
 class MeshCollider():
     def __init__(self):

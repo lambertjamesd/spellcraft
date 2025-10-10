@@ -22,8 +22,9 @@ void mesh_collider_load(struct mesh_collider* into, FILE* file) {
     fread(&triangle_count, 2, 1, file);
     fread(&vertex_count, 2, 1, file);
 
-    void* data = malloc(sizeof(vector3_t) * vertex_count);
-    fread(data, node_size + triangle_count * sizeof(mesh_triangle_indices_t) + vertex_count * sizeof(struct Vector3), 1, file);
+    int data_size = node_size + triangle_count * sizeof(mesh_triangle_indices_t) + vertex_count * sizeof(struct Vector3);
+    void* data = malloc(data_size);
+    fread(data, data_size, 1, file);
 
     into->index.nodes = data;
     into->index.indices = (mesh_triangle_indices_t*)((char*)data + node_size);

@@ -121,6 +121,7 @@ bool kd_tree_shadow_cast(kd_tree_t* tree, struct Vector3* starting_point, struct
                 }
 
                 --curr;
+                --curr_offset;
                 break;
             }
             case KD_TREE_BRANCH_NODE: {
@@ -144,8 +145,11 @@ bool kd_tree_shadow_cast(kd_tree_t* tree, struct Vector3* starting_point, struct
                     *curr = *(kd_tree_node_t*)((char*)tree->nodes + *curr_offset);
                 } else {
                     --curr;
+                    --curr_offset;
                 }
                 break;
+            default:
+                assert(false);
         } 
     }
 

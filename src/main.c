@@ -141,8 +141,6 @@ bool check_scene_load() {
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(1500)
 
-extern int gjk_count;
-
 int main(void)
 {
 	resolution_t custom_res = {320, 240, false};
@@ -225,13 +223,9 @@ int main(void)
             } 
         }
 
-        gjk_count = 0;
-
         joypad_poll();
         if (update_has_layer(UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE)) {
-            uint64_t start_time = get_ticks_us();
             collision_scene_collide();
-            debugf("collision_time = %f, %d\n", (get_ticks_us() - start_time) / 1000.0f, gjk_count);
         }
         update_dispatch();
     }
