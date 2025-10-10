@@ -225,7 +225,9 @@ int main(void)
 
         joypad_poll();
         if (update_has_layer(UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE)) {
+            // uint64_t start_time = get_ticks_us();
             collision_scene_collide();
+            // debugf("collision_time = %f\n", (get_ticks_us() - start_time) / 1000.0f);
         }
         update_dispatch();
     }

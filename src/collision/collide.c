@@ -76,12 +76,51 @@ struct object_mesh_collide_data {
     struct mesh_triangle triangle;
 };
 
+bool collide_object_check_triangle_bounding_box(struct object_mesh_collide_data* data) {
+    struct Vector3* points[3];
+
+    for (int i = 0; i < 3; i += 1) {
+        points[i] = &data->triangle.vertices[data->triangle.triangle.indices[i]];
+    }
+
+    float* min = VECTOR3_AS_ARRAY(&data->object->bounding_box.min);
+    float* max = VECTOR3_AS_ARRAY(&data->object->bounding_box.max);
+
+    for (int axis = 0; axis < 3; axis += 1) {
+        bool is_below = true;
+        bool is_above = true;
+
+        for (int point_index = 0; point_index < 3; point_index += 1) {
+            float pos = VECTOR3_AS_ARRAY(points[point_index])[axis]; 
+            if (*max > pos) {
+                is_below = false;
+            }
+            if (*min < pos) {
+                is_above = false;
+            }
+        }
+
+        if (is_below || is_above) {
+            return false;
+        }
+
+        min += 1;
+        max += 1;
+    }
+
+    return true;
+}
+
 bool collide_object_to_triangle(void* data, int triangle_index, int collision_layers) {
     struct object_mesh_collide_data* collide_data = (struct object_mesh_collide_data*)data;
 
     collide_data->triangle.triangle = collide_data->mesh->index.indices[triangle_index];
     
     if (!(surface_type_collision_layers[collide_data->triangle.triangle.surface_type] & collision_layers)) {
+        return false;
+    }
+
+    if (!collide_object_check_triangle_bounding_box(collide_data)) {
         return false;
     }
 
