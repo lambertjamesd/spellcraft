@@ -139,6 +139,15 @@ void vector3TripleProduct(struct Vector3* a, struct Vector3* b, struct Vector3* 
     vector3AddScaled(output, a, -vector3Dot(b, c), output);
 }
 
+void vector3Reflect(struct Vector3* input, struct Vector3* normal, struct Vector3* result) {
+    vector3AddScaled(
+        input,
+        normal,
+        -2.0f * vector3Dot(input, normal),
+        result
+    );
+}
+
 void vector3Max(struct Vector3* a, struct Vector3* b, struct Vector3* out) {
     out->x = fmaxf(a->x, b->x);
     out->y = fmaxf(a->y, b->y);

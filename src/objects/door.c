@@ -82,6 +82,10 @@ bool door_interact(struct interactable* interactable, entity_id from) {
 
     struct Vector3 target;
     vector3Add(&door->transform.position, &offset, &target);
+    struct Vector3 camera_target;
+    vector3Sub(&current_scene->camera.transform.position, player_get_position(&current_scene->player), &camera_target);
+    vector3Reflect(&camera_target, &door_forward, &camera_target);
+    vector3Add(player_get_position(&current_scene->player), &camera_target, &camera_target);
 
     animator_run_clip(&door->animator, door->animations.open, 0.0f, false);
 
@@ -89,6 +93,7 @@ bool door_interact(struct interactable* interactable, entity_id from) {
 
     cutscene_builder_pause(&builder, true, false, UPDATE_LAYER_WORLD);
     cutscene_builder_delay(&builder, 0.5f);
+    cutscene_builder_camera_move_to(&builder, &camera_target);
     cutscene_builder_interact_position(
         &builder, 
         INTERACTION_MOVE, 

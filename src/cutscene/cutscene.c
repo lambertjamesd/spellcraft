@@ -355,6 +355,15 @@ void cutscene_builder_camera_return(struct cutscene_builder* builder) {
     };
 }
 
+void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_CAMERA_MOVE_TO,
+    };
+    step->data.camera_move_to.target = *position;
+}
+
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value) {
     struct cutscene_step* expression = cutscene_builder_next_step(builder);
     struct cutscene_step* set = cutscene_builder_next_step(builder);

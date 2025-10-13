@@ -307,6 +307,11 @@ void camera_play_animation(struct camera_controller* controller, struct camera_a
     controller->current_frame = 0;
 }
 
+void camera_move_to(struct camera_controller* controller, struct Vector3* position) {
+    controller->stable_position = *position;
+    controller->camera->transform.position = *position;
+}
+
 void camera_set_fixed(struct camera_controller* controller, struct Vector3* position, struct Quaternion* rotation, float fov) {
     controller->state = CAMERA_STATE_FIXED;
     controller->camera->transform.position = *position;

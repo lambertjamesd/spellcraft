@@ -24,6 +24,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_CAMERA_FOLLOW,
     CUTSCENE_STEP_CAMERA_RETURN,
     CUTSCENE_STEP_CAMERA_ANIMATE,
+    CUTSCENE_STEP_CAMERA_MOVE_TO,
     CUTSCENE_STEP_CAMERA_WAIT,
     CUTSCENE_STEP_INTERACT_WITH_LOCATION,
     CUTSCENE_STEP_FADE,
@@ -90,6 +91,9 @@ union cutscene_step_data {
     struct {
         char* animation_name;
     } camera_animate;
+    struct {
+        struct Vector3 target;
+    } camera_move_to;
     struct {
         enum interaction_type type;
         union cutscene_actor_id subject;
@@ -160,6 +164,7 @@ void cutscene_builder_npc_wait(
     union cutscene_actor_id subject
 );
 void cutscene_builder_camera_return(struct cutscene_builder* builder);
+void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position);
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value);
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder);

@@ -46,6 +46,7 @@ void vector3Project(struct Vector3* in, struct Vector3* normal, struct Vector3* 
 void vector3ProjectPlane(struct Vector3* in, struct Vector3* normal, struct Vector3* out);
 int vector3MoveTowards(struct Vector3* from, struct Vector3* towards, float maxDistance, struct Vector3* out);
 void vector3TripleProduct(struct Vector3* a, struct Vector3* b, struct Vector3* c, struct Vector3* output);
+void vector3Reflect(struct Vector3* input, struct Vector3* normal, struct Vector3* result);
 
 void vector3Max(struct Vector3* a, struct Vector3* b, struct Vector3* out);
 void vector3Min(struct Vector3* a, struct Vector3* b, struct Vector3* out);
