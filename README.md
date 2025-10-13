@@ -76,12 +76,8 @@ Performance metric before kd tree
 
 ## TODO
 
-- coyote time
-- z targeting
 - direct camera control
 - load on background thread
 - particle rendering in mesh
-- figure out if player model could be rendered more effeciently
 - camera logic
 -  do a better job with camera tracking logic
--  implement automatic camera framing when talking to npc
