@@ -51,6 +51,13 @@ void vector3Multiply(struct Vector3* a, struct Vector3* b, struct Vector3* out) 
     out->z = a->z * b->z;
 }
 
+void vector3Rotate90(struct Vector3* a, struct Vector3* out) {
+    float tmp = a->x;
+    out->x = -a->z;
+    out->y = a->y;
+    out->z = tmp;
+}
+
 void vector3Normalize(struct Vector3* in, struct Vector3* out) {
     float denom = in->x * in->x + in->y * in->y + in->z * in->z;
 

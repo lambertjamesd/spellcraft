@@ -190,7 +190,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_CAMERA_MOVE_TO: {
-            camera_move_to(&current_scene->camera_controller, &step->data.camera_move_to.target);
+            camera_move_to(&current_scene->camera_controller, &step->data.camera_move_to.target, step->data.camera_move_to.args.instant, step->data.camera_move_to.args.move_target);
             break;
         }
         case CUTSCENE_STEP_CAMERA_WAIT:

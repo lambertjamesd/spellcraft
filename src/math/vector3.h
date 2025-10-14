@@ -34,6 +34,7 @@ void vector3Add(struct Vector3* a, struct Vector3* b, struct Vector3* out);
 void vector3AddScaled(struct Vector3* a, struct Vector3* normal, float scale, struct Vector3* out);
 void vector3Sub(struct Vector3* a, struct Vector3* b, struct Vector3* out);
 void vector3Multiply(struct Vector3* a, struct Vector3* b, struct Vector3* out);
+void vector3Rotate90(struct Vector3* a, struct Vector3* out);
 void vector3Normalize(struct Vector3* in, struct Vector3* out);
 void vector3Lerp(struct Vector3* a, struct Vector3* b, float t, struct Vector3* out);
 float vector3Dot(struct Vector3* a, struct Vector3* b);

@@ -51,6 +51,13 @@ struct templated_string {
     uint16_t nargs;
 };
 
+struct camera_move_to_args {
+    bool instant: 1;
+    bool move_target: 1; 
+};
+
+typedef struct camera_move_to_args camera_move_to_args_t;
+
 union cutscene_step_data {
     struct {
         struct templated_string message;
@@ -93,6 +100,7 @@ union cutscene_step_data {
     } camera_animate;
     struct {
         struct Vector3 target;
+        camera_move_to_args_t args;
     } camera_move_to;
     struct {
         enum interaction_type type;
@@ -163,8 +171,9 @@ void cutscene_builder_npc_wait(
     struct cutscene_builder* builder,
     union cutscene_actor_id subject
 );
+void cutscene_builder_camera_wait(struct cutscene_builder* builder);
 void cutscene_builder_camera_return(struct cutscene_builder* builder);
-void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position);
+void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, camera_move_to_args_t* args);
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value);
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder);

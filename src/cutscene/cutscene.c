@@ -347,6 +347,14 @@ void cutscene_builder_npc_wait(
     };
 }
 
+void cutscene_builder_camera_wait(struct cutscene_builder* builder) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_CAMERA_WAIT,
+    };
+}
+
 void cutscene_builder_camera_return(struct cutscene_builder* builder) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
@@ -355,13 +363,16 @@ void cutscene_builder_camera_return(struct cutscene_builder* builder) {
     };
 }
 
-void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position) {
+void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, camera_move_to_args_t* args) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
 
     *step = (struct cutscene_step){
         .type = CUTSCENE_STEP_CAMERA_MOVE_TO,
+        .data.camera_move_to = {
+            .target = {position->x, position->y, position->z},
+            .args = *args,
+        },
     };
-    step->data.camera_move_to.target = *position;
 }
 
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value) {

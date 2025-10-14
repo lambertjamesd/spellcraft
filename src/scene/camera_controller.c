@@ -9,9 +9,6 @@
 #include "../entity/interactable.h"
 #include <math.h>
 
-#define CAMERA_FOLLOW_DISTANCE  3.4f
-#define CAMERA_FOLLOW_HEIGHT    1.6f
-
 static struct move_towards_parameters camera_move_parameters = {
     .max_speed = 30.0f,
     .max_accel = 10.0f,
@@ -180,17 +177,37 @@ void camera_controller_return_target(struct camera_controller* controller, struc
     }
 }
 
+void camera_controller_move_to(struct camera_controller* controller) {
+    if (controller->state_data.move_to.moving_look_at) {
+        if (move_towards(&controller->looking_at, &controller->looking_at_speed, &controller->look_target, &camera_move_parameters)) {
+            controller->state_data.move_to.moving_look_at = false;
+        }
+    }
+
+    if (controller->state_data.move_to.moving_position) {
+        if (move_towards(&controller->stable_position, &controller->speed, &controller->target, &camera_move_parameters)) {
+            controller->state_data.move_to.moving_position = false;
+        }
+    }
+    
+    struct Vector3 offset;
+    vector3Sub(&controller->looking_at, &controller->stable_position, &offset);
+    quatLook(&offset, &gUp, &controller->camera->transform.rotation);
+}
+
 static struct camera_animation_frame __attribute__((aligned(16))) anim_frame_buffer;
 
 void camera_controller_update_animation(struct camera_controller* controller) {
-    if (!controller->animation || controller->current_frame >= controller->animation->frame_count) {
+    struct camera_animation* animation = controller->state_data.animate.animation;
+
+    if (!animation || controller->state_data.animate.current_frame >= animation->frame_count) {
         return;
     }
 
     data_cache_hit_invalidate((void*)&anim_frame_buffer, 16);
     dma_read(
         &anim_frame_buffer, 
-        controller->animation->rom_offset + sizeof(struct camera_animation_frame) * controller->current_frame, 
+        animation->rom_offset + sizeof(struct camera_animation_frame) * controller->state_data.animate.current_frame, 
         sizeof(struct camera_animation_frame)
     );
 
@@ -209,7 +226,7 @@ void camera_controller_update_animation(struct camera_controller* controller) {
 
     controller->camera->transform.rotation.w = sqrtf(1.0f - neg_w);
     controller->camera->fov = (180.0f / M_PI) * anim_frame_buffer.fov;
-    controller->current_frame += 1;
+    controller->state_data.animate.current_frame += 1;
     camera_look_at_from_rotation(controller);
 }
 
@@ -218,33 +235,44 @@ entity_id camera_determine_secondary_target(struct camera_controller* controller
 }
 
 void camera_controller_update(struct camera_controller* controller) {
-    if (controller->state == CAMERA_STATE_FOLLOW) {
-        entity_id secondary = camera_determine_secondary_target(controller);
-        dynamic_object_t* obj = collision_scene_find_object(secondary);
-        
-        if (obj) {
-            interactable_t* interactable = interactable_get(secondary);
 
-            if (interactable && interactable->flags.target_straight_on) {
-                camera_controller_direct_target(controller, obj->position);
+    switch (controller->state) {
+        case CAMERA_STATE_FOLLOW: {
+            entity_id secondary = camera_determine_secondary_target(controller);
+            dynamic_object_t* obj = collision_scene_find_object(secondary);
+            
+            if (obj) {
+                interactable_t* interactable = interactable_get(secondary);
+
+                if (interactable && interactable->flags.target_straight_on) {
+                    camera_controller_direct_target(controller, obj->position);
+                } else {
+                    camera_controller_watch_target(controller, obj->position);
+                }
             } else {
-                camera_controller_watch_target(controller, obj->position);
+                // camera_controller_determine_player_move_target(controller, &controller->target, false);
+                camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);
             }
-        } else {
-            // camera_controller_determine_player_move_target(controller, &controller->target, false);
-            camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);
+            camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
+            break;
         }
-        camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
-    } else if (controller->state == CAMERA_STATE_LOOK_AT_WITH_PLAYER) {
-        // camera_controller_watch_target(controller, &controller->look_target);
-        camera_controller_direct_target(controller, &controller->look_target);
-        camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
-    } else if (controller->state == CAMERA_STATE_ANIMATE) {
-        camera_controller_update_animation(controller);
-    } else if (controller->state == CAMERA_STATE_RETURN_TO_PLAYER) {
-        camera_controller_return_target(controller, &controller->target);
-    } else if (controller->state == CAMERA_STATE_FIXED) {
-        // NOTHING
+        case CAMERA_STATE_LOOK_AT_WITH_PLAYER:
+            // camera_controller_watch_target(controller, &controller->look_target);
+            camera_controller_direct_target(controller, &controller->look_target);
+            camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
+            break;
+        case CAMERA_STATE_ANIMATE:
+            camera_controller_update_animation(controller);
+            break;
+        case CAMERA_STATE_RETURN_TO_PLAYER:
+            camera_controller_return_target(controller, &controller->target);
+            break;
+        case CAMERA_STATE_FIXED:
+            // empty
+            break;
+        case CAMERA_STATE_MOVE_TO:
+            camera_controller_move_to(controller);
+            break;
     }
 
     vector3AddScaled(&controller->shake_velocity, &controller->shake_offset, -50.0f, &controller->shake_velocity);
@@ -277,8 +305,8 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
 
     camera_controller_update_position(controller, &player->cutscene_actor.transform);
 
-    controller->animation = NULL;
-    controller->current_frame = 0;
+    controller->state_data.animate.animation = NULL;
+    controller->state_data.animate.current_frame = 0;
 }
 
 void camera_controller_destroy(struct camera_controller* controller) {
@@ -303,13 +331,25 @@ void camera_return(struct camera_controller* controller) {
 
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation) {
     controller->state = CAMERA_STATE_ANIMATE;
-    controller->animation = animation;
-    controller->current_frame = 0;
+    controller->state_data.animate.animation = animation;
+    controller->state_data.animate.current_frame = 0;
 }
 
-void camera_move_to(struct camera_controller* controller, struct Vector3* position) {
-    controller->stable_position = *position;
-    controller->camera->transform.position = *position;
+void camera_move_to(struct camera_controller* controller, struct Vector3* position, bool instant, bool move_target) {
+    controller->state = CAMERA_STATE_MOVE_TO;
+    if (move_target) {
+        controller->look_target = *position;
+        controller->state_data.move_to.moving_look_at = !instant;
+        if (instant) {
+            controller->looking_at = *position;
+        }
+    } else {
+        controller->target = *position;
+        controller->state_data.move_to.moving_position = !instant;
+        if (instant) {
+            controller->stable_position = *position;
+        }
+    }
 }
 
 void camera_set_fixed(struct camera_controller* controller, struct Vector3* position, struct Quaternion* rotation, float fov) {
@@ -321,7 +361,16 @@ void camera_set_fixed(struct camera_controller* controller, struct Vector3* posi
 }
 
 bool camera_is_animating(struct camera_controller* controller) {
-    return controller->animation != 0 && controller->current_frame < controller->animation->frame_count;
+    switch (controller->state) {
+        case CAMERA_STATE_ANIMATE:
+            return controller->state_data.animate.animation != 0 && 
+                controller->state_data.animate.current_frame < controller->state_data.animate.animation->frame_count;
+        case CAMERA_STATE_MOVE_TO:
+            return controller->state_data.move_to.moving_look_at || controller->state_data.move_to.moving_position;
+        default:
+            return false;
+    }
+        
 }
 
 void camera_shake(struct camera_controller* controller, float strength) {

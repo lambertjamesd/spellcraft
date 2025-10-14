@@ -10,7 +10,10 @@
 #include "../scene/scene.h"
 #include "../resource/tmesh_cache.h"
 
-#define DOOR_EXIT_SPACING   1.0f
+#define BEHIND_PLAYER_OFFSET        0.5f
+#define DOOR_EXIT_SPACING           1.5f
+#define CAMERA_PLACEMENT_OFFSET     3.0f
+#define CAMERA_PLACEMENT_TANGENTS   2.0f
 
 static struct dynamic_object_type door_collision = {
     BOX_COLLIDER(1.0f, 1.5f, 0.35f),
@@ -78,14 +81,21 @@ bool door_interact(struct interactable* interactable, entity_id from) {
     vector2ToLookDir(&door->transform.rotation, &door_forward);
     vector3Project(&offset, &door_forward, &offset);
     vector3Normalize(&offset, &offset);
-    vector3Scale(&offset, &offset, DOOR_EXIT_SPACING);
 
     struct Vector3 target;
-    vector3Add(&door->transform.position, &offset, &target);
+    vector3AddScaled(&door->transform.position, &offset, DOOR_EXIT_SPACING, &target);
+    
     struct Vector3 camera_target;
-    vector3Sub(&current_scene->camera.transform.position, player_get_position(&current_scene->player), &camera_target);
-    vector3Reflect(&camera_target, &door_forward, &camera_target);
-    vector3Add(player_get_position(&current_scene->player), &camera_target, &camera_target);
+    vector3AddScaled(
+        &door->transform.position,
+        &offset,
+        CAMERA_PLACEMENT_OFFSET,
+        &camera_target
+    );
+    camera_target.y += CAMERA_FOLLOW_HEIGHT;
+    struct Vector3 door_right;
+    vector3Rotate90(&offset, &door_right);
+    vector3AddScaled(&camera_target, &door_right, CAMERA_PLACEMENT_TANGENTS, &camera_target);
 
     animator_run_clip(&door->animator, door->animations.open, 0.0f, false);
 
@@ -93,7 +103,6 @@ bool door_interact(struct interactable* interactable, entity_id from) {
 
     cutscene_builder_pause(&builder, true, false, UPDATE_LAYER_WORLD);
     cutscene_builder_delay(&builder, 0.5f);
-    cutscene_builder_camera_move_to(&builder, &camera_target);
     cutscene_builder_interact_position(
         &builder, 
         INTERACTION_MOVE, 
@@ -102,12 +111,42 @@ bool door_interact(struct interactable* interactable, entity_id from) {
         },
         &target
     );
+    cutscene_builder_delay(&builder, 0.25f);
+    cutscene_builder_camera_move_to(
+        &builder, 
+        &camera_target, 
+        &(camera_move_to_args_t){
+            .instant = true, 
+            .move_target = false
+        }
+    );
+    target.y += CAMERA_FOLLOW_HEIGHT;
+    cutscene_builder_camera_move_to(
+        &builder, 
+        &target, 
+        &(camera_move_to_args_t){
+            .instant = true, 
+            .move_target = true
+        }
+    );
     cutscene_builder_npc_wait(
         &builder, 
         (union cutscene_actor_id) {
             .npc_type = NPC_TYPE_PLAYER,
         }
     );
+    vector3AddScaled(&door->transform.position, &offset, BEHIND_PLAYER_OFFSET, &camera_target);
+    camera_target.y += CAMERA_FOLLOW_HEIGHT;
+    cutscene_builder_camera_move_to(
+        &builder, 
+        &camera_target, 
+        &(camera_move_to_args_t){
+            .instant = false, 
+            .move_target = false
+        }
+    );
+    cutscene_builder_camera_wait(&builder);
+    cutscene_builder_camera_return(&builder);
     cutscene_builder_pause(&builder, false, false, UPDATE_LAYER_WORLD);
 
     cutscene_runner_run(
