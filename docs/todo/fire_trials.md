@@ -3,9 +3,7 @@
 * Better design for burning vines
 * Hide some item in the side room
 * Polish up fire sword (maybe multiple attack animations)
-* Face animation frame is glitchy
 * Jelly death animation
-* Fix jelly vision
 * Procedrual damage animation
 * Door design
 * Rune upgrade tablet design
