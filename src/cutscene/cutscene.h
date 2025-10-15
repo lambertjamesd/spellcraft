@@ -172,6 +172,7 @@ void cutscene_builder_npc_wait(
     union cutscene_actor_id subject
 );
 void cutscene_builder_camera_wait(struct cutscene_builder* builder);
+void cutscene_builder_camera_follow(struct cutscene_builder* builder);
 void cutscene_builder_camera_return(struct cutscene_builder* builder);
 void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, camera_move_to_args_t* args);
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value);

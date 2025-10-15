@@ -14,8 +14,9 @@ static struct move_towards_parameters camera_move_parameters = {
     .max_accel = 10.0f,
 };
 
-#define ASPECT_RATIO    (4.0f/3.0f)
+#define ASPECT_RATIO            (4.0f/3.0f)
 #define OVER_SHOULDER_DISTANCE  1.1f
+#define EXTEND_SPEED            2.0f
 
 #define MIN_TWO_TARGET_DISTANCE 
 
@@ -140,7 +141,14 @@ void camera_controller_determine_player_move_target(struct camera_controller* co
         }
     }
 
-    vector3AddScaled(player_pos, &offset, -CAMERA_FOLLOW_DISTANCE, result);
+    float clamped_distance = controller->wall_checker.actual_distance + EXTEND_SPEED * fixed_time_step;
+
+    if (clamped_distance < CAMERA_FOLLOW_DISTANCE) {
+        vector3AddScaled(player_pos, &offset, -clamped_distance, result);
+    } else {
+        vector3AddScaled(player_pos, &offset, -CAMERA_FOLLOW_DISTANCE, result);
+    }
+
     result->y += CAMERA_FOLLOW_HEIGHT;
     struct Vector3 looking_at = *player_pos;
     looking_at.y += CAMERA_FOLLOW_HEIGHT;
@@ -235,7 +243,6 @@ entity_id camera_determine_secondary_target(struct camera_controller* controller
 }
 
 void camera_controller_update(struct camera_controller* controller) {
-
     switch (controller->state) {
         case CAMERA_STATE_FOLLOW: {
             entity_id secondary = camera_determine_secondary_target(controller);
@@ -275,6 +282,8 @@ void camera_controller_update(struct camera_controller* controller) {
             break;
     }
 
+    camera_wall_checker_update(&controller->wall_checker, &controller->looking_at, &controller->target);
+
     vector3AddScaled(&controller->shake_velocity, &controller->shake_offset, -50.0f, &controller->shake_velocity);
     vector3AddScaled(&controller->shake_offset, &controller->shake_velocity, fixed_time_step, &controller->shake_offset);
     vector3Scale(&controller->shake_velocity, &controller->shake_velocity, 0.5f);
@@ -307,10 +316,13 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
 
     controller->state_data.animate.animation = NULL;
     controller->state_data.animate.current_frame = 0;
+
+    camera_wall_checker_init(&controller->wall_checker);
 }
 
 void camera_controller_destroy(struct camera_controller* controller) {
     update_remove(controller);
+    camera_wall_checker_destroy(&controller->wall_checker);
 }
 
 void camera_look_at(struct camera_controller* controller, struct Vector3* target) {

@@ -146,7 +146,7 @@ bool door_interact(struct interactable* interactable, entity_id from) {
         }
     );
     cutscene_builder_camera_wait(&builder);
-    cutscene_builder_camera_return(&builder);
+    cutscene_builder_camera_follow(&builder);
     cutscene_builder_pause(&builder, false, false, UPDATE_LAYER_WORLD);
 
     cutscene_runner_run(

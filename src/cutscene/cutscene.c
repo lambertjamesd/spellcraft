@@ -355,6 +355,14 @@ void cutscene_builder_camera_wait(struct cutscene_builder* builder) {
     };
 }
 
+void cutscene_builder_camera_follow(struct cutscene_builder* builder) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_CAMERA_FOLLOW,
+    };
+}
+
 void cutscene_builder_camera_return(struct cutscene_builder* builder) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     

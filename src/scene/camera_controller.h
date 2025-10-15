@@ -4,6 +4,7 @@
 #include "../render/camera.h"
 #include "../player/player.h"
 #include "camera_animation.h"
+#include "camera_wall_checker.h"
 
 #define CAMERA_FOLLOW_DISTANCE  3.4f
 #define CAMERA_FOLLOW_HEIGHT    1.6f
@@ -48,6 +49,7 @@ struct camera_controller {
     struct Vector3 look_target;
     struct Vector3 shake_offset;
     struct Vector3 shake_velocity;
+    camera_wall_checker_t wall_checker;
     enum camera_controller_state state;
     union camera_controller_state_data state_data;
 };
