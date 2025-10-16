@@ -34,6 +34,7 @@ void health_set_callback(struct health* health, health_damage_callback callback,
 void health_destroy(struct health* health);
 
 float health_damage(struct health* health, struct damage_info* damage);
+void health_damage_all(struct health* health);
 float health_damage_id(entity_id target, struct damage_info* damage, struct damaged_set* set);
 
 void health_heal(struct health* health, float amount);

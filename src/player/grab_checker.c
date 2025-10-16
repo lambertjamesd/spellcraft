@@ -19,6 +19,7 @@ static tmesh_t* grab_checker_mesh;
 #define MAX_GRAB_HEIGHT         1.9f
 #define GROUND_LEVEL_TOLERANCE  0.5f
 #define GRAB_TIMER_THRESHOLD    15
+#define MAX_VERTICAL_DELTA      0.01f
 
 #define CLIMB_OFFSET            0.5f
 
@@ -60,6 +61,7 @@ void grab_checker_init(grab_checker_t* checker, struct dynamic_object_type* coll
     checker->can_grab = false;
     checker->did_cast = false;
     checker->grab_timer = 0;
+    checker->last_player_y = 0.0f;
 
 #if DEBUG_GRABBER
     if (!grab_checker_mesh) {
@@ -109,6 +111,14 @@ bool grab_checker_update(grab_checker_t* checker, dynamic_object_t* player_colli
     
     contact_t* wall_contact = NULL;
     float best_wall_tolernace = 0.0f;
+
+    float player_y = player_collider->position->y;
+    float delta = fabsf(player_y - checker->last_player_y);
+    checker->last_player_y = player_y;
+
+    if (delta > MAX_VERTICAL_DELTA) {
+        return false;
+    }
     
     for (
         contact_t* curr = player_collider->active_contacts;

@@ -10,7 +10,7 @@
 * Spell casting UI
 * Health and mana UI
 * Push cast animation
-* Disable climb while climbing vertically
+* Disable climb while moving vertically
 * Add bottomless pit to defeat biters in lightning room
 * Better door cross animation
 * Walking down hill glitch

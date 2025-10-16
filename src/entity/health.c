@@ -111,6 +111,10 @@ float health_damage(struct health* health, struct damage_info* damage) {
     return result;
 }
 
+void health_damage_all(struct health* health) {
+    health->current_health = 0;
+}
+
 float health_damage_id(entity_id target, struct damage_info* damage, struct damaged_set* set) {
     struct health* health = health_get(target);
 

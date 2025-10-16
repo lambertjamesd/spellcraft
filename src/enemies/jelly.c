@@ -6,6 +6,7 @@
 #include "../entity/entity_id.h"
 #include "../math/constants.h"
 #include "../math/minmax.h"
+#include "../math/mathf.h"
 #include "../render/defs.h"
 #include "../render/render_scene.h"
 #include "../resource/tmesh_cache.h"
@@ -29,6 +30,8 @@
 #define JUMP_TIME       0.2f
 
 #define VISION_DISTANCE 8.0f
+
+#define SCALE_CHANGE_RATE   0.05f
 
 static struct Vector2 jelly_max_rotation;
 
@@ -78,6 +81,10 @@ void jelly_thaw(struct jelly* jelly) {
 }
 
 float jelly_recalc_radius(struct jelly* jelly) {
+    if (jelly->health.current_health <= 0.0f) {
+        return 0.0f;
+    }
+
     float health_ratio = sqrtf(MAX(jelly->health.current_health, 0.0f) * (1.0f / STARTING_HEALTH));
     return (health_ratio * (STARTING_RADIUS - MIN_RADIUS)) + MIN_RADIUS;
 }
@@ -269,9 +276,13 @@ void jelly_update(void* data) {
     struct jelly* jelly = (struct jelly*)data;
 
     if (jelly->needs_new_radius) {
-        dynamic_object_set_scale(&jelly->collider, jelly_recalc_radius(jelly));
-        jelly->transform.scale = jelly->collider.scale;
+        jelly->target_radius = jelly_recalc_radius(jelly);
         jelly->needs_new_radius = 0;
+    }
+
+    if (jelly->target_radius != jelly->collider.scale) {
+        jelly->transform.scale = mathfMoveTowards(jelly->collider.scale, jelly->target_radius, SCALE_CHANGE_RATE);
+        dynamic_object_set_scale(&jelly->collider, jelly->transform.scale);
     }
 
     if (!jelly->is_frozen) {
@@ -280,10 +291,14 @@ void jelly_update(void* data) {
         jelly_update_handle_damage(jelly, is_grounded);
         jelly_update_target(jelly, &jump_target, is_grounded);
         jelly_update_spring(jelly, &jump_target);
+
+        if (jelly->collider.under_water) {
+            health_damage_all(&jelly->health);
+            jelly->needs_new_radius = 1;
+        }
     }
 
-
-    if (jelly->health.current_health <= 0.0f || (!jelly->is_frozen && jelly->collider.under_water)) {
+    if (jelly->transform.scale <= 0.0f) {
         entity_despawn(jelly->health.entity_id);
     }
 }
@@ -319,6 +334,7 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity
 
     jelly->collider.density_class = DYNAMIC_DENSITY_NEUTRAL;
     jelly->collider.scale = jelly_recalc_radius(jelly);
+    jelly->target_radius = jelly->collider.scale;
     jelly->transform.scale = jelly->collider.scale;
     jelly->collider.center.y = 1.0f;
     jelly->jump_timer = 0.0f;

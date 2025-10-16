@@ -26,6 +26,7 @@ struct jelly {
     float jump_timer;
 
     float freeze_timer;
+    float target_radius;
 
     entity_id current_target;
 

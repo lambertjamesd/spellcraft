@@ -10,6 +10,7 @@ struct grab_checker {
     dynamic_object_t collider;
     struct Vector3 climb_to;
     struct Vector2 target_pos;
+    float last_player_y;
     bool can_grab;
     bool did_cast;
     uint16_t grab_timer;
