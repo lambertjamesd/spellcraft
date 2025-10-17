@@ -6,17 +6,17 @@
 #include "../menu/menu_common.h"
 #include "../render/defs.h"
 
-static struct Coloru8 start_color;
-static struct Coloru8 end_color;
+static color_t start_color;
+static color_t end_color;
 static float lerp_time;
 static float current_time;
 static bool is_active;
 
-static struct Coloru8 flash_color;
+static color_t flash_color;
 
-struct Coloru8 fade_effect_calculate_color() {
+color_t fade_effect_calculate_color() {
     if (flash_color.a != 0) {
-        struct Coloru8 result = flash_color;
+        color_t result = flash_color;
         flash_color.a = 0;
         return result;
     }
@@ -41,7 +41,7 @@ void fade_effect_update(void* data) {
 void fade_effect_render(void* data) {
     rspq_block_run(solid_primitive_material->block);
 
-    struct Coloru8 color = fade_effect_calculate_color();
+    color_t color = fade_effect_calculate_color();
 
     if (color.a == 0) {
         return;
@@ -66,7 +66,7 @@ void fade_effect_activate() {
     menu_add_callback(fade_effect_render, &start_color, MENU_PRIORITY_OVERLAY);
 }
 
-void fade_effect_set(struct Coloru8 color, float time) {
+void fade_effect_set(color_t color, float time) {
     start_color = fade_effect_calculate_color();
     if (start_color.a == 0) {
         start_color = color;
@@ -84,7 +84,7 @@ void fade_effect_set(struct Coloru8 color, float time) {
     fade_effect_activate();
 }
 
-void fade_effect_flash(struct Coloru8 color) {
+void fade_effect_flash(color_t color) {
     flash_color = color;
     fade_effect_activate();
 }

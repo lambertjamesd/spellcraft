@@ -21,7 +21,7 @@
 #define MAX_QUEUED_CUTSCENES   4
 #define MAX_CUTSCENE_CALL_DEPTH 6
 
-static struct Coloru8 fade_colors[] = {
+static color_t fade_colors[] = {
     {0, 0, 0, 0},
     {0, 0, 0, 255},
     {255, 255, 255, 255},

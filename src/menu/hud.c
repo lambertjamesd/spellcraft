@@ -6,6 +6,7 @@
 #include "../cutscene/cutscene_runner.h"
 #include "../spell/spell_render.h"
 #include "../spell/assets.h"
+#include "../render/coloru8.h"
 
 #define SPELL_SLOT_LOCATION_X   232
 #define SPELL_SLOT_LOCATION_Y   152
@@ -28,12 +29,13 @@ static color_t health_color = {240, 80, 0, 200};
 static color_t spell_active_colors[] = {
     [ITEM_TYPE_NONE] = { 255, 255, 255, 255 },
     [SPELL_SYMBOL_FIRE] = { 240, 100, 10, 255 },
-    [SPELL_SYMBOL_ICE] = { 10, 100, 240, 255 },
+    [SPELL_SYMBOL_ICE] = { 10, 200, 240, 255 },
     [SPELL_SYMBOL_EARTH] = { 10, 200, 40, 255 },
-    [SPELL_SYMBOL_AIR] = { 200, 200, 10, 255 },
+    [SPELL_SYMBOL_AIR] = { 240, 240, 10, 255 },
 };
 
 static color_t inactive_color = { 255, 255, 255, 128 };
+static color_t secondary_mixin = { 240, 240, 255, 200 };
 
 struct slot_offset {
     uint8_t x, y;
@@ -142,6 +144,8 @@ void hud_render(void *data) {
         } else {
             if (i == block.primary_rune) {
                 rdpq_set_prim_color(spell_active_colors[i]);
+            } else if (LIVE_CAST_BLOCK_HAS_SECONDARY(&block, i)) {
+                rdpq_set_prim_color(coloru8_lerp(&spell_active_colors[i], &secondary_mixin, 0.75f));
             } else if (block.length < inventory_get_item_level(block.primary_rune)) {
                 rdpq_set_prim_color(spell_active_colors[ITEM_TYPE_NONE]);
             } else {

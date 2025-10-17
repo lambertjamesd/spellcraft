@@ -67,7 +67,7 @@ color_t lightning_eval_color(struct color_keyframe* keyframes, int count, float 
         if (time < curr->time) {
             struct color_keyframe* prev = curr - 1;
             float lerp = (time - prev->time) / (curr->time - prev->time);
-            struct Coloru8 result = coloru8_lerp((struct Coloru8*)&prev->color, (struct Coloru8*)&curr->color, lerp);
+            color_t result = coloru8_lerp((color_t*)&prev->color, (color_t*)&curr->color, lerp);
             return (color_t){result.r, result.g, result.b, result.a};
         }
         
@@ -100,7 +100,7 @@ bool lightning_strike_update(struct lightning_strike* strike) {
     bool result = strike->timer >= STRIKE_DELAY && start_time < STRIKE_DELAY;
 
     if (result) {
-        fade_effect_flash((struct Coloru8){
+        fade_effect_flash((color_t){
             .r = 0xFF,
             .g = 0xFF,
             .b = 0xFF,

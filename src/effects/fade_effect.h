@@ -3,8 +3,8 @@
 
 #include "../render/coloru8.h"
 
-void fade_effect_set(struct Coloru8 color, float time);
+void fade_effect_set(color_t color, float time);
 
-void fade_effect_flash(struct Coloru8 color);
+void fade_effect_flash(color_t color);
 
 #endif
