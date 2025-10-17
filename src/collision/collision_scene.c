@@ -16,7 +16,7 @@
 #include "water.h"
 #include "../entity/entity_spawner.h"
 
-#define MAX_SNAP_TO_GROUND_ANGLE    30.0f
+#define MAX_SNAP_TO_GROUND_ANGLE    35.0f
 #define KILL_PLANE                  -10.0f
 
 struct collision_scene g_scene;

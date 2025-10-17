@@ -287,6 +287,11 @@ bool player_check_grab(struct player* player, struct Vector3* target_direction) 
     return false;
 }
 
+void player_enter_grounded_state(struct player* player) {
+    player->coyote_time = 0.0f;
+    player->state = PLAYER_GROUNDED;
+}
+
 bool player_handle_ground_movement(struct player* player, struct contact* ground_contact, struct Vector3* target_direction, float* speed) {
     contact_t fake_contact = {
         .normal = gUp,
@@ -335,7 +340,12 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
 
         vector3Scale(&projected_target_direction, &projected_target_direction, 1.0f / sqrtf(vector3MagSqrd(&projected_normalized)));
 
+        float prev_y = player->cutscene_actor.collider.velocity.y;
+
         vector3Scale(&projected_target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
+        if (ground_contact->surface_type == SURFACE_TYPE_COYOTE) {
+            player->cutscene_actor.collider.velocity.y = prev_y;
+        }
     }
 
     if (ground_contact->other_object) {
@@ -441,7 +451,7 @@ void player_update_jumping(struct player* player, struct contact* ground_contact
         player->state = PLAYER_FALLING;
         player_run_clip(player, PLAYER_ANIMATION_JUMP_PEAK);
     } else if (ground_contact) {
-        player->state = PLAYER_GROUNDED;
+        player_enter_grounded_state(player);
         player_run_clip(player, PLAYER_ANIMATION_LAND);
     }
 }
@@ -451,17 +461,19 @@ void player_update_falling(struct player* player, struct contact* ground_contact
 
     player_check_for_casting(player);
 
-    player_handle_air_movement(player);
-
     if (ground_contact) {
-        player->state = PLAYER_GROUNDED;
+        player_enter_grounded_state(player);
         player_run_clip(player, PLAYER_ANIMATION_LAND);
+        return;
     } else if (collider->under_water) {
         player->state = PLAYER_SWIMMING;
         player_loop_animation(player, PLAYER_ANIMATION_TREAD_WATER, 1.0f);
+        return;
     } else if (!player_is_running(player, PLAYER_ANIMATION_JUMP_PEAK)) {
         player_loop_animation(player, PLAYER_ANIMATION_FALL, 1.0f);
     }
+    
+    player_handle_air_movement(player);
 }
 
 void player_update_swimming(struct player* player, struct contact* ground_contact) {
