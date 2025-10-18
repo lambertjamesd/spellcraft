@@ -7,53 +7,39 @@
 
 extern struct global_location inventory_item_locations[ITEM_TYPE_COUNT];
 
-struct spell_symbol flame_spell_symbols[] = {
-    {.type = SPELL_SYMBOL_AIR},
-    {.type = SPELL_SYMBOL_FIRE},
-};
-
 struct spell flame_spell = {
-    .symbols = flame_spell_symbols,
-    .cols = 2,
-    .rows = 1,
+    .symbols = {
+        {.primary_rune = SPELL_SYMBOL_AIR, .flaming = 1}
+    },
+    .length = 1,
 
     .symbol_index = SPELL_ICON_FIRE,
 };
 
-struct spell_symbol dash_spell_symbols[] = {
-    {.type = SPELL_SYMBOL_FIRE},
-    {.type = SPELL_SYMBOL_AIR},
-};
-
 struct spell dash_spell = {
-    .symbols = dash_spell_symbols,
-    .cols = 2,
-    .rows = 1,
+    .symbols = {
+        {.primary_rune = SPELL_SYMBOL_FIRE, .windy = 1}
+    },
+    .length = 1,
 
     .symbol_index = SPELL_ICON_DASH,
-};
-
-struct spell_symbol projectile_spell_symbols[] = {
-    {.type = SPELL_SYMBOL_EARTH},
 };
 
 struct spell projectile_spell = {
-    .symbols = projectile_spell_symbols,
-    .cols = 1,
-    .rows = 1,
+    .symbols = {
+        {.primary_rune = SPELL_SYMBOL_EARTH, .windy = 1}
+    },
+    .length = 1,
 
     .symbol_index = SPELL_ICON_DASH,
 };
 
 
-struct spell_symbol lightning_spell_symbols[] = {
-    {.type = SPELL_SYMBOL_ICE},
-};
-
 struct spell lightning_spell = {
-    .symbols = lightning_spell_symbols,
-    .cols = 1,
-    .rows = 1,
+    .symbols = {
+        {.primary_rune = SPELL_SYMBOL_FIRE, .icy = 1}
+    },
+    .length = 1,
 
     .symbol_index = SPELL_ICON_FIRE,
 };
@@ -81,16 +67,14 @@ void inventory_init() {
     inventory.spell_slots[3] = &lightning_spell;
 
     for (int i = 0; i < MAX_CUSTOM_SPELLS; i += 1) {
-        spell_init(&inventory.custom_spells[i], SPELL_MAX_COLS, SPELL_MAX_ROWS, SPELL_ICON_CUSTOM_0 + i);
+        spell_init(&inventory.custom_spells[i], SPELL_ICON_CUSTOM_0 + i);
     }
 
     inventory.equipped_staff = &staff_stats_none;
 }
 
 void inventory_destroy() {
-    for (int i = 0; i < MAX_CUSTOM_SPELLS; i += 1) {
-        spell_destroy(&inventory.custom_spells[i]);
-    }
+    
 }
 
 bool inventory_has_item(enum inventory_item_type type) {

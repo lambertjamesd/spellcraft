@@ -67,10 +67,8 @@ enum spell_exec_slot_type {
 
 struct spell_exec_slot {
     // null when spell isn't active
-    struct spell* for_spell;
-    uint8_t curr_col;
-    uint8_t curr_row;
-    uint8_t symbol_count;
+    struct spell for_spell;
+    uint8_t rune_index;
     uint8_t button_index;
     enum spell_exec_slot_type type;
     union spell_exec_data data;
@@ -102,8 +100,6 @@ void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* s
 void spell_exec_update(struct spell_exec* exec);
 void spell_exec_stop(struct spell_exec* exec, int button_index);
 bool spell_exec_charge(struct spell_exec* exec);
-
-bool spell_exec_is_used(struct spell_exec* exec, struct spell* spell);
 
 float spell_exec_max_mana(struct spell_exec* exec);
 float spell_exec_current_mana(struct spell_exec* exec);

@@ -2,113 +2,61 @@
 
 #include <malloc.h>
 
-void spell_init(struct spell* spell, uint8_t cols, uint8_t rows, int icon) {
-    int cell_count = cols * rows;
-
-    spell->symbols = malloc(sizeof(struct spell_symbol) * cell_count);
-    spell->rows = rows;
-    spell->cols = cols;
+void spell_init(spell_t* spell, int icon) {
+    memset(spell, 0, sizeof(spell_t));
     spell->symbol_index = icon;
-    memset(spell->symbols, 0, sizeof(struct spell_symbol) * cell_count);
-
-    struct spell_symbol* curr = spell->symbols;
-
-    for (int i = 0; i < cell_count; i += 1) {
-        curr->reserved = 0;
-        curr->type = 0;
-        ++curr;
-    }
 }
 
-void spell_destroy(struct spell* spell) {
-    free(spell->symbols);
-    spell->symbols = 0;
-}
-
-struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row) {
-    if (col >= spell->cols || row >= spell->rows || col < 0 || row < 0) {
-        struct spell_symbol result;
-        result.reserved = 0;
-        result.type = ITEM_TYPE_NONE;
-        return result;
+rune_pattern_t spell_get_rune_pattern(spell_t* spell, int index) {
+    if (index >= spell->length) {
+        return (rune_pattern_t){};
     }
 
-    return spell->symbols[col + row * spell->cols];
+    return spell->symbols[index];
 }
 
-union spell_modifier_flags spell_get_modifiers(struct spell* spell, int col, int row) {
-    union spell_modifier_flags result = { .all = 0 };
-    do {
-        ++col;
-        struct spell_symbol symbol = spell_get_symbol(spell, col, row);
-
-        switch (symbol.type) {
-            case SPELL_SYMBOL_FIRE:
-                result.flaming = 1;
-                break;
-            case SPELL_SYMBOL_ICE:
-                result.icy = 1;
-                break;
-            case SPELL_SYMBOL_EARTH:
-                result.earthy = 1;
-                break;
-            case SPELL_SYMBOL_AIR:
-                result.windy = 1;
-                break;
-            case SPELL_SYMBOL_LIFE:
-                result.living = 1;
-                break;
-            default:
-                return result;
-        };
-    } while (col < spell->cols);
-
-    return result;
-}
-
-void spell_set_symbol(struct spell* spell, int col, int row, struct spell_symbol value) {
-    if (col >= spell->cols || row >= spell->rows || col < 0 || row < 0) {
+void spell_set_rune_pattern(spell_t* spell, int index, rune_pattern_t rune) {
+    if (index >= spell->length) {
         return;
     }
 
-    spell->symbols[col + row * spell->cols] = value;
+    spell->symbols[index] = rune;
 }
 
-bool spell_has_primary_event(struct spell* spell, int col, int row) {
-    if (spell_get_symbol(spell, col, row).type == SPELL_SYMBOL_BREAK) {
-        return true;
+void spell_append(spell_t* spell, rune_pattern_t value) {
+    if (spell->length < MAX_SPELL_LENGTH) {
+        spell->symbols[spell->length] = value;
+        ++spell->length;
     }
-
-    do {
-        ++col;
-        if (spell_get_symbol(spell, col, row).type == SPELL_SYMBOL_BREAK) {
-            return true;
-        }
-    } while (col < spell->cols);
-
-    return false;
 }
 
-bool spell_has_secondary_event(struct spell* spell, int col, int row) {
-    return false;
-}
-
-int spell_get_primary_event(struct spell* spell, int col, int row) {
-    if (spell_get_symbol(spell, col, row).type == SPELL_SYMBOL_BREAK) {
-        return col + 1;
+bool rune_pattern_has_secondary(rune_pattern_t pattern, enum inventory_item_type symbol_type) {
+    switch (symbol_type)
+    {
+    case SPELL_SYMBOL_FIRE:
+        return pattern.flaming;
+    case SPELL_SYMBOL_ICE:
+        return pattern.icy;
+    case SPELL_SYMBOL_EARTH:
+        return pattern.earthy;
+    case SPELL_SYMBOL_AIR:
+        return pattern.windy;
+    case SPELL_SYMBOL_LIFE:
+        return pattern.living;
+    default:
+        return false;
     }
-
-    do {
-        ++col;
-        if (spell_get_symbol(spell, col, row).type == SPELL_SYMBOL_BREAK) {
-            return col + 1 < spell->cols ? col + 1 : -1;
-        }
-    } while (col < spell->cols);
-
-    return -1;
 }
 
+int rune_pattern_symbol_count(rune_pattern_t pattern) {
+    int result = 0;
 
-bool spell_is_rune(int index) {
-    return index >= SPELL_SYMBOL_FIRE && index <= SPELL_SYMBOL_LIFE;
+    if (pattern.primary_rune != ITEM_TYPE_NONE) ++result;
+    if (pattern.flaming) ++result;
+    if (pattern.icy) ++result;
+    if (pattern.earthy) ++result;
+    if (pattern.windy) ++result;
+    if (pattern.living) ++result;
+
+    return result;
 }

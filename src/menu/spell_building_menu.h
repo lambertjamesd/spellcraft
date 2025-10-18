@@ -7,14 +7,7 @@
 #include "../player/inventory.h"
 
 struct spell_building_menu {
-    uint8_t symbol_cursor_x;
-    uint8_t symbol_cursor_y;
-
-    uint8_t spell_cursor_x;
-    uint8_t spell_cursor_y;
-
-    struct spell_symbol symbol_grid[SPELL_MAX_ROWS][SPELL_MAX_COLS];
-
+    struct spell spell_copy;
     struct spell* current_spell;
 };
 

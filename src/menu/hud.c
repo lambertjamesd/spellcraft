@@ -90,6 +90,18 @@ void hud_draw_bar(int max_width, int current_width, int prev_width, int y, color
     }
 }
 
+void spell_render_icon(enum inventory_item_type type, int x, int y) {
+    int source_x = type == SPELL_SYMBOL_RECAST ? 216 : (type - 1) * 24;
+
+    rdpq_texture_rectangle_scaled(
+        TILE0,
+        x, y,
+        x + 24, y + 24,
+        source_x, 0,
+        source_x + 24, 24
+    );
+}
+
 void hud_render(void *data) {
     if (cutscene_runner_is_running()) {
         return;
@@ -129,12 +141,11 @@ void hud_render(void *data) {
 
     rspq_block_run(spell_assets_get()->spell_symbols->block);
 
-    struct live_cast_block block;
-    live_cast_get_current_block(&hud->player->live_cast, &block);
+    rune_pattern_t rune = live_cast_get_current_rune(&hud->player->live_cast);
 
     for (int i = SPELL_SYMBOL_FIRE; i <= SPELL_SYMBOL_AIR; i += 1) {
         rdpq_sync_pipe();
-        if (block.primary_rune == ITEM_TYPE_NONE) {
+        if (rune.primary_rune == ITEM_TYPE_NONE) {
             int symbol_level = inventory_get_item_level(i);
             if (symbol_level > 0) {
                 rdpq_set_prim_color(spell_active_colors[ITEM_TYPE_NONE]);
@@ -142,11 +153,11 @@ void hud_render(void *data) {
                 rdpq_set_prim_color(inactive_color);
             }
         } else {
-            if (i == block.primary_rune) {
+            if (i == rune.primary_rune) {
                 rdpq_set_prim_color(spell_active_colors[i]);
-            } else if (LIVE_CAST_BLOCK_HAS_SECONDARY(&block, i)) {
+            } else if (rune_pattern_has_secondary(rune, i)) {
                 rdpq_set_prim_color(coloru8_lerp(&spell_active_colors[i], &secondary_mixin, 0.75f));
-            } else if (block.length < inventory_get_item_level(block.primary_rune)) {
+            } else if (rune_pattern_symbol_count(rune) < inventory_get_item_level(rune.primary_rune)) {
                 rdpq_set_prim_color(spell_active_colors[ITEM_TYPE_NONE]);
             } else {
                 rdpq_set_prim_color(inactive_color);
@@ -200,10 +211,6 @@ void hud_render(void *data) {
         HEALTH_BAR_Y,
         health_color
     );
-
-    if (hud->player->live_cast.current_spell_output) {
-        live_cast_render_preview(&hud->player->live_cast);
-    }
 }
 
 void hud_init(struct hud* hud, struct player* player) {

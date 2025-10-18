@@ -144,18 +144,18 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
     living_sprite->flags.is_attacking = false;
     living_sprite->flags.is_mine = false;
     living_sprite->flags.did_apply_aeo = false;
-    living_sprite->flags.has_fire = event_options.modifiers.flaming;
-    living_sprite->flags.has_ice = event_options.modifiers.icy;
+    living_sprite->flags.has_fire = event_options.rune.flaming;
+    living_sprite->flags.has_ice = event_options.rune.icy;
     living_sprite->definition = definition;
     living_sprite->explode_timer = 0.0f;
 
-    if (definition->element_type == ELEMENT_TYPE_LIFE ? event_options.modifiers.flaming : event_options.modifiers.windy) {
+    if (definition->element_type == ELEMENT_TYPE_LIFE ? event_options.rune.flaming : event_options.rune.windy) {
         vector3Scale(&source->direction, &living_sprite->collider.velocity, LAUNCH_VELOCITY);
         living_sprite->collider.velocity.y = LAUNCH_Y_VELOCITY;
         living_sprite->target = 0;
     }
     
-    if (event_options.modifiers.earthy) {
+    if (event_options.rune.earthy) {
         living_sprite->target = 0;
         living_sprite->flags.is_mine = true;
         living_sprite->vision.scale = 0.5f;

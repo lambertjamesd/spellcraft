@@ -36,7 +36,6 @@ struct spell_assets {
     struct material* thunder_cloud;
     
     struct material* spell_symbols;
-    struct material* casting_border;
 
     struct tmesh* fire_sprite;
     

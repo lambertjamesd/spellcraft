@@ -9,67 +9,64 @@
 #include "element_emitter_definitions.h"
 #include "living_sprite_definitions.h"
 
-void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana);
+void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, struct spell_data_source* data_source, float burst_mana);
 
 void spell_slot_init(
     struct spell_exec_slot* slot, 
     int button_index,
     struct spell_data_source* input,
-    union spell_modifier_flags modifier_flags,
     float burst_mana,
     struct spell* for_spell,
-    uint8_t curr_col,
-    uint8_t curr_row
+    uint8_t rune_index
 ) {
-    struct spell_symbol symbol = spell_get_symbol(for_spell, curr_col, curr_row);
+    rune_pattern_t rune = spell_get_rune_pattern(for_spell, rune_index);
 
     struct spell_event_options event_options;
 
-    event_options.has_primary_event = spell_has_primary_event(for_spell, curr_col, curr_row);
-    event_options.has_secondary_event = spell_has_secondary_event(for_spell, curr_col, curr_row);
-    event_options.modifiers = modifier_flags;
+    event_options.has_next_rune = spell_get_length(for_spell) > rune_index + 1;
+    event_options.rune = rune;
     event_options.burst_mana = burst_mana;
 
-    switch ((enum inventory_item_type)symbol.type) {
+    switch ((enum inventory_item_type)rune.primary_rune) {
         case SPELL_SYMBOL_EARTH:
-            if (modifier_flags.windy) {
+            if (rune.windy) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_PROJECTILE;
-                projectile_init(&slot->data.projectile, input, modifier_flags, event_options, spell_data_source_determine_element(modifier_flags));
+                projectile_init(&slot->data.projectile, input, rune, event_options, spell_data_source_determine_element(rune));
             } else {
                 slot->type = SPELL_EXEC_SLOT_TYPE_SHEILD;
-                shield_init(&slot->data.shield, input, event_options, spell_data_source_determine_element(modifier_flags));
+                shield_init(&slot->data.shield, input, event_options, spell_data_source_determine_element(rune));
             }
             break;
         case SPELL_SYMBOL_FIRE:
-            if (modifier_flags.living) {
-                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_FIRE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+            if (rune.living) {
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_FIRE, rune.windy, rune.flaming, rune.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
-            } else if (modifier_flags.windy) {
+            } else if (rune.windy) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
-                wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(modifier_flags.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE, modifier_flags.earthy));
+                wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(rune.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE, rune.earthy));
             } else {
-                if (!modifier_flags.icy) {
+                if (!rune.icy) {
                     slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
                     elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_FIRE);
-                } else if (modifier_flags.earthy) {
+                } else if (rune.earthy) {
                     slot->type = SPELL_EXEC_SLOT_TYPE_LIGHTNING_STORM;
                     lightning_storm_init(&slot->data.lightning_storm, input, event_options);
                 } else {
-                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, modifier_flags.earthy, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, rune.earthy, rune.windy, rune.flaming, rune.icy);
                     slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
                     element_emitter_init(&slot->data.element_emitter, input, event_options, def);
                 }
             }
             break;
         case SPELL_SYMBOL_ICE:
-            if (modifier_flags.living) {
-                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_ICE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+            if (rune.living) {
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_ICE, rune.windy, rune.flaming, rune.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
-            } else if (modifier_flags.windy) {
-                if (modifier_flags.flaming) {
-                    if (modifier_flags.earthy) {
+            } else if (rune.windy) {
+                if (rune.flaming) {
+                    if (rune.earthy) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_HURRICANE;
                         hurricane_init(&slot->data.hurricane, input, event_options);
                     } else {
@@ -78,14 +75,14 @@ void spell_slot_init(
                     }
                 } else {
                     slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
-                    wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(modifier_flags.flaming ? ELEMENT_TYPE_NONE : ELEMENT_TYPE_ICE, modifier_flags.earthy));
+                    wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(rune.flaming ? ELEMENT_TYPE_NONE : ELEMENT_TYPE_ICE, rune.earthy));
                 }
             } else {
-                if (!modifier_flags.flaming) {
+                if (!rune.flaming) {
                     slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
                     elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_ICE);
                 } else {
-                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, modifier_flags.earthy, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, rune.earthy, rune.windy, rune.flaming, rune.icy);
                     slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
                     element_emitter_init(&slot->data.element_emitter, input, event_options, def);
                 }
@@ -96,19 +93,19 @@ void spell_slot_init(
             recast_init(&slot->data.recast, input, event_options, RECAST_MODE_RECAST);
             break;
         case SPELL_SYMBOL_AIR:
-            if (modifier_flags.living) {
-                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_AIR, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+            if (rune.living) {
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_AIR, rune.windy, rune.flaming, rune.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
             } else {
-                if (modifier_flags.earthy) {
-                    if (modifier_flags.flaming && modifier_flags.icy) {
+                if (rune.earthy) {
+                    if (rune.flaming && rune.icy) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_TELEPORT;
                         teleport_init(&slot->data.teleport, input, event_options, TELEPORT_DIR_UP_DOWN);
-                    } else if (modifier_flags.flaming) {
+                    } else if (rune.flaming) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_JUMP;
                         jump_init(&slot->data.jump, input, event_options, &jump_def_fire);
-                    } else if (modifier_flags.icy) {
+                    } else if (rune.icy) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_STASIS;
                         stasis_init(&slot->data.stasis, input, event_options);
                     } else {
@@ -116,13 +113,13 @@ void spell_slot_init(
                         jump_init(&slot->data.jump, input, event_options, &jump_def_basic);
                     }
                 } else {
-                    if (modifier_flags.flaming && modifier_flags.icy) {
+                    if (rune.flaming && rune.icy) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_TELEPORT;
                         teleport_init(&slot->data.teleport, input, event_options, TELEPORT_DIR_SIDE);
-                    } else if (modifier_flags.flaming) {
+                    } else if (rune.flaming) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
                         push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_FIRE);
-                    } else if (modifier_flags.icy) {
+                    } else if (rune.icy) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
                         push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_ICE);
                     } else {
@@ -133,8 +130,8 @@ void spell_slot_init(
             }
             break;
         case SPELL_SYMBOL_LIFE:
-            if (modifier_flags.windy) {
-                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_LIFE, modifier_flags.windy, modifier_flags.flaming, modifier_flags.icy);
+            if (rune.windy) {
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_LIFE, rune.windy, rune.flaming, rune.icy);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
             } else {
@@ -149,9 +146,8 @@ void spell_slot_init(
     }
 
     slot->button_index = button_index;
-    slot->for_spell = for_spell;
-    slot->curr_col = curr_col;
-    slot->curr_row = curr_row;
+    slot->for_spell = *for_spell;
+    slot->rune_index = rune_index;
 }
 
 void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
@@ -299,20 +295,11 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
     for (int i = 0; i < event_listener.event_count; ++i) {
         struct spell_event* event = &event_listener.events[i];
 
-        switch (event->type) {
-        case SPELL_EVENT_PRIMARY:
-        {
-            int event_start = spell_get_primary_event(slot->for_spell, slot->curr_col, slot->curr_row);
-            if (event_start != -1) {
-                spell_exec_step(exec, slot->button_index, slot->for_spell, event_start, slot->curr_row, event->data_source, event->burst_mana);
+        if (event->type == SPELL_EVENT_PRIMARY) {
+            int event_start = slot->rune_index + 1;
+            if (event_start < spell_get_length(&slot->for_spell)) {
+                spell_exec_step(exec, slot->button_index, &slot->for_spell, event_start, event->data_source, event->burst_mana);
             }
-            break;
-        }
-        case SPELL_EVENT_SECONDARY:
-            if (spell_has_secondary_event(slot->for_spell, slot->curr_col, slot->curr_row))  {
-                spell_exec_step(exec, slot->button_index, slot->for_spell, slot->curr_col + 1, slot->curr_row + 1, event->data_source, event->burst_mana);
-            }
-            break;
         }
     }
 
@@ -409,7 +396,7 @@ int spell_exec_find_modifier(struct spell_exec* exec) {
     return result;
 }
 
-void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, int row, struct spell_data_source* data_source, float burst_mana) {
+void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* spell, int col, struct spell_data_source* data_source, float burst_mana) {
     if (!data_source) {
         return;
     }
@@ -427,11 +414,9 @@ void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* sp
         slot,
         button_index,
         data_source,
-        spell_get_modifiers(spell, col, row),
         burst_mana,
         spell,
-        col,
-        row
+        col
     );
 
     if (slot->type == SPELL_EXEC_SLOT_TYPE_RECAST) {
@@ -489,11 +474,11 @@ void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* s
         return;
     }
 
-    if (spell_get_symbol(spell, 0, 0).type == SPELL_EXEC_SLOT_TYPE_EMPTY) {
+    if (spell_get_length(spell) == SPELL_EXEC_SLOT_TYPE_EMPTY) {
         return;
     }
 
-    spell_exec_step(exec, button_index, spell, 0, 0, data_source, 0.0f);
+    spell_exec_step(exec, button_index, spell, 0, data_source, 0.0f);
 }
 
 bool spell_exec_charge(struct spell_exec* exec) {
@@ -505,16 +490,6 @@ bool spell_exec_charge(struct spell_exec* exec) {
     }
 
     return false;
-}
-
-bool spell_exec_is_used(struct spell_exec* exec, struct spell* spell) {
-    for (int i = 0; i < MAX_SPELL_EXECUTORS; i += 1) {
-        if (exec->slots[i].for_spell == spell) {
-            return true;
-        }
-    }
-
-    return true;
 }
 
 #define GET_ID_FROM_INDEX(exec, idx) (int)(((idx) & 0x8000) ? (exec)->modifier_ids[(idx) & 0x7FFF] : (exec)->ids[idx])

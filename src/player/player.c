@@ -432,7 +432,7 @@ bool player_check_for_casting(struct player* player) {
     }
 
     if (live_cast_has_pending_spell(&player->live_cast) && pressed.a) {
-        spell_exec_start(&player->spell_exec, 4, live_cast_extract_active_spell(&player->live_cast), source);
+        spell_exec_start(&player->spell_exec, 4, live_cast_get_spell(&player->live_cast), source);
         player_check_for_animation_request(player, source);
         return true;
     }
@@ -922,8 +922,6 @@ void player_update(struct player* player) {
 
     struct contact* ground = dynamic_object_get_ground(&player->cutscene_actor.collider);
     player_update_state(player, ground);
-
-    live_cast_cleanup_unused_spells(&player->live_cast, &player->spell_exec);
 
     if (player->cutscene_actor.collider.hit_kill_plane) {
         player->cutscene_actor.transform.position = player->last_good_footing;

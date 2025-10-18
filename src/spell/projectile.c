@@ -80,14 +80,13 @@ void projectile_render(struct projectile* projectile, struct render_batch* batch
     render_batch_add_tmesh(batch, mesh, mtxfp, NULL, NULL, NULL);
 }
 
-void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, union spell_modifier_flags modifiers, struct spell_event_options event_options, enum element_type element) {
+void projectile_init(struct projectile* projectile, struct spell_data_source* data_source, rune_pattern_t rune, struct spell_event_options event_options, enum element_type element) {
     projectile->data_source = data_source;
     projectile->data_output = NULL;
 
     projectile->pos = data_source->position;
     projectile->has_hit = 0;
-    projectile->has_primary_event = event_options.has_primary_event;
-    projectile->has_secondary_event = event_options.has_secondary_event;
+    projectile->has_next_rune = event_options.has_next_rune;
     projectile->is_controlled = 0;
     projectile->element = element;
 
@@ -106,13 +105,13 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
 
-    if (modifiers.flaming) {
+    if (rune.flaming) {
         projectile->dynamic_object.has_gravity = 0;
     } else {
         projectile->dynamic_object.velocity.y = projectile_vertical_speed[element];
     }
 
-    if (modifiers.living) {
+    if (rune.living) {
         projectile->is_controlled = 1;
     }
 
@@ -120,7 +119,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
 }
 
 bool projectile_is_active(struct projectile* projectile) {
-    if (projectile->has_primary_event || !projectile->has_secondary_event) {
+    if (projectile->has_next_rune) {
         return !projectile->has_hit;
     }
 
@@ -150,30 +149,10 @@ bool projectile_update(struct projectile* projectile, struct spell_event_listene
         projectile->dynamic_object.velocity.y += fixed_time_step * projectile_accel[projectile->element];
     }
 
-    if (projectile->has_secondary_event) {
-        if (!projectile->data_output) {
-            projectile->data_output = spell_data_source_pool_get(&spell_sources->data_sources);
-
-            if (projectile->data_output) {
-                spell_data_source_retain(projectile->data_output);
-                projectile->data_output->direction = projectile->data_source->direction;
-                projectile->data_output->position = projectile->data_source->position;
-                projectile->data_output->flags = projectile->data_source->flags;
-                projectile->data_output->target = projectile->dynamic_object.entity_id;
-
-                spell_event_listener_add(event_listener, SPELL_EVENT_SECONDARY, projectile->data_output, 0.0f);
-            }
-        } else {
-            projectile->data_output->position = projectile->pos;
-            projectile->data_output->direction = projectile->data_source->direction;
-            projectile->data_output->flags.cast_state = projectile->data_source->flags.cast_state;
-        }
-    }
-
     if (projectile->dynamic_object.active_contacts && !projectile->has_hit) {
         struct contact* first_contact = projectile->dynamic_object.active_contacts;
 
-        if (projectile->has_primary_event) {
+        if (projectile->has_next_rune) {
             struct spell_data_source* hit_source = spell_data_source_pool_get(&spell_sources->data_sources);
 
             if (hit_source) {

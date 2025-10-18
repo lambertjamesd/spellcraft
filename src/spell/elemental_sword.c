@@ -103,7 +103,7 @@ void elemental_sword_render(void* data, struct render_batch* batch) {
 void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_data_source* source, struct spell_event_options event_options, enum element_type element_type) {
     entity_id entity_id = entity_id_new();
     elemental_sword->data_source = spell_data_source_retain(source);
-    elemental_sword->definition = event_options.modifiers.earthy ?
+    elemental_sword->definition = event_options.rune.earthy ?
         &spin_definitions[element_type] :
         &swing_definitions[element_type];
 

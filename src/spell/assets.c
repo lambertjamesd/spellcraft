@@ -68,9 +68,6 @@ void spell_assets_init() {
     // material_cache_release() never called
     assets.spell_symbols = material_cache_load("rom:/materials/spell/symbols.mat");
 
-    // material_cache_release() never called
-    assets.casting_border = material_cache_load("rom:/materials/spell/casting_border.mat");
-
     // tmesh_cache_release() never called
     assets.fire_sprite = tmesh_cache_load("rom:/meshes/spell/fire_sprite.tmesh");
 

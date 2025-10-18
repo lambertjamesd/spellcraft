@@ -23,42 +23,39 @@ enum spell_icon {
     SPELL_ICON_COUNT,
 };
 
-struct spell_symbol {
-    uint8_t reserved: 4;
-    uint8_t type: 4;
+struct rune_pattern {
+    uint8_t primary_rune: 3;
+    uint8_t flaming: 1;
+    uint8_t icy: 1;
+    uint8_t windy: 1;
+    uint8_t living: 1;
+    uint8_t earthy: 1;
 };
 
+typedef struct rune_pattern rune_pattern_t;
+
+#define MAX_SPELL_LENGTH 6
+
 struct spell {
-    struct spell_symbol* symbols;
-    uint8_t cols;
-    uint8_t rows;
+    rune_pattern_t symbols[MAX_SPELL_LENGTH];
+    uint8_t length;
     uint8_t symbol_index;
 };
 
-union spell_modifier_flags {
-    struct {
-        uint16_t flaming: 1;
-        uint16_t icy: 1;
-        uint16_t windy: 1;
-        uint16_t living: 1;
-        uint16_t earthy: 1;
-    };
-    uint16_t all;
-};
+typedef struct spell spell_t;
 
-void spell_init(struct spell* spell, uint8_t cols, uint8_t rows, int icon);
-void spell_destroy(struct spell* spell);
+void spell_init(spell_t* spell, int icon);
 
-struct spell_symbol spell_get_symbol(struct spell* spell, int col, int row);
-union spell_modifier_flags spell_get_modifiers(struct spell* spell, int col, int row);
+rune_pattern_t spell_get_rune_pattern(spell_t* spell, int index);
+void spell_set_rune_pattern(spell_t* spell, int index, rune_pattern_t rune);
 
-void spell_set_symbol(struct spell* spell, int col, int row, struct spell_symbol value);
+void spell_append(spell_t* spell, rune_pattern_t value);
 
-bool spell_has_primary_event(struct spell* spell, int col, int row);
-bool spell_has_secondary_event(struct spell* spell, int col, int row);
+static inline int spell_get_length(spell_t* spell) {
+    return spell->length;
+}
 
-int spell_get_primary_event(struct spell* spell, int col, int row);
-
-bool spell_is_rune(int index);
+bool rune_pattern_has_secondary(rune_pattern_t pattern, enum inventory_item_type symbol_type);
+int rune_pattern_symbol_count(rune_pattern_t pattern);
 
 #endif

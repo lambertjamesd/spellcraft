@@ -45,9 +45,8 @@ struct spell_data_source {
 typedef struct spell_data_source spell_data_source_t;
 
 struct spell_event_options {
-    uint16_t has_primary_event: 1;
-    uint16_t has_secondary_event: 1;
-    union spell_modifier_flags modifiers;
+    uint16_t has_next_rune: 1;
+    rune_pattern_t rune;
     float burst_mana;
 };
 
@@ -67,6 +66,6 @@ bool spell_data_source_request_animation(struct spell_data_source* data_source, 
 
 void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform);
 
-enum element_type spell_data_source_determine_element(union spell_modifier_flags flags);
+enum element_type spell_data_source_determine_element(rune_pattern_t rune);
 
 #endif

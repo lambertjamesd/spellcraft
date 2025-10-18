@@ -50,19 +50,19 @@ void spell_heal_init(struct spell_heal* heal, struct spell_data_source* source, 
     spell_data_source_retain(source);
     entity_id id = entity_id_new();
 
-    if (event_options.modifiers.flaming) {
+    if (event_options.rune.flaming) {
         heal->flags.instant = 1;
     } else {
         heal->flags.instant = 0;
     }
 
-    if (event_options.modifiers.icy) {
+    if (event_options.rune.icy) {
         heal->flags.reverse = 1;
     } else {
         heal->flags.reverse = 0;
     }
 
-    if (event_options.modifiers.earthy) {
+    if (event_options.rune.earthy) {
         heal->flags.aoe = 1;
         
         dynamic_object_init(
