@@ -10,10 +10,8 @@
 * Spell casting UI
 * Health and mana UI
 * Push cast animation
-* Disable climb while moving vertically
 * Add bottomless pit to defeat biters in lightning room
 * Better door cross animation
-* Walking down hill glitch
 * Preview primary action
 * Better z targeting when close
 * Vertical z targeting
@@ -23,3 +21,5 @@
 * Build fire kiln
 * Sketch out fire kiln puzzle
 * Better visuals for current rooms
+* slanted surfaces are too sticky
+* can walk up triangles edges in vertical walls
