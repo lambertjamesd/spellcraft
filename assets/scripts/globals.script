@@ -2,10 +2,10 @@
 global has_staff_default: bool = true;
 global has_talked_outside: bool;
 
-global fire_rune_level: i8 = 4;
-global ice_rune_level: i8 = 4;
-global earth_rune_level: i8 = 4;
-global air_rune_level: i8 = 4;
+global fire_rune_level: i8 = 2;
+global ice_rune_level: i8 = 0;
+global earth_rune_level: i8 = 0;
+global air_rune_level: i8 = 0;
 global life_rune_level: i8 = 0;
 
 global recast_rune_level: i8 = 0;

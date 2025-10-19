@@ -13,6 +13,8 @@ struct live_cast {
     uint8_t was_cast;
 };
 
+typedef struct live_cast live_cast_t;
+
 void live_cast_init(struct live_cast* live_cast);
 void live_cast_destroy(struct live_cast* live_cast);
 
