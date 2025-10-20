@@ -5,7 +5,7 @@ global has_talked_outside: bool;
 global fire_rune_level: i8 = 2;
 global ice_rune_level: i8 = 0;
 global earth_rune_level: i8 = 0;
-global air_rune_level: i8 = 0;
+global air_rune_level: i8 = 3;
 global life_rune_level: i8 = 0;
 
 global recast_rune_level: i8 = 0;

@@ -6,9 +6,11 @@
 #include "../render/render_batch.h"
 
 struct symbol_modifier_parameters {
-    uint8_t alpha;
+    uint8_t background_alpha;
+    uint8_t rune_alpha;
     int8_t x_offset;
     int8_t y_offset;
+    uint8_t size;
 };
 
 struct live_cast_renderer {

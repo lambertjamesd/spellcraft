@@ -26,43 +26,6 @@
 static color_t mana_color = {80, 0, 240, 200};
 static color_t health_color = {240, 80, 0, 200};
 
-static color_t spell_active_colors[] = {
-    [ITEM_TYPE_NONE] = { 255, 255, 255, 255 },
-    [SPELL_SYMBOL_FIRE] = { 240, 100, 10, 255 },
-    [SPELL_SYMBOL_ICE] = { 10, 200, 240, 255 },
-    [SPELL_SYMBOL_EARTH] = { 10, 200, 40, 255 },
-    [SPELL_SYMBOL_AIR] = { 240, 240, 10, 255 },
-};
-
-static color_t inactive_color = { 255, 255, 255, 128 };
-static color_t secondary_mixin = { 240, 240, 255, 200 };
-
-struct slot_offset {
-    uint8_t x, y;
-};
-
-static struct slot_offset slot_offsets[] = {
-    [SPELL_SYMBOL_FIRE] = { SPELL_SLOT_OFFSET * 2, SPELL_SLOT_OFFSET },
-    [SPELL_SYMBOL_ICE] = { 0, SPELL_SLOT_OFFSET },
-    [SPELL_SYMBOL_EARTH] = { SPELL_SLOT_OFFSET, SPELL_SLOT_OFFSET * 2 },
-    [SPELL_SYMBOL_AIR] = { SPELL_SLOT_OFFSET, 0 },
-};
-
-void hud_render_spell_icon(struct spell* spell, int x, int y) {
-    if (!spell) {
-        return;
-    }
-    
-    rspq_block_run(menu_spell_icons[spell->symbol_index]->block);
-
-    rdpq_texture_rectangle(
-        TILE0,
-        x, y,
-        x + 24, y + 24,
-        0, 0
-    );
-}
-
 void hud_draw_bar(int max_width, int current_width, int prev_width, int y, color_t color) {
     rspq_block_run(solid_primitive_material->block);
     rdpq_set_prim_color((color_t){255, 255, 255, 128});
@@ -96,93 +59,6 @@ void hud_render(void *data) {
     }
  
     struct hud* hud = (struct hud*)data;
-
-    // rspq_block_run(current_spell_icon->block);
-
-    // rdpq_texture_rectangle(
-    //     TILE0,
-    //     SPELL_SLOT_LOCATION_X, SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET,
-    //     SPELL_SLOT_LOCATION_X + 32, SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 32,
-    //     0, 0
-    // );
-
-    // rdpq_texture_rectangle(
-    //     TILE0,
-    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET, SPELL_SLOT_LOCATION_Y,
-    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 32, SPELL_SLOT_LOCATION_Y + 32,
-    //     0, 0
-    // );
-
-    // rdpq_texture_rectangle(
-    //     TILE0,
-    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET * 2, SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET,
-    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET * 2 + 32, SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 32,
-    //     0, 0
-    // );
-
-    // rdpq_texture_rectangle(
-    //     TILE0,
-    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET, SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET * 2,
-    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 32, SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET * 2 + 32,
-    //     0, 0
-    // );
-
-    // rspq_block_run(spell_assets_get()->spell_symbols->block);
-
-    // rune_pattern_t rune = live_cast_get_current_rune(&hud->player->live_cast);
-
-    // for (int i = SPELL_SYMBOL_FIRE; i <= SPELL_SYMBOL_AIR; i += 1) {
-    //     rdpq_sync_pipe();
-    //     if (rune.primary_rune == ITEM_TYPE_NONE) {
-    //         int symbol_level = inventory_get_item_level(i);
-    //         if (symbol_level > 0) {
-    //             rdpq_set_prim_color(spell_active_colors[ITEM_TYPE_NONE]);
-    //         } else {
-    //             rdpq_set_prim_color(inactive_color);
-    //         }
-    //     } else {
-    //         if (i == rune.primary_rune) {
-    //             rdpq_set_prim_color(spell_active_colors[i]);
-    //         } else if (rune_pattern_has_secondary(rune, i)) {
-    //             rdpq_set_prim_color(coloru8_lerp(&spell_active_colors[i], &secondary_mixin, 0.75f));
-    //         } else if (rune_pattern_symbol_count(rune) < inventory_get_item_level(rune.primary_rune)) {
-    //             rdpq_set_prim_color(spell_active_colors[ITEM_TYPE_NONE]);
-    //         } else {
-    //             rdpq_set_prim_color(inactive_color);
-    //         }
-    //     }
-
-    //     spell_render_icon(
-    //         i, 
-    //         SPELL_SLOT_LOCATION_X + 4 + slot_offsets[i].x, 
-    //         SPELL_SLOT_LOCATION_Y + 4 + slot_offsets[i].y
-    //     );
-    // }
- 
-
-    // hud_render_spell_icon(
-    //     inventory_get_equipped_spell(0), 
-    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
-    //     SPELL_SLOT_LOCATION_Y + 4
-    // );
-
-    // hud_render_spell_icon(
-    //     inventory_get_equipped_spell(1), 
-    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET + 4,
-    //     SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET * 2 + 4
-    // );
-
-    // hud_render_spell_icon(
-    //     inventory_get_equipped_spell(2), 
-    //     SPELL_SLOT_LOCATION_X + 4,
-    //     SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
-    // );
-
-    // hud_render_spell_icon(
-    //     inventory_get_equipped_spell(3), 
-    //     SPELL_SLOT_LOCATION_X + SPELL_SLOT_OFFSET * 2 + 4,
-    //     SPELL_SLOT_LOCATION_Y + SPELL_SLOT_OFFSET + 4
-    // );
 
     hud_draw_bar(
         MANA_TO_SIZE(spell_exec_max_mana(&hud->player->spell_exec)),
