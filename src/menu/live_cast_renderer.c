@@ -46,6 +46,8 @@ void spell_render_icon(enum inventory_item_type type, int x, int y) {
         source_x, 0,
         source_x + 24, 24
     );
+
+    // __rdpq_texture_rectangle_raw_fx()
 }
 
 void live_cast_renderer_init(live_cast_renderer_t* live_cast_renderer, live_cast_t* live_cast) {

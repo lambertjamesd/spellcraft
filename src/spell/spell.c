@@ -21,6 +21,10 @@ void spell_set_rune_pattern(spell_t* spell, int index, rune_pattern_t rune) {
     }
 
     spell->symbols[index] = rune;
+
+    if (index == 0 && rune.primary_rune == ITEM_TYPE_NONE) {
+        spell->length = 0;
+    }
 }
 
 void spell_append(spell_t* spell, rune_pattern_t value) {
