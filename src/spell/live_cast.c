@@ -25,10 +25,11 @@ bool live_cast_is_typing(struct live_cast* live_cast) {
 }
 
 struct spell* live_cast_use_spell(struct live_cast* live_cast) {
-    live_cast->was_cast = true;
-
-    if (live_cast_get_current_rune(live_cast).primary_rune == ITEM_TYPE_NONE && live_cast->pending_spell.length > 0) {
-        --live_cast->pending_spell.length;
+    if (!live_cast->was_cast) {
+        if (live_cast_get_current_rune(live_cast).primary_rune == ITEM_TYPE_NONE && live_cast->pending_spell.length > 0) {
+            --live_cast->pending_spell.length;
+        }
+        live_cast->was_cast = true;
     }
 
     return &live_cast->pending_spell;
@@ -59,6 +60,7 @@ bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_ty
     if (live_cast->was_cast) {
         spell_init(spell, 0);
         live_cast->was_cast = false;
+        live_cast->current_spell_output = 0;
     }
 
     if (symbol_type == SPELL_SYMBOL_BREAK) {
