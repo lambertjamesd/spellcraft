@@ -33,6 +33,15 @@ void spell_append(spell_t* spell, rune_pattern_t value) {
         ++spell->length;
     }
 }
+int spell_get_length(spell_t* spell) {
+    int result = spell->length;
+
+    while (result > 0 && spell->symbols[result].primary_rune != ITEM_TYPE_NONE) {
+        --result;
+    }
+
+    return spell->length;
+}
 
 bool rune_pattern_has_secondary(rune_pattern_t pattern, enum inventory_item_type symbol_type) {
     switch (symbol_type)

@@ -24,17 +24,30 @@ bool live_cast_is_typing(struct live_cast* live_cast) {
     return spell_get_length(&live_cast->pending_spell) > 0;
 }
 
-struct spell* live_cast_get_spell(struct live_cast* live_cast) {
+struct spell* live_cast_use_spell(struct live_cast* live_cast) {
     live_cast->was_cast = true;
+
+    if (live_cast_get_current_rune(live_cast).primary_rune == ITEM_TYPE_NONE && live_cast->pending_spell.length > 0) {
+        --live_cast->pending_spell.length;
+    }
+
     return &live_cast->pending_spell;
 }
 
 rune_pattern_t live_cast_get_current_rune(struct live_cast* live_cast) {
-    if (spell_get_length(&live_cast->pending_spell) == 0) {
+    if (spell_get_length(&live_cast->pending_spell) == 0 || live_cast->was_cast) {
         return (rune_pattern_t){};
     }
 
     return spell_get_rune_pattern(&live_cast->pending_spell, spell_get_length(&live_cast->pending_spell) - 1);
+}
+
+int live_cast_prev_rune_count(struct live_cast* live_cast) {
+    return live_cast->was_cast ? spell_get_length(&live_cast->pending_spell) : live_cast->current_spell_output;    
+}
+
+rune_pattern_t live_cast_get_rune(struct live_cast* live_cast, int index) {
+    return spell_get_rune_pattern(&live_cast->pending_spell, index);
 }
 
 bool live_cast_toggle(bool curr_value, bool has_room) {

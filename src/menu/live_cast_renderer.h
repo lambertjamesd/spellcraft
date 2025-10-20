@@ -19,6 +19,8 @@ struct live_cast_renderer {
     material_t* spell_icons;
 
     struct symbol_modifier_parameters symbol_modifiers[4];
+    int16_t prev_runes_offset;
+    uint8_t last_active_index;
 };
 
 typedef struct live_cast_renderer live_cast_renderer_t;

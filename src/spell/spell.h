@@ -51,9 +51,7 @@ void spell_set_rune_pattern(spell_t* spell, int index, rune_pattern_t rune);
 
 void spell_append(spell_t* spell, rune_pattern_t value);
 
-static inline int spell_get_length(spell_t* spell) {
-    return spell->length;
-}
+int spell_get_length(spell_t* spell);
 
 bool rune_pattern_has_secondary(rune_pattern_t pattern, enum inventory_item_type symbol_type);
 int rune_pattern_symbol_count(rune_pattern_t pattern);

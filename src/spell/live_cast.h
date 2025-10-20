@@ -21,10 +21,12 @@ void live_cast_destroy(struct live_cast* live_cast);
 bool live_cast_has_pending_spell(struct live_cast* live_cast);
 bool live_cast_is_typing(struct live_cast* live_cast);
 
-struct spell* live_cast_get_spell(struct live_cast* live_cast);
+struct spell* live_cast_use_spell(struct live_cast* live_cast);
 
 bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_type symbol_type);
 
 rune_pattern_t live_cast_get_current_rune(struct live_cast* live_cast);
+int live_cast_prev_rune_count(struct live_cast* live_cast);
+rune_pattern_t live_cast_get_rune(struct live_cast* live_cast, int index);
 
 #endif

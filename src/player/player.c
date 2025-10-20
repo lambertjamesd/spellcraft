@@ -432,7 +432,7 @@ bool player_check_for_casting(struct player* player) {
     }
 
     if (live_cast_has_pending_spell(&player->live_cast) && pressed.a) {
-        spell_exec_start(&player->spell_exec, 4, live_cast_get_spell(&player->live_cast), source);
+        spell_exec_start(&player->spell_exec, 4, live_cast_use_spell(&player->live_cast), source);
         player_check_for_animation_request(player, source);
         return true;
     }
