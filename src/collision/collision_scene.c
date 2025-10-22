@@ -457,6 +457,7 @@ void collision_scene_collide() {
                 contact->point = *object->position;
                 contact->point.y = shadow.y;
                 contact->surface_type = shadow.surface_type;
+                contact->collision_layers = 0;
                 object->shadow_contact = contact;
             }
 

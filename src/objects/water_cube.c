@@ -47,6 +47,7 @@ void water_cube_update(void* data) {
             other->point = *obj->position;
             other->point.y = water_top;
             other->surface_type = SURFACE_TYPE_WATER;
+            other->collision_layers = 0;
 
             obj->active_contacts = other;
 

@@ -225,6 +225,7 @@ void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_obj
             contact->normal = gZeroVec;
             contact->point = *a->position;
             contact->other_object = a ? a->entity_id : 0;
+            contact->collision_layers = a->collision_layers;
 
             contact->next = b->active_contacts;
             b->active_contacts = contact;
@@ -232,6 +233,7 @@ void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_obj
             contact->normal = gZeroVec;
             contact->point = *b->position;
             contact->other_object = b ? b->entity_id : 0;
+            contact->collision_layers = b->collision_layers;
 
             contact->next = a->active_contacts;
             a->active_contacts = contact;
@@ -290,6 +292,7 @@ void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_obj
         contact->point = result.contactA;
         contact->other_object = a ? a->entity_id : 0;
         contact->surface_type = 0;
+        contact->collision_layers = a->collision_layers;
     
         contact->next = b->active_contacts;
         b->active_contacts = contact;
@@ -306,6 +309,7 @@ void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_obj
         contact->point = result.contactB;
         contact->other_object = b ? b->entity_id : 0;
         contact->surface_type = 0;
+        contact->collision_layers = b->collision_layers;
     
         contact->next = a->active_contacts;
         a->active_contacts = contact;

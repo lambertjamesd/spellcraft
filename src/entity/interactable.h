@@ -5,6 +5,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+enum __attribute__ ((__packed__)) interact_type {
+    INTERACT_TYPE_NONE,
+    INTERACT_TYPE_TALK,
+    INTERACT_TYPE_READ,
+    INTERACT_TYPE_PICKUP,
+    INTERACT_TYPE_DROP,
+    INTERACT_TYPE_OPEN,
+};
+
+typedef enum interact_type interact_type_t;
+
 struct interactable;
 
 typedef bool (*interaction_callback)(struct interactable* interactable, entity_id from);
@@ -16,6 +27,7 @@ struct interactable_flags {
 
 struct interactable {
     entity_id id;
+    interact_type_t interact_type;
     struct interactable_flags flags;
     interaction_callback callback;
     void* data;

@@ -32,6 +32,10 @@
 #define CARRY_GRAB_TIME   (11.0f / 30.0f)
 #define CARRY_DROP_TIME   (11.0f / 30.0f)
 
+#define INTERACT_RANGE          2.0f
+#define INTERACT_Y_LOWER        -0.75f
+#define INTERACT_Y_UPEER        1.25f
+
 static struct Vector2 player_max_rotation;
 static struct Vector2 z_target_rotation;
 
@@ -158,9 +162,42 @@ void player_loop_animation(struct player* player, enum player_animation clip, fl
     player->cutscene_actor.animate_speed = speed;
 }
 
-bool player_interact_with_entity(player_t* player,  entity_id entity) {
+interactable_t* player_check_for_interactable(player_t* player, entity_id entity, struct Vector3* optPos, float* distance) {
+    if (!optPos) {
+        dynamic_object_t* obj = collision_scene_find_object(entity);
+
+        if (!obj) {
+            return NULL;
+        }
+
+        optPos = obj->position;
+    }
+
+    
+    struct Vector3 offset;
+    vector3Sub(optPos, player_get_position(player), &offset);
+
+    float curr_distance = vector3MagSqrd2D(&offset);
+
+    if (curr_distance > *distance || offset.y < INTERACT_Y_LOWER || offset.y > INTERACT_Y_UPEER) {
+        return NULL;
+    }
+
     interactable_t* interactable = interactable_get(entity);
 
+    if (!interactable) {
+        return NULL;
+    }
+
+    if (interactable->flags.grabbable && curr_distance > GRAB_RADIUS * GRAB_RADIUS) {
+        return NULL;
+    }
+    
+    *distance = curr_distance;
+    return interactable;
+}
+
+bool player_interact_with_interactable(player_t* player,  interactable_t* interactable, entity_id entity) {
     if (!interactable) {
         return false;
     }
@@ -169,13 +206,6 @@ bool player_interact_with_entity(player_t* player,  entity_id entity) {
         dynamic_object_t* obj = collision_scene_find_object(entity);
 
         if (!obj) {
-            return false;
-        }
-
-        struct Vector3 offset;
-        vector3Sub(obj->position, player_get_position(player), &offset);
-
-        if (vector3MagSqrd2D(&offset) > GRAB_RADIUS * GRAB_RADIUS) {
             return false;
         }
 
@@ -196,20 +226,41 @@ bool player_interact_with_entity(player_t* player,  entity_id entity) {
     }
 }
 
+interactable_t* player_find_interactable(player_t* player, entity_id* entity) {
+    contact_t* curr = player->z_target_trigger.active_contacts;
+
+    float distance = INTERACT_RANGE * INTERACT_RANGE;
+
+    if (player->z_target) {
+        *entity = player->z_target;
+        return player_check_for_interactable(player, player->z_target, NULL, &distance);
+    }
+
+    interactable_t* result = NULL;
+    *entity = 0;
+
+    for (
+        contact_t* curr = player->z_target_trigger.active_contacts;
+        curr;
+        curr = curr->next
+    ) {
+        interactable_t* interactable = player_check_for_interactable(player, curr->other_object, &curr->point, &distance);
+
+        if (!interactable) {
+            continue;
+        }
+
+        result = interactable;
+        *entity = curr->other_object;
+    }
+    
+    return result;
+}
+
 struct player_interaction {
     struct player* player;
     bool did_interact;
 };
-
-void player_handle_interaction(void* data, struct dynamic_object* overlaps) {
-    struct player_interaction* interaction = (struct player_interaction*)data;
-
-    if (interaction->did_interact) {
-        return;
-    }
-    
-    interaction->did_interact = player_interact_with_entity(interaction->player, overlaps->entity_id);
-}
 
 void player_get_input_direction(struct player* player, struct Vector3* target_direction) {
     joypad_inputs_t input = joypad_get_inputs(0);
@@ -382,14 +433,14 @@ bool player_handle_a_action(struct player* player) {
         .did_interact = false,
     };
 
-    if (player->z_target) {
-        if (player_interact_with_entity(player, player->z_target)) {
-            return true;
-        }
+    entity_id interact_entity_id = 0;
+    interactable_t* interactable = player_find_interactable(player, &interact_entity_id);
+
+    if (interactable) {
+        return player_interact_with_interactable(player, interactable, interact_entity_id);
     }
 
-    collision_scene_query_trigger(&player_visual_shape, &player->cutscene_actor.transform, COLLISION_LAYER_TANGIBLE, player_handle_interaction, &interaction);
-    return interaction.did_interact;
+    return false;
 }
 
 void player_check_for_animation_request(struct player* player, struct spell_data_source* source) {
@@ -850,19 +901,24 @@ void player_check_collectables(struct player* player) {
 }
 
 void player_find_z_target(struct player* player) {
-    struct contact* contact = player->z_target_trigger.active_contacts;
+    
     struct contact* nearest_target = NULL;
     float nearest_distance = 0.0f;
 
-    while (contact) {
+    for (struct contact* contact = player->z_target_trigger.active_contacts;
+        contact;
+        contact = contact->next
+    ) {
+        if (!(contact->collision_layers | COLLISION_LAYER_Z_TARGET)) {
+            continue;
+        }
+
         float distance = vector3DistSqrd(&contact->point, &player->cutscene_actor.transform.position);
 
         if (nearest_target == NULL || distance < nearest_distance) {
             nearest_target = contact;
             nearest_distance = distance;
         }
-
-        contact = contact->next;
     }
 
     if (nearest_target) {
@@ -1063,7 +1119,7 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     drop_shadow_init(&player->drop_shadow, &player->cutscene_actor.collider);
 
-    spatial_trigger_init(&player->z_target_trigger, &player->cutscene_actor.transform, &player_z_trigger_shape, COLLISION_LAYER_Z_TARGET);
+    spatial_trigger_init(&player->z_target_trigger, &player->cutscene_actor.transform, &player_z_trigger_shape, COLLISION_LAYER_Z_TARGET | COLLISION_LAYER_TANGIBLE);
     collision_scene_add_trigger(&player->z_target_trigger);
     player->z_target_transform = player->cutscene_actor.transform;
     renderable_single_axis_init(&player->z_target_visual, &player->z_target_transform, "rom:/meshes/player/z_cursor.tmesh");

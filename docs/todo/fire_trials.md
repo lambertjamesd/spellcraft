@@ -4,10 +4,9 @@
 * Hide some item in the side room
 * Polish up fire sword (maybe multiple attack animations)
 * Jelly death animation
-* Procedrual damage animation
+* Procedrual damage animation for player
 * Door design
 * Rune upgrade tablet design
-* Spell casting UI
 * Health and mana UI
 * Push cast animation
 * Add bottomless pit to defeat biters in lightning room

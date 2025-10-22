@@ -4,11 +4,13 @@
 #include "../player/inventory.h"
 #include "../render/material.h"
 #include "../player/player.h"
+#include "../render/material.h"
 #include "live_cast_renderer.h"
 
 struct hud {
     struct player* player;
     live_cast_renderer_t live_cast_renderer;
+    material_t* button_icon;
 };
 
 void hud_init(struct hud* hud, struct player* player);

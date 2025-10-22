@@ -207,6 +207,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
             contact->normal = gZeroVec;
             contact->point = *a->position;
             contact->other_object = a ? a->entity_id : 0;
+            contact->collision_layers = a->collision_layers;
 
             contact->next = b->active_contacts;
             b->active_contacts = contact;
@@ -214,6 +215,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
             contact->normal = gZeroVec;
             contact->point = *b->position;
             contact->other_object = b ? b->entity_id : 0;
+            contact->collision_layers = b->collision_layers;
 
             contact->next = a->active_contacts;
             a->active_contacts = contact;
@@ -267,6 +269,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         contact->point = result.contactA;
         contact->other_object = a ? a->entity_id : 0;
         contact->surface_type = 0;
+        contact->collision_layers = a->collision_layers;
     
         contact->next = b->active_contacts;
         b->active_contacts = contact;
@@ -283,6 +286,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         contact->point = result.contactB;
         contact->other_object = b ? b->entity_id : 0;
         contact->surface_type = 0;
+        contact->collision_layers = b->collision_layers;
     
         contact->next = a->active_contacts;
         a->active_contacts = contact;
@@ -312,6 +316,7 @@ void collide_object_to_trigger(struct dynamic_object* obj, struct spatial_trigge
     contact->point = *obj->position;
     contact->other_object = obj->entity_id;
     contact->surface_type = 0;
+    contact->collision_layers = obj->collision_layers;
 
     contact->next = trigger->active_contacts;
     trigger->active_contacts = contact;
@@ -328,6 +333,8 @@ void collide_add_contact(struct dynamic_object* object, struct EpaResult* result
     contact->point = result->contactA;
     contact->other_object = 0;
     contact->surface_type = surface_type;
+    // TODO add collision layers
+    contact->collision_layers = 0;
 
     contact->next = object->active_contacts;
     object->active_contacts = contact;

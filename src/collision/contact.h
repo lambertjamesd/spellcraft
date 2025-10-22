@@ -4,6 +4,7 @@
 #include "../math/vector3.h"
 #include "../entity/entity_id.h"
 #include "surface_type.h"
+#include <stdint.h>
 
 struct dynamic_object;
 
@@ -13,6 +14,7 @@ struct contact {
     struct Vector3 normal;
     entity_id other_object;
     enum surface_type surface_type;
+    uint16_t collision_layers;
 };
 
 typedef struct contact contact_t;

@@ -7,6 +7,7 @@
 #include "../spell/spell_render.h"
 #include "../spell/assets.h"
 #include "../render/coloru8.h"
+#include "../resource/material_cache.h"
 
 #define SPELL_SLOT_LOCATION_X   232
 #define SPELL_SLOT_LOCATION_Y   152
@@ -22,6 +23,9 @@
 #define MANA_BAR_HEIGHT         4
 
 #define HEALTH_BAR_Y            206
+
+#define BUTTON_ICON_X           240
+#define BUTTON_ICON_Y           20
 
 static color_t mana_color = {80, 0, 240, 200};
 static color_t health_color = {240, 80, 0, 200};
@@ -77,15 +81,25 @@ void hud_render(void *data) {
     );
 
     live_cast_renderer_render(&hud->live_cast_renderer);
+
+    rspq_block_run(hud->button_icon->block);
+    rdpq_texture_rectangle(
+        TILE0, 
+        BUTTON_ICON_X, BUTTON_ICON_Y, 
+        BUTTON_ICON_X + 32, BUTTON_ICON_Y + 32, 
+        0, 0
+    );
 }
 
 void hud_init(struct hud* hud, struct player* player) {
     menu_add_callback(hud_render, hud, MENU_PRIORITY_HUD);
     hud->player = player;
     live_cast_renderer_init(&hud->live_cast_renderer, &player->live_cast);
+    hud->button_icon = material_cache_load("rom:/materials/menu/button_icon.mat");
 }
 
 void hud_destroy(struct hud* hud) {
     menu_remove_callback(hud);
     live_cast_renderer_destroy(&hud->live_cast_renderer);
+    material_cache_release(hud->button_icon);
 }
