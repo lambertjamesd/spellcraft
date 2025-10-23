@@ -11,6 +11,7 @@ struct hud {
     struct player* player;
     live_cast_renderer_t live_cast_renderer;
     material_t* button_icon;
+    rdpq_font_t* action_font;
 };
 
 void hud_init(struct hud* hud, struct player* player);

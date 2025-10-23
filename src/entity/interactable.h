@@ -12,6 +12,7 @@ enum __attribute__ ((__packed__)) interact_type {
     INTERACT_TYPE_PICKUP,
     INTERACT_TYPE_DROP,
     INTERACT_TYPE_OPEN,
+    INTERACT_TYPE_CAST,
 };
 
 #define MAX_INTERACT_RANGE  2.0f
@@ -50,5 +51,7 @@ static inline interact_type_t interactable_get_type(interactable_t* interactable
 }
 
 interactable_t* interactable_get(entity_id id);
+
+const char* interact_type_to_name(interact_type_t type);
 
 #endif

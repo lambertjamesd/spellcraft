@@ -422,14 +422,11 @@ void player_handle_air_movement(struct player* player) {
     player->cutscene_actor.collider.velocity.y = prev_y;
 }
 
-bool player_handle_a_action(struct player* player) {
+bool player_handle_a_action(struct player* player, interactable_t* interactable, entity_id interact_entity_id) {
     struct player_interaction interaction = {
         .player = player,
         .did_interact = false,
     };
-
-    entity_id interact_entity_id = 0;
-    interactable_t* interactable = player_find_interactable(player, &interact_entity_id);
 
     if (interactable) {
         return player_interact_with_interactable(player, interactable, interact_entity_id);
@@ -477,7 +474,13 @@ bool player_check_for_casting(struct player* player) {
         player_check_for_animation_request(player, source);
     }
 
-    if (live_cast_has_pending_spell(&player->live_cast) && pressed.a) {
+    bool has_spell = live_cast_has_pending_spell(&player->live_cast);
+
+    if (has_spell) {
+        player->last_interaction_type = INTERACT_TYPE_CAST;
+    }
+
+    if (has_spell && pressed.a) {
         spell_exec_start(&player->spell_exec, 4, live_cast_use_spell(&player->live_cast), source);
         player_check_for_animation_request(player, source);
         return true;
@@ -633,6 +636,8 @@ void player_carry(player_t* player, contact_t* ground_contact) {
 
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
+    player->last_interaction_type = INTERACT_TYPE_DROP;
+
     if (pressed.a) {
         player_run_clip(player, PLAYER_ANIMATION_CARRY_DROP);
         return;
@@ -684,18 +689,22 @@ void player_update_knockback(struct player* player, struct contact* ground_conta
 void player_update_grounded(struct player* player, struct contact* ground_contact) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
     struct dynamic_object* collider = &player->cutscene_actor.collider;
+ 
+    entity_id interact_entity_id = 0;
+    interactable_t* interactable = player_find_interactable(player, &interact_entity_id);
 
-    bool should_cast = true;
-
-    if (pressed.a && !live_cast_is_typing(&player->live_cast) && player_handle_a_action(player)) {
-        should_cast = false;
+    if (interactable) {
+        player->last_interaction_type = interactable_get_type(interactable);
+        if (pressed.a) {
+            player_handle_a_action(player, interactable, interact_entity_id);
+        }
     }
 
     if (player->state != PLAYER_GROUNDED) {
         return;
     }
 
-    if (should_cast) {
+    if (player->last_interaction_type == INTERACT_TYPE_NONE) {
         player_check_for_casting(player);
     }
 
@@ -955,6 +964,8 @@ void player_update(struct player* player) {
     joypad_inputs_t input = joypad_get_inputs(0);
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
+    player->last_interaction_type = INTERACT_TYPE_NONE;
+
     if (pressed.d_up) {
         debug_collider_enable();
     } else if (pressed.d_down) {
@@ -1121,6 +1132,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     render_scene_add_renderable(&player->z_target_visual, 1.0f);
     player->z_target = 0;
     player->z_target_visual.hide = 1;
+    player->last_interaction_type = INTERACT_TYPE_NONE;
 }
 
 void player_destroy(struct player* player) {

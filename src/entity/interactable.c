@@ -1,5 +1,6 @@
 #include "interactable.h"
 
+#include <stddef.h>
 #include "../util/hash_map.h"
 
 static struct hash_map interactable_entity_mapping;
@@ -11,6 +12,17 @@ static float interaction_range[] = {
     [INTERACT_TYPE_PICKUP] = 0.85f,
     [INTERACT_TYPE_DROP] = 0.0f,
     [INTERACT_TYPE_OPEN] = 0.85f,
+    [INTERACT_TYPE_CAST] = 0.0f,
+};
+
+static const char* interaction_names[] = {
+    [INTERACT_TYPE_NONE] = NULL,
+    [INTERACT_TYPE_TALK] = "Talk",
+    [INTERACT_TYPE_READ] = "Read",
+    [INTERACT_TYPE_PICKUP] = "Lift",
+    [INTERACT_TYPE_DROP] = "Drop",
+    [INTERACT_TYPE_OPEN] = "Open",
+    [INTERACT_TYPE_CAST] = "Cast",
 };
 
 void interactable_reset() {
@@ -38,4 +50,8 @@ bool interactable_is_in_range(struct interactable* interactable, float distance_
 
 struct interactable* interactable_get(entity_id id) {
     return hash_map_get(&interactable_entity_mapping, id);
+}
+
+const char* interact_type_to_name(interact_type_t type) {
+    return interaction_names[type];
 }

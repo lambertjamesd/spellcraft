@@ -8,6 +8,7 @@
 #include "../spell/assets.h"
 #include "../render/coloru8.h"
 #include "../resource/material_cache.h"
+#include "../resource/font_cache.h"
 
 #define SPELL_SLOT_LOCATION_X   232
 #define SPELL_SLOT_LOCATION_Y   152
@@ -26,6 +27,7 @@
 
 #define BUTTON_ICON_X           240
 #define BUTTON_ICON_Y           20
+#define BUTTON_ICON_SIZE        32
 
 static color_t mana_color = {80, 0, 240, 200};
 static color_t health_color = {240, 80, 0, 200};
@@ -86,9 +88,29 @@ void hud_render(void *data) {
     rdpq_texture_rectangle(
         TILE0, 
         BUTTON_ICON_X, BUTTON_ICON_Y, 
-        BUTTON_ICON_X + 32, BUTTON_ICON_Y + 32, 
+        BUTTON_ICON_X + BUTTON_ICON_SIZE, BUTTON_ICON_Y + BUTTON_ICON_SIZE, 
         0, 0
     );
+
+    rdpq_sync_pipe();
+
+    const char* message = interact_type_to_name(hud->player->last_interaction_type);
+
+    if (message) {
+        rdpq_text_printn(&(rdpq_textparms_t){
+                // .line_spacing = -3,
+                .align = ALIGN_CENTER,
+                .valign = VALIGN_CENTER,
+                .width = BUTTON_ICON_SIZE,
+                .height = BUTTON_ICON_SIZE,
+                .wrap = WRAP_WORD,
+            }, 
+            1, 
+            BUTTON_ICON_X, BUTTON_ICON_Y, 
+            message,
+            strlen(message)
+        );
+    }
 }
 
 void hud_init(struct hud* hud, struct player* player) {
@@ -96,10 +118,12 @@ void hud_init(struct hud* hud, struct player* player) {
     hud->player = player;
     live_cast_renderer_init(&hud->live_cast_renderer, &player->live_cast);
     hud->button_icon = material_cache_load("rom:/materials/menu/button_icon.mat");
+    hud->action_font = font_cache_load("rom:/fonts/Amarante-Regular.font64");
 }
 
 void hud_destroy(struct hud* hud) {
     menu_remove_callback(hud);
     live_cast_renderer_destroy(&hud->live_cast_renderer);
     material_cache_release(hud->button_icon);
+    font_cache_release(hud->action_font);
 }

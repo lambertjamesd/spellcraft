@@ -16,6 +16,7 @@
 #include "../spell/spell_exec.h"
 #include "../spell/live_cast.h"
 #include "../entity/health.h"
+#include "../entity/interactable.h"
 
 #include "inventory.h"
 #include "grab_checker.h"
@@ -164,6 +165,7 @@ struct player {
     struct renderable z_target_visual;
 
     entity_id z_target;
+    interact_type_t last_interaction_type;
 };
 
 typedef struct player player_t;
