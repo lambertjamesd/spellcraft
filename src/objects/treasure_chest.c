@@ -15,12 +15,8 @@ static struct dynamic_object_type treasure_chest_collision = {
     .friction = 0.25f,
 };
 
-bool treasure_chest_interact(struct interactable* interactable, entity_id from) {
+void treasure_chest_interact(struct interactable* interactable, entity_id from) {
     struct treasure_chest* treasure_chest = (struct treasure_chest*)interactable->data;
-
-    if (!treasure_chest->item_type) {
-        return false;
-    }
 
     animator_run_clip(&treasure_chest->animator, treasure_chest->animations.open, 0.0f, false);
 
@@ -41,8 +37,7 @@ bool treasure_chest_interact(struct interactable* interactable, entity_id from) 
 
     inventory_unlock_item(treasure_chest->item_type);
     treasure_chest->item_type = ITEM_TYPE_NONE;
-
-    return true;
+    interactable_set_type(interactable, INTERACT_TYPE_NONE);
 }
 
 void treasure_chest_update(void* data) {
@@ -71,7 +66,6 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
 
     collision_scene_add(&treasure_chest->dynamic_object);
 
-    interactable_init(&treasure_chest->interactable, id, INTERACT_TYPE_OPEN, treasure_chest_interact, treasure_chest);
 
     treasure_chest->animation_set = animation_cache_load("rom:/meshes/objects/treasurechest.anim");
     treasure_chest->animations.open = animation_set_find_clip(treasure_chest->animation_set, "open");
@@ -83,8 +77,10 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
     if (inventory_has_item(definition->item) && !inventory_is_upgrade_item(definition->item)) {
         animator_run_clip(&treasure_chest->animator, treasure_chest->animations.open, animation_clip_get_duration(treasure_chest->animations.open), false);
         treasure_chest->item_type = ITEM_TYPE_NONE;
+        interactable_init(&treasure_chest->interactable, id, INTERACT_TYPE_OPEN, treasure_chest_interact, treasure_chest);
     } else {
         animator_run_clip(&treasure_chest->animator, treasure_chest->animations.idle, 0.0f, false);
+        interactable_init(&treasure_chest->interactable, id, INTERACT_TYPE_NONE, treasure_chest_interact, treasure_chest);
     }
 }
 

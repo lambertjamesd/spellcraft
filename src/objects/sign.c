@@ -9,19 +9,18 @@ static struct dynamic_object_type sign_collider = {
     BOX_COLLIDER(0.5f, 0.25f, 0.05f),
 };
 
-bool sign_interact(struct interactable* interactable, entity_id from) {
+void sign_interact(struct interactable* interactable, entity_id from) {
     sign_t* sign = (sign_t*)interactable->data;
-    if (sign->read_cutscene) {
-        cutscene_runner_run(sign->read_cutscene, NULL, NULL, sign->dynamic_object.entity_id);
-        return true;
+    if (!sign->read_cutscene) {
+        return;
     }
-    return false;
+    cutscene_runner_run(sign->read_cutscene, NULL, NULL, sign->dynamic_object.entity_id);
 }
 
 void sign_init(sign_t* sign, struct sign_definition* def, entity_id entity_id) {
     transformSaInit(&sign->transform, &def->position, &def->rotation, 1.0f);
 
-    interactable_init(&sign->interactable, entity_id, INTERACT_TYPE_READ, sign_interact, sign);
+    interactable_init(&sign->interactable, entity_id, def->message ? INTERACT_TYPE_READ : INTERACT_TYPE_NONE, sign_interact, sign);
 
     renderable_single_axis_init(&sign->renderable, &sign->transform, "rom:/meshes/objects/sign.tmesh");
     render_scene_add_renderable(&sign->renderable, 1.0f);

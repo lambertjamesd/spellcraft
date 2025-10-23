@@ -163,7 +163,7 @@ void player_loop_animation(struct player* player, enum player_animation clip, fl
 interactable_t* player_check_for_interactable(player_t* player, entity_id entity, struct Vector3* optPos, float* distance) {
     interactable_t* interactable = interactable_get(entity);
 
-    if (!interactable) {
+    if (!interactable || interactable->interact_type == INTERACT_TYPE_NONE) {
         return NULL;
     }
 
@@ -216,7 +216,8 @@ bool player_interact_with_interactable(player_t* player,  interactable_t* intera
         player_run_clip(player, PLAYER_ANIMATION_CARRY_PICKUP);
         return true;
     } else {
-        return interactable->callback(interactable, ENTITY_ID_PLAYER);
+        interactable->callback(interactable, ENTITY_ID_PLAYER);
+        return true;
     }
 }
 

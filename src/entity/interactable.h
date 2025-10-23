@@ -20,7 +20,7 @@ typedef enum interact_type interact_type_t;
 
 struct interactable;
 
-typedef bool (*interaction_callback)(struct interactable* interactable, entity_id from);
+typedef void (*interaction_callback)(struct interactable* interactable, entity_id from);
 
 struct interactable_flags {
     uint16_t target_straight_on: 1;
@@ -41,6 +41,10 @@ void interactable_reset();
 void interactable_init(interactable_t* interactable, entity_id id, interact_type_t interact_type, interaction_callback callback, void* data);
 void interactable_destroy(interactable_t* interactable);
 bool interactable_is_in_range(interactable_t* interactable, float distance_sqrd);
+
+static inline void interactable_set_type(interactable_t* interactable, interact_type_t type) {
+    interactable->interact_type = type;
+}
 static inline interact_type_t interactable_get_type(interactable_t* interactable) {
     return interactable->interact_type;
 }

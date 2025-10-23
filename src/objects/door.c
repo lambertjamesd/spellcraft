@@ -26,7 +26,7 @@ void door_render(void* data, struct render_batch* batch) {
     
     render_scene_render_renderable_single_axis(&door->renderable, batch);
 
-    if (door->is_unlocked) {
+    if (interactable_get_type(&door->interactable) == INTERACT_TYPE_OPEN) {
         return;
     }
 
@@ -55,18 +55,14 @@ void door_cuscene_finish(struct cutscene* cutscene, void* data) {
     cutscene_free(cutscene);
 }
 
-bool door_interact(struct interactable* interactable, entity_id from) {
+void door_interact(struct interactable* interactable, entity_id from) {
     struct dynamic_object* obj = collision_scene_find_object(from);
 
     if (!obj) {
-        return false;
+        return;
     }
 
     struct door* door = (struct door*)interactable->data;
-
-    if (!door->is_unlocked) {
-        return false;
-    }
 
     room_id other_room = scene_is_showing_room(current_scene, door->room_a) ? door->room_b : door->room_a;
     scene_show_room(current_scene, other_room);
@@ -155,8 +151,6 @@ bool door_interact(struct interactable* interactable, entity_id from) {
         door,
         0
     );
-
-    return true;
 }
 
 void door_update(void* data) {
@@ -169,7 +163,8 @@ void door_update(void* data) {
         door->preview_room = ROOM_NONE;
     }
     
-    door->is_unlocked = door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
+    bool is_unlocked = door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
+    interactable_set_type(&door->interactable, is_unlocked ? INTERACT_TYPE_OPEN : INTERACT_TYPE_NONE);
 }
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id) {
@@ -199,7 +194,8 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
 
     collision_scene_add(&door->collider);
 
-    interactable_init(&door->interactable, id, INTERACT_TYPE_OPEN, door_interact, door);
+    bool unlocked = door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
+    interactable_init(&door->interactable, id, unlocked ? INTERACT_TYPE_OPEN : INTERACT_TYPE_OPEN, door_interact, door);
 
     door->animation_set = animation_cache_load("rom:/meshes/objects/doors/door.anim");
     door->animations.open = animation_set_find_clip(door->animation_set, "open");
@@ -208,8 +204,6 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
     animator_init(&door->animator, door->renderable.armature.bone_count);
     update_add(door, door_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
     animator_run_clip(&door->animator, door->animations.close, animation_clip_get_duration(door->animations.close), false);
-
-    door->is_unlocked = door->unlocked == VARIABLE_DISCONNECTED ? true : expression_get_bool(door->unlocked);
 }
 
 void door_destroy(struct door* door) {

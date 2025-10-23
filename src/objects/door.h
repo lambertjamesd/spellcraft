@@ -31,8 +31,6 @@ struct door {
 
     room_id next_room;
     room_id preview_room;
-
-    bool is_unlocked;
 };
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id);
