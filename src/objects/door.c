@@ -199,7 +199,7 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
 
     collision_scene_add(&door->collider);
 
-    interactable_init(&door->interactable, id, door_interact, door);
+    interactable_init(&door->interactable, id, INTERACT_TYPE_OPEN, door_interact, door);
 
     door->animation_set = animation_cache_load("rom:/meshes/objects/doors/door.anim");
     door->animations.open = animation_set_find_clip(door->animation_set, "open");

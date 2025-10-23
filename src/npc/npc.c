@@ -73,9 +73,9 @@ void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id) {
         information->animations
     );
 
-    interactable_init(&npc->interactable, id, npc_interact, npc);
-
+    
     if (*definiton->dialog) {
+        interactable_init(&npc->interactable, id, INTERACT_TYPE_TALK, npc_interact, npc);
         npc->talk_to_cutscene = cutscene_load(definiton->dialog);
     } else {
         npc->talk_to_cutscene = NULL;
@@ -87,6 +87,8 @@ void npc_destroy(struct npc* npc) {
     renderable_destroy(&npc->renderable);
     cutscene_actor_destroy(&npc->cutscene_actor);
     update_remove(npc);
-    interactable_destroy(&npc->interactable);
-    cutscene_free(npc->talk_to_cutscene);
+    if (npc->talk_to_cutscene) {
+        interactable_destroy(&npc->interactable);
+        cutscene_free(npc->talk_to_cutscene);
+    }
 }

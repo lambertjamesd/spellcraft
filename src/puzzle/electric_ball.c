@@ -136,9 +136,8 @@ void electric_ball_init(electric_ball_t* ball, struct electric_ball_definition* 
     collision_scene_add(&ball->collision);
     electric_ball_fulfull_request(ball);
 
-    interactable_init(&ball->interactable, entity_id, electric_ball_interact, ball);
+    interactable_init(&ball->interactable, entity_id, INTERACT_TYPE_PICKUP, electric_ball_interact, ball);
     ball->interactable.flags.target_straight_on = true;
-    ball->interactable.flags.grabbable = true;
 }
 
 void electric_ball_destroy(electric_ball_t* ball) {

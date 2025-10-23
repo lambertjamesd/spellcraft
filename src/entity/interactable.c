@@ -4,23 +4,36 @@
 
 static struct hash_map interactable_entity_mapping;
 
+static float interaction_range[] = {
+    [INTERACT_TYPE_NONE] = 0.0f,
+    [INTERACT_TYPE_TALK] = 2.0f,
+    [INTERACT_TYPE_READ] = 2.0f,
+    [INTERACT_TYPE_PICKUP] = 0.85f,
+    [INTERACT_TYPE_DROP] = 0.0f,
+    [INTERACT_TYPE_OPEN] = 0.85f,
+};
+
 void interactable_reset() {
     hash_map_destroy(&interactable_entity_mapping);
     hash_map_init(&interactable_entity_mapping, 32);
 }
 
-void interactable_init(struct interactable* interactable, entity_id id, interaction_callback callback, void* data) {
+void interactable_init(struct interactable* interactable, entity_id id, interact_type_t interact_type, interaction_callback callback, void* data) {
     interactable->id = id;
+    interactable->interact_type = interact_type;
     interactable->callback = callback;
     interactable->data = data;
     hash_map_set(&interactable_entity_mapping, id, interactable);
     
     interactable->flags.target_straight_on = false;
-    interactable->flags.grabbable = false;
 }
 
 void interactable_destroy(struct interactable* interactable) {
     hash_map_delete(&interactable_entity_mapping, interactable->id);
+}
+
+bool interactable_is_in_range(struct interactable* interactable, float distance_sqrd) {
+    return distance_sqrd < interaction_range[interactable->interact_type] * interaction_range[interactable->interact_type];
 }
 
 struct interactable* interactable_get(entity_id id) {

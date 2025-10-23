@@ -27,12 +27,10 @@
 #define SLIDE_DELAY 0.25f
 #define COYOTE_TIME 0.1f
 #define SHADOW_AS_GROUND_DISTANCE   0.15f
-#define GRAB_RADIUS 0.85f
 
 #define CARRY_GRAB_TIME   (11.0f / 30.0f)
 #define CARRY_DROP_TIME   (11.0f / 30.0f)
 
-#define INTERACT_RANGE          2.0f
 #define INTERACT_Y_LOWER        -0.75f
 #define INTERACT_Y_UPEER        1.25f
 
@@ -163,6 +161,12 @@ void player_loop_animation(struct player* player, enum player_animation clip, fl
 }
 
 interactable_t* player_check_for_interactable(player_t* player, entity_id entity, struct Vector3* optPos, float* distance) {
+    interactable_t* interactable = interactable_get(entity);
+
+    if (!interactable) {
+        return NULL;
+    }
+
     if (!optPos) {
         dynamic_object_t* obj = collision_scene_find_object(entity);
 
@@ -179,20 +183,10 @@ interactable_t* player_check_for_interactable(player_t* player, entity_id entity
 
     float curr_distance = vector3MagSqrd2D(&offset);
 
-    if (curr_distance > *distance || offset.y < INTERACT_Y_LOWER || offset.y > INTERACT_Y_UPEER) {
+    if (!interactable_is_in_range(interactable, curr_distance) || curr_distance > *distance || offset.y < INTERACT_Y_LOWER || offset.y > INTERACT_Y_UPEER) {
         return NULL;
     }
 
-    interactable_t* interactable = interactable_get(entity);
-
-    if (!interactable) {
-        return NULL;
-    }
-
-    if (interactable->flags.grabbable && curr_distance > GRAB_RADIUS * GRAB_RADIUS) {
-        return NULL;
-    }
-    
     *distance = curr_distance;
     return interactable;
 }
@@ -202,7 +196,7 @@ bool player_interact_with_interactable(player_t* player,  interactable_t* intera
         return false;
     }
 
-    if (interactable->flags.grabbable) {
+    if (interactable_get_type(interactable) == INTERACT_TYPE_PICKUP) {
         dynamic_object_t* obj = collision_scene_find_object(entity);
 
         if (!obj) {
@@ -229,7 +223,7 @@ bool player_interact_with_interactable(player_t* player,  interactable_t* intera
 interactable_t* player_find_interactable(player_t* player, entity_id* entity) {
     contact_t* curr = player->z_target_trigger.active_contacts;
 
-    float distance = INTERACT_RANGE * INTERACT_RANGE;
+    float distance = MAX_INTERACT_RANGE * MAX_INTERACT_RANGE;
 
     if (player->z_target) {
         *entity = player->z_target;

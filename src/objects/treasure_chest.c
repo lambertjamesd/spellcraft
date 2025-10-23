@@ -71,7 +71,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
 
     collision_scene_add(&treasure_chest->dynamic_object);
 
-    interactable_init(&treasure_chest->interactable, id, treasure_chest_interact, treasure_chest);
+    interactable_init(&treasure_chest->interactable, id, INTERACT_TYPE_OPEN, treasure_chest_interact, treasure_chest);
 
     treasure_chest->animation_set = animation_cache_load("rom:/meshes/objects/treasurechest.anim");
     treasure_chest->animations.open = animation_set_find_clip(treasure_chest->animation_set, "open");

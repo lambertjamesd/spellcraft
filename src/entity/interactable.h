@@ -14,6 +14,8 @@ enum __attribute__ ((__packed__)) interact_type {
     INTERACT_TYPE_OPEN,
 };
 
+#define MAX_INTERACT_RANGE  2.0f
+
 typedef enum interact_type interact_type_t;
 
 struct interactable;
@@ -21,7 +23,6 @@ struct interactable;
 typedef bool (*interaction_callback)(struct interactable* interactable, entity_id from);
 
 struct interactable_flags {
-    uint16_t grabbable: 1;
     uint16_t target_straight_on: 1;
 };
 
@@ -37,9 +38,13 @@ typedef struct interactable interactable_t;
 
 void interactable_reset();
 
-void interactable_init(struct interactable* interactable, entity_id id, interaction_callback callback, void* data);
-void interactable_destroy(struct interactable* interactable);
+void interactable_init(interactable_t* interactable, entity_id id, interact_type_t interact_type, interaction_callback callback, void* data);
+void interactable_destroy(interactable_t* interactable);
+bool interactable_is_in_range(interactable_t* interactable, float distance_sqrd);
+static inline interact_type_t interactable_get_type(interactable_t* interactable) {
+    return interactable->interact_type;
+}
 
-struct interactable* interactable_get(entity_id id);
+interactable_t* interactable_get(entity_id id);
 
 #endif
