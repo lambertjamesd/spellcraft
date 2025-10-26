@@ -7,7 +7,8 @@
 
 struct mesh_triangle_indices {
     uint16_t indices[3];
-    uint16_t surface_type;
+    uint8_t surface_type;
+    uint8_t enabled_edges;
 };
 
 struct mesh_shadow_cast_result {

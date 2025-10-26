@@ -18,14 +18,16 @@ class MeshColliderTriangle():
         self.centroid: mathutils.Vector | None = None
         self.min: mathutils.Vector | None = None
         self.max: mathutils.Vector | None = None
+        self.unused_edges: int = 0
 
     def serialize(self, file):
         file.write(struct.pack(
-            ">HHHH",
+            ">HHHBB",
             self.indices[0],
             self.indices[1],
             self.indices[2],
             self.surface_type,
+            self.unused_edges,
         ))
 
     def calculate_bounds(self, vertices: list[mathutils.Vector]):
@@ -36,6 +38,9 @@ class MeshColliderTriangle():
         self.centroid = (a + b + c) * (1.0 / 3.0)
         self.min = _vector_min(a, _vector_min(b, c))
         self.max = _vector_max(a, _vector_max(b, c))
+
+    def mark_edge_unused(self, edge_index: int):
+        self.unused_edges = self.unused_edges | (1 << edge_index)
 
 def _triangle_support_function(vertices: list[mathutils.Vector], triangle: MeshColliderTriangle, direction: mathutils.Vector):
     result_index = max(triangle.indices, key = lambda index: direction.dot(vertices[index]))
@@ -332,6 +337,17 @@ class KdMeshIndex():
     def __str__(self):
         return self.root.to_string('')
 
+def _edge_key(a_index, b_index) -> str:
+    if a_index < b_index:
+        return f"{a_index}:{b_index}"
+    return f"{b_index}:{a_index}"
+
+class EdgeConnection():
+    def __init__(self, triangle: MeshColliderTriangle, edge_index: int, normal: mathutils.Vector):
+        self.triangle: MeshColliderTriangle = triangle
+        self.edge_index: int = edge_index
+        self.normal: mathutils.Vector = normal
+
 class MeshCollider():
     def __init__(self):
         self.vertices: list[mathutils.Vector] = []
@@ -369,6 +385,40 @@ class MeshCollider():
             ], surface_type=surface_type))
 
         bm.free()
+    
+    def _get_triangle_normal(triangle: MeshColliderTriangle) -> mathutils.Vector:
+        a = self.vertices[triangle.indices[1]] - self.vertices[triangle.indices[0]]
+        b = self.vertices[triangle.indices[2]] - self.vertices[triangle.indices[0]]
+
+        return a.cross(b).normalized()
+
+    def _find_needed_edges(self):
+        edge_to_face: dict[str, EdgeConnection] = {}
+
+        for triangle in self.triangles:
+            normal = self._get_triangle_normal(triangle)
+
+            for index in range(0, 3):
+                a_index = triangle.indices[index]
+                b_index = triangle.indices[(index + 1) % 3]
+
+                key = _edge_key(a_index, b_index)
+
+                if not (key in edge_to_face):
+                    edge_to_face[key] = EdgeConnection(triangle, index, normal)
+                    continue
+
+                tangent = (self.vertices[b_index] - self.vertices[a_index]) \
+                    .normalized() \
+                    .cross(normal)
+
+                other: EdgeConnection = edge_to_face[key]
+
+                if tangent.dot(other.normal) > 0.01:
+                    continue
+
+                triangle.mark_edge_unused(index)
+                other.triangle.mark_edge_unused(other.edge_index)
 
     def write_out(self, file, force_subdivisions: mathutils.Vector | None = None):
         file.write('CMSH'.encode())
