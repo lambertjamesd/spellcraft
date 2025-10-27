@@ -2,6 +2,7 @@
 #define __COLLISION_MESH_INDEX_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "../math/vector3.h"
 #include "surface_type.h"
 
@@ -11,6 +12,8 @@ struct mesh_triangle_indices {
     uint8_t enabled_edges;
 };
 
+#define HAS_EDGE(triangle, edge_index)  (((triangle)->enabled_edges & (1 << (edge_index))) != 0)
+
 struct mesh_shadow_cast_result {
     float y;
     struct Vector3 normal;
@@ -18,5 +21,11 @@ struct mesh_shadow_cast_result {
 };
 
 typedef struct mesh_triangle_indices mesh_triangle_indices_t;
+
+bool mesh_triangle_filter_edge_contacts(
+    struct mesh_triangle_indices* triangle,
+    struct Vector3* vertices,
+    struct Vector3* contact_normal
+);
 
 #endif
