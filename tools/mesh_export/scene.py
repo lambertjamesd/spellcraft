@@ -496,6 +496,7 @@ def process_scene():
         write_static(scene, base_transform, room_collection, file)
         write_particles(scene, base_transform, room_collection, file)
 
+        scene.scene_mesh_collider.find_needed_edges()
         scene.scene_mesh_collider.write_out(file)
 
         grouped: dict[int, list[ObjectEntry]] = {}

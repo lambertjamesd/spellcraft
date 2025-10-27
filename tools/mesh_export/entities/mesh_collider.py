@@ -386,13 +386,13 @@ class MeshCollider():
 
         bm.free()
     
-    def _get_triangle_normal(triangle: MeshColliderTriangle) -> mathutils.Vector:
+    def _get_triangle_normal(self, triangle: MeshColliderTriangle) -> mathutils.Vector:
         a = self.vertices[triangle.indices[1]] - self.vertices[triangle.indices[0]]
         b = self.vertices[triangle.indices[2]] - self.vertices[triangle.indices[0]]
 
         return a.cross(b).normalized()
 
-    def _find_needed_edges(self):
+    def find_needed_edges(self):
         edge_to_face: dict[str, EdgeConnection] = {}
 
         for triangle in self.triangles:

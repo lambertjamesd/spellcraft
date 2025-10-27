@@ -264,6 +264,7 @@ def generate_overworld(
             write_collider_time -= time.perf_counter()
             collider_data = io.BytesIO()
             if len(collider_cells[z][x]):
+                collider_cells[z][x][0].find_needed_edges()
                 collider_cells[z][x][0].write_out(collider_data, force_subdivisions = mathutils.Vector((8, 1, 8)))
             else:
                 tmp = mesh_collider.MeshCollider()
