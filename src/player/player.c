@@ -76,6 +76,11 @@ static struct climb_up_data climb_up_data[CLIMB_UP_COUNT] = {
     },
 };
 
+// about a 40 degree slope
+#define MAX_STABLE_SLOPE    0.219131191f
+
+#define MAX_SLIDING_SLOPE   0.8f
+
 static struct cutscene_actor_def player_actor_def = {
     .eye_level = 1.26273f,
     .move_speed = PLAYER_WALK_ANIM_SPEED,
@@ -94,8 +99,7 @@ static struct cutscene_actor_def player_actor_def = {
                 .inner_half_height = 0.5f,
             }
         },
-        // about a 40 degree slope
-        .max_stable_slope = 0.219131191f,
+        .max_stable_slope = MAX_STABLE_SLOPE,
         .friction = 0.2f,
     },
 };
@@ -361,7 +365,7 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
         return false;
     }
 
-    if (dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
+    if (dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
         // TODO handle sliding logic
         player->slide_timer += fixed_time_step;
 
@@ -412,7 +416,7 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
     return true;
 }
 
-void player_handle_air_movement(struct player* player) {
+void player_handle_air_movement(struct player* player, contact_t* ground_contact) {
     if (player->cutscene_actor.collider.is_pushed) {
         return;
     }
@@ -421,6 +425,10 @@ void player_handle_air_movement(struct player* player) {
     player_get_input_direction(player, &target_direction);
 
     player_handle_look(player, &target_direction);
+
+    if (ground_contact && vector3Dot(&target_direction, &ground_contact->normal) < 0.0f) {
+        vector3ProjectPlane(&target_direction, &ground_contact->normal, &target_direction);
+    }
 
     float prev_y = player->cutscene_actor.collider.velocity.y;
     vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
@@ -499,9 +507,9 @@ bool player_check_for_casting(struct player* player) {
 }
 
 void player_update_sliding(struct player* player, struct contact* ground_contact) {
-    if (ground_contact == NULL) {
+    if (ground_contact == NULL || dynamic_object_should_slide(MAX_SLIDING_SLOPE, ground_contact->normal.y, SURFACE_TYPE_DEFAULT)) {
         player_enter_falling_state(player);
-    } else if (!dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
+    } else if (!dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
         player_enter_grounded_state(player);
     }
 }
@@ -522,8 +530,12 @@ void player_update_falling(struct player* player, struct contact* ground_contact
 
     player_check_for_casting(player);
 
-    if (ground_contact) {
-        player_enter_grounded_state(player);
+    if (ground_contact && !dynamic_object_should_slide(MAX_SLIDING_SLOPE, ground_contact->normal.y, SURFACE_TYPE_DEFAULT)) {
+        if (dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
+            player->state = PLAYER_SLIDING;
+        } else {
+            player_enter_grounded_state(player);
+        }
         player_run_clip(player, PLAYER_ANIMATION_LAND);
         return;
     } else if (collider->under_water) {
@@ -534,13 +546,13 @@ void player_update_falling(struct player* player, struct contact* ground_contact
         player_loop_animation(player, PLAYER_ANIMATION_FALL, 1.0f);
     }
     
-    player_handle_air_movement(player);
+    player_handle_air_movement(player, ground_contact);
 }
 
 void player_update_swimming(struct player* player, struct contact* ground_contact) {
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
-    player_handle_air_movement(player);
+    player_handle_air_movement(player, ground_contact);
 
     if (ground_contact) {
         player->state = PLAYER_GROUNDED;
@@ -702,7 +714,12 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
-    if (ground_contact && dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
+    if (ground_contact && dynamic_object_should_slide(MAX_SLIDING_SLOPE, ground_contact->normal.y, SURFACE_TYPE_DEFAULT)) {
+        player_enter_falling_state(player);
+        return;
+    }
+
+    if (ground_contact && dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
         player->state = PLAYER_SLIDING;
         return;
     }

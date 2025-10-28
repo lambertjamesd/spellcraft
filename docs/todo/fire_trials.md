@@ -20,5 +20,3 @@
 * Build fire kiln
 * Sketch out fire kiln puzzle
 * Better visuals for current rooms
-* slanted surfaces are too sticky
-* can walk up triangles edges in vertical walls
