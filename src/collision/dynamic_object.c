@@ -4,6 +4,7 @@
 #include "../math/minmax.h"
 #include <math.h>
 #include <stddef.h>
+#include <libdragon.h>
 
 void dynamic_object_init(
     entity_id entity_id,

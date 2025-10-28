@@ -338,6 +338,11 @@ void player_enter_grounded_state(struct player* player) {
     player->state = PLAYER_GROUNDED;
 }
 
+void player_enter_falling_state(struct player* player) {
+    player->state = PLAYER_FALLING;
+    player_run_clip(player, PLAYER_ANIMATION_JUMP_PEAK);
+}
+
 bool player_handle_ground_movement(struct player* player, struct contact* ground_contact, struct Vector3* target_direction, float* speed) {
     contact_t fake_contact = {
         .normal = gUp,
@@ -493,12 +498,19 @@ bool player_check_for_casting(struct player* player) {
     return false;
 }
 
+void player_update_sliding(struct player* player, struct contact* ground_contact) {
+    if (ground_contact == NULL) {
+        player_enter_falling_state(player);
+    } else if (!dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
+        player_enter_grounded_state(player);
+    }
+}
+
 void player_update_jumping(struct player* player, struct contact* ground_contact) {
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
     if (collider->velocity.y < 0.0f) {
-        player->state = PLAYER_FALLING;
-        player_run_clip(player, PLAYER_ANIMATION_JUMP_PEAK);
+        player_enter_falling_state(player);
     } else if (ground_contact) {
         player_enter_grounded_state(player);
         player_run_clip(player, PLAYER_ANIMATION_LAND);
@@ -689,6 +701,11 @@ void player_update_knockback(struct player* player, struct contact* ground_conta
 void player_update_grounded(struct player* player, struct contact* ground_contact) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
     struct dynamic_object* collider = &player->cutscene_actor.collider;
+
+    if (ground_contact && dynamic_object_should_slide(player_actor_def.collider.max_stable_slope, ground_contact->normal.y, ground_contact->surface_type)) {
+        player->state = PLAYER_SLIDING;
+        return;
+    }
  
     entity_id interact_entity_id = 0;
     interactable_t* interactable = player_find_interactable(player, &interact_entity_id);
@@ -784,6 +801,9 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
 
 void player_update_state(struct player* player, struct contact* ground_contact) {
     switch (player->state) {
+        case PLAYER_SLIDING:
+            player_update_sliding(player, ground_contact);
+            break;
         case PLAYER_JUMPING:
             player_update_jumping(player, ground_contact);
             break;
@@ -983,6 +1003,7 @@ void player_update(struct player* player) {
     }
 
     struct contact* ground = dynamic_object_get_ground(&player->cutscene_actor.collider);
+
     player_update_state(player, ground);
 
     if (player->cutscene_actor.collider.hit_kill_plane) {

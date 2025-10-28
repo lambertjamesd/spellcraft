@@ -26,6 +26,7 @@
 
 enum player_state {
     PLAYER_GROUNDED,
+    PLAYER_SLIDING,
     PLAYER_JUMPING,
     PLAYER_FALLING,
     PLAYER_SWIMMING,

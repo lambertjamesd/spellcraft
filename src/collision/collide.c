@@ -19,8 +19,11 @@ bool correct_velocity(struct Vector3* velocity, struct Vector3* normal, float ra
     if ((velocityDot < 0) == (ratio < 0)) {
         struct Vector3 tangentVelocity;
 
+        if (normal->y > 0.0f) {
+            vector3Scale(&tangentVelocity, &tangentVelocity, 1.0f - friction * normal->y);
+        }
+
         vector3AddScaled(velocity, normal, -velocityDot, &tangentVelocity);
-        vector3Scale(&tangentVelocity, &tangentVelocity, 1.0f - friction);
         vector3AddScaled(&tangentVelocity, normal, velocityDot * -bounce, velocity);
         return true;
     }
@@ -138,13 +141,6 @@ bool collide_object_to_triangle(void* data, int triangle_index, int collision_la
         collide_data->object, 
         dynamic_object_minkowski_sum, 
         &result)) {
-        if (!mesh_triangle_filter_edge_contacts(
-            &collide_data->triangle.triangle, 
-            collide_data->mesh->index.vertices, 
-            &result.normal)) {
-            return false;
-        }
-
         enum surface_type surface_type = collide_data->triangle.triangle.surface_type;
         correct_overlap(
             collide_data->object, 
