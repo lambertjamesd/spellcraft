@@ -11,7 +11,6 @@
 * Push cast animation
 * Add bottomless pit to defeat biters in lightning room
 * Better door cross animation
-* Preview primary action
 * Better z targeting when close
 * Vertical z targeting
 * Climb animations
