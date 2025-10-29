@@ -114,6 +114,18 @@ class Assignment():
         space = '  ' * depth
         result.append(f"{space}{self.name.value} = {self.value};")
 
+class FunctionDefinitionArg():
+    def __init__(self, name: tokenizer.Token, type_name: tokenizer.Token):
+        self.name: tokenizer.Token = name
+        self.type_name: tokenizer.Token = type_name
+
+class FunctionDefinition():
+    def __init__(self, func: tokenizer.Token, name: tokenizer.Token, args: list[FunctionDefinitionArg], body: list):
+        self.func: tokenizer.Token = func
+        self.name: tokenizer.Token = name
+        self.args: list[FunctionDefinitionArg] = args
+        self.body: list = body
+
 class CutsceneStep():
     def __init__(self, name: tokenizer.Token, parameters: list):
         self.name: tokenizer.Token = name
@@ -201,6 +213,7 @@ class Cutscene():
         self.globals: list[VariableDefinition] = []
         self.scene_vars: list[VariableDefinition] = []
         self.locals: list[VariableDefinition] = []
+        self.functions: list[FunctionDefinition] = []
         self.statements = []
 
     def __str__(self):
@@ -235,7 +248,32 @@ def _parse_variable_definition(parse_state: _ParseState, type: str):
         initializer = _parse_expression(parse_state)
     parse_state.require(';')
     return VariableDefinition(name, type, initializer)
+
+def _parse_function_definition(parse_state: _ParseState) -> FunctionDefinition:
+    func = parse_state.require('identifier', 'func')
+    name = parse_state.require('identifier')
+    parse_state.require('(')
+
+    args: list[FunctionDefinitionArg] = []
     
+    next = parse_state.peek()
+    while next.token_type != 'eof' and next.value != ')':
+        arg_name = parse_state.require('identifier')
+        parse_state.require(':')
+        arg_type_name = _parse_type(parse_state)
+
+        args.append(FunctionDefinitionArg(arg_name, arg_type_name))
+        next = parse_state.peek()
+
+        if next.value != ')':
+            parse_state.require(',')
+
+    parse_state.require(')')
+
+    body = _parse_block(parse_state, 'end')
+    parse_state.require('identifier', 'end')
+
+    return FunctionDefinition(func, name, args, body)
 
 def _maybe_parse_cutscene_def(parse_state: _ParseState, into: Cutscene) -> bool:
     next = parse_state.peek()
@@ -248,6 +286,9 @@ def _maybe_parse_cutscene_def(parse_state: _ParseState, into: Cutscene) -> bool:
         return True
     if next.value == 'local':
         into.locals.append(_parse_variable_definition(parse_state, 'local'))
+        return True
+    if next.value == 'func':
+        into.functions.append(_parse_function_definition(parse_state))
         return True
     
     return False
