@@ -287,7 +287,7 @@ def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
         scene_vars_builder.add_generated_variable(bool_name, "bool")
 
     if not success:
-        sys.exit(1)
+        raise Exception('failed to load cutscene vars')
 
     with open(var_json_path, 'w') as file:
         scene_vars_builder.serialize(file)

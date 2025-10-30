@@ -1,0 +1,6 @@
+
+sign_start;
+
+say "A is not first";
+
+sign_end;

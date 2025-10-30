@@ -428,8 +428,9 @@ def generate_steps(file, statements: list, context: variable_layout.VariableCont
     errors = cutscene.apply_jump_labels()
 
     if len(errors) > 0:
-        print('\n\n'.join(errors))
-        sys.exit(1)
+        message = '\n\n'.join(errors)
+        print(message)
+        raise Exception(message)
 
     file.write('CTSN'.encode())
 

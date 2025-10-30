@@ -17,8 +17,9 @@ _type_bit_sizes = {
 
 def _determine_type_bit_size(type: parser.DataType):
     if not type.name.value in _type_bit_sizes:
-        print(type.name.format_message('invalid type'))
-        sys.exit(1)
+        message = type.name.format_message('invalid type')
+        print(message)
+        raise Exception(message)
 
     result = _type_bit_sizes[type.name.value]
     alignment = result
@@ -186,16 +187,18 @@ class VariableLayoutBuilder():
 
             if isinstance(variable.initializer, parser.String):
                 if len(variable.initializer.replacements) > 0:
-                    print(variable.initializer.at.format_message('varaibles cannot be initialized with a template string'))
-                    sys.exit()
+                    message = variable.initializer.at.format_message('varaibles cannot be initialized with a template string')
+                    print(message)
+                    raise Exception(message)
 
                 value = variable.initializer.contents[0]
             else:
                 value = eval.check_for_literals(variable.initializer)
 
                 if value is None:
-                    print(variable.initializer.at.format_message('variables can only be initialized with a constant'))
-                    sys.exit()
+                    message = variable.initializer.at.format_message('variables can only be initialized with a constant')
+                    print(message)
+                    raise Exception(message)
 
         initial_value = _calculate_initial_value(value, variable.type)
 

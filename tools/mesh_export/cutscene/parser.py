@@ -12,7 +12,7 @@ class _ParseState():
 
     def error(self, message: str, at: int):
         print(self.source.format_message(message, at))
-        sys.exit(1)
+        raise Exception(message)
 
     def peek(self, offset = 0, include_whitespace = False) -> tokenizer.Token:
         skip_count = offset

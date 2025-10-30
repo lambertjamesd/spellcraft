@@ -24,31 +24,34 @@ if __name__ == "__main__":
     with open(args.globals) as file:
         globals.deserialize(file)
     
-    with open(args.input) as file:
-        result = cutscene.parser.parse(file.read(), args.input)
+    try:
+        with open(args.input) as file:
+            result = cutscene.parser.parse(file.read(), args.input)
 
-    local_builder = cutscene.variable_layout.VariableLayoutBuilder()
+        local_builder = cutscene.variable_layout.VariableLayoutBuilder()
 
-    for local_var in result.locals:
-        local_builder.add_variable(local_var)
+        for local_var in result.locals:
+            local_builder.add_variable(local_var)
 
-    locals = local_builder.build()
+        locals = local_builder.build()
 
-    scene_builder = cutscene.variable_layout.VariableLayoutBuilder()
+        scene_builder = cutscene.variable_layout.VariableLayoutBuilder()
 
-    for scene_var in result.scene_vars:
-        scene_builder.add_variable(scene_var)
+        for scene_var in result.scene_vars:
+            scene_builder.add_variable(scene_var)
 
-    scene_vars = scene_builder.build()
+        scene_vars = scene_builder.build()
 
-    context = cutscene.variable_layout.VariableContext(globals, scene_vars, locals)
+        context = cutscene.variable_layout.VariableContext(globals, scene_vars, locals)
 
-    errors: list[str] = []
-    cutscene.step_generator.validate_steps(result.statements, errors, context)
+        errors: list[str] = []
+        cutscene.step_generator.validate_steps(result.statements, errors, context)
 
-    if len(errors) > 0:
-        print('\n\n'.join(errors))
+        if len(errors) > 0:
+            print('\n\n'.join(errors))
+            sys.exit(1)
+
+        with open(args.output, 'wb') as file:
+            cutscene.step_generator.generate_steps(file, result.statements, context)
+    except:
         sys.exit(1)
-
-    with open(args.output, 'wb') as file:
-        cutscene.step_generator.generate_steps(file, result.statements, context)
