@@ -8,4 +8,14 @@
 void capsule_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 void capsule_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
 
+#define CAPSULE_COLLIDER(radius, inner_half_height) \
+.minkowsi_sum = capsule_minkowski_sum, \
+.bounding_box = capsule_bounding_box,  \
+.data = {                              \
+    .capsule = {                       \
+        (radius),                      \
+        (inner_half_height),           \
+    },                                 \
+}
+
 #endif

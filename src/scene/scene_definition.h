@@ -104,10 +104,12 @@ struct biter_definition {
 enum ground_torch_type {
     GROUND_TORCH_FIRE,
     GROUND_TORCH_LIGHTNING,
+    GROUND_TORCH_KILN,
 };
 
 struct ground_torch_definition {
     struct Vector3 position;
+    struct Vector2 rotation;
     enum ground_torch_type torch_type;
     boolean_variable lit_source;
 };

@@ -25,7 +25,7 @@ scene pottery_wheel_2: i8;
 scene pottery_wheel_solved: bool;
 scene pottery_wheel_solved_secret: bool;
 
-func step_room_pottery_wheels()
-   pottery_wheel_solved = pottery_wheel_0 == 1 and pottery_wheel_1 == 0 and pottery_wheel_2 == 2;
-   pottery_wheel_solved_secret = pottery_wheel_0 == 3 and pottery_wheel_1 == 1 and pottery_wheel_2 == 0;
-end
+// func step_room_pottery_wheels()
+//   pottery_wheel_solved = pottery_wheel_0 == 1 and pottery_wheel_1 == 0 and pottery_wheel_2 == 2;
+//   pottery_wheel_solved_secret = pottery_wheel_0 == 3 and pottery_wheel_1 == 1 and pottery_wheel_2 == 0;
+// end

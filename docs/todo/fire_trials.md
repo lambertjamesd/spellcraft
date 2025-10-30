@@ -19,3 +19,6 @@
 * Build fire kiln
 * Sketch out fire kiln puzzle
 * Better visuals for current rooms
+* Figure out fast64 asset linking bug
+* Syntax errors in scripts can crash blender
+* Figure out symbolic link for blender plugin

@@ -50,6 +50,8 @@ struct dynamic_object_type {
     float max_stable_slope;
 };
 
+typedef struct dynamic_object_type dynamic_object_type_t;
+
 #define DYNAMIC_OBJECT_MARK_PUSHED(object)              (object)->is_pushed = 2
 #define DYNAMIC_OBJECT_MARK_DISABLE_FRICTION(object)    (object)->disable_friction = 2
 #define DYNAMIC_OBJECT_MARK_JUMPING(object)             (object)->is_jumping = 2

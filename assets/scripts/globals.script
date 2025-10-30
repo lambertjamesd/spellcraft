@@ -16,3 +16,6 @@ global intro_played: bool;
 global talk_count: i16;
 
 global has_entered_fire_trials: bool;
+
+global fire_trials_bossdoor_kiln_0: bool;
+global fire_trials_bossdoor_kiln_1: bool;

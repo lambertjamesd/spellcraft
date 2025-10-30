@@ -151,6 +151,12 @@
             "type": "elevator"
         },
         {
+            "name": "puzzle_kiln",
+            "description": "",
+            "mesh": "meshes/puzzle/kiln.blend#kiln",
+            "type": "ground_torch"
+        },
+        {
             "name": "puzzle_timed_torch",
             "description": "",
             "mesh": "meshes/puzzle/timed_torch.blend#timed_torch",

@@ -8,7 +8,7 @@
 #include "../entity/health.h"
 
 struct ground_torch {
-    struct Vector3 position;
+    transform_sa_t transform;
     struct tmesh* base_mesh;
     struct tmesh* flame_mesh;
     
