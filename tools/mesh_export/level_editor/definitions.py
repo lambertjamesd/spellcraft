@@ -7,6 +7,8 @@ from ..parse.struct_parse import find_structs, find_enums
 from ..entities import entry_point
 from ..cutscene import parser
 
+int_types = {'i8', 'i16', 'i32'}
+
 class Definitions:
     def __init__(self):
         self.definitions = None
@@ -18,6 +20,7 @@ class Definitions:
         self.scripts = []
         self.entry_points = []
         self.boolean_variables = []
+        self.integer_variables = []
 
         self._objects_for_library_path = {}
 
@@ -94,6 +97,7 @@ class Definitions:
         scene_location = bpy.data.filepath[:-len('.blend')] + '.script'
 
         booleans = ['disconnected']
+        integer_variables = ['disconnected']
 
         try:
             with open(globals_location) as global_file:
@@ -102,6 +106,8 @@ class Definitions:
                 for var in parse_tree.globals:
                     if var.type.name.value == 'bool':
                         booleans.append(f"global {var.name.value}: bool")
+                    if var.type.name.value in int_types:
+                        integer_variables.append(f"global {var.name.value}: {var.type.name.value}")
         except Exception as e:
             print(f"failed to load global {e}")
 
@@ -113,12 +119,13 @@ class Definitions:
                     for var in parse_tree.scene_vars:
                         if var.type.name.value == 'bool':
                             booleans.append(f"scene {var.name.value}: bool")
+                        if var.type.name.value in int_types:
+                            integer_variables.append(f"scene {var.name.value}: {var.type.name.value}")
             except Exception as e:
                 print(f"failed to load scene script {e}")
 
         self.boolean_variables = booleans
-
-
+        self.integer_variables = integer_variables
 
     def load(self):
         current_path = bpy.data.filepath
@@ -224,6 +231,10 @@ class Definitions:
     def get_boolean_variables(self):
         self.load()
         return self.boolean_variables
+        
+    def get_integer_variables(self):
+        self.load()
+        return self.integer_variables
 
     def get_object_for_library_path(self, path):
         self.load()

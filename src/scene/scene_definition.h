@@ -33,6 +33,7 @@ enum entity_type_id {
     ENTITY_TYPE_electric_ball_grabber,
     ENTITY_TYPE_electric_ball_dropper,
     ENTITY_TYPE_step_switch,
+    ENTITY_TYPE_pottery_wheel,
 };
 
 struct crate_definition {
@@ -75,6 +76,7 @@ typedef uint16_t room_id;
 #define SCENE_VARIABLE_FLAG 0x8000
 
 typedef uint16_t boolean_variable;
+typedef uint16_t integer_variable;
 
 typedef char* script_location;
 
@@ -271,6 +273,12 @@ struct npc_definition {
     struct Vector2 rotation;
     enum npc_type npc_type;
     script_location dialog;
+};
+
+struct pottery_wheel_definition {
+    struct Vector3 position;
+    boolean_variable input;
+    integer_variable output;
 };
 
 #endif

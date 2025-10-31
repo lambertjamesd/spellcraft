@@ -56,6 +56,7 @@ fixed_sizes = {
     'room_id': 2,
     'bool': 1,
     'boolean_variable': 2,
+    'integer_variable': 2,
 }
 
 fixed_alignments = {
@@ -76,6 +77,7 @@ fixed_alignments = {
     'room_id': 2,
     'bool': 1,
     'boolean_variable': 2,
+    'integer_variable': 2,
 }
 
 struct_formats = {
@@ -93,10 +95,12 @@ struct_formats = {
     'room_id': 'H',
     'bool': 'B',
     'boolean_variable': 'H',
+    'integer_variable': 'H',
 }
 
 struct_format_defaults = {
     'boolean_variable': 0xFFFF,
+    'integer_variable': 0xFFFF,
 }
 
 _string_aliases = {

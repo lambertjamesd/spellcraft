@@ -23,6 +23,9 @@ def _get_rooms(self, context):
 
 def _get_booleans(self, context):
     return list(map(lambda x: (x, x, ''), object_definitions.get_boolean_variables()))
+    
+def _get_integers(self, context):
+    return list(map(lambda x: (x, x, ''), object_definitions.get_integer_variables()))
 
 def _get_entry_points(self, context):
     return list(map(lambda x: (x, x[len('rom:/scenes/'):], ''), object_definitions.get_entry_points()))
@@ -133,7 +136,29 @@ class NODE_OT_game_object_boolean_variable(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
+         
+class NODE_OT_game_object_integer_variable(bpy.types.Operator):
+    """Set integer variable"""
+    bl_idname = "node.game_object_integer_variable"
+    bl_label = "Set integer variable property"
+    bl_description = "Sets a integer variable property on a game object"
+    bl_property = "selected_item"
+    bl_options = {'REGISTER', 'UNDO'}
 
+    selected_item: bpy.props.EnumProperty(items=_get_integers)
+    name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        context.object[self.name] = self.selected_item
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
 
 class NODE_OT_game_objects_clear_script(bpy.types.Operator):
     """Set custom property"""
@@ -204,6 +229,7 @@ _enum_mapping = {
     'script_location': NODE_OT_game_object_scripts.bl_idname,
     'room_id': NODE_OT_game_object_room_id.bl_idname,
     'boolean_variable': NODE_OT_game_object_boolean_variable.bl_idname,
+    'integer_variable': NODE_OT_game_object_integer_variable.bl_idname,
     'struct Vector3': NODE_OT_game_object_positions.bl_idname,
 }
 
@@ -269,7 +295,7 @@ def _init_default_properties(target):
             target[attr.name] = ''
         elif attr.data_type == 'room_id':
             target[attr.name] = 'room_default'
-        elif attr.data_type == 'boolean_variable':
+        elif attr.data_type == 'boolean_variable' or attr.data_type == 'integer_variable':
             target[attr.name] = 'disconnected'
         elif attr.data_type == 'struct Vector3':
             target[attr.name] = ''
@@ -546,6 +572,7 @@ _classes = [
     NODE_OT_game_object_scripts,
     NODE_OT_game_object_room_id,
     NODE_OT_game_object_boolean_variable,
+    NODE_OT_game_object_integer_variable,
     NODE_OT_game_objects_clear_script,
     NODE_OT_game_object_entry_points,
     NODE_OT_game_object_add,

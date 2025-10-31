@@ -18,8 +18,11 @@ scene basement_entrance_solved: bool;
 scene basement_entrance_door_open: bool;
 scene basement_entrance_drop_ball: bool;
 
+scene pottery_wheel_spin_0: bool;
 scene pottery_wheel_0: i8;
+scene pottery_wheel_spin_1: bool;
 scene pottery_wheel_1: i8;
+scene pottery_wheel_spin_2: bool;
 scene pottery_wheel_2: i8;
 
 scene pottery_wheel_solved: bool;

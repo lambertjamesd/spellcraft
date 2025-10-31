@@ -294,20 +294,28 @@ def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
 
     return scene_vars_builder.build()
 
+int_types = {'i8', 'i16', 'i32'}
+
 def build_variable_enum(enums: dict, globals: cutscene.variable_layout.VariableLayout, scene: cutscene.variable_layout.VariableLayout):
     boolean_enum: dict[str, int] = {}
+    integer_enum: dict[str, int] = {}
 
     for entry in globals.get_all_entries():
         if entry.type_name == 'bool':
             boolean_enum[f"global {entry.name}: bool"] = entry.offset
+        if entry.type_name in int_types:
+            boolean_enum[f"global {entry.name}: {entry.type_name}"] = entry.offset
 
     for entry in scene.get_all_entries():
         if entry.type_name == 'bool':
             boolean_enum[f"scene {entry.name}: bool"] = entry.offset | 0x8000
+        if entry.type_name in int_types:
+            boolean_enum[f"scene {entry.name}: {entry.type_name}"] = entry.offset | 0x8000
 
     boolean_enum['disconnected'] = 0xFFFF
 
     enums['boolean_variable'] = parse.struct_parse.UnorderedEnum('boolean_variable', boolean_enum)
+    enums['integer_variable'] = parse.struct_parse.UnorderedEnum('integer_variable', integer_enum)
         
 
 def build_room_entity_block(objects: list[ObjectEntry], variable_context, context, enums) -> bytes:

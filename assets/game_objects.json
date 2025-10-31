@@ -157,6 +157,12 @@
             "type": "ground_torch"
         },
         {
+            "name": "puzzle_pottery_wheel",
+            "description": "",
+            "mesh": "meshes/puzzle/pottery_wheel.blend#pottery_wheel",
+            "type": "pottery_wheel"
+        },
+        {
             "name": "puzzle_timed_torch",
             "description": "",
             "mesh": "meshes/puzzle/timed_torch.blend#timed_torch",
