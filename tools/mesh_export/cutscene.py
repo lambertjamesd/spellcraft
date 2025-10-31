@@ -53,5 +53,6 @@ if __name__ == "__main__":
 
         with open(args.output, 'wb') as file:
             cutscene.step_generator.generate_steps(file, result.statements, context)
-    except:
+    except Exception as e:
+        print(e)
         sys.exit(1)

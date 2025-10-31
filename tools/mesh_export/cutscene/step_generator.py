@@ -434,7 +434,7 @@ def generate_steps(file, statements: list, context: variable_layout.VariableCont
 
     file.write('CTSN'.encode())
 
-    file.write(struct.pack('>H', len(cutscene.steps)))
+    file.write(struct.pack('>HH', len(cutscene.steps), 1))
 
     context.locals.write_default_values(file)
 
@@ -444,3 +444,6 @@ def generate_steps(file, statements: list, context: variable_layout.VariableCont
             file.write(step.data)
         elif isinstance(step, JumpCutsceneStep):
             file.write(struct.pack('>h', step.offset))
+
+    # TODO write more than the main function
+    file.write(struct.pack('>HB', len(cutscene.steps), 1))

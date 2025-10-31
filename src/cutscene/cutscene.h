@@ -38,9 +38,20 @@ enum cutscene_step_type {
 
 struct cutscene_step;
 
+struct cutscene_function {
+    struct cutscene_step* steps;
+    uint16_t step_count;
+    const char* name;
+};
+
+typedef struct cutscene_function cutscene_function_t;
+
 struct cutscene {
     struct cutscene_step* steps;
     uint16_t step_count;
+
+    uint16_t function_count;
+    cutscene_function_t* functions;
     
     uint16_t locals_size;
     void* locals;
@@ -138,7 +149,9 @@ struct cutscene_step {
     union cutscene_step_data data;
 };
 
-struct cutscene* cutscene_new(int capacity, int locals_capacity);
+typedef struct cutscene_step cutscene_step_t;
+
+struct cutscene* cutscene_new(int capacity, int locals_capacity, int function_count);
 void cutscene_free(struct cutscene* cutscene);
 
 #define MAX_BUILDER_STEP_COUNT  32

@@ -44,6 +44,11 @@ void cutscene_destroy_template_string(struct templated_string* string) {
 char* string_load(FILE* file) {
     uint8_t result_length;
     fread(&result_length, 1, 1, file);
+
+    if (result_length == 0) {
+        return NULL;
+    }
+
     char* result = malloc(result_length + 1);
     fread(result, 1, result_length, file);
     result[result_length] = '\0';
@@ -61,11 +66,14 @@ struct cutscene* cutscene_load(char* filename) {
     uint16_t step_count;
     fread(&step_count, 2, 1, file);
 
+    uint16_t function_count;
+    fread(&function_count, 2, 1, file);
+
     uint16_t locals_size;
     fread(&locals_size, 2, 1, file);
-    
+
     // release with cutscene_free()
-    struct cutscene* result = cutscene_new(step_count, locals_size);
+    struct cutscene* result = cutscene_new(step_count, locals_size, function_count);
 
     if (locals_size) {
         fread(result->locals, 1, locals_size, file);
@@ -157,16 +165,30 @@ struct cutscene* cutscene_load(char* filename) {
             }
         }
     }
+    
+    cutscene_step_t* function_steps = result->steps;
+    for (int i = 0; i < function_count; i += 1) {
+        uint16_t function_size;
+        fread(&function_size, 2, 1, file);
+
+        result->functions[i].steps = function_steps;
+        result->functions[i].step_count = function_size;
+        result->functions[i].name = string_load(file);
+
+        function_steps += function_size;
+    }
 
     fclose(file);
     
     return result;
 }
 
-void cutscene_init(struct cutscene* cutscene, int capacity, int locals_size) {
+void cutscene_init(struct cutscene* cutscene, int capacity, int locals_size, int function_count) {
     cutscene->steps = malloc(sizeof(struct cutscene_step) * capacity);
+    cutscene->functions = malloc(sizeof(cutscene_function_t) * function_count);
     cutscene->step_count = capacity;
     cutscene->locals_size = locals_size;
+    cutscene->function_count = function_count;
     if (locals_size) {
         cutscene->locals = malloc(locals_size);
     } else {
@@ -201,11 +223,12 @@ void cutscene_destroy(struct cutscene* cutscene) {
 
     free(cutscene->steps);
     free(cutscene->locals);
+    free(cutscene->functions);
 }
 
-struct cutscene* cutscene_new(int capacity, int locals_capacity) {
+struct cutscene* cutscene_new(int capacity, int locals_capacity, int function_count) {
     struct cutscene* result = malloc(sizeof(struct cutscene));
-    cutscene_init(result, capacity, locals_capacity);
+    cutscene_init(result, capacity, locals_capacity, function_count);
     return result;
 }
 
@@ -418,7 +441,12 @@ void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_vari
 // release with cutscene_free()
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder) {
     // release with cutscene_free()
-    struct cutscene* result = cutscene_new(builder->step_count, 0);
+    struct cutscene* result = cutscene_new(builder->step_count, 0, 1);
     memcpy(result->steps, builder->steps, sizeof(struct cutscene_step) * builder->step_count);
+    result->functions[0] = (cutscene_function_t){
+        .name = NULL,
+        .step_count = builder->step_count,
+        .steps = result->steps,
+    };
     return result;
 }
