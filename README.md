@@ -81,3 +81,9 @@ Performance metric before kd tree
 - particle rendering in mesh
 - camera logic
 -  do a better job with camera tracking logic
+
+## Setup the blender plugin
+
+```
+cmd /c mklink /D "C:\Users\YourUsername\.config\nvim" "\\wsl$\Ubuntu\home\username\.config\nvim"
+```

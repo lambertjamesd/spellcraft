@@ -10,7 +10,7 @@ if __name__ == "__main__":
         local a: i32;
 
         if a * 3 < 10 then
-            exit;
+            return;
         end      
 
         say "this is a {a} \\\" test";

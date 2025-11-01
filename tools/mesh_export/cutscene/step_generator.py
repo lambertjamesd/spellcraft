@@ -237,15 +237,15 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
     cutscene.steps.append(CutsceneStep(_step_ids[step.name.value], data.getvalue()))
 
-def _generate_alias(cutscene: Cutscene, step: parser.CutsceneStep, alias: Alias, context:variable_layout.VariableContext):
+def _generate_alias(cutscene: Cutscene, step: parser.CutsceneStep, alias: Alias, context:variable_layout.VariableContext, return_label: str):
     cutscene_alias = parser.parse(alias.source, "alias")
 
     for step in cutscene_alias.statements:
-        _generate_step(cutscene, step, context)
+        _generate_step(cutscene, step, context, return_label)
 
 def _validate_step(step, errors: list[str], context: variable_layout.VariableContext):
     if isinstance(step, parser.CutsceneStep):
-        if step.name.value == 'exit':
+        if step.name.value == 'return':
             return
         
         args = None
@@ -338,14 +338,14 @@ def validate_steps(statements: list, errors: list[str], context: variable_layout
     for statement in statements:
         _validate_step(statement, errors, context)
 
-def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableContext):
+def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableContext, return_label: str):
     if isinstance(step, parser.CutsceneStep):
-        if step.name.value == 'exit':
-            cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, '$exit', step.name))
+        if step.name.value == 'return':
+            cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, return_label, step.name))
             return
         
         if step.name.value in _aliases:
-            _generate_alias(cutscene, step, _aliases[step.name.value], context)
+            _generate_alias(cutscene, step, _aliases[step.name.value], context, return_label)
             return
 
         _generate_function_step(cutscene, step, _step_args[step.name.value], context)
@@ -361,7 +361,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         size_before = len(cutscene.steps)
         
         for statement in step.statements:
-            _generate_step(cutscene, statement, context)
+            _generate_step(cutscene, statement, context, return_label)
 
         if step.else_block:
             # setup the jump that skips over the else block
@@ -376,7 +376,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
             size_before = len(cutscene.steps)
 
             for statement in step.else_block:
-                _generate_step(cutscene, statement, context)
+                _generate_step(cutscene, statement, context, return_label)
 
             # update the correct jump offset
             skip_else.offset = len(cutscene.steps) - size_before
@@ -415,15 +415,26 @@ def _idle_effected_actors(cutscene: Cutscene, statements: list):
     for actor in actors:
         cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, struct.pack('>i', actor)))
 
-def generate_steps(file, statements: list, context: variable_layout.VariableContext):
-    cutscene = Cutscene()
-
+def _generate_statement_list_steps(cutscene: Cutscene, statements: list, context: variable_layout.VariableContext, function_name: str):
     for statement in statements:
-        _generate_step(cutscene, statement, context)
+        _generate_step(cutscene, statement, context, f'$return_{function_name}')
 
-    cutscene.add_label('$exit')
+    cutscene.add_label(f'$return_{function_name}')
 
     _idle_effected_actors(cutscene, statements)
+
+def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layout.VariableContext):
+    cutscene = Cutscene()
+
+    _generate_statement_list_steps(cutscene, inputCutscene.statements, context, '')
+
+    fn_length: list[int] = []
+    main_length = len(cutscene.steps)
+
+    for fn in inputCutscene.functions:
+        before = len(cutscene.steps)
+        _generate_statement_list_steps(cutscene, fn.body, context, fn.name.value)
+        fn_length.append(len(cutscene.steps) - before)
 
     errors = cutscene.apply_jump_labels()
 
@@ -434,7 +445,7 @@ def generate_steps(file, statements: list, context: variable_layout.VariableCont
 
     file.write('CTSN'.encode())
 
-    file.write(struct.pack('>HH', len(cutscene.steps), 1))
+    file.write(struct.pack('>HH', len(cutscene.steps), 1 + len(inputCutscene.functions)))
 
     context.locals.write_default_values(file)
 
@@ -445,5 +456,11 @@ def generate_steps(file, statements: list, context: variable_layout.VariableCont
         elif isinstance(step, JumpCutsceneStep):
             file.write(struct.pack('>h', step.offset))
 
-    # TODO write more than the main function
-    file.write(struct.pack('>HB', len(cutscene.steps), 1))
+    file.write(struct.pack('>HB', main_length, 0))
+
+    for length, fn in zip(fn_length, inputCutscene.functions):
+        name_bytes = fn.name.value.encode()
+
+        file.write(struct.pack('>HB', length, len(name_bytes)))
+        file.write(name_bytes)
+

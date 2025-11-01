@@ -2,7 +2,7 @@
 global has_entered_fire_trials: bool;
 
 if has_entered_fire_trials then
-    exit;
+    return;
 end
 
 world_pause;
