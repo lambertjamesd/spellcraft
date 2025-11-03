@@ -41,7 +41,7 @@ void npc_interact(struct interactable* interactable, entity_id from) {
         return;
     }
 
-    cutscene_runner_run(npc->talk_to_cutscene, NULL, NULL, npc->cutscene_actor.collider.entity_id);
+    cutscene_runner_run(npc->talk_to_cutscene, 0, NULL, NULL, npc->cutscene_actor.collider.entity_id);
 }
 
 void npc_update(void *data) {

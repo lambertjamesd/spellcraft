@@ -77,6 +77,11 @@ class Scene():
         self.loading_zones: list[LoadingZone] = []
         self.scene_mesh_collider = entities.mesh_collider.MeshCollider()
 
+def write_string(value: str, file):
+    byte_encoded = value.encode()
+    file.write(struct.pack('>B', len(byte_encoded)))
+    file.write(byte_encoded)
+
 def get_object_type(obj: bpy.types.Object) -> str:
     if 'type' in obj:
         return obj['type']
@@ -271,17 +276,28 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
     
 def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
     scene_vars_builder = cutscene.variable_layout.VariableLayoutBuilder()
+    function_names: list[str] = []
 
-    scene_vars_name = input_filename[:-6] + '.script'
+    cutscene_filename = input_filename[:-6] + '.script'
 
     success = True
+    exists = os.path.exists(cutscene_filename)
 
-    if os.path.exists(scene_vars_name):
-        with open(scene_vars_name) as scene_vars_file:
-            scene_vars_parse_tree = cutscene.parser.parse(scene_vars_file.read(), scene_vars_name)
+    if exists:
+        with open(cutscene_filename) as scene_vars_file:
+            scene_vars_parse_tree = cutscene.parser.parse(scene_vars_file.read(), cutscene_filename)
 
             for var in scene_vars_parse_tree.scene_vars:
                 success = scene_vars_builder.add_variable(var) and success
+
+            # main function
+            function_names.append("")
+            for fn in scene_vars_parse_tree.functions:
+                function_names.append(fn.name.value)
+
+        cutscene_filename = f"rom:{cutscene_filename[6:]}"
+    else:
+        cutscene_filename = None
 
     for bool_name in generated_bools:
         scene_vars_builder.add_generated_variable(bool_name, "bool")
@@ -292,7 +308,7 @@ def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
     with open(var_json_path, 'w') as file:
         scene_vars_builder.serialize(file)
 
-    return scene_vars_builder.build()
+    return scene_vars_builder.build(), function_names, cutscene_filename
 
 int_types = {'i8', 'i16', 'i32'}
 
@@ -468,7 +484,7 @@ def process_scene():
         obj.generate_spawn_condition(variable_name)
 
 
-    scene_vars = load_cutscene_vars(
+    scene_vars, function_names, cutscene_filename = load_cutscene_vars(
         input_filename, 
         generated_bools,
         f"{output_filename[:-len('.scene')]}.json"
@@ -488,13 +504,8 @@ def process_scene():
         file.write(len(scene.locations).to_bytes(1, 'big'))
 
         for location in scene.locations:
-            location_bytes = location.name.encode()
-            file.write(len(location_bytes).to_bytes(1, 'big'))
-            file.write(location_bytes)
-
-            on_enter_bytes = location.on_enter.encode()
-            file.write(len(on_enter_bytes).to_bytes(1, 'big'))
-            file.write(on_enter_bytes)
+            write_string(location.name, file)
+            write_string(location.on_enter, file)
 
             parse.struct_serialize.write_vector3_position(file, location.obj)
             parse.struct_serialize.write_vector2_rotation(file, location.obj)
@@ -547,14 +558,19 @@ def process_scene():
         write_loading_zones(scene, base_transform, context, file)
 
         if has_overworld:
-            overworld_romname = overworld_filename.replace('filesystem/', 'rom:/')
-            file.write(struct.pack(">B", len(overworld_romname)))
-            file.write(overworld_romname.encode())
+            write_string(overworld_filename, file)
         else:
             file.write(b'\0')
 
         entities.camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
 
+        if cutscene_filename:
+            write_string(cutscene_filename, file)
+        else:
+            file.write(b'\0')
+        for room in room_collection.rooms:
+            fn_index = function_names.index(room) if room in function_names else 0xFFFF
+            file.write(fn_index.to_bytes(2, 'big'))
         scene_vars.write_default_values(file)
             
 

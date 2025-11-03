@@ -88,6 +88,7 @@ void collectable_collected(struct collectable* collectable) {
 
         cutscene_runner_run(
             cutscene_builder_finish(&builder),
+            0,
             cutscene_runner_free_on_finish(),
             NULL,
             collectable->dynamic_object.entity_id

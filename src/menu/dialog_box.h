@@ -30,4 +30,6 @@ bool dialog_box_is_active();
 void dialog_box_hide();
 void dialog_box_destroy();
 
+void dialog_box_format_string(char* into, char* format, int* args);
+
 #endif

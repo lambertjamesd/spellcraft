@@ -9,6 +9,7 @@
 #include "../render/coloru8.h"
 #include "../resource/material_cache.h"
 #include "../resource/font_cache.h"
+#include "../time/time.h"
 
 #define SPELL_SLOT_LOCATION_X   232
 #define SPELL_SLOT_LOCATION_Y   152
@@ -60,7 +61,7 @@ void hud_draw_bar(int max_width, int current_width, int prev_width, int y, color
 }
 
 void hud_render(void *data) {
-    if (cutscene_runner_is_running()) {
+    if (!update_has_layer(UPDATE_LAYER_WORLD)) {
         return;
     }
  

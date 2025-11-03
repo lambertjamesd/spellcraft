@@ -101,9 +101,9 @@ assets/materials/materials.blend: tools/mesh_export/material_generator.py $(MATE
 # cutscenes
 ###
 
-SCRIPTS := $(shell find assets/scripts -type f -name '*.script' | sort)
+SCRIPTS := $(shell find assets -type f -name '*.script' | sort)
 
-SCRIPTS_COMPILED := $(SCRIPTS:assets/scripts/%=filesystem/scripts/%)
+SCRIPTS_COMPILED := $(SCRIPTS:assets/%=filesystem/%)
 
 build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/inventory_mapping.c: tools/mesh_export/globals.py assets/scripts/globals.script
 	@mkdir -p $(dir $@)
@@ -126,7 +126,7 @@ SCENE_SOURCES := $(shell find assets/scenes -type f -name '*.blend' | sort)
 
 SCENES := $(SCENE_SOURCES:assets/scenes/%.blend=filesystem/scenes/%.scene)
 
-filesystem/scenes/%.scene filesystem/scenes/%.overworld: assets/scenes/%.blend build/assets/scripts/globals.json $(EXPORT_SOURCE)
+filesystem/scenes/%.scene filesystem/scenes/%.overworld: assets/scenes/%.blend assets/scenes/%.script build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene))
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene) $(@:%.scene=%.overworld)

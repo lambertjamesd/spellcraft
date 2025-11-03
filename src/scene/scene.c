@@ -6,6 +6,7 @@
 #include "../entity/entity_spawner.h"
 #include "../cutscene/evaluation_context.h"
 #include "../cutscene/expression_evaluate.h"
+#include "../cutscene/cutscene_runner.h"
 
 struct scene* current_scene;
 
@@ -117,6 +118,39 @@ void scene_check_despawns(struct scene* scene) {
     }
 }
 
+void scene_cutscene_finish(struct cutscene* cutscene, void* data) {
+    scene_t* scene = (scene_t*)data;
+    scene->is_running_step = false;
+    scene->next_loaded_room_cutscene = NEXT_LOADED_ROOM(scene->next_loaded_room_cutscene);
+}
+
+void scene_check_cutscenes(scene_t* scene) {
+    if (scene->is_running_step || !scene->cutscene) {
+        return;
+    }
+
+    for (
+        int i = 0; 
+        i < MAX_LOADED_ROOM; 
+        i += 1, scene->next_loaded_room_cutscene = NEXT_LOADED_ROOM(scene->next_loaded_room_cutscene)) {
+        loaded_room_t* room = &scene->loaded_rooms[scene->next_loaded_room_cutscene];
+
+        if (room->room_index == ROOM_INDEX_NONE) {
+            continue;
+        }
+
+        uint16_t scene_fn = scene->room_cutscene_functions[room->room_index];
+
+        if (scene_fn == FUNCTION_INDEX_NONE) {
+            continue;
+        }
+
+        scene->is_running_step = true;
+        cutscene_runner_run(scene->cutscene, scene_fn, scene_cutscene_finish, scene, 0);
+        break;
+    }
+}
+
 void scene_update(void* data) {
     struct scene* scene = (struct scene*)data;
 
@@ -135,6 +169,7 @@ void scene_update(void* data) {
     }
 
     scene_check_despawns(scene);
+    scene_check_cutscenes(scene);
 }
 
 void scene_queue_next(char* scene_name) {

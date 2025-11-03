@@ -52,7 +52,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
         with open(args.output, 'wb') as file:
-            cutscene.step_generator.generate_steps(file, result.statements, context)
+            cutscene.step_generator.generate_steps(file, result, context)
     except Exception as e:
         print(e)
         sys.exit(1)

@@ -15,6 +15,7 @@
 #include "camera_animation.h"
 #include "../entity/entity_spawner.h"
 #include "../particles/static_particles.h"
+#include "../cutscene/cutscene.h"
 
 struct static_entity {
     struct tmesh tmesh;
@@ -64,7 +65,8 @@ struct shared_entity_block {
 
 typedef struct shared_entity_block shared_entity_block_t;
 
-#define ROOM_INDEX_NONE     0xFFFF
+#define ROOM_INDEX_NONE         0xFFFF
+#define FUNCTION_INDEX_NONE     0xFFFF
 
 struct loaded_entity {
     entity_id id;
@@ -82,6 +84,8 @@ struct loaded_room {
 typedef struct loaded_room loaded_room_t;
 
 #define MAX_LOADED_ROOM 4
+
+#define NEXT_LOADED_ROOM(curr)  (((curr) + 1) % MAX_LOADED_ROOM)
 
 struct scene {
     struct static_entity* static_entities;
@@ -110,11 +114,15 @@ struct scene {
     uint16_t static_particles_count;
     uint16_t loading_zone_count;
     uint16_t named_location_count;
+    uint8_t next_loaded_room_cutscene;
+    bool is_running_step;
 
     entity_id last_despawn_check;
 
     loaded_room_t loaded_rooms[MAX_LOADED_ROOM];
 
+    cutscene_t* cutscene;
+    uint16_t* room_cutscene_functions;
     char* string_table;
     char* scene_vars;
 

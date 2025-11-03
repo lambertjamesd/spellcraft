@@ -109,12 +109,6 @@
             "type": "mana_plant"
         },
         {
-            "name": "puzzle_bool_and_logic",
-            "description": "",
-            "mesh": "meshes/puzzle/bool_and_logic.blend#bool_and_logic",
-            "type": "bool_and_logic"
-        },
-        {
             "name": "puzzle_camera_focus",
             "description": "",
             "mesh": "camera",

@@ -30,6 +30,7 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
 
     cutscene_runner_run(
         cutscene_builder_finish(&builder),
+        0,
         cutscene_runner_free_on_finish(),
         NULL,
         treasure_chest->dynamic_object.entity_id

@@ -34,6 +34,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_SHOW_TITLE,
     CUTSCENE_STEP_LOOK_AT_SUBJECT,
     CUTSCENE_STEP_NPC_ANIMATE,
+    CUTSCENE_STEP_PRINT,
 };
 
 struct cutscene_step;
@@ -56,6 +57,8 @@ struct cutscene {
     uint16_t locals_size;
     void* locals;
 };
+
+typedef struct cutscene cutscene_t;
 
 struct templated_string {
     char* template;
@@ -142,6 +145,9 @@ union cutscene_step_data {
         char* animation_name;
         uint8_t loop;
     } npc_animate;
+    struct {
+        struct templated_string message;
+    } print;
 };
 
 struct cutscene_step {
