@@ -35,14 +35,16 @@ union cutscene_runner_data {
 };
 
 struct cutscene_queue_entry {
-    struct cutscene* cutscene;
+    cutscene_t* cutscene;
     cutscene_finish_callback finish_callback;
     void* data;
     entity_id subject;
+    uint16_t function_index;
 };
 
 struct cutscene_active_entry {
-    struct cutscene* cutscene;
+    cutscene_t* cutscene;
+    cutscene_function_t* function;
     cutscene_finish_callback finish_callback;
     void* data;
     entity_id subject;
@@ -66,7 +68,7 @@ struct cutscene_runner {
 
 static struct cutscene_runner cutscene_runner;
 
-void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data, entity_id subject);
+void cuscene_runner_start(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject);
 
 void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cutscene_step* step) {
     switch (step->type)
@@ -305,7 +307,13 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
     }
 }
 
-void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
+void cuscene_runner_start(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
+    if (function_index < 0 || function_index >= cutscene->function_count) {
+        return;
+    }
+
+    cutscene_function_t* fn = &cutscene->functions[function_index];
+
     if (cutscene->step_count == 0) {
         return;
     }
@@ -315,6 +323,7 @@ void cuscene_runner_start(struct cutscene* cutscene, cutscene_finish_callback fi
 
     struct cutscene_active_entry* next = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
     next->cutscene = cutscene;
+    next->function = fn;
     next->finish_callback = finish_callback;
     next->data = data;
     next->subject = subject;
@@ -331,7 +340,7 @@ void cutscene_runner_update(void* data) {
 
     struct cutscene_active_entry* active_cutscene = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
 
-    struct cutscene_step* step = &active_cutscene->cutscene->steps[active_cutscene->current_instruction];
+    struct cutscene_step* step = &active_cutscene->function->steps[active_cutscene->current_instruction];
 
     if (!cutscene_runner_update_step(active_cutscene, step)) {
         return;
@@ -341,9 +350,9 @@ void cutscene_runner_update(void* data) {
 
     while (cutscene_runner.current_cutscene >= 0) {
         active_cutscene = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
-        step = &active_cutscene->cutscene->steps[active_cutscene->current_instruction];
+        step = &active_cutscene->function->steps[active_cutscene->current_instruction];
 
-        if (active_cutscene->current_instruction < active_cutscene->cutscene->step_count) {
+        if (active_cutscene->current_instruction < active_cutscene->function->step_count) {
             cutscene_runner_init_step(active_cutscene, step);
             return;
         }
@@ -368,7 +377,7 @@ void cutscene_runner_update(void* data) {
         cutscene_runner.next_cutscene = 0;
     }
 
-    cuscene_runner_start(queue_entry->cutscene, queue_entry->finish_callback, queue_entry->data, queue_entry->subject);
+    cuscene_runner_start(queue_entry->cutscene, queue_entry->function_index, queue_entry->finish_callback, queue_entry->data, queue_entry->subject);
     queue_entry->cutscene = NULL;
 }
 
@@ -392,9 +401,9 @@ void cutscene_runner_init() {
     }
 }
 
-void cutscene_runner_run(struct cutscene* cutscene, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
+void cutscene_runner_run(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
     if (cutscene_runner.current_cutscene == -1) {
-        cuscene_runner_start(cutscene, finish_callback, data, subject);
+        cuscene_runner_start(cutscene, function_index, finish_callback, data, subject);
         return;
     }
 
@@ -411,6 +420,7 @@ void cutscene_runner_run(struct cutscene* cutscene, cutscene_finish_callback fin
     assert(!queue_entry->cutscene);
 
     queue_entry->cutscene = cutscene;
+    queue_entry->function_index = function_index;
     queue_entry->finish_callback = finish_callback;
     queue_entry->data = data;
     queue_entry->subject = subject;

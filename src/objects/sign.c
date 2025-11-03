@@ -14,7 +14,7 @@ void sign_interact(struct interactable* interactable, entity_id from) {
     if (!sign->read_cutscene) {
         return;
     }
-    cutscene_runner_run(sign->read_cutscene, NULL, NULL, sign->dynamic_object.entity_id);
+    cutscene_runner_run(sign->read_cutscene, 0, NULL, NULL, sign->dynamic_object.entity_id);
 }
 
 void sign_init(sign_t* sign, struct sign_definition* def, entity_id entity_id) {

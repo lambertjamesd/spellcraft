@@ -57,6 +57,8 @@ struct cutscene {
     void* locals;
 };
 
+typedef struct cutscene cutscene_t;
+
 struct templated_string {
     char* template;
     uint16_t nargs;
