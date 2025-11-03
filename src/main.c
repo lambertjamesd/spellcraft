@@ -60,7 +60,7 @@ void reset() {
 }
 
 static struct frame_memory_pool frame_memory_pools[2];
-static uint8_t next_frame_memoy_pool;
+static uint8_t next_frame_memory_pool;
 
 void render_3d() {
     uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
@@ -73,15 +73,15 @@ void render_3d() {
     t3d_light_set_ambient(colorAmbient); // one global ambient light, always active
     t3d_light_set_count(0);
     
-    struct frame_memory_pool* pool = &frame_memory_pools[next_frame_memoy_pool];
+    struct frame_memory_pool* pool = &frame_memory_pools[next_frame_memory_pool];
     frame_pool_reset(pool);
 
     T3DViewport* viewport = frame_malloc(pool, sizeof(T3DViewport));
     *viewport = t3d_viewport_create();
 
-    render_scene_render(&current_scene->camera, viewport, &frame_memory_pools[next_frame_memoy_pool]);
+    render_scene_render(&current_scene->camera, viewport, &frame_memory_pools[next_frame_memory_pool]);
     
-    next_frame_memoy_pool ^= 1;
+    next_frame_memory_pool ^= 1;
 }
 
 void render_menu() {
