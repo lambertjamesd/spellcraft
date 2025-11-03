@@ -23,16 +23,17 @@ CUTSCENE_STEP_CAMERA_LOOK_AT_NPC = 12
 CUTSCENE_STEP_CAMERA_FOLLOW = 13
 CUTSCENE_STEP_CAMERA_RETURN = 14
 CUTSCENE_STEP_CAMERA_ANIMATE = 15
-CUTSCENE_STEP_CAMERA_WAIT = 16
-CUTSCENE_STEP_INTERACT_WITH_LOCATION = 17
-CUTSCENE_STEP_FADE = 18
-CUTSCENE_STEP_INTERACT_WITH_POSITION = 19
-CUTSCENE_STEP_NPC_WAIT = 20
-CUTSCENE_STEP_NPC_SET_SPEED = 21
-CUTSCENE_STEP_SHOW_TITLE = 22
-CUTSCENE_STEP_LOOK_AT_SUBJECT = 23
-CUTSCENE_STEP_NPC_ANIMATE = 24
-
+CUTSCENE_STEP_CAMERA_MOVE_TO = 16
+CUTSCENE_STEP_CAMERA_WAIT = 17
+CUTSCENE_STEP_INTERACT_WITH_LOCATION = 18
+CUTSCENE_STEP_FADE = 19
+CUTSCENE_STEP_INTERACT_WITH_POSITION = 20
+CUTSCENE_STEP_NPC_WAIT = 21
+CUTSCENE_STEP_NPC_SET_SPEED = 22
+CUTSCENE_STEP_SHOW_TITLE = 23
+CUTSCENE_STEP_LOOK_AT_SUBJECT = 24
+CUTSCENE_STEP_NPC_ANIMATE = 25
+CUTSCENE_STEP_PRINT = 26
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -63,7 +64,8 @@ _step_args = {
     "npc_set_speed": [ParameterType("int", True), ParameterType("float", True)],
     "show_title": [ParameterType("str", True)],
     "look_at_subject": [],
-    "npc_animate": [ParameterType("int", True), ParameterType("str", True), ParameterType("bool", True)]
+    "npc_animate": [ParameterType("int", True), ParameterType("str", True), ParameterType("bool", True)],
+    "print": [ParameterType("tstr", True)],
 }
 
 _step_ids = {
@@ -85,6 +87,7 @@ _step_ids = {
     "show_title": CUTSCENE_STEP_SHOW_TITLE,
     "look_at_subject": CUTSCENE_STEP_LOOK_AT_SUBJECT,
     "npc_animate": CUTSCENE_STEP_NPC_ANIMATE,
+    "print": CUTSCENE_STEP_PRINT,
 }
 
 _steps_that_need_idle = {

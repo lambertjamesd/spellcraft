@@ -32,6 +32,7 @@ void evaluation_context_destroy(struct evaluation_context* context);
 void evaluation_context_push(struct evaluation_context* context, int value);
 int evaluation_context_pop(struct evaluation_context* context);
 void evaluation_context_popn(struct evaluation_context* context, int* into, int count);
+int evaluation_context_peek(struct evaluation_context* context);
 
 int evaluation_context_load(void* data, enum data_type data_type, int word_offset);
 void evaluation_context_save(void* data, enum data_type data_type, int word_offset, int value);

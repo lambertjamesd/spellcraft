@@ -25,6 +25,10 @@ int evaluation_context_pop(struct evaluation_context* context) {
     return context->stack[context->current_stack];
 }
 
+int evaluation_context_peek(struct evaluation_context* context) {
+    return context->stack[context->current_stack];
+}
+
 void evaluation_context_popn(struct evaluation_context* context, int* into, int count) {
     assert(context->current_stack >= count);
     context->current_stack -= count;

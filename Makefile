@@ -101,9 +101,9 @@ assets/materials/materials.blend: tools/mesh_export/material_generator.py $(MATE
 # cutscenes
 ###
 
-SCRIPTS := $(shell find assets/scripts -type f -name '*.script' | sort)
+SCRIPTS := $(shell find assets -type f -name '*.script' | sort)
 
-SCRIPTS_COMPILED := $(SCRIPTS:assets/scripts/%=filesystem/scripts/%)
+SCRIPTS_COMPILED := $(SCRIPTS:assets/%=filesystem/%)
 
 build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/inventory_mapping.c: tools/mesh_export/globals.py assets/scripts/globals.script
 	@mkdir -p $(dir $@)

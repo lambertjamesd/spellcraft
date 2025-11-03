@@ -266,6 +266,13 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             cutscene_actor_run_animation(subject, step->data.npc_animate.animation_name, step->data.npc_animate.loop);
             break;
         }
+        case CUTSCENE_STEP_PRINT: {
+            int args[step->data.print.message.nargs];
+            evaluation_context_popn(&cutscene->context, args, step->data.print.message.nargs);
+            char message[128];
+            dialog_box_format_string(message, step->data.print.message.template, args);
+            debugf("%s\n", message);
+        }
     }
 }
 
@@ -309,12 +316,14 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
 
 void cuscene_runner_start(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
     if (function_index < 0 || function_index >= cutscene->function_count) {
+        finish_callback(cutscene, data);
         return;
     }
 
     cutscene_function_t* fn = &cutscene->functions[function_index];
 
     if (cutscene->step_count == 0) {
+        finish_callback(cutscene, data);
         return;
     }
 

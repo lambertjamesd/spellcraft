@@ -28,6 +28,11 @@ scene pottery_wheel_2: i8;
 scene pottery_wheel_solved: bool;
 scene pottery_wheel_solved_secret: bool;
 
+func room_crossing()
+    crossing_jelly_all_died = crossing_jelly_0_died and crossing_jelly_1_died and crossing_jelly_2_died;
+    print "hello world {crossing_jelly_all_died} = {crossing_jelly_0_died} and {crossing_jelly_1_died} and {crossing_jelly_2_died}";
+end
+
 func room_pottery_wheels()
     pottery_wheel_solved = pottery_wheel_0 == 1 and pottery_wheel_1 == 0 and pottery_wheel_2 == 2;
     pottery_wheel_solved_secret = pottery_wheel_0 == 3 and pottery_wheel_1 == 1 and pottery_wheel_2 == 0;

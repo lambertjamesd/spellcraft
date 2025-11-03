@@ -163,6 +163,9 @@ struct cutscene* cutscene_load(char* filename) {
                 fread(&step->data.npc_animate.loop, 1, 1, file);
                 break;
             }
+            case CUTSCENE_STEP_PRINT:
+                cutscene_load_template_string(&step->data.print.message, file);
+                break;
         }
     }
     
@@ -215,6 +218,9 @@ void cutscene_destroy(struct cutscene* cutscene) {
                 break;
             case CUTSCENE_STEP_SHOW_TITLE:
                 free(step->data.show_title.message);
+                break;
+            case CUTSCENE_STEP_PRINT:
+                cutscene_destroy_template_string(&step->data.print.message);
                 break;
             default:
                 break;

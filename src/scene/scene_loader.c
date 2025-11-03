@@ -155,6 +155,34 @@ void scene_load_loading_zones(struct scene* scene, FILE* file) {
     }
 }
 
+void scene_load_cutscene(struct scene* scene, FILE* file) {
+    uint8_t cutscene_name_length;
+    fread(&cutscene_name_length, 1, 1, file);
+
+    if (cutscene_name_length) {
+        char cutscene_name[cutscene_name_length + 1];
+        fread(cutscene_name, 1, cutscene_name_length, file);
+        cutscene_name[cutscene_name_length] = '\0';
+        scene->cutscene = cutscene_load(cutscene_name);
+    } else {
+        scene->cutscene = NULL;
+    }
+
+    if (scene->room_count) {
+        scene->room_cutscene_functions = malloc(sizeof(uint16_t) * scene->room_count);
+        fread(scene->room_cutscene_functions, sizeof(uint16_t), scene->room_count, file);
+    } else {
+        scene->room_cutscene_functions = NULL;
+    }
+
+    uint16_t scene_var_length;
+    fread(&scene_var_length, 2, 1, file);
+    void* scene_vars = malloc(scene_var_length);
+    fread(scene_vars, scene_var_length, 1, file);
+    scene->scene_vars = scene_vars;
+    expression_set_scene_variables(scene->scene_vars);
+}
+
 struct scene* scene_load(const char* filename) {
     FILE* file = asset_fopen(filename, NULL);
 
@@ -167,6 +195,9 @@ struct scene* scene_load(const char* filename) {
     for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
         scene->loaded_rooms[i].room_index = ROOM_INDEX_NONE;
     }
+
+    scene->next_loaded_room_cutscene = 0;
+    scene->is_running_step = false;
 
     struct player_definition player_def;
     player_def.location = gZeroVec;
@@ -285,12 +316,7 @@ struct scene* scene_load(const char* filename) {
 
     scene_load_camera_animations(&scene->camera_animations, filename, file);
 
-    uint16_t scene_var_length;
-    fread(&scene_var_length, 2, 1, file);
-    void* scene_vars = malloc(scene_var_length);
-    fread(scene_vars, scene_var_length, 1, file);
-    scene->scene_vars = scene_vars;
-    expression_set_scene_variables(scene->scene_vars);
+    scene_load_cutscene(scene, file);
 
     fclose(file);
 
@@ -380,6 +406,9 @@ void scene_release(struct scene* scene) {
 
     camera_animation_list_destroy(&scene->camera_animations);
 
+    if (scene->cutscene) {
+        cutscene_free(scene->cutscene);
+    }
     free(scene->scene_vars);
     expression_set_scene_variables(NULL);
 
