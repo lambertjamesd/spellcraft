@@ -392,8 +392,14 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         if not expression:
             raise Exception(f"Could not generate expression {step.value}")
         cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_EXPRESSION, expression.to_bytes()))
+        
+        step_type = CUTSCENE_STEP_SET_LOCAL
 
-        step_type = CUTSCENE_STEP_SET_LOCAL if context.is_local(step.name.value) else CUTSCENE_STEP_SET_GLOBAL
+        if context.is_global(step.name.value):
+            step_type = CUTSCENE_STEP_SET_GLOBAL
+        elif context.is_scene_var(step.name.value):
+            step_type = CUTSCENE_STEP_SET_SCENE
+
         var_type = context.get_variable_type(step.name.value)
         bit_offset = context.get_variable_offset(step.name.value)
 
