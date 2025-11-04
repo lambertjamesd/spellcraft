@@ -118,7 +118,7 @@ filesystem/scripts/%.script: assets/scripts/%.script build/assets/scripts/global
 	python3 tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json $< $(@:filesystem/%=build/assets/%)
 	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
 	
-filesystem/scenes/%.script: assets/scenes/%.script build/assets/scenes/%.json build/assets/scenes/%.blender build/assets/scripts/globals.json $(EXPORT_SOURCE)
+filesystem/scenes/%.script: assets/scenes/%.script build/assets/scenes/%.json assets/scenes/%.blend build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
 	python3 tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json -c $(@:filesystem/%.script=build/assets/%.json) $< $(@:filesystem/%=build/assets/%)
@@ -132,7 +132,7 @@ SCENE_SOURCES := $(shell find assets/scenes -type f -name '*.blend' | sort)
 
 SCENES := $(SCENE_SOURCES:assets/scenes/%.blend=filesystem/scenes/%.scene)
 
-filesystem/scenes/%.scene filesystem/scenes/%.overworld: assets/scenes/%.blend assets/scenes/%.script build/assets/scripts/globals.json $(EXPORT_SOURCE)
+filesystem/scenes/%.scene filesystem/scenes/%.overworld: assets/scenes/%.blend $(wildcard assets/scenes/%.script) build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene))
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene) $(@:%.scene=%.overworld)
