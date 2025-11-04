@@ -112,10 +112,16 @@ build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/in
 filesystem/scripts/globals.dat: build/assets/scripts/globals.dat
 	$(MK_ASSET) -o $(dir $@) -w 4 $<
 
-filesystem/%.script: assets/%.script build/assets/scripts/globals.json $(EXPORT_SOURCE)
+filesystem/scripts/%.script: assets/scripts/%.script build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
 	python3 tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json $< $(@:filesystem/%=build/assets/%)
+	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
+	
+filesystem/scenes/%.script: assets/scenes/%.script build/assets/scenes/%.json build/assets/scripts/globals.json $(EXPORT_SOURCE)
+	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
+	python3 tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json -c $(@:filesystem/%.script=build/assets/%.json) $< $(@:filesystem/%=build/assets/%)
 	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
 
 ###
@@ -132,6 +138,8 @@ filesystem/scenes/%.scene filesystem/scenes/%.overworld: assets/scenes/%.blend a
 	$(BLENDER_4) $< --background --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene) $(@:%.scene=%.overworld)
 	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene)
 	-cp $(@:filesystem/scenes/%.scene=build/assets/scenes/%.sanim) $(@:%.scene=%.sanim)
+
+build/assets/scenes/%.json: filesystem/scenes/%.scene
 
 ###
 # tests

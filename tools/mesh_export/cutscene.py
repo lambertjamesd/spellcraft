@@ -12,6 +12,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument('-g', '--globals')
+    parser.add_argument('-c', '--cutscenes', required=False)
 
     parser.add_argument('input')
     parser.add_argument('output')
@@ -20,9 +21,14 @@ if __name__ == "__main__":
     result: cutscene.parser.Cutscene = None
 
     globals = cutscene.variable_layout.VariableLayout()
+    scene_vars = cutscene.variable_layout.VariableLayout()
 
     with open(args.globals) as file:
         globals.deserialize(file)
+
+    if args.cutscenes:
+        with open(args.cutscenes) as file:
+            scene_vars.deserialize(file)
     
     try:
         with open(args.input) as file:
@@ -34,13 +40,6 @@ if __name__ == "__main__":
             local_builder.add_variable(local_var)
 
         locals = local_builder.build()
-
-        scene_builder = cutscene.variable_layout.VariableLayoutBuilder()
-
-        for scene_var in result.scene_vars:
-            scene_builder.add_variable(scene_var)
-
-        scene_vars = scene_builder.build()
 
         context = cutscene.variable_layout.VariableContext(globals, scene_vars, locals)
 
