@@ -1,6 +1,6 @@
 
 sign_start;
 
-say "D is not last";
+say "Only push is missing";
 
 sign_end;

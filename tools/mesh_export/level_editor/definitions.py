@@ -58,7 +58,7 @@ class Definitions:
                 if abs_path == bpy.data.filepath:
                     continue
 
-                relative_path = os.path.relpath(abs_path, start_path)
+                relative_path = os.path.relpath(abs_path, start_path).replace("\\", "/")
 
                 result.append(f"rom:/{relative_path}")
 

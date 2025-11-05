@@ -1,6 +1,6 @@
 
 sign_start;
 
-say "C is not next to A";
+say "Fire cannot touch fire spin";
 
 sign_end;
