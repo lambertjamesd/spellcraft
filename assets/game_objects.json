@@ -43,6 +43,12 @@
             "type": "door"
         },
         {
+            "name": "objects_env_interactive_bramble_dry_barrier",
+            "description": "",
+            "mesh": "meshes/objects/env_interactive/bramble_dry_barrier.blend#Cube.001",
+            "type": "burning_thorns"
+        },
+        {
             "name": "objects_fireforest_burning_tree_1",
             "description": "",
             "mesh": "meshes/objects/fireforest/burning_tree_1.blend#burningtree1_mesh",
@@ -107,6 +113,12 @@
             "description": "",
             "mesh": "meshes/pickups/mana_plant.blend#mana_plant",
             "type": "mana_plant"
+        },
+        {
+            "name": "puzzle_bool_and_logic",
+            "description": "",
+            "mesh": "meshes/puzzle/bool_and_logic.blend#bool_and_logic",
+            "type": "bool_and_logic"
         },
         {
             "name": "puzzle_camera_focus",

@@ -11,6 +11,7 @@
 struct burning_thorns {
     struct TransformSingleAxis transform;
     struct renderable renderable;
+    material_t* burn_material;
 
     health_t health;
     dynamic_object_t collider;
