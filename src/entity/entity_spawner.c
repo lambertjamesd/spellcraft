@@ -28,6 +28,7 @@
 #include "../puzzle/timed_torch.h"
 #include "../puzzle/step_switch.h"
 #include "../puzzle/pottery_wheel.h"
+#include "../puzzle/fan_switch.h"
 
 #include "../pickups/mana_plant.h"
 
@@ -75,6 +76,7 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(electric_ball_dropper, fields_empty),
     ENTITY_DEFINITION(step_switch, fields_empty),
     ENTITY_DEFINITION(pottery_wheel, fields_empty),
+    ENTITY_DEFINITION(fan_switch, fields_empty),
 };
 
 struct entity_definition* entity_find_def(const char* name) {

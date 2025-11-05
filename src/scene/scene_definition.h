@@ -34,6 +34,7 @@ enum entity_type_id {
     ENTITY_TYPE_electric_ball_dropper,
     ENTITY_TYPE_step_switch,
     ENTITY_TYPE_pottery_wheel,
+    ENTITY_TYPE_fan_switch,
 };
 
 struct crate_definition {
@@ -283,6 +284,12 @@ struct pottery_wheel_definition {
     struct Vector3 position;
     boolean_variable input;
     integer_variable output;
+};
+
+struct fan_switch_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    boolean_variable output;
 };
 
 #endif
