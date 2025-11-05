@@ -8,14 +8,14 @@
 #include "../resource/material_cache.h"
 #include "../render/coloru8.h"
 
-#define BURN_TIME           2.0f
-#define TRANSITION_TIME     1.5f
+#define BURN_TIME           4.5f
+#define TRANSITION_TIME     4.0f
 #define NOT_BURNING         -1.0f
 
 #define DARKEN_TIME         (BURN_TIME - TRANSITION_TIME)
 
 static color_t prim_color = {255, 206, 133, 255};
-static color_t color_black = {0, 0, 0, 255};
+static color_t color_black = {0, 0, 0, 0};
 
 static color_t burn_away_start = {0, 0, 0, 128};
 static color_t burn_away_end = {128, 128, 128, 0};
@@ -48,8 +48,9 @@ void burning_thorns_update(void* data) {
         float lerp_value = thorns->burn_time * (1.0f / TRANSITION_TIME);
 
         color_t burn_color = coloru8_lerp(&burn_away_end, &burn_away_start, lerp_value);
-        burn_color.r = burning_thorn_offset(burn_color.r, 20);
-        burn_color.g = burning_thorn_offset(burn_color.g, 10);
+        burn_color.r = burning_thorn_offset(burn_color.r, 11);
+        burn_color.g = burning_thorn_offset(burn_color.g, 9);
+        burn_color.b = burning_thorn_offset(burn_color.b, 7);
         thorns->attrs[0].color = burn_color;
     } else {
         float lerp_value = (thorns->burn_time - TRANSITION_TIME) * (1.0f / DARKEN_TIME);
@@ -78,7 +79,7 @@ void burning_thorns_init(burning_thorns_t* thorns, struct burning_thorns_definit
     render_scene_add_renderable(&thorns->renderable, 1.4f);
 
     thorns->attrs[0].type = ELEMENT_ATTR_PRIM_COLOR;
-    thorns->attrs[0].color = (color_t){255, 255, 255, 255};
+    thorns->attrs[0].color = prim_color;
     thorns->attrs[1].type = ELEMENT_ATTR_NONE;
 
     thorns->renderable.attrs = thorns->attrs;
