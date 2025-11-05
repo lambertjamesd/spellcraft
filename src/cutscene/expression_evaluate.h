@@ -14,4 +14,7 @@ void* expression_get_scene_variables();
 bool expression_get_bool(boolean_variable variable);
 void expression_set_bool(boolean_variable variable, bool value);
 
+int expression_get_integer(integer_variable variable);
+void expression_set_integer(integer_variable variable, int value);
+
 #endif

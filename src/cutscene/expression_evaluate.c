@@ -36,6 +36,34 @@ void expression_set_bool(boolean_variable variable, bool value) {
     }
 }
 
+int expression_get_integer(integer_variable variable) {
+    if (variable == VARIABLE_DISCONNECTED) {
+        return 0;
+    }
+
+    data_type_t type = GET_INT_VAR_SIZE(variable);
+
+    if (SCENE_VARIABLE_FLAG & variable) {
+        return evaluation_context_load(scene_variables, type, variable & INT_OFFSET_MASK);
+    } else {
+        return evaluation_context_load(savefile_get_globals(), type, variable & INT_OFFSET_MASK);
+    }
+}
+
+void expression_set_integer(integer_variable variable, int value) {
+    if (variable == VARIABLE_DISCONNECTED) {
+        return;
+    }
+
+    data_type_t type = GET_INT_VAR_SIZE(variable);
+    
+    if (SCENE_VARIABLE_FLAG & variable) {
+        evaluation_context_save(scene_variables, type, variable & INT_OFFSET_MASK, value);
+    } else {
+        evaluation_context_save(savefile_get_globals(), type, variable & INT_OFFSET_MASK, value);
+    }
+}
+
 void expression_evaluate(struct evaluation_context* context, struct expression* expression) {
     uint8_t* current = expression->expression_program;
 

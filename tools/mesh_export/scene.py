@@ -310,7 +310,12 @@ def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
 
     return scene_vars_builder.build(), function_names, cutscene_filename
 
-int_types = {'i8', 'i16', 'i32'}
+int_types = {'i8': 1, 'i16': 2, 'i32': 3}
+
+TYPE_OFFSET = 13
+
+def int_type_flag(name: str) -> int:
+    return int_types[name] << TYPE_OFFSET
 
 def build_variable_enum(enums: dict, globals: cutscene.variable_layout.VariableLayout, scene: cutscene.variable_layout.VariableLayout):
     boolean_enum: dict[str, int] = {}
@@ -320,13 +325,13 @@ def build_variable_enum(enums: dict, globals: cutscene.variable_layout.VariableL
         if entry.type_name == 'bool':
             boolean_enum[f"global {entry.name}: bool"] = entry.offset
         if entry.type_name in int_types:
-            boolean_enum[f"global {entry.name}: {entry.type_name}"] = entry.offset
+            boolean_enum[f"global {entry.name}: {entry.type_name}"] = entry.word_offset() | int_type_flag(entry.type_name)
 
     for entry in scene.get_all_entries():
         if entry.type_name == 'bool':
             boolean_enum[f"scene {entry.name}: bool"] = entry.offset | 0x8000
         if entry.type_name in int_types:
-            boolean_enum[f"scene {entry.name}: {entry.type_name}"] = entry.offset | 0x8000
+            boolean_enum[f"scene {entry.name}: {entry.type_name}"] = entry.word_offset() | 0x8000 | int_type_flag(entry.type_name)
 
     boolean_enum['disconnected'] = 0xFFFF
 

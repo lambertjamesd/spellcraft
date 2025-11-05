@@ -18,6 +18,8 @@ enum data_type {
     DATA_TYPE_ADDRESS,
 };
 
+typedef enum data_type data_type_t;
+
 struct evaluation_context {
     int stack[MAX_STACK_SIZE];
     uint16_t current_stack;

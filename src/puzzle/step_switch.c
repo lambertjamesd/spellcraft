@@ -25,6 +25,8 @@ void step_switch_update(void* data) {
         }
     }
 
+    // debugf("is_stepping = %d\n", is_stepping);
+
     step_switch->transform.position.y = mathfMoveTowards(
         step_switch->transform.position.y,
         step_switch->target_pos,

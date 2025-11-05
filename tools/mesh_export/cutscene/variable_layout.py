@@ -63,6 +63,9 @@ class VaraibleLayoutEntry():
         self.bit_size: int = bit_size
         self.initial_value: bytes = initial_value
 
+    def word_offset(self) -> int:
+        return self.offset // self.bit_size
+
 class VariableLayout():
     def __init__(self):
         self._entries: dict[str, VaraibleLayoutEntry] = {}

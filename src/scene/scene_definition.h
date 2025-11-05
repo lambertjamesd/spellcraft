@@ -74,6 +74,10 @@ typedef uint16_t room_id;
 
 #define VARIABLE_DISCONNECTED   0xFFFF
 #define SCENE_VARIABLE_FLAG 0x8000
+#define INT_SIZE_MASK       0x6000
+#define INT_OFFSET_MASK     0x1FFF
+
+#define GET_INT_VAR_SIZE(var)   (data_type_t)(((var) & INT_SIZE_MASK) >> 13)
 
 typedef uint16_t boolean_variable;
 typedef uint16_t integer_variable;

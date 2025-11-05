@@ -339,7 +339,7 @@ void cuscene_runner_start(struct cutscene* cutscene, int function_index, cutscen
     next->current_instruction = 0;
     evaluation_context_init(&next->context, cutscene->locals_size);
 
-    cutscene_runner_init_step(next, &cutscene->steps[0]);
+    cutscene_runner_init_step(next, &fn->steps[0]);
 }
 
 void cutscene_runner_update(void* data) {

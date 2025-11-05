@@ -442,6 +442,10 @@ void collision_scene_collide() {
 
         struct dynamic_object* object = (struct dynamic_object*)element->object;
 
+        if (object->is_fixed) {
+            continue;
+        }
+
         collision_scene_collide_single(element->object, &prev_pos[i]);
 
         bool is_grounded = dynamic_object_get_ground(object) != NULL;
