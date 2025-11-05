@@ -8,8 +8,8 @@
 #include "../resource/material_cache.h"
 #include "../render/coloru8.h"
 
-#define BURN_TIME           4.5f
-#define TRANSITION_TIME     4.0f
+#define BURN_TIME           2.9f
+#define TRANSITION_TIME     2.6f
 #define NOT_BURNING         -1.0f
 
 #define DARKEN_TIME         (BURN_TIME - TRANSITION_TIME)
@@ -48,9 +48,9 @@ void burning_thorns_update(void* data) {
         float lerp_value = thorns->burn_time * (1.0f / TRANSITION_TIME);
 
         color_t burn_color = coloru8_lerp(&burn_away_end, &burn_away_start, lerp_value);
-        burn_color.r = burning_thorn_offset(burn_color.r, 11);
-        burn_color.g = burning_thorn_offset(burn_color.g, 9);
-        burn_color.b = burning_thorn_offset(burn_color.b, 7);
+        burn_color.r = burning_thorn_offset(burn_color.r, 13);
+        burn_color.g = burning_thorn_offset(burn_color.g, 7);
+        burn_color.b = burning_thorn_offset(burn_color.b, 6);
         thorns->attrs[0].color = burn_color;
     } else {
         float lerp_value = (thorns->burn_time - TRANSITION_TIME) * (1.0f / DARKEN_TIME);
