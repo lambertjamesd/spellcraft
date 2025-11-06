@@ -39,7 +39,7 @@ void setup() {
     fade_effect_set((color_t){0, 0, 0, 255}, 0.0f);
     fade_effect_set((color_t){0, 0, 0, 0}, 3.0f);
 
-    scene_queue_next("rom:/scenes/fire_trials.scene");
+    scene_queue_next("rom:/scenes/fire_trials.scene#test");
     // scene_queue_next("rom:/scenes/fire_trials.scene");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
     // scene_queue_next("rom:/scenes/ability_testing.scene");

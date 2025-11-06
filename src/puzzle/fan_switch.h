@@ -11,6 +11,7 @@ struct fan_switch {
     transform_sa_t transform;
     renderable_t renderable;
     dynamic_object_t collider;
+    boolean_variable output;
 };
 
 typedef struct fan_switch fan_switch_t;

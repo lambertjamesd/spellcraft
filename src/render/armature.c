@@ -5,9 +5,11 @@
 #include <math.h>
 #include "../math/matrix.h"
 #include "../util/flags.h"
+#include "../render/defs.h"
 
-#define POSITION_SCALE      (1.0f / 256.0f)
+#define POSITION_SCALE      (WORLD_SCALE / 256.0f)
 #define QUATERNION_SCALE    (1.0f / 32767.0f)
+#define SCALE_SCALE         (1.0f / 256.0f)
 
 void armature_unpack_transform(struct armature_packed_transform* packed, struct Transform* result) {
     result->position.x = packed->x * POSITION_SCALE;
@@ -21,9 +23,9 @@ void armature_unpack_transform(struct armature_packed_transform* packed, struct 
     float wSqrd = 1.0f - result->rotation.x * result->rotation.x - result->rotation.y * result->rotation.y - result->rotation.z * result->rotation.z;
     result->rotation.w = wSqrd > 0.0f ? sqrtf(wSqrd) : 0.0f;
 
-    result->scale.x = packed->sx * POSITION_SCALE;
-    result->scale.y = packed->sy * POSITION_SCALE;
-    result->scale.z = packed->sz * POSITION_SCALE;
+    result->scale.x = packed->sx * SCALE_SCALE;
+    result->scale.y = packed->sy * SCALE_SCALE;
+    result->scale.z = packed->sz * SCALE_SCALE;
 }
 
 void armature_definition_init(struct armature_definition* definition, int bone_count) {

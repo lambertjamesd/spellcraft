@@ -157,6 +157,12 @@
             "type": "elevator"
         },
         {
+            "name": "puzzle_fan_switch",
+            "description": "",
+            "mesh": "meshes/puzzle/fan_switch.blend#fan_switch",
+            "type": "fan_switch"
+        },
+        {
             "name": "puzzle_kiln",
             "description": "",
             "mesh": "meshes/puzzle/kiln.blend#kiln",

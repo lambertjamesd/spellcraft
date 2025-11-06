@@ -10,6 +10,8 @@ struct Quaternion {
     float x, y, z, w;
 };
 
+typedef struct Quaternion quaternion_t;
+
 extern struct Quaternion gQuaternionZero;
 
 void quatIdent(struct Quaternion* q);
