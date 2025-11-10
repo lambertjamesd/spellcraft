@@ -14,7 +14,7 @@ static struct dynamic_object_type crate_collision_type = {
             .half_size = {0.5f, 0.5f, 0.5f},
         }
     },
-    .friction = 0.1f,
+    .friction = 0.75f,
     .bounce = 0.0f,
 };
 
