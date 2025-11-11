@@ -132,6 +132,7 @@ void scene_load_shared_entities(shared_entity_block_t* shared_entities, FILE* fi
         memory_stream_read(&stream, NULL, expression_size);
 
         memory_stream_read(&stream, NULL, sizeof(uint16_t)); // on_despawn
+        memory_stream_read(&stream, NULL, sizeof(uint16_t)); // script_location
 
         memory_stream_read(&stream, NULL, sizeof(uint16_t)); // entity_type
         uint16_t def_size;

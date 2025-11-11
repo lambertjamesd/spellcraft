@@ -18,6 +18,10 @@ scene basement_entrance_solved: bool;
 scene basement_entrance_door_open: bool;
 scene basement_entrance_drop_ball: bool;
 
+func room_crossing()
+    crossing_jelly_all_died = crossing_jelly_0_died and crossing_jelly_1_died and crossing_jelly_2_died;
+end
+
 scene pottery_wheel_spin_0: bool;
 scene pottery_wheel_0: i8;
 scene pottery_wheel_spin_1: bool;
@@ -30,12 +34,21 @@ scene pottery_wheel_solved_secret: bool;
 
 scene pottery_wheel_elevator_active: bool;
 
-func room_crossing()
-    crossing_jelly_all_died = crossing_jelly_0_died and crossing_jelly_1_died and crossing_jelly_2_died;
-end
-
 func room_wheels()
     pottery_wheel_solved = pottery_wheel_0 == 0 and 
                             pottery_wheel_1 == 1 and 
                             pottery_wheel_2 == 3;
+end
+
+scene block_puzzle_hidden_jelly_spawned: bool;
+scene block_puzzle_hidden_jelly_spawner: entity_spawner;
+scene block_puzzle_jelly_cover: entity_id;
+
+func room_block_puzzle()
+    if block_puzzle_jelly_cover == 0 and not block_puzzle_hidden_jelly_spawned then
+        block_puzzle_hidden_jelly_spawned = true;
+        print "TODO spawn jelly";
+        // spawn_entity block_puzzle_hidden_jelly;
+    end
+    
 end

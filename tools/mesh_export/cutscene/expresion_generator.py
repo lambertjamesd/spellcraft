@@ -77,6 +77,8 @@ data_type_mapping = {
     "i8": 1,
     "i16": 2,
     "i32": 3,
+    "entity_id": 2,
+    "entity_spawner": 2,
     "bool": 4,
     "float": 5,
     "str": 6,
@@ -86,6 +88,8 @@ data_word_size_mapping = {
     "i8": 8,
     "i16": 16,
     "i32": 32,
+    "entity_id": 16,
+    "entity_spawner": 32,
     "bool": 1,
     "float": 32,
     "str": 8,
@@ -104,7 +108,7 @@ def generate_variable_address(data_type: str, bit_offset: int) -> bytes:
 # script
 
 class ExpresionScriptLoad():
-    def __init__(self, source: bool, name: str, data_type: str, bit_offset: int):
+    def __init__(self, source: int, name: str, data_type: str, bit_offset: int):
         self.command: int = source
         self.name: str = name
         self.data_type: str = data_type
@@ -164,7 +168,7 @@ class ExpressionCommand():
         file.write(struct.pack('>B', self.command))
 
 class ExpressionScript():
-    def __init__(self, steps: list = None):
+    def __init__(self, steps: list | None = None):
         self.steps: list = steps or []
 
     def __str__(self):
@@ -205,6 +209,10 @@ type_mapping = {
     'i8': 'int',
     'i16': 'int',
     'i32': 'int',
+    "entity_id": 'int',
+    "entity_spawner": 'int',
+    'entity_id': 'int',
+    'entity_spawner': 'int',
     'float': 'float',
 }
 

@@ -71,6 +71,7 @@ typedef struct shared_entity_block shared_entity_block_t;
 struct loaded_entity {
     entity_id id;
     boolean_variable on_despawn;
+    integer_variable script_location;
 };
 
 typedef struct loaded_entity loaded_entity_t;

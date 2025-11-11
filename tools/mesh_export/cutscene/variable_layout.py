@@ -12,6 +12,8 @@ _type_bit_sizes = {
     'i8': 8,
     'i16': 16,
     'i32': 32,
+    "entity_id": 16,
+    "entity_spawner": 32,
     'float': 32,
 }
 
@@ -29,23 +31,24 @@ def _determine_type_bit_size(type: parser.DataType):
 
     return result, alignment
 
-def _calculate_initial_value(value, type: parser.DataType):
-    name = type.name.value
-
+def _pack_initial_value(value, name: str, count: int | None = None) -> bytes:
     if name == 'bool':
         return struct.pack('>B', 1 if value else 0)
     if name == 'i8':
         return struct.pack('>b', value or 0)
-    if name == 'i16':
+    if name == 'i16' or name == 'entity_id':
         return struct.pack('>h', value or 0)
-    if name == 'i32':
+    if name == 'i32' or name == 'entity_spawner':
         return struct.pack('>i', value or 0)
     if name == 'float':
         return struct.pack('>f', value or 0)
     if name == 'char':
+        if count == None:
+            raise Exception(f'Char must have a length {name}')
+
         result = (value or '').encode()
-        return result[0:type.count] + bytes(max(0, type.count - len(result)))
-    raise Exception(f'Could not determine inital value for {type}')
+        return result[0:count] + bytes(max(0, count - len(result)))
+    raise Exception(f'Could not determine inital value for {name}')
 
 class VariableInfo():
     def __init__(self, name: str, bit_size: int, alignment: int, type_name: str, initial_value: bytes):
@@ -65,6 +68,9 @@ class VaraibleLayoutEntry():
 
     def word_offset(self) -> int:
         return self.offset // self.bit_size
+    
+    def set_initial_value(self, value):
+        self.initial_value = _pack_initial_value(value, self.type_name)
 
 class VariableLayout():
     def __init__(self):
@@ -113,6 +119,12 @@ class VariableLayout():
 
         return int((result + 7) // 8)
     
+    def set_initial_value(self, name: str, value):
+        if not name in self._entries:
+            return
+        
+        self._entries[name].set_initial_value(value)
+
     def write_default_values(self, file):
         size = self.get_total_size()
 
@@ -203,7 +215,7 @@ class VariableLayoutBuilder():
                     print(message)
                     raise Exception(message)
 
-        initial_value = _calculate_initial_value(value, variable.type)
+        initial_value = _pack_initial_value(value, variable.type.name.value, count = variable.type.count)
 
         self._entries.append(VariableInfo(name_str, bit_size, alignment, type_str, initial_value))
 

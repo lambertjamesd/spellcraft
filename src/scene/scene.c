@@ -114,6 +114,7 @@ void scene_check_despawns(struct scene* scene) {
 
             entity->id = 0;
             expression_set_bool(entity->on_despawn, true);
+            expression_set_integer(entity->script_location, 0);
         }
     }
 }
@@ -216,6 +217,9 @@ loaded_entity_t scene_load_entity(struct scene* scene, memory_stream_t* stream, 
     uint16_t on_despawn;
     memory_stream_read(stream, &on_despawn, sizeof(uint16_t));
 
+    uint16_t script_location;
+    memory_stream_read(stream, &script_location, sizeof(uint16_t));
+
     uint16_t entity_type;
     uint16_t def_size;
     memory_stream_read(stream, &entity_type, sizeof(uint16_t));
@@ -229,15 +233,20 @@ loaded_entity_t scene_load_entity(struct scene* scene, memory_stream_t* stream, 
         // maybe todo, the types could be applied once on scene load
         // instead of on each time the entity is loaded
         scene_entity_apply_types(def_data, scene->string_table, def->fields, def->field_count);
+        entity_id id = entity_spawn(entity_type, def_data);
+        expression_set_integer(script_location, id);
         return (loaded_entity_t){
-            .id = entity_spawn(entity_type, def_data),
+            .id = id,
             .on_despawn = on_despawn,
+            .script_location = script_location,
         };
     } else {
         memory_stream_read(stream, NULL, def_size);
+        expression_set_integer(script_location, 0);
         return (loaded_entity_t){
             .id = 0,
             .on_despawn = VARIABLE_DISCONNECTED,
+            .script_location = script_location,
         };
     }
 }

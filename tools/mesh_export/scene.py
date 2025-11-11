@@ -313,6 +313,7 @@ def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
 int_types = {'i8': 1, 'i16': 2, 'i32': 3}
 
 TYPE_OFFSET = 13
+SCENE_FLAG = 0x8000
 
 def int_type_flag(name: str) -> int:
     return int_types[name] << TYPE_OFFSET
@@ -320,34 +321,54 @@ def int_type_flag(name: str) -> int:
 def build_variable_enum(enums: dict, globals: cutscene.variable_layout.VariableLayout, scene: cutscene.variable_layout.VariableLayout):
     boolean_enum: dict[str, int] = {}
     integer_enum: dict[str, int] = {}
+    entity_id_enum: dict[str, int] = {}
 
     for entry in globals.get_all_entries():
+        var_name = f"global {entry.name}: {entry.type_name}"
+        
         if entry.type_name == 'bool':
-            boolean_enum[f"global {entry.name}: bool"] = entry.offset
-        if entry.type_name in int_types:
-            boolean_enum[f"global {entry.name}: {entry.type_name}"] = entry.word_offset() | int_type_flag(entry.type_name)
+            boolean_enum[var_name] = entry.offset
+        elif entry.type_name in int_types:
+            integer_enum[var_name] = entry.word_offset() | int_type_flag(entry.type_name)
+        elif entry.type_name == 'entity_id':
+            entity_id_enum[var_name] = entry.word_offset() | int_type_flag('i16')
 
     for entry in scene.get_all_entries():
+        var_name = f"scene {entry.name}: {entry.type_name}"
+
         if entry.type_name == 'bool':
-            boolean_enum[f"scene {entry.name}: bool"] = entry.offset | 0x8000
-        if entry.type_name in int_types:
-            boolean_enum[f"scene {entry.name}: {entry.type_name}"] = entry.word_offset() | 0x8000 | int_type_flag(entry.type_name)
+            boolean_enum[var_name] = entry.offset | SCENE_FLAG
+        elif entry.type_name in int_types:
+            integer_enum[var_name] = entry.word_offset() | SCENE_FLAG | int_type_flag(entry.type_name)
+        elif entry.type_name == 'entity_id':
+            entity_id_enum[var_name] = entry.word_offset() | SCENE_FLAG | int_type_flag('i16')
 
     boolean_enum['disconnected'] = 0xFFFF
+    integer_enum['disconnected'] = 0xFFFF
+    entity_id_enum['disconnected'] = 0xFFFF
 
     enums['boolean_variable'] = parse.struct_parse.UnorderedEnum('boolean_variable', boolean_enum)
     enums['integer_variable'] = parse.struct_parse.UnorderedEnum('integer_variable', integer_enum)
+    enums['entity_id_variable'] = parse.struct_parse.UnorderedEnum('entity_id_variable', entity_id_enum)
         
 
-def build_room_entity_block(objects: list[ObjectEntry], variable_context, context, enums) -> bytes:
+def build_room_entity_block(objects: list[ObjectEntry], variable_context, context, enums: dict[str, parse.struct_parse.UnorderedEnum]) -> bytes:
     block = io.BytesIO()
 
     block.write(len(objects).to_bytes(2, 'big'))
 
+    entity_enum = enums['entity_id_variable']
+
     for object in objects:
         object.write_condition(variable_context, block)
         on_despawn = enums['boolean_variable'].str_to_int(object.on_despawn or "disconnected")
-        block.write(struct.pack('>H', on_despawn))
+
+        script_location_name = f"scene {object.obj.name}: entity_id"
+        
+        if not entity_enum.is_defined(script_location_name):
+            script_location_name = 'disconnected'
+
+        block.write(struct.pack('>HH', on_despawn, entity_enum.str_to_int(script_location_name)))
 
         def_type = enums['enum entity_type_id'].str_to_int('ENTITY_TYPE_' + object.name)
         block.write(def_type.to_bytes(2, 'big'))
@@ -488,7 +509,6 @@ def process_scene():
 
         obj.generate_spawn_condition(variable_name)
 
-
     scene_vars, function_names, cutscene_filename = load_cutscene_vars(
         input_filename, 
         generated_bools,
@@ -527,6 +547,8 @@ def process_scene():
         shared_entity_index: dict[int, list[int]] = {}
         shared_entities: list[ObjectEntry] = []
 
+        expected_spawners: set[str] = set([entry.name for entry in scene_vars.get_all_entries() if entry.type_name == "entity_spawner"])
+
         for object in scene.objects:
             parse.struct_serialize.layout_strings(object.obj, object.def_type, context, None)
 
@@ -546,10 +568,26 @@ def process_scene():
                 shared_entities.append(object)
                 continue
 
+            object_index = 0
+
             if key in grouped:
+                object_index = len(grouped[key])
                 grouped[key].append(object)
             else:
                 grouped[key] = [object]
+
+            spawner_var_name = f"{object.obj.name}_spawner"
+            var_type = scene_vars.get_variable_type(spawner_var_name)
+
+            if var_type:
+                if var_type != "entity_spawner":
+                    raise Exception(f"the variable {spawner_var_name} should be of type entity_spawner")
+                else:
+                    expected_spawners.remove(spawner_var_name)
+                    scene_vars.set_initial_value(spawner_var_name, (object.room_index << 16) | object_index)
+
+        if len(expected_spawners) > 0:
+            raise Exception(f"expected spawners {','.join(expected_spawners)}. Either remove these variables from the script or add an object to the scene with the spanwer name with the _spawner suffix removed")
 
         for loading_zone in scene.loading_zones:
             context.get_string_offset(loading_zone.target)

@@ -18,6 +18,8 @@ data_type_mapping = {
     "i8": "DATA_TYPE_S8",
     "i16": "DATA_TYPE_S16",
     "i32": "DATA_TYPE_S32",
+    "entity_id": "DATA_TYPE_S16",
+    "entity_spawner": "DATA_TYPE_S32",
     "bool": "DATA_TYPE_BOOL",
     "float": "DATA_TYPE_F32",
     "str": "DATA_TYPE_ADDRESS",

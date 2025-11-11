@@ -29,16 +29,19 @@ class Source():
         return f'{self.filename}:{line}:{col} {message}\n{self.get_source_line(at)}\n{padding}^'
 
 class Token():
-    def __init__(self, token_type: str, value: str, at: int, source: Source):
+    def __init__(self, token_type: str, value: str, at: int, source: Source | None):
         self.token_type: str = token_type
         self.value: str = value
         self.at: int = at
-        self._source: Source = source
+        self._source: Source | None = source
 
     def __str__(self):
         return f"'{self.value}':{self.token_type}"
     
     def format_message(self, message: str) -> str:
+        if not self._source:
+            return message
+
         return self._source.format_message(message, self.at)
 
 def _whitespace_state(current: str):
