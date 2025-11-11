@@ -71,6 +71,8 @@ typedef uint32_t collectable_sub_type;
 
 typedef uint16_t room_id;
 
+typedef uint32_t entity_spawner;
+
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT
 
 #define VARIABLE_DISCONNECTED   0xFFFF

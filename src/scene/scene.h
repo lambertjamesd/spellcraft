@@ -72,6 +72,8 @@ struct loaded_entity {
     entity_id id;
     boolean_variable on_despawn;
     integer_variable script_location;
+    uint16_t entity_type;
+    const void* definition;
 };
 
 typedef struct loaded_entity loaded_entity_t;
@@ -142,6 +144,8 @@ void scene_clear_next();
 
 bool scene_show_room(struct scene* scene, int room_index);
 void scene_hide_room(struct scene* scene, int room_index);
+
+void scene_spawn_entity(struct scene* scene, int room_index, int entity_index);
 
 bool scene_is_showing_room(struct scene* scene, int room_index);
 

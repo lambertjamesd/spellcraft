@@ -78,7 +78,7 @@ data_type_mapping = {
     "i16": 2,
     "i32": 3,
     "entity_id": 2,
-    "entity_spawner": 2,
+    "entity_spawner": 3,
     "bool": 4,
     "float": 5,
     "str": 6,

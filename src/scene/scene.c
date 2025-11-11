@@ -227,28 +227,30 @@ loaded_entity_t scene_load_entity(struct scene* scene, memory_stream_t* stream, 
     struct entity_definition* def = entity_def_get(entity_type);
     assert(def->definition_size == def_size);
 
+    const void* definition = memory_stream_curr(stream);
+
+    entity_id id = 0;
+
     if (should_spawn) {
         char def_data[def_size] __attribute__((aligned(8)));
         memory_stream_read(stream, def_data, def_size);
         // maybe todo, the types could be applied once on scene load
         // instead of on each time the entity is loaded
         scene_entity_apply_types(def_data, scene->string_table, def->fields, def->field_count);
-        entity_id id = entity_spawn(entity_type, def_data);
+        id = entity_spawn(entity_type, def_data);
         expression_set_integer(script_location, id);
-        return (loaded_entity_t){
-            .id = id,
-            .on_despawn = on_despawn,
-            .script_location = script_location,
-        };
     } else {
         memory_stream_read(stream, NULL, def_size);
         expression_set_integer(script_location, 0);
-        return (loaded_entity_t){
-            .id = 0,
-            .on_despawn = VARIABLE_DISCONNECTED,
-            .script_location = script_location,
-        };
     }
+
+    return (loaded_entity_t){
+        .id = id,
+        .on_despawn = on_despawn,
+        .script_location = script_location,
+        .entity_type = entity_type,
+        .definition = definition,
+    };
 }
 
 void scene_remove_shared_reference(struct scene* scene, int entity_index) {
@@ -352,17 +354,48 @@ void scene_hide_room(struct scene* scene, int room_index) {
     }
 }
 
-
-bool scene_is_showing_room(struct scene* scene, int room_index) {
+loaded_room_t* scene_find_room(struct scene* scene, int room_index) {
     for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
         loaded_room_t* room = &scene->loaded_rooms[i];
 
         if (room->room_index == room_index) {
-            return true;
+            return room;
         }
     }
 
-    return false;
+    return NULL;
+}
+
+
+void scene_spawn_entity(struct scene* scene, int room_index, int entity_index) {
+    loaded_room_t* room = scene_find_room(scene, room_index);
+
+    if (room == NULL) {
+        return;
+    }
+
+    if (entity_index < 0 || entity_index >= room->entity_count) {
+        return;
+    }
+
+    loaded_entity_t* entity = &room->entities[entity_index];
+
+    if (entity->id) {
+        return;
+    }
+
+    struct entity_definition* def = entity_def_get(entity->entity_type);
+    char aligned_definition[def->definition_size] __attribute__((aligned(8)));
+    memcpy(aligned_definition, entity->definition, def->definition_size);
+    entity_id id = entity_spawn(entity->entity_type, aligned_definition);
+
+    entity->id = id;
+    expression_set_integer(entity->script_location, id);
+}
+
+
+bool scene_is_showing_room(struct scene* scene, int room_index) {
+    return scene_find_room(scene, room_index) != NULL;
 }
 
 bool scene_has_next() {

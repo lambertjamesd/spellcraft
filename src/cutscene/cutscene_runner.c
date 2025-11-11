@@ -272,6 +272,12 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             char message[128];
             dialog_box_format_string(message, step->data.print.message.template, args);
             debugf("%s\n", message);
+            break;
+        }
+        case CUTSCENE_STEP_SPAWN: {
+            int spawner = evaluation_context_pop(&cutscene->context);
+            scene_spawn_entity(current_scene, spawner >> 16, spawner & 0xFFFF);
+            break;
         }
     }
 }

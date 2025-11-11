@@ -34,6 +34,7 @@ CUTSCENE_STEP_SHOW_TITLE = 23
 CUTSCENE_STEP_LOOK_AT_SUBJECT = 24
 CUTSCENE_STEP_NPC_ANIMATE = 25
 CUTSCENE_STEP_PRINT = 26
+CUTSCENE_STEP_SPAWN = 27
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -66,6 +67,7 @@ _step_args = {
     "look_at_subject": [],
     "npc_animate": [ParameterType("int", True), ParameterType("str", True), ParameterType("bool", True)],
     "print": [ParameterType("tstr", True)],
+    "spawn": [ParameterType("entity_spawner", False)],
 }
 
 _step_ids = {
@@ -88,6 +90,7 @@ _step_ids = {
     "look_at_subject": CUTSCENE_STEP_LOOK_AT_SUBJECT,
     "npc_animate": CUTSCENE_STEP_NPC_ANIMATE,
     "print": CUTSCENE_STEP_PRINT,
+    "spawn": CUTSCENE_STEP_SPAWN,
 }
 
 _steps_that_need_idle = {
@@ -194,7 +197,7 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
         expression = None
 
-        if arg.name == 'int' or arg.name == 'bool':
+        if arg.name == 'int' or arg.name == 'bool' or arg.name == 'entity_spawner':
             expression = expresion_generator.generate_script(parameter, context, 'int')
         elif arg.name == 'float':
             expression = expresion_generator.generate_script(parameter, context, 'float')

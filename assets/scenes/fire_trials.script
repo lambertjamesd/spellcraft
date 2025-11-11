@@ -47,8 +47,7 @@ scene block_puzzle_jelly_cover: entity_id;
 func room_block_puzzle()
     if block_puzzle_jelly_cover == 0 and not block_puzzle_hidden_jelly_spawned then
         block_puzzle_hidden_jelly_spawned = true;
-        print "TODO spawn jelly";
-        // spawn_entity block_puzzle_hidden_jelly;
+        spawn block_puzzle_hidden_jelly_spawner;
     end
     
 end

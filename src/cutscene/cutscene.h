@@ -35,6 +35,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_LOOK_AT_SUBJECT,
     CUTSCENE_STEP_NPC_ANIMATE,
     CUTSCENE_STEP_PRINT,
+    CUTSCENE_STEP_SPAWN,
 };
 
 struct cutscene_step;
