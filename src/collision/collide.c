@@ -5,6 +5,7 @@
 #include "collision_scene.h"
 #include "../util/flags.h"
 #include <stdio.h>
+#include <libdragon.h>
 
 int surface_type_collision_layers[] = {
     COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
@@ -16,14 +17,12 @@ int surface_type_collision_layers[] = {
 bool correct_velocity(struct Vector3* velocity, struct Vector3* normal, float ratio, float friction, float bounce) {
     float velocityDot = vector3Dot(velocity, normal);
 
+    
     if ((velocityDot < 0) == (ratio < 0)) {
         struct Vector3 tangentVelocity;
-
-        if (normal->y > 0.0f) {
-            vector3Scale(&tangentVelocity, &tangentVelocity, 1.0f - friction * normal->y);
-        }
-
+        
         vector3AddScaled(velocity, normal, -velocityDot, &tangentVelocity);
+        vector3Scale(&tangentVelocity, &tangentVelocity, 1.0f - friction * fabsf(normal->y));
         vector3AddScaled(&tangentVelocity, normal, velocityDot * -bounce, velocity);
         return true;
     }
