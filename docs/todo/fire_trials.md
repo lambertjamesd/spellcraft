@@ -27,3 +27,4 @@
 * reconsider block z targeting
 * make biter ai more fun
 * climbing 2 high block
+* small ledges should step easier
