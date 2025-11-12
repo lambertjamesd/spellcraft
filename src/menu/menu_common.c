@@ -65,7 +65,7 @@ void menu_common_render_background(int x, int y, int w, int h) {
         x, y - 3,
         x + w, y, 
         3, 0,
-        1, 3
+        6, 3
     );
 
     rdpq_texture_rectangle(
@@ -80,7 +80,7 @@ void menu_common_render_background(int x, int y, int w, int h) {
         x - 3, y,
         x, y + h, 
         0, 3,
-        3, 1
+        3, 6
     );
 
     rdpq_texture_rectangle(
@@ -95,14 +95,14 @@ void menu_common_render_background(int x, int y, int w, int h) {
         x, y + h,
         x + w, y + h + 3, 
         3, 6,
-        1, 3
+        6, 9
     );
 
     rdpq_texture_rectangle(
         TILE0,
         x + w, y + h,
         x + w + 3, y + h + 3, 
-        0, 6
+        6, 6
     );
 
     rdpq_texture_rectangle_scaled(
@@ -110,7 +110,7 @@ void menu_common_render_background(int x, int y, int w, int h) {
         x + w, y,
         x + w + 3, y + h, 
         6, 3,
-        3, 1
+        9, 6
     );
 
     rdpq_sync_pipe();

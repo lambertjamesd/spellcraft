@@ -42,7 +42,8 @@ MKSPRITE_FLAGS ?=
 
 SPRITES := $(PNG_RGBA16:assets/%.png=filesystem/%.sprite)
 
-filesystem/%.sprite: assets/%.png
+.SECONDEXPANSION:
+filesystem/%.sprite: assets/%.png $$(wildcard assets/%.json)
 	@mkdir -p $(dir $@)
 	@echo "    [SPRITE] $@"
 	$(N64_MKSPRITE) -f ${shell jq -r .format ${<:%.png=%.json} || echo AUTO} --compress -o "$(dir $@)" "$<"
@@ -132,7 +133,8 @@ SCENE_SOURCES := $(shell find assets/scenes -type f -name '*.blend' | sort)
 
 SCENES := $(SCENE_SOURCES:assets/scenes/%.blend=filesystem/scenes/%.scene)
 
-filesystem/scenes/%.scene: assets/scenes/%.blend $(wildcard assets/scenes/%.script) build/assets/scripts/globals.json $(EXPORT_SOURCE)
+.SECONDEXPANSION:
+filesystem/scenes/%.scene: assets/scenes/%.blend $$(wildcard assets/scenes/%.script) build/assets/scripts/globals.json $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene))
 	echo $@ $<

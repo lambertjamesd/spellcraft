@@ -49,5 +49,4 @@ func room_block_puzzle()
         block_puzzle_hidden_jelly_spawned = true;
         spawn block_puzzle_hidden_jelly_spawner;
     end
-    
 end
