@@ -4,6 +4,7 @@
 #include "../math/transform_single_axis.h"
 #include "../scene/scene_definition.h"
 #include "../render/renderable.h"
+#include <stdbool.h>
 
 struct room_portal {
     struct TransformSingleAxis transform;
@@ -13,6 +14,7 @@ struct room_portal {
     float last_player_distance;
 
     room_id current_room;
+    bool did_fade;
 
     struct element_attr attrs[2];
 };
