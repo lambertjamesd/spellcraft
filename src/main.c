@@ -31,7 +31,6 @@
 
 void setup() {
     debug_init_isviewer();
-    // fprintf(stderr, "This is how to talk");
     init_engine();
     savefile_new();
 
