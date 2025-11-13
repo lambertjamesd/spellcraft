@@ -28,3 +28,6 @@
 * make biter ai more fun
 * climbing 2 high block
 * small ledges should step easier
+* start adding sounds
+* object culling
+* jelly wait to attack if offscreen?
