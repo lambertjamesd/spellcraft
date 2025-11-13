@@ -34,13 +34,10 @@
 #define INTERACT_Y_LOWER        -0.75f
 #define INTERACT_Y_UPEER        1.25f
 
+
+#define MAX_ROTATION_RATE       5.0f
 static struct Vector2 player_max_rotation;
 static struct Vector2 z_target_rotation;
-
-static struct spatial_trigger_type player_visual_shape = {
-    SPATIAL_TRIGGER_WEDGE(2.0f, 1.0f, 0.707f, 0.707f),
-    .center = {0.0f, 0.25f, 0.0f},
-};
 
 static struct spatial_trigger_type player_z_trigger_shape = {
     SPATIAL_TRIGGER_WEDGE(15.0f, 7.0f, 0.707f, 0.707f),
@@ -80,6 +77,9 @@ static struct climb_up_data climb_up_data[CLIMB_UP_COUNT] = {
 #define MAX_STABLE_SLOPE    0.219131191f
 
 #define MAX_SLIDING_SLOPE   0.8f
+
+#define LOOK_DEADZONE       0.03f
+#define MOVE_DEADZONE       0.1f
 
 static struct cutscene_actor_def player_actor_def = {
     .eye_level = 1.26273f,
@@ -226,8 +226,6 @@ bool player_interact_with_interactable(player_t* player,  interactable_t* intera
 }
 
 interactable_t* player_find_interactable(player_t* player, entity_id* entity) {
-    contact_t* curr = player->z_target_trigger.active_contacts;
-
     float distance = MAX_INTERACT_RANGE * MAX_INTERACT_RANGE;
 
     if (player->z_target) {
@@ -256,11 +254,6 @@ interactable_t* player_find_interactable(player_t* player, entity_id* entity) {
     return result;
 }
 
-struct player_interaction {
-    struct player* player;
-    bool did_interact;
-};
-
 void player_get_input_direction(struct player* player, struct Vector3* target_direction) {
     joypad_inputs_t input = joypad_get_inputs(0);
 
@@ -285,7 +278,7 @@ void player_get_input_direction(struct player* player, struct Vector3* target_di
 }
 
 void player_look_towards(struct player* player, struct Vector3* target_direction) {
-    if (vector3MagSqrd(target_direction) > 0.01f) {
+    if (vector3MagSqrd(target_direction) > LOOK_DEADZONE) {
         struct Vector2 directionUnit;
         vector2LookDir(&directionUnit, target_direction);
         vector2RotateTowards(&player->cutscene_actor.transform.rotation, &directionUnit, &player_max_rotation, &player->cutscene_actor.transform.rotation);
@@ -382,9 +375,14 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
         return true;
     }
 
-    if (vector3MagSqrd(target_direction) < 0.001f) {
+    struct Vector2 target_rotation;
+    vector2LookDir(&target_rotation, target_direction);
+    float movement_alignment = vector2Dot(&player->cutscene_actor.transform.rotation, &target_rotation);
+
+    if (vector3MagSqrd(target_direction) < MOVE_DEADZONE || movement_alignment < 0.0f) {
         player->cutscene_actor.collider.velocity = gZeroVec;
     } else {
+        // TODO adjust for deadzone
         struct Vector3 projected_target_direction;
         vector3ProjectPlane(target_direction, &ground_contact->normal, &projected_target_direction);
 
@@ -393,7 +391,7 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
         struct Vector3 projected_normalized;
         vector3ProjectPlane(&normalized_direction, &ground_contact->normal, &projected_normalized);
 
-        vector3Scale(&projected_target_direction, &projected_target_direction, 1.0f / sqrtf(vector3MagSqrd(&projected_normalized)));
+        vector3Scale(&projected_target_direction, &projected_target_direction, movement_alignment / sqrtf(vector3MagSqrd(&projected_normalized)));
 
         float prev_y = player->cutscene_actor.collider.velocity.y;
 
@@ -436,11 +434,6 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
 }
 
 bool player_handle_a_action(struct player* player, interactable_t* interactable, entity_id interact_entity_id) {
-    struct player_interaction interaction = {
-        .player = player,
-        .did_interact = false,
-    };
-
     if (interactable) {
         return player_interact_with_interactable(player, interactable, interact_entity_id);
     }
@@ -1110,7 +1103,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     render_scene_add_renderable(&player->renderable, 2.0f);
     update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
-    vector2ComplexFromAngle(fixed_time_step * 7.0f, &player_max_rotation);
+    vector2ComplexFromAngle(fixed_time_step * MAX_ROTATION_RATE, &player_max_rotation);
     vector2ComplexFromAngle(fixed_time_step * 2.0f, &z_target_rotation);
 
     struct TransformSingleAxis transform = {
