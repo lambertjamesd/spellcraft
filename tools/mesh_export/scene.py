@@ -189,7 +189,7 @@ def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collect
 
     offset = 0
 
-    for room_meshes in room_collection.rooms:
+    for room_index in range(len(room_collection.rooms)):
         particles = room_to_particle[room_index]
         file.write(struct.pack('>HH', offset, offset + len(particles)))
         offset += len(particles)
