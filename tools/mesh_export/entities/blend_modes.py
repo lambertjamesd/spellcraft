@@ -302,7 +302,7 @@ RM_FOG_SHADE_A = build_blend_mode(material.BlendModeCycle('IN', 'SHADE_A', 'FOG'
 RM_FOG_PRIM_A	= build_blend_mode(material.BlendModeCycle('FOG', 'FOG_A', 'IN', 'INV_MUX_A'))
 RM_PASS = build_blend_mode(material.BlendModeCycle('IN', '0', 'IN', '1'))
 
-def combine_blend_mode(a: material.BlendMode, b: material.BlendMode):
+def combine_blend_mode(a: material.BlendMode, b: material.BlendMode | None):
 	if not b:
 		return material.BlendMode(
 			a.cyc1,

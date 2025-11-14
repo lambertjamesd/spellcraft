@@ -25,6 +25,9 @@ def search_node_input(from_node: bpy.types.Node, input_name: str):
 def search_node_linkage(from_node: bpy.types.Node, input_name: str):
     input = search_node_input(from_node, input_name)
 
+    if not input:
+        return None
+
     if not input.is_linked:
         return None
 
@@ -225,7 +228,7 @@ def _determine_tex_axis_from_f3d(axis, image_size, uv_scroll, result: material.T
     result.max = image_size << 2
 
 
-def _determine_tex_from_f3d(tex, uv_scroll, base_path: str) -> material.Tex:
+def _determine_tex_from_f3d(tex, uv_scroll, base_path: str) -> material.Tex | None:
     image = tex['tex']
 
     if not tex['tex_set'] or not image:
@@ -449,7 +452,7 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
 def material_can_extract(bpy_mat: bpy.types.Material) -> bool:
     return bpy_mat.name.startswith('materials/') or 'f3d_mat' in bpy_mat
 
-def material_romname(bpy_mat: bpy.types.Material) -> bool:
+def material_romname(bpy_mat: bpy.types.Material) -> str | None:
     if bpy_mat.name.startswith('materials/'):
         material_filename = f"assets/{bpy_mat.name}.mat.json"
 

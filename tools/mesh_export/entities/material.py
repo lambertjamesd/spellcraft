@@ -229,7 +229,7 @@ class BlendMode():
         self.z_mode = z_mode
         self.z_write = z_write
         self.z_compare = z_compare
-        self.aa = aa,
+        self.aa: bool = aa,
         self.alpha_compare = alpha_compare
         self.coverage_dest = coverage_dest
         self.color_on_coverage = color_on_coverage
