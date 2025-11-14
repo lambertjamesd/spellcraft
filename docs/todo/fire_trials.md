@@ -23,7 +23,6 @@
 * z target wiggles sometimes
 * strafe animations
 * use pots in first push block puzzle
-* block friction
 * reconsider block z targeting
 * make biter ai more fun
 * climbing 2 high block
