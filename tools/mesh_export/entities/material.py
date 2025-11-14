@@ -7,7 +7,7 @@ import json
 
 class PngMetadata():
     def __init__(self, filename):
-        self.palette: list[int] = None
+        self.palette: list[int] | None = None
         self.width: int = 0
         self.height: int = 0
         self.fmt: str = 'FMT_NONE'
@@ -109,7 +109,7 @@ class Color():
         return Color(self.r, self.g, self.b, self.a)
 
     def __eq__(self, value: object) -> bool:
-        if not value:
+        if not value or not isinstance(value, Color):
             return False
         
         return self.r == value.r and self.g == value.g and self.b == value.b and self.a == value.a
@@ -157,9 +157,9 @@ class CombineModeCycle():
             self.aa == attr or self.ab == attr or self.ac == attr or self.ad == attr
 
 class CombineMode():
-    def __init__(self, cyc1: CombineModeCycle, cyc2: CombineModeCycle):
-        self.cyc1: CombineModeCycle = cyc1
-        self.cyc2: CombineModeCycle = cyc2
+    def __init__(self, cyc1: CombineModeCycle | None, cyc2: CombineModeCycle | None):
+        self.cyc1: CombineModeCycle | None = cyc1
+        self.cyc2: CombineModeCycle | None = cyc2
 
     def copy(self):
         return CombineMode(self.cyc1.copy() if self.cyc1 else None, self.cyc2.copy() if self.cyc2 else None)
@@ -178,11 +178,11 @@ class CombineMode():
     
     def uses(self, attr: str) -> bool:
         if attr == 'TEX1':
-            return self.cyc1.uses(attr) or (self.cyc2 and self.cyc2.uses('TEX0'))
+            return bool((self.cyc1 and self.cyc1.uses(attr)) or (self.cyc2 and self.cyc2.uses('TEX0')))
         if attr == 'TEX0':
-            return self.cyc1.uses(attr)
+            return bool(self.cyc1 and self.cyc1.uses(attr))
 
-        return self.cyc1.uses(attr) or (self.cyc2 and self.cyc2.uses(attr))
+        return bool((self.cyc1 and self.cyc1.uses(attr)) or (self.cyc2 and self.cyc2.uses(attr)))
 
     
 class BlendModeCycle():
@@ -191,14 +191,6 @@ class BlendModeCycle():
         self.b1 = b1
         self.a2 = a2
         self.b2 = b2
-
-    def copy(self):
-        result = BlendModeCycle()
-        result.a1 = self.a1
-        result.b1 = self.b1
-        result.a2 = self.a2
-        result.b2 = self.b2
-        return result
 
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, BlendModeCycle):
@@ -219,7 +211,7 @@ class BlendMode():
     def __init__(
             self, 
             cyc1: BlendModeCycle, 
-            cyc2: BlendModeCycle,
+            cyc2: BlendModeCycle | None,
             z_mode: str = 'OPAQUE',
             z_write: bool = True,
             z_compare: bool = True,
@@ -233,7 +225,7 @@ class BlendMode():
             image_read: bool = False
         ):
         self.cyc1: BlendModeCycle = cyc1
-        self.cyc2: BlendModeCycle = cyc2
+        self.cyc2: BlendModeCycle | None = cyc2
         self.z_mode = z_mode
         self.z_write = z_write
         self.z_compare = z_compare
@@ -309,6 +301,9 @@ class TexAxis():
         self.scroll = 0
 
     def __eq__(self, value: object) -> bool:
+        if not isinstance(value, TexAxis):
+            return False
+
         return self.min == value.min and \
             self.max == value.max and \
             self.shift == value.shift and \
@@ -405,9 +400,15 @@ class Tex():
         return bool(self.palette_data) and not self.filename and self.frames
 
     def rom_filename(self) -> str:
+        if not self.filename:
+            return ""
+
         return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
         
     def frame_filenames(self) -> list[str]:
+        if not self.frames:
+            return []
+
         return list(map(lambda x: f"rom:{x[len('assets'):-len('.png')]}.sprite", self.frames))
 
     def byte_size(self) -> int:
@@ -415,7 +416,7 @@ class Tex():
     
 
     def __eq__(self, value: object) -> bool:
-        if not value:
+        if not value or not isinstance(value, Tex):
             return False
 
         return self.filename == value.filename and \
@@ -464,9 +465,9 @@ class Fog():
 
 class Material():
     def __init__(self):
-        self.combine_mode: CombineMode = None
-        self.blend_mode: BlendMode = None
-        self.env_color: Color = None
+        self.combine_mode: CombineMode | None = None
+        self.blend_mode: BlendMode | None = None
+        self.env_color: Color | None = None
         self.prim_color: Color | None = None
         self.blend_color: Color | None = None
         self.lighting: bool | None = None
@@ -533,7 +534,7 @@ class Material():
         
         return 0
     
-    def get_palette_data(self) -> list[int] | None:
+    def get_palette_data(self) -> tuple[list[int] | None, int]:
         if not self.tex0 and not self.tex1:
             return None, 0
         
@@ -546,6 +547,9 @@ class Material():
         result = []
 
         for tex in [self.tex0, self.tex1]:
+            if not tex:
+                continue
+
             palette_data = tex.palette_data
 
             if not palette_data:
