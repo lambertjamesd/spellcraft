@@ -373,6 +373,26 @@ class EntryPointPanel(bpy.types.Panel):
         else:
             operator = self.layout.operator(NODE_OT_game_object_scripts.bl_idname, text='Add on enter script')
             operator.name = 'on_enter'
+            
+
+class StaticParticlesPanel(bpy.types.Panel):
+    bl_idname='GO_PT_static_particles'
+    bl_label='Static particles'
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+    bl_options = {"HIDE_HEADER"}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.object and context.object.type == 'MESH' and 'type' in context.object.data and context.object.data['type'] == 'static_particles'
+    
+    def draw(self, context):
+        target = context.object
+        box = self.layout.box()
+        split = box.split(factor=0.5)
+        split.label(text="Instance mesh")
+        split.prop(target, "particle_instance_obj", text="")
 
     
 class GameObjectPanel(bpy.types.Panel):
@@ -556,8 +576,6 @@ class CreateGameObjectPanel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        result = object_definitions.get_repo_path() != None
-        print('CreateGameObjectPanel.poll', result)
         return object_definitions.get_repo_path() != None
     
     def draw(self, context):
@@ -583,14 +601,20 @@ _classes = [
     LoadingZonePanel,
     GameObjectPanel,
     EntryPointPanel,
+    StaticParticlesPanel,
     CreateGameObjectPanel,
 ]
 
 def register():
-    print('register')
+    bpy.types.Object.particle_instance_obj = bpy.props.PointerProperty(
+        name="Instnace mesh",
+        type=bpy.types.Object,
+        description="Select a mesh"
+    )
     for cls in _classes:
         bpy.utils.register_class(cls)
 
 def unregister():
+    del bpy.types.Object.particle_instance_obj
     for cls in _classes:
         bpy.utils.unregister_class(cls)

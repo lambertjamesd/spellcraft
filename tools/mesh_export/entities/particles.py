@@ -6,7 +6,27 @@ import math
 
 from . import material_extract
 
-def find_mesh_instance(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, mathutils.Vector | None, float]:
+def _get_instance_info(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, mathutils.Vector | None, float | None]:
+    mesh = obj.data
+
+    if mesh == None or not isinstance(mesh, bpy.types.Mesh):
+        return None, None, None
+
+    bb = obj.bound_box
+
+    min_y = bb[0][1]
+    max_y = min_y
+
+    for vertex in bb:
+        min_y = min(min_y, vertex[1])
+        max_y = max(max_y, vertex[1])
+
+    return mesh, obj.dimensions, (min_y + max_y) * 0.5
+
+def find_mesh_instance(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, mathutils.Vector | None, float | None]:
+    if 'particle_instance_obj' in obj and obj['particle_instance_obj']:
+        return _get_instance_info(obj['particle_instance_obj'])
+
     for modifier in obj.modifiers:
         if not isinstance(modifier, bpy.types.NodesModifier):
             continue
@@ -31,21 +51,7 @@ def find_mesh_instance(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, ma
             if not isinstance(default_value, bpy.types.Object):
                 continue
 
-            mesh = default_value.data
-
-            if mesh == None or not isinstance(mesh, bpy.types.Mesh):
-                continue
-
-            bb = default_value.bound_box
-
-            min_y = bb[0][1]
-            max_y = min_y
-
-            for vertex in bb:
-                min_y = min(min_y, vertex[1])
-                max_y = max(max_y, vertex[1])
-
-            return mesh, default_value.dimensions, (min_y + max_y) * 0.5
+            return _get_instance_info(default_value)
 
     return None, None, None
 
@@ -108,11 +114,13 @@ def extract_color(index, color, alpha, has_texture):
 
 def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> Particles | None:
     if obj.type != 'MESH':
+        print(f'WARNING: static_particle object should be a mesh for object {obj.name}')
         return None
     
     instance, dimensions, center_offset = find_mesh_instance(obj)
 
     if not instance or not dimensions:
+        print(f'WARNING: could not find mesh instance for static_particle for object {obj.name}')
         return None
 
     mesh: bpy.types.Mesh = obj.data
