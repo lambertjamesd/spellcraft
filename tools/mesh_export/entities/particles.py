@@ -55,13 +55,23 @@ def find_mesh_instance(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, ma
 
     return None, None, None
 
+def clamp_particle_pos(value: float) -> int:
+    result = int(math.floor(value + 0.5))
+
+    if result < -128:
+        return 128
+    elif result > 127:
+        return 127
+    
+    return result
+
 def transform_particle(point: mathutils.Vector, mid_point: mathutils.Vector, scale_inv: mathutils.Vector, center_offset: float) -> mathutils.Vector:
     pos = (point + mathutils.Vector((0, center_offset, 0)) - mid_point) * scale_inv
 
     return mathutils.Vector((
-        round(pos.x),
-        round(pos.y),
-        round(pos.z)
+        clamp_particle_pos(pos.x),
+        clamp_particle_pos(pos.y),
+        clamp_particle_pos(pos.z)
     ))
 
 class Particles:
@@ -83,12 +93,24 @@ class Particles:
         self.particle_scale_height = math.floor(0x7FFF * scaled.y / self.particle_size)
 
     def write_into(self, file):
-        material_filename = material_extract.material_romname(self.material).encode()
+        filename_str = material_extract.material_romname(self.material)
+
+        if not filename_str:
+            file.write((0).to_bytes(1, 'big'))
+            return
+
+        material_filename = filename_str.encode()
         file.write(len(material_filename).to_bytes(1, 'big'))
         file.write(material_filename)
         file.write(struct.pack('>fff', self.position.x, self.position.y, self.position.z))
         file.write(struct.pack('>fff', self.scale.x, self.scale.y, self.scale.z))
-        file.write(struct.pack('>HHHH', self.particle_count, self.particle_size, self.particle_scale_width, self.particle_scale_height))
+
+        final_count = self.particle_count
+
+        if (final_count % 2) != 0:
+            final_count += 1
+
+        file.write(struct.pack('>HHHH', final_count, self.particle_size, self.particle_scale_width, self.particle_scale_height))
 
 def convert_channel(value):
     return round(255 * value)
