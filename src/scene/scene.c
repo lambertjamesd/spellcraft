@@ -13,8 +13,8 @@ struct scene* current_scene;
 static char next_scene_name[64];
 static char next_entrance_name[16];
 
-#define MAX_PARTICLE_DISTANCE 20.0f
-#define PARTICLE_FADE_DISTANCE 15.0f
+#define MAX_PARTICLE_DISTANCE 40.0f
+#define PARTICLE_FADE_DISTANCE 25.0f
 
 void scene_render_room(struct scene* scene, int room_index, struct render_batch* batch) {
     if (room_index < 0 || room_index >= scene->room_count) {
