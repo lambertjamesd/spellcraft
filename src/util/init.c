@@ -15,6 +15,7 @@
 #include "../menu/dialog_box.h"
 #include "../cutscene/cutscene_runner.h"
 #include "../cutscene/cutscene_actor.h"
+#include "../audio/audio.h"
 
 void init_engine() {
     spell_assets_init();
@@ -32,4 +33,5 @@ void init_engine() {
     dialog_box_init();
     cutscene_runner_init();
     cutscene_actor_reset();
+    audio_player_init();
 }

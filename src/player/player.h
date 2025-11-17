@@ -75,39 +75,10 @@ enum player_animation {
     PLAYER_ANIMATION_COUNT,
 };
 
-struct player_animations {
-    struct animation_clip* idle;
-    struct animation_clip* run;
-    struct animation_clip* walk;
-    struct animation_clip* dash;
-    struct animation_clip* attack;
-    struct animation_clip* attack_hold;
-    struct animation_clip* air_dash;
-    struct animation_clip* take_damage;
+enum player_sound {
+    PLAYER_SOUND_STEP0,
 
-    struct animation_clip* tread_water;
-    struct animation_clip* swim;
-
-    struct animation_clip* jump;
-    struct animation_clip* jump_peak;
-    struct animation_clip* fall;
-    struct animation_clip* land;
-
-    struct animation_clip* knocked_back;
-    struct animation_clip* knockback_fly;
-    struct animation_clip* knockback_land;
-
-    struct animation_clip* swing_attack;
-    struct animation_clip* spin_attack;
-    struct animation_clip* cast_up;
-    
-    struct animation_clip* climb_up[CLIMB_UP_COUNT];
-
-    struct animation_clip* carry_pickup;
-    struct animation_clip* carry_idle;
-    struct animation_clip* carry_run;
-    struct animation_clip* carry_walk;
-    struct animation_clip* carry_drop;
+    PLAYER_SOUND_COUNT,
 };
 
 struct player_definition {
@@ -151,6 +122,7 @@ struct player {
     animation_clip_t* animations[PLAYER_ANIMATION_COUNT];
     struct animation_clip* last_spell_animation;
     struct inventory_assets assets;
+    wav64_t* sounds[PLAYER_SOUND_COUNT];
     
     struct drop_shadow drop_shadow;
 

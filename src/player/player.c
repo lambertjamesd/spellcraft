@@ -14,6 +14,7 @@
 #include "../time/time.h"
 #include "../debug/debug_colliders.h"
 #include "../render/defs.h"
+#include "../audio/audio.h"
 
 #include "../effects/fade_effect.h"
 
@@ -727,6 +728,10 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
         }
     }
 
+    if (pressed.a) {
+        audio_play_2d(player->sounds[PLAYER_SOUND_STEP0], 1.0f, 0.0f, 1.0f, 0);
+    }
+
     if (player->state != PLAYER_GROUNDED) {
         return;
     }
@@ -1083,9 +1088,25 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_CARRY_DROP] = "carry_drop",
 };
 
+static const char* sound_names[PLAYER_SOUND_COUNT] = {
+    [PLAYER_SOUND_STEP0] = "rom:/sounds/characters/footstep_stone_0.wav64"  
+};
+
 void player_load_animation(struct player* player) {
     for (int i = 0; i < PLAYER_ANIMATION_COUNT; i += 1) {
         player->animations[i] = animation_set_find_clip(player->cutscene_actor.animation_set, animation_clip_names[i]);
+    }
+}
+
+void player_load_sound(struct player* player) {
+    for (int i = 0; i < PLAYER_SOUND_COUNT; i += 1) {
+        player->sounds[i] = wav64_load(sound_names[i], NULL);
+    }
+}
+
+void player_unload_sound(struct player* player) {
+    for (int i = 0; i < PLAYER_SOUND_COUNT; i += 1) {
+        wav64_close(player->sounds[i]);
     }
 }
 
@@ -1144,6 +1165,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     }
 
     player_load_animation(player);
+    player_load_sound(player);
 
     player->last_spell_animation = NULL;
 
@@ -1184,6 +1206,7 @@ void player_destroy(struct player* player) {
     collision_scene_remove_trigger(&player->z_target_trigger);
     render_scene_remove(&player->z_target_visual);
     renderable_destroy(&player->z_target_visual);
+    player_unload_sound(player);
 }
 
 struct Vector3* player_get_position(struct player* player) {

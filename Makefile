@@ -92,6 +92,19 @@ list_materials: $(MATERIALS)
 	echo $(MATERIALS)
 
 ###
+# sound effects
+###
+
+SOUND_EFFECT_SOURCES := $(shell find assets/ -type f -name '*.wav' | sort)
+
+SOUND_EFFECTS := $(SOUND_EFFECT_SOURCES:assets/%.wav=filesystem/%.wav64)
+
+filesystem/%.wav64: assets/%.wav
+	@mkdir -p $(dir $@)
+	@echo "    [AUDIO] $@"
+	$(N64_AUDIOCONV) --wav-compress 1 --wav-resample 22050 -o $@ $<
+
+###
 # material_builder
 ###
 
@@ -170,9 +183,9 @@ TEST_SOURCES := $(shell find src/ -type f -name '*_test.c' | sort)
 TEST_SOURCE_OBJS := $(TEST_SOURCES:src/%.c=$(BUILD_DIR)/%.o)
 TEST_OBJS := $(SOURCE_OBJS) $(TEST_SOURCE_OBJS)
 
-filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
+filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) $(SOUND_EFFECTS) filesystem/scripts/globals.dat
 
-$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) filesystem/scripts/globals.dat
+$(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(FONTS) $(SCRIPTS_COMPILED) $(SOUND_EFFECTS) filesystem/scripts/globals.dat
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
 $(BUILD_DIR)/spellcraft_test.elf: $(TEST_OBJS)
 
