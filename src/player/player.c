@@ -728,10 +728,6 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
         }
     }
 
-    if (pressed.a) {
-        audio_play_2d(player->sounds[PLAYER_SOUND_STEP0], 1.0f, 0.0f, 1.0f, 0);
-    }
-
     if (player->state != PLAYER_GROUNDED) {
         return;
     }
@@ -901,7 +897,7 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
             source->flags.is_animating = 0;
             source->flags.cast_state = SPELL_CAST_STATE_INACTIVE;
         } else {
-            source->flags.cast_state = player->cutscene_actor.animator.events ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+            source->flags.cast_state = player->cutscene_actor.animator.events.attack ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
         }
     } else {
         source->direction = castDirection;
@@ -1088,9 +1084,7 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_CARRY_DROP] = "carry_drop",
 };
 
-static const char* sound_names[PLAYER_SOUND_COUNT] = {
-    [PLAYER_SOUND_STEP0] = "rom:/sounds/characters/footstep_stone_0.wav64"  
-};
+static const char* sound_names[PLAYER_SOUND_COUNT] = {};
 
 void player_load_animation(struct player* player) {
     for (int i = 0; i < PLAYER_ANIMATION_COUNT; i += 1) {

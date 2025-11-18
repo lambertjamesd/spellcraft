@@ -22,6 +22,7 @@
 #include "util/screen_debug.h"
 #include "effects/area_title.h"
 #include "effects/fade_effect.h"
+#include "audio/audio.h"
 
 #include <libdragon.h>
 #include <n64sys.h>
@@ -225,6 +226,10 @@ int main(void)
         }
 
         joypad_poll();
+        struct Vector3 right;
+        quatMultVector(&current_scene->camera.transform.rotation, &gRight, &right);
+        audio_update_listener(&current_scene->camera.transform.position, &right, &gZeroVec);
+        audio_player_update();
         if (update_has_layer(UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE)) {
             // uint64_t start_time = get_ticks_us();
             collision_scene_collide();

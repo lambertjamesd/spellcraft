@@ -259,7 +259,7 @@ void jelly_king_attack_ranged(struct jelly_king* jelly_king) {
         return;
     }
 
-    if (jelly_king->animator.events) {
+    if (jelly_king->animator.events.attack) {
         jelly_king_fire_jelly(jelly_king);
         jelly_king_reaim(jelly_king);
     }
@@ -298,7 +298,7 @@ void jelly_king_attack_aeo(struct jelly_king* jelly_king) {
         jelly_king_start_idle(jelly_king);
     }
 
-    if (jelly_king->animator.events) {
+    if (jelly_king->animator.events.attack) {
         health_apply_contact_damage(jelly_king->collider.active_contacts, &aeo_attack, NULL);
     }
 }

@@ -43,7 +43,7 @@ static struct spatial_trigger_type biter_vision_type = {
 
 void biter_update_target(struct biter* biter) {
     if (biter->animator.current_clip == biter->animations.attack) {
-        if (!biter->current_target || !biter->animator.events) {
+        if (!biter->current_target || !biter->animator.events.attack) {
             return;
         }
 

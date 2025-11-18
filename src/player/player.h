@@ -76,8 +76,6 @@ enum player_animation {
 };
 
 enum player_sound {
-    PLAYER_SOUND_STEP0,
-
     PLAYER_SOUND_COUNT,
 };
 

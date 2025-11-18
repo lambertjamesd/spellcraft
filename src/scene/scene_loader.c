@@ -260,7 +260,8 @@ struct scene* scene_load(const char* filename) {
     scene->last_despawn_check = 0;
 
     inventory_init();
-    camera_init(&scene->camera, DEFAULT_CAMERA_FOV, 0.25f, 125.0f);
+    cutscene_actor_common_init();
+    camera_init(&scene->camera, DEFAULT_CAMERA_FOV, 0.4f, 125.0f);
     player_init(&scene->player, &player_def, &scene->camera.transform);
     camera_controller_init(&scene->camera_controller, &scene->camera, &scene->player);
 
@@ -389,6 +390,7 @@ void scene_release(struct scene* scene) {
     camera_controller_destroy(&scene->camera_controller);
 
     inventory_destroy();
+    cutscene_actor_common_destroy();
 
     collision_scene_remove_static_mesh(&scene->mesh_collider);
     mesh_collider_release(&scene->mesh_collider);

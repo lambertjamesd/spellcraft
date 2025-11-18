@@ -62,9 +62,13 @@ struct cutscene_actor {
     enum actor_state state;
     cutscene_actor_id_t id;
     struct cutscene_actor_def* def;
+    animator_events_t last_animator_events;
 };
 
 typedef struct cutscene_actor cutscene_actor_t;
+
+void cutscene_actor_common_init();
+void cutscene_actor_common_destroy();
 
 void cutscene_actor_init(struct cutscene_actor* actor, struct cutscene_actor_def* def, entity_id entity_id, struct TransformSingleAxis* transform, enum npc_type npc_type, int index, struct armature* armature, char* animations_path);
 

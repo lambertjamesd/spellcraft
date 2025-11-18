@@ -5,11 +5,37 @@
 #include "../resource/animation_cache.h"
 #include "../util/hash_map.h"
 #include "../util/flags.h"
+#include "../audio/audio.h"
+#include "../math/mathf.h"
 
 static struct hash_map cutscene_actor_hash_map;
 
 #define SPACING_DISTANCE        1.8f
 #define AT_LOCATION_TOLERANCE   0.25f
+
+enum cutscene_actor_sounds {
+    CA_SOUND_STEP_0,
+
+    CA_SOUND_COUNT,
+};
+
+static const char* common_sound_effect_names[CA_SOUND_COUNT] = {
+    [CA_SOUND_STEP_0] = "rom:/sounds/characters/footstep_stone_0.wav64"  
+};
+
+static wav64_t* common_sound_effects[CA_SOUND_COUNT];
+
+void cutscene_actor_common_init() {
+    for (int i = 0; i < CA_SOUND_COUNT; i += 1) {
+        common_sound_effects[i] = wav64_load(common_sound_effect_names[i], NULL);
+    }
+}
+
+void cutscene_actor_common_destroy() {
+    for (int i = 0; i < CA_SOUND_COUNT; i += 1) {
+        wav64_close(common_sound_effects[i]);
+    }
+}
 
 void cutscene_actor_init(
     struct cutscene_actor* actor, 
@@ -52,6 +78,7 @@ void cutscene_actor_init(
 
     actor->collider.center.y += def->half_height;
     actor->collider.collision_group = def->collision_group;
+    actor->last_animator_events.all = 0;
 
     collision_scene_add(&actor->collider);
 }
@@ -92,8 +119,17 @@ bool cutscene_actor_is_moving(struct cutscene_actor* actor) {
     return (actor->state & (ACTOR_STATE_LOOKING | ACTOR_STATE_MOVING | ACTOR_STATE_SPACE | ACTOR_STATE_ANIMATING)) != 0;
 }
 
+void cutscene_actor_check_anim_events(struct cutscene_actor* actor) {
+    if (actor->animator.events.step && !actor->last_animator_events.step) {
+        audio_play_3d(common_sound_effects[CA_SOUND_STEP_0], 0.1f, &actor->transform.position, &gZeroVec, randomInRangef(0.9f, 1.1f), 0);
+    }
+}
+
 bool cutscene_actor_update(struct cutscene_actor* actor) {
+    actor->last_animator_events = actor->animator.events;
     animator_update(&actor->animator, actor->armature, fixed_time_step * actor->animate_speed);
+
+    cutscene_actor_check_anim_events(actor);
 
     if (!cutscene_actor_is_moving(actor)) {
         return false;

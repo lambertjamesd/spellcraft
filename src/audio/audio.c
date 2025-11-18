@@ -3,8 +3,9 @@
 #include <stdbool.h>
 #include "../math/mathf.h"
 
-#define MAX_ACTIVE_SOUNDS   16
-#define SPEED_OF_SOUND      343
+#define MAX_ACTIVE_SOUNDS       16
+#define SPEED_OF_SOUND          343
+#define FULL_VOLUME_DISTANCE    3.0f
 
 struct active_sound {
     wav64_t* wav;
@@ -125,7 +126,7 @@ void audio_process_3d(active_sound_t* sound, int channel) {
         return;
     }
 
-    float volume = sound->volume / mag_sqrd;
+    float volume = (FULL_VOLUME_DISTANCE * FULL_VOLUME_DISTANCE) * sound->volume / mag_sqrd;
 
     if (volume < 0.0001f) {
         mixer_ch_set_vol(channel, 0.0f, 0.0f);
@@ -193,18 +194,13 @@ audio_id audio_play_3d(wav64_t* wav, float volume, struct Vector3* pos, struct V
     sound->volume = volume;
     sound->frequency = pitch_shift * wav->wave.frequency;
 
+    mixer_ch_play(channel, &wav->wave);
     audio_process_3d(sound, channel);
     
     return audio_id;
 }
 
 void audio_player_update() {
-    if (audio_can_write()) {
-        short *buf = audio_write_begin();
-        mixer_poll(buf, audio_get_buffer_length());
-        audio_write_end();
-    }
-
     for (int i = 0; i < MAX_ACTIVE_SOUNDS; i += 1) {
         if (!active_sound_ids[i]) {
             continue;
@@ -220,6 +216,12 @@ void audio_player_update() {
         if (sound->is_3d) {
             audio_process_3d(sound, i);
         }
+    }
+
+    if (audio_can_write()) {
+        short *buf = audio_write_begin();
+        mixer_poll(buf, audio_get_buffer_length());
+        audio_write_end();
     }
 }
 
@@ -243,4 +245,10 @@ void audio_update_position(audio_id id, struct Vector3* pos, struct Vector3* vel
 
     sound->position = *pos;
     sound->velocity = *vel;
+}
+
+void audio_update_listener(struct Vector3* pos, struct Vector3* right, struct Vector3* velocity) {
+    listener.position = *pos;
+    listener.right = *right;
+    listener.velocity = *velocity;
 }

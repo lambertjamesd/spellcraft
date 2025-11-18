@@ -8,6 +8,17 @@
 #include "armature.h"
 #include "../math/transform.h"
 
+union animator_events {
+    struct {
+        uint16_t reserved: 14;
+        uint16_t step: 1;
+        uint16_t attack: 1;
+    };
+    uint16_t all;
+};
+
+typedef union animator_events animator_events_t;
+
 struct animator {
     struct animation_clip* current_clip;
     int16_t* bone_state[2];
@@ -19,7 +30,7 @@ struct animator {
     // flags
     uint16_t loop: 1;
     uint16_t done: 1;
-    uint16_t events;
+    animator_events_t events;
     uint8_t image_frame_0;
     uint8_t image_frame_1;
     color_t prim_color;

@@ -58,4 +58,5 @@ void pottery_wheel_init(pottery_wheel_t* wheel, struct pottery_wheel_definition*
 void pottery_wheel_destroy(pottery_wheel_t* wheel) {
     render_scene_remove(&wheel->renderable);
     renderable_destroy(&wheel->renderable);
+    update_remove(wheel);
 }

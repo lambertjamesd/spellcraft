@@ -31,7 +31,7 @@ void animator_init(struct animator* animator, int bone_count) {
     animator->bone_state_frames[1] = -1;
     animator->next_frame_state_index = -1;
     animator->bone_count = bone_count;
-    animator->events = 0;
+    animator->events.all = 0;
     animator->image_frame_0 = NO_IMAGE_FRAME;
     animator->image_frame_1 = NO_IMAGE_FRAME;
 }
@@ -120,7 +120,7 @@ void animator_init_zero_transform(struct animator* animator, struct animation_us
         used_attributes += 1;
     }
 
-    animator->events = 0;
+    animator->events.all = 0;
 }
 
 void animator_normalize(struct animator* animator, struct Transform* transforms) {
@@ -160,7 +160,7 @@ void animator_blend_transform(struct animator* animator, int16_t* frame, struct 
     }
 
     if (animator->current_clip->has_events) {
-        animator->events |= (uint16_t)*frame;
+        animator->events.all |= (uint16_t)*frame;
         frame += 1;
     }
 
@@ -343,7 +343,7 @@ void animator_run_clip(struct animator* animator, struct animation_clip* clip, f
     animator->current_time = start_time;
     animator->loop = loop;
     animator->done = 0;
-    animator->events = 0;
+    animator->events.all = 0;
 
     animator_step(animator, 0.0f);
 }

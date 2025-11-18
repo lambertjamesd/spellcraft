@@ -156,15 +156,17 @@ class PackedArmatureData():
 
 class PackedEventData():
     def __init__(self):
-        self.attack_event: bool = False
+        self.events: list[str] = []
+        self.event_mask: int = 0
+
+    def has_events(self) -> bool:
+        return self.event_mask != 0
+
+    def add_event(self, index: int):
+        self.event_mask |= 1 << index
 
     def pack(self):
-        result = 0
-
-        if self.attack_event:
-            result |= 1 << 0
-        
-        return result
+        return self.event_mask
     
 class PackedImageFrameData():
     def __init__(self):
@@ -209,7 +211,7 @@ class PackedAnimation():
                 frame.pose[bone_idx].determine_needed_channels(defualt_bone_pose, bone_attr)
 
         for frame in self._frames:
-            if frame.events.attack_event:
+            if frame.events.has_events():
                 result.has_events = True
             if frame.image_data.image_frame_0 != None or frame.image_data.image_frame_1 != None:
                 result.has_image_frames = True
@@ -257,6 +259,11 @@ class ArmatureBone:
     
     def __repr__(self):
         return str(self)
+    
+event_names = [
+    "event_attack",
+    "event_step"
+]
 
 class ArmatureData:
     def __init__(self, obj: bpy.types.Object, base_transform: mathutils.Matrix):
@@ -387,8 +394,9 @@ class ArmatureData:
     def generate_event_data(self) -> PackedEventData:
         result: PackedEventData = PackedEventData()
 
-        if 'event_attack' in self.obj and self.obj['event_attack']:
-            result.attack_event = True
+        for index, name in enumerate(event_names):
+            if name in self.obj and self.obj[name]:
+                result.add_event(index)
 
         return result
     
