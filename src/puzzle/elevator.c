@@ -2,7 +2,7 @@
 
 #include "../render/render_scene.h"
 #include "../collision/collision_scene.h"
-#include "../collision/shapes/box.h"
+#include "../collision/shapes/cylinder.h"
 #include "../time/time.h"
 #include "../cutscene/expression_evaluate.h"
 #include "../physics/move_towards.h"
@@ -16,7 +16,7 @@ static struct move_towards_parameters move_parameters = {
 };
 
 static struct dynamic_object_type elevator_collision_type = {
-    BOX_COLLIDER(1.5f, 1.5f, 1.5f),
+    CYLINDER_COLLIDER(1.5f, 0.2211935f),
     .friction = 0.9f,
     .bounce = 0.0f,
 };
