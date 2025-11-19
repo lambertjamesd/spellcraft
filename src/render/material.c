@@ -194,6 +194,8 @@ void material_load(struct material* into, FILE* material_file) {
     rdpq_mode_filter(FILTER_BILINEAR);
 
     bool has_palette = false;
+    
+    rdpq_blender_t fog_mode = RDPQ_FOG_STANDARD;
 
     while (has_more) {
         uint8_t nextCommand;
@@ -215,6 +217,9 @@ void material_load(struct material* into, FILE* material_file) {
                     rdpq_blender_t blendMode;
                     fread(&blendMode, sizeof(rdpq_blender_t), 1, material_file);
                     rdpq_mode_blender(blendMode & SOM_BLEND_MASK);
+
+                    fog_mode = blendMode & 0xCCCC0000;
+                    fog_mode |= fog_mode >> 2;
 
                     if (blendMode & SOM_Z_COMPARE) {
                         into->flags |= MATERIAL_FLAGS_Z_READ;
@@ -306,6 +311,11 @@ void material_load(struct material* into, FILE* material_file) {
                     uint8_t enabled;
                     fread(&enabled, 1, 1, material_file);
                     t3d_fog_set_enabled(enabled);
+                    if (enabled) {
+                        rdpq_mode_fog(fog_mode);
+                    } else {
+                        rdpq_mode_fog(0);
+                    }
                 }
                 break;
             case COMMAND_FOG_COLOR:
