@@ -36,7 +36,10 @@ enum cutscene_step_type {
     CUTSCENE_STEP_NPC_ANIMATE,
     CUTSCENE_STEP_PRINT,
     CUTSCENE_STEP_SPAWN,
+    CUTSCENE_STEP_CALLBACK,
 };
+
+typedef void (*cutscene_step_callback)(void* data);
 
 struct cutscene_step;
 
@@ -149,6 +152,10 @@ union cutscene_step_data {
     struct {
         struct templated_string message;
     } print;
+    struct {
+        cutscene_step_callback callback;
+        void* data;
+    } callback;
 };
 
 struct cutscene_step {
@@ -181,6 +188,7 @@ void cutscene_builder_interact_npc(
     union cutscene_actor_id subject,
     union cutscene_actor_id target
 );
+void cutscene_builder_npc_set_speed(struct cutscene_builder* builder, union cutscene_actor_id subject, float speed);
 void cutscene_builder_interact_position(
     struct cutscene_builder* builder,
     enum interaction_type type,
@@ -196,6 +204,7 @@ void cutscene_builder_camera_follow(struct cutscene_builder* builder);
 void cutscene_builder_camera_return(struct cutscene_builder* builder);
 void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, camera_move_to_args_t* args);
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value);
+void cutscene_builder_callback(struct cutscene_builder* builder, cutscene_step_callback callback, void* data);
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder);
 

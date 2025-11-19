@@ -35,6 +35,7 @@ CUTSCENE_STEP_LOOK_AT_SUBJECT = 24
 CUTSCENE_STEP_NPC_ANIMATE = 25
 CUTSCENE_STEP_PRINT = 26
 CUTSCENE_STEP_SPAWN = 27
+CUTSCENE_STEP_CALLBACK = 28
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):

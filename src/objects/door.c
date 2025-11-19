@@ -16,7 +16,7 @@
 #define CAMERA_PLACEMENT_TANGENTS   2.0f
 
 static struct dynamic_object_type door_collision = {
-    BOX_COLLIDER(1.0f, 1.5f, 0.35f),
+    BOX_COLLIDER(2.16264f, 2.0f, 0.317424f),
     .bounce = 0.2f,
     .friction = 0.25f,
 };
@@ -44,15 +44,11 @@ void door_render(void* data, struct render_batch* batch) {
     render_batch_add_tmesh(batch, door->lock_model, mtxfp, NULL, NULL, NULL);
 }
 
-void door_cuscene_finish(struct cutscene* cutscene, void* data) {
+void door_cutscene_close(void* data) {
     struct door* door = (struct door*)data;
-
     animator_run_clip(&door->animator, door->animations.close, 0.0f, false);
-    
     door->next_room = door->preview_room;
     door->collider.collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE;
-
-    cutscene_free(cutscene);
 }
 
 void door_interact(struct interactable* interactable, entity_id from) {
@@ -107,6 +103,9 @@ void door_interact(struct interactable* interactable, entity_id from) {
         },
         &target
     );
+    cutscene_builder_npc_set_speed(&builder, (union cutscene_actor_id) {
+        .npc_type = NPC_TYPE_PLAYER,
+    }, 2.0f);
     cutscene_builder_delay(&builder, 0.25f);
     cutscene_builder_camera_move_to(
         &builder, 
@@ -131,6 +130,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
             .npc_type = NPC_TYPE_PLAYER,
         }
     );
+    cutscene_builder_callback(&builder, door_cutscene_close, door);
     vector3AddScaled(&door->transform.position, &offset, BEHIND_PLAYER_OFFSET, &camera_target);
     camera_target.y += CAMERA_FOLLOW_HEIGHT;
     cutscene_builder_camera_move_to(
@@ -148,7 +148,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
     cutscene_runner_run(
         cutscene_builder_finish(&builder),
         0,
-        door_cuscene_finish,
+        cutscene_runner_free_on_finish(),
         door,
         0
     );

@@ -279,6 +279,10 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             scene_spawn_entity(current_scene, spawner >> 16, spawner & 0xFFFF);
             break;
         }
+        case CUTSCENE_STEP_CALLBACK: {
+            step->data.callback.callback(step->data.callback.data);
+            break;
+        }
     }
 }
 

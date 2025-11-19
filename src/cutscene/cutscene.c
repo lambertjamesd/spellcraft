@@ -340,6 +340,20 @@ void cutscene_builder_interact_npc(
     };
 }
 
+void cutscene_builder_npc_set_speed(struct cutscene_builder* builder, union cutscene_actor_id subject, float speed) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_NPC_SET_SPEED,
+        .data = {
+            .npc_set_speed = {
+                .subject = subject,
+                .speed = speed,
+            },
+        },
+    };
+}
+
 void cutscene_builder_interact_position(
     struct cutscene_builder* builder,
     enum interaction_type type,
@@ -442,6 +456,18 @@ void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_vari
             },
         };
     }
+}
+
+void cutscene_builder_callback(struct cutscene_builder* builder, cutscene_step_callback callback, void* data) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_CALLBACK,
+        .data.callback = {
+            .callback = callback,
+            .data = data,
+        },
+    };
 }
 
 // release with cutscene_free()
