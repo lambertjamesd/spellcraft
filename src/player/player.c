@@ -376,9 +376,15 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
         return true;
     }
 
-    struct Vector2 target_rotation;
-    vector2LookDir(&target_rotation, target_direction);
-    float movement_alignment = vector2Dot(&player->cutscene_actor.transform.rotation, &target_rotation);
+    float movement_alignment;
+
+    if (player->z_target) {
+        movement_alignment = 1.0f;
+    } else {
+        struct Vector2 target_rotation;
+        vector2LookDir(&target_rotation, target_direction);
+        movement_alignment = vector2Dot(&player->cutscene_actor.transform.rotation, &target_rotation);
+    }
 
     if (vector3MagSqrd(target_direction) < MOVE_DEADZONE || movement_alignment < 0.0f) {
         player->cutscene_actor.collider.velocity = gZeroVec;
