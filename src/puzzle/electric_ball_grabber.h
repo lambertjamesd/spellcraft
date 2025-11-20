@@ -21,5 +21,7 @@ typedef struct electric_ball_grabber electric_ball_grabber_t;
 
 void electric_ball_grabber_init(electric_ball_grabber_t* grabber, struct electric_ball_grabber_definition* definition, entity_id entity_id);
 void electric_ball_grabber_destroy(electric_ball_grabber_t* grabber);
+void electric_ball_grabber_common_init();
+void electric_ball_grabber_common_destroy();
 
 #endif

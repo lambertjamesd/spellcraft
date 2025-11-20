@@ -18,5 +18,7 @@ typedef struct electric_ball_dropper electric_ball_dropper_t;
 
 void electric_ball_dropper_init(electric_ball_dropper_t* dropper, struct electric_ball_dropper_definition* definition, entity_id entity_id);
 void electric_ball_dropper_destroy(electric_ball_dropper_t* dropper);
+void electric_ball_dropper_common_init();
+void electric_ball_dropper_common_destroy();
 
 #endif

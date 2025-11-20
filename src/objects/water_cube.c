@@ -86,3 +86,11 @@ void water_cube_destroy(struct water_cube* cube) {
     collision_scene_remove_trigger(&cube->trigger);
     update_remove(cube);
 }
+
+void water_cube_common_init() {
+
+}
+
+void water_cube_common_destroy() {
+
+}

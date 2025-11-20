@@ -54,3 +54,11 @@ void electric_ball_dropper_destroy(electric_ball_dropper_t* dropper) {
     update_remove(dropper);
     entity_despawn(dropper->current_ball);
 }
+
+void electric_ball_dropper_common_init() {
+
+}
+
+void electric_ball_dropper_common_destroy() {
+
+}

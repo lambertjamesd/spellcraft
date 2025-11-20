@@ -35,6 +35,8 @@ enum entity_type_id {
     ENTITY_TYPE_step_switch,
     ENTITY_TYPE_pottery_wheel,
     ENTITY_TYPE_fan_switch,
+    
+    ENTITY_TYPE_count,
 };
 
 struct crate_definition {

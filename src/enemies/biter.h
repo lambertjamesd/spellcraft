@@ -32,5 +32,7 @@ struct biter {
 
 void biter_init(struct biter* biter, struct biter_definition* definition, entity_id id);
 void biter_destroy(struct biter* biter);
+void biter_common_init();
+void biter_common_destroy();
 
 #endif

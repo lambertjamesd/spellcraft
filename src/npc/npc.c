@@ -91,3 +91,11 @@ void npc_destroy(struct npc* npc) {
         cutscene_free(npc->talk_to_cutscene);
     }
 }
+
+void npc_common_init() {
+
+}
+
+void npc_common_destroy() {
+
+}

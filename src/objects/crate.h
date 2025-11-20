@@ -17,5 +17,7 @@ struct crate {
 
 void crate_init(struct crate* crate, struct crate_definition* definition, entity_id id);
 void crate_destroy(struct crate* crate);
+void crate_common_init();
+void crate_common_destroy();
 
 #endif

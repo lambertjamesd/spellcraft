@@ -180,3 +180,11 @@ void biter_destroy(struct biter* biter) {
     animator_destroy(&biter->animator);
     animation_cache_release(biter->animation_set);
 }
+
+void biter_common_init() {
+
+}
+
+void biter_common_destroy() {
+    
+}

@@ -36,6 +36,8 @@
     #name, \
     (entity_init)name ## _init, \
     (entity_destroy)name ## _destroy, \
+    name ## _common_init, \
+    name ## _common_destroy, \
     sizeof(struct name), \
     sizeof(struct name ## _definition), \
     fields, \
@@ -50,7 +52,7 @@ static struct entity_field_type_location fields_sign[] = {
     { .offset = offsetof(struct sign_definition, message), .type = ENTITY_FIELD_TYPE_STRING },
 };
 
-static struct entity_definition scene_entity_definitions[] = {
+static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(empty, fields_empty),
     ENTITY_DEFINITION(biter, fields_empty),
     ENTITY_DEFINITION(collectable, fields_empty),
@@ -78,6 +80,8 @@ static struct entity_definition scene_entity_definitions[] = {
     ENTITY_DEFINITION(pottery_wheel, fields_empty),
     ENTITY_DEFINITION(fan_switch, fields_empty),
 };
+
+static uint16_t scene_entity_count[ENTITY_TYPE_count];
 
 struct entity_definition* entity_find_def(const char* name) {
    for (int i = 0; i < sizeof(scene_entity_definitions) / sizeof(*scene_entity_definitions); i += 1) {
@@ -109,6 +113,13 @@ struct entity_header {
     entity_id id;
 };
 
+void entity_add_reference(enum entity_type_id entity_type) {
+    if (!scene_entity_count[entity_type]) {
+        scene_entity_definitions[entity_type].common_init();
+    }
+    ++scene_entity_count[entity_type];
+}
+
 entity_id entity_spawn(enum entity_type_id type, void* definition) {
     struct entity_definition* entity_def = entity_def_get(type);
 
@@ -125,10 +136,12 @@ entity_id entity_spawn(enum entity_type_id type, void* definition) {
     entity_id result = entity_id_new();
     void* entity = malloc(entity_def->entity_size + sizeof(struct entity_header));
     
-    if (!hash_map_set(&entity_mapping, result, entity)) {
+    if (!entity || !hash_map_set(&entity_mapping, result, entity)) {
         free(entity);
         return 0;
     }
+
+    entity_add_reference(type);
 
     struct entity_header* header = entity;
     header->entity_def = entity_def;
@@ -136,6 +149,13 @@ entity_id entity_spawn(enum entity_type_id type, void* definition) {
 
     entity_def->init(header + 1, definition, result);
     return result;
+}
+
+void entity_remove_reference(enum entity_type_id entity_type) {
+    --scene_entity_count[entity_type];
+    if (!scene_entity_count[entity_type]) {
+        scene_entity_definitions[entity_type].common_destroy();
+    }
 }
 
 bool entity_despawn(entity_id entity_id) {
@@ -150,6 +170,8 @@ bool entity_despawn(entity_id entity_id) {
     }
 
     struct entity_header* header = entity;
+    entity_remove_reference(header->entity_def->entity_type);
+
     header->entity_def->destroy(header + 1);
     free(entity);
 

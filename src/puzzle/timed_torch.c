@@ -62,3 +62,11 @@ void timed_torch_puzzle_init(struct timed_torch_puzzle* torch_puzzle, struct tim
 void timed_torch_puzzle_destroy(struct timed_torch_puzzle* torch_puzzle) {
     update_remove(torch_puzzle);
 }
+
+void timed_torch_puzzle_common_init() {
+
+}
+
+void timed_torch_puzzle_common_destroy() {
+
+}

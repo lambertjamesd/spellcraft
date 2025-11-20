@@ -93,3 +93,11 @@ void treasure_chest_destroy(struct treasure_chest* treasure_chest) {
     animation_cache_release(treasure_chest->animation_set);
     update_remove(treasure_chest);
 }
+
+void treasure_chest_common_init() {
+
+}
+
+void treasure_chest_common_destroy() {
+
+}

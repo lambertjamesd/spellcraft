@@ -12,6 +12,7 @@
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
 #include "../entity/entity_spawner.h"
+#include "../audio/audio.h"
 #include "vision.h"
 
 #define MAX_HEALTH      400.0f
@@ -32,6 +33,10 @@
 #define VISION_DISTANCE 8.0f
 
 #define SCALE_CHANGE_RATE   0.05f
+
+static wav64_t* jump_sound;
+static tmesh_t* mesh;
+static tmesh_t* ice_mesh;
 
 static struct Vector2 jelly_max_rotation;
 
@@ -174,6 +179,8 @@ void jelly_update_target(struct jelly* jelly, struct Vector3* jump_target, bool 
         jelly->jump_timer = 0.0f;
         jelly->is_jumping = 1;
         jelly->is_attacking = 1;
+        
+        audio_play_3d(jump_sound, 1.0f, &jelly->transform.position, &gZeroVec, randomInRangef(0.9f, 1.1f), 0);
     } else {
         jelly->jump_timer += fixed_time_step;
     }
@@ -264,7 +271,7 @@ void jelly_render(void* data, struct render_batch* batch) {
 
     render_batch_add_tmesh(
         batch, 
-        jelly->is_frozen ? jelly->ice_mesh : jelly->mesh, 
+        jelly->is_frozen ? ice_mesh : mesh, 
         mtxfp,
         NULL, 
         NULL,
@@ -296,6 +303,12 @@ void jelly_update(void* data) {
             health_damage_all(&jelly->health);
             jelly->needs_new_radius = 1;
         }
+
+        if (is_grounded && !jelly->was_grounded) {
+            audio_play_3d(jump_sound, 0.5f, &jelly->transform.position, &gZeroVec, randomInRangef(0.4f, 0.6f), 0);
+        }
+
+        jelly->was_grounded = is_grounded;
     }
 
     if (jelly->transform.scale <= 0.0f) {
@@ -306,9 +319,6 @@ void jelly_update(void* data) {
 void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity_id id) {
     transformSaInit(&jelly->transform, &definition->position, &definition->rotation, 1.0f);
 
-    jelly->mesh = tmesh_cache_load("rom:/meshes/enemies/water_jelly.tmesh");
-    jelly->ice_mesh = tmesh_cache_load("rom:/meshes/enemies/ice_jelly.tmesh");
-
     render_scene_add(&jelly->transform.position, 1.0f, jelly_render, jelly);
 
     health_init(&jelly->health, id, MAX_HEALTH);
@@ -318,6 +328,7 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity
     jelly->is_frozen = 0;
     jelly->is_jumping = 0;
     jelly->is_attacking = 0;
+    jelly->was_grounded = 0;
 
     jelly->freeze_timer = 0.0f;
     vector3Add(&definition->position, &gUp, &jelly->shear_spring);
@@ -363,10 +374,20 @@ void jelly_destroy(struct jelly* jelly) {
     health_destroy(&jelly->health);
     collision_scene_remove(&jelly->collider);
     update_remove(jelly);
-    tmesh_cache_release(jelly->mesh);
-    tmesh_cache_release(jelly->ice_mesh);
     collision_scene_remove_trigger(&jelly->vision);
     drop_shadow_destroy(&jelly->drop_shadow);
+}
+
+void jelly_common_init() {
+    jump_sound = wav64_load("rom:/sounds/enemies/jelly/jump.wav64", NULL);
+    mesh = tmesh_cache_load("rom:/meshes/enemies/water_jelly.tmesh");
+    ice_mesh = tmesh_cache_load("rom:/meshes/enemies/ice_jelly.tmesh");
+}
+
+void jelly_common_destroy() {
+    wav64_close(jump_sound);
+    tmesh_cache_release(mesh);
+    tmesh_cache_release(ice_mesh);
 }
 
 void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, int collision_group, entity_id target) {

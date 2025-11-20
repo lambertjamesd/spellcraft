@@ -21,6 +21,9 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
 void collectable_collected(struct collectable* collectable);
 void collectable_destroy(struct collectable* collectable);
 
+void collectable_common_init();
+void collectable_common_destroy();
+
 struct collectable* collectable_get(entity_id id);
 
 #endif

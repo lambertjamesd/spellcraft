@@ -14,8 +14,6 @@
 
 struct jelly {
     struct TransformSingleAxis transform;
-    struct tmesh* mesh;
-    struct tmesh* ice_mesh;
     struct health health;
     struct dynamic_object collider;
     struct spatial_trigger vision;
@@ -34,12 +32,15 @@ struct jelly {
     uint16_t is_frozen: 1;
     uint16_t is_jumping: 1; 
     uint16_t is_attacking: 1;
+    uint16_t was_grounded: 1;
 
     struct drop_shadow drop_shadow;
 };
 
 void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity_id id);
 void jelly_destroy(struct jelly* jelly);
+void jelly_common_init();
+void jelly_common_destroy();
 
 void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, int collision_group, entity_id target);
 

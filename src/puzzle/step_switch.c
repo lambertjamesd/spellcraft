@@ -78,3 +78,11 @@ void step_switch_destroy(step_switch_t* step_switch) {
     renderable_destroy(&step_switch->renderable);
     update_remove(step_switch);
 }
+
+void step_switch_common_init() {
+
+}
+
+void step_switch_common_destroy() {
+
+}

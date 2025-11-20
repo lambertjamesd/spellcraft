@@ -147,3 +147,11 @@ void ground_torch_destroy(struct ground_torch* ground_torch) {
     tmesh_cache_release(ground_torch->base_mesh);
     tmesh_cache_release(ground_torch->flame_mesh);
 }
+
+void ground_torch_common_init() {
+
+}
+
+void ground_torch_common_destroy() {
+
+}

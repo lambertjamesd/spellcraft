@@ -21,5 +21,7 @@ struct room_portal {
 
 void room_portal_init(struct room_portal* portal, struct room_portal_definition* definition);
 void room_portal_destroy(struct room_portal* portal);
+void room_portal_common_init();
+void room_portal_common_destroy();
 
 #endif

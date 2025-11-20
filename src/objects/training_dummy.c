@@ -151,3 +151,11 @@ void training_dummy_destroy(struct training_dummy* dummy) {
     update_remove(dummy);
     health_destroy(&dummy->health);
 }
+
+void training_dummy_common_init() {
+
+}
+
+void training_dummy_common_destroy() {
+
+}

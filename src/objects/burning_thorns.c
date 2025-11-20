@@ -118,3 +118,11 @@ void burning_thorns_destroy(burning_thorns_t* thorns) {
         burning_effect_free(thorns->burning_effect);
     }
 }
+
+void burning_thorns_common_init() {
+
+}
+
+void burning_thorns_common_destroy() {
+
+}

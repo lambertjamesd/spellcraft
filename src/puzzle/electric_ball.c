@@ -144,3 +144,11 @@ void electric_ball_destroy(electric_ball_t* ball) {
     electric_ball_remove_fulfullment(ball);
     interactable_destroy(&ball->interactable);
 }
+
+void electric_ball_common_init() {
+
+}
+
+void electric_ball_common_destroy() {
+
+}

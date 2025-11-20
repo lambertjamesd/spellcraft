@@ -54,3 +54,11 @@ void crate_destroy(struct crate* crate) {
     health_destroy(&crate->health);
     update_remove(crate);
 }
+
+void crate_common_init() {
+
+}
+
+void crate_common_destroy() {
+
+}

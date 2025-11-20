@@ -62,5 +62,7 @@ struct jelly_king {
 
 void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition, entity_id id);
 void jelly_king_destroy(struct jelly_king* jelly_king);
+void jelly_king_common_init();
+void jelly_king_common_destroy();
 
 #endif

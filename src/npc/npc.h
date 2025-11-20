@@ -26,5 +26,7 @@ struct npc {
 
 void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id);
 void npc_destroy(struct npc* npc);
+void npc_common_init();
+void npc_common_destroy();
 
 #endif

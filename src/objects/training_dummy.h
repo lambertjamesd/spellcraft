@@ -22,5 +22,7 @@ struct training_dummy {
 
 void training_dummy_init(struct training_dummy* dummy, struct training_dummy_definition* definition, entity_id id);
 void training_dummy_destroy(struct training_dummy* dummy);
+void training_dummy_common_init();
+void training_dummy_common_destroy();
 
 #endif

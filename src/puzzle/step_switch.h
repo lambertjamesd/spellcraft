@@ -20,5 +20,7 @@ typedef struct step_switch step_switch_t;
 
 void step_switch_init(step_switch_t* step_switch, struct step_switch_definition* definition, entity_id entity_id);
 void step_switch_destroy(step_switch_t* step_switch);
+void step_switch_common_init();
+void step_switch_common_destroy();
 
 #endif

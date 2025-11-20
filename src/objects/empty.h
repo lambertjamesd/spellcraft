@@ -14,5 +14,7 @@ struct empty {
 
 void empty_init(struct empty* empty, struct empty_definition* definition, entity_id entity_id);
 void empty_destroy(struct empty* empty, struct empty_definition* definition);
+void empty_common_init();
+void empty_common_destroy();
 
 #endif

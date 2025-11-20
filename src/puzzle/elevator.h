@@ -21,5 +21,7 @@ struct elevator {
 
 void elevator_init(struct elevator* elevator, struct elevator_definition* definition, entity_id id);
 void elevator_destroy(struct elevator* elevator);
+void elevator_common_init();
+void elevator_common_destroy();
 
 #endif

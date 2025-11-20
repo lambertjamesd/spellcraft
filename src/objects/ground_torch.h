@@ -22,5 +22,7 @@ struct ground_torch {
 
 void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_definition* definition, entity_id id);
 void ground_torch_destroy(struct ground_torch* ground_torch);
+void ground_torch_common_init();
+void ground_torch_common_destroy();
 
 #endif

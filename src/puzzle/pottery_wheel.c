@@ -60,3 +60,11 @@ void pottery_wheel_destroy(pottery_wheel_t* wheel) {
     renderable_destroy(&wheel->renderable);
     update_remove(wheel);
 }
+
+void pottery_wheel_common_init() {
+
+}
+
+void pottery_wheel_common_destroy() {
+
+}

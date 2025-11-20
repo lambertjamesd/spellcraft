@@ -216,3 +216,11 @@ void door_destroy(struct door* door) {
     update_remove(door);
     tmesh_cache_release(door->lock_model);
 }
+
+void door_common_init() {
+
+}
+
+void door_common_destroy() {
+
+}

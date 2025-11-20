@@ -24,5 +24,7 @@ typedef struct pottery_wheel pottery_wheel_t;
 
 void pottery_wheel_init(pottery_wheel_t* wheel, struct pottery_wheel_definition* definition, entity_id entity_id);
 void pottery_wheel_destroy(pottery_wheel_t* wheel);
+void pottery_wheel_common_init();
+void pottery_wheel_common_destroy();
 
 #endif

@@ -26,5 +26,7 @@ typedef struct burning_thorns burning_thorns_t;
 
 void burning_thorns_init(burning_thorns_t* thorns, struct burning_thorns_definition* definition, entity_id id);
 void burning_thorns_destroy(burning_thorns_t* thorns);
+void burning_thorns_common_init();
+void burning_thorns_common_destroy();
 
 #endif

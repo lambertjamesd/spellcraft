@@ -16,5 +16,7 @@ struct bool_and_logic {
 
 void bool_and_logic_init(struct bool_and_logic* logic, struct bool_and_logic_definition* definition, entity_id id);
 void bool_and_logic_destroy(struct bool_and_logic* logic);
+void bool_and_logic_common_init();
+void bool_and_logic_common_destroy();
 
 #endif

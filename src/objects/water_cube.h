@@ -13,5 +13,7 @@ struct water_cube {
 
 void water_cube_init(struct water_cube* cube, struct water_cube_definition* definition, entity_id id);
 void water_cube_destroy(struct water_cube* cube);
+void water_cube_common_init();
+void water_cube_common_destroy();
 
 #endif

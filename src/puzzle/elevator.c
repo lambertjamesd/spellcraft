@@ -101,3 +101,11 @@ void elevator_destroy(struct elevator* elevator) {
     renderable_destroy(&elevator->renderable);
     update_remove(elevator);
 }
+
+void elevator_common_init() {
+
+}
+
+void elevator_common_destroy() {
+
+}

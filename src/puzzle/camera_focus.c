@@ -57,3 +57,11 @@ void camera_focus_init(camera_focus_t* camera_focus, struct camera_focus_definit
 void camera_focus_destroy(camera_focus_t* camera_focus) {
     update_remove(camera_focus);
 }
+
+void camera_focus_common_init() {
+
+}
+
+void camera_focus_common_destroy() {
+
+}

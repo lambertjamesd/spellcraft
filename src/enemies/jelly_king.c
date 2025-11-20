@@ -390,3 +390,11 @@ void jelly_king_destroy(struct jelly_king* jelly_king) {
         entity_despawn(jelly_king->minion[i]);
     }
 }
+
+void jelly_king_common_init() {
+
+}
+
+void jelly_king_common_destroy() {
+
+}

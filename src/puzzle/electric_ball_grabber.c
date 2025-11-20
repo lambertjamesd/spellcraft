@@ -93,3 +93,11 @@ void electric_ball_grabber_destroy(electric_ball_grabber_t* grabber) {
     update_remove(grabber);
     electric_ball_remove_request(grabber->entity_id);
 }
+
+void electric_ball_grabber_common_init() {
+
+}
+
+void electric_ball_grabber_common_destroy() {
+
+}

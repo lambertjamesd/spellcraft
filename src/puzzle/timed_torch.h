@@ -16,5 +16,7 @@ struct timed_torch_puzzle {
 
 void timed_torch_puzzle_init(struct timed_torch_puzzle* torch_puzzle, struct timed_torch_puzzle_definition* definition, entity_id id);
 void timed_torch_puzzle_destroy(struct timed_torch_puzzle* torch_puzzle);
+void timed_torch_puzzle_common_init();
+void timed_torch_puzzle_common_destroy();
 
 #endif

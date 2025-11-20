@@ -54,3 +54,11 @@ void sign_destroy(sign_t* sign) {
     collision_scene_remove(&sign->dynamic_object);
     cutscene_free(sign->read_cutscene);
 }
+
+void sign_common_init() {
+
+}
+
+void sign_common_destroy() {
+
+}

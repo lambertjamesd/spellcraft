@@ -105,3 +105,11 @@ void room_portal_destroy(struct room_portal* portal) {
     renderable_destroy(&portal->renderable);
     update_remove(portal);
 }
+
+void room_portal_common_init() {
+
+}
+
+void room_portal_common_destroy() {
+
+}

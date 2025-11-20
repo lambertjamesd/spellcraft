@@ -21,5 +21,7 @@ typedef struct camera_focus camera_focus_t;
 
 void camera_focus_init(camera_focus_t* camera_focus, struct camera_focus_definition* definition, entity_id entity_id);
 void camera_focus_destroy(camera_focus_t* camera_focus);
+void camera_focus_common_init();
+void camera_focus_common_destroy();
 
 #endif

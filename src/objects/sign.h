@@ -20,5 +20,7 @@ typedef struct sign sign_t;
 
 void sign_init(sign_t* sign, struct sign_definition* def, entity_id entity_id);
 void sign_destroy(sign_t* sign);
+void sign_common_init();
+void sign_common_destroy();
 
 #endif

@@ -7,3 +7,11 @@ void empty_init(struct empty* empty, struct empty_definition* definition, entity
 void empty_destroy(struct empty* empty, struct empty_definition* definition) {
     // do nothing
 }
+
+void empty_common_init() {
+    // do nothing
+}
+
+void empty_common_destroy() {
+    // do nothing
+}

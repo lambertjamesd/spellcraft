@@ -117,3 +117,11 @@ void mana_plant_destroy(struct mana_plant* plant) {
     collision_scene_remove_trigger(&plant->trigger);
     tmesh_cache_release(plant->mesh);
 }
+
+void mana_plant_common_init() {
+
+}
+
+void mana_plant_common_destroy() {
+
+}

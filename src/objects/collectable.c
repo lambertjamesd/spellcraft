@@ -103,6 +103,14 @@ void collectable_destroy(struct collectable* collectable) {
     hash_map_delete(&collectable_hash_map, collectable->dynamic_object.entity_id);
 }
 
+void collectable_common_init() {
+
+}
+
+void collectable_common_destroy() {
+
+}
+
 struct collectable* collectable_get(entity_id id) {
     return hash_map_get(&collectable_hash_map, id);
 }

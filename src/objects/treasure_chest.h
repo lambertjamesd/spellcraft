@@ -27,5 +27,7 @@ struct treasure_chest {
 
 void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition, entity_id id);
 void treasure_chest_destroy(struct treasure_chest* treasure_chest);
+void treasure_chest_common_init();
+void treasure_chest_common_destroy();
 
 #endif

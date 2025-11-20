@@ -68,3 +68,11 @@ void fan_switch_destroy(fan_switch_t* fan_switch) {
     collision_scene_remove(&fan_switch->collider);
     update_remove(fan_switch);
 }
+
+void fan_switch_common_init() {
+
+}
+
+void fan_switch_common_destroy() {
+
+}

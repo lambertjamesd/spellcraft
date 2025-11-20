@@ -15,5 +15,7 @@ struct mana_plant {
 
 void mana_plant_init(struct mana_plant* plant, struct mana_plant_definition* definition, entity_id id);
 void mana_plant_destroy(struct mana_plant* plant);
+void mana_plant_common_init();
+void mana_plant_common_destroy();
 
 #endif

@@ -35,5 +35,7 @@ struct door {
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id);
 void door_destroy(struct door* door);
+void door_common_init();
+void door_common_destroy();
 
 #endif
