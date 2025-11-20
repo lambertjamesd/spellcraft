@@ -30,3 +30,4 @@
 * start adding sounds
 * object culling
 * jelly wait to attack if offscreen?
+* getting stuck on elevator in spinning room

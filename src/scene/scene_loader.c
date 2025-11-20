@@ -261,7 +261,7 @@ struct scene* scene_load(const char* filename) {
 
     inventory_init();
     cutscene_actor_common_init();
-    camera_init(&scene->camera, DEFAULT_CAMERA_FOV, 0.4f, 125.0f);
+    camera_init(&scene->camera, DEFAULT_CAMERA_FOV, 1.0f, 125.0f);
     player_init(&scene->player, &player_def, &scene->camera.transform);
     camera_controller_init(&scene->camera_controller, &scene->camera, &scene->player);
 

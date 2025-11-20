@@ -208,22 +208,22 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         if (b->trigger_type == TRIGGER_TYPE_BASIC) {
             contact->normal = gZeroVec;
             contact->point = *a->position;
-            contact->other_object = a ? a->entity_id : 0;
+            contact->other_object = a->entity_id;
             contact->collision_layers = a->collision_layers;
+            contact->surface_type = a->type->surface_type;
 
             contact->next = b->active_contacts;
             b->active_contacts = contact;
         } else {
             contact->normal = gZeroVec;
             contact->point = *b->position;
-            contact->other_object = b ? b->entity_id : 0;
+            contact->other_object = b->entity_id;
             contact->collision_layers = b->collision_layers;
+            contact->surface_type = b->type->surface_type;
 
             contact->next = a->active_contacts;
             a->active_contacts = contact;
         }
-
-        contact->surface_type = 0;
 
         return;
     }
@@ -269,8 +269,8 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     
         contact->normal = result.normal;
         contact->point = result.contactA;
-        contact->other_object = a ? a->entity_id : 0;
-        contact->surface_type = 0;
+        contact->other_object = a->entity_id;
+        contact->surface_type = a->type->surface_type;
         contact->collision_layers = a->collision_layers;
     
         contact->next = b->active_contacts;
@@ -286,8 +286,8 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         
         vector3Negate(&result.normal, &contact->normal);
         contact->point = result.contactB;
-        contact->other_object = b ? b->entity_id : 0;
-        contact->surface_type = 0;
+        contact->other_object = b->entity_id;
+        contact->surface_type = b->type->surface_type;
         contact->collision_layers = b->collision_layers;
     
         contact->next = a->active_contacts;
@@ -317,7 +317,7 @@ void collide_object_to_trigger(struct dynamic_object* obj, struct spatial_trigge
     contact->normal = gZeroVec;
     contact->point = *obj->position;
     contact->other_object = obj->entity_id;
-    contact->surface_type = 0;
+    contact->surface_type = obj->type->surface_type;
     contact->collision_layers = obj->collision_layers;
 
     contact->next = trigger->active_contacts;

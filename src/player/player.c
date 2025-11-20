@@ -950,7 +950,7 @@ void player_find_z_target(struct player* player) {
         contact;
         contact = contact->next
     ) {
-        if (!(contact->collision_layers | COLLISION_LAYER_Z_TARGET)) {
+        if (!(contact->collision_layers & COLLISION_LAYER_Z_TARGET)) {
             continue;
         }
 
@@ -1020,7 +1020,7 @@ void player_update(struct player* player) {
     }
 
     struct contact* ground = dynamic_object_get_ground(&player->cutscene_actor.collider);
-
+    
     player_update_state(player, ground);
 
     if (player->cutscene_actor.collider.hit_kill_plane) {

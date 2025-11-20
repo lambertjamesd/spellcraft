@@ -48,6 +48,7 @@ struct dynamic_object_type {
     // 0 wont be stable on any slope, 1 will stick to anything not facing downward
     // or 1 - cos(slope angle)
     float max_stable_slope;
+    uint16_t surface_type;
 };
 
 typedef struct dynamic_object_type dynamic_object_type_t;

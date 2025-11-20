@@ -183,14 +183,26 @@ bool dynamic_object_is_grounded(struct dynamic_object* object) {
 
 #define SHADOW_AS_GROUND_TOLERNACE  0.15f
 
+int8_t surface_ground_priorities[SURFACE_TYPE_COUNT] = {
+    [SURFACE_TYPE_STICKY] = 1,
+};
+
 struct contact* dynamic_object_get_ground(struct dynamic_object* object) {
     struct contact* contact = object->active_contacts;
 
     struct contact* result = NULL;
+    int ground_priority = 0;
 
     while (contact) {
-        if (contact->normal.y > 0.001f && (!result || contact->normal.y > result->normal.y)) {
+        int priority = surface_ground_priorities[(int)contact->surface_type];
+
+        if (contact->normal.y > 0.001f && (
+            !result || 
+            priority > ground_priority || 
+            (priority == ground_priority && contact->normal.y > result->normal.y)
+        )) {
             result = contact;
+            ground_priority = priority;
         }
 
         contact = contact->next;

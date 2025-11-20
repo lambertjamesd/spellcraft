@@ -19,6 +19,7 @@ static struct dynamic_object_type elevator_collision_type = {
     CYLINDER_COLLIDER(1.5f, 0.2211935f),
     .friction = 0.9f,
     .bounce = 0.0f,
+    .surface_type = SURFACE_TYPE_STICKY,
 };
 
 void elevator_update(void* data) {

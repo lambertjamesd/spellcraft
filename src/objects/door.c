@@ -106,7 +106,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
     cutscene_builder_npc_set_speed(&builder, (union cutscene_actor_id) {
         .npc_type = NPC_TYPE_PLAYER,
     }, 2.0f);
-    cutscene_builder_delay(&builder, 0.25f);
+    cutscene_builder_delay(&builder, 0.4f);
     cutscene_builder_camera_move_to(
         &builder, 
         &camera_target, 

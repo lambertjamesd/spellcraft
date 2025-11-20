@@ -17,8 +17,14 @@ struct Camera {
     float far;
 };
 
+typedef struct Camera camera_t;
+
 void camera_init(struct Camera* camera, float fov, float near, float far);
 
 void camera_apply(struct Camera* camera, T3DViewport* viewport, struct ClippingPlanes* clipping_planes, mat4x4 view_proj_matrix);
+
+static inline void camera_set_near(camera_t* camera, float near) {
+    camera->near = near;
+}
 
 #endif

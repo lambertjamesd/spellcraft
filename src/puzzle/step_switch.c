@@ -9,6 +9,7 @@
 
 static struct dynamic_object_type step_switch_type = {
     BOX_COLLIDER(0.5f, 0.1f, 0.5f),
+    .surface_type = SURFACE_TYPE_STICKY,
 };
 
 #define PRESS_DISTANCE  0.1f
