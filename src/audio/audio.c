@@ -6,6 +6,16 @@
 #define MAX_ACTIVE_SOUNDS       16
 #define SPEED_OF_SOUND          343
 #define FULL_VOLUME_DISTANCE    3.0f
+#define OUTPUT_SAMPLE_RATE      44100
+
+#define BUFFERS_PER_SECOND      25
+#define MAX_ECHO_DURATION       0.5
+
+// about half a second
+#define DELAY_BUFFERS           13
+#define ACTUAL_BUFFER_DELAY     4
+
+#define TOTAL_AUDIO_BUFFERS     (DELAY_BUFFERS + ACTUAL_BUFFER_DELAY)
 
 struct active_sound {
     wav64_t* wav;
@@ -59,7 +69,7 @@ void audio_active_sound_init(active_sound_t* active_sound) {
 }
 
 void audio_player_init() {
-    audio_init(44100, 4);
+    audio_init(OUTPUT_SAMPLE_RATE, TOTAL_AUDIO_BUFFERS);
     mixer_init(MAX_ACTIVE_SOUNDS);
 
     for (int i = 0; i < MAX_ACTIVE_SOUNDS; i += 1) {
@@ -200,6 +210,75 @@ audio_id audio_play_3d(wav64_t* wav, float volume, struct Vector3* pos, struct V
     return audio_id;
 }
 
+static short* prev_buffers[TOTAL_AUDIO_BUFFERS];
+static uint16_t prev_buffer;
+
+struct audio_sample {
+    short l, r;
+};
+
+typedef struct audio_sample audio_sample_t;
+
+static float echo_delay = 0.2f;
+static int32_t echo_decay = 0x2000; 
+static int32_t echo_low_pass = 0xF800;
+audio_sample_t prev_lowpass_output;
+
+short audio_sample_reverb(short current_output, short input, short* prev_lowpass) {
+    int low_passed = ((int)input * (0x10000 - echo_low_pass) + (int)*prev_lowpass * echo_low_pass) >> 16;
+    *prev_lowpass = low_passed;
+    
+    int result = (int)current_output + (((int)low_passed * echo_decay) >> 16);
+
+    if (result > 0x7fff) {
+        return 0x7fff;
+    }
+
+    if (result < -0x7fff) {
+        return -0x7fff;
+    }
+
+    return (short)result;
+}
+
+void audio_apply_echo(short* buffer, int buffer_length) {
+    if (!echo_decay || !buffer) {
+        return;
+    }
+
+    int sample_offset = (int)(echo_delay * OUTPUT_SAMPLE_RATE);
+    int buffer_offset = (sample_offset + buffer_length - 1) / buffer_length;
+
+    int read_buffer = (prev_buffer + TOTAL_AUDIO_BUFFERS - buffer_offset) % TOTAL_AUDIO_BUFFERS;
+
+    if (!prev_buffers[read_buffer]) {
+        return;
+    }
+
+    int read_buffer_start = (buffer_length - sample_offset) % buffer_length;
+
+    if (read_buffer_start < 0) {
+        read_buffer_start += buffer_length;
+    }
+
+    audio_sample_t* output = (audio_sample_t*)buffer;
+    audio_sample_t* input = ((audio_sample_t*)prev_buffers[read_buffer]) + read_buffer_start;
+
+    audio_sample_t* input_end = ((audio_sample_t*)prev_buffers[read_buffer]) + buffer_length;
+
+    for (int i = 0; i < buffer_length; i += 1) {
+        output->l = audio_sample_reverb(output->l, input->r, &prev_lowpass_output.l);
+        output->r = audio_sample_reverb(output->r, input->l, &prev_lowpass_output.r);
+
+        ++output;
+        ++input;
+        
+        if (input == input_end) {
+            input = (audio_sample_t*)prev_buffers[(read_buffer + 1) % TOTAL_AUDIO_BUFFERS];
+        }
+    }
+}
+
 void audio_player_update() {
     for (int i = 0; i < MAX_ACTIVE_SOUNDS; i += 1) {
         if (!active_sound_ids[i]) {
@@ -220,7 +299,20 @@ void audio_player_update() {
 
     if (audio_can_write()) {
         short *buf = audio_write_begin();
-        mixer_poll(buf, audio_get_buffer_length());
+        prev_buffers[prev_buffer] = buf;
+
+        short *write_buffer = prev_buffers[(prev_buffer + TOTAL_AUDIO_BUFFERS - DELAY_BUFFERS) % TOTAL_AUDIO_BUFFERS];
+
+        if (write_buffer) {
+            mixer_poll(write_buffer, audio_get_buffer_length());
+            audio_apply_echo(write_buffer, audio_get_buffer_length());
+        }
+        
+        prev_buffer += 1;
+        if (prev_buffer == TOTAL_AUDIO_BUFFERS) {
+            prev_buffer = 0;
+        }
+
         audio_write_end();
     }
 }
