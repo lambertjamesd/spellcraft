@@ -379,6 +379,7 @@ void jelly_destroy(struct jelly* jelly) {
 }
 
 void jelly_common_init() {
+    assert(jump_sound == NULL);
     jump_sound = wav64_load("rom:/sounds/enemies/jelly/jump.wav64", NULL);
     mesh = tmesh_cache_load("rom:/meshes/enemies/water_jelly.tmesh");
     ice_mesh = tmesh_cache_load("rom:/meshes/enemies/ice_jelly.tmesh");
@@ -386,6 +387,7 @@ void jelly_common_init() {
 
 void jelly_common_destroy() {
     wav64_close(jump_sound);
+    jump_sound = NULL;
     tmesh_cache_release(mesh);
     tmesh_cache_release(ice_mesh);
 }
