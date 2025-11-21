@@ -38,8 +38,8 @@ void camera_look_at_from_rotation(struct camera_controller* controller) {
     vector3AddScaled(&controller->stable_position, &controller->looking_at, -CAMERA_FOLLOW_DISTANCE, &controller->looking_at);
 }
 
-#define MAX_SIN_ANGLE DEFAULT_CAMERA_COS_FOV_6
-#define MAX_COS_ANGLE DEFAULT_CAMERA_SIN_FOV_6
+#define MAX_SIN_ANGLE DEFAULT_CAMERA_COS_FOV_2
+#define MAX_COS_ANGLE DEFAULT_CAMERA_SIN_FOV_2
 
 void camera_controller_direct_target(struct camera_controller* controller, struct Vector3* target) {
     struct Vector3* player_pos = &controller->player->cutscene_actor.transform.position;
@@ -76,7 +76,7 @@ void camera_controller_watch_target(struct camera_controller* controller, struct
     if (rotation_amount.y > MAX_SIN_ANGLE) {
         rotation_amount.x = MAX_COS_ANGLE;
         rotation_amount.y = MAX_SIN_ANGLE;
-        follow_distance = target_distance * (MAX_SIN_ANGLE / DEFAULT_CAMERA_SIN_TRI_CORNER);
+        // follow_distance = target_distance * (MAX_SIN_ANGLE / DEFAULT_CAMERA_SIN_TRI_CORNER);
     } else {
         rotation_amount.x = sqrtf(1.0f - rotation_amount.y * rotation_amount.y);
     }
