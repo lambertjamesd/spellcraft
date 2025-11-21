@@ -94,7 +94,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
     door->collider.collision_layers = 0;
 
     cutscene_builder_pause(&builder, true, false, UPDATE_LAYER_WORLD);
-    cutscene_builder_delay(&builder, 0.5f);
+    cutscene_builder_delay(&builder, 0.75f);
     cutscene_builder_interact_position(
         &builder, 
         INTERACTION_MOVE, 

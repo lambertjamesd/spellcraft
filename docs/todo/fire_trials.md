@@ -9,7 +9,6 @@
 * Health and mana UI
 * Push cast animation
 * Add bottomless pit to defeat biters in lightning room
-* Better door cross animation
 * Better z targeting when close
 * Vertical z targeting
 * Climb animations
@@ -30,4 +29,3 @@
 * start adding sounds
 * object culling
 * jelly wait to attack if offscreen?
-* getting stuck on elevator in spinning room
