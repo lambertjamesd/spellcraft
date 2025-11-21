@@ -16,7 +16,7 @@ static tmesh_t* grab_checker_mesh;
 
 #define HORIZONTAL_TOLERANCE    0.1f
 #define WALL_CHECK_TOLERANCE    0.701f
-#define MAX_GRAB_HEIGHT         1.9f
+#define MAX_GRAB_HEIGHT         2.2f
 #define GROUND_LEVEL_TOLERANCE  0.5f
 #define GRAB_TIMER_THRESHOLD    15
 #define MAX_VERTICAL_DELTA      0.01f
@@ -158,7 +158,7 @@ bool grab_checker_update(grab_checker_t* checker, dynamic_object_t* player_colli
     if (checker->can_grab) {
         checker->collider.position->x = cast_from.x;
         checker->collider.position->z = cast_from.z;
-        checker->collider.velocity = gZeroVec;
+        checker->collider.velocity = (struct Vector3){0.0f, -1.0f, 0.0f};
     } else {
         *checker->collider.position = cast_from;
         checker->collider.velocity = (struct Vector3){0.0f, -MAX_GRAB_HEIGHT / fixed_time_step, 0.0f};

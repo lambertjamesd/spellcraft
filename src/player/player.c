@@ -67,7 +67,7 @@ static struct climb_up_data climb_up_data[CLIMB_UP_COUNT] = {
         .end_jump_time = 13.0f / 30.0f,
     },
     {
-        .max_climb_height = 1.8f,
+        .max_climb_height = 2.1f,
         .animation_height = 1.4f,
         .start_jump_time = 6.0f / 30.0f,
         .end_jump_time = 13.0f / 30.0f,
