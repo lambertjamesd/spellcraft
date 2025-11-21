@@ -8,7 +8,7 @@
 
 #include "../resource/tmesh_cache.h"
 
-#define DEBUG_GRABBER   1
+#define DEBUG_GRABBER   0
 
 #if DEBUG_GRABBER
 static tmesh_t* grab_checker_mesh; 
