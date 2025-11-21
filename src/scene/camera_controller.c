@@ -57,7 +57,7 @@ void camera_controller_direct_target(struct camera_controller* controller, struc
 
 void camera_controller_watch_target(struct camera_controller* controller, struct Vector3* target) {
     struct Vector3* camera_pos = &controller->stable_position;
-    struct Vector3* player_pos = &controller->player->cutscene_actor.transform.position;
+    struct Vector3* player_pos = player_get_position(controller->player);
 
     struct Vector2 player_to_target = {
         .x = target->x - player_pos->x,
@@ -115,9 +115,32 @@ void camera_controller_watch_target(struct camera_controller* controller, struct
     };
     struct Vector3 looking_at = {
         .x = controller->target.x + camera_rotation.y * CAMERA_FOLLOW_DISTANCE,
-        .y = controller->target.y,
+        .y = player_pos->y + CAMERA_FOLLOW_HEIGHT,
         .z = controller->target.z - camera_rotation.x * CAMERA_FOLLOW_DISTANCE,
     };
+
+    if (target->y < player_pos->y || target->y > player_pos->y + CAMERA_FOLLOW_HEIGHT) {        
+        struct Vector3 offset;
+        vector3Sub(target, player_pos, &offset);
+
+        if (target->y > player_pos->y) {
+            offset.y -= CAMERA_FOLLOW_HEIGHT;
+        }
+
+        float distance = sqrtf(vector3MagSqrd2D(&offset));
+
+        if (distance > 0.001f) {
+            float slope = offset.y / distance;
+            controller->target.y -= slope * CAMERA_FOLLOW_DISTANCE;
+
+            vector3Sub(&controller->target, player_pos, &offset);
+            offset.y -= CAMERA_FOLLOW_HEIGHT;
+
+            vector3Normalize(&offset, &offset);
+            vector3AddScaled(player_pos, &offset, CAMERA_FOLLOW_DISTANCE, &controller->target);
+            controller->target.y += CAMERA_FOLLOW_HEIGHT;
+        }
+    }
 
     move_towards(&controller->looking_at, &controller->looking_at_speed, &looking_at, &camera_move_parameters);
 }
@@ -267,7 +290,9 @@ void camera_controller_update(struct camera_controller* controller) {
                 if (interactable && interactable->flags.target_straight_on) {
                     camera_controller_direct_target(controller, obj->position);
                 } else {
-                    camera_controller_watch_target(controller, obj->position);
+                    struct Vector3 target;
+                    vector3Lerp(&obj->bounding_box.min, &obj->bounding_box.max, 0.5f, &target);
+                    camera_controller_watch_target(controller, &target);
                 }
             } else {
                 // camera_controller_determine_player_move_target(controller, &controller->target, false);

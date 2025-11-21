@@ -14,12 +14,10 @@
 * Build fire kiln
 * Better visuals for current rooms
 * Figure out fast64 asset linking bug
-* Figure out symbolic link for blender plugin
 * strafe animations
 * use pots in first push block puzzle
 * reconsider block z targeting
 * make biter ai more fun
-* climbing 2 high block
 * small ledges should step easier
 * start adding sounds
 * object culling
