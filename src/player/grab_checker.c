@@ -177,4 +177,5 @@ void grab_checker_destroy(grab_checker_t* checker) {
 
 void grab_checker_get_climb_to(grab_checker_t* checker, struct Vector3* out) {
     *out = checker->climb_to;
+    checker->grab_timer = 0.0f;
 }
