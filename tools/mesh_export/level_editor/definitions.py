@@ -180,9 +180,13 @@ class Definitions:
 
         self.materials = list(filter(lambda x: x.endswith('.mat.blend'), self._search_blend_files(os.path.join(repo_path, 'assets/materials'))))
 
+        print("searching for scripts")
         self.scripts = self._search_scripts(os.path.join(repo_path, 'assets'))
+        print("searching for entry points")
         self.entry_points = self._search_entry_points(os.path.join(repo_path, 'assets'))
+        print("loading variables")
         self._load_variables(repo_path)
+        print("finished")
         
 
 
