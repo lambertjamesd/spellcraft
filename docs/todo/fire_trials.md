@@ -21,3 +21,5 @@
 * start adding sounds
 * object culling
 * jelly wait to attack if offscreen?
+* change some doors to passive portals
+* speed up searching for entry points
