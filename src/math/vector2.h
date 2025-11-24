@@ -5,6 +5,8 @@ struct Vector2 {
     float x, y;
 };
 
+typedef struct Vector2 vector2_t;
+
 extern struct Vector2 gRight2;
 extern struct Vector2 gUp2;
 extern struct Vector2 gZeroVec2;

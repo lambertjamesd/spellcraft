@@ -31,6 +31,7 @@ void health_init(struct health* health, entity_id id, float max_health) {
     health->entity_id = id;
     health->max_health = max_health;
     health->current_health = max_health;
+    health->current_status = 0;
     health->status_timer = 0.0f;
 
     hash_map_set(&health_entity_mapping, id, health);

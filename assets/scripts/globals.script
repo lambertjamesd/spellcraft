@@ -2,7 +2,7 @@
 global has_staff_default: bool = true;
 global has_talked_outside: bool;
 
-global fire_rune_level: i8 = 2;
+global fire_rune_level: i8 = 3;
 global ice_rune_level: i8 = 0;
 global earth_rune_level: i8 = 2;
 global air_rune_level: i8 = 3;
@@ -19,3 +19,4 @@ global has_entered_fire_trials: bool;
 
 global fire_trials_bossdoor_kiln_0: bool;
 global fire_trials_bossdoor_kiln_1: bool;
+global fire_trials_bossdoor_open: bool;

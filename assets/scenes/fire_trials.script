@@ -50,3 +50,12 @@ func room_block_puzzle()
         spawn block_puzzle_hidden_jelly_spawner;
     end
 end
+
+global fire_trials_bossdoor_kiln_0: bool;
+global fire_trials_bossdoor_kiln_1: bool;
+global fire_trials_bossdoor_open: bool;
+scene fire_trials_bossdoor_open_focused: bool;
+
+func room_bossdoor()
+    fire_trials_bossdoor_open = fire_trials_bossdoor_kiln_0 and fire_trials_bossdoor_kiln_1;
+end

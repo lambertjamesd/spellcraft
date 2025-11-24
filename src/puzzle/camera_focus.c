@@ -20,7 +20,7 @@ void camera_focus_update(void* data) {
         return;
     }
 
-    if (camera_focus->repeat && camera_focus->did_fire) {
+    if (!camera_focus->repeat && camera_focus->did_fire) {
         expression_set_bool(camera_focus->output, true);
         return;
     }
@@ -50,7 +50,12 @@ void camera_focus_init(camera_focus_t* camera_focus, struct camera_focus_definit
     memcpy(camera_focus, definition, sizeof(struct camera_focus_definition));
 
     update_add(camera_focus, camera_focus_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
-    camera_focus->last_state = true;
+    camera_focus->last_state = expression_get_bool(camera_focus->input);
+
+    if (camera_focus->last_state) {
+        expression_set_bool(camera_focus->output, true);
+    }
+
     camera_focus->did_fire = false;
 }
 

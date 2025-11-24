@@ -9,6 +9,7 @@
 #include "../time/time.h"
 #include "../time/time.h"
 #include "../cutscene/expression_evaluate.h"
+#include "../math/vector2.h"
 #include <memory.h>
 
 struct torch_type_def {
@@ -16,7 +17,8 @@ struct torch_type_def {
     char* active_effect;
     enum damage_type start_damage;
     enum damage_type stop_damage;
-    struct Vector3 flame_location;
+    vector2_t flame_offset;
+    float flame_height;
     dynamic_object_type_t collider;
     float collider_offset;
 };
@@ -27,7 +29,7 @@ static struct torch_type_def torch_defs[] = {
         .active_effect = "rom:/meshes/objects/torch_flame.tmesh",
         .start_damage = DAMAGE_TYPE_FIRE,
         .stop_damage = DAMAGE_TYPE_ICE | DAMAGE_TYPE_WATER,
-        .flame_location = {0.0f, 0.84124f, 0.0f},
+        .flame_height = 0.84124f,
         .collider = {
             CAPSULE_COLLIDER(0.4f, 0.4f),
         },
@@ -38,7 +40,7 @@ static struct torch_type_def torch_defs[] = {
         .active_effect = "rom:/meshes/puzzle/torch_lightning.tmesh",
         .start_damage = DAMAGE_TYPE_LIGHTING,
         .stop_damage = DAMAGE_TYPE_WATER,
-        .flame_location = {0.0f, 0.84124f, 0.0f},
+        .flame_height = 0.84124f,
         .collider = {
             CAPSULE_COLLIDER(0.4f, 0.4f),
         },
@@ -48,8 +50,9 @@ static struct torch_type_def torch_defs[] = {
         .mesh_filename = "rom:/meshes/puzzle/kiln.tmesh",
         .active_effect = "rom:/meshes/objects/torch_flame.tmesh",
         .start_damage = DAMAGE_TYPE_FIRE,
-        .stop_damage = DAMAGE_TYPE_WATER,
-        .flame_location = {0.0f, 0.84124f, 0.0f},
+        .stop_damage = 0,
+        .flame_offset = {0.0f, 2.2837f},
+        .flame_height = 0.15f,
         .collider = {
             CYLINDER_COLLIDER(3.0f, 2.5f),
         },
@@ -98,10 +101,15 @@ void ground_torch_render(void* data, struct render_batch* batch) {
     
     mat4x4 mtx;
 
+    vector2_t flame_offset;
+    vector2ComplexMul(&torch_type->flame_offset, &torch->transform.rotation, &flame_offset);
+
     memcpy(mtx, &batch->camera_matrix, sizeof(mat4x4));
     matrixApplyScaledPos(mtx, &torch->transform.position, WORLD_SCALE);
     matrixApplyScale(mtx, MODEL_WORLD_SCALE);
-    mtx[3][1] += torch_type->flame_location.y * WORLD_SCALE;
+    mtx[3][1] += torch_type->flame_height * WORLD_SCALE;
+    mtx[3][0] += flame_offset.x * WORLD_SCALE;
+    mtx[3][2] += flame_offset.y * WORLD_SCALE;
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
