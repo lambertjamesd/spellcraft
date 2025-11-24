@@ -8,7 +8,6 @@
 * Health and mana UI
 * Push cast animation
 * Add bottomless pit to defeat biters in lightning room
-* Vertical z targeting
 * Climb animations
 * Carry animations
 * Build fire kiln

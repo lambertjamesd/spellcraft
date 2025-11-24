@@ -137,7 +137,10 @@ void camera_controller_watch_target(struct camera_controller* controller, struct
             offset.y -= CAMERA_FOLLOW_HEIGHT;
 
             vector3Normalize(&offset, &offset);
-            vector3AddScaled(player_pos, &offset, CAMERA_FOLLOW_DISTANCE, &controller->target);
+
+            float followDistance = offset.y < 0.0 ? mathfLerp(CAMERA_FOLLOW_DISTANCE, OVER_SHOULDER_DISTANCE, -offset.y) : CAMERA_FOLLOW_DISTANCE;
+
+            vector3AddScaled(player_pos, &offset, followDistance, &controller->target);
             controller->target.y += CAMERA_FOLLOW_HEIGHT;
         }
     }
