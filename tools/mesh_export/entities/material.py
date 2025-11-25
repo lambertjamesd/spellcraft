@@ -228,7 +228,7 @@ class BlendMode():
         self.cyc2: BlendModeCycle | None = cyc2
         self.z_mode = z_mode
         self.z_write = z_write
-        self.z_compare = z_compare
+        self.z_compare: bool = z_compare
         self.aa: bool = aa,
         self.alpha_compare = alpha_compare
         self.coverage_dest = coverage_dest

@@ -88,6 +88,7 @@ def process_scene():
         use_scene = obj.users_scene[0]
 
     settings = entities.export_settings.ExportSettings()
+    settings.fixed_point_scale = 128
 
     meshes = mesh_list.determine_mesh_data(arm)
 

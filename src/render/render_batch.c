@@ -409,7 +409,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
     if (default_mtx) {
         mat4x4 scaleMtx;
-        matrixFromScale(scaleMtx, MODEL_WORLD_SCALE);
+        matrixFromScale(scaleMtx, STATIC_WORLD_SCALE);
         struct Vector3 camera_neg_pos = {
             batch->camera_matrix[3][0],
             batch->camera_matrix[3][1],

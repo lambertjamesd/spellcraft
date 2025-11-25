@@ -3,10 +3,12 @@
 
 #include "../math/vector3.h"
 
-#define MODEL_SCALE 64
-#define WORLD_SCALE 32
+#define MODEL_SCALE     128
+#define STATIC_SCALE    64
+#define WORLD_SCALE     32
 
 #define MODEL_WORLD_SCALE   ((float)WORLD_SCALE / (float)MODEL_SCALE)
+#define STATIC_WORLD_SCALE   ((float)WORLD_SCALE / (float)STATIC_SCALE)
 
 #define DEFAULT_CAMERA_FOV          70.0f
 #define DEFAULT_CAMERA_FOV_H        86.067076526f
