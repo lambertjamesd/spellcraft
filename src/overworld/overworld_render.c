@@ -262,9 +262,9 @@ void overworld_render_lod_0(struct overworld* overworld, struct Camera* camera, 
         -camera->transform.position.y * lod_scale * WORLD_SCALE,
         -camera->transform.position.z * lod_scale * WORLD_SCALE
     );
-    mtx.m[0][0] = MODEL_WORLD_SCALE;
-    mtx.m[1][1] = MODEL_WORLD_SCALE;
-    mtx.m[2][2] = MODEL_WORLD_SCALE;
+    mtx.m[0][0] = STATIC_WORLD_SCALE;
+    mtx.m[1][1] = STATIC_WORLD_SCALE;
+    mtx.m[2][2] = STATIC_WORLD_SCALE;
 
     int camera_x = -(int)mtx.m[3][0];
     int camera_z = -(int)mtx.m[3][2];
@@ -314,9 +314,9 @@ void overworld_render_tile(struct overworld* overworld, struct Camera* camera, s
         (z * overworld->tile_size + overworld->min.y - camera_position->z) * WORLD_SCALE
     );
 
-    mtx.m[0][0] = MODEL_WORLD_SCALE;
-    mtx.m[1][1] = MODEL_WORLD_SCALE;
-    mtx.m[2][2] = MODEL_WORLD_SCALE;
+    mtx.m[0][0] = STATIC_WORLD_SCALE;
+    mtx.m[1][1] = STATIC_WORLD_SCALE;
+    mtx.m[2][2] = STATIC_WORLD_SCALE;
 
     for (int y = min_y; y < max_y; y += 1) {
         T3DMat4FP* tile_position = frame_malloc(pool, sizeof(T3DMat4FP));

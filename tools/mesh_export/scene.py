@@ -601,7 +601,8 @@ def process_scene():
         write_loading_zones(scene, base_transform, context, file)
 
         if has_overworld:
-            write_string(overworld_filename, file)
+            overworld_file_location = f"rom:/{overworld_filename[len('filesystem/'):]}"
+            write_string(overworld_file_location, file)
         else:
             file.write(b'\0')
 

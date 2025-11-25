@@ -224,6 +224,7 @@ struct overworld* overworld_load(const char* filename) {
     memset(result, 0, sizeof(struct overworld));
 
     result->file = fopen(filename, "rb");
+    assert(result->file);
 
     int header;
     fread(&header, 1, 4, result->file);
