@@ -15,6 +15,11 @@ static struct dynamic_object_type camera_wall_checker_type = {
 };
 
 void camera_wall_checker_init(camera_wall_checker_t* checker) {
+    checker->collider.collision_group = COLLISION_GROUP_PLAYER;
+    checker->collider.weight_class = WEIGHT_CLASS_GHOST;
+    checker->collider.has_gravity = false;
+    checker->position = gZeroVec;
+    checker->cast_from = gZeroVec;
     dynamic_object_init(
         entity_id_new(),
         &checker->collider,
@@ -23,11 +28,6 @@ void camera_wall_checker_init(camera_wall_checker_t* checker) {
         &checker->position,
         NULL
     );
-    checker->collider.collision_group = COLLISION_GROUP_PLAYER;
-    checker->collider.weight_class = WEIGHT_CLASS_GHOST;
-    checker->collider.has_gravity = false;
-    checker->position = gZeroVec;
-    checker->cast_from = gZeroVec;
     collision_scene_add(&checker->collider);
 }
 

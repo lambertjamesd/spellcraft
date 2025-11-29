@@ -107,11 +107,11 @@ union cutscene_step_data {
     } delay;
     struct {
         enum interaction_type type;
-        union cutscene_actor_id subject;
-        union cutscene_actor_id target;
+        entity_id subject;
+        entity_id target;
     } interact_with_npc;
     struct {
-        union cutscene_actor_id target;
+        entity_id target;
     } camera_look_at;
     struct {
         char* animation_name;
@@ -122,7 +122,7 @@ union cutscene_step_data {
     } camera_move_to;
     struct {
         enum interaction_type type;
-        union cutscene_actor_id subject;
+        entity_id subject;
         char* location_name;
     } interact_with_location;
     struct {
@@ -131,21 +131,21 @@ union cutscene_step_data {
     } fade;
     struct {
         enum interaction_type type;
-        union cutscene_actor_id subject;
+        entity_id subject;
         struct Vector3 position;
     } interact_with_position;
     struct {
-        union cutscene_actor_id subject;
+        entity_id subject;
     } npc_wait;
     struct {
-        union cutscene_actor_id subject;
+        entity_id subject;
         float speed;
     } npc_set_speed;
     struct {
         char* message;
     } show_title;
     struct {
-        cutscene_actor_id_t subject;
+        entity_id subject;
         char* animation_name;
         uint8_t loop;
     } npc_animate;
@@ -185,19 +185,19 @@ void cutscene_builder_delay(struct cutscene_builder* builder, float delay);
 void cutscene_builder_interact_npc(
     struct cutscene_builder* builder,
     enum interaction_type type,
-    union cutscene_actor_id subject,
-    union cutscene_actor_id target
+    entity_id subject,
+    entity_id target
 );
-void cutscene_builder_npc_set_speed(struct cutscene_builder* builder, union cutscene_actor_id subject, float speed);
+void cutscene_builder_npc_set_speed(struct cutscene_builder* builder, entity_id subject, float speed);
 void cutscene_builder_interact_position(
     struct cutscene_builder* builder,
     enum interaction_type type,
-    union cutscene_actor_id subject,
+    entity_id subject,
     struct Vector3* position
 );
 void cutscene_builder_npc_wait(
     struct cutscene_builder* builder,
-    union cutscene_actor_id subject
+    entity_id subject
 );
 void cutscene_builder_camera_wait(struct cutscene_builder* builder);
 void cutscene_builder_camera_follow(struct cutscene_builder* builder);

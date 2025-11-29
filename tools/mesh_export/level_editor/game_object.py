@@ -7,7 +7,7 @@ import bmesh
 import mathutils
 
 def _get_item_types(self, context):
-    return list(map(lambda x: (x, x, ''), object_definitions.get_enum('enum inventory_item_type').all_values()))
+    return list(map(lambda x: (x.name, x.name, ''), object_definitions.get_enum('enum inventory_item_type').all_values()))
 
 def _get_scripts(self, context):
     return list(map(lambda x: (x, x, ''), object_definitions.get_scripts()))

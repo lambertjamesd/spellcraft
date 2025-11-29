@@ -39,6 +39,13 @@ enum entity_type_id {
     ENTITY_TYPE_count,
 };
 
+enum fixed_entity_ids {
+    ENTITY_ID_PLAYER = 1,
+    ENTITY_ID_SUBJECT = 2,
+
+    ENTITY_ID_FIRST_DYNAMIC,
+};
+
 struct crate_definition {
     struct Vector3 position;
     struct Vector2 rotation;

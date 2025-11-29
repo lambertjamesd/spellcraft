@@ -120,7 +120,7 @@ struct cutscene* cutscene_load(char* filename) {
                 break;
             case CUTSCENE_STEP_IDLE_NPC:
                 fread(&step->data.interact_with_npc.subject, 4, 1, file);
-                step->data.interact_with_npc.target.unique_id = 0;
+                step->data.interact_with_npc.target = 0;
                 break;
             case CUTSCENE_STEP_CAMERA_LOOK_AT_NPC:
                 fread(&step->data.camera_look_at.target, 4, 1, file);
@@ -323,8 +323,8 @@ void cutscene_builder_delay(struct cutscene_builder* builder, float delay) {
 void cutscene_builder_interact_npc(
     struct cutscene_builder* builder,
     enum interaction_type type,
-    union cutscene_actor_id subject,
-    union cutscene_actor_id target
+    entity_id subject,
+    entity_id target
 ) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
@@ -340,7 +340,7 @@ void cutscene_builder_interact_npc(
     };
 }
 
-void cutscene_builder_npc_set_speed(struct cutscene_builder* builder, union cutscene_actor_id subject, float speed) {
+void cutscene_builder_npc_set_speed(struct cutscene_builder* builder, entity_id subject, float speed) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
     *step = (struct cutscene_step){
@@ -357,7 +357,7 @@ void cutscene_builder_npc_set_speed(struct cutscene_builder* builder, union cuts
 void cutscene_builder_interact_position(
     struct cutscene_builder* builder,
     enum interaction_type type,
-    union cutscene_actor_id subject,
+    entity_id subject,
     struct Vector3* position
 ) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
@@ -376,7 +376,7 @@ void cutscene_builder_interact_position(
 
 void cutscene_builder_npc_wait(
     struct cutscene_builder* builder,
-    union cutscene_actor_id subject
+    entity_id subject
 ) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     

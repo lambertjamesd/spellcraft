@@ -2,10 +2,10 @@
 global has_staff_default: bool;
 
 world_pause;
-interact_with_npc INTERACTION_LOOK_SPACE, NPC_TYPE_PLAYER, NPC_TYPE_MENTOR;
-interact_with_npc INTERACTION_LOOK, NPC_TYPE_MENTOR, NPC_TYPE_PLAYER;
-cam_look_npc NPC_TYPE_MENTOR;
-npc_wait NPC_TYPE_MENTOR;
+interact_with_npc INTERACTION_LOOK_SPACE, ENTITY_ID_PLAYER, ENTITY_ID_SUBJECT;
+interact_with_npc INTERACTION_LOOK, ENTITY_ID_SUBJECT, ENTITY_ID_PLAYER;
+cam_look_npc ENTITY_ID_SUBJECT;
+npc_wait ENTITY_ID_SUBJECT;
 
 if has_staff_default then
     say "
@@ -18,9 +18,9 @@ if has_staff_default then
 
     say "Fus ro dah";
 
-    npc_animate NPC_TYPE_PLAYER, "knock_over", false;
+    npc_animate ENTITY_ID_PLAYER, "knock_over", false;
 
-    npc_wait NPC_TYPE_PLAYER;
+    npc_wait ENTITY_ID_PLAYER;
 else
     say "
         Hey {player_name}, your fathers old staff is in that chest over there

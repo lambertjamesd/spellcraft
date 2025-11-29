@@ -5,6 +5,7 @@
 #include "../time/time.h"
 #include <stddef.h>
 #include <math.h>
+#include "../scene/scene_definition.h"
 
 #include "../resource/tmesh_cache.h"
 

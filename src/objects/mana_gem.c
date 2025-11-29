@@ -9,6 +9,7 @@
 #include "../render/render_scene.h"
 #include "../time/time.h"
 #include "../spell/mana_pool.h"
+#include "../scene/scene_definition.h"
 
 #define RADIUS_SCALE        0.02f
 #define MIN_RADIUS          0.1f

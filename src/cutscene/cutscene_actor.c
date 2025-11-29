@@ -58,12 +58,10 @@ void cutscene_actor_init(
     actor->target = gZeroVec;
     actor->animate_speed = 1.0f;
     actor->state = ACTOR_STATE_IDLE;
-    actor->id.npc_type = npc_type;
-    actor->id.index = index;
     actor->def = def;
     actor->move_speed = def->move_speed;
 
-    hash_map_set(&cutscene_actor_hash_map, actor->id.unique_id, actor);
+    hash_map_set(&cutscene_actor_hash_map, entity_id, actor);
 
     animator_run_clip(&actor->animator, actor->animations.idle, 0.0f, true);
 
@@ -87,7 +85,7 @@ void cutscene_actor_destroy(struct cutscene_actor* actor) {
     animation_cache_release(actor->animation_set);
     collision_scene_remove(&actor->collider);
     animator_destroy(&actor->animator);
-    hash_map_delete(&cutscene_actor_hash_map, actor->id.unique_id);
+    hash_map_delete(&cutscene_actor_hash_map, actor->collider.entity_id);
 }
 
 void cutscene_actor_reset() {
@@ -95,11 +93,8 @@ void cutscene_actor_reset() {
     hash_map_init(&cutscene_actor_hash_map, 32);
 }
 
-struct cutscene_actor* cutscene_actor_find(enum npc_type npc_type, int index) {
-    cutscene_actor_id_t id;
-    id.npc_type = npc_type;
-    id.index = index;
-    return hash_map_get(&cutscene_actor_hash_map, id.unique_id);
+struct cutscene_actor* cutscene_actor_find(entity_id entity_id) {
+    return hash_map_get(&cutscene_actor_hash_map, entity_id);
 }
 
 void cutscene_actor_interact_with(struct cutscene_actor* actor, enum interaction_type interaction, struct Vector3* at) {

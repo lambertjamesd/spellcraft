@@ -26,17 +26,6 @@ struct cutscene_actor_animations {
     struct animation_clip* run;
 };
 
-union cutscene_actor_id {
-    struct {
-        // used to tell apart two npcs of the same type
-        uint16_t index;
-        uint16_t npc_type;
-    };
-    uint32_t unique_id;
-};
-
-typedef union cutscene_actor_id cutscene_actor_id_t; 
-
 struct cutscene_actor_def {
     float eye_level;
     float move_speed;
@@ -60,7 +49,6 @@ struct cutscene_actor {
     float animate_speed;
     float move_speed;
     enum actor_state state;
-    cutscene_actor_id_t id;
     struct cutscene_actor_def* def;
     animator_events_t last_animator_events;
 };
@@ -74,7 +62,7 @@ void cutscene_actor_init(struct cutscene_actor* actor, struct cutscene_actor_def
 
 void cutscene_actor_destroy(struct cutscene_actor* actor);
 void cutscene_actor_reset();
-struct cutscene_actor* cutscene_actor_find(enum npc_type npc_type, int index);
+struct cutscene_actor* cutscene_actor_find(entity_id entity_id);
 
 void cutscene_actor_interact_with(struct cutscene_actor* actor, enum interaction_type interaction, struct Vector3* at);
 void cutscene_actor_idle(struct cutscene_actor* actor);

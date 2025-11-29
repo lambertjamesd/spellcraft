@@ -28,29 +28,41 @@ class StructureInfo:
 class PointerType:
     def __init__(self, sub_type):
         self.sub_type = sub_type
-    
-class EnumInfo:
-    def __init__(self, name: str, values: list[str]):
-        self.name: str = name
-        self._values: list[str] = values
 
-    def str_to_int(self, value: str):
-        return self._values.index(value)
+class EnumValue:
+    def __init__(self, name: str, value: int):
+        self.name: str = name
+        self.value: int = value
+
+class EnumInfo:
+    def __init__(self, name: str, values: list[EnumValue]):
+        self.name: str = name
+        self._values: list[EnumValue] = values
+
+    def str_to_int(self, value: str) -> int | None:
+        for entry in self._values:
+            if entry.name == value:
+                return entry.value
+            
+        return None
     
     def int_to_str(self, value: int):
         if value < 0 or value >= len(self._values):
             return None
         return self._values[value]
     
-    def all_values(self) -> list[str]:
+    def all_values(self) -> list[EnumValue]:
         return self._values
     
     def is_defined(self, name: str) -> bool:
-        return name in self._values
+        for entry in self._values:
+            if entry.name == name:
+                return True
+        return False
     
     def populate_dict(self, dict: dict[str, int]):
-        for idx, name in enumerate(self._values):
-            dict[name] = idx
+        for entry in self._values:
+            dict[entry.name] = entry.value
 
 class UnorderedEnum:
     def __init__(self, name: str, values: dict[str, int]):
@@ -95,6 +107,12 @@ def token_identifier(chr: str):
     
     return (token_default_state(chr), 'identifier')
 
+def token_int(chr: str):
+    if chr.isdigit():
+        return (token_int, None)
+    
+    return (token_default_state(chr), 'int')
+
 def token_emit(token_type: str):
     def result(chr: str):
         return (token_default_state(chr), token_type)
@@ -138,11 +156,13 @@ def token_error(chr: str):
     
     return (token_error, None)
 
-single_tokens = {'{', '}', ';', ',', '*'}
+single_tokens = {'{', '}', ';', ',', '*', '='}
 
 def token_default_state(chr: str):
     if chr.isalpha() or chr == '_':
         return token_identifier
+    if chr.isdigit():
+        return token_int
     if chr.isspace():
         return token_white
     if chr == '/':
@@ -279,18 +299,28 @@ def parse_enum(state: ParseState):
 
     if name and state.peek(0).token_type != '{':
         return f"enum {name.value}"
+    elif not name:
+        raise Exception('enum needed a name')
     
     state.require('{')
 
-    values: list[str] = []
+    values: list[EnumValue] = []
+
+    current_value: int = 0
 
     while not state.optional('}'):
         if state.peek(0).token_type == 'eof':
             raise Exception(state.format_error(state.peek(0), 'unexpected end of file'))
         
         value_name = state.require('identifier')
-        values.append(value_name.value)
+
+        if state.optional('='):
+            current_value = int(state.require('int').value)
+
+        values.append(EnumValue(value_name.value, current_value))
         state.optional(',')
+
+        current_value += 1
 
     return EnumInfo(name.value, values)
 

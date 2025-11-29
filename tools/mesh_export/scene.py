@@ -475,16 +475,16 @@ def process_scene():
         definitions = parse.struct_parse.find_structs(file_content)
         enums = parse.struct_parse.find_enums(file_content)
 
-    room_names = ['room_default']
+    room_names = [parse.struct_parse.EnumValue('room_default', 0)]
 
     for collection in bpy.data.collections:
         if collection.name.startswith('room_'):
-            room_names.append(collection.name)
+            room_names.append(parse.struct_parse.EnumValue(collection.name, len(room_names)))
 
     room_enum = parse.struct_parse.EnumInfo('enum rooms', room_names)
 
-    for name in sorted(room_names):
-        room_collection.get_room_index(name)
+    for entry in sorted(room_names, key=lambda x: x.name):
+        room_collection.get_room_index(entry.name)
 
     enums['enum rooms'] = room_enum
 

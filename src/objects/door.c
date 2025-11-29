@@ -98,14 +98,10 @@ void door_interact(struct interactable* interactable, entity_id from) {
     cutscene_builder_interact_position(
         &builder, 
         INTERACTION_MOVE, 
-        (union cutscene_actor_id) {
-            .npc_type = NPC_TYPE_PLAYER,
-        },
+        ENTITY_ID_PLAYER,
         &target
     );
-    cutscene_builder_npc_set_speed(&builder, (union cutscene_actor_id) {
-        .npc_type = NPC_TYPE_PLAYER,
-    }, 2.0f);
+    cutscene_builder_npc_set_speed(&builder, ENTITY_ID_PLAYER, 2.0f);
     cutscene_builder_delay(&builder, 0.4f);
     cutscene_builder_camera_move_to(
         &builder, 
@@ -124,12 +120,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
             .move_target = true
         }
     );
-    cutscene_builder_npc_wait(
-        &builder, 
-        (union cutscene_actor_id) {
-            .npc_type = NPC_TYPE_PLAYER,
-        }
-    );
+    cutscene_builder_npc_wait(&builder, ENTITY_ID_PLAYER);
     cutscene_builder_callback(&builder, door_cutscene_close, door);
     vector3AddScaled(&door->transform.position, &offset, BEHIND_PLAYER_OFFSET, &camera_target);
     camera_target.y += CAMERA_FOLLOW_HEIGHT;
