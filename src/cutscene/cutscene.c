@@ -115,22 +115,22 @@ struct cutscene* cutscene_load(char* filename) {
                 break;
             case CUTSCENE_STEP_INTERACT_WITH_NPC:
                 fread(&step->data.interact_with_npc.type, 4, 1, file);
-                fread(&step->data.interact_with_npc.subject, 4, 1, file);
-                fread(&step->data.interact_with_npc.target, 4, 1, file);
+                fread(&step->data.interact_with_npc.subject, 2, 1, file);
+                fread(&step->data.interact_with_npc.target, 2, 1, file);
                 break;
             case CUTSCENE_STEP_IDLE_NPC:
-                fread(&step->data.interact_with_npc.subject, 4, 1, file);
+                fread(&step->data.interact_with_npc.subject, 2, 1, file);
                 step->data.interact_with_npc.target = 0;
                 break;
             case CUTSCENE_STEP_CAMERA_LOOK_AT_NPC:
-                fread(&step->data.camera_look_at.target, 4, 1, file);
+                fread(&step->data.camera_look_at.target, 2, 1, file);
                 break;
             case CUTSCENE_STEP_CAMERA_ANIMATE:
                 step->data.camera_animate.animation_name = string_load(file);
                 break;
             case CUTSCENE_STEP_INTERACT_WITH_LOCATION: {
                 fread(&step->data.interact_with_location.type, 4, 1, file);
-                fread(&step->data.interact_with_location.subject, 4, 1, file);
+                fread(&step->data.interact_with_location.subject, 2, 1, file);
                 step->data.interact_with_location.location_name = string_load(file);
                 break;
             }    
@@ -140,16 +140,16 @@ struct cutscene* cutscene_load(char* filename) {
                 break;
             case CUTSCENE_STEP_INTERACT_WITH_POSITION: {
                 fread(&step->data.interact_with_position.type, 4, 1, file);
-                fread(&step->data.interact_with_position.subject, 4, 1, file);
+                fread(&step->data.interact_with_position.subject, 2, 1, file);
                 fread(&step->data.interact_with_position.position, 12, 1, file);
                 break;
             }
             case CUTSCENE_STEP_NPC_WAIT: {
-                fread(&step->data.npc_wait.subject, 4, 1, file);
+                fread(&step->data.npc_wait.subject, 2, 1, file);
                 break;
             }
             case CUTSCENE_STEP_NPC_SET_SPEED: {
-                fread(&step->data.npc_set_speed.subject, 4, 1, file);
+                fread(&step->data.npc_set_speed.subject, 2, 1, file);
                 fread(&step->data.npc_set_speed.speed, 4, 1, file);
                 break;
             }
@@ -158,7 +158,7 @@ struct cutscene* cutscene_load(char* filename) {
                 break;
             }
             case CUTSCENE_STEP_NPC_ANIMATE: {
-                fread(&step->data.npc_animate.subject, 4, 1, file);
+                fread(&step->data.npc_animate.subject, 2, 1, file);
                 step->data.npc_animate.animation_name = string_load(file);
                 fread(&step->data.npc_animate.loop, 1, 1, file);
                 break;

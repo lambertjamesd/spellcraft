@@ -51,22 +51,27 @@ _step_args = {
     "say": [ParameterType("tstr", True)],
     "pause": [ParameterType("bool", True), ParameterType("bool", True)],
     "delay": [ParameterType("float", True)],
-    "interact_with_npc": [ParameterType("int", True), ParameterType("int", True), ParameterType("int", True)],
-    "idle_npc": [ParameterType("int", True)],
-    "cam_look_npc": [ParameterType("int", True)],
+    "interact_with_npc": [ParameterType("int", True), ParameterType("entity_id", True), ParameterType("entity_id", True)],
+    "idle_npc": [ParameterType("entity_id", True)],
+    "cam_look_npc": [ParameterType("entity_id", True)],
     "cam_follow": [],
     "cam_return": [],
     "cam_animate": [ParameterType("str", True)],
     "cam_wait": [],
-    "interact_with_location": [ParameterType("int", True), ParameterType("int", True), ParameterType("str", True)],
+    "interact_with_location": [ParameterType("int", True), ParameterType("entity_id", True), ParameterType("str", True)],
     "fade": [ParameterType("int", True), ParameterType("float", True)],
-    "interact_with_position": [ParameterType("int",
-     True), ParameterType("int", True), ParameterType("float", True), ParameterType("float", True), ParameterType("float", True)],
-    "npc_wait": [ParameterType("int", True)],
-    "npc_set_speed": [ParameterType("int", True), ParameterType("float", True)],
+    "interact_with_position": [
+        ParameterType("int", True), 
+        ParameterType("entity_id", True), 
+        ParameterType("float", True), 
+        ParameterType("float", True), 
+        ParameterType("float", True)
+    ],
+    "npc_wait": [ParameterType("entity_id", True)],
+    "npc_set_speed": [ParameterType("entity_id", True), ParameterType("float", True)],
     "show_title": [ParameterType("str", True)],
     "look_at_subject": [],
-    "npc_animate": [ParameterType("int", True), ParameterType("str", True), ParameterType("bool", True)],
+    "npc_animate": [ParameterType("entity_id", True), ParameterType("str", True), ParameterType("bool", True)],
     "print": [ParameterType("tstr", True)],
     "spawn": [ParameterType("entity_spawner", False)],
 }
@@ -216,7 +221,7 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
 
     data = io.BytesIO()
-
+    
     for idx, arg in enumerate(args):
         parameter = step.parameters[idx]
 
@@ -237,10 +242,14 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
         if arg.name == 'bool':
             data.write(struct.pack('>B', 1 if static_value else 0))
-        if arg.name == 'int':
+        elif arg.name == 'int':
             data.write(struct.pack('>i', int(static_value)))
-        if arg.name == 'float':
+        elif arg.name == 'entity_id':
+            data.write(struct.pack('>H', int(static_value)))
+        elif arg.name == 'float':
             data.write(struct.pack('>f', float(static_value)))
+        else:
+            raise Exception(f"could not write arg of type {arg.name}")
 
     cutscene.steps.append(CutsceneStep(_step_ids[step.name.value], data.getvalue()))
 
@@ -298,7 +307,7 @@ def _validate_step(step, errors: list[str], context: variable_layout.VariableCon
                     errors.append(parameter.at.format_message('expected string for parameter'))
                 continue
             
-            if arg_type.name == 'bool' or arg_type.name == 'int':
+            if arg_type.name == 'bool' or arg_type.name == 'int' or arg_type.name == 'entity_id':
                 if parameter_type != 'int':
                     errors.append(parameter.at.format_message(f'expected int got {parameter_type}'))
             elif arg_type.name == 'float':
@@ -426,7 +435,7 @@ def _idle_effected_actors(cutscene: Cutscene, statements: list):
     _idle_find_effected_actors(statements, actors)
 
     for actor in actors:
-        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, struct.pack('>i', actor)))
+        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, struct.pack('>h', actor)))
 
 def _generate_statement_list_steps(cutscene: Cutscene, statements: list, context: variable_layout.VariableContext, function_name: str):
     for statement in statements:

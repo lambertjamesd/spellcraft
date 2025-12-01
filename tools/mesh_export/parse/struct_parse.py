@@ -46,10 +46,12 @@ class EnumInfo:
             
         return None
     
-    def int_to_str(self, value: int):
-        if value < 0 or value >= len(self._values):
-            return None
-        return self._values[value]
+    def int_to_str(self, value: int) -> str | None:
+        for entry in self._values:
+            if entry.value == value:
+                return entry.name
+            
+        return None
     
     def all_values(self) -> list[EnumValue]:
         return self._values

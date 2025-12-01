@@ -283,7 +283,7 @@ def _init_default_properties(target):
             target[attr.name] = 0.0
         elif attr.data_type == 'string':
             target[attr.name] = ''
-        elif attr.data_type.startswith('enum '):
+        elif isinstance(attr.data_type, str) and attr.data_type.startswith('enum '):
             default_value = ''
             if attr.data_type in object_definitions.enums:
                 default_value = object_definitions.enums[attr.data_type].int_to_str(0)
