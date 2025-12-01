@@ -305,8 +305,7 @@ void camera_controller_update(struct camera_controller* controller) {
             break;
         }
         case CAMERA_STATE_LOOK_AT_WITH_PLAYER:
-            // camera_controller_watch_target(controller, &controller->look_target);
-            camera_controller_direct_target(controller, &controller->look_target);
+            camera_controller_watch_target(controller, &controller->look_target);
             camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
             break;
         case CAMERA_STATE_ANIMATE:
