@@ -103,6 +103,12 @@
             "type": "treasure_chest"
         },
         {
+            "name": "objects_trigger_cube",
+            "description": "",
+            "mesh": "meshes/objects/trigger_cube.blend#Cube",
+            "type": "trigger_cube"
+        },
+        {
             "name": "objects_water_cube",
             "description": "",
             "mesh": "meshes/objects/water_cube.blend#Cube",

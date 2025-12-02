@@ -142,7 +142,8 @@ void biter_init(struct biter* biter, struct biter_definition* definition, entity
         &biter->vision, 
         &biter->transform,
         &biter_vision_type,
-        COLLISION_LAYER_DAMAGE_PLAYER
+        COLLISION_LAYER_DAMAGE_PLAYER,
+        id
     );
 
     biter->dynamic_object.center.y = biter_collision_type.data.sphere.radius * 0.5f;

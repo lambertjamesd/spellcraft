@@ -35,6 +35,7 @@ enum entity_type_id {
     ENTITY_TYPE_step_switch,
     ENTITY_TYPE_pottery_wheel,
     ENTITY_TYPE_fan_switch,
+    ENTITY_TYPE_trigger_cube,
     
     ENTITY_TYPE_count,
 };
@@ -301,6 +302,12 @@ struct fan_switch_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     boolean_variable output;
+};
+
+struct trigger_cube_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    struct Vector3 scale;
 };
 
 #endif

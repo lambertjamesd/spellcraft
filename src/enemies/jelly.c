@@ -357,7 +357,8 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity
         &jelly->vision, 
         &jelly->transform,
         &jelly_vision_type,
-        COLLISION_LAYER_DAMAGE_PLAYER
+        COLLISION_LAYER_DAMAGE_PLAYER,
+        id
     );
 
     collision_scene_add_trigger(&jelly->vision);

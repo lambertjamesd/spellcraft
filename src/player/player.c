@@ -1178,7 +1178,7 @@ void player_init(struct player* player, struct player_definition* definition, st
 
     drop_shadow_init(&player->drop_shadow, &player->cutscene_actor.collider);
 
-    spatial_trigger_init(&player->z_target_trigger, &player->cutscene_actor.transform, &player_z_trigger_shape, COLLISION_LAYER_Z_TARGET | COLLISION_LAYER_TANGIBLE);
+    spatial_trigger_init(&player->z_target_trigger, &player->cutscene_actor.transform, &player_z_trigger_shape, COLLISION_LAYER_Z_TARGET | COLLISION_LAYER_TANGIBLE, ENTITY_ID_PLAYER);
     collision_scene_add_trigger(&player->z_target_trigger);
     player->z_target_transform = player->cutscene_actor.transform;
     renderable_single_axis_init(&player->z_target_visual, &player->z_target_transform, "rom:/meshes/player/z_cursor.tmesh");

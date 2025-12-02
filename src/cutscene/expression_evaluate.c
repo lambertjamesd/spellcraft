@@ -1,6 +1,7 @@
 #include "expression_evaluate.h"
 
 #include "../savefile/savefile.h"
+#include "expression_fn.h"
 
 static void* scene_variables;
 
@@ -173,6 +174,27 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
                     context,
                     -evaluation_context_pop(context)
                 );
+                break;
+            case EXPRESSION_TYPE_BUILT_IN_FN:
+                // this avoids alignment issues
+                memcpy(&data, current, sizeof(union expression_data));
+                current += sizeof(union expression_data);
+                
+                int starting_size = evaluation_context_stack_size(context);
+                expression_built_in_fn fn = expression_lookup_fn(data.fn_call.fn);
+                assert(fn);
+
+                int actual_result_count = fn(context, data.fn_call.arg_count);
+                assert(evaluation_context_stack_size(context) == starting_size - data.fn_call.arg_count + actual_result_count);
+
+                while (actual_result_count < data.fn_call.result_count) {
+                    evaluation_context_push(context, 0);
+                    ++actual_result_count;
+                }
+
+                if (actual_result_count > data.fn_call.result_count) {
+                    evaluation_context_popn(context, NULL, actual_result_count - data.fn_call.result_count);
+                }
                 break;
         }
     }

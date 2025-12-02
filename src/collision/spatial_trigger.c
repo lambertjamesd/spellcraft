@@ -6,13 +6,14 @@
 #include <stdio.h>
 #include <libdragon.h>
 
-void spatial_trigger_init(struct spatial_trigger* trigger, struct TransformSingleAxis* transform, struct spatial_trigger_type* type, uint16_t collision_layers) {
+void spatial_trigger_init(struct spatial_trigger* trigger, struct TransformSingleAxis* transform, struct spatial_trigger_type* type, uint16_t collision_layers, entity_id entity_id) {
     trigger->transform = transform;
     trigger->type = type;
     spatial_trigger_recalc_bb(trigger);
     trigger->active_contacts = NULL;
     trigger->collision_layers = collision_layers;
     trigger->collision_group = 0;
+    trigger->entity_id = entity_id;
 }
 
 void spatial_trigger_recalc_bb(struct spatial_trigger* trigger) {

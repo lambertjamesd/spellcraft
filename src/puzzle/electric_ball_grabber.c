@@ -61,7 +61,7 @@ void electric_ball_grabber_update(void* data) {
 void electric_ball_grabber_init(electric_ball_grabber_t* grabber, struct electric_ball_grabber_definition* definition, entity_id entity_id) {
     transformSaInit(&grabber->transform, &definition->position, &definition->rotation, 1.0f);
 
-    spatial_trigger_init(&grabber->trigger, &grabber->transform, &grabber_trigger_type, COLLISION_LAYER_LIGHTNING_BALL);
+    spatial_trigger_init(&grabber->trigger, &grabber->transform, &grabber_trigger_type, COLLISION_LAYER_LIGHTNING_BALL, entity_id);
     collision_scene_add_trigger(&grabber->trigger);
 
     grabber->attrs[0] = (element_attr_t){.type = ELEMENT_ATTR_PRIM_COLOR, .color = unlit_color};

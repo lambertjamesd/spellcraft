@@ -40,7 +40,7 @@ void hurricane_init(hurricane_t* hurricane, spell_data_source_t* source, spell_e
 
     vector2ComplexFromAngle(ROTATE_RATE * fixed_time_step, &hurricane_rotate_rate);
 
-    spatial_trigger_init(&hurricane->trigger, &hurricane->transform, &hurricate_trigger, COLLISION_LAYER_DAMAGE_ENEMY);
+    spatial_trigger_init(&hurricane->trigger, &hurricane->transform, &hurricate_trigger, COLLISION_LAYER_DAMAGE_ENEMY, entity_id_new());
     collision_scene_add_trigger(&hurricane->trigger);
 
     hurricane->timer = 0.0f;

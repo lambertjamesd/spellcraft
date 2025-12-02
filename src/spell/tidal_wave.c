@@ -41,7 +41,7 @@ void tidal_wave_init(tidal_wave_t* tidal_wave, struct spell_data_source* source,
     renderable_single_axis_init(&tidal_wave->renderable, &tidal_wave->transform, "rom:/meshes/spell/tidal_wave.tmesh");
     render_scene_add_renderable(&tidal_wave->renderable, 1.5f);
 
-    spatial_trigger_init(&tidal_wave->trigger, &tidal_wave->transform, &tidal_wave_trigger, COLLISION_LAYER_DAMAGE_ENEMY);
+    spatial_trigger_init(&tidal_wave->trigger, &tidal_wave->transform, &tidal_wave_trigger, COLLISION_LAYER_DAMAGE_ENEMY, entity_id_new());
     collision_scene_add_trigger(&tidal_wave->trigger);
 
     if (move_over_ground(&tidal_wave->transform.position, &source->direction, &move_def, 2.0f)) {

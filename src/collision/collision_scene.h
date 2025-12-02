@@ -31,6 +31,7 @@ struct collision_scene {
     struct contact* next_free_contact;
     struct contact* all_contacts;
     struct hash_map entity_mapping;
+    struct hash_map trigger_mapping;
     uint16_t count;
     uint16_t capacity;
     uint16_t mesh_collider_count;
@@ -48,6 +49,7 @@ void collision_scene_add_trigger(struct spatial_trigger* trigger);
 void collision_scene_remove_trigger(struct spatial_trigger* trigger);
 
 struct dynamic_object* collision_scene_find_object(entity_id id);
+spatial_trigger_t* collision_scene_find_trigger(entity_id id);
 
 void collision_scene_add_static_mesh(struct mesh_collider* collider);
 void collision_scene_remove_static_mesh(struct mesh_collider* collider);

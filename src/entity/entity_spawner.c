@@ -18,6 +18,7 @@
 #include "../objects/room_portal.h"
 #include "../objects/burning_thorns.h"
 #include "../objects/sign.h"
+#include "../objects/trigger_cube.h"
 
 #include "../puzzle/bool_and_logic.h"
 #include "../puzzle/camera_focus.h"
@@ -79,6 +80,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(step_switch, fields_empty),
     ENTITY_DEFINITION(pottery_wheel, fields_empty),
     ENTITY_DEFINITION(fan_switch, fields_empty),
+    ENTITY_DEFINITION(trigger_cube, fields_empty),
 };
 
 static uint16_t scene_entity_count[ENTITY_TYPE_count];

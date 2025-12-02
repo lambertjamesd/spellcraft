@@ -105,7 +105,8 @@ void mana_plant_init(struct mana_plant* plant, struct mana_plant_definition* def
         &plant->trigger,
         &plant->transform,
         &mana_plant_grab_trigger,
-        COLLISION_LAYER_DAMAGE_PLAYER
+        COLLISION_LAYER_DAMAGE_PLAYER,
+        id
     );
 
     collision_scene_add_trigger(&plant->trigger);

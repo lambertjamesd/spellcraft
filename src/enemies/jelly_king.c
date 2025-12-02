@@ -371,7 +371,7 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
 
     health_init(&jelly_king->health, id, MAX_HEALTH);
 
-    spatial_trigger_init(&jelly_king->vision, &jelly_king->transform, &jelly_king_vision_type, COLLISION_LAYER_DAMAGE_PLAYER);
+    spatial_trigger_init(&jelly_king->vision, &jelly_king->transform, &jelly_king_vision_type, COLLISION_LAYER_DAMAGE_PLAYER, id);
     collision_scene_add_trigger(&jelly_king->vision);
 
     vector2ComplexFromAngle(MAX_ROTATE_PER_SECOND * M_DEG_2_RAD * fixed_time_step, &jelly_king->max_rotate);

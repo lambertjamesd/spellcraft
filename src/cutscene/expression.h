@@ -37,6 +37,8 @@ enum expression_type {
 
     EXPRESSION_TYPE_ITOF,
     EXPRESSION_TYPE_FTOI,
+
+    EXPRESSION_TYPE_BUILT_IN_FN,
 };
 
 union expression_data {
@@ -44,6 +46,11 @@ union expression_data {
         uint16_t data_type;
         uint16_t word_offset;
     } load_variable;
+    struct {
+        uint16_t fn;
+        uint8_t arg_count;
+        uint8_t result_count;
+    } fn_call;
     int literal;
 };
 

@@ -38,9 +38,11 @@ void collision_scene_reset() {
     free(g_scene.elements);
     free(g_scene.all_contacts);
     hash_map_destroy(&g_scene.entity_mapping);
+    hash_map_destroy(&g_scene.trigger_mapping);
     memset(&g_scene, 0, sizeof(g_scene));
 
     hash_map_init(&g_scene.entity_mapping, MIN_DYNAMIC_OBJECTS);
+    hash_map_init(&g_scene.trigger_mapping, MIN_DYNAMIC_OBJECTS);
 
     g_scene.elements = malloc(sizeof(struct collision_scene_element) * MIN_DYNAMIC_OBJECTS);
     g_scene.capacity = MIN_DYNAMIC_OBJECTS;
@@ -85,6 +87,14 @@ struct dynamic_object* collision_scene_find_object(entity_id id) {
     return hash_map_get(&g_scene.entity_mapping, id);
 }
 
+spatial_trigger_t* collision_scene_find_trigger(entity_id id) {
+    if (!id) {
+        return 0;
+    }
+
+    return hash_map_get(&g_scene.trigger_mapping, id);
+}
+
 void collision_scene_return_contacts(struct contact* active_contacts) {
     struct contact* last_contact = active_contacts;
 
@@ -125,10 +135,12 @@ void collision_scene_remove(struct dynamic_object* object) {
 
 void collision_scene_add_trigger(struct spatial_trigger* trigger) {
     collision_scene_add_with_type(trigger, COLLISION_ELEMENT_TYPE_TRIGGER);
+    hash_map_set(&g_scene.trigger_mapping, trigger->entity_id, trigger);
 }
 
 void collision_scene_remove_trigger(struct spatial_trigger* trigger) {
     collision_scene_remove_any(trigger);
+    hash_map_delete(&g_scene.trigger_mapping, trigger->entity_id);
 }
 
 void collision_scene_add_static_mesh(struct mesh_collider* collider) {

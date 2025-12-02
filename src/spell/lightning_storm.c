@@ -59,7 +59,7 @@ void lightning_storm_render(void* data, render_batch_t* batch) {
 void lightning_storm_init(lightning_storm_t* storm, struct spell_data_source* source, struct spell_event_options event_options) {
     transformSaInit(&storm->transform, &source->position, &gRight2, MTX_SCALE);
     transformSaInit(&storm->trigger_transform, &source->position, &gRight2, 1.0f);
-    spatial_trigger_init(&storm->trigger, &storm->trigger_transform, &lightning_storm_shape, COLLISION_LAYER_DAMAGE_ENEMY);
+    spatial_trigger_init(&storm->trigger, &storm->trigger_transform, &lightning_storm_shape, COLLISION_LAYER_DAMAGE_ENEMY, entity_id_new());
     collision_scene_add_trigger(&storm->trigger);
 
     storm->data_source = spell_data_source_retain(source);

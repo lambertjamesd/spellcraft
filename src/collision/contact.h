@@ -5,6 +5,7 @@
 #include "../entity/entity_id.h"
 #include "surface_type.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 struct dynamic_object;
 
@@ -18,5 +19,7 @@ struct contact {
 };
 
 typedef struct contact contact_t;
+
+bool contacts_are_touching(contact_t* first, entity_id other_object);
 
 #endif

@@ -32,7 +32,9 @@ int evaluation_context_peek(struct evaluation_context* context) {
 void evaluation_context_popn(struct evaluation_context* context, int* into, int count) {
     assert(context->current_stack >= count);
     context->current_stack -= count;
-    memcpy(into, &context->stack[context->current_stack], sizeof(int) * count);
+    if (into) {
+        memcpy(into, &context->stack[context->current_stack], sizeof(int) * count);
+    }
 }
 
 int evaluation_context_load(void* data, enum data_type data_type, int word_offset) {
