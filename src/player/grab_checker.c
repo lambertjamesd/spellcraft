@@ -46,6 +46,7 @@ void grab_checker_render(void* data, struct render_batch* batch) {
 #endif
 
 void grab_checker_init(grab_checker_t* checker, struct dynamic_object_type* collider_type) {
+    checker->position = gZeroVec;
     dynamic_object_init(
         entity_id_new(),
         &checker->collider,
