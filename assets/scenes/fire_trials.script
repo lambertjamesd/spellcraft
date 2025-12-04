@@ -43,9 +43,10 @@ end
 scene block_puzzle_hidden_jelly_spawned: bool;
 scene block_puzzle_hidden_jelly_spawner: entity_spawner;
 scene block_puzzle_jelly_cover: entity_id;
+scene block_puzzle_jelly_trigger: entity_id;
 
 func room_block_puzzle()
-    if block_puzzle_jelly_cover == 0 and not block_puzzle_hidden_jelly_spawned then
+    if not block_puzzle_hidden_jelly_spawned and are_touching(block_puzzle_jelly_trigger, ENTITY_ID_PLAYER) then
         block_puzzle_hidden_jelly_spawned = true;
         spawn block_puzzle_hidden_jelly_spawner;
     end
