@@ -82,18 +82,22 @@ class DataType():
         
         return self.name.value == other.name.value and self.count == other.count
 
+class Expression():
+    def __init__(self, at: tokenizer.Token):
+        self.at: tokenizer.Token = at
+
 class VariableDefinition():
-    def __init__(self, name: tokenizer.Token, type: DataType, initializer):
+    def __init__(self, name: tokenizer.Token, type: DataType, initializer: Expression | None):
         self.name: tokenizer.Token = name
         self.type: DataType = type
-        self.initializer = initializer
+        self.initializer: Expression | None = initializer
 
     def __str__(self):
         return f"{self.name.value}: {self.type};"
 
 class IfStatement():
-    def __init__(self, condition, statements: list, else_block: list):
-        self.condition = condition
+    def __init__(self, condition: Expression, statements: list, else_block: list):
+        self.condition: Expression = condition
         self.statements: list = statements
         self.else_block: list = else_block
 
@@ -106,18 +110,18 @@ class IfStatement():
         
 
 class Assignment():
-    def __init__(self, name: tokenizer.Token, value):
+    def __init__(self, name: tokenizer.Token, value: Expression):
         self.name: tokenizer.Token = name
-        self.value = value
+        self.value: Expression = value
 
     def append_string(self, result: list[str], depth: int):
         space = '  ' * depth
         result.append(f"{space}{self.name.value} = {self.value};")
 
 class FunctionDefinitionArg():
-    def __init__(self, name: tokenizer.Token, type_name: tokenizer.Token):
+    def __init__(self, name: tokenizer.Token, type_name: DataType):
         self.name: tokenizer.Token = name
-        self.type_name: tokenizer.Token = type_name
+        self.type_name: DataType = type_name
 
 class FunctionDefinition():
     def __init__(self, func: tokenizer.Token, name: tokenizer.Token, args: list[FunctionDefinitionArg], body: list):
@@ -125,6 +129,12 @@ class FunctionDefinition():
         self.name: tokenizer.Token = name
         self.args: list[FunctionDefinitionArg] = args
         self.body: list = body
+
+class FunctionCall(Expression):
+    def __init__(self, name: tokenizer.Token, args: list[Expression]):
+        super().__init__(name)
+        self.name: tokenizer.Token = name
+        self.args: list[Expression] = args
 
 class CutsceneStep():
     def __init__(self, name: tokenizer.Token, parameters: list):
@@ -139,33 +149,33 @@ class CutsceneStep():
             parameters = [str(parameter) for parameter in self.parameters]
             result.append(f"{space}{self.name.value} {', '.join(parameters)};")
 
-class Identifier():
+class Identifier(Expression):
     def __init__(self, name: tokenizer.Token):
-        self.at: tokenizer.Token = name
+        super().__init__(name)
         self.name: tokenizer.Token = name
 
     def __str__(self):
         return self.name.value
 
-class Integer():
+class Integer(Expression):
     def __init__(self, value: tokenizer.Token):
-        self.at: tokenizer.Token = value
+        super().__init__(value)
         self.value: tokenizer.Token = value
 
     def __str__(self):
         return self.value.value
 
-class Float():
+class Float(Expression):
     def __init__(self, value: tokenizer.Token):
-        self.at: tokenizer.Token = value
+        super().__init__(value)
         self.value: tokenizer.Token = value
 
     def __str__(self):
         return self.value.value
 
-class String():
+class String(Expression):
     def __init__(self, start_token: tokenizer.Token, contents: list[str], replacements: list):
-        self.at: tokenizer.Token = start_token
+        super().__init__(start_token)
         self.start_token: tokenizer.Token = start_token
         self.contents: list[str] = contents
         self.replacements: list = replacements
@@ -182,21 +192,22 @@ class String():
 
         return ''.join(parts)
 
-class UnaryOperator():
-    def __init__(self, operator: tokenizer.Token, operand):
+class UnaryOperator(Expression):
+    def __init__(self, operator: tokenizer.Token, operand: Expression):
+        super().__init__(operator)
         self.at: tokenizer.Token = operator
         self.operator: tokenizer.Token = operator
-        self.operand = operand
+        self.operand: Expression = operand
 
     def __str__(self):
         return f"{self.operator.value}{self.operand}"
 
-class BinaryOperator():
-    def __init__(self, a, operator: tokenizer.Token, b):
-        self.at: tokenizer.Token = operator
-        self.a = a
+class BinaryOperator(Expression):
+    def __init__(self, a: Expression, operator: tokenizer.Token, b: Expression):
+        super().__init__(operator)
+        self.a: Expression = a
         self.operator: tokenizer.Token = operator
-        self.b = b
+        self.b: Expression = b
 
     def __str__(self):
         return f"({self.a} {self.operator.value} {self.b})"
@@ -242,12 +253,12 @@ def _parse_variable_definition(parse_state: _ParseState, type: str):
     parse_state.require('identifier', type)
     name = parse_state.require('identifier')
     parse_state.require(':')
-    type = _parse_type(parse_state)
+    parsed_type = _parse_type(parse_state)
     initializer = None
     if parse_state.optional('='):
         initializer = _parse_expression(parse_state)
     parse_state.require(';')
-    return VariableDefinition(name, type, initializer)
+    return VariableDefinition(name, parsed_type, initializer)
 
 def _parse_function_definition(parse_state: _ParseState) -> FunctionDefinition:
     func = parse_state.require('identifier', 'func')
@@ -270,7 +281,7 @@ def _parse_function_definition(parse_state: _ParseState) -> FunctionDefinition:
 
     parse_state.require(')')
 
-    body = _parse_block(parse_state, 'end')
+    body = _parse_block(parse_state, {'end'})
     parse_state.require('identifier', 'end')
 
     return FunctionDefinition(func, name, args, body)
@@ -382,10 +393,28 @@ def _parse_string(parse_state: _ParseState) -> String:
 
     return String(start_token, contents, replacements)
 
+def _parse_function_call(parse_state: _ParseState):
+    name = parse_state.require('identifier')
+    parse_state.require('(')
+    args = []
+
+    while not parse_state.optional(')'):
+        args.append(_parse_expression(parse_state))
+
+        next = parse_state.peek()
+
+        if next.token_type != ')':
+            parse_state.require(',')
+
+    return FunctionCall(name, args)
+
 def _parse_single(parse_state: _ParseState):
     next = parse_state.peek()
 
     if next.token_type == 'identifier':
+        if parse_state.peek(1).token_type == '(':
+            return _parse_function_call(parse_state)
+
         parse_state.advance()
         return Identifier(next)
     

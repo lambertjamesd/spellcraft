@@ -32,7 +32,7 @@ class StaticEvaluator():
     def __init__(self):
         self.literal_value = {}
 
-    def _check_for_literals(self, expression):
+    def _check_for_literals(self, expression: parser.Expression):
         if isinstance(expression, parser.Integer):
             return int(expression.value.value)
         if isinstance(expression, parser.Float):
@@ -86,10 +86,13 @@ class StaticEvaluator():
         if isinstance(expression, parser.Identifier):
             if expression.name.value in global_constant_values:
                 return global_constant_values[expression.name.value]
+        if isinstance(expression, parser.FunctionCall):
+            for arg in expression.args:
+                self.check_for_literals(arg)
         
         return None
 
-    def check_for_literals(self, expression):
+    def check_for_literals(self, expression: parser.Expression):
         result = self._check_for_literals(expression)
         self.literal_value[expression] = result
         return result

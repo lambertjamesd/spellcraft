@@ -4,6 +4,7 @@ import io
 from . import parser
 from . import variable_layout
 from . import static_evaluator
+from . import built_in_functions
 
 EXPRESSION_TYPE_END = 0
 EXPRESSION_TYPE_LOAD_LOCAL = 1
@@ -37,6 +38,8 @@ EXPRESSION_TYPE_NEGATEF = 23
 
 EXPRESSION_TYPE_ITOF = 24
 EXPRESSION_TYPE_FTOI = 25
+
+EXPRESSION_TYPE_BUILT_IN_FN = 26
 
 command_to_name = {}
 
@@ -153,6 +156,22 @@ class ExpresionScriptFloatLiteral():
     
     def serialize(self, file):
         file.write(struct.pack('>BI', self.command, self.value))
+
+class ExpressionFunctionCall():
+    def __init__(self, function_id: int, arg_count: int, result_count: int):
+        self.command: int = EXPRESSION_TYPE_BUILT_IN_FN
+        self.function_id = function_id
+        self.arg_count: int = arg_count
+        self.result_count: int = result_count
+        
+    def __str__(self):
+        return f'float call {self.function_id}({self.arg_count}) -> {self.result_count}'
+
+    def has_data(self) -> bool:
+        return True
+    
+    def serialize(self, file):
+        file.write(struct.pack('>BHBB', self.command, self.function_id, self.arg_count, self.result_count))
     
 class ExpressionCommand():
     def __init__(self, command: int):
@@ -315,6 +334,24 @@ class TypeChecker():
             
             self._report_error(expression.name.format_message(f'unknown type {type_str}'))
             return 'error'
+        
+        if isinstance(expression, parser.FunctionCall):
+            built_in = built_in_functions.lookup(expression.name.value)
+
+            if built_in:
+                if len(expression.args) != len(built_in.args):
+                    self._report_error(expression.name.format_message(f"expected {len(built_in.args)} arguments got {len(expression.args)}"))
+                
+                for i in range(0, min(len(expression.args), len(built_in.args))):
+                    element_type = self.determine_type(expression.args[i])
+
+                    if element_type != built_in.args[i].type:
+                        self._report_error(expression.args[i].at.format_message(f"expected {len(built_in.args)} arguments got {len(expression.args)}"))
+                        
+                return built_in.return_type
+            
+            self._report_error(expression.name.format_message(f"could not find function name {expression.name.value}"))
+            return 'error'
     
         raise Exception('unknown expression type')
 
@@ -340,7 +377,7 @@ class ExpressionGenerator():
         self.type_info: TypeChecker = type_info
         self.static_evaluator: static_evaluator.StaticEvaluator = eval
 
-    def generate_to_type(self, expression, to_type: str, script: ExpressionScript):
+    def generate_to_type(self, expression: parser.Expression, to_type: str, script: ExpressionScript):
         self.generate(expression, script)
         
         from_type = self.type_info.expression_to_type[expression]
@@ -358,7 +395,10 @@ class ExpressionGenerator():
             raise Exception(f'Connot convert from {from_type} to {to_type}')
             
 
-    def generate(self, expression, script: ExpressionScript):
+    def generate(self, expression: parser.Expression, script: ExpressionScript):
+        if not expression in self.static_evaluator.literal_value:
+            raise Exception(expression.at.format_message('expression is missing a type'))
+
         literal_value = self.static_evaluator.literal_value[expression]
 
         if not literal_value is None:
@@ -462,6 +502,17 @@ class ExpressionGenerator():
             offset = self.context.get_variable_offset(name)
 
             script.steps.append(ExpresionScriptLoad(source, name, data_type, offset))
+
+        if isinstance(expression, parser.FunctionCall):
+            built_in = built_in_functions.lookup(expression.name.value)
+
+            if not built_in:
+                raise Exception(expression.name.format_message(f"Could not find function {expression.name.value}"))
+            
+            for i, arg in enumerate(expression.args):
+                self.generate_to_type(arg, built_in.get_arg_type(i), script)
+
+            script.steps.append(ExpressionFunctionCall(built_in.index, len(expression.args), 1))
 
 
 def generate_script(expression, context: variable_layout.VariableContext, expected_type: str | None = None) -> ExpressionScript | None:
