@@ -20,3 +20,4 @@ global has_entered_fire_trials: bool;
 global fire_trials_bossdoor_kiln_0: bool;
 global fire_trials_bossdoor_kiln_1: bool;
 global fire_trials_bossdoor_open: bool;
+global fire_trials_boss_dead: bool;

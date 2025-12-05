@@ -53,8 +53,7 @@ void npc_update(void *data) {
 void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id) {
     struct npc_information* information = &npc_information[definiton->npc_type];
 
-    struct TransformSingleAxis transform;
-    transformSaInit(&transform, &definiton->position, &definiton->rotation, 1.0f);
+    transformSaInit(&npc->cutscene_actor.transform, &definiton->position, &definiton->rotation, 1.0f);
     renderable_single_axis_init(&npc->renderable, &npc->cutscene_actor.transform, information->mesh);
 
     render_scene_add_renderable(&npc->renderable, 2.0f);
@@ -65,7 +64,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id) {
         &npc->cutscene_actor, 
         &information->actor,
         id,
-        &transform, 
+        &npc->cutscene_actor.transform, 
         definiton->npc_type, 
         0, 
         &npc->renderable.armature, 

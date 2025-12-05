@@ -24,11 +24,15 @@ int area_title_measure() {
 
     while (*curr) {
         rdpq_font_gmetrics_t metrics;
-        rdpq_font_get_glyph_metrics(g_title.font, *curr, &metrics);
+        bool was_found = rdpq_font_get_glyph_metrics(g_title.font, *curr, &metrics);
         ++curr;
 
-        result += metrics.xadvance;
+        if (was_found) {
+            result += metrics.xadvance;
+        }
     }
+
+    debugf("result = %d\n", result);
     
     return result;
 }
@@ -64,6 +68,7 @@ void area_title_render(void* data) {
         strlen(g_title.message)
     );
 
+    debugf("alpha =%f\n", alpha);
     int half_width = (int)((area_title_measure() >> 1) * alpha);
 
     rdpq_sync_pipe();

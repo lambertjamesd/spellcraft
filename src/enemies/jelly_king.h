@@ -10,6 +10,7 @@
 #include "../render/renderable.h"
 #include "../render/animator.h"
 #include "jelly.h"
+#include "../cutscene/cutscene_actor.h"
 
 struct jelly_king_animations {
     struct animation_clip* idle;
@@ -30,14 +31,11 @@ enum jelly_king_state {
 #define MAX_JELLY_MINIONS   5
 
 struct jelly_king {
-    struct TransformSingleAxis transform;
+    cutscene_actor_t cutscene_actor;
+    cutscene_actor_def_t actor_def;
     struct renderable renderable;
     struct health health;
-    struct dynamic_object collider;
-    struct dynamic_object_type collider_type;
     struct spatial_trigger vision;
-    struct animation_set* animation_set;
-    struct animator animator;
     struct jelly_king_animations animations;
     struct Vector2 max_rotate;
     enum jelly_king_state state;
