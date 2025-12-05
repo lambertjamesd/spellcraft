@@ -54,4 +54,4 @@ if __name__ == "__main__":
             cutscene.step_generator.generate_steps(file, result, context)
     except Exception as e:
         print(e)
-        sys.exit(1)
+        raise e

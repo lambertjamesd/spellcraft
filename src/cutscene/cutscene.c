@@ -115,22 +115,12 @@ struct cutscene* cutscene_load(char* filename) {
                 break;
             case CUTSCENE_STEP_INTERACT_WITH_NPC:
                 fread(&step->data.interact_with_npc.type, 4, 1, file);
-                fread(&step->data.interact_with_npc.subject, 2, 1, file);
-                fread(&step->data.interact_with_npc.target, 2, 1, file);
-                break;
-            case CUTSCENE_STEP_IDLE_NPC:
-                fread(&step->data.interact_with_npc.subject, 2, 1, file);
-                step->data.interact_with_npc.target = 0;
-                break;
-            case CUTSCENE_STEP_CAMERA_LOOK_AT_NPC:
-                fread(&step->data.camera_look_at.target, 2, 1, file);
                 break;
             case CUTSCENE_STEP_CAMERA_ANIMATE:
                 step->data.camera_animate.animation_name = string_load(file);
                 break;
             case CUTSCENE_STEP_INTERACT_WITH_LOCATION: {
                 fread(&step->data.interact_with_location.type, 4, 1, file);
-                fread(&step->data.interact_with_location.subject, 2, 1, file);
                 step->data.interact_with_location.location_name = string_load(file);
                 break;
             }    
@@ -140,16 +130,10 @@ struct cutscene* cutscene_load(char* filename) {
                 break;
             case CUTSCENE_STEP_INTERACT_WITH_POSITION: {
                 fread(&step->data.interact_with_position.type, 4, 1, file);
-                fread(&step->data.interact_with_position.subject, 2, 1, file);
                 fread(&step->data.interact_with_position.position, 12, 1, file);
                 break;
             }
-            case CUTSCENE_STEP_NPC_WAIT: {
-                fread(&step->data.npc_wait.subject, 2, 1, file);
-                break;
-            }
             case CUTSCENE_STEP_NPC_SET_SPEED: {
-                fread(&step->data.npc_set_speed.subject, 2, 1, file);
                 fread(&step->data.npc_set_speed.speed, 4, 1, file);
                 break;
             }
@@ -158,7 +142,6 @@ struct cutscene* cutscene_load(char* filename) {
                 break;
             }
             case CUTSCENE_STEP_NPC_ANIMATE: {
-                fread(&step->data.npc_animate.subject, 2, 1, file);
                 step->data.npc_animate.animation_name = string_load(file);
                 fread(&step->data.npc_animate.loop, 1, 1, file);
                 break;
@@ -326,6 +309,12 @@ void cutscene_builder_interact_npc(
     entity_id subject,
     entity_id target
 ) {
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_literal(&expr, subject);
+    expression_builder_load_literal(&expr, target);
+    cutscene_builder_expression(builder, &expr);
+
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
     *step = (struct cutscene_step){
@@ -333,21 +322,23 @@ void cutscene_builder_interact_npc(
         .data = {
             .interact_with_npc = {
                 .type = type,
-                .subject = subject,
-                .target = target,
             },
         },
     };
 }
 
 void cutscene_builder_npc_set_speed(struct cutscene_builder* builder, entity_id subject, float speed) {
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_literal(&expr, subject);
+    cutscene_builder_expression(builder, &expr);
+
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
     *step = (struct cutscene_step){
         .type = CUTSCENE_STEP_NPC_SET_SPEED,
         .data = {
             .npc_set_speed = {
-                .subject = subject,
                 .speed = speed,
             },
         },
@@ -360,6 +351,11 @@ void cutscene_builder_interact_position(
     entity_id subject,
     struct Vector3* position
 ) {
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_literal(&expr, subject);
+    cutscene_builder_expression(builder, &expr);
+
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
     *step = (struct cutscene_step){
@@ -367,7 +363,6 @@ void cutscene_builder_interact_position(
         .data = {
             .interact_with_position = {
                 .type = type,
-                .subject = subject,
                 .position = *position,
             },
         },
@@ -377,16 +372,16 @@ void cutscene_builder_interact_position(
 void cutscene_builder_npc_wait(
     struct cutscene_builder* builder,
     entity_id subject
-) {
+) {    
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_literal(&expr, subject);
+    cutscene_builder_expression(builder, &expr);
+
     struct cutscene_step* step = cutscene_builder_next_step(builder);
     
     *step = (struct cutscene_step){
         .type = CUTSCENE_STEP_NPC_WAIT,
-        .data = {
-            .npc_wait = {
-                .subject = subject,
-            },
-        },
     };
 }
 
@@ -468,6 +463,14 @@ void cutscene_builder_callback(struct cutscene_builder* builder, cutscene_step_c
             .data = data,
         },
     };
+}
+
+void cutscene_builder_expression(struct cutscene_builder* builder, expression_builder_t* expression) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_EXPRESSION,
+    };
+    expression_builder_finish(expression, &step->data.expression.expression);
 }
 
 // release with cutscene_free()

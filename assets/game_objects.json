@@ -43,6 +43,12 @@
             "type": "door"
         },
         {
+            "name": "objects_empty",
+            "description": "",
+            "mesh": "meshes/objects/empty.blend#empty",
+            "type": "empty"
+        },
+        {
             "name": "objects_env_interactive_bramble_dry_barrier",
             "description": "",
             "mesh": "meshes/objects/env_interactive/bramble_dry_barrier.blend#Cube.001",

@@ -107,12 +107,7 @@ union cutscene_step_data {
     } delay;
     struct {
         enum interaction_type type;
-        entity_id subject;
-        entity_id target;
     } interact_with_npc;
-    struct {
-        entity_id target;
-    } camera_look_at;
     struct {
         char* animation_name;
     } camera_animate;
@@ -122,7 +117,6 @@ union cutscene_step_data {
     } camera_move_to;
     struct {
         enum interaction_type type;
-        entity_id subject;
         char* location_name;
     } interact_with_location;
     struct {
@@ -131,21 +125,15 @@ union cutscene_step_data {
     } fade;
     struct {
         enum interaction_type type;
-        entity_id subject;
         struct Vector3 position;
     } interact_with_position;
     struct {
-        entity_id subject;
-    } npc_wait;
-    struct {
-        entity_id subject;
         float speed;
     } npc_set_speed;
     struct {
         char* message;
     } show_title;
     struct {
-        entity_id subject;
         char* animation_name;
         uint8_t loop;
     } npc_animate;
@@ -205,6 +193,8 @@ void cutscene_builder_camera_return(struct cutscene_builder* builder);
 void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, camera_move_to_args_t* args);
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value);
 void cutscene_builder_callback(struct cutscene_builder* builder, cutscene_step_callback callback, void* data);
+
+void cutscene_builder_expression(struct cutscene_builder* builder, expression_builder_t* expression);
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder);
 

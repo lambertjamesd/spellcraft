@@ -60,3 +60,35 @@ scene fire_trials_bossdoor_open_focused: bool;
 func room_bossdoor()
     fire_trials_bossdoor_open = fire_trials_bossdoor_kiln_0 and fire_trials_bossdoor_kiln_1;
 end
+
+global fire_trials_boss_dead: bool;
+scene bossfight_jelly_king: entity_id;
+scene bossfight_jelly_king_spawner: entity_spawner;
+scene bossfight_cutscene_started: bool;
+scene bossfight_cutscene_trigger: entity_id;
+scene bossfight_walk_to: entity_id;
+
+func room_bossfight()
+    if fire_trials_boss_dead and not bossfight_cutscene_started then
+        bossfight_cutscene_started = true;
+    end
+
+    if not fire_trials_boss_dead and bossfight_cutscene_started and bossfight_jelly_king == 0 then
+        fire_trials_boss_dead = true;
+    end
+
+    if not bossfight_cutscene_started and are_touching(bossfight_cutscene_trigger, ENTITY_ID_PLAYER) then
+        world_pause;
+        interact_with_npc INTERACTION_MOVE, ENTITY_ID_PLAYER, bossfight_walk_to;
+        cam_animate "bossfight";
+        delay 3;
+        spawn bossfight_jelly_king_spawner;
+        npc_animate bossfight_jelly_king, "spawn", false;
+
+        show_title "JELLY KING";
+        cam_return;
+        world_unpause;
+
+        bossfight_cutscene_started = true;
+    end
+end

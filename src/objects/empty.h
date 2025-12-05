@@ -3,10 +3,7 @@
 
 #include "../math/vector3.h"
 #include "../entity/entity_id.h"
-
-struct empty_definition {
-    struct Vector3 position;
-};
+#include "../scene/scene_definition.h"
 
 struct empty {
     struct Vector3 position;

@@ -54,9 +54,13 @@ union expression_data {
     int literal;
 };
 
+typedef union expression_data expression_data_t;
+
 struct expression {
     void* expression_program;
 };
+
+typedef struct expression expression_t;
 
 // EXPR
 #define EXPECTED_EXPR_HEADER 0x45585052
@@ -70,5 +74,28 @@ void expression_load(struct expression* expression, FILE* file);
 void expression_destroy(struct expression* expression);
 
 void expression_load_literal(struct expression* expression, int literal);
+
+#define MAX_EXPRESSION_SIZE 64
+
+struct expression_builder {
+    char* curr;
+    char expression[MAX_EXPRESSION_SIZE];
+};
+
+typedef struct expression_builder expression_builder_t;
+
+static inline void expression_builder_init(expression_builder_t* builder) {
+    builder->curr = builder->expression;
+}
+
+void expression_builder_add(expression_builder_t* builder, enum expression_type type, union expression_data* data);
+
+static inline void expression_builder_load_literal(expression_builder_t* builder, int value) {
+    expression_builder_add(builder, EXPRESSION_TYPE_LOAD_LITERAL, &(expression_data_t) {
+        .literal = value,
+    });
+}
+
+void expression_builder_finish(expression_builder_t* builder, expression_t* expression);
 
 #endif

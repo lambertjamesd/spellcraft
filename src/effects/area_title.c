@@ -31,8 +31,6 @@ int area_title_measure() {
             result += metrics.xadvance;
         }
     }
-
-    debugf("result = %d\n", result);
     
     return result;
 }
@@ -67,8 +65,7 @@ void area_title_render(void* data) {
         g_title.message,
         strlen(g_title.message)
     );
-
-    debugf("alpha =%f\n", alpha);
+    
     int half_width = (int)((area_title_measure() >> 1) * alpha);
 
     rdpq_sync_pipe();

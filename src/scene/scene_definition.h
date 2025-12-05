@@ -47,6 +47,10 @@ enum fixed_entity_ids {
     ENTITY_ID_FIRST_DYNAMIC,
 };
 
+struct empty_definition {
+    struct Vector3 position;
+};
+
 struct crate_definition {
     struct Vector3 position;
     struct Vector2 rotation;

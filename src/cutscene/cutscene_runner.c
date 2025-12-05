@@ -145,12 +145,15 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;   
         }
         case CUTSCENE_STEP_INTERACT_WITH_NPC: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, step->data.interact_with_npc.subject);
+            int entities[2];
+            evaluation_context_popn(&cutscene->context, entities, 2);
+
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, entities[0]);
             if (!subject) {
                 break;
             }
 
-            struct cutscene_actor* target = cutscene_runner_lookup_actor(cutscene, step->data.interact_with_npc.target);
+            struct cutscene_actor* target = cutscene_runner_lookup_actor(cutscene, entities[1]);
             if (!target) {
                 break;
             }
@@ -164,7 +167,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_IDLE_NPC: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, step->data.interact_with_npc.subject);
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
             if (!subject) {
                 break;
             }
@@ -172,7 +175,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_CAMERA_LOOK_AT_NPC: {
-            struct cutscene_actor* target = cutscene_runner_lookup_actor(cutscene, step->data.camera_look_at.target);
+            struct cutscene_actor* target = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
             if (!target) {
                 break;
             }
@@ -202,7 +205,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         case CUTSCENE_STEP_CAMERA_WAIT:
             break;
         case CUTSCENE_STEP_INTERACT_WITH_LOCATION: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, step->data.interact_with_location.subject);
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
             if (!subject) {
                 break;
             }
@@ -223,7 +226,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             fade_effect_set(fade_colors[step->data.fade.color], step->data.fade.duration);
             break;
         case CUTSCENE_STEP_INTERACT_WITH_POSITION: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, step->data.interact_with_position.subject);
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
             if (!subject) {
                 break;
             }
@@ -239,7 +242,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_NPC_SET_SPEED: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, step->data.npc_set_speed.subject);
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
             if (!subject) {
                 break;
             }
@@ -259,7 +262,8 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_NPC_ANIMATE: {
-            cutscene_actor_t* subject = cutscene_runner_lookup_actor(cutscene, step->data.npc_animate.subject);
+            entity_id subject_id = evaluation_context_pop(&cutscene->context);
+            cutscene_actor_t* subject = cutscene_runner_lookup_actor(cutscene, subject_id);
             if (!subject) {
                 break;
             }
@@ -315,7 +319,7 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
         case CUTSCENE_STEP_CAMERA_WAIT:
             return !camera_is_animating(&current_scene->camera_controller);
         case CUTSCENE_STEP_NPC_WAIT: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, step->data.npc_wait.subject);
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
             return !subject || !cutscene_actor_is_moving(subject);
         }
         default:

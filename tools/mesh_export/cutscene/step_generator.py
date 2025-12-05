@@ -51,27 +51,27 @@ _step_args = {
     "say": [ParameterType("tstr", True)],
     "pause": [ParameterType("bool", True), ParameterType("bool", True)],
     "delay": [ParameterType("float", True)],
-    "interact_with_npc": [ParameterType("int", True), ParameterType("entity_id", True), ParameterType("entity_id", True)],
-    "idle_npc": [ParameterType("entity_id", True)],
-    "cam_look_npc": [ParameterType("entity_id", True)],
+    "interact_with_npc": [ParameterType("int", True), ParameterType("entity_id", False), ParameterType("entity_id", False)],
+    "idle_npc": [ParameterType("entity_id", False)],
+    "cam_look_npc": [ParameterType("entity_id", False)],
     "cam_follow": [],
     "cam_return": [],
     "cam_animate": [ParameterType("str", True)],
     "cam_wait": [],
-    "interact_with_location": [ParameterType("int", True), ParameterType("entity_id", True), ParameterType("str", True)],
+    "interact_with_location": [ParameterType("int", True), ParameterType("entity_id", False), ParameterType("str", True)],
     "fade": [ParameterType("int", True), ParameterType("float", True)],
     "interact_with_position": [
         ParameterType("int", True), 
-        ParameterType("entity_id", True), 
+        ParameterType("entity_id", False), 
         ParameterType("float", True), 
         ParameterType("float", True), 
         ParameterType("float", True)
     ],
-    "npc_wait": [ParameterType("entity_id", True)],
-    "npc_set_speed": [ParameterType("entity_id", True), ParameterType("float", True)],
+    "npc_wait": [ParameterType("entity_id", False)],
+    "npc_set_speed": [ParameterType("entity_id", False), ParameterType("float", True)],
     "show_title": [ParameterType("str", True)],
     "look_at_subject": [],
-    "npc_animate": [ParameterType("entity_id", True), ParameterType("str", True), ParameterType("bool", True)],
+    "npc_animate": [ParameterType("entity_id", False), ParameterType("str", True), ParameterType("bool", True)],
     "print": [ParameterType("tstr", True)],
     "spawn": [ParameterType("entity_spawner", False)],
 }
@@ -203,7 +203,7 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
         expression = None
 
-        if arg.name == 'int' or arg.name == 'bool' or arg.name == 'entity_spawner':
+        if arg.name == 'int' or arg.name == 'bool' or arg.name == 'entity_spawner' or arg.name == 'entity_id':
             expression = expresion_generator.generate_script(parameter, context, 'int')
         elif arg.name == 'float':
             expression = expresion_generator.generate_script(parameter, context, 'float')
@@ -430,12 +430,17 @@ def _idle_find_effected_actors(statements: list, actors: set):
             actors.add(static_evaluator.StaticEvaluator().check_for_literals(statement.parameters[1]))
 
 def _idle_effected_actors(cutscene: Cutscene, statements: list):
-    actors = set()
+    actors = set[int]()
 
     _idle_find_effected_actors(statements, actors)
 
     for actor in actors:
-        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, struct.pack('>h', actor)))
+        expression = expresion_generator.ExpressionScript([
+            expresion_generator.ExpresionScriptIntLiteral(actor),
+            expresion_generator.ExpressionCommand(expresion_generator.EXPRESSION_TYPE_END),
+        ])
+        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_EXPRESSION, expression.to_bytes()))
+        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, b''))
 
 def _generate_statement_list_steps(cutscene: Cutscene, statements: list, context: variable_layout.VariableContext, function_name: str):
     for statement in statements:
