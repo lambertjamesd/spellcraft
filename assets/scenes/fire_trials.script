@@ -80,14 +80,18 @@ func room_bossfight()
     if not bossfight_cutscene_started and are_touching(bossfight_cutscene_trigger, ENTITY_ID_PLAYER) then
         world_pause;
         interact_with_npc INTERACTION_MOVE, ENTITY_ID_PLAYER, bossfight_walk_to;
+        npc_set_speed ENTITY_ID_PLAYER, 3;
         cam_animate "bossfight";
-        delay 3;
         spawn bossfight_jelly_king_spawner;
         npc_animate bossfight_jelly_king, "spawn", false;
+        
+        delay 11;
 
         show_title "JELLY KING";
+        cam_wait;
         cam_return;
         world_unpause;
+        idle_npc bossfight_jelly_king;
 
         bossfight_cutscene_started = true;
     end

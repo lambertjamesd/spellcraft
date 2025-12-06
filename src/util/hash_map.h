@@ -15,6 +15,8 @@ struct hash_map {
     uint16_t count;
 };
 
+typedef struct hash_map hash_map_t;
+
 // capacity must be a power of 2
 bool hash_map_init(struct hash_map* hash_map, int capacity);
 void hash_map_destroy(struct hash_map* hash_map);

@@ -329,7 +329,7 @@ void jelly_king_attack_aeo(struct jelly_king* jelly_king) {
 
 void jelly_king_update(void* data) {
     struct jelly_king* jelly_king = (struct jelly_king*)data;
-    if (cutscene_actor_update(&jelly_king->cutscene_actor)) {
+    if (cutscene_actor_update(&jelly_king->cutscene_actor) || !update_has_layer(UPDATE_LAYER_WORLD)) {
         return;
     }
 
@@ -388,7 +388,7 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
 
     jelly_king_start_idle(jelly_king);
 
-    update_add(jelly_king, jelly_king_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
+    update_add(jelly_king, jelly_king_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     jelly_king->next_minion = 0;
     jelly_king->last_minion = 0;

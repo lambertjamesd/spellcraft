@@ -7,6 +7,7 @@
 #include "../menu/dialog_box.h"
 #include "../menu/menu_rendering.h"
 #include "../menu/menu_common.h"
+#include "../objects/empty.h"
 #include "../util/flags.h"
 #include "../scene/scene.h"
 #include "evaluation_context.h"
@@ -76,6 +77,26 @@ cutscene_actor_t* cutscene_runner_lookup_actor(struct cutscene_active_entry* cut
     }
 
     return cutscene_actor_find(input);
+}
+
+vector3_t* cutscene_runner_lookup_pos(struct cutscene_active_entry* cutscene, entity_id id) {
+    if (id == ENTITY_ID_SUBJECT) {
+        id = cutscene->subject;
+    }
+
+    cutscene_actor_t* actor = cutscene_actor_find(id);
+
+    if (actor != NULL) {
+        return cutscene_actor_get_pos(actor);
+    }
+
+    empty_t* empty = empty_find(id);
+
+    if (empty != NULL) {
+        return &empty->position;
+    }
+
+    return NULL;
 }
 
 void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cutscene_step* step) {
@@ -153,7 +174,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
                 break;
             }
 
-            struct cutscene_actor* target = cutscene_runner_lookup_actor(cutscene, entities[1]);
+            vector3_t* target = cutscene_runner_lookup_pos(cutscene, entities[1]);
             if (!target) {
                 break;
             }
@@ -161,7 +182,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             cutscene_actor_interact_with(
                 subject,
                 step->data.interact_with_npc.type,
-                &target->transform.position
+                target
             );
 
             break;

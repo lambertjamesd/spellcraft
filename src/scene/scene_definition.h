@@ -49,6 +49,7 @@ enum fixed_entity_ids {
 
 struct empty_definition {
     struct Vector3 position;
+    struct Vector2 rotation;
 };
 
 struct crate_definition {
