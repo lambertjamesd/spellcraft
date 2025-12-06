@@ -21,7 +21,7 @@ struct jelly_king_animations {
 
 enum jelly_king_state {
     JELLY_KING_IDLE,
-    JELLY_KING_MOVE_TO_TARGET,
+    JELLY_KING_BITE_AIM,
     JELLY_KING_ATTACK,
     JELLY_KING_ATTACK_RANGED,
     JELLY_KING_ATTACK_AIMING,
@@ -50,6 +50,12 @@ struct jelly_king {
         struct {
             float chase_timeout;
         } chase;
+        struct {
+            float aim_timer;
+        } bite_aim;
+        struct {
+            bool did_bite;
+        } bite;
     } state_data;
 
     entity_id minion[MAX_JELLY_MINIONS];

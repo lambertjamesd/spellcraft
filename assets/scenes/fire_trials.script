@@ -64,7 +64,7 @@ end
 global fire_trials_boss_dead: bool;
 scene bossfight_jelly_king: entity_id;
 scene bossfight_jelly_king_spawner: entity_spawner;
-scene bossfight_cutscene_started: bool;
+scene bossfight_cutscene_started: bool = true;
 scene bossfight_cutscene_trigger: entity_id;
 scene bossfight_walk_to: entity_id;
 

@@ -103,7 +103,10 @@ void cutscene_actor_interact_with(struct cutscene_actor* actor, enum interaction
 }
 
 void cutscene_actor_idle(struct cutscene_actor* actor) {
-    actor->state = ACTOR_STATE_IDLE;
+    if (actor->state != ACTOR_STATE_IDLE) {
+        animator_run_clip(&actor->animator, actor->animations.idle, 0.0f, true);
+        actor->state = ACTOR_STATE_IDLE;
+    }
 }
 
 void cutscene_actor_set_speed(struct cutscene_actor* actor, float speed) {

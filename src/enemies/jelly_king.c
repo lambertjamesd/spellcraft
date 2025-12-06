@@ -13,7 +13,8 @@
 
 #define MAX_HEALTH      1000.0f
 
-#define MAX_ROTATE_PER_SECOND   20.0f
+#define MAX_ROTATE_PER_SECOND           20.0f
+#define MAX_AIM_ROTATE_PER_SECOND       60.0f
 #define SPEED                   20.0f
 #define ACCEL                   1.5f
 
@@ -62,11 +63,21 @@ static struct spatial_trigger_type jelly_king_vision_type = {
     },
 };
 
+static struct damage_source bite_attack = {
+    .amount = 20.0f,
+    .type = DAMAGE_TYPE_BASH,
+    .knockback_strength = 0.0f,
+};
+
 static struct damage_source aeo_attack = {
     .amount = 10.0f,
     .type = DAMAGE_TYPE_KNOCKBACK,
     .knockback_strength = 2.0f,
 };
+
+void jelly_king_set_rotation_speed(struct jelly_king* jelly_king, float deg_per_sec) {
+    vector2ComplexFromAngle(deg_per_sec * M_DEG_2_RAD * fixed_time_step, &jelly_king->max_rotate);
+}
 
 bool jelly_king_rotate_to_target(struct jelly_king* jelly_king, struct contact* nearest_target, float threshold) {
     if (!nearest_target) {
@@ -107,17 +118,25 @@ void jelly_king_start_idle(struct jelly_king* jelly_king) {
     animator_run_clip(&jelly_king->cutscene_actor.animator, jelly_king->animations.idle, 0.0f, true);
 }
 
-void jelly_king_chase_player(struct jelly_king* jelly_king) {
-    jelly_king->state = JELLY_KING_MOVE_TO_TARGET;
-    jelly_king->state_data.chase.chase_timeout = MAX_CHANGE_TIME;
-}
-
 void jelly_king_start_aeo_attack(struct jelly_king* jelly_king) {
     jelly_king->state = JELLY_KING_ATTACK_AEO;
     animator_run_clip(&jelly_king->cutscene_actor.animator, jelly_king->animations.attack_aeo, 0.0f, false);
 }
 
-void jelly_move_towards_target(struct jelly_king* jelly_king, struct contact* nearest_target) {
+void jelly_king_start_bite_attack(struct jelly_king* jelly_king) {
+    jelly_king->state = JELLY_KING_ATTACK;
+    jelly_king->state_data.bite.did_bite = false;
+    cutscene_actor_run_clip(&jelly_king->cutscene_actor, jelly_king->animations.attack, 0.0f, false);
+    jelly_king_set_rotation_speed(jelly_king, MAX_AIM_ROTATE_PER_SECOND);
+}
+
+void jelly_king_start_bite_aim(struct jelly_king* jelly_king) {
+    jelly_king->state = JELLY_KING_BITE_AIM;
+    jelly_king->state_data.bite_aim.aim_timer = 1.0f;
+    jelly_king_set_rotation_speed(jelly_king, MAX_AIM_ROTATE_PER_SECOND);
+}
+
+bool jelly_move_towards_target(struct jelly_king* jelly_king, struct contact* nearest_target) {
     if (jelly_king_rotate_to_target(jelly_king, nearest_target, 0.5f)) {
         struct Vector3 targetVel;
         vector2ToLookDir(cutscene_actor_get_rot(&jelly_king->cutscene_actor), &targetVel);
@@ -126,7 +145,11 @@ void jelly_move_towards_target(struct jelly_king* jelly_king, struct contact* ne
         vector3_t* vel = cutscene_actor_get_vel(&jelly_king->cutscene_actor);
 
         vector3MoveTowards(vel, &targetVel, ACCEL * fixed_time_step, vel);
+
+        return true;
     }
+
+    return false;
 }
 
 void jelly_king_idle(struct jelly_king* jelly_king) {
@@ -144,7 +167,7 @@ void jelly_king_idle(struct jelly_king* jelly_king) {
         --jelly_king->state_data.idle.attack_timer;
     }
 
-    if (jelly_king->state_data.idle.attack_timer <= 0) {
+    if (jelly_king->state_data.idle.attack_timer <= 0 || cutscene_actor_is_touching(&jelly_king->cutscene_actor, nearest_target->other_object)) {
         struct Vector3 offset;
         vector3Sub(&nearest_target->point, pos, &offset);
 
@@ -157,7 +180,7 @@ void jelly_king_idle(struct jelly_king* jelly_king) {
             if (vector2Dot(&rotation, cutscene_actor_get_rot(&jelly_king->cutscene_actor)) < 0.7f) {
                 jelly_king_start_aeo_attack(jelly_king);
             } else {
-                jelly_king_chase_player(jelly_king);
+                jelly_king_start_bite_aim(jelly_king);
             }
         } else if (jelly_king_can_fire_minion(jelly_king)) {
             jelly_king_fire_minions(jelly_king, 3);
@@ -165,30 +188,57 @@ void jelly_king_idle(struct jelly_king* jelly_king) {
     }
 }
 
-void jelly_king_move_to_target(struct jelly_king* jelly_king) {
+void jelly_king_bite_aim(struct jelly_king* jelly_king) {
+    struct contact* nearest_target = dynamic_object_nearest_contact(jelly_king->vision.active_contacts, cutscene_actor_get_pos(&jelly_king->cutscene_actor));
+
+    bool can_bite = jelly_move_towards_target(jelly_king, nearest_target);
+
+    jelly_king->state_data.bite_aim.aim_timer -= fixed_time_step;
+
+    if (can_bite || jelly_king->state_data.bite_aim.aim_timer < 0.0f) {
+        jelly_king_start_bite_attack(jelly_king);
+    }
+}
+
+void jelly_king_bite_attack(struct jelly_king* jelly_king) {
+    if (!cutscene_actor_is_animating(&jelly_king->cutscene_actor)) {
+        jelly_king_start_idle(jelly_king);
+        return;
+    }
+
     struct contact* nearest_target = dynamic_object_nearest_contact(jelly_king->vision.active_contacts, cutscene_actor_get_pos(&jelly_king->cutscene_actor));
 
     if (!nearest_target) {
         return;
     }
+
+    if (nearest_target && !jelly_king->state_data.bite.did_bite) {
+        jelly_king_rotate_to_target(jelly_king, nearest_target, 0.95f);
+    }
+
+    if (cutscene_actor_get_animator_events(&jelly_king->cutscene_actor).attack) {
+        jelly_king->state_data.bite.did_bite = true;
+        jelly_king_set_rotation_speed(jelly_king, MAX_ROTATE_PER_SECOND);
+
+        if (nearest_target) {
+            struct Vector3 offset;
+            vector3Sub(&nearest_target->point, cutscene_actor_get_pos(&jelly_king->cutscene_actor), &offset);
     
-    jelly_move_towards_target(jelly_king, nearest_target);
+            float distanceSq = vector3MagSqrd2D(&offset);
+    
+            if (distanceSq < BITE_ATTACK_RANGE * BITE_ATTACK_RANGE) {
+                vector3Scale(&offset, &offset, 1.0f / sqrtf(distanceSq));
 
-    if (cutscene_actor_is_touching(&jelly_king->cutscene_actor, nearest_target->other_object)) {
-        cutscene_actor_run_clip(&jelly_king->cutscene_actor, jelly_king->animations.attack, 0.0f, false);
-        jelly_king->state = JELLY_KING_ATTACK;
-    }
-
-    jelly_king->state_data.chase.chase_timeout -= fixed_time_step;
-
-    if (jelly_king->state_data.chase.chase_timeout < 0.0f) {
-        jelly_king_start_idle(jelly_king);
-    }
-}
-
-void jelly_king_attack(struct jelly_king* jelly_king) {
-    if (!cutscene_actor_is_animating(&jelly_king->cutscene_actor)) {
-        jelly_king_start_idle(jelly_king);
+                damage_info_t damage = {
+                    .amount = bite_attack.amount,
+                    .type = bite_attack.type,
+                    .source = cutscene_actor_get_id(&jelly_king->cutscene_actor),
+                    .knockback_strength = bite_attack.knockback_strength,
+                    .direction = offset,
+                };
+                health_damage_id(nearest_target->other_object, &damage, NULL);
+            }
+        }
     }
 }
 
@@ -327,6 +377,14 @@ void jelly_king_attack_aeo(struct jelly_king* jelly_king) {
     }
 }
 
+float jelly_king_on_damage(void* data, struct damage_info* damage) {
+    struct jelly_king* jelly_king = (struct jelly_king*)data;
+
+    damage->knockback_strength *= 0.5f;
+
+    return damage->amount;
+}
+
 void jelly_king_update(void* data) {
     struct jelly_king* jelly_king = (struct jelly_king*)data;
     if (cutscene_actor_update(&jelly_king->cutscene_actor) || !update_has_layer(UPDATE_LAYER_WORLD)) {
@@ -342,11 +400,11 @@ void jelly_king_update(void* data) {
         case JELLY_KING_IDLE:
             jelly_king_idle(jelly_king);
             break;
-        case JELLY_KING_MOVE_TO_TARGET:
-            jelly_king_move_to_target(jelly_king);
+        case JELLY_KING_BITE_AIM:
+            jelly_king_bite_aim(jelly_king);
             break;
         case JELLY_KING_ATTACK:
-            jelly_king_attack(jelly_king);
+            jelly_king_bite_attack(jelly_king);
             break;
         case JELLY_KING_ATTACK_RANGED:
             jelly_king_attack_ranged(jelly_king);
@@ -394,11 +452,12 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
     jelly_king->last_minion = 0;
 
     health_init(&jelly_king->health, id, MAX_HEALTH);
+    health_set_callback(&jelly_king->health, jelly_king_on_damage, jelly_king);
 
     spatial_trigger_init(&jelly_king->vision, &jelly_king->cutscene_actor.transform, &jelly_king_vision_type, COLLISION_LAYER_DAMAGE_PLAYER, id);
     collision_scene_add_trigger(&jelly_king->vision);
 
-    vector2ComplexFromAngle(MAX_ROTATE_PER_SECOND * M_DEG_2_RAD * fixed_time_step, &jelly_king->max_rotate);
+    jelly_king_set_rotation_speed(jelly_king, MAX_ROTATE_PER_SECOND);
 
     memset(jelly_king->minion, 0, sizeof(jelly_king->minion));
 }

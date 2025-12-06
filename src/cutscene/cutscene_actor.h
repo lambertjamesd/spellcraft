@@ -113,4 +113,8 @@ static inline animator_events_t cutscene_actor_get_animator_events(cutscene_acto
     return actor->animator.events;
 }
 
+static inline entity_id cutscene_actor_get_id(cutscene_actor_t* actor) {
+    return actor->collider.entity_id;
+}
+
 #endif
