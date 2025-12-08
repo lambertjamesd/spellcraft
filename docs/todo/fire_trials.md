@@ -23,3 +23,8 @@
 * jelly wait to attack if offscreen?
 * change some doors to passive portals
 * speed up searching for entry points
+* jelly king fight
+  * harder bite attack
+  * implement dash attack
+  * add pots to push into jelly king
+  * implement lightning against jellies

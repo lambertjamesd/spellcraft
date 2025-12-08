@@ -72,7 +72,7 @@ static struct damage_source bite_attack = {
 static struct damage_source aeo_attack = {
     .amount = 10.0f,
     .type = DAMAGE_TYPE_KNOCKBACK,
-    .knockback_strength = 2.0f,
+    .knockback_strength = damage_knockback_with_time(1.0f),
 };
 
 void jelly_king_set_rotation_speed(struct jelly_king* jelly_king, float deg_per_sec) {

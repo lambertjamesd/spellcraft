@@ -6,6 +6,8 @@
 #include "../math/vector3.h"
 #include "./entity_id.h"
 
+#include "../collision/dynamic_object.h"
+
 enum damage_type {
     DAMAGE_TYPE_PROJECTILE = (1 << 0),
     DAMAGE_TYPE_FIRE = (1 << 1),
@@ -24,6 +26,8 @@ struct damage_source {
 };
 
 typedef struct damage_source damage_source_t;
+
+#define damage_knockback_with_time(hangtime)  (0.5f * -GRAVITY_CONSTANT * (hangtime))
 
 struct damage_info {
     float amount;
