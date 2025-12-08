@@ -17,6 +17,8 @@ struct jelly_king_animations {
     struct animation_clip* attack;
     struct animation_clip* attack_ranged;
     struct animation_clip* attack_aeo;
+    struct animation_clip* attack_dash;
+    struct animation_clip* die;
 };
 
 enum jelly_king_state {
@@ -26,6 +28,8 @@ enum jelly_king_state {
     JELLY_KING_ATTACK_RANGED,
     JELLY_KING_ATTACK_AIMING,
     JELLY_KING_ATTACK_AEO,
+    JELLY_KING_ATTACK_DASH,
+    JELLY_KING_DIE,
 };
 
 #define MAX_JELLY_MINIONS   5
@@ -56,6 +60,9 @@ struct jelly_king {
         struct {
             bool did_bite;
         } bite;
+        struct {
+            bool did_dash;
+        } dash;
     } state_data;
 
     entity_id minion[MAX_JELLY_MINIONS];

@@ -15,6 +15,8 @@
 #define CAMERA_PLACEMENT_OFFSET     3.0f
 #define CAMERA_PLACEMENT_TANGENTS   2.0f
 
+#define COLLISION_LAYERS    (COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_BLOCK_CAMERA)
+
 static struct dynamic_object_type door_collision = {
     BOX_COLLIDER(2.16264f, 2.0f, 0.317424f),
     .bounce = 0.2f,
@@ -48,7 +50,7 @@ void door_cutscene_close(void* data) {
     struct door* door = (struct door*)data;
     animator_run_clip(&door->animator, door->animations.close, 0.0f, false);
     door->next_room = door->preview_room;
-    door->collider.collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE;
+    door->collider.collision_layers = COLLISION_LAYERS;
 }
 
 void door_interact(struct interactable* interactable, entity_id from) {
@@ -174,7 +176,7 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
         id, 
         &door->collider, 
         &door_collision, 
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE,
+        COLLISION_LAYERS,
         &door->transform.position, 
         &door->transform.rotation
     );

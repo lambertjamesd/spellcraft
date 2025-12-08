@@ -8,6 +8,7 @@
 #include "../math/constants.h"
 #include "../entity/entity_spawner.h"
 #include "../collision/shapes/cylinder.h"
+#include "../entity/entity_spawner.h"
 
 #define VISION_DISTANCE 12.0f
 
@@ -15,16 +16,17 @@
 
 #define MAX_ROTATE_PER_SECOND           20.0f
 #define MAX_AIM_ROTATE_PER_SECOND       60.0f
-#define SPEED                   20.0f
-#define ACCEL                   1.5f
+#define SPEED                   10.0f
+#define ACCEL                   5.0f
 
 #define MINION_DELAY_TIMER      10
 
 #define DEFAULT_LAUNCH_SPEED    6.0f
 
-#define ATTACK_DELAY_FRAMES     (5 * 50)
+#define ATTACK_DELAY_FRAMES     (3 * 30)
 
 #define BITE_ATTACK_RANGE       3.0f
+#define BITE_ATTACK_ACCEL       2.0f
 
 #define MAX_CHANGE_TIME         4.0f
 
@@ -136,6 +138,16 @@ void jelly_king_start_bite_aim(struct jelly_king* jelly_king) {
     jelly_king_set_rotation_speed(jelly_king, MAX_AIM_ROTATE_PER_SECOND);
 }
 
+void jelly_king_start_dash(struct jelly_king* jelly_king) {
+    jelly_king->state = JELLY_KING_ATTACK_DASH;
+    cutscene_actor_run_clip(&jelly_king->cutscene_actor, jelly_king->animations.attack_dash, 0.0f, false);
+}
+
+void jelly_king_die(struct jelly_king* jelly_king) {
+    jelly_king->state = JELLY_KING_DIE;
+    cutscene_actor_run_clip(&jelly_king->cutscene_actor, jelly_king->animations.die, 0.0f, false);
+}
+
 bool jelly_move_towards_target(struct jelly_king* jelly_king, struct contact* nearest_target) {
     if (jelly_king_rotate_to_target(jelly_king, nearest_target, 0.5f)) {
         struct Vector3 targetVel;
@@ -213,7 +225,7 @@ void jelly_king_bite_attack(struct jelly_king* jelly_king) {
     }
 
     if (nearest_target && !jelly_king->state_data.bite.did_bite) {
-        jelly_king_rotate_to_target(jelly_king, nearest_target, 0.95f);
+        jelly_move_towards_target(jelly_king, nearest_target);
     }
 
     if (cutscene_actor_get_animator_events(&jelly_king->cutscene_actor).attack) {
@@ -239,6 +251,11 @@ void jelly_king_bite_attack(struct jelly_king* jelly_king) {
                 health_damage_id(nearest_target->other_object, &damage, NULL);
             }
         }
+
+        struct Vector3 forward;
+        vector2ToLookDir(cutscene_actor_get_rot(&jelly_king->cutscene_actor), &forward);
+        struct Vector3* vel = cutscene_actor_get_vel(&jelly_king->cutscene_actor);
+        vector3AddScaled(vel, &forward, BITE_ATTACK_ACCEL, vel);
     }
 }
 
@@ -377,6 +394,16 @@ void jelly_king_attack_aeo(struct jelly_king* jelly_king) {
     }
 }
 
+void jelly_king_attack_dash(struct jelly_king* jelly_king) {
+
+}
+
+void jelly_king_attack_die(struct jelly_king* jelly_king) {
+    if (!cutscene_actor_is_animating(&jelly_king->cutscene_actor)) {
+        entity_despawn(cutscene_actor_get_id(&jelly_king->cutscene_actor));
+    }
+}
+
 float jelly_king_on_damage(void* data, struct damage_info* damage) {
     struct jelly_king* jelly_king = (struct jelly_king*)data;
 
@@ -415,6 +442,12 @@ void jelly_king_update(void* data) {
         case JELLY_KING_ATTACK_AEO:
             jelly_king_attack_aeo(jelly_king);
             break;
+        case JELLY_KING_ATTACK_DASH:
+            jelly_king_attack_dash(jelly_king);
+            break;
+        case JELLY_KING_DIE:
+            jelly_king_attack_dash(jelly_king);
+            break;
     }
 }
 
@@ -443,6 +476,8 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
     jelly_king->animations.attack = cutscene_actor_find_clip(&jelly_king->cutscene_actor, "attack");
     jelly_king->animations.attack_ranged = cutscene_actor_find_clip(&jelly_king->cutscene_actor, "attack_ranged");
     jelly_king->animations.attack_aeo = cutscene_actor_find_clip(&jelly_king->cutscene_actor, "attack_aeo");
+    jelly_king->animations.attack_dash = cutscene_actor_find_clip(&jelly_king->cutscene_actor, "attack_dash");
+    jelly_king->animations.die = cutscene_actor_find_clip(&jelly_king->cutscene_actor, "die");
 
     jelly_king_start_idle(jelly_king);
 

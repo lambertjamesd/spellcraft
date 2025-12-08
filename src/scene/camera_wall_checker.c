@@ -24,7 +24,7 @@ void camera_wall_checker_init(camera_wall_checker_t* checker) {
         entity_id_new(),
         &checker->collider,
         &camera_wall_checker_type,
-        COLLISION_LAYER_TANGIBLE,
+        COLLISION_LAYER_BLOCK_CAMERA,
         &checker->position,
         NULL
     );
