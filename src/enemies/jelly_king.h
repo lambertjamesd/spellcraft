@@ -29,6 +29,7 @@ enum jelly_king_state {
     JELLY_KING_ATTACK_AIMING,
     JELLY_KING_ATTACK_AEO,
     JELLY_KING_ATTACK_DASH,
+    JELLY_KING_FACE_PLAYER,
     JELLY_KING_DIE,
 };
 
@@ -43,6 +44,7 @@ struct jelly_king {
     struct jelly_king_animations animations;
     struct Vector2 max_rotate;
     enum jelly_king_state state;
+    contact_t last_target;
 
     union {
         struct {
