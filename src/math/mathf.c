@@ -69,7 +69,7 @@ float mathfBounceBackLerp(float t) {
 }
 
 float mathfRandomFloat() {
-    return (float)randomInt() / (float)0x7fff;
+    return (float)randomInt() * (1.0f / (float)0x7fff);
 }
 
 float clampf(float input, float min, float max) {

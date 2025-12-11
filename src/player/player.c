@@ -36,7 +36,7 @@
 #define INTERACT_Y_UPEER        1.25f
 
 
-#define MAX_ROTATION_RATE       5.0f
+#define MAX_ROTATION_RATE       10.0f
 static struct Vector2 player_max_rotation;
 static struct Vector2 z_target_rotation;
 

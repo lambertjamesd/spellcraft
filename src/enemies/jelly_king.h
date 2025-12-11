@@ -16,7 +16,7 @@ struct jelly_king_animations {
     struct animation_clip* idle;
     struct animation_clip* attack;
     struct animation_clip* attack_ranged;
-    struct animation_clip* attack_aeo;
+    struct animation_clip* attack_aoe;
     struct animation_clip* attack_dash;
     struct animation_clip* die;
 };
@@ -27,8 +27,9 @@ enum jelly_king_state {
     JELLY_KING_ATTACK,
     JELLY_KING_ATTACK_RANGED,
     JELLY_KING_ATTACK_AIMING,
-    JELLY_KING_ATTACK_AEO,
+    JELLY_KING_ATTACK_AOE,
     JELLY_KING_ATTACK_DASH,
+    JELLY_KING_DASH_TURNAROUND,
     JELLY_KING_FACE_PLAYER,
     JELLY_KING_DIE,
 };
