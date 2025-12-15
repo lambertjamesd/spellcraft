@@ -71,12 +71,16 @@ static struct cutscene_runner cutscene_runner;
 
 void cuscene_runner_start(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject);
 
-cutscene_actor_t* cutscene_runner_lookup_actor(struct cutscene_active_entry* cutscene, entity_id input) {
+entity_id cutscene_runner_translate_entity(struct cutscene_active_entry* cutscene, entity_id input) {
     if (input == ENTITY_ID_SUBJECT) {
-        return cutscene_actor_find(cutscene->subject);
+        return cutscene->subject;
     }
 
-    return cutscene_actor_find(input);
+    return input;
+}
+
+cutscene_actor_t* cutscene_runner_lookup_actor(struct cutscene_active_entry* cutscene, entity_id input) {
+    return cutscene_actor_find(cutscene_runner_translate_entity(cutscene, input));
 }
 
 vector3_t* cutscene_runner_lookup_pos(struct cutscene_active_entry* cutscene, entity_id id) {
@@ -272,6 +276,10 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         }
         case CUTSCENE_STEP_SHOW_TITLE: {
             area_title_show(step->data.show_title.message);
+            break;
+        }
+        case CUTSCENE_STEP_SHOW_BOSS_HEALTH: {
+            hud_show_boss_health(&current_scene->hud, step->data.show_boss_health.name, cutscene_runner_translate_entity(cutscene, evaluation_context_pop(&cutscene->context)));
             break;
         }
         case CUTSCENE_STEP_LOOK_AT_SUBJECT: {

@@ -37,6 +37,7 @@ enum cutscene_step_type {
     CUTSCENE_STEP_PRINT,
     CUTSCENE_STEP_SPAWN,
     CUTSCENE_STEP_CALLBACK,
+    CUTSCENE_STEP_SHOW_BOSS_HEALTH,
 };
 
 typedef void (*cutscene_step_callback)(void* data);
@@ -144,6 +145,9 @@ union cutscene_step_data {
         cutscene_step_callback callback;
         void* data;
     } callback;
+    struct {
+        char* name;
+    } show_boss_health;
 };
 
 struct cutscene_step {

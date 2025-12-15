@@ -1,6 +1,6 @@
 #include "dialog_box.h"
 
-#include "../resource/font_cache.h"
+#include "../font/fonts.h"
 #include "menu_common.h"
 #include "menu_rendering.h"
 #include "../time/time.h"
@@ -13,8 +13,7 @@ struct dialog_box dialog_box;
 
 void dialog_box_init() {
     dialog_box.current_message = NULL;
-    dialog_box.font = font_cache_load("rom:/fonts/Amarante-Regular.font64");
-    rdpq_text_register_font(1, dialog_box.font);
+    font_type_use(FONT_DIALOG);
 }
 
 void dialog_box_update(void* data) {
@@ -73,7 +72,7 @@ void dialog_box_render(void* data) {
             .height = 60,
             .wrap = WRAP_WORD,
         }, 
-        1, 
+        FONT_DIALOG, 
         30, 170, 
         dialog_box.current_message_start,
         dialog_box.current_message_end - dialog_box.current_message_start
@@ -146,5 +145,5 @@ void dialog_box_hide() {
 
 void dialog_box_destroy() {
     rdpq_text_unregister_font(1);
-    font_cache_release(dialog_box.font);
+    font_type_release(FONT_DIALOG);
 }

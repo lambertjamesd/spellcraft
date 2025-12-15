@@ -8,8 +8,8 @@
 #include "../spell/assets.h"
 #include "../render/coloru8.h"
 #include "../resource/material_cache.h"
-#include "../resource/font_cache.h"
 #include "../time/time.h"
+#include "../font/fonts.h"
 
 #define SPELL_SLOT_LOCATION_X   232
 #define SPELL_SLOT_LOCATION_Y   152
@@ -26,9 +26,12 @@
 
 #define HEALTH_BAR_Y            206
 
-#define BUTTON_ICON_X           240
-#define BUTTON_ICON_Y           20
+#define BUTTON_ICON_X           258
+#define BUTTON_ICON_Y           30
 #define BUTTON_ICON_SIZE        32
+
+#define BOSS_HEALTH_WIDTH       260
+#define BOSS_HEALTH_Y           20
 
 static color_t mana_color = {80, 0, 240, 200};
 static color_t health_color = {240, 80, 0, 200};
@@ -60,12 +63,43 @@ void hud_draw_bar(int max_width, int current_width, int prev_width, int y, color
     }
 }
 
+void hud_render_boss_name(hud_t* hud) {
+    health_t* health = health_get(hud->boss.id);
+
+    if (!health) {
+        if (hud->boss.id) {
+            hud_hide_boss_health(hud);
+        }
+
+        return;
+    }
+
+    int current_health = (int)(BOSS_HEALTH_WIDTH * health->current_health / health->max_health);
+
+    hud_draw_bar(BOSS_HEALTH_WIDTH, current_health, 0, 20, health_color);
+    rdpq_text_printn(&(rdpq_textparms_t){
+            // .line_spacing = -3,
+            .align = ALIGN_LEFT,
+            .valign = VALIGN_TOP,
+            .width = BOSS_HEALTH_WIDTH,
+            .height = BUTTON_ICON_SIZE,
+            .wrap = WRAP_WORD,
+        }, 
+        FONT_DIALOG, 
+        (320 - BOSS_HEALTH_WIDTH) >> 1, BOSS_HEALTH_Y + 8, 
+        "Jelly King",
+        strlen("Jelly King")
+    );
+}
+
 void hud_render(void *data) {
     if (!update_has_layer(UPDATE_LAYER_WORLD)) {
         return;
     }
  
     struct hud* hud = (struct hud*)data;
+
+    hud_render_boss_name(hud);
 
     hud_draw_bar(
         MANA_TO_SIZE(spell_exec_max_mana(&hud->player->spell_exec)),
@@ -106,7 +140,7 @@ void hud_render(void *data) {
                 .height = BUTTON_ICON_SIZE,
                 .wrap = WRAP_WORD,
             }, 
-            1, 
+            FONT_DIALOG, 
             BUTTON_ICON_X, BUTTON_ICON_Y, 
             message,
             strlen(message)
@@ -119,12 +153,23 @@ void hud_init(struct hud* hud, struct player* player) {
     hud->player = player;
     live_cast_renderer_init(&hud->live_cast_renderer, &player->live_cast);
     hud->button_icon = material_cache_load("rom:/materials/menu/button_icon.mat");
-    hud->action_font = font_cache_load("rom:/fonts/Amarante-Regular.font64");
+    font_type_use(FONT_DIALOG);
+    hud->boss = (struct hud_boss){};
 }
 
 void hud_destroy(struct hud* hud) {
     menu_remove_callback(hud);
     live_cast_renderer_destroy(&hud->live_cast_renderer);
     material_cache_release(hud->button_icon);
-    font_cache_release(hud->action_font);
+    font_type_release(FONT_DIALOG);
+}
+
+void hud_show_boss_health(struct hud* hud, const char* name, entity_id id) {
+    strncpy(hud->boss.name, name, MAX_BOSS_NAME_LENGTH-1);
+    hud->boss.name[MAX_BOSS_NAME_LENGTH-1] = '\0';
+    hud->boss.id = id;
+}
+
+void hud_hide_boss_health(struct hud* hud) {
+    hud->boss = (struct hud_boss){};
 }

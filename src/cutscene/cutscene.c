@@ -149,6 +149,10 @@ struct cutscene* cutscene_load(char* filename) {
             case CUTSCENE_STEP_PRINT:
                 cutscene_load_template_string(&step->data.print.message, file);
                 break;
+            case CUTSCENE_STEP_SHOW_BOSS_HEALTH: {
+                step->data.show_boss_health.name = string_load(file);
+                break;
+            }
         }
     }
     
@@ -204,6 +208,9 @@ void cutscene_destroy(struct cutscene* cutscene) {
                 break;
             case CUTSCENE_STEP_PRINT:
                 cutscene_destroy_template_string(&step->data.print.message);
+                break;
+            case CUTSCENE_STEP_SHOW_BOSS_HEALTH:
+                free(step->data.show_boss_health.name);
                 break;
             default:
                 break;
