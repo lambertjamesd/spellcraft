@@ -71,7 +71,11 @@ class Definitions:
         base_path = abspath('//')
 
         for sibling in siblings:
-            relative_path = os.path.relpath(os.path.join(base_path, sibling), start_path).replace('.blend', '.scene')
+            relative_path = os.path.relpath(os.path.join(base_path, sibling), start_path).replace('.blend', '.scene').replace('\\', '/')
+
+            if 'repair/' in relative_path:
+                result.append(f"rom:/{relative_path}".replace('.scene', '.repair'))
+                continue
 
             try:
                 with bpy.data.libraries.load("//" + sibling, link=True) as (data_from, data_to):
