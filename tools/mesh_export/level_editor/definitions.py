@@ -73,12 +73,15 @@ class Definitions:
         for sibling in siblings:
             relative_path = os.path.relpath(os.path.join(base_path, sibling), start_path).replace('.blend', '.scene')
 
-            with bpy.data.libraries.load("//" + sibling, link=True) as (data_from, data_to):
-                for obj_name in data_from.objects:
-                    if not obj_name.startswith(entry_point.ENTRY_PREFIX):
-                        continue
-                    
-                    result.append(f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}")
+            try:
+                with bpy.data.libraries.load("//" + sibling, link=True) as (data_from, data_to):
+                    for obj_name in data_from.objects:
+                        if not obj_name.startswith(entry_point.ENTRY_PREFIX):
+                            continue
+                        
+                        result.append(f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}")
+            except:
+                print(f"failed to load file {sibling}")
 
         relative_path = os.path.relpath(bpy.data.filepath, start_path).replace('.blend', '.scene')
 

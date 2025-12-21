@@ -101,6 +101,7 @@ typedef uint16_t boolean_variable;
 typedef uint16_t integer_variable;
 
 typedef char* script_location;
+typedef char* scene_entry_point;
 
 struct collectable_definition {
     struct Vector3 position;
