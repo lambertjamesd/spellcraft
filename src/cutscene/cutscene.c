@@ -153,6 +153,9 @@ struct cutscene* cutscene_load(char* filename) {
                 step->data.show_boss_health.name = string_load(file);
                 break;
             }
+            case CUTSCENE_STEP_LOAD_SCENE:
+                step->data.load_scene.scene = string_load(file);
+                break;
         }
     }
     
@@ -211,6 +214,9 @@ void cutscene_destroy(struct cutscene* cutscene) {
                 break;
             case CUTSCENE_STEP_SHOW_BOSS_HEALTH:
                 free(step->data.show_boss_health.name);
+                break;
+            case CUTSCENE_STEP_LOAD_SCENE:
+                free(step->data.load_scene.scene);
                 break;
             default:
                 break;
@@ -478,6 +484,20 @@ void cutscene_builder_expression(struct cutscene_builder* builder, expression_bu
         .type = CUTSCENE_STEP_EXPRESSION,
     };
     expression_builder_finish(expression, &step->data.expression.expression);
+}
+
+void cutscene_builder_load_scene(struct cutscene_builder* builder, const char* scene) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    int name_len = strlen(scene);   
+    char* copy = malloc(name_len + 1);
+    strcpy(copy, scene);
+
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_LOAD_SCENE,
+        .data.load_scene = {
+            .scene = copy,
+        },
+    };
 }
 
 // release with cutscene_free()

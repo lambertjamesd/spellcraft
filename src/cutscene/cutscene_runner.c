@@ -69,6 +69,22 @@ struct cutscene_runner {
 
 static struct cutscene_runner cutscene_runner;
 
+static inline int cutscene_next_queue_index(int index) {
+    if (index + 1 == MAX_QUEUED_CUTSCENES) {
+        return 0;
+    }
+
+    return index + 1;
+}
+
+static inline int cutscene_prev_queue_index(int index) {
+    if (index == 0) {
+        return MAX_QUEUED_CUTSCENES - 1;
+    }
+
+    return index - 1;
+}
+
 void cuscene_runner_start(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject);
 
 entity_id cutscene_runner_translate_entity(struct cutscene_active_entry* cutscene, entity_id input) {
@@ -316,6 +332,10 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             step->data.callback.callback(step->data.callback.data);
             break;
         }
+        case CUTSCENE_STEP_LOAD_SCENE: {
+            scene_queue_next(step->data.load_scene.scene);
+            break;
+        }
     }
 }
 
@@ -356,6 +376,16 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
     }
 }
 
+void cutscene_runner_cancel_step(struct cutscene_active_entry* cutscene, struct cutscene_step* step) {
+    switch (step->type) {
+        case CUTSCENE_STEP_DIALOG:
+            dialog_box_hide();
+            return;
+        default:
+            return;
+    }
+}
+
 void cuscene_runner_start(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
     if (function_index < 0 || function_index >= cutscene->function_count) {
         finish_callback(cutscene, data);
@@ -382,6 +412,19 @@ void cuscene_runner_start(struct cutscene* cutscene, int function_index, cutscen
     evaluation_context_init(&next->context, cutscene->locals_size);
 
     cutscene_runner_init_step(next, &fn->steps[0]);
+}
+
+void cutscene_runner_check_queue() {
+    struct cutscene_queue_entry* queue_entry = &cutscene_runner.queue[cutscene_runner.next_cutscene];
+
+    if (!queue_entry->cutscene) {
+        return;
+    }
+
+    cutscene_runner.next_cutscene = cutscene_next_queue_index(cutscene_runner.next_cutscene);
+
+    cuscene_runner_start(queue_entry->cutscene, queue_entry->function_index, queue_entry->finish_callback, queue_entry->data, queue_entry->subject);
+    queue_entry->cutscene = NULL;
 }
 
 void cutscene_runner_update(void* data) {
@@ -416,20 +459,7 @@ void cutscene_runner_update(void* data) {
         cutscene_runner.current_cutscene -= 1;
     }
 
-    struct cutscene_queue_entry* queue_entry = &cutscene_runner.queue[cutscene_runner.next_cutscene];
-
-    if (!queue_entry->cutscene) {
-        return;
-    }
-
-    cutscene_runner.next_cutscene += 1;
-
-    if (cutscene_runner.next_cutscene == MAX_QUEUED_CUTSCENES) {
-        cutscene_runner.next_cutscene = 0;
-    }
-
-    cuscene_runner_start(queue_entry->cutscene, queue_entry->function_index, queue_entry->finish_callback, queue_entry->data, queue_entry->subject);
-    queue_entry->cutscene = NULL;
+    cutscene_runner_check_queue();
 }
 
 void cutscene_runner_render(void* data) {
@@ -452,19 +482,10 @@ void cutscene_runner_init() {
     }
 }
 
-void cutscene_runner_run(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
-    if (cutscene_runner.current_cutscene == -1) {
-        cuscene_runner_start(cutscene, function_index, finish_callback, data, subject);
-        return;
-    }
-
+void cutscene_runner_enqueue(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
     int next_cutscene = cutscene_runner.last_cutscene;
 
-    cutscene_runner.last_cutscene += 1;
-
-    if (cutscene_runner.last_cutscene == MAX_QUEUED_CUTSCENES) {
-        cutscene_runner.last_cutscene = 0;
-    }
+    cutscene_runner.last_cutscene = cutscene_next_queue_index(cutscene_runner.last_cutscene);
 
     struct cutscene_queue_entry* queue_entry = &cutscene_runner.queue[next_cutscene];
 
@@ -477,8 +498,80 @@ void cutscene_runner_run(struct cutscene* cutscene, int function_index, cutscene
     queue_entry->subject = subject;
 }
 
+void cutscene_runner_run(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
+    if (cutscene_runner.current_cutscene == -1) {
+        cuscene_runner_start(cutscene, function_index, finish_callback, data, subject);
+        return;
+    }
+
+    cutscene_runner_enqueue(cutscene, function_index, finish_callback, data, subject);
+}
+
 bool cutscene_runner_is_running() {
     return cutscene_runner.current_cutscene != -1;
+}
+
+void cutscene_cancel_active(struct cutscene_active_entry* entry) {
+    cutscene_runner_cancel_step(entry, &entry->function->steps[entry->current_instruction]);
+    entry->finish_callback(entry->cutscene, entry->data);
+}
+
+void cutscene_runner_cancel(struct cutscene* cutscene) {
+    if (cutscene_runner.current_cutscene == -1) {
+        return;
+    }
+
+    int next_cutscene = cutscene_runner.current_cutscene;
+
+    for (int i = 0; i <= cutscene_runner.current_cutscene; i += 1) {
+        if (cutscene_runner.active_cutscenes[i].cutscene == cutscene) {
+            next_cutscene = i - 1;
+            break;
+        }
+    }
+
+    for (int i = cutscene_runner.current_cutscene; i > next_cutscene; i -= 1) {
+        cutscene_cancel_active(&cutscene_runner.active_cutscenes[i]);
+    }
+    cutscene_runner.current_cutscene = next_cutscene;
+
+    int curr = cutscene_runner.next_cutscene;
+    int write_index = curr;
+    int deletion_count = 0;
+
+    for (int i = 0; i < MAX_QUEUED_CUTSCENES; i += 1) {
+        struct cutscene_queue_entry* entry = &cutscene_runner.queue[curr];
+        
+        if (curr != write_index) {
+            cutscene_runner.queue[write_index] = cutscene_runner.queue[curr];
+        }
+
+        if (entry->cutscene == cutscene) {
+            entry->finish_callback(entry->cutscene, entry->data);
+
+            entry->cutscene = NULL;
+            if (curr == cutscene_runner.next_cutscene) {
+                cutscene_runner.next_cutscene = cutscene_next_queue_index(cutscene_runner.next_cutscene);
+                write_index = cutscene_runner.next_cutscene;
+            } else {
+                deletion_count += 1;
+            }
+        } else {
+            write_index = cutscene_next_queue_index(write_index);
+        }
+
+        curr = cutscene_next_queue_index(curr);
+    }
+
+    for (int i = 0; i < deletion_count; i += 1) {
+        cutscene_runner.queue[write_index].cutscene = NULL;
+        write_index = cutscene_next_queue_index(write_index);
+        cutscene_runner.last_cutscene = cutscene_prev_queue_index(cutscene_runner.last_cutscene);
+    }
+
+    if (cutscene_runner.current_cutscene == -1) {
+        cutscene_runner_check_queue();
+    }
 }
 
 void _cutscene_runner_free_on_finish(struct cutscene* cutscene, void* data) {
