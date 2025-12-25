@@ -65,13 +65,6 @@ bool collide_object_swept_to_triangle(void* data, int triangle_index, int collis
         collide_data->object->position,
         &result
     )) {
-        if (!mesh_triangle_filter_edge_contacts(
-            &triangle.triangle, 
-            collide_data->mesh->index.vertices, 
-            &result.normal)) {
-            return false;
-        }
-
         collide_data->hit_result = result;
         collide_data->surface_type = triangle.triangle.surface_type;
         return true;
