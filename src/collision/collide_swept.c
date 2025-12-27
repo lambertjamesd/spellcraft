@@ -85,6 +85,7 @@ bool collide_object_swept_to_triangle(void* data, int triangle_index, int collis
             &triangle.triangle, 
             collide_data->mesh->index.vertices, 
             &result.normal)) {
+            *collide_data->object->position = final_pos;
             return false;
         }
         
