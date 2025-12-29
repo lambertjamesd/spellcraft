@@ -36,12 +36,7 @@ struct npc_information npc_information[] = {
 
 void npc_interact(struct interactable* interactable, entity_id from) {
     struct npc* npc = (struct npc*)interactable->data;
-
-    if (!npc->talk_to_cutscene) {
-        return;
-    }
-
-    cutscene_runner_run(npc->talk_to_cutscene, 0, NULL, NULL, npc->cutscene_actor.collider.entity_id);
+    cutscene_ref_run(&npc->talk_to_cutscene, npc->cutscene_actor.collider.entity_id);
 }
 
 void npc_update(void *data) {
@@ -74,9 +69,9 @@ void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id) {
     
     if (*definiton->dialog) {
         interactable_init(&npc->interactable, id, INTERACT_TYPE_TALK, npc_interact, npc);
-        npc->talk_to_cutscene = cutscene_load(definiton->dialog);
+        cutscene_ref_init(&npc->talk_to_cutscene, definiton->dialog);
     } else {
-        npc->talk_to_cutscene = NULL;
+        cutscene_ref_init_null(&npc->talk_to_cutscene);
     }
 }
 
@@ -85,9 +80,9 @@ void npc_destroy(struct npc* npc) {
     renderable_destroy(&npc->renderable);
     cutscene_actor_destroy(&npc->cutscene_actor);
     update_remove(npc);
-    if (npc->talk_to_cutscene) {
+    if (npc->talk_to_cutscene.type != CUTSCENE_REF_NONE) {
         interactable_destroy(&npc->interactable);
-        cutscene_free(npc->talk_to_cutscene);
+        cutscene_ref_destroy(&npc->talk_to_cutscene);
     }
 }
 

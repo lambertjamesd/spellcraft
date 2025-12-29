@@ -8,6 +8,7 @@
 #include "../entity/interactable.h"
 #include "../cutscene/cutscene.h"
 #include "../cutscene/cutscene_actor.h"
+#include "../cutscene/cutscene_reference.h"
 
 struct npc_information {
     char* mesh;
@@ -21,7 +22,7 @@ struct npc {
     struct cutscene_actor cutscene_actor;
     struct renderable renderable;
     struct interactable interactable;
-    struct cutscene* talk_to_cutscene;
+    cutscene_ref_t talk_to_cutscene;
 };
 
 void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id);

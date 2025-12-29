@@ -163,6 +163,7 @@ typedef struct cutscene_step cutscene_step_t;
 
 struct cutscene* cutscene_new(int capacity, int locals_capacity, int function_count);
 void cutscene_free(struct cutscene* cutscene);
+int cutscene_find_function_index(struct cutscene* cutscene, const char* name);
 
 #define MAX_BUILDER_STEP_COUNT  32
 
@@ -171,7 +172,7 @@ struct cutscene_builder {
     uint16_t step_count;
 };
 
-struct cutscene* cutscene_load(char* filename);
+struct cutscene* cutscene_load(const char* filename);
 void cutscene_builder_init(struct cutscene_builder* builder);
 
 void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode, int layers);
