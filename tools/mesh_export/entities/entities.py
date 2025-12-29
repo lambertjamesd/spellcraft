@@ -114,7 +114,6 @@ def write_object_groups(
 
     definitions = io.BytesIO()
     conditions = io.BytesIO()
-    strings = io.BytesIO()
 
     for object in objects:
         layout_strings(object.obj, object.def_type, context, None)
@@ -123,11 +122,10 @@ def write_object_groups(
         object.write_condition(variable_context, conditions)
         object.write_definition(context, definitions)
 
-    context.write_strings(strings)
 
     definition_bytes = definitions.getvalue()
     condition_bytes = conditions.getvalue()
-    string_bytes = strings.getvalue()
+    string_bytes = context.get_bytes()
     file.write(len(definition_bytes).to_bytes(4, 'big'))
     file.write(len(condition_bytes).to_bytes(2, 'big'))
     file.write(len(string_bytes).to_bytes(2, 'big'))
@@ -146,9 +144,19 @@ def write_object_groups(
             idx
         ))
 
+    entity_id_varaibles = enums['entity_id_variable'] if 'entity_id_variable' in enums else None
+
     for object in objects:
         def_type = enums['enum entity_type_id'].str_to_int('ENTITY_TYPE_' + object.name)
+        
+        script_location_name = f"scene {object.obj.name}: entity_id"
+        scene_variable = 0xFFFF
+
+        if entity_id_varaibles and entity_id_varaibles.is_defined(script_location_name):
+            scene_variable = entity_id_varaibles.str_to_int(script_location_name)
+
         file.write(def_type.to_bytes(2, 'big'))
+        file.write(scene_variable.to_bytes(2, 'big'))
         
 
     
