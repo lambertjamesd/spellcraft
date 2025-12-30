@@ -255,7 +255,10 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
     if lod_0_collection:
         lod_0_objects = list(lod_0_collection.all_objects)
 
-    subdivisions = collection['subdivisions'] if 'subdivisions' in collection else 8
+    subdivisions = 8
+    
+    if 'subdivisions' in collection:
+        subdivisions = collection['subdivisions']
 
     entities.overworld.generate_overworld(
         overworld_filename, 
@@ -319,33 +322,7 @@ def int_type_flag(name: str) -> int:
     return int_types[name] << TYPE_OFFSET
 
 def build_variable_enum(enums: dict, globals: cutscene.variable_layout.VariableLayout, scene: cutscene.variable_layout.VariableLayout):
-    boolean_enum: dict[str, int] = {}
-    integer_enum: dict[str, int] = {}
-    entity_id_enum: dict[str, int] = {}
-
-    for entry in globals.get_all_entries():
-        var_name = f"global {entry.name}: {entry.type_name}"
-        
-        if entry.type_name == 'bool':
-            boolean_enum[var_name] = entry.offset
-        elif entry.type_name in int_types:
-            integer_enum[var_name] = entry.word_offset() | int_type_flag(entry.type_name)
-        elif entry.type_name == 'entity_id':
-            entity_id_enum[var_name] = entry.word_offset() | int_type_flag('i16')
-
-    for entry in scene.get_all_entries():
-        var_name = f"scene {entry.name}: {entry.type_name}"
-
-        if entry.type_name == 'bool':
-            boolean_enum[var_name] = entry.offset | SCENE_FLAG
-        elif entry.type_name in int_types:
-            integer_enum[var_name] = entry.word_offset() | SCENE_FLAG | int_type_flag(entry.type_name)
-        elif entry.type_name == 'entity_id':
-            entity_id_enum[var_name] = entry.word_offset() | SCENE_FLAG | int_type_flag('i16')
-
-    boolean_enum['disconnected'] = 0xFFFF
-    integer_enum['disconnected'] = 0xFFFF
-    entity_id_enum['disconnected'] = 0xFFFF
+    boolean_enum, integer_enum, entity_id_enum = cutscene.variable_layout.build_variables(globals, scene)
 
     enums['boolean_variable'] = parse.struct_parse.UnorderedEnum('boolean_variable', boolean_enum)
     enums['integer_variable'] = parse.struct_parse.UnorderedEnum('integer_variable', integer_enum)
@@ -387,15 +364,15 @@ def find_scene_objects(scene, definitions, room_collection, base_transform):
         if obj.name.startswith('fast64_f3d_material_library_'):
             continue
 
-        if obj in object_blacklist:
-            continue
-
         if 'loading_zone' in obj:
             scene.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
             continue
 
         if entities.entry_point.is_entry_point(obj):
             scene.locations.append(LocationEntry(obj, entities.entry_point.get_entry_point(obj)))
+            continue
+
+        if obj in object_blacklist:
             continue
 
         obj_type = get_object_type(obj)
@@ -455,6 +432,55 @@ def write_loading_zones(scene, base_transform, context, file):
         file.write(struct.pack(">fff", bb_min.x, bb_min.y, bb_min.z))
         file.write(struct.pack(">fff", bb_max.x, bb_max.y, bb_max.z))
         file.write(struct.pack(">I", context.get_string_offset(loading_zone.target)))
+
+def read_room_objects(scene: Scene, scene_vars, context) -> tuple[dict[int, list[ObjectEntry]], dict[int, list[int]], list[ObjectEntry]]:
+    grouped: dict[int, list[ObjectEntry]] = {}
+    shared_entity_index: dict[int, list[int]] = {}
+    shared_entities: list[ObjectEntry] = []
+
+    expected_spawners: set[str] = set([entry.name for entry in scene_vars.get_all_entries() if entry.type_name == "entity_spawner"])
+
+    for object in scene.objects:
+        parse.struct_serialize.layout_strings(object.obj, object.def_type, context, None)
+
+        key = object.room_index
+
+        multiroom_ids = object.get_multiroom_ids(context)
+
+        if len(multiroom_ids):
+            entity_index = len(shared_entities)
+
+            for room_id in multiroom_ids:
+                if room_id in shared_entity_index:
+                    shared_entity_index[room_id].append(entity_index)
+                else:
+                    shared_entity_index[room_id] = [entity_index]
+
+            shared_entities.append(object)
+            continue
+
+        object_index = 0
+
+        if key in grouped:
+            object_index = len(grouped[key])
+            grouped[key].append(object)
+        else:
+            grouped[key] = [object]
+
+        spawner_var_name = f"{object.obj.name}_spawner"
+        var_type = scene_vars.get_variable_type(spawner_var_name)
+
+        if var_type:
+            if var_type != "entity_spawner":
+                raise Exception(f"the variable {spawner_var_name} should be of type entity_spawner")
+            else:
+                expected_spawners.remove(spawner_var_name)
+                scene_vars.set_initial_value(spawner_var_name, (object.room_index << 16) | object_index)
+
+    if len(expected_spawners) > 0:
+        raise Exception(f"expected spawners {','.join(expected_spawners)}. Either remove these variables from the script or add an object to the scene with the spanwer name with the _spawner suffix removed")
+    
+    return  grouped, shared_entity_index, shared_entities
 
 def process_scene():
     input_filename = sys.argv[1]
@@ -543,54 +569,15 @@ def process_scene():
         scene.scene_mesh_collider.find_needed_edges()
         scene.scene_mesh_collider.write_out(file)
 
-        grouped: dict[int, list[ObjectEntry]] = {}
-        shared_entity_index: dict[int, list[int]] = {}
-        shared_entities: list[ObjectEntry] = []
-
-        expected_spawners: set[str] = set([entry.name for entry in scene_vars.get_all_entries() if entry.type_name == "entity_spawner"])
-
-        for object in scene.objects:
-            parse.struct_serialize.layout_strings(object.obj, object.def_type, context, None)
-
-            key = object.room_index
-
-            multiroom_ids = object.get_multiroom_ids(context)
-
-            if len(multiroom_ids):
-                entity_index = len(shared_entities)
-
-                for room_id in multiroom_ids:
-                    if room_id in shared_entity_index:
-                        shared_entity_index[room_id].append(entity_index)
-                    else:
-                        shared_entity_index[room_id] = [entity_index]
-
-                shared_entities.append(object)
-                continue
-
-            object_index = 0
-
-            if key in grouped:
-                object_index = len(grouped[key])
-                grouped[key].append(object)
-            else:
-                grouped[key] = [object]
-
-            spawner_var_name = f"{object.obj.name}_spawner"
-            var_type = scene_vars.get_variable_type(spawner_var_name)
-
-            if var_type:
-                if var_type != "entity_spawner":
-                    raise Exception(f"the variable {spawner_var_name} should be of type entity_spawner")
-                else:
-                    expected_spawners.remove(spawner_var_name)
-                    scene_vars.set_initial_value(spawner_var_name, (object.room_index << 16) | object_index)
-
-        if len(expected_spawners) > 0:
-            raise Exception(f"expected spawners {','.join(expected_spawners)}. Either remove these variables from the script or add an object to the scene with the spanwer name with the _spawner suffix removed")
-
         for loading_zone in scene.loading_zones:
             context.get_string_offset(loading_zone.target)
+
+        grouped = {}
+        shared_entity_index = {}
+        shared_entities = []
+
+        if not has_overworld:
+            grouped, shared_entity_index, shared_entities = read_room_objects(scene, scene_vars, context)
 
         context.write_strings(file)
 
