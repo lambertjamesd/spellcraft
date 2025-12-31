@@ -56,7 +56,7 @@ void inventory_menu_render(struct inventory_menu* menu) {
         int x = MENU_X + ICON_X(equipped_staff->staff_index);
         int y = MENU_Y + COL_SPACING;
 
-        rspq_block_run(current_spell_icon->block);
+        material_apply(current_spell_icon);
         rdpq_texture_rectangle_scaled(
             TILE0, 
             x, y,
@@ -77,7 +77,7 @@ void inventory_menu_render(struct inventory_menu* menu) {
             continue;
         }
 
-        rspq_block_run(material->block);
+        material_apply(material);
 
         int icon_x = MENU_X + ICON_X(i);
 
@@ -90,7 +90,7 @@ void inventory_menu_render(struct inventory_menu* menu) {
         );
     }
 
-    rspq_block_run(spell_cursor_material->block);
+    material_apply(spell_cursor_material);
 
     int x = MENU_X + ICON_X(menu->cursor_x);
     int y = MENU_Y + COL_SPACING;

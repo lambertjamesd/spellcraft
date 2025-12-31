@@ -160,7 +160,7 @@ void live_cast_render_symbol_runes(rune_pattern_t rune, int x, int y) {
 }
 
 void live_cast_renderer_render(live_cast_renderer_t* live_cast_renderer) {
-    rspq_block_run(live_cast_renderer->icon_background->block);
+    material_apply(live_cast_renderer->icon_background);
 
     int prev_spell_count = live_cast_prev_rune_count(live_cast_renderer->live_cast);
 
@@ -242,7 +242,7 @@ void live_cast_renderer_render(live_cast_renderer_t* live_cast_renderer) {
         );
     }
     
-    rspq_block_run(live_cast_renderer->spell_icons->block);
+    material_apply(live_cast_renderer->spell_icons);
     
     for (int i = SPELL_SYMBOL_FIRE; i <= SPELL_SYMBOL_AIR; i += 1) {
         struct symbol_modifier_parameters parameters = live_cast_renderer->symbol_modifiers[i - SPELL_SYMBOL_FIRE];

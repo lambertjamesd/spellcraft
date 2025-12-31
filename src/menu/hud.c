@@ -37,7 +37,7 @@ static color_t mana_color = {80, 0, 240, 200};
 static color_t health_color = {240, 80, 0, 200};
 
 void hud_draw_bar(int max_width, int current_width, int prev_width, int y, color_t color) {
-    rspq_block_run(solid_primitive_material->block);
+    material_apply(solid_primitive_material);
     rdpq_set_prim_color((color_t){255, 255, 255, 128});
     rdpq_texture_rectangle(
         TILE0, 
@@ -119,7 +119,7 @@ void hud_render(void *data) {
 
     live_cast_renderer_render(&hud->live_cast_renderer);
 
-    rspq_block_run(hud->button_icon->block);
+    material_apply(hud->button_icon);
     rdpq_texture_rectangle(
         TILE0, 
         BUTTON_ICON_X, BUTTON_ICON_Y, 

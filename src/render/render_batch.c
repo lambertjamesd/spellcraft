@@ -440,9 +440,10 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         struct render_batch_element* element = &batch->elements[index];
 
         if (current_mat != element->material) {
-            rdpq_sync_pipe();
             if (element->material->block) {
-                rspq_block_run(element->material->block);
+                material_apply(element->material);
+            } else {
+                rdpq_sync_pipe();
             }
 
             render_batch_check_texture_scroll(TILE0, &element->material->tex0);
@@ -468,7 +469,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         bool should_sprite_mode = element_type_2d[element->type];
 
         if (should_sprite_mode != is_sprite_mode) {
-            rdpq_sync_pipe();
             if (should_sprite_mode) {
                 static_particles_start();
             } else {

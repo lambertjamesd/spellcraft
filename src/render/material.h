@@ -53,4 +53,6 @@ void material_destroy(struct material* material);
 void material_load(struct material* into, FILE* material_file);
 void material_release(struct material* material);
 
+void material_apply(struct material* material);
+
 #endif

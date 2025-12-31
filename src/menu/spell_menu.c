@@ -106,7 +106,7 @@ void spell_menu_render(struct spell_menu* spell_menu) {
             struct spell* spell = inventory_get_built_in_spell(col, row);
 
             if (spell) {
-                rspq_block_run(menu_spell_icons[spell->symbol_index]->block);
+                material_apply(menu_spell_icons[spell->symbol_index]);
 
                 int x = SPELL_SYMBOL_X(col);
                 int y = SPELL_SYMBOL_Y(row);
@@ -121,7 +121,7 @@ void spell_menu_render(struct spell_menu* spell_menu) {
         }
     }
 
-    rspq_block_run(spell_cursor_material->block);
+    material_apply(spell_cursor_material);
 
     int x = SPELL_SYMBOL_X(spell_menu->cursor_x);
     int y = SPELL_SYMBOL_Y(spell_menu->cursor_y == 3 ? spell_menu->cursor_y + 1 : spell_menu->cursor_y);
@@ -134,7 +134,7 @@ void spell_menu_render(struct spell_menu* spell_menu) {
     );
 
     for (int i = 0; i < 6; i += 1) {
-        rspq_block_run(menu_spell_icons[i + SPELL_ICON_CUSTOM_0]->block);
+        material_apply(menu_spell_icons[i + SPELL_ICON_CUSTOM_0]);
 
         int x = SPELL_SYMBOL_X(i);
         int y = SPELL_SYMBOL_Y(4);

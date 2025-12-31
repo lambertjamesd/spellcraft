@@ -179,7 +179,7 @@ bool show_item_update(struct show_item* show_item, union cutscene_step_data* dat
 
 void show_item_render(struct show_item* show_item) {
     if (show_item->showing_item && show_item->show_item_timer) {
-        rspq_block_run(solid_primitive_material->block);
+        material_apply(solid_primitive_material);
 
         float alpha = show_item->show_item_timer * (1.0f / RUNE_FADE_TIME);
 
@@ -194,7 +194,7 @@ void show_item_render(struct show_item* show_item) {
 
         int size = (int)(32.0f * alpha);
 
-        rspq_block_run(current_spell_icon->block);
+        material_apply(current_spell_icon);
         rdpq_texture_rectangle_scaled(
             TILE0, 
             160 - size, 80 - size,
@@ -211,7 +211,7 @@ void show_item_render(struct show_item* show_item) {
         int h = 48;
 
         if (show_item->item_sprite && is_showing) {
-            rspq_block_run(sprite_blit->block);
+            material_apply(sprite_blit);
             rdpq_sprite_blit(show_item->item_sprite, 160 - 24, 80 - 24, NULL);
 
             int level = inventory_get_item_level(show_item->showing_item) - 1;
@@ -231,7 +231,7 @@ void show_item_render(struct show_item* show_item) {
         }
 
         if (show_item->item_material && is_showing) {
-            rspq_block_run(show_item->item_material->block);
+            material_apply(show_item->item_material);
 
             if (!show_item->showing_item) {
                 color_t color = {255, 255, 255, (uint8_t)(alpha * 255.0f)};
@@ -256,7 +256,7 @@ void show_item_render(struct show_item* show_item) {
             float alpha = 1.0f - (flash_time * (1.0f / RUNE_FLASH_TIME));
             alpha *= alpha;
 
-            rspq_block_run(solid_primitive_material->block);
+            material_apply(solid_primitive_material);
             color_t color = {255, 255, 255, (uint8_t)(alpha * 255.0f)};
             rdpq_set_prim_color(color);
             rdpq_texture_rectangle(TILE0, 0, 0, 320, 240, 0, 0);
