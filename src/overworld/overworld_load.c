@@ -54,7 +54,6 @@ struct overworld_tile* overworld_tile_load(FILE* file) {
     T3DMat4FP* curr_matrix = UncachedAddr(result->detail_matrices);
 
     for (int i = 0; i < mesh_count; i += 1) {
-        
         tmesh_load(&result->terrain_meshes[i], file);
         rspq_block_begin();
         material_apply(result->terrain_meshes[i].material);
@@ -283,7 +282,7 @@ void overworld_free(struct overworld* overworld) {
     for (
         struct hash_map_entry* entry = hash_map_next(&overworld->loaded_actors, NULL);
         entry;
-        entry = hash_map_next(&overworld->loaded_actors, NULL)
+        entry = hash_map_next(&overworld->loaded_actors, entry)
     ) {
         struct overworld_actor* actor = (struct overworld_actor*)entry->value;
         entity_despawn(actor->entity_id);
