@@ -40,7 +40,7 @@ RUN cd /opt &&\
 
 # Install Blender
 ENV BLENDER_4=/opt/blender/blender
-RUN wget https://ftp.nluug.nl/pub/graphics/blender/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz
+RUN wget https://ftp.nluug.nl/pub/graphics/blender/release/Blender4.3/blender-4.5.5-linux-x64.tar.xz
 RUN apt-get install xz-utils -y &&\
     tar -xvf blender-4.3.2-linux-x64.tar.xz &&\
     mv blender-4.3.2-linux-x64 /opt/blender &&\
