@@ -258,6 +258,7 @@ def _get_obj_def(current_object):
     return None
         
 AUTO_PROPERTIES = {'position', 'rotation', 'scale', 'fov'}
+INT_PROPERTIES = {'int8_t', 'int16_t', 'int32_t', 'uint8_t', 'uint16_t', 'uint32_t'}
 
 def _init_default_properties(target):
     obj_def = _get_obj_def(target)
@@ -282,6 +283,8 @@ def _init_default_properties(target):
             target[attr.name] = False
         elif attr.data_type == 'float':
             target[attr.name] = 0.0
+        elif attr.data_type in INT_PROPERTIES:
+            target[attr.name] = 0
         elif attr.data_type == 'string':
             target[attr.name] = ''
         elif isinstance(attr.data_type, str) and attr.data_type.startswith('enum '):
