@@ -7,6 +7,16 @@
 #define MAGIC_PRIME 2748002342
 #define MIN_CAPACITY    32
 
+static inline struct hash_map_entry* hash_map_next_entry(struct hash_map* hash_map, struct hash_map_entry* curr, struct hash_map_entry* end) {
+    curr += 1;
+
+    if (curr == end) {
+        return hash_map->entries;
+    }
+
+    return curr;
+}
+
 bool hash_map_init(struct hash_map* hash_map, int capacity) {
     if (capacity < MIN_CAPACITY) {
         capacity = MIN_CAPACITY;
@@ -114,10 +124,30 @@ bool hash_map_set(struct hash_map* hash_map, int key, void* value) {
 void hash_map_delete(struct hash_map* hash_map, int key) {
     struct hash_map_entry* entry = hash_map_find_entry(hash_map->entries, hash_map->capacity, key);
 
-    if (entry && entry->key == key) {
-        hash_map->count -= 1;
-        entry->key = 0;
-        entry->value = 0;
+    if (!entry || entry->key != key) {
+        return;
+    }
+
+    hash_map->count -= 1;
+    entry->key = 0;
+    entry->value = 0;
+
+    struct hash_map_entry* end = hash_map->entries + hash_map->capacity;
+
+    struct hash_map_entry* next = hash_map_next_entry(hash_map, entry, end);
+
+    while (next->value) {
+        struct hash_map_entry* wanted_location = hash_map_find_entry(hash_map->entries, hash_map->capacity, next->key);
+
+        if (wanted_location != next) {
+            wanted_location->key = next->key;
+            wanted_location->value = next->value;
+
+            next->key = 0;
+            next->value = 0;
+        }
+
+        next = hash_map_next_entry(hash_map, next, end);
     }
 }
 
