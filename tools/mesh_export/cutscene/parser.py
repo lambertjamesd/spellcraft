@@ -173,12 +173,23 @@ class Float(Expression):
     def __str__(self):
         return self.value.value
 
+class StringReplacement():
+    def __init__(self, expr: Expression, format: tokenizer.Token | None):
+        self.expr: Expression = expr
+        self.format: tokenizer.Token | None = format
+        
+    def __str__(self):
+        if self.format:
+            return f"{str(self.expr)}:{self.format.value}"
+        return str(self.expr)
+
+
 class String(Expression):
-    def __init__(self, start_token: tokenizer.Token, contents: list[str], replacements: list):
+    def __init__(self, start_token: tokenizer.Token, contents: list[str], replacements: list[StringReplacement]):
         super().__init__(start_token)
         self.start_token: tokenizer.Token = start_token
         self.contents: list[str] = contents
-        self.replacements: list = replacements
+        self.replacements: list[StringReplacement] = replacements
 
     def __str__(self):
         parts: list[str] = []
@@ -358,7 +369,7 @@ def _parse_string(parse_state: _ParseState) -> String:
     start_token = parse_state.require('"')
     current_content: list[str] = []
     contents: list[str] = []
-    replacements: list = []
+    replacements: list[StringReplacement] = []
 
     next = parse_state.peek(include_whitespace=True)
 
@@ -370,7 +381,13 @@ def _parse_string(parse_state: _ParseState) -> String:
             parse_state.advance()
             contents.append(''.join(current_content))
             current_content = []
-            replacements.append(_parse_expression(parse_state))
+            expr = _parse_expression(parse_state)
+            format = None
+
+            if parse_state.optional(':'):
+                format = parse_state.require('identifier')
+
+            replacements.append(StringReplacement(expr, format))
             parse_state.require('}')
         elif next.token_type == '\\':
             parse_state.advance()
