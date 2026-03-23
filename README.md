@@ -76,11 +76,18 @@ Performance metric before kd tree
 
 ## TODO
 
+- bring changes over from jam project
 - direct camera control
 - load on background thread
 - particle rendering in mesh
 - camera logic
 -  do a better job with camera tracking logic
+
+## Fire trails todo
+
+* Add a combat room after the fire wind puzzle
+* Add visual cues to enemies noticing player
+* Change cube puzzles to use navmesh
 
 ## Setup the blender plugin
 
