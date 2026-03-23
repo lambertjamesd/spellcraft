@@ -2,6 +2,7 @@
 
 #include "../util/sort.h"
 #include "../time/time.h"
+#include "../math/mathf.h"
 #include "../particles/static_particles.h"
 #include "defs.h"
 
@@ -33,22 +34,24 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     return result;
 }
 
-T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count) {
-    if (!pose) {
+T3DMat4FP* render_batch_build_pose(T3DMat4* pose, int bone_count, frame_memory_pool_t* pool) {
+    T3DMat4FP* result = frame_malloc(pool, sizeof(T3DMat4FP) * bone_count);
+
+    if (!result) {
         return NULL;
     }
 
+    result = UncachedAddr(result);
+
     T3DMat4* end = pose + bone_count;
+    T3DMat4FP* out = result;
 
     for(T3DMat4* curr = pose; curr < end; curr += 1) {
-        T3DMat4FP tmp;
-        t3d_mat4_to_fixed(&tmp, curr);
-        *((T3DMat4FP*)curr) = tmp;
+        t3d_mat4_to_fixed(out, curr);
+        ++out;
     }
 
-    data_cache_hit_writeback_invalidate(pose, sizeof(T3DMat4) * bone_count);
-
-    return (T3DMat4FP*)pose;
+    return result;
 }
 
 void render_batch_relative_mtx(struct render_batch* batch, mat4x4 into) {
@@ -65,6 +68,10 @@ struct render_batch_element* render_batch_add_tmesh(
     struct tmesh** attachments,
     struct element_attr* additional_attrs
 ) {
+    if (!mesh->material) {
+        return NULL;
+    }
+
     struct render_batch_element* element = render_batch_add(batch);
 
     if (!element) {
@@ -134,9 +141,10 @@ struct render_batch_element* render_batch_add_tmesh(
 
     if (armature) {
         if (armature->bone_count) {
-            T3DMat4* pose = armature_build_pose(armature, batch->pool);
+            T3DMat4 pose[armature->bone_count];
+            armature_build_pose(armature, pose);
     
-            T3DMat4FP* pose_fp = render_batch_build_pose(pose, armature->bone_count);
+            T3DMat4FP* pose_fp = render_batch_build_pose(pose, armature->bone_count, batch->pool);
             
             attr->type = ELEMENT_ATTR_POSE;
             attr->offset = 0;
@@ -153,6 +161,8 @@ struct render_batch_element* render_batch_add_tmesh(
                     if (!matrices) {
                         continue;
                     }
+
+                    matrices = UncachedAddr(matrices);
     
                     int matrix_index = 0;                
                     
@@ -261,7 +271,13 @@ mat4x4* render_batch_get_transform(struct render_batch* batch) {
 }
 
 T3DMat4FP* render_batch_get_transformfp(struct render_batch* batch) {
-    return UncachedAddr(frame_malloc(batch->pool, sizeof(T3DMat4FP)));
+    T3DMat4FP* result = frame_malloc(batch->pool, sizeof(T3DMat4FP));
+
+    if (!result) {
+        return NULL;
+    }
+
+    return UncachedAddr(result); ;
 }
 
 T3DMat4FP* render_batch_transformfp_from_sa(struct render_batch* batch, struct TransformSingleAxis* transform) {
@@ -313,32 +329,6 @@ int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, u
     return a->type - b->type;
 }
 
-void render_batch_check_texture_scroll(int tile, struct material_tex* tex) {
-    if (!tex->texture_enabled || (!tex->scroll_x && !tex->scroll_y)) {
-        return;
-    }
-
-    int w = tex->width << 2;
-    int h = tex->height << 2;
-
-    int x_offset = (int)(game_time * tex->scroll_x * w) % w;
-    int y_offset = (int)(game_time * tex->scroll_y * h) % h;
-
-    if (x_offset < 0) {
-        x_offset += w;
-    }
-
-    if (y_offset < 0) {
-        y_offset += h;
-    }
-
-    rdpq_set_tile_size_fx(
-        tile, 
-        x_offset + tex->s0, y_offset + tex->t0, 
-        x_offset + tex->s1, y_offset + tex->t1
-    );
-}
-
 static bool element_type_2d[] = {
     [RENDER_BATCH_MESH] = false,
     [RENDER_BATCH_PARTICLES] = true,
@@ -367,10 +357,11 @@ void render_batch_setup_light(struct render_batch* batch, enum light_source ligh
         }
         case LIGHT_SOURCE_RIM: {
             T3DVec3 dir = {{
-                .x = -batch->camera_matrix[2][0],
-                .y = -batch->camera_matrix[2][1],
-                .z = -batch->camera_matrix[2][2],
+                .x = -batch->camera_matrix[2][0] * COS_10 + batch->camera_matrix[1][0] * SIN_10,
+                .y = -batch->camera_matrix[2][1] * COS_10 + batch->camera_matrix[1][1] * SIN_10,
+                .z = -batch->camera_matrix[2][2] * COS_10 + batch->camera_matrix[1][2] * SIN_10,
             }};
+            dir.y += 1.5f;
             t3d_light_set_ambient(black_color);
             t3d_light_set_directional(0, white_color, &dir);
             t3d_light_set_count(1);
@@ -446,9 +437,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             } else {
                 rdpq_sync_pipe();
             }
-
-            render_batch_check_texture_scroll(TILE0, &element->material->tex0);
-            render_batch_check_texture_scroll(TILE1, &element->material->tex1);
 
             bool need_z_write = (element->material->flags & MATERIAL_FLAGS_Z_WRITE) != 0;
             bool need_z_read = (element->material->flags & MATERIAL_FLAGS_Z_READ) != 0;

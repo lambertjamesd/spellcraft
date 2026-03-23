@@ -21,7 +21,7 @@ bool expression_get_bool(boolean_variable variable) {
     if (SCENE_VARIABLE_FLAG & variable) {
         return evaluation_context_load(scene_variables, DATA_TYPE_BOOL, variable ^ SCENE_VARIABLE_FLAG);
     } else {
-        return evaluation_context_load(savefile_get_globals(), DATA_TYPE_BOOL, variable);
+        return evaluation_context_load(savefile_get_globals(GLOBAL_ACCESS_MODE_READ), DATA_TYPE_BOOL, variable);
     }
 }
 
@@ -33,7 +33,7 @@ void expression_set_bool(boolean_variable variable, bool value) {
     if (SCENE_VARIABLE_FLAG & variable) {
         evaluation_context_save(scene_variables, DATA_TYPE_BOOL, variable ^ SCENE_VARIABLE_FLAG, value);
     } else {
-        evaluation_context_save(savefile_get_globals(), DATA_TYPE_BOOL, variable, value);
+        evaluation_context_save(savefile_get_globals(GLOBAL_ACCESS_MODE_WRITE), DATA_TYPE_BOOL, variable, value);
     }
 }
 
@@ -47,7 +47,7 @@ int expression_get_integer(integer_variable variable) {
     if (SCENE_VARIABLE_FLAG & variable) {
         return evaluation_context_load(scene_variables, type, variable & INT_OFFSET_MASK);
     } else {
-        return evaluation_context_load(savefile_get_globals(), type, variable & INT_OFFSET_MASK);
+        return evaluation_context_load(savefile_get_globals(GLOBAL_ACCESS_MODE_READ), type, variable & INT_OFFSET_MASK);
     }
 }
 
@@ -61,8 +61,41 @@ void expression_set_integer(integer_variable variable, int value) {
     if (SCENE_VARIABLE_FLAG & variable) {
         evaluation_context_save(scene_variables, type, variable & INT_OFFSET_MASK, value);
     } else {
-        evaluation_context_save(savefile_get_globals(), type, variable & INT_OFFSET_MASK, value);
+        evaluation_context_save(savefile_get_globals(GLOBAL_ACCESS_MODE_WRITE), type, variable & INT_OFFSET_MASK, value);
     }
+}
+
+void expression_debug_write(struct expression* expression) {
+    uint8_t* current = expression->expression_program;
+    char buffer[128];
+    char* out = buffer;
+
+    while (*current != EXPRESSION_TYPE_END) {
+        int instruction = *current;
+        ++current;
+
+        union expression_data data;
+
+        switch (instruction) {
+            case EXPRESSION_TYPE_LOAD_LOCAL:
+            case EXPRESSION_TYPE_LOAD_SCENE_VAR:
+            case EXPRESSION_TYPE_LOAD_GLOBAL:
+            case EXPRESSION_TYPE_LOAD_LITERAL:
+            case EXPRESSION_TYPE_BUILT_IN_FN:
+                // this avoids alignment issues
+                memcpy(&data, current, sizeof(union expression_data));
+
+                out += sprintf(out, "%02x %08x ", instruction, data.literal);
+
+                current += sizeof(union expression_data);
+                break;
+            default:
+                out += sprintf(out, "%02x ", instruction);
+                break;
+        }
+    }
+
+    debugf("0x%08x %s\n", (int)expression->expression_program, buffer);
 }
 
 void expression_evaluate(struct evaluation_context* context, struct expression* expression) {
@@ -93,7 +126,7 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
                 // this avoids alignment issues
                 memcpy(&data, current, sizeof(union expression_data));
 
-                evaluation_context_push(context, evaluation_context_load(savefile_get_globals(), data.load_variable.data_type, data.load_variable.word_offset));
+                evaluation_context_push(context, evaluation_context_load(savefile_get_globals(GLOBAL_ACCESS_MODE_READ), data.load_variable.data_type, data.load_variable.word_offset));
                 current += sizeof(union expression_data);
                 break;
             case EXPRESSION_TYPE_LOAD_LITERAL:
@@ -173,6 +206,18 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
                 evaluation_context_push(
                     context,
                     -evaluation_context_pop(context)
+                );
+                break;
+            case EXPRESSION_TYPE_GTF:
+                evaluation_context_push(
+                    context,
+                    evaluation_context_pop(context) > evaluation_context_pop(context)
+                );
+                break;
+            case EXPRESSION_TYPE_GTEF:
+                evaluation_context_push(
+                    context,
+                    evaluation_context_pop_float(context) > evaluation_context_pop_float(context)
                 );
                 break;
             case EXPRESSION_TYPE_BUILT_IN_FN:

@@ -7,6 +7,7 @@
 #include "../util/flags.h"
 #include "../util/blist.h"
 #include "../util/callback_list.h"
+#include "../profile/profile.h"
 
 struct update_element {
     void* data;
@@ -102,15 +103,42 @@ void update_dispatch() {
 
     struct callback_element* current = callback_list_get(&g_update_state.callbacks, 0);
 
+#if ENABLE_PROFILE_update
+    update_callback last_callback = NULL;
+#endif
+
     for (int i = 0; i < g_update_state.callbacks.count; ++i) {
         struct update_element* element = callback_element_get_data(current);
 
         if ((element->mask & g_update_state.enabled_layers) != 0 && current->id) {
-            ((update_callback)current->callback)(element->data);
+            update_callback callback = (update_callback)current->callback;
+
+#if ENABLE_PROFILE_update
+            if (last_callback != callback) {
+                if (last_callback) {
+                    char name[16];
+                    sprintf(name, "fn %08x", (int)last_callback);
+                    profile_end(name);
+                }
+
+                last_callback = callback;
+                profile_start();
+            }
+#endif
+
+            callback(element->data);
         }
         
         current = callback_list_next(&g_update_state.callbacks, current);
     }
+    
+#if ENABLE_PROFILE_update
+    if (last_callback) {
+        char name[16];
+        sprintf(name, "fn %08x", (int)last_callback);
+        profile_end(name);
+    }
+#endif
 
     callback_list_end(&g_update_state.callbacks);
 }

@@ -7,7 +7,10 @@
 struct drop_shadow {
     struct dynamic_object* target;
     struct tmesh* mesh;
+    bool enabled;
 };
+
+typedef struct drop_shadow drop_shadow_t;
 
 void drop_shadow_init(struct drop_shadow* drop_shadow, struct dynamic_object* target);
 void drop_shadow_destroy(struct drop_shadow* drop_shadow);

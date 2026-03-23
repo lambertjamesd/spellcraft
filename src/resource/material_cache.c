@@ -18,7 +18,7 @@ struct material* material_cache_load(const char* filename) {
         material_load(result, material_file);
         fclose(material_file);
 
-        entry->resource = result;
+        resource_cache_set_resource(&material_resource_cache, entry, result);
     }
 
     return entry->resource;
@@ -44,4 +44,8 @@ struct material* material_cache_load_from_file(FILE* file) {
     material_name[material_name_length] = '\0';
 
     return material_cache_load(material_name);
+}
+
+void material_cache_destroy() {
+    resource_cache_destroy(&material_resource_cache);
 }

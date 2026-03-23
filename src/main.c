@@ -6,7 +6,6 @@
 #include "resource/sprite_cache.h"
 #include "render/camera.h"
 #include "math/transform.h"
-#include "menu/spell_building_menu.h"
 #include "savefile/savefile.h"
 #include "time/time.h"
 #include "collision/collision_scene.h"
@@ -15,7 +14,6 @@
 
 #include "render/render_batch.h"
 #include "scene/scene_loader.h"
-#include "objects/crate.h"
 #include "time/game_mode.h"
 #include "render/tmesh.h"
 #include "util/init.h"
@@ -23,6 +21,14 @@
 #include "effects/area_title.h"
 #include "effects/fade_effect.h"
 #include "audio/audio.h"
+#include "repair/repair_scene.h"
+#include "config.h"
+#include "menu/main_menu.h"
+#include "overworld/overworld_load.h"
+#include "render/z_clear.h"
+#include "render/defs.h"
+#include "debug/rewind.h"
+#include "profile/profile.h"
 
 #include <libdragon.h>
 #include <n64sys.h>
@@ -31,23 +37,29 @@
 
 
 void setup() {
+#if DEBUG_ENABLED
     debug_init_isviewer();
+#endif
+    // rdpq_debug_start();
+    savefile_check_for_data();
     init_engine();
-    savefile_new();
+    interactable_reset();
+    z_clear_init();
 
-
+    fade_effect_init();
     fade_effect_set((color_t){0, 0, 0, 255}, 0.0f);
     fade_effect_set((color_t){0, 0, 0, 0}, 3.0f);
 
-    // scene_queue_next("rom:/scenes/fire_trials.scene#test");
-    // scene_queue_next("rom:/scenes/fire_trials.scene");
-    scene_queue_next("rom:/scenes/overworld_test.scene");
-    // scene_queue_next("rom:/scenes/ability_testing.scene");
-    // scene_queue_next("rom:/scenes/material_testing.scene");
-    // scene_queue_next("rom:/scenes/texture_stresstest.scene");
-    // scene_queue_next("rom:/scenes/playerhome_basement.scene");
-    // scene_queue_next("rom:/scenes/StartArea_ForestWest.scene#west");
-    // scene_queue_next("rom:/scenes/StartArea_TempleOutside.scene");
+#if ENABLE_CHEATS
+    scene_queue_next("rom:/scenes/level_select.scene#default");
+#else
+    scene_queue_next("rom:/scenes/overworld.scene#main_menu");
+#endif
+    // scene_queue_next("rom:/scenes/settlement_house1_inside.scene#default");
+    // scene_queue_next("rom:/scenes/overworld.scene#default");
+    // scene_queue_next("rom:/repair/motorycle_engine.repair");
+    // scene_queue_next("rom:/scenes/inside_boat.scene");
+    // scene_queue_next("rom:/scenes/inside_house.scene#defualt");
 
     current_scene = scene_load(scene_get_next());
 
@@ -62,13 +74,21 @@ void reset() {
 static struct frame_memory_pool frame_memory_pools[2];
 static uint8_t next_frame_memory_pool;
 
-void render_3d() {
+void render_3d(surface_t* col, surface_t* z_buffer) {
     uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
+    if (current_scene && current_scene->overworld) {
+        z_clear_dithered(z_buffer);
+    } else {
+        t3d_screen_clear_depth();
+    }
+    rdpq_set_color_image(col);
+    rdpq_set_z_image(z_buffer);
+    if ((current_scene && !current_scene->overworld) || ENABLE_LOD_RENDER_DEBUG) {
+        t3d_screen_clear_color(RGBA32(0, 0, 0, 0));
+    }
+    
     t3d_frame_start();
-
-	t3d_screen_clear_color(RGBA32(100, 0, 100, 0));
-    t3d_screen_clear_depth();
 
     t3d_light_set_ambient(colorAmbient); // one global ambient light, always active
     t3d_light_set_count(0);
@@ -79,12 +99,22 @@ void render_3d() {
     T3DViewport* viewport = frame_malloc(pool, sizeof(T3DViewport));
     *viewport = t3d_viewport_create();
 
-    render_scene_render(&current_scene->camera, viewport, &frame_memory_pools[next_frame_memory_pool]);
+    if (current_scene) {
+        render_scene_render(&current_scene->camera, viewport, &frame_memory_pools[next_frame_memory_pool]);
+    } else if (current_repair_scene) {
+        repair_scene_render(current_repair_scene, viewport, pool);
+    }
     
     next_frame_memory_pool ^= 1;
 }
 
 void render_menu() {
+#if ENABLE_BIG_SCREEN_SHOT
+    if (camera_is_showing_fov()) {
+        return;
+    }
+#endif
+
     rdpq_sync_pipe();
     rdpq_mode_persp(false);
     rdpq_set_mode_standard();
@@ -92,11 +122,11 @@ void render_menu() {
     screen_debug_render();
 }
 
-void render(surface_t* zbuffer) {
+void render(surface_t* col, surface_t* zbuffer) {
     update_render_time();
 
     if (current_game_mode == GAME_MODE_3D || current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
-        render_3d();
+        render_3d(col, zbuffer);
     } else if (current_game_mode == GAME_MODE_MENU) {
         static surface_t background;
         background = surface_make_linear(zbuffer->buffer, FMT_RGBA16, zbuffer->width, zbuffer->height);
@@ -108,34 +138,27 @@ void render(surface_t* zbuffer) {
     render_menu();
 }
 
+#define MAX_FRAME_CATCHUP   2
 #define VI_PER_FRAME 2
-volatile static uint8_t vi_delay;
+volatile static int8_t vi_delay;
 
 void on_vi_interrupt() {
-    if (vi_delay > 0) {
+    if (vi_delay > -MAX_FRAME_CATCHUP * VI_PER_FRAME) {
         vi_delay -= 1;
     }
 }
 
 bool check_scene_load() {
-    static uint8_t frame_wait = 0;
-
     if (!scene_has_next()) {
         return false;
     }
 
-    if (frame_wait == 0) {
-        frame_wait = 2;
-        return true;
-    } 
+    rspq_wait();
 
-    --frame_wait;
-
-    if (frame_wait > 0) {
-        return true;
+    if (current_scene) {
+        scene_release(current_scene);
+        current_scene = NULL;
     }
-
-    scene_release(current_scene);
     reset();
     current_scene = scene_load(scene_get_next());
     scene_clear_next();
@@ -145,9 +168,22 @@ bool check_scene_load() {
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(1500)
 
+void step_simulation() {
+    rewind_update();
+
+    if (update_has_layer(UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE)) {
+        SC_PROFILE_START(main);
+        collision_scene_collide();
+        SC_PROFILE_END(main, collision_scene_collide);
+    }
+    SC_PROFILE_START(main);
+    update_dispatch();
+    SC_PROFILE_END(main, update_dispatch);
+}
+
 int main(void)
 {
-	resolution_t custom_res = {320, 240, false};
+	resolution_t custom_res = {SCREEN_WD, SCREEN_HT, false};
 
 	if (get_tv_type() == 0) //TEMP: if PAL, adjust vertical res
 	{
@@ -155,6 +191,7 @@ int main(void)
 	}
 
     display_init(custom_res, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
+    // display_set_fps_limit(30.0f);
 	// *(volatile uint32_t*)0xA4400000 |= 0x300; //disables resampling on the VI
 	rdpq_init();
     t3d_init((T3DInitParams){});
@@ -163,34 +200,50 @@ int main(void)
     joypad_init();
 
     surface_t zbuffer = surface_alloc(FMT_RGBA16, custom_res.width, custom_res.height);
-	
+
+#if DEBUG_ENABLED
     debug_init_usblog();
     console_set_debug(true);
 
     // give time for the debugger to connect
     long long start_time = timer_ticks();
     while (timer_ticks() - start_time < DEBUG_CONNECT_DELAY);
+#endif
 
     setup();
-
+    
     register_VI_handler(on_vi_interrupt);
 
+#if DEBUG_ENABLED
+    debugf("game started\n");
+#endif
+
     while(1) {
-        while (vi_delay > 0) {
-            // TODO process low priority tasks
+        savefile_check_autosave();
+        if (current_scene && current_scene->overworld) {
+            SC_PROFILE_START(main);
+            overworld_check_unload_queue(current_scene->overworld);
+            SC_PROFILE_END(main, overworld_check_unload_queue);
         }
-        vi_delay = VI_PER_FRAME;
+
+        while (vi_delay > 0) {}
+
+        int update_count = -vi_delay / VI_PER_FRAME + 1;
 
         if (check_scene_load()) {
             continue;
         }
+        
+        mixer_try_play();
+
+        SC_PROFILE_START(main);
 
         if (current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
             surface_t* fb = display_get();
 
             rdpq_attach(fb, &zbuffer);
 
-            render_3d();
+            render_3d(fb, &zbuffer);
             rdpq_sync_pipe();
 
             // copy the frame buffer into the z buffer
@@ -223,22 +276,41 @@ int main(void)
             if (fb) {
                 rdpq_attach(fb, &zbuffer);
 
-                render(&zbuffer);
+                render(fb, &zbuffer);
 
                 rdpq_detach_show();
             } 
         }
+        
+        SC_PROFILE_END(main, render);
 
-        joypad_poll();
-        struct Vector3 right;
-        quatMultVector(&current_scene->camera.transform.rotation, &gRight, &right);
-        audio_update_listener(&current_scene->camera.transform.position, &right, &gZeroVec);
-        audio_player_update();
-        if (update_has_layer(UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE)) {
-            // uint64_t start_time = get_ticks_us();
-            collision_scene_collide();
-            // debugf("collision_time = %f\n", (get_ticks_us() - start_time) / 1000.0f);
+        for (int it = 0; it < update_count; it += 1) {
+            SC_PROFILE_START(main);
+            joypad_poll();
+            struct Vector3 right;
+            if (current_scene) {
+                quatMultVector(&current_scene->camera.transform.rotation, &gRight, &right);
+                audio_update_listener(&current_scene->camera.transform.position, &right);
+            } else {
+                audio_update_listener(&gZeroVec, &gRight);
+            }
+            audio_player_update();
+    #if ENABLE_BIG_SCREEN_SHOT
+            if (joypad_get_buttons_pressed(0).l) {
+                camera_next_sub_fov();
+            }
+    
+            if (!camera_is_showing_fov()) {
+                step_simulation();
+            }
+    #else
+            step_simulation();
+    #endif
+            mixer_try_play();
+            
+            vi_delay += VI_PER_FRAME;
+
+            SC_PROFILE_END(main, update);
         }
-        update_dispatch();
     }
 }

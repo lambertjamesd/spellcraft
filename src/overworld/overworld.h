@@ -18,9 +18,18 @@ struct overworld_tile_def {
     uint32_t actor_block_offset;
 };
 
+struct overworld_tile_layer {
+    tmesh_t terrain_mesh;
+    rspq_block_t* render_block;
+    tmesh_t* scrolling_meshes;
+    uint16_t scrolling_mesh_count;
+    uint16_t pre_scrolling_mesh_count;
+};
+
+typedef struct overworld_tile_layer overworld_tile_layer_t;
+
 struct overworld_tile {
-    struct tmesh* terrain_meshes;
-    rspq_block_t** render_blocks;
+    overworld_tile_layer_t* layers;
     float starting_y;
     struct tmesh** detail_meshes;
     uint16_t terrain_mesh_count;
@@ -68,7 +77,7 @@ struct overworld_actor_tile {
 };
 
 struct overworld_tile_render_block {
-    rspq_block_t** render_blocks;
+    overworld_tile_layer_t* layers;
     struct overworld_tile* tile;
     float starting_y;
     uint8_t x;
@@ -78,33 +87,40 @@ struct overworld_tile_render_block {
 
 #define LOD0_SORT_DIRECTION_COUNT   4
 
-struct overworld_lod0_entry {
+struct overworld_lod1_entry {
     struct tmesh meshes[LOD0_SORT_DIRECTION_COUNT];
     int16_t x, z;
     uint16_t priority;
+    uint8_t child_count;
+    uint8_t lod_scale;
 };
 
-struct overworld_lod0 {
-    struct overworld_lod0_entry* entries;
+struct overworld_lod1 {
+    struct overworld_lod1_entry* entries;
     uint8_t entry_count;
 };
 
 #define NO_TILE_COORD   0xFFFF
 #define MAX_ACTIVE_ACTORS   128
 #define LOADED_TILE_ARRAY_SIZE  2
+#define UNLOAD_QUEUE_SIZE   4
+
+// #define USE_LESS_MEMORY     true
+#define USE_LESS_MEMORY  !is_memory_expanded()
 
 struct overworld {
     uint16_t tile_x, tile_y;
     struct Vector2 min;
     float inv_tile_size;
     float tile_size;
-    struct overworld_lod0 lod0;
+    struct overworld_lod1 lod1;
     struct overworld_tile_def* tile_definitions;
     FILE* file;
 
     // tile locations modulo wrap to share slots
     struct overworld_tile* loaded_tiles[4][4];
     struct overworld_tile_render_block render_blocks[4][4];
+    struct overworld_tile* unload_queue[UNLOAD_QUEUE_SIZE];
 
     struct overworld_actor_tile* loaded_actor_tiles[LOADED_TILE_ARRAY_SIZE][LOADED_TILE_ARRAY_SIZE];
 

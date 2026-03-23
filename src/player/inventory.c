@@ -1,9 +1,7 @@
 #include "inventory.h"
 
-#include <memory.h>
-#include "../util/flags.h"
+#include "../cutscene/expression_evaluate.h"
 #include "../savefile/savefile.h"
-#include <assert.h>
 
 extern struct global_location inventory_item_locations[ITEM_TYPE_COUNT];
 
@@ -77,22 +75,6 @@ void inventory_destroy() {
     
 }
 
-bool inventory_has_item(enum inventory_item_type type) {
-    if (type >= ITEM_TYPE_COUNT) {
-        return false;
-    }
-
-    if (type < SPELL_SYBMOL_COUNT) {
-        return true;
-    }
-
-    struct global_location* global = &inventory_item_locations[type];
-
-    assert(global->data_type);
-
-    return evaluation_context_load(savefile_get_globals(), global->data_type, global->word_offset);
-}
-
 bool inventory_is_upgrade_item(enum inventory_item_type type) {
     return type >= SPELL_SYMBOL_FIRE && type <= SPELL_SYMBOL_LIFE;
 }
@@ -158,4 +140,56 @@ struct spell* inventory_get_built_in_spell(unsigned x, unsigned y) {
 struct spell* inventory_get_custom_spell(unsigned index) {
     assert(index < MAX_CUSTOM_SPELLS);
     return &inventory.custom_spells[index];
+}
+
+bool inventory_has_item(enum inventory_item_type item) {
+    return inventory_get_count(item) != 0;
+}
+
+void inventory_set_has_item(enum inventory_item_type item, bool value) {
+    if (item >= ITEM_TYPE_COUNT || item == ITEM_TYPE_NONE) {
+        return;
+    }
+
+    struct global_location* global = &inventory_item_locations[item];
+
+    if (!global->data_type) {
+        debugf("item %d has no mapping\n", item);
+    }
+
+    assert(global->data_type);
+
+    evaluation_context_save(savefile_get_globals(GLOBAL_ACCESS_MODE_WRITE), global->data_type, global->word_offset, value);
+}
+
+int inventory_get_count(enum inventory_item_type item) {
+    if (item >= ITEM_TYPE_COUNT || item == ITEM_TYPE_NONE) {
+        return false;
+    }
+
+    struct global_location* global = &inventory_item_locations[item];
+
+    if (!global->data_type) {
+        debugf("item %d has no mapping\n", item);
+    }
+
+    assert(global->data_type);
+
+    return evaluation_context_load(savefile_get_globals(GLOBAL_ACCESS_MODE_READ), global->data_type, global->word_offset);
+}
+
+boolean_variable inventory_get_item_ref(enum inventory_item_type item) {
+    if (item >= ITEM_TYPE_COUNT || item == ITEM_TYPE_NONE) {
+        return VARIABLE_DISCONNECTED;
+    }
+
+    struct global_location* global = &inventory_item_locations[item];
+
+    if (!global->data_type) {
+        debugf("item %d has no mapping\n", item);
+    }
+
+    assert(global->data_type == DATA_TYPE_BOOL);
+
+    return global->word_offset;
 }

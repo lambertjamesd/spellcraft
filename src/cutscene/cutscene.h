@@ -39,6 +39,14 @@ enum cutscene_step_type {
     CUTSCENE_STEP_CALLBACK,
     CUTSCENE_STEP_SHOW_BOSS_HEALTH,
     CUTSCENE_STEP_LOAD_SCENE,
+    CUTSCENE_STEP_DESPAWN,
+    CUTSCENE_STEP_START_TIMER,
+    CUTSCENE_STEP_CANCEL_TIMER,
+    CUTSCENE_STEP_ASK,
+    CUTSCENE_STEP_STOPWATCH_SHOW,
+    CUTSCENE_STEP_STOPWATCH_RUN,
+    CUTSCENE_STEP_AUDIO_PAUSE,
+    CUTSCENE_STEP_SHOW_IMAGE,
 };
 
 typedef void (*cutscene_step_callback)(void* data);
@@ -48,7 +56,7 @@ struct cutscene_step;
 struct cutscene_function {
     struct cutscene_step* steps;
     uint16_t step_count;
-    const char* name;
+    char* name;
 };
 
 typedef struct cutscene_function cutscene_function_t;
@@ -152,6 +160,19 @@ union cutscene_step_data {
     struct {
         char* scene;
     } load_scene;
+    struct {
+        float time;
+        char* cutscene;
+    } start_timer;
+    struct {
+        uint8_t value;
+    } stopwatch;
+    struct {
+        uint8_t is_paused;
+    } audio_pause;
+    struct {
+        char* filename;
+    } show_image;
 };
 
 struct cutscene_step {
@@ -172,12 +193,14 @@ struct cutscene_builder {
     uint16_t step_count;
 };
 
+typedef struct cutscene_builder cutscene_builder_t;
+
 struct cutscene* cutscene_load(const char* filename);
 void cutscene_builder_init(struct cutscene_builder* builder);
 
 void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode, int layers);
 void cutscene_builder_dialog(struct cutscene_builder* builder, const char* message);
-void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type item, bool should_show);
+void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type item);
 void cutscene_builder_delay(struct cutscene_builder* builder, float delay);
 void cutscene_builder_interact_npc(
     struct cutscene_builder* builder,
@@ -205,6 +228,7 @@ void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_vari
 void cutscene_builder_callback(struct cutscene_builder* builder, cutscene_step_callback callback, void* data);
 void cutscene_builder_expression(struct cutscene_builder* builder, expression_builder_t* expression);
 void cutscene_builder_load_scene(struct cutscene_builder* builder, const char* scene);
+void cutscene_builder_fade(struct cutscene_builder* builder, enum fade_colors color, float duration);
 
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder);
 

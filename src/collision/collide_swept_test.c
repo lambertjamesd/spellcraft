@@ -21,8 +21,8 @@ static kd_tree_leaf_t single_triangle_leaf = {
 
 static struct mesh_collider single_traingle_mesh = {
     .index = {
-        .min = {0.0f, 0.0f, 0.0f},
-        .size_inv = {1.0f, 1.0f, 1.0f},
+        .min = {0.0f, 0.0f, -0.5f},
+        .size_inv = {0xFFFF, 0xFFFF, 0xFFFF},
         .vertices = (struct Vector3[]){
             {0.0f, 0.0f, 0.0f},
             {1.0f, 0.0f, 0.0f},
@@ -36,13 +36,7 @@ static struct mesh_collider single_traingle_mesh = {
 };
 
 static struct dynamic_object_type simple_cube_object = {
-    .minkowsi_sum = box_minkowski_sum,
-    .bounding_box = box_bounding_box,
-    .data = {
-        .box = {
-            .half_size = {0.05f, 0.05f, 0.05f},
-        }
-    },
+    BOX_COLLIDER(0.05f, 0.05f, 0.05f),
     .bounce = 0.5f,
     .friction = 0.0f,
 };
@@ -54,6 +48,7 @@ void test_collide_object_swept_to_triangle(struct test_context* t) {
 
     struct dynamic_object object;
     dynamic_object_init(1, &object, &simple_cube_object, ~0, &position, NULL);
+    collision_scene_recalc_bb(&object, &prev_pos);
 
     object_mesh_collide_data_init(&collide_data, &prev_pos, &single_traingle_mesh, &object);
 
@@ -70,6 +65,12 @@ void test_collide_object_swept_to_triangle(struct test_context* t) {
 
     did_hit = collide_object_swept_to_triangle(&collide_data, 0, COLLISION_LAYER_TANGIBLE);
     test_eqi(t, false, did_hit);
+
+    prev_pos = (vector3_t){0.5f, 0.25f, 0.04f};
+    position = (vector3_t){0.5f, 0.25f, 2.0f};
+    
+    did_hit = collide_object_swept_to_triangle(&collide_data, 0, COLLISION_LAYER_TANGIBLE);
+    test_eqi(t, false, did_hit);
 }
 
 void test_collide_object_to_mesh_swept(struct test_context* t) {
@@ -78,6 +79,7 @@ void test_collide_object_to_mesh_swept(struct test_context* t) {
 
     struct dynamic_object object;
     dynamic_object_init(1, &object, &simple_cube_object, ~0, &position, NULL);
+    collision_scene_recalc_bb(&object, &prev_pos);
 
     object.velocity = (struct Vector3){0.0f, 0.0f, 1.0f};
 

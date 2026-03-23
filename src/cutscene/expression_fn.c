@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 #include "../collision/collision_scene.h"
+#include "../menu/dialog_box.h"
+#include "cutscene_stopwatch.h"
 
 int expression_are_touching(struct evaluation_context* context, int arg_count) {
     if (arg_count != 2) {
@@ -40,8 +42,22 @@ int expression_are_touching(struct evaluation_context* context, int arg_count) {
     return 0;
 }
 
+int expression_ask_response(struct evaluation_context* context, int arg_count) {
+    evaluation_context_popn(context, NULL, arg_count);
+    evaluation_context_push(context, dialog_box_get_response());
+    return 1;
+}
+
+int expression_stopwatch_time(struct evaluation_context* context, int arg_count) {
+    evaluation_context_popn(context, NULL, arg_count);
+    evaluation_context_push_float(context, cutscene_last_stopwatch_time());
+    return 1;
+}
+
 static expression_built_in_fn fn_array[EXPRESSION_BUILT_IN_COUNT] = {
     [EXPRESSION_BUILT_IN_ARE_TOUCHING] = expression_are_touching,
+    [EXPRESSION_BUILT_ASK_RESPONSE] = expression_ask_response,
+    [EXPRESSION_BUILT_STOPWATCH_TIME] = expression_stopwatch_time,
 };
 
 expression_built_in_fn expression_lookup_fn(enum expression_built_in_type type) {

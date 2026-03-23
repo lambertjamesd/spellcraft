@@ -3,15 +3,20 @@
 #include <t3d/t3d.h>
 #include "../resource/sprite_cache.h"
 #include "../render/defs.h"
+#include "../time/time.h"
 
 void material_init(struct material* material) {
     material->block = 0;
 
     material->tex0.sprite = NULL;
     material->tex0.texture_enabled = false;
+    material->tex0.num_frames = 0;
+    material->tex0.frames = NULL;
 
     material->tex1.sprite = NULL;
     material->tex1.texture_enabled = false;
+    material->tex1.num_frames = 0;
+    material->tex1.frames = NULL;
 
     material->sort_priority = SORT_PRIORITY_OPAQUE;
 
@@ -24,22 +29,24 @@ void material_init(struct material* material) {
 void material_destroy(struct material* material) {
     if (material->tex0.sprite) {
         sprite_cache_release(material->tex0.sprite);
-
-        for (int i = 0; i < material->tex0.num_frames; i += 1) {
-            sprite_cache_release(material->tex0.frames[i]);
-        }
-
-        free(material->tex0.frames);
     }
+
+    for (int i = 0; i < material->tex0.num_frames; i += 1) {
+        sprite_cache_release(material->tex0.frames[i]);
+    }
+
+    free(material->tex0.frames);
+
     if (material->tex1.sprite) {
         sprite_cache_release(material->tex1.sprite);
-
-        for (int i = 0; i < material->tex1.num_frames; i += 1) {
-            sprite_cache_release(material->tex1.frames[i]);
-        }
-
-        free(material->tex1.frames);
     }
+
+    for (int i = 0; i < material->tex1.num_frames; i += 1) {
+        sprite_cache_release(material->tex1.frames[i]);
+    }
+
+    free(material->tex1.frames);
+    
     rspq_block_free(material->block);
     free(material->palette.tlut);
     material->palette.tlut = 0;
@@ -75,6 +82,8 @@ void material_load_tex(struct material_tex* tex, FILE* file) {
 
     if (!texture_enabled) {
         tex->texture_enabled = false;
+        tex->num_frames = 0;
+        tex->frames = NULL;
         return;
     }
     tex->texture_enabled = true;
@@ -379,10 +388,45 @@ void material_load(struct material* into, FILE* material_file) {
     into->block = rspq_block_end();
 }
 
+void material_load_file(struct material* into, const char* filename) {
+    FILE* material_file = asset_fopen(filename, NULL);
+    material_load(into, material_file);
+    fclose(material_file);
+}
+
 void material_release(struct material* material) {
     material_destroy(material);
 }
 
+void material_check_texture_scroll(int tile, struct material_tex* tex) {
+    if (!tex->texture_enabled || (!tex->scroll_x && !tex->scroll_y)) {
+        return;
+    }
+
+    int w = tex->width << 2;
+    int h = tex->height << 2;
+
+    int x_offset = (int)(game_time * tex->scroll_x * w) % w;
+    int y_offset = (int)(game_time * tex->scroll_y * h) % h;
+
+    if (x_offset < 0) {
+        x_offset += w;
+    }
+
+    if (y_offset < 0) {
+        y_offset += h;
+    }
+
+    rdpq_set_tile_size_fx(
+        tile, 
+        x_offset + tex->s0, y_offset + tex->t0, 
+        x_offset + tex->s1, y_offset + tex->t1
+    );
+}
+
 void material_apply(struct material* material) {
     rspq_block_run(material->block);
+
+    material_check_texture_scroll(TILE0, &material->tex0);
+    material_check_texture_scroll(TILE1, &material->tex1);
 }

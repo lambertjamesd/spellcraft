@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include "../time/time.h"
 #include "../menu/menu_rendering.h"
-#include "../menu/menu_common.h"
 #include "../render/defs.h"
+#include "../resource/material_cache.h"
 
 static color_t start_color;
 static color_t end_color;
@@ -13,6 +13,7 @@ static float current_time;
 static bool is_active;
 
 static color_t flash_color;
+static material_t* solid_primitive_material;
 
 color_t fade_effect_calculate_color() {
     if (flash_color.a != 0) {
@@ -62,8 +63,12 @@ void fade_effect_activate() {
     }
     is_active = true;
 
-    update_add(&start_color, fade_effect_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_CUTSCENE | UPDATE_LAYER_WORLD);
+    update_add(&start_color, fade_effect_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_CUTSCENE | UPDATE_LAYER_WORLD | UPDATE_LAYER_PAUSE_MENU);
     menu_add_callback(fade_effect_render, &start_color, MENU_PRIORITY_OVERLAY);
+}
+
+void fade_effect_init() {
+    solid_primitive_material = material_cache_load("rom:/materials/menu/solid_primitive.mat");
 }
 
 void fade_effect_set(color_t color, float time) {

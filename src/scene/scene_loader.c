@@ -16,6 +16,9 @@
 #include "../util/memory_stream.h"
 #include "../effects/area_title.h"
 #include "../render/defs.h"
+#include "../audio/audio.h"
+#include "../cutscene/race.h"
+#include "../effects/fade_effect.h"
 
 #include "../collision/collision_scene.h"
 
@@ -26,6 +29,9 @@
 
 // EXPR
 #define EXPECTED_CONDITION_HEADER 0x45585052
+
+// MMRG
+#define MINIMAP_RANGE_HEADER 0x4D4D5247
 
 bool scene_load_check_condition(FILE* file) {
     struct expression expression;
@@ -55,6 +61,19 @@ void scene_load_static_particles(scene_t* scene, int room_count, FILE* file) {
 
     scene->room_particle_ranges = malloc(sizeof(struct static_entity_range) * room_count);
     fread(scene->room_particle_ranges, sizeof(struct static_entity_range), room_count, file);
+}
+
+void scene_load_minimap(scene_t* scene, FILE* file) {
+    int header;
+    fread(&header, 4, 1, file);
+    assert(MINIMAP_RANGE_HEADER == header);
+    fread(&scene->minimap_min, sizeof(vector2_t), 1, file);
+    fread(&scene->minimap_max, sizeof(vector2_t), 1, file);
+}
+
+void scene_mini_location(scene_t* scene, FILE* file) {
+    fread(&scene->minimap_location, sizeof(vector2_t), 1, file);
+    fread(&scene->minimap_rotation, sizeof(float), 1, file);
 }
 
 void scene_load_camera_animations(struct camera_animation_list* list, const char* filename, FILE* file) {
@@ -185,6 +204,20 @@ void scene_load_cutscene(struct scene* scene, FILE* file) {
     expression_set_scene_variables(scene->scene_vars);
 }
 
+void scene_destroy_cutscene(scene_t* scene) {
+    if (scene->cutscene) {
+        cutscene_runner_cancel(scene->cutscene);
+        cutscene_free(scene->cutscene);
+    }
+    free(scene->scene_vars);
+    free(scene->room_cutscene_functions);
+    expression_set_scene_variables(NULL);
+}
+
+void scene_fade_in(struct cutscene* cutscene, void* data) {
+    fade_effect_set((color_t){0, 0, 0, 0}, 0.5f);
+}
+
 struct scene* scene_load(const char* filename) {
     FILE* file = asset_fopen(filename, NULL);
 
@@ -261,15 +294,13 @@ struct scene* scene_load(const char* filename) {
     scene->named_locations = named_locations;
     scene->named_location_count = location_count;
     scene->last_despawn_check = 0;
+    scene->can_pause = false;
 
-    inventory_init();
     cutscene_actor_common_init();
-    camera_init(&scene->camera, DEFAULT_CAMERA_FOV, 1.0f, 125.0f);
+    camera_init(&scene->camera, DEFAULT_CAMERA_FOV, WORLD_NEAR_PLANE, WORLD_FAR_PLANE);
     player_init(&scene->player, &player_def, &scene->camera.transform);
     camera_controller_init(&scene->camera_controller, &scene->camera, &scene->player);
-
-    pause_menu_init(&scene->pause_menu);
-    hud_init(&scene->hud, &scene->player);
+    hud_init(&scene->hud, &scene->player, &scene->camera);
 
     uint16_t static_count;
     fread(&static_count, 2, 1, file);
@@ -317,7 +348,11 @@ struct scene* scene_load(const char* filename) {
         scene->overworld = overworld_load(overworld_filename);
     } else {
         scene->overworld = NULL;
+        scene->camera.far = 50.0f;
     }
+
+    scene_load_minimap(scene, file);
+    scene_mini_location(scene, file);
 
     scene_load_camera_animations(&scene->camera_animations, filename, file);
 
@@ -326,11 +361,15 @@ struct scene* scene_load(const char* filename) {
     fclose(file);
 
     render_scene_add(NULL, 0.0f, scene_render, scene);
-    update_add(scene, scene_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD);
+    update_add(scene, scene_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     scene_show_room(scene, current_room);
 
-    cutscene_ref_run_then_destroy(&starting_cutscene, 0);
+    if (starting_cutscene.type == CUTSCENE_REF_NONE) {
+        fade_effect_set((color_t){0, 0, 0, 0}, 0.5f);
+    } else {
+        cutscene_ref_run_then_destroy(&starting_cutscene, 0, scene_fade_in, NULL);
+    }
 
     return scene;
 }
@@ -410,12 +449,7 @@ void scene_release(struct scene* scene) {
 
     camera_animation_list_destroy(&scene->camera_animations);
 
-    if (scene->cutscene) {
-        cutscene_runner_cancel(scene->cutscene);
-        cutscene_free(scene->cutscene);
-    }
-    free(scene->scene_vars);
-    expression_set_scene_variables(NULL);
+    scene_destroy_cutscene(scene);
 
     free(scene);
 

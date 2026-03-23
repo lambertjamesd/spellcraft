@@ -89,6 +89,7 @@ struct cutscene* cutscene_load(const char* filename) {
 
         switch (step_type) {
             case CUTSCENE_STEP_DIALOG:
+            case CUTSCENE_STEP_ASK:
                 cutscene_load_template_string(&step->data.dialog.message, file);
                 break;
             case CUTSCENE_STEP_PAUSE:
@@ -156,6 +157,24 @@ struct cutscene* cutscene_load(const char* filename) {
             case CUTSCENE_STEP_LOAD_SCENE:
                 step->data.load_scene.scene = string_load(file);
                 break;
+            case CUTSCENE_STEP_START_TIMER:
+                fread(&step->data.start_timer.time, 4, 1, file);
+                step->data.start_timer.cutscene = string_load(file);
+                break;
+            case CUTSCENE_STEP_STOPWATCH_SHOW:
+            case CUTSCENE_STEP_STOPWATCH_RUN:
+                fread(&step->data.stopwatch.value, 1, 1, file);
+                break;
+            case CUTSCENE_STEP_START_RACE:
+                step->data.race_start.on_finish = string_load(file);
+                fread(&step->data.race_start.lap_count, 4, 1, file);
+                break;
+            case CUTSCENE_STEP_AUDIO_PAUSE:
+                fread(&step->data.audio_pause.is_paused, 1, 1, file);
+                break;
+            case CUTSCENE_STEP_SHOW_IMAGE:
+                step->data.show_image.filename = string_load(file);
+                break;
         }
     }
     
@@ -195,6 +214,7 @@ void cutscene_destroy(struct cutscene* cutscene) {
 
         switch (step->type) {
             case CUTSCENE_STEP_DIALOG:
+            case CUTSCENE_STEP_ASK:
                 cutscene_destroy_template_string(&step->data.dialog.message);
                 break;
             case CUTSCENE_STEP_EXPRESSION:
@@ -209,6 +229,9 @@ void cutscene_destroy(struct cutscene* cutscene) {
             case CUTSCENE_STEP_SHOW_TITLE:
                 free(step->data.show_title.message);
                 break;
+            case CUTSCENE_STEP_NPC_ANIMATE:
+                free(step->data.npc_animate.animation_name);
+                break;
             case CUTSCENE_STEP_PRINT:
                 cutscene_destroy_template_string(&step->data.print.message);
                 break;
@@ -218,9 +241,22 @@ void cutscene_destroy(struct cutscene* cutscene) {
             case CUTSCENE_STEP_LOAD_SCENE:
                 free(step->data.load_scene.scene);
                 break;
+            case CUTSCENE_STEP_START_TIMER:
+                free(step->data.start_timer.cutscene);
+                break;
+            case CUTSCENE_STEP_START_RACE:
+                free(step->data.race_start.on_finish);
+                break;
+            case CUTSCENE_STEP_SHOW_IMAGE:
+                free(step->data.show_image.filename);
+                break;
             default:
                 break;
         }
+    }
+
+    for (int i = 0; i < cutscene->function_count; i += 1) {
+        free(cutscene->functions[i].name);
     }
 
     free(cutscene->steps);
@@ -523,6 +559,18 @@ void cutscene_builder_load_scene(struct cutscene_builder* builder, const char* s
     };
 }
 
+void cutscene_builder_fade(struct cutscene_builder* builder, enum fade_colors color, float duration) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_FADE,
+        .data.fade = {
+            .color = color,
+            .duration = duration,
+        },
+    };
+}
+
 // release with cutscene_free()
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder) {
     // release with cutscene_free()
@@ -535,3 +583,4 @@ struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder) {
     };
     return result;
 }
+

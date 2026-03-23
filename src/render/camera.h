@@ -4,6 +4,9 @@
 #include "../math/transform.h"
 #include "../math/plane.h"
 #include "../math/matrix.h"
+#include "../math/ray.h"
+#include "../math/vector2.h"
+#include "../config.h"
 #include <t3d/t3d.h>
 
 struct ClippingPlanes {
@@ -26,5 +29,13 @@ void camera_apply(struct Camera* camera, T3DViewport* viewport, struct ClippingP
 static inline void camera_set_near(camera_t* camera, float near) {
     camera->near = near;
 }
+
+void camera_screen_to_ray(camera_t* camera, vector2_t* screen_pos, ray_t* ray);
+void camera_screen_from_position(camera_t* camera, vector3_t* pos, vector2_t* screen_pos);
+
+#if ENABLE_BIG_SCREEN_SHOT
+void camera_next_sub_fov();
+bool camera_is_showing_fov();
+#endif
 
 #endif

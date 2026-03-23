@@ -14,7 +14,7 @@ struct tmesh* tmesh_cache_load(const char* filename) {
         tmesh_load(result, meshFile);
         fclose(meshFile);
 
-        entry->resource = result;
+        resource_cache_set_resource(&tmesh_resource_cache, entry, result);
     }
 
     return entry->resource;
@@ -25,4 +25,8 @@ void tmesh_cache_release(struct tmesh* mesh) {
         tmesh_release(mesh);
         free(mesh);
     }
+}
+
+void tmesh_cache_destroy() {
+    resource_cache_destroy(&tmesh_resource_cache);
 }

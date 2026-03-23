@@ -8,6 +8,7 @@
 #include "../render/frame_alloc.h"
 #include "../render/tmesh.h"
 #include "../render/camera.h"
+#include "../config.h"
 
 void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool);
 

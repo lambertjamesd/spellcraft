@@ -154,6 +154,7 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     T3DMat4FP* armature = t3d_segment_placeholder(T3D_SEGMENT_SKELETON);
 
     rspq_block_begin();
+    rdpq_sync_pipe();
 
     for (uint16_t i = 0; i < command_count; i += 1) {
         uint8_t command;

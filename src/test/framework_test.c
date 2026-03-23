@@ -4,6 +4,7 @@
 #include <string.h>
 #include "../scene/scene.h"
 #include "../scene/scene_loader.h"
+#include "../resource/tmesh_cache.h"
 
 #define MAX_NAMED_FAILS 16
 
@@ -31,6 +32,8 @@ void test_run_raw(test_callback callback, const char* name) {
         fprintf(stderr, "TEST PASS %s\n", name);
     }
     test_call_deferred();
+
+    tmesh_cache_destroy();
 }
 
 void test_fatal_raw(struct test_context* t, const char* message, const char* location) {

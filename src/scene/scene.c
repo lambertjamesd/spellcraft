@@ -7,11 +7,18 @@
 #include "../cutscene/evaluation_context.h"
 #include "../cutscene/expression_evaluate.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../menu/map_menu.h"
+#include "../time/time.h"
+#include "../config.h"
+#include "../profile/profile.h"
 
 struct scene* current_scene;
 
-static char next_scene_name[64];
-static char next_entrance_name[16];
+#define MAX_SCENE_NAME_LENGTH       64
+#define MAX_ENTRANCE_NAME_LENGTH    32
+
+static char next_scene_name[MAX_SCENE_NAME_LENGTH];
+static char next_entrance_name[MAX_ENTRANCE_NAME_LENGTH];
 
 void scene_render_room(struct scene* scene, int room_index, struct render_batch* batch) {
     if (room_index < 0 || room_index >= scene->room_count) {
@@ -31,7 +38,6 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
     
     static_particles_t* curr_particle = scene->static_particles + range.start;
     static_particles_t* end_particle = scene->static_particles + range.end;
-
     struct Transform transform;
     quatIdent(&transform.rotation);
 
@@ -57,6 +63,7 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
                     particles = fade_particles;
                     particles->particle_scale_width = (uint16_t)((uint32_t)(scale * particles->particle_scale_width) >> 16);
                     particles->particle_scale_height = (uint16_t)((uint32_t)(scale * particles->particle_scale_height) >> 16);
+                    data_cache_hit_writeback_invalidate(fade_particles, sizeof(render_batch_particles_t));
                 }
             }
     
@@ -81,6 +88,10 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
 
 void scene_render(void* data, struct render_batch* batch) {
     struct scene* scene = (struct scene*)data;
+
+    if (scene->overworld) {
+        return;
+    }
     
     for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
         if (scene->loaded_rooms[i].room_index == ROOM_INDEX_NONE) {
@@ -155,34 +166,92 @@ void scene_check_cutscenes(scene_t* scene) {
 }
 
 void scene_update(void* data) {
+    SC_PROFILE_START(scene);
     struct scene* scene = (struct scene*)data;
 
     struct Vector3 player_center = scene->player.cutscene_actor.transform.position;
-    player_center.y += scene->player.cutscene_actor.collider.center.y;
+    player_center.y += scene->player.cutscene_actor.collider.type->center.y;
 
+    SC_PROFILE_START(scene);
     for (int i = 0; i < scene->loading_zone_count; i += 1) {
         if (box3DContainsPoint(&scene->loading_zones[i].bounding_box, &player_center)) {
-            scene_queue_next(scene->loading_zones[i].scene_name);
+            cutscene_builder_t cutscene;
+            cutscene_builder_init(&cutscene);
+            cutscene_builder_pause(&cutscene, true, false, UPDATE_LAYER_WORLD);
+            cutscene_builder_fade(&cutscene, FADE_COLOR_BLACK, 0.5f);
+            cutscene_builder_delay(&cutscene, 0.5f);
+            cutscene_builder_load_scene(&cutscene, scene->loading_zones[i].scene_name);
+            cutscene_builder_pause(&cutscene, false, false, UPDATE_LAYER_WORLD);
+
+            cutscene_runner_run(cutscene_builder_finish(&cutscene), 0, cutscene_runner_free_on_finish(), NULL, 0);
+
+            // kinda hacky
+            scene->loading_zone_count = 0;
         }
     }
+    SC_PROFILE_END(scene, loading_zones);
 
+    SC_PROFILE_START(scene);
     if (scene->overworld) {
+        data_cache_writeback_invalidate_all();
+        SC_PROFILE_START(scene);
         overworld_check_loaded_tiles(scene->overworld);
+        SC_PROFILE_END(scene, overworld_check_loaded_tiles);
+        SC_PROFILE_START(scene);
         overworld_check_collider_tiles(scene->overworld, player_get_position(&scene->player));
+        SC_PROFILE_END(scene, overworld_check_collider_tiles);
+    }
+    SC_PROFILE_END(scene, overworld);
+
+    SC_PROFILE_START(scene);
+    scene_check_despawns(scene);
+    SC_PROFILE_END(scene, scene_check_despawns);
+    SC_PROFILE_START(scene);
+    scene_check_cutscenes(scene);
+    SC_PROFILE_END(scene, scene_check_cutscenes);
+
+    if (update_has_layer(UPDATE_LAYER_WORLD)) {
+        joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
+        joypad_inputs_t input = joypad_get_inputs(0);
+    
+        if (!input.btn.start) {
+            scene->can_pause = true;
+        }
+    
+        if (pressed.start && scene->can_pause) {
+            map_menu_show();
+            scene->can_pause = false;
+        }
+
+#if ENABLE_LOD_RENDER_DEBUG
+        if (input.btn.d_right) {
+            lod_render_mode = LOD_RENDER_MODE_DEFAULT;
+        }
+        if (input.btn.d_left) {
+            lod_render_mode = LOD_RENDER_MODE_DETAILED;
+        }
+        if (input.btn.d_down) {
+            lod_render_mode = LOD_RENDER_MODE_LOD3;
+        }
+        if (pressed.d_up) {
+            ++lod_render_mode;
+        }
+#endif
     }
 
-    scene_check_despawns(scene);
-    scene_check_cutscenes(scene);
+    overworld_music_update(&scene->music, player_get_position(&scene->player), scene->overworld != NULL);
+    SC_PROFILE_END(scene, scene_update);
 }
 
-void scene_queue_next(char* scene_name) {
-    char* curr = scene_name;
+void scene_queue_next(const char* scene_name) {
+    const char* curr = scene_name;
     char* out = next_scene_name;
     while (*curr && *curr != '#') {
         *out++ = *curr++;
     }
 
     *out = '\0';
+    assert(out <= &next_scene_name[MAX_SCENE_NAME_LENGTH]);
 
     out = next_entrance_name;
 
@@ -195,6 +264,7 @@ void scene_queue_next(char* scene_name) {
     ++curr;
 
     while ((*out++ = *curr++));
+    assert(out <= &next_entrance_name[MAX_ENTRANCE_NAME_LENGTH]);
 }
 
 void scene_clear_next() {
@@ -432,4 +502,18 @@ void scene_entity_apply_types(void* definition, char* string_table, struct entit
             }
         }
     }
+}
+
+void scene_teleport_player_to(vector3_t* pos) {
+    if (current_scene->overworld) {
+        overworld_check_collider_tiles(current_scene->overworld, pos);
+    }
+
+    vector3_t* player_pos = player_get_position(&current_scene->player);
+    vector3_t offset;
+    vector3Sub(pos, player_pos, &offset);
+
+    camera_shift_by(&current_scene->camera_controller, &offset);
+
+    *player_pos = *pos;
 }

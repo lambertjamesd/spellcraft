@@ -36,6 +36,17 @@ int evaluation_context_pop(struct evaluation_context* context);
 void evaluation_context_popn(struct evaluation_context* context, int* into, int count);
 int evaluation_context_peek(struct evaluation_context* context);
 
+static inline void evaluation_context_push_float(struct evaluation_context* context, float value) {
+    int* int_ptr = (int*)&value;
+    evaluation_context_push(context, *int_ptr);
+}
+
+static inline float evaluation_context_pop_float(struct evaluation_context* context) {
+    int int_result = evaluation_context_pop(context);
+    return *(float*)&int_result;
+}
+
+
 int evaluation_context_load(void* data, enum data_type data_type, int word_offset);
 void evaluation_context_save(void* data, enum data_type data_type, int word_offset, int value);
 

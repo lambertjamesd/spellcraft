@@ -12,4 +12,6 @@ void material_cache_release(struct material* material);
 
 struct material* material_cache_load_from_file(FILE* file);
 
+void material_cache_destroy();
+
 #endif

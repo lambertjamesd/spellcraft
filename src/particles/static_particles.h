@@ -7,8 +7,8 @@
 
 #define UNPACK_SCALE(scale) ((float)(scale) * (1.0f / 0xFFFF))
 
-#define MAX_PARTICLE_DISTANCE 70.0f
-#define PARTICLE_FADE_DISTANCE 40.0f
+#define MAX_PARTICLE_DISTANCE 120.0f
+#define PARTICLE_FADE_DISTANCE 100.0f
 
 struct static_particle_instance_data {
     struct Vector3 center;

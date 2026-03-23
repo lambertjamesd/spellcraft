@@ -74,8 +74,8 @@ void cutscene_actor_init(
         &actor->transform.rotation
     );
 
-    actor->collider.center.y += def->half_height;
     actor->collider.collision_group = def->collision_group;
+    actor->collider.weight_class = WEIGHT_CLASS_HEAVY;
     actor->last_animator_events.all = 0;
 
     collision_scene_add(&actor->collider);
@@ -161,6 +161,10 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
                 if (actor->move_speed > actor->def->run_threshold && actor->animations.run) {
                     use_clip = actor->animations.run;
                     target_move_speed = actor->def->run_speed;
+                }
+
+                if (target_move_speed == 0.0f) {
+                    target_move_speed = 1.0f;
                 }
     
                 if (!animator_is_running_clip(&actor->animator, use_clip)) {

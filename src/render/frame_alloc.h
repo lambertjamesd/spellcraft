@@ -6,7 +6,7 @@
 #include "../math/transform.h"
 #include "../math/transform_single_axis.h"
 
-#define FRAME_MEMORY_SIZE   32 * 1024
+#define FRAME_MEMORY_SIZE   64 * 1024
 #define FRAME_WORD_COUNT    (FRAME_MEMORY_SIZE / sizeof(uint64_t))
 
 #define ALIGN_16(input)     (((input) + 15) & ~15)

@@ -12,9 +12,10 @@ struct resource_cache_entry {
     uint32_t filename_hash;
 };
 
+typedef struct resource_cache_entry resource_cache_entry_t;
+
 struct resource_cache {
     struct resource_cache_entry* entries;
-    short next_entry_index;
     short entry_capacity;
     short entry_count;
 
@@ -22,9 +23,13 @@ struct resource_cache {
     short* resource_index;
 };
 
-void resource_cache_reset(struct resource_cache* cache);
-struct resource_cache_entry* resource_cache_next(struct resource_cache* cache, struct resource_cache_entry* entry);
+typedef struct resource_cache resource_cache_t;
+
+void resource_cache_init(struct resource_cache* cache);
+void resource_cache_destroy(struct resource_cache* cache);
 struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, const char* filename);
 bool resource_cache_free(struct resource_cache* cache, void* resource);
+
+void resource_cache_set_resource(struct resource_cache* cache, struct resource_cache_entry* entry, void* resource);
 
 #endif

@@ -6,11 +6,16 @@
 #include "../math/matrix.h"
 #include "../render/defs.h"
 #include "../collision/collision_scene.h"
+#include "../resource/tmesh_cache.h"
 
 #define SHADOW_SCALE    (0.5f * MODEL_WORLD_SCALE)
 
 void drop_shadow_render(void* data, struct render_batch* batch) {
     struct drop_shadow* drop_shadow = (struct drop_shadow*)data;
+
+    if (!drop_shadow->enabled) {
+        return;
+    }
 
     struct contact* contact = dynamic_object_get_ground(drop_shadow->target);
 
@@ -32,7 +37,7 @@ void drop_shadow_render(void* data, struct render_batch* batch) {
     vector3Scale(&contact->normal, &skew_scale, SHADOW_SCALE / contact->normal.y);
 
     struct Vector3 pos = contact->point;
-    pos.y += 0.1f;
+    pos.y += 0.01f;
 
     mat4x4 mtx;
     matrixFromScale(mtx, SHADOW_SCALE);
@@ -47,6 +52,7 @@ void drop_shadow_render(void* data, struct render_batch* batch) {
 
 void drop_shadow_init(struct drop_shadow* drop_shadow, struct dynamic_object* target) {
     drop_shadow->target = target;
+    drop_shadow->enabled = true;
 
     render_scene_add(target->position, 1.0f, drop_shadow_render, drop_shadow);
     drop_shadow->mesh = effect_assets_get()->drop_shadow;

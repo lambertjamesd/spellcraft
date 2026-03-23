@@ -37,6 +37,7 @@ struct Box3D* collision_scene_element_bounding_box(struct collision_scene_elemen
 void collision_scene_reset() {
     free(g_scene.elements);
     free(g_scene.all_contacts);
+    free(g_scene.cast_points);
     hash_map_destroy(&g_scene.entity_mapping);
     hash_map_destroy(&g_scene.trigger_mapping);
     memset(&g_scene, 0, sizeof(g_scene));
@@ -50,6 +51,9 @@ void collision_scene_reset() {
     g_scene.all_contacts = malloc(sizeof(struct contact) * MAX_ACTIVE_CONTACTS);
     g_scene.next_free_contact = &g_scene.all_contacts[0];
     g_scene.kill_plane = KILL_PLANE;
+    g_scene.cast_points = NULL;
+    g_scene.cast_point_capacity = 0;
+    g_scene.cast_point_count = 0;
 
     for (int i = 0; i + 1 < MAX_ACTIVE_CONTACTS; ++i) {
         g_scene.all_contacts[i].next = &g_scene.all_contacts[i + 1];
@@ -114,6 +118,8 @@ void collision_scene_remove_any(void* object) {
             if (g_scene.elements[i].type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
                 struct dynamic_object* obj = g_scene.elements[i].object;
                 collision_scene_return_contacts(obj->active_contacts);
+                collision_scene_return_contacts(obj->shadow_contact);
+                obj->shadow_contact = NULL;
                 obj->active_contacts = NULL;
             } else {
                 struct spatial_trigger* trigger = g_scene.elements[i].object;
@@ -331,15 +337,31 @@ bool collision_scene_should_sweep(dynamic_object_t* object, struct Vector3* prev
         fabs(offset.z) > bbSize.z;
 }
 
+void collision_scene_recalc_bb(struct dynamic_object* object, vector3_t* prev_pos) {
+    dynamic_object_recalc_bb(object);
+    object->should_sweep_collide = collision_scene_should_sweep(object, prev_pos);
+
+    if (object->should_sweep_collide) {
+        struct Vector3 move_amount;
+        vector3Sub(prev_pos, object->position, &move_amount);
+        box3DExtendDirection(&object->bounding_box, &move_amount, &object->bounding_box);
+    }
+}
+
 #define MAX_SWEPT_ITERATIONS    5
 
 void collision_scene_collide_single(struct dynamic_object* object, struct Vector3* prev_pos) {
+    if (!object->collision_layers) {
+        return;
+    }
+
     for (int i = 0; i < MAX_SWEPT_ITERATIONS; i += 1) {
-        if (collision_scene_should_sweep(object, prev_pos)) {
+        if (object->should_sweep_collide) {
             bool did_hit = collide_object_to_multiple_mesh_swept(object, g_scene.mesh_colliders, g_scene.mesh_collider_count, prev_pos);
             if (!did_hit) {
                 return;
             }
+            collision_scene_recalc_bb(object, prev_pos);
         } else {
             for (int collider_index = 0; collider_index < g_scene.mesh_collider_count; collider_index += 1) {
                 struct mesh_collider* mesh = g_scene.mesh_colliders[collider_index];
@@ -430,20 +452,11 @@ void collision_scene_collide() {
         }
 
         dynamic_object_update(object);
-        object->should_sweep_collide = collision_scene_should_sweep(object, &prev_pos[i]);
 
-        dynamic_object_recalc_bb(object);
-
-        if (object->should_sweep_collide) {
-            struct Vector3 move_amount;
-            vector3Sub(&prev_pos[i], object->position, &move_amount);
-            box3DExtendDirection(&object->bounding_box, &move_amount, &object->bounding_box);
-        }
+        collision_scene_recalc_bb(object, &prev_pos[i]);
     }
 
     collision_scene_collide_dynamic(prev_pos);
-
-    entity_id kill_entity = 0;
 
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
@@ -485,17 +498,28 @@ void collision_scene_collide() {
         }
 
         if (object->position->y < g_scene.kill_plane) {
-            kill_entity = object->entity_id;
             object->position->y = g_scene.kill_plane;
             object->velocity.y = 0.0f;
             object->hit_kill_plane = 1;
         }
     }
 
-    // kill the entity outide the loop since despawing an entity
-    // could mess with the element list
-    if (kill_entity) {
-        entity_despawn(kill_entity);
+    cast_point_t** last = g_scene.cast_points + g_scene.cast_point_count;
+    for (cast_point_t** cast_point = g_scene.cast_points; 
+        cast_point != last; 
+        ++cast_point) {
+         
+        cast_point_t* curr = *cast_point;
+        struct mesh_shadow_cast_result shadow;
+        if (collision_scene_shadow_cast(&curr->pos, &shadow)) {
+            curr->y = shadow.y;
+            curr->normal = shadow.normal;
+            curr->surface_type = shadow.surface_type;
+        } else {
+            curr->y = -1000000.0f;
+            curr->normal = gZeroVec;
+            curr->surface_type = SURFACE_TYPE_NONE;
+        }
     }
 }
 
@@ -618,4 +642,47 @@ int collision_scene_get_count() {
 
 struct collision_scene_element* collision_scene_get_element(int index) {
     return &g_scene.elements[index];
+}
+
+void collision_scene_add_cast_point(struct cast_point* cast_point, vector3_t* pos) {
+    if (g_scene.cast_point_count == g_scene.cast_point_capacity) {
+        int prev = g_scene.cast_point_capacity;
+
+        if (g_scene.cast_point_capacity == 0) {
+            g_scene.cast_point_capacity = 4;
+        } else {
+            g_scene.cast_point_capacity *= 2;
+        }
+
+        cast_point_t** next = malloc(sizeof(cast_point_t*) * g_scene.cast_point_capacity);
+
+        if (prev) {
+            memcpy(next, g_scene.cast_points, sizeof(cast_point_t*) * prev);
+            free(g_scene.cast_points);
+        }
+
+        g_scene.cast_points = next;
+    }
+
+    cast_point->pos = *pos;
+    cast_point->surface_type = SURFACE_TYPE_NONE;
+    cast_point->y = 0.0f;
+    cast_point->normal = gZeroVec;
+
+    g_scene.cast_points[g_scene.cast_point_count] = cast_point;
+    ++g_scene.cast_point_count;
+}
+
+void collision_scene_remove_cast_point(struct cast_point* cast_point) {
+    cast_point_t** end = g_scene.cast_points + g_scene.cast_point_count;
+
+    for (cast_point_t** curr = g_scene.cast_points;
+        curr != end;
+        ++curr) {
+        if (*curr == cast_point) {
+            *curr = *(end - 1);
+            --g_scene.cast_point_count;
+            break;
+        }
+    }
 }

@@ -34,6 +34,8 @@ void animator_init(struct animator* animator, int bone_count) {
     animator->events.all = 0;
     animator->image_frame_0 = NO_IMAGE_FRAME;
     animator->image_frame_1 = NO_IMAGE_FRAME;
+    animator->blend_frames = 0;
+    animator->done = 0;
 }
 
 void animator_destroy(struct animator* animator) {
@@ -123,6 +125,28 @@ void animator_init_zero_transform(struct animator* animator, struct animation_us
     animator->events.all = 0;
 }
 
+void animator_scale_for_blending(struct animator* animator, struct animation_used_attributes* used_attributes, struct Transform* transforms, float weight) {
+    if (animator->next_frame_state_index == -1) {
+        return;
+    }
+
+    for (int i = 0; i < animator->bone_count; ++i) {
+        if (used_attributes->has_pos) {
+            vector3Scale(&transforms[i].position, &transforms[i].position, weight);
+        }
+        if (used_attributes->has_rot) {
+            quatScale(&transforms[i].rotation, weight, &transforms[i].rotation);
+        }
+        if (used_attributes->has_scale) {
+            vector3Scale(&transforms[i].scale, &transforms[i].scale, weight);
+        }
+
+        used_attributes += 1;
+    }
+
+    animator->events.all = 0;
+}
+
 void animator_normalize(struct animator* animator, struct Transform* transforms) {
     for (int i = 0; i < animator->bone_count; ++i) {
         quatNormalize(&transforms[i].rotation, &transforms[i].rotation);
@@ -197,8 +221,18 @@ void animator_read_transform(struct animator* animator, struct Transform* transf
         return;
     }
 
-    animator_init_zero_transform(animator, animator->current_clip->used_bone_attributes, transforms);
-    animator_read_transform_with_weight(animator, transforms, 1.0f);
+    if (animator->blend_frames) {
+        float blend_weight = 1.0f / (animator->blend_frames + 1);
+
+        animator_scale_for_blending(animator, animator->current_clip->used_bone_attributes, transforms, 1.0f - blend_weight);
+        animator_read_transform_with_weight(animator, transforms, blend_weight);
+
+        --animator->blend_frames;
+    } else {
+        animator_init_zero_transform(animator, animator->current_clip->used_bone_attributes, transforms);
+        animator_read_transform_with_weight(animator, transforms, 1.0f);
+    }
+
     animator_normalize(animator, transforms);
 }
 
@@ -246,61 +280,62 @@ void animator_step(struct animator* animator, float delta_time) {
         }
     }
 
-    float currentFrameFractional = animator->current_time * current_clip->frames_per_second;
-    int prevFrame = (int)floorf(currentFrameFractional);
-    int next_frame = (int)ceilf(currentFrameFractional);
-    float lerpValue = currentFrameFractional - prevFrame;
+    float current_frame_fractional = animator->current_time * current_clip->frames_per_second;
+    int prev_frame = (int)floorf(current_frame_fractional);
+    int next_frame = (int)ceilf(current_frame_fractional);
+    float lerpValue = current_frame_fractional - prev_frame;
 
-    prevFrame = animator_clamp_frame(animator, prevFrame);
+    prev_frame = animator_clamp_frame(animator, prev_frame);
     next_frame = animator_clamp_frame(animator, next_frame);
 
-    if (next_frame == prevFrame) {
+    if (next_frame == prev_frame) {
         lerpValue = 1.0f;
     }
 
-    int existingPrevFrame = animator_bone_state_index_of_frame(animator, prevFrame);
-    int existingNextFrame = animator_bone_state_index_of_frame(animator, next_frame);
+    int existing_prev_frame = animator_bone_state_index_of_frame(animator, prev_frame);
+    int existing_next_frame = animator_bone_state_index_of_frame(animator, next_frame);
+    
+    animator->blend_lerp = lerpValue;
 
-    if (existingPrevFrame == -1 && existingNextFrame == -1) {
+    if (existing_prev_frame == -1 && existing_next_frame == -1) {
         // both frames need to be requested
-        animator->blend_lerp = lerpValue;
-        if (prevFrame != next_frame) {
+        if (prev_frame != next_frame) {
             animator->next_frame_state_index = 0;
-            animator_request_frame(animator, prevFrame);
+            animator_request_frame(animator, prev_frame);
         }
         animator->next_frame_state_index = 1;
         animator_request_frame(animator, next_frame);
         return;
     }
 
-    if (existingNextFrame == -1) {
+    if (existing_next_frame == -1) {
         // only the next frame needs to be requested
-        animator->blend_lerp = lerpValue;
-        animator->next_frame_state_index = existingPrevFrame ^ 1;
+        animator->next_frame_state_index = existing_prev_frame ^ 1;
         animator_request_frame(animator, next_frame);
         return;
     }
 
-    if (existingPrevFrame == -1) {
+    if (existing_prev_frame == -1) {
         // only the previous frame needs to be requested
-        animator->blend_lerp = 1.0f - lerpValue;
-        animator->next_frame_state_index = existingNextFrame ^ 1;
-        animator_request_frame(animator, prevFrame);
+        animator->next_frame_state_index = existing_next_frame ^ 1;
+        animator_request_frame(animator, prev_frame);
+        animator->next_frame_state_index = existing_next_frame;
         return;
     }
 
-    if (existingNextFrame == existingPrevFrame) {
+    if (existing_next_frame == existing_prev_frame) {
         // only one frame is needed and is already present
         animator->blend_lerp = 1.0f;
-        animator->next_frame_state_index = existingNextFrame;
+        animator->next_frame_state_index = existing_next_frame;
         return;
     }
+}
 
-    if (existingNextFrame == 1) {
-        animator->blend_lerp = lerpValue;
-    } else {
-        animator->blend_lerp = 1.0f - lerpValue;
-    }
+void animator_copy_attributes(struct animator* animator, struct armature* armature) {
+    armature->image_frame_0 = animator->image_frame_0;
+    armature->image_frame_1 = animator->image_frame_1;
+    armature->prim_color = animator->prim_color;
+    armature->env_color = animator->env_color;
 }
 
 void animator_update(struct animator* animator, struct armature* armature, float delta_time) {
@@ -318,13 +353,12 @@ void animator_update(struct animator* animator, struct armature* armature, float
     }
 
     animator_step(animator, delta_time);
-    armature->image_frame_0 = animator->image_frame_0;
-    armature->image_frame_1 = animator->image_frame_1;
-    armature->prim_color = animator->prim_color;
-    armature->env_color = animator->env_color;
+    animator_copy_attributes(animator, armature);
 }
 
 void animator_run_clip(struct animator* animator, struct animation_clip* clip, float start_time, bool loop) {
+    bool should_blend = animator->current_clip != 0 || animator->done;
+
     animator->current_clip = clip;
 
     if (!clip) {
@@ -345,6 +379,8 @@ void animator_run_clip(struct animator* animator, struct animation_clip* clip, f
     animator->done = 0;
     animator->events.all = 0;
 
+    animator->blend_frames = should_blend ? 7 : 0;
+
     animator_step(animator, 0.0f);
 }
 
@@ -358,4 +394,73 @@ bool animator_is_running_clip(struct animator* animator, struct animation_clip* 
 
 float animator_get_time(struct animator* animator) {
     return animator->current_time;
+}
+
+void animation_blender_init(animation_blender_t* blender, armature_t* armature, float* bone_weights) {
+    blender->armature = armature;
+    blender->bone_weights = bone_weights;
+
+    for (int i = 0; i < armature->bone_count; i += 1) {
+        bone_weights[i] = 0.0f;
+        armature->pose[i] = (transform_t){};
+    }
+}
+
+void animation_blender_apply_weights(animation_blender_t* blender, struct animation_used_attributes* used_attributes, float weight) {
+    for (int i = 0; i < blender->armature->bone_count; ++i) {
+        if (used_attributes->has_pos || used_attributes->has_rot || used_attributes->has_scale) {
+            blender->bone_weights[i] += weight;
+        }
+
+        used_attributes += 1;
+    }
+}
+
+void animation_blender_blend(animation_blender_t* blender, animator_t* animator, float delta_time, float weight) {
+    struct animation_clip* current_clip = animator->current_clip;
+
+    if (!current_clip) {
+        return;
+    }
+
+    if (animator->next_frame_state_index != -1) {
+        animator->events.all = 0;
+        animator_read_transform_with_weight(animator, blender->armature->pose, weight);
+    }
+
+    if (animator->done) {
+        animator->current_clip = NULL;
+        return;
+    }
+
+    animator_step(animator, delta_time);
+    animator_copy_attributes(animator, blender->armature);
+}
+
+void animation_blender_finish(animation_blender_t* blender) {
+    transform_t* pose = blender->armature->pose;
+
+    struct armature_packed_transform* default_pose = blender->armature->definition->default_pose;
+
+    for (int i = 0; i < blender->armature->bone_count; ++i, ++pose) {
+        float weight = blender->bone_weights[i];
+
+        if (weight < 0.001f) {
+            armature_unpack_transform(
+                &default_pose[i], 
+                pose
+            );
+            continue;
+        }
+
+        if (weight < 0.99f || weight > 1.01f) {
+            weight = 1.0f / weight;
+            vector3Scale(&pose->position, &pose->position, weight);
+            vector3Scale(&pose->scale, &pose->scale, weight);
+            quatScale(&pose->rotation, weight, &pose->rotation);
+        }
+
+        
+        quatNormalize(&pose->rotation, &pose->rotation);
+    }
 }

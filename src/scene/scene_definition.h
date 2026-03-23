@@ -36,6 +36,8 @@ enum entity_type_id {
     ENTITY_TYPE_pottery_wheel,
     ENTITY_TYPE_fan_switch,
     ENTITY_TYPE_trigger_cube,
+    ENTITY_TYPE_script_runner,
+    // type enum insert point
     
     ENTITY_TYPE_count,
 };
@@ -316,5 +318,7 @@ struct trigger_cube_definition {
     struct Vector2 rotation;
     struct Vector3 scale;
 };
+
+// definition insert point
 
 #endif

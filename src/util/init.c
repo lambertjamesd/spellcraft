@@ -1,21 +1,17 @@
 #include "init.h"
 
-#include "../spell/assets.h"
-#include "../effects/assets.h"
-#include "../menu/menu_common.h"
 #include "../render/render_scene.h"
 #include "../time/time.h"
 #include "../collision/collision_scene.h"
 #include "../entity/health.h"
-#include "../spell/mana_pool.h"
 #include "../entity/interactable.h"
 #include "../menu/menu_rendering.h"
-#include "../objects/assets.h"
-#include "../objects/collectable.h"
 #include "../menu/dialog_box.h"
 #include "../cutscene/cutscene_runner.h"
 #include "../cutscene/cutscene_actor.h"
 #include "../audio/audio.h"
+#include "../entities/vehicle.h"
+#include "../menu/menu_common.h"
 
 void init_engine() {
     spell_assets_init();

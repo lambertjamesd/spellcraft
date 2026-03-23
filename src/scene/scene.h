@@ -7,15 +7,14 @@
 #include "../collision/mesh_collider.h"
 
 #include "../player/player.h"
-#include "../player/inventory.h"
-#include "../menu/pause_menu.h"
-#include "../menu/hud.h"
 #include "../overworld/overworld.h"
 #include "camera_controller.h"
 #include "camera_animation.h"
 #include "../entity/entity_spawner.h"
 #include "../particles/static_particles.h"
 #include "../cutscene/cutscene.h"
+#include "../menu/hud.h"
+#include "../audio/audio.h"
 
 struct static_entity {
     struct tmesh tmesh;
@@ -108,6 +107,10 @@ struct scene {
     struct loading_zone* loading_zones;
     struct named_location* named_locations;
     struct overworld* overworld;
+    vector2_t minimap_min;
+    vector2_t minimap_max;
+    vector2_t minimap_location;
+    float minimap_rotation;
 
     room_entity_block_t* room_entities;
     shared_entity_block_t shared_entities;
@@ -128,6 +131,7 @@ struct scene {
     uint16_t* room_cutscene_functions;
     char* string_table;
     char* scene_vars;
+    bool can_pause;
 
     struct camera_animation_list camera_animations;
 };
@@ -139,7 +143,7 @@ extern struct scene* current_scene;
 void scene_render(void* data, struct render_batch* batch);
 void scene_update(void* data);
 
-void scene_queue_next(char* scene_name);
+void scene_queue_next(const char* scene_name);
 void scene_clear_next();
 
 bool scene_show_room(struct scene* scene, int room_index);
@@ -157,5 +161,7 @@ char* scene_get_next_entry();
 struct named_location* scene_find_location(char* name);
 
 void scene_entity_apply_types(void* definition, char* string_table, struct entity_field_type_location* type_locations, int type_location_count);
+
+void scene_teleport_player_to(vector3_t* pos);
 
 #endif

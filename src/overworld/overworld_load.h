@@ -12,5 +12,6 @@ void overworld_actor_tile_free(struct overworld_actor_tile* tile);
 
 void overworld_check_loaded_tiles(struct overworld* overworld);
 void overworld_check_collider_tiles(struct overworld* overworld, struct Vector3* player_pos);
+void overworld_check_unload_queue(struct overworld* overworld);
 
 #endif

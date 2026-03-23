@@ -6,4 +6,6 @@
 wav64_t* wav_cache_load(const char* filename);
 void wav_cache_release(wav64_t* wav);
 
+void wav_cache_destroy();
+
 #endif

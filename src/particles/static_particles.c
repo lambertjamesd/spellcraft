@@ -3,6 +3,7 @@
 #include "../resource/material_cache.h"
 #include "../render/frame_alloc.h"
 #include "../render/defs.h"
+#include "../profile/profile.h"
 
 static_particles_t* static_particles_load(uint16_t* count, FILE* file) {
     uint32_t total_particle_size;
@@ -86,16 +87,24 @@ void static_particles_render_instances(static_particles_t* particle_list, int pa
     struct Transform transform;
     quatIdent(&transform.rotation);
     material_t* curr_material = NULL;
+
+    SC_PROFILE_START(render_particles);
+
+    SC_LOOP_PROFILE_INIT(render_particles, 2);
+    SC_LOOP_COUNT_START(render_particles);
     
     for (int i = 0; i < particles_count; i += 1) {
         static_particles_t* particles = &particle_list[i];
 
         for (int instance_index = 0; instance_index < particles->instance_count; instance_index += 1) {
+            SC_LOOP_PROFILE_START(render_particles, 0);
+            SC_LOOP_INCREMENT(render_particles);
             static_particle_instance_data_t* instance = &particles->instance_data[instance_index];
 
             float distance = sqrtf(vector3DistSqrd(&instance->center, camera_pos));
         
             if (distance >= MAX_PARTICLE_DISTANCE) {
+                SC_LOOP_PROFILE_END(render_particles, 0);
                 continue;;
             }
         
@@ -110,6 +119,7 @@ void static_particles_render_instances(static_particles_t* particle_list, int pa
                     batch_particles = fade_particles;
                     batch_particles->particle_scale_width = (uint16_t)((uint32_t)(scale * batch_particles->particle_scale_width) >> 16);
                     batch_particles->particle_scale_height = (uint16_t)((uint32_t)(scale * batch_particles->particle_scale_height) >> 16);
+                    data_cache_hit_writeback_invalidate(fade_particles, sizeof(render_batch_particles_t));
                 }
             }
         
@@ -121,20 +131,32 @@ void static_particles_render_instances(static_particles_t* particle_list, int pa
         
             transform.position = instance->center;
             vector3Sub(&instance->center, camera_pos, &transform.position);
-            vector3Scale(&instance->size, &transform.scale, MODEL_WORLD_SCALE);
+            vector3Scale(&instance->size, &transform.scale, STATIC_WORLD_SCALE);
             vector3Scale(&transform.position, &transform.position, WORLD_SCALE);
         
             T3DMat4FP* mtxfp = frame_pool_get_transformfp(pool);
         
             if (!mtxfp) {
+                SC_LOOP_PROFILE_END(render_particles, 0);
                 return;
             }
         
             mat4x4 mtx;
             transformToMatrix(&transform, mtx);
             t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
+
+            SC_LOOP_PROFILE_END(render_particles, 0);
         
+            SC_LOOP_PROFILE_START(render_particles, 1);
             static_particles_render(batch_particles, mtxfp, particles->material->tex0.sprite != NULL);
+            SC_LOOP_PROFILE_END(render_particles, 1);
         }
     }
+
+    SC_LOOP_FINISH(render_particles, 0, other);
+    SC_LOOP_FINISH(render_particles, 1, static_particles_render);
+
+    SC_LOOP_COUNT_FINISH(render_particles);
+
+    SC_PROFILE_END(render_particles, "static_render");
 }
