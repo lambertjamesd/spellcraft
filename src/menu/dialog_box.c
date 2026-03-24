@@ -1,6 +1,6 @@
 #include "dialog_box.h"
 
-#include "../fonts/fonts.h"
+#include "../font/fonts.h"
 #include "menu_common.h"
 #include "menu_rendering.h"
 #include "../time/time.h"

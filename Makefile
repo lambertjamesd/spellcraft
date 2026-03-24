@@ -211,7 +211,7 @@ filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(REPAIRS) $(FONTS) $(
 
 $(BUILD_DIR)/spellcraft.dfs: filesystem/ $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(REPAIRS) $(FONTS) $(SCRIPTS_COMPILED) $(SOUND_EFFECTS) $(MUSIC) filesystem/scripts/globals.dat
 $(BUILD_DIR)/spellcraft.elf: $(OBJS)
-$(BUILD_DIR)/spellcraft.elf: $(TEST_OBJS)
+$(BUILD_DIR)/spellcraft_test.elf: $(TEST_OBJS)
 
 build/%.asm: build/%.o
 	mips-linux-gnu-objdump -S --disassemble $< > $@

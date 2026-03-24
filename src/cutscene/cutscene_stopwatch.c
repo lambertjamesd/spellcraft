@@ -2,7 +2,7 @@
 
 #include "../time/time.h"
 #include "../menu/menu_rendering.h"
-#include "../fonts/fonts.h"
+#include "../font/fonts.h"
 #include "../menu/menu_common.h"
 #include "../render/defs.h"
 

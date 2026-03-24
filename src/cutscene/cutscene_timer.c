@@ -4,7 +4,7 @@
 #include "../time/time.h"
 #include "cutscene_reference.h"
 #include "../menu/menu_rendering.h"
-#include "../fonts/fonts.h"
+#include "../font/fonts.h"
 
 #define MAX_CUTSCENE_NAME_LEN   64
 
