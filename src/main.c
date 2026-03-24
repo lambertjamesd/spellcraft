@@ -38,7 +38,8 @@ void setup() {
     debug_init_isviewer();
 #endif
     // rdpq_debug_start();
-    savefile_check_for_data();
+    // savefile_check_for_data();
+    savefile_new();
     init_engine();
     interactable_reset();
     z_clear_init();
@@ -47,16 +48,15 @@ void setup() {
     fade_effect_set((color_t){0, 0, 0, 255}, 0.0f);
     fade_effect_set((color_t){0, 0, 0, 0}, 3.0f);
 
-#if ENABLE_CHEATS
-    scene_queue_next("rom:/scenes/level_select.scene#default");
-#else
-    scene_queue_next("rom:/scenes/overworld.scene#main_menu");
-#endif
-    // scene_queue_next("rom:/scenes/settlement_house1_inside.scene#default");
-    // scene_queue_next("rom:/scenes/overworld.scene#default");
-    // scene_queue_next("rom:/repair/motorycle_engine.repair");
-    // scene_queue_next("rom:/scenes/inside_boat.scene");
-    // scene_queue_next("rom:/scenes/inside_house.scene#defualt");
+    // scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    // scene_queue_next("rom:/scenes/fire_trials.scene");
+    scene_queue_next("rom:/scenes/overworld_test.scene");
+    // scene_queue_next("rom:/scenes/ability_testing.scene");
+    // scene_queue_next("rom:/scenes/material_testing.scene");
+    // scene_queue_next("rom:/scenes/texture_stresstest.scene");
+    // scene_queue_next("rom:/scenes/playerhome_basement.scene");
+    // scene_queue_next("rom:/scenes/StartArea_ForestWest.scene#west");
+    // scene_queue_next("rom:/scenes/StartArea_TempleOutside.scene");
 
     current_scene = scene_load(scene_get_next());
 
