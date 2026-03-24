@@ -6,26 +6,31 @@ import math
 import struct
 import io
 
-sys.path.append(os.path.dirname(__file__))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-import entities.mesh
-import entities.mesh_collider
-import entities.tiny3d_mesh_writer
-import entities.mesh_optimizer
-import entities.material_extract
-import entities.material
-import entities.entry_point
-import entities.particles
-from entities.entities import ObjectEntry
-import entities.overworld
-import parse.struct_parse
-import parse.struct_serialize
-import cutscene.expresion_generator
-import cutscene.parser
-import cutscene.tokenizer
-import cutscene.variable_layout
-import entities.camera_animation
-import entities.room
+import mesh_export.parse
+print(mesh_export.parse.__file__)
+    
+from mesh_export.entities import mesh as entities_mesh
+from mesh_export.entities import mesh_collider
+from mesh_export.entities import tiny3d_mesh_writer
+from mesh_export.entities import mesh_optimizer
+from mesh_export.entities import material_extract
+from mesh_export.entities import material
+from mesh_export.entities import entry_point
+from mesh_export.entities import particles as entities_particles
+from mesh_export.entities.entities import ObjectEntry
+from mesh_export.entities import overworld
+from mesh_export.entities import room as entities_room
+from mesh_export.entities import export_settings
+from mesh_export.parse import struct_parse
+from mesh_export.parse import struct_serialize
+from mesh_export.cutscene import parser
+from mesh_export.cutscene import variable_layout
+from mesh_export.entities import camera_animation
+from mesh_export.entities import room
 
 class StaticEntry():
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
@@ -76,14 +81,14 @@ class Scene():
         self.particles: list[ParticlesEntry] = []
         self.locations: list[LocationEntry] = []
         self.loading_zones: list[LoadingZone] = []
-        self.scene_mesh_collider = entities.mesh_collider.MeshCollider()
+        self.scene_mesh_collider = mesh_collider.MeshCollider()
 
 def write_string(value: str, file):
     byte_encoded = value.encode()
     file.write(struct.pack('>B', len(byte_encoded)))
     file.write(byte_encoded)
 
-def get_object_type(obj: bpy.types.Object) -> str:
+def get_object_type(obj: bpy.types.Object) -> str | None:
     if 'type' in obj:
         return obj['type']
     
@@ -92,7 +97,7 @@ def get_object_type(obj: bpy.types.Object) -> str:
     
     return None
 
-def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, parse.struct_parse.StructureInfo], room_index: int):
+def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, struct_parse.StructureInfo], room_index: int):
     type = get_object_type(obj)
 
     if not type:
@@ -108,18 +113,18 @@ def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitio
     return ObjectEntry(obj, type, definitions[def_type_name], room_index)
 
 class meshes_with_material:
-    def __init__(self, meshes: list[entities.mesh.mesh_data], material, material_name: str):
+    def __init__(self, meshes: list[entities_mesh.mesh_data], material, material_name: str):
         self.meshes = meshes
         self.material = material
         self.material_name = material_name
 
 class room_static_meshes:
     def __init__(self):
-        self.mesh_with_material: list[entities.mesh.mesh_data] = []
-        self.none_meshes: list[entities.mesh.mesh_data] = []
+        self.mesh_with_material: list[entities_mesh.mesh_data] = []
+        self.none_meshes: list[entities_mesh.mesh_data] = []
 
-    def add_mesh(self, mesh: entities.mesh.mesh_data):
-        name = entities.material_extract.material_romname(mesh.mat)
+    def add_mesh(self, mesh: entities_mesh.mesh_data):
+        name = material_extract.material_romname(mesh.mat)
 
         if name == None:
             self.none_meshes.append(mesh)
@@ -130,16 +135,19 @@ class room_static_meshes:
         result = []
 
         for mesh in self.mesh_with_material:
-            result.append(meshes_with_material(
-                [mesh], 
-                entities.material_extract.load_material_with_name(mesh.mat), 
-                entities.material_extract.material_romname(mesh.mat)
-            ))
+            name = material_extract.material_romname(mesh.mat)
+            
+            if name:
+                result.append(meshes_with_material(
+                    [mesh], 
+                    material_extract.load_material_with_name(mesh.mat), 
+                    name
+                ))
 
         if len(self.none_meshes) > 0:
             result.append(meshes_with_material(
                 self.none_meshes, 
-                entities.material.Material(), 
+                material.Material(), 
                 'rom:/materials/default.mat'
             ))
 
@@ -152,8 +160,8 @@ class room_static_meshes:
 
 
 
-def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection: entities.room.room_collection, file):
-    settings = entities.export_settings.ExportSettings()
+def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection: room.room_collection, file):
+    settings = export_settings.ExportSettings()
 
     for entry in scene.static:
         room_collection.get_obj_room_index(entry.obj)
@@ -161,19 +169,19 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
     mesh_list_for_rooms = []
 
     for i in range(len(room_collection.rooms)):
-        mesh_list_for_rooms.append(entities.mesh.mesh_list(base_transform))
+        mesh_list_for_rooms.append(entities_mesh.mesh_list(base_transform))
 
     for entry in scene.static:
         mesh_list_for_rooms[room_collection.get_obj_room_index(entry.obj)].append(entry.obj)
 
-    meshes_for_rooms: list[list[entities.mesh.mesh_data]] = list(map(lambda x: x.determine_mesh_data(), mesh_list_for_rooms))
+    meshes_for_rooms: list[list[entities_mesh.mesh_data]] = list(map(lambda x: x.determine_mesh_data(), mesh_list_for_rooms))
     room_static_list: list[room_static_meshes] = []
 
-    for meshes in meshes_for_rooms:
+    for mesh_in_room in meshes_for_rooms:
         room_static = room_static_meshes()
 
-        for mesh in meshes:
-            room_static.add_mesh(entities.mesh_optimizer.remove_duplicates(mesh))
+        for mesh in mesh_in_room:
+            room_static.add_mesh(mesh_optimizer.remove_duplicates(mesh))
 
         room_static_list.append(room_static)
 
@@ -191,7 +199,7 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
         settings.default_material_name = mesh.material_name
         settings.default_material = mesh.material
 
-        entities.tiny3d_mesh_writer.write_mesh(mesh.meshes, None, [], settings, file)
+        tiny3d_mesh_writer.write_mesh(mesh.meshes, None, [], settings, file)
 
     room_count = len(meshes_for_rooms)
     file.write(room_count.to_bytes(2, 'big'))
@@ -202,8 +210,8 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
         file.write(struct.pack('>HH', index_start, index_start + room_mesh_count))
         index_start += room_mesh_count
 
-def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collection: entities.room.room_collection, file):
-    room_to_particle: list[list[entities.particles.Particles]] = []
+def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collection: room.room_collection, file):
+    room_to_particle: list[list[entities_particles.Particles]] = []
 
     for room in room_collection.rooms:
         room_to_particle.append([])
@@ -211,7 +219,7 @@ def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collect
     count = 0
 
     for particles in scene.particles:
-        built = entities.particles.build_particles(particles.obj, base_transform)
+        built = entities_particles.build_particles(particles.obj, base_transform)
 
         if not built:
             continue
@@ -236,7 +244,7 @@ def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collect
     for room_index in range(len(room_collection.rooms)):
         particles = room_to_particle[room_index]
 
-        particles = entities.particles.batch_particles(particles)
+        particles = entities_particles.batch_particles(particles)
 
         for built in particles:
             built.write_into(file)
@@ -258,19 +266,19 @@ def find_static_blacklist():
     return result
 
 def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: str, definitions, enums, variable_context):
-    settings = entities.export_settings.ExportSettings()
+    settings = export_settings.ExportSettings()
 
     if not ('lod_0' in  bpy.data.collections):
         return False
     
     collection: bpy.types.Collection = bpy.data.collections["lod_0"]
 
-    mesh_list = entities.mesh.mesh_list(base_transform)
-    detail_list: list[entities.overworld.OverworldDetail] = []
-    entity_list: list[entities.entities.ObjectEntry] = []
-    particle_list: list[entities.particles.Particles] = [];
+    mesh_list = entities_mesh.mesh_list(base_transform)
+    detail_list: list[overworld.OverworldDetail] = []
+    entity_list: list[ObjectEntry] = []
+    particle_list: list[entities_particles.Particles] = []
 
-    collider = entities.mesh_collider.MeshCollider()
+    collider = mesh_collider.MeshCollider()
 
     for obj in collection.all_objects:
         final_transform = base_transform @ obj.matrix_world
@@ -284,17 +292,19 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
             if obj_type == 'none':
                 continue
             elif obj_type == 'static_particles':
-                particles = entities.particles.build_particles(obj, base_transform)
-
-                particle_list.append(particles)
+                particles = entities_particles.build_particles(obj, base_transform)
+                if particles:
+                    particle_list.append(particles)
             else:
-                entity_list.append(process_linked_object(obj, obj.data, definitions, 0))
+                entity = process_linked_object(obj, obj.data, definitions, 0)
+                if entity:
+                    entity_list.append(entity)
             continue
 
         mesh: bpy.types.Mesh = obj.data
 
         if mesh.library:
-            detail_list.append(entities.overworld.OverworldDetail(obj))
+            detail_list.append(overworld.OverworldDetail(obj))
             continue
 
         if len(mesh.materials) > 0:
@@ -312,7 +322,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
 
         if lod_collection:
             for obj in lod_collection.all_objects:
-                lod_1_objects.append(entities.overworld.LodTile(obj, lod_level))
+                lod_1_objects.append(overworld.LodTile(obj, lod_level))
 
         lod_level += 1
 
@@ -321,7 +331,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
     if 'subdivisions' in collection:
         subdivisions = collection['subdivisions']
 
-    entities.overworld.generate_overworld(
+    overworld.generate_overworld(
         overworld_filename, 
         mesh_list, 
         lod_1_objects, 
@@ -339,7 +349,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
     return True
     
 def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
-    scene_vars_builder = cutscene.variable_layout.VariableLayoutBuilder()
+    scene_vars_builder = variable_layout.VariableLayoutBuilder()
     function_names: list[str] = []
 
     cutscene_filename = input_filename[:-6] + '.script'
@@ -349,7 +359,7 @@ def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
 
     if exists:
         with open(cutscene_filename) as scene_vars_file:
-            scene_vars_parse_tree = cutscene.parser.parse(scene_vars_file.read(), cutscene_filename)
+            scene_vars_parse_tree = parser.parse(scene_vars_file.read(), cutscene_filename)
 
             for var in scene_vars_parse_tree.scene_vars:
                 success = scene_vars_builder.add_variable(var) and success
@@ -382,15 +392,15 @@ SCENE_FLAG = 0x8000
 def int_type_flag(name: str) -> int:
     return int_types[name] << TYPE_OFFSET
 
-def build_variable_enum(enums: dict, globals: cutscene.variable_layout.VariableLayout, scene: cutscene.variable_layout.VariableLayout):
-    boolean_enum, integer_enum, entity_id_enum = cutscene.variable_layout.build_variables(globals, scene)
+def build_variable_enum(enums: dict, globals: variable_layout.VariableLayout, scene: variable_layout.VariableLayout):
+    boolean_enum, integer_enum, entity_id_enum = variable_layout.build_variables(globals, scene)
 
-    enums['boolean_variable'] = parse.struct_parse.UnorderedEnum('boolean_variable', boolean_enum)
-    enums['integer_variable'] = parse.struct_parse.UnorderedEnum('integer_variable', integer_enum)
-    enums['entity_id_variable'] = parse.struct_parse.UnorderedEnum('entity_id_variable', entity_id_enum)
+    enums['boolean_variable'] = struct_parse.UnorderedEnum('boolean_variable', boolean_enum)
+    enums['integer_variable'] = struct_parse.UnorderedEnum('integer_variable', integer_enum)
+    enums['entity_id_variable'] = struct_parse.UnorderedEnum('entity_id_variable', entity_id_enum)
         
 
-def build_room_entity_block(objects: list[ObjectEntry], variable_context, context, enums: dict[str, parse.struct_parse.UnorderedEnum]) -> bytes:
+def build_room_entity_block(objects: list[ObjectEntry], variable_context, context, enums: dict[str, struct_parse.UnorderedEnum]) -> bytes:
     block = io.BytesIO()
 
     block.write(len(objects).to_bytes(2, 'big'))
@@ -411,7 +421,7 @@ def build_room_entity_block(objects: list[ObjectEntry], variable_context, contex
         def_type = enums['enum entity_type_id'].str_to_int('ENTITY_TYPE_' + object.name)
         block.write(def_type.to_bytes(2, 'big'))
 
-        struct_size = parse.struct_serialize.obj_gather_types(object.def_type, context)
+        struct_size = struct_serialize.obj_gather_types(object.def_type, context)
         block.write(struct_size.to_bytes(2, 'big'))
     
         object.write_definition(context, block)
@@ -429,8 +439,8 @@ def find_scene_objects(scene, definitions, room_collection, base_transform):
             scene.loading_zones.append(LoadingZone(obj, obj['loading_zone']))
             continue
 
-        if entities.entry_point.is_entry_point(obj):
-            scene.locations.append(LocationEntry(obj, entities.entry_point.get_entry_point(obj)))
+        if entry_point.is_entry_point(obj):
+            scene.locations.append(LocationEntry(obj, entry_point.get_entry_point(obj) or ''))
             continue
 
         if obj in object_blacklist:
@@ -502,7 +512,7 @@ def read_room_objects(scene: Scene, scene_vars, context) -> tuple[dict[int, list
     expected_spawners: set[str] = set([entry.name for entry in scene_vars.get_all_entries() if entry.type_name == "entity_spawner"])
 
     for object in scene.objects:
-        parse.struct_serialize.layout_strings(object.obj, object.def_type, context, None)
+        struct_serialize.layout_strings(object.obj, object.def_type, context, None)
 
         key = object.room_index
 
@@ -589,7 +599,7 @@ def process_scene():
     base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
     definitions = {}
     enums = {}
-    room_collection = entities.room.room_collection()
+    room_collection = entities_room.room_collection()
 
     include_all(bpy.context.view_layer.layer_collection)
     bpy.context.view_layer.update()
@@ -598,23 +608,23 @@ def process_scene():
 
     with open('src/scene/scene_definition.h', 'r') as file:
         file_content = file.read()
-        definitions = parse.struct_parse.find_structs(file_content)
-        enums = parse.struct_parse.find_enums(file_content)
+        definitions = struct_parse.find_structs(file_content)
+        enums = struct_parse.find_enums(file_content)
 
-    room_names = [parse.struct_parse.EnumValue('room_default', 0)]
+    room_names = [struct_parse.EnumValue('room_default', 0)]
 
     for collection in bpy.data.collections:
         if collection.name.startswith('room_'):
-            room_names.append(parse.struct_parse.EnumValue(collection.name, len(room_names)))
+            room_names.append(struct_parse.EnumValue(collection.name, len(room_names)))
 
-    room_enum = parse.struct_parse.EnumInfo('enum rooms', room_names)
+    room_enum = struct_parse.EnumInfo('enum rooms', room_names)
 
     for entry in sorted(room_names, key=lambda x: x.name):
         room_collection.get_room_index(entry.name)
 
     enums['enum rooms'] = room_enum
 
-    globals = cutscene.variable_layout.VariableLayout()
+    globals = variable_layout.VariableLayout()
 
     with open('build/assets/scripts/globals.json') as file:
         globals.deserialize(file)
@@ -643,9 +653,9 @@ def process_scene():
 
     build_variable_enum(enums, globals, scene_vars)
 
-    variable_context = cutscene.variable_layout.VariableContext(globals, scene_vars, cutscene.variable_layout.VariableLayout())
+    variable_context = variable_layout.VariableContext(globals, scene_vars, variable_layout.VariableLayout())
 
-    context = parse.struct_serialize.SerializeContext(enums)
+    context = struct_serialize.SerializeContext(enums)
 
     has_overworld = check_for_overworld(base_transform, overworld_filename, definitions, enums, variable_context)
 
@@ -658,8 +668,8 @@ def process_scene():
             write_string(location.name, file)
             write_string(location.on_enter, file)
 
-            parse.struct_serialize.write_vector3_position(file, location.obj)
-            parse.struct_serialize.write_vector2_rotation(file, location.obj)
+            struct_serialize.write_vector3_position(file, location.obj)
+            struct_serialize.write_vector2_rotation(file, location.obj)
 
             file.write(struct.pack('>H', room_collection.get_obj_room_index(location.obj)))
 
@@ -697,7 +707,7 @@ def process_scene():
 
         write_minimap_location(base_transform, file)
 
-        entities.camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
+        camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
 
         if cutscene_filename:
             write_string(cutscene_filename, file)

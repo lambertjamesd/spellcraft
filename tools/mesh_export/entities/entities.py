@@ -5,14 +5,12 @@ import struct
 import sys
 import re
 
-sys.path.append("..")
+from mesh_export.parse.struct_parse import StructureInfo, EnumInfo
+from mesh_export.parse.struct_serialize import layout_strings, SerializeContext, write_obj, get_position, get_value
 
-from parse.struct_parse import StructureInfo, EnumInfo
-from parse.struct_serialize import layout_strings, SerializeContext, write_obj, get_position, get_value
-
-from cutscene.parser import parse_expression
-from cutscene.expresion_generator import generate_script
-from cutscene.variable_layout import VariableContext
+from mesh_export.cutscene.parser import parse_expression
+from mesh_export.cutscene.expresion_generator import generate_script
+from mesh_export.cutscene.variable_layout import VariableContext
 
 MULTIROOM_ATTRIBUTE = {
     "door": ["room_a", "room_b"],

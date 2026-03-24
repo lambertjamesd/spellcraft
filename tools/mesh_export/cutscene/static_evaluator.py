@@ -4,7 +4,7 @@ from . import parser
 
 sys.path.append("..")
 
-import parse.struct_parse
+import mesh_export.parse.struct_parse
     
 global_constant_values: dict[str, int] = {
     'true': 1,
@@ -13,7 +13,7 @@ global_constant_values: dict[str, int] = {
 
 with open('src/scene/scene_definition.h', 'r') as file:
     file_content = file.read()
-    enums = parse.struct_parse.find_enums(file_content)
+    enums = mesh_export.parse.struct_parse.find_enums(file_content)
 
     for value in enums.values():
         value.populate_dict(global_constant_values)
