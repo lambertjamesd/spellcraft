@@ -344,10 +344,10 @@ def _pack_normal(normal: mathutils.Vector):
 def _pack_color(color):
     return struct.pack(
         '>BBBB', 
-        int(pow(max(0, color[0]), 1 / 2.2) * 255),
-        int(pow(max(0, color[1]), 1 / 2.2) * 255),
-        int(pow(max(0, color[2]), 1 / 2.2) * 255),
-        int(color[3] * 255)
+        min(int(pow(max(0, color[0]), 1 / 2.2) * 255), 255),
+        min(int(pow(max(0, color[1]), 1 / 2.2) * 255), 255),
+        min(int(pow(max(0, color[2]), 1 / 2.2) * 255), 255),
+        min(int(color[3] * 255), 255)
     )
 
 def _pack_uv(uv, materail: material.Material):
@@ -482,8 +482,17 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
         if settings.sort_direction:
             mat = mat.copy()
             mat.z_buffer = False
-            mat.blend_mode.z_compare = False
-            mat.blend_mode.z_write = False
+
+            if mat.blend_mode:
+                mat.blend_mode.z_compare = False
+                mat.blend_mode.z_write = False
+            else:
+                mat.blend_mode = material.BlendMode(
+                    material.BlendModeCycle('IN', '0', 'IN', '1'),
+                    None,
+                    z_compare=False,
+                    z_write=False
+                )
 
         if settings.fog_scale != 1 and mat.fog:
             mat.fog.min_distance *= settings.fog_scale

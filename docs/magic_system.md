@@ -137,12 +137,12 @@ Progress indiciators
 | Ice     | A E       | Ice pull inward                  | On ice shatter   | F M       |
 | Ice     | E         | AEO ice explosion (spikes of ice)| On ice shatter   | F         |
 | Earth   |           | Shield                           | On parry         | F         |
-| Earth   | F         | Fire sheild                      | On parry         | F         |
-| Earth   | F I       | Lightning sheild                 | On taking damage |           |
+| Earth   | F         | Fire shield                      | On parry         | F         |
+| Earth   | F I       | Lightning shield                 | On taking damage |           |
 | Earth   | F I A     | Lightning sniper rock            | On impact        | F         |
 | Earth   | F A       | Rocket projectile                | On impact        | F         |
-| Earth   | I         | Ice shield                       | On parry         | F         |
-| Earth   | I A       | Snowball                         | On impact        | F         |
+| Earth   | I         | Ice shield (charged recast)      | On recast        | F         |
+| Earth   | I A       | Snowball (sticky grenade )       | On recast        | F         |
 | Earth   | A         | Projectile                       | On impact        | F T       |
 | Air     |           | Dash                             |                  | F         |
 | Air     | F         | Fire dash                        | On dash end      | F         |

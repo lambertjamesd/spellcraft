@@ -303,11 +303,18 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
         if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH':
             collider.append(mesh, final_transform)
 
-    lod_1_collection: bpy.types.Collection | None = bpy.data.collections["lod_1"] if "lod_1" in bpy.data.collections else None
+    lod_level = 1
+
     lod_1_objects = []
 
-    if lod_1_collection:
-        lod_1_objects = list(lod_1_collection.all_objects)
+    while f"lod_{lod_level}" in bpy.data.collections:
+        lod_collection: bpy.types.Collection = bpy.data.collections[f"lod_{lod_level}"]
+
+        if lod_collection:
+            for obj in lod_collection.all_objects:
+                lod_1_objects.append(entities.overworld.LodTile(obj, lod_level))
+
+        lod_level += 1
 
     subdivisions = 8
     
@@ -536,6 +543,41 @@ def read_room_objects(scene: Scene, scene_vars, context) -> tuple[dict[int, list
     
     return  grouped, shared_entity_index, shared_entities
 
+def write_minimap_range(scene_rotation: mathutils.Matrix, file):
+    minimap_min = mathutils.Vector()
+    minimap_max = mathutils.Vector()
+
+    file.write('MMRG'.encode())
+
+    if 'minimap_min' in bpy.data.objects:
+        final_transform = scene_rotation @ bpy.data.objects['minimap_min'].matrix_world
+        minimap_min = final_transform @ mathutils.Vector()
+        
+    if 'minimap_max' in bpy.data.objects:
+        final_transform = scene_rotation @ bpy.data.objects['minimap_max'].matrix_world
+        minimap_max = final_transform @ mathutils.Vector()
+
+    file.write(struct.pack('>ffff', minimap_min.x, minimap_min.z, minimap_max.x, minimap_max.z))
+
+    
+def write_minimap_location(base_transform: mathutils.Matrix, file):
+    center = mathutils.Vector()
+    rotation = 0
+
+    scene = bpy.data.scenes[0]
+
+    if 'overworld_center' in scene:
+        center = base_transform @ mathutils.Vector(scene['overworld_center'])
+        rotation = scene['overworld_rotation']
+
+    file.write(struct.pack('>fff', center.x, center.z, rotation))
+
+def include_all(collection):
+    collection.exclude = False
+
+    for child in collection.children:
+        include_all(child)
+
 def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-2]
@@ -548,6 +590,9 @@ def process_scene():
     definitions = {}
     enums = {}
     room_collection = entities.room.room_collection()
+
+    include_all(bpy.context.view_layer.layer_collection)
+    bpy.context.view_layer.update()
 
     room_collection.get_room_index('room_default')
 
@@ -647,6 +692,10 @@ def process_scene():
             write_string(overworld_file_location, file)
         else:
             file.write(b'\0')
+
+        write_minimap_range(base_transform, file)
+
+        write_minimap_location(base_transform, file)
 
         entities.camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
 

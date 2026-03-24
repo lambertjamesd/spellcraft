@@ -359,6 +359,9 @@ class Tex():
         result._png_metadata = self._png_metadata
         return result
     
+    def does_scroll(self):
+        return self.s.scroll != 0 or self.t.scroll != 0
+    
     def set_filename(self, filename):
         self.filename = filename
 
@@ -371,7 +374,7 @@ class Tex():
         self.height = self._png_metadata.height
         self.palette_data = self._png_metadata.palette
 
-    def set_frames(self, frames):
+    def set_frames(self, frames: list[str]):
         self.frames = frames
 
         self._png_metadata = PngMetadata(frames[0])
@@ -402,6 +405,9 @@ class Tex():
     def rom_filename(self) -> str:
         if not self.filename:
             return ""
+        
+        if not self.filename.startswith('assets'):
+            raise Exception('filename should be relative')
 
         return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
         
@@ -479,6 +485,7 @@ class Material():
         self.vtx_effect: str | None = None
         self.fog: Fog | None = None
         self.light_count: int | None = None
+        self.priority: int | None = None
 
     def copy(self):
         result = Material()
@@ -496,7 +503,11 @@ class Material():
         result.vtx_effect = self.vtx_effect
         result.fog = self.fog.copy() if self.fog else None
         result.light_count = self.light_count
+        result.priority =  self.priority
         return result
+    
+    def does_scroll(self) -> bool:
+        return bool((self.tex0 and self.tex0.does_scroll()) or (self.tex1 and self.tex1.does_scroll()))
 
     def combine_mode_uses(self, attr: str) -> bool:
         if not self.combine_mode:
@@ -522,19 +533,22 @@ class Material():
         return 128, 128
     
     def get_render_layer(self) -> int:
+        if self.priority != None:
+            return self.priority
+
         if not self.blend_mode:
-            return 0
+            return 10
         
         if self.blend_mode.z_mode == 'OPAQUE':
-            return 0
+            return 10
         if self.blend_mode.z_mode == 'INTER':
-            return 0
+            return 10
         if self.blend_mode.z_mode == 'TRANSPARENT':
-            return 1
+            return 20
         if self.blend_mode.z_mode == 'DECAL':
-            return 2
+            return 30
         
-        return 0
+        return 10
     
     def get_palette_data(self) -> tuple[list[int] | None, int]:
         if not self.tex0 and not self.tex1:
@@ -1022,6 +1036,8 @@ def parse_material(filename: str):
     result.z_buffer = _optional_boolean(json_data, 'zBuffer', 'zBuffer', True)
 
     result.vtx_effect = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
+
+    result.priority = _optional_number(json_data, 'priority', 'priority', None)
 
     result.fog = Fog()
 

@@ -1,11 +1,16 @@
 
 from . import material
 
-def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) -> material.Tex | None:
+def determine_tex_delta(start: material.Tex | None, end: material.Tex | None, st0_filename: str | None = None, et0_filename: str | None = None) -> material.Tex | None:
     if not start or not end:
         return end
     
-    if start == end:
+    accept_last_image_data = True
+    
+    if start.filename == None and end.filename == None:
+        accept_last_image_data = st0_filename == et0_filename
+    
+    if start == end and accept_last_image_data:
         return None
     
     result = end.copy()
@@ -13,7 +18,7 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None) ->
     if start.filename == end.filename:
         result.filename = None
 
-    if start.palette_data == end.palette_data:
+    if start.palette_data == end.palette_data and accept_last_image_data:
         result.palette_data = None
 
     if start.frames == end.frames:
@@ -62,7 +67,12 @@ def determine_material_delta(start: material.Material, end: material.Material) -
         result.lighting = end.lighting
 
     result.tex0 = determine_tex_delta(start.tex0, end.tex0)
-    result.tex1 = determine_tex_delta(start.tex1, end.tex1)
+    result.tex1 = determine_tex_delta(
+        start.tex1, 
+        end.tex1,
+        start.tex0.filename if start.tex0 else None,
+        end.tex0.filename if end.tex0 else None
+    )
 
     if end.culling != None and (start.culling == None or start.culling != end.culling):
         result.culling = end.culling

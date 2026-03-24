@@ -48,6 +48,12 @@ class mesh_data():
 
         return result
     
+    def mat_priority(self) -> int:
+        if not self.mat or not 'priority' in self.mat:
+            return 10
+        
+        return self.mat['priority']
+    
     def mat_name(self) -> str:
         if self.mat:
             return self.mat.name
@@ -78,6 +84,17 @@ class mesh_data():
         self.indices.append(a)
         self.indices.append(b)
         self.indices.append(c)
+
+    
+    def append_mesh_data(self, other):
+        start_index = len(self.vertices)
+
+        self.vertices += other.vertices
+        self.normals += other.normals
+        self.color += other.color
+        self.uv += other.uv
+        self.indices += list(map(lambda x: x + start_index, other.indices))
+        self.bone_indices += other.bone_indices
 
     def get_triangles(self):
         result: list[list[int]] = []

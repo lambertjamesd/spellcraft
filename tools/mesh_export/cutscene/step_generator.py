@@ -38,6 +38,15 @@ CUTSCENE_STEP_SPAWN = 27
 CUTSCENE_STEP_CALLBACK = 28
 CUTSCENE_STEP_SHOW_BOSS_HEALTH = 29
 CUTSCENE_STEP_LOAD_SCENE = 30
+CUTSCENE_STEP_DESPAWN = 31
+CUTSCENE_STEP_START_TIMER = 32
+CUTSCENE_STEP_CANCEL_TIMER = 33
+CUTSCENE_STEP_ASK = 34
+CUTSCENE_STEP_SHOW_MAIN_MENU = 35
+CUTSCENE_STEP_STOPWATCH_SHOW = 36
+CUTSCENE_STEP_STOPWATCH_RUN = 37
+CUTSCENE_STEP_AUDIO_PAUSE = 38
+CUTSCENE_STEP_SHOW_IMAGE = 39
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -51,10 +60,12 @@ class Alias():
 
 _step_args = {
     "say": [ParameterType("tstr", True)],
+    "ask": [ParameterType("tstr", True)],
     "pause": [ParameterType("bool", True), ParameterType("bool", True)],
     "delay": [ParameterType("float", True)],
     "interact_with_npc": [ParameterType("int", True), ParameterType("entity_id", False), ParameterType("entity_id", False)],
     "idle_npc": [ParameterType("entity_id", False)],
+    "show_item": [ParameterType("int", True)],
     "cam_look_npc": [ParameterType("entity_id", False)],
     "cam_follow": [],
     "cam_return": [],
@@ -76,16 +87,25 @@ _step_args = {
     "npc_animate": [ParameterType("entity_id", False), ParameterType("str", True), ParameterType("bool", True)],
     "print": [ParameterType("tstr", True)],
     "spawn": [ParameterType("entity_spawner", False)],
-    "show_boss_health": [ParameterType("str", True), ParameterType("entity_id", False)],
+    "despawn": [ParameterType("entity_id", False)],
     "load_scene": [ParameterType("str", True)],
+    "start_timer": [ParameterType("float", True), ParameterType("str", True)],
+    "cancel_timer": [],
+    "show_main_menu": [],
+    "stopwatch_show": [ParameterType("bool", True)],
+    "stopwatch_run": [ParameterType("bool", True)],
+    "audio_pause": [ParameterType("bool", True)],
+    "show_image": [ParameterType("str", True)],
 }
 
 _step_ids = {
     "say": CUTSCENE_STEP_DIALOG,
+    "ask": CUTSCENE_STEP_ASK,
     "pause": CUTSCENE_STEP_PAUSE,
     "delay": CUTSCENE_STEP_DELAY,
     "interact_with_npc": CUTSCENE_STEP_INTERACT_WITH_NPC,
     "idle_npc": CUTSCENE_STEP_IDLE_NPC,
+    "show_item": CUTSCENE_STEP_SHOW_ITEM,
     "cam_look_npc": CUTSCENE_STEP_CAMERA_LOOK_AT_NPC,
     "cam_follow": CUTSCENE_STEP_CAMERA_FOLLOW,
     "cam_return": CUTSCENE_STEP_CAMERA_RETURN,
@@ -101,8 +121,15 @@ _step_ids = {
     "npc_animate": CUTSCENE_STEP_NPC_ANIMATE,
     "print": CUTSCENE_STEP_PRINT,
     "spawn": CUTSCENE_STEP_SPAWN,
-    "show_boss_health": CUTSCENE_STEP_SHOW_BOSS_HEALTH,
     "load_scene": CUTSCENE_STEP_LOAD_SCENE,
+    "despawn": CUTSCENE_STEP_DESPAWN,
+    "start_timer": CUTSCENE_STEP_START_TIMER,
+    "cancel_timer": CUTSCENE_STEP_CANCEL_TIMER,
+    "show_main_menu": CUTSCENE_STEP_SHOW_MAIN_MENU,
+    "stopwatch_show": CUTSCENE_STEP_STOPWATCH_SHOW,
+    "stopwatch_run": CUTSCENE_STEP_STOPWATCH_RUN,
+    "audio_pause": CUTSCENE_STEP_AUDIO_PAUSE,
+    "show_image": CUTSCENE_STEP_SHOW_IMAGE,
 }
 
 _steps_that_need_idle = {
@@ -112,8 +139,8 @@ _steps_that_need_idle = {
 }
 
 _aliases: dict[str, Alias] = {
-    "sign_start": Alias("pause true, false; look_at_subject;"),
-    "sign_end": Alias("pause false, false;"),
+    "sign_start": Alias("pause true, false; look_at_subject; cam_look_npc ENTITY_ID_SUBJECT;"),
+    "sign_end": Alias("pause false, false; cam_return;"),
     "world_pause": Alias("pause true, false;"),
     "world_unpause": Alias("pause false, false;"),
 }
@@ -201,10 +228,10 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
             if not isinstance(parameter, parser.String):
                 raise Exception('Parameter should be a string')
 
-            for replacment in parameter.replacements:
-                expression = expresion_generator.generate_script(replacment.expr, context)
+            for replacement in parameter.replacements:
+                expression = expresion_generator.generate_script(replacement.expr, context)
                 if not expression:
-                    raise Exception(f"Could not generate expression {replacment}")   
+                    raise Exception(f"Could not generate expression {replacement}")   
 
                 if pre_expression:
                     pre_expression = pre_expression.concat(expression)
@@ -448,6 +475,8 @@ def _idle_effected_actors(cutscene: Cutscene, statements: list):
     _idle_find_effected_actors(statements, actors)
 
     for actor in actors:
+        if actor == None:
+            continue
         expression = expresion_generator.ExpressionScript([
             expresion_generator.ExpresionScriptIntLiteral(actor),
             expresion_generator.ExpressionCommand(expresion_generator.EXPRESSION_TYPE_END),

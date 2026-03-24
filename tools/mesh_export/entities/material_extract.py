@@ -2,6 +2,7 @@ import bpy
 import os.path
 import sys
 import math
+import re
 
 from . import material
 from . import serialize
@@ -228,15 +229,48 @@ def _determine_tex_axis_from_f3d(axis, image_size, uv_scroll, result: material.T
     result.min = 0
     result.max = image_size << 2
 
+filename_number_suffix = r'\d+\.png$'
 
-def _determine_tex_from_f3d(tex, uv_scroll, base_path: str) -> material.Tex | None:
+def _look_for_frames(filename: str) -> list[str]:
+    match = re.search(filename_number_suffix, filename)
+
+    if not match:
+        return [filename]
+
+    number_text = filename[match.start() - match.endpos: -4]
+    prefix = filename[0:match.start() - match.endpos]
+
+    pad_len = len(number_text)
+
+    result = []
+    index = int(number_text)
+
+    while index < 100:
+        frame_filename = prefix + str(index).rjust(pad_len, '0') + '.png'
+
+        if not os.path.isfile(frame_filename):
+            break
+
+        result.append(frame_filename)
+        index += 1
+
+    return result
+
+def _determine_tex_from_f3d(tex, uv_scroll, base_path: str, flipbook: bool = False) -> material.Tex | None:
     image = tex['tex']
 
     if not tex['tex_set'] or not image:
         return None
 
     result = material.Tex()
-    result.set_filename(os.path.normpath(os.path.join(os.path.dirname(base_path), image.filepath[2:])))
+
+    filename = os.path.normpath(os.path.join(os.path.dirname(base_path), image.filepath[2:]))
+    frames = _look_for_frames(filename) if flipbook else [filename]
+
+    if len(frames) == 1:
+        result.set_filename(filename)
+    else:
+        result.set_frames(frames)
 
     _determine_tex_axis_from_f3d(tex['S'], result.width, uv_scroll['x'] if uv_scroll and 'x' in uv_scroll else None, result.s)
     _determine_tex_axis_from_f3d(tex['T'], result.height, uv_scroll['y'] if uv_scroll and 'y' in uv_scroll else None, result.t)
@@ -422,7 +456,10 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
 
     uv_anim_0 = f3d_mat['UVanim0'] if 'UVanim0' in f3d_mat else None
     uv_anim_1 = f3d_mat['UVanim1'] if 'UVanim1' in f3d_mat else None
-    result.tex0 = _determine_tex_from_f3d(f3d_mat['tex0'], uv_anim_0, base_path) if result.combine_mode.uses('TEX0') else None
+
+    flipbook_0 = 'flipbook_0' in mat and mat['flipbook_0']
+
+    result.tex0 = _determine_tex_from_f3d(f3d_mat['tex0'], uv_anim_0, base_path, flipbook = flipbook_0) if result.combine_mode.uses('TEX0') else None
     result.tex1 = _determine_tex_from_f3d(f3d_mat['tex1'], uv_anim_1, base_path) if result.combine_mode.uses('TEX1') else None
     result.layout_textures()
 
@@ -447,6 +484,9 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
         result.light_count = 1
     else:
         result.light_count = 0
+
+    if 'priority' in mat:
+        result.priority = mat['priority']
 
     return result
 

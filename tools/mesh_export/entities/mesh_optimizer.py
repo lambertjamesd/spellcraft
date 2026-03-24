@@ -91,8 +91,21 @@ def determine_chunk_order(chunks: list[mesh_chunk], default_material: material.M
 
     result = []
 
-    for render_layer in range(0, 3):
-        chunk_layer = list(filter(lambda x: x.material.get_render_layer() == render_layer, chunks))
+    layers: dict[int, list[mesh_chunk]] = {}
+
+    for chunk in chunks:
+        layer = chunk.material.get_render_layer()
+
+        if layer in layers:
+            layers[layer].append(chunk)
+        else:
+            layers[layer] = [chunk]
+
+    sorted_layer_pairs = sorted(layers.items(), key = lambda k: k[0])
+
+    sorted_layers = [k[1] for k in sorted_layer_pairs]
+
+    for chunk_layer in sorted_layers:
         target_length = len(result) + len(chunk_layer)
         used_chunks = set()
 
