@@ -19,6 +19,8 @@
 #include "../objects/burning_thorns.h"
 #include "../objects/sign.h"
 #include "../objects/trigger_cube.h"
+#include "../entities/script_runner.h"
+// include_list insert point
 
 #include "../puzzle/bool_and_logic.h"
 #include "../puzzle/camera_focus.h"
@@ -48,10 +50,6 @@
 
 static struct entity_field_type_location fields_empty[] = {};
 
-static struct entity_field_type_location fields_repair_interaction[] = {
-    { .offset = offsetof(struct repair_interaction_definition, repair_scene), .type = ENTITY_FIELD_TYPE_STRING },
-};
-
 static struct entity_field_type_location fields_npc[] = {
     { .offset = offsetof(struct npc_definition, dialog), .type = ENTITY_FIELD_TYPE_STRING },
 };
@@ -60,7 +58,7 @@ static struct entity_field_type_location fields_script_runner[] = {
     { .offset = offsetof(struct script_runner_definition, target), .type = ENTITY_FIELD_TYPE_STRING },
 };
 
-static struct entity_field_type_location fields_sign_runner[] = {
+static struct entity_field_type_location fields_sign[] = {
     { .offset = offsetof(struct sign_definition, message), .type = ENTITY_FIELD_TYPE_STRING },
 };
 

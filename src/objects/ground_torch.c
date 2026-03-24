@@ -20,7 +20,6 @@ struct torch_type_def {
     vector2_t flame_offset;
     float flame_height;
     dynamic_object_type_t collider;
-    float collider_offset;
 };
 
 static struct torch_type_def torch_defs[] = {
@@ -32,8 +31,8 @@ static struct torch_type_def torch_defs[] = {
         .flame_height = 0.84124f,
         .collider = {
             CAPSULE_COLLIDER(0.4f, 0.4f),
+            .center = { 0.0f, 0.8f, 0.0f },
         },
-        .collider_offset = 0.8f,
     },
     [GROUND_TORCH_LIGHTNING] = {
         .mesh_filename = "rom:/meshes/puzzle/electric_torch.tmesh",
@@ -43,8 +42,8 @@ static struct torch_type_def torch_defs[] = {
         .flame_height = 0.84124f,
         .collider = {
             CAPSULE_COLLIDER(0.4f, 0.4f),
+            .center = { 0.0f, 0.8f, 0.0f },
         },
-        .collider_offset = 0.8f,
     },
     [GROUND_TORCH_KILN] = {
         .mesh_filename = "rom:/meshes/puzzle/kiln.tmesh",
@@ -55,8 +54,8 @@ static struct torch_type_def torch_defs[] = {
         .flame_height = 0.15f,
         .collider = {
             CYLINDER_COLLIDER(3.0f, 2.5f),
+            .center = { 0.0f, 2.5f, 0.0f },
         },
-        .collider_offset = 2.5f,
     },
 };
 
@@ -130,7 +129,6 @@ void ground_torch_init(struct ground_torch* ground_torch, struct ground_torch_de
         &ground_torch->transform.position, 
         NULL
     );
-    ground_torch->dynamic_object.center.y = torch_type->collider_offset;
     ground_torch->dynamic_object.is_fixed = 1;
     ground_torch->dynamic_object.weight_class = WEIGHT_CLASS_SUPER_HEAVY;
 

@@ -29,7 +29,7 @@ void test_memory_leak_end(struct test_context* t, heap_stats_t *start) {
 }
 
 void test_resource_reset() {
-    menu_common_destroy();
+    // menu_common_destroy();
     interactable_reset();
     tmesh_cache_destroy();
     material_cache_destroy();

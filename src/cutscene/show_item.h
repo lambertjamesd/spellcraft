@@ -15,6 +15,8 @@ struct show_item {
     float show_item_timer;
 };
 
+typedef struct show_item show_item_t;
+
 void show_item_init(struct show_item* show_item);
 void show_item_start(struct show_item* show_item, union cutscene_step_data* data);
 bool show_item_update(struct show_item* show_item, union cutscene_step_data* data);

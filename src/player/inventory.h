@@ -4,10 +4,35 @@
 #include <stdint.h>
 #include "../scene/scene_definition.h"
 #include "../cutscene/evaluation_context.h"
+#include "staff.h"
+#include "../spell/spell.h"
 
 struct global_location { 
     uint16_t data_type;
     uint16_t word_offset;
+};
+
+#define MAX_SPELL_SLOTS 4
+
+#define MAX_CUSTOM_SPELLS   6
+
+#define INVENTORY_SPELL_COLUMNS   6
+#define INVENTORY_SPELL_ROWS      3
+
+#define SPELL_SYMBOL_TO_MASK(symbol_index)  (1 << (symbol_index))
+
+#define EQUIPPED_NONE   0xFF
+
+extern enum inventory_item_type staff_item_types[INV_STAFF_COUNT];
+
+struct inventory {
+    struct spell* spell_slots[MAX_SPELL_SLOTS];
+
+    struct spell* built_in_spells[INVENTORY_SPELL_COLUMNS * INVENTORY_SPELL_ROWS];
+
+    struct spell custom_spells[MAX_CUSTOM_SPELLS];
+
+    struct staff_stats* equipped_staff;
 };
 
 void inventory_init();

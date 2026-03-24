@@ -28,6 +28,7 @@ static struct dynamic_object_type biter_collision_type = {
     .friction = 0.1f,
     // about a 40 degree slope
     .max_stable_slope = 0.219131191f,
+    .center = { 0.0f, 0.4f, 0.0f },
 };
 
 static struct spatial_trigger_type biter_vision_type = {
@@ -116,7 +117,7 @@ void biter_update_target(struct biter* biter) {
 }
 
 void biter_update(struct biter* biter) {
-    animator_update(&biter->animator, &biter->renderable.armature, fixed_time_step);
+    animator_update(&biter->animator, &biter->renderable.mesh_render.armature, fixed_time_step);
 
     biter_update_target(biter);
 
@@ -146,7 +147,6 @@ void biter_init(struct biter* biter, struct biter_definition* definition, entity
         id
     );
 
-    biter->dynamic_object.center.y = biter_collision_type.data.sphere.radius * 0.5f;
     biter->dynamic_object.density_class = DYNAMIC_DENSITY_MEDIUM;
 
     collision_scene_add(&biter->dynamic_object);
@@ -164,7 +164,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition, entity
     biter->animations.run = animation_set_find_clip(biter->animation_set, "enemy1_walk");
     biter->current_target = 0;
 
-    animator_init(&biter->animator, biter->renderable.armature.bone_count);
+    animator_init(&biter->animator, biter->renderable.mesh_render.armature.bone_count);
 
     animator_run_clip(&biter->animator, biter->animations.idle, 0.0f, true);
 

@@ -89,10 +89,10 @@ void inventory_unlock_item(enum inventory_item_type type) {
     assert(global->data_type);
 
     if (inventory_is_upgrade_item(type)) {
-        int prev = evaluation_context_load(savefile_get_globals(), global->data_type, global->word_offset);
-        evaluation_context_save(savefile_get_globals(), global->data_type, global->word_offset, prev + 1);
+        int prev = evaluation_context_load(savefile_get_globals(GLOBAL_ACCESS_MODE_READ), global->data_type, global->word_offset);
+        evaluation_context_save(savefile_get_globals(GLOBAL_ACCESS_MODE_WRITE), global->data_type, global->word_offset, prev + 1);
     } else {
-        evaluation_context_save(savefile_get_globals(), global->data_type, global->word_offset, true);
+        evaluation_context_save(savefile_get_globals(GLOBAL_ACCESS_MODE_WRITE), global->data_type, global->word_offset, true);
     }
 }
 
@@ -102,7 +102,7 @@ int inventory_get_item_level(enum inventory_item_type type) {
     }
 
     struct global_location* global = &inventory_item_locations[type];
-    return evaluation_context_load(savefile_get_globals(), global->data_type, global->word_offset);
+    return evaluation_context_load(savefile_get_globals(GLOBAL_ACCESS_MODE_WRITE), global->data_type, global->word_offset);
 }
 
 struct staff_stats* inventory_equipped_staff() {

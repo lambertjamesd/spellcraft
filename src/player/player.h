@@ -17,6 +17,7 @@
 #include "../spell/live_cast.h"
 #include "../entity/health.h"
 #include "../entity/interactable.h"
+#include "../player/staff.h"
 
 #include "inventory.h"
 #include "grab_checker.h"

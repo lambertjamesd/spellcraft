@@ -7,7 +7,6 @@
 #include "../cutscene/evaluation_context.h"
 #include "../cutscene/expression_evaluate.h"
 #include "../cutscene/cutscene_runner.h"
-#include "../menu/map_menu.h"
 #include "../time/time.h"
 #include "../config.h"
 #include "../profile/profile.h"
@@ -213,15 +212,6 @@ void scene_update(void* data) {
     if (update_has_layer(UPDATE_LAYER_WORLD)) {
         joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
         joypad_inputs_t input = joypad_get_inputs(0);
-    
-        if (!input.btn.start) {
-            scene->can_pause = true;
-        }
-    
-        if (pressed.start && scene->can_pause) {
-            map_menu_show();
-            scene->can_pause = false;
-        }
 
 #if ENABLE_LOD_RENDER_DEBUG
         if (input.btn.d_right) {
@@ -238,8 +228,6 @@ void scene_update(void* data) {
         }
 #endif
     }
-
-    overworld_music_update(&scene->music, player_get_position(&scene->player), scene->overworld != NULL);
     SC_PROFILE_END(scene, scene_update);
 }
 

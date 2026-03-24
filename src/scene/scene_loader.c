@@ -17,7 +17,6 @@
 #include "../effects/area_title.h"
 #include "../render/defs.h"
 #include "../audio/audio.h"
-#include "../cutscene/race.h"
 #include "../effects/fade_effect.h"
 
 #include "../collision/collision_scene.h"
@@ -294,13 +293,12 @@ struct scene* scene_load(const char* filename) {
     scene->named_locations = named_locations;
     scene->named_location_count = location_count;
     scene->last_despawn_check = 0;
-    scene->can_pause = false;
 
     cutscene_actor_common_init();
     camera_init(&scene->camera, DEFAULT_CAMERA_FOV, WORLD_NEAR_PLANE, WORLD_FAR_PLANE);
     player_init(&scene->player, &player_def, &scene->camera.transform);
     camera_controller_init(&scene->camera_controller, &scene->camera, &scene->player);
-    hud_init(&scene->hud, &scene->player, &scene->camera);
+    hud_init(&scene->hud, &scene->player);
 
     uint16_t static_count;
     fread(&static_count, 2, 1, file);

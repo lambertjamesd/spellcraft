@@ -50,8 +50,8 @@ static cutscene_actor_def_t jelly_cutscene_actor = {
         .bounce = 0.0f,
         // about a 40 degree slope
         .max_stable_slope = 0.219131191f,
+        .center = { 0.0f, 1.5f, 0.0f },
     },
-    .half_height = 1.5f,
     .collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY | COLLISION_LAYER_Z_TARGET,
 };
 
@@ -522,9 +522,8 @@ void jelly_king_update(void* data) {
         return;
     }
 
-    jelly_king->actor_def.collider.data.cylinder.half_height = jelly_king_collider.data.cylinder.half_height * jelly_king->renderable.armature.pose[0].scale.y;
-    jelly_king->cutscene_actor.collider.center.y = jelly_king->actor_def.collider.data.cylinder.half_height;
-    jelly_king->actor_def.collider.data.cylinder.radius = jelly_king_collider.data.cylinder.radius * jelly_king->renderable.armature.pose[0].scale.x;
+    jelly_king->actor_def.collider.data.cylinder.half_height = jelly_king_collider.data.cylinder.half_height * jelly_king->renderable.mesh_render.armature.pose[0].scale.y;
+    jelly_king->actor_def.collider.data.cylinder.radius = jelly_king_collider.data.cylinder.radius * jelly_king->renderable.mesh_render.armature.pose[0].scale.x;
 
     switch (jelly_king->state)
     {
@@ -582,7 +581,7 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
         &jelly_king->cutscene_actor.transform,
         NPC_TYPE_JELLY_KING,
         0,
-        &jelly_king->renderable.armature,
+        &jelly_king->renderable.mesh_render.armature,
         "rom:/meshes/enemies/jelly_king.anim"
     );
 

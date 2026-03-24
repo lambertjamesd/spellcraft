@@ -301,6 +301,12 @@ struct npc_definition {
     script_location dialog;
 };
 
+struct script_runner_definition {
+    struct Vector3 position;
+    script_location target;
+    bool loop;
+};
+
 struct pottery_wheel_definition {
     struct Vector3 position;
     boolean_variable input;

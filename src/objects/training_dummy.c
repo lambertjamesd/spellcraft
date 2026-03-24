@@ -11,14 +11,8 @@
 #define DUMMY_BURN_TIME 7.0f
 
 static struct dynamic_object_type dummy_collision = {
-    .minkowsi_sum = capsule_minkowski_sum,
-    .bounding_box = capsule_bounding_box,
-    .data = {
-        .capsule = {
-            .radius = 0.35f,
-            .inner_half_height = 0.4f,
-        }
-    }
+    CAPSULE_COLLIDER(0.25f, 0.4f),
+    .center = {0.0f, 0.65f, 0.0f},
 };
 
 void training_dummy_check_fire(struct training_dummy* dummy) {
@@ -61,14 +55,14 @@ void training_dummy_update(void* data) {
             dummy->shock_timer = 2;
         } else {
             --dummy->shock_timer;
-            dummy->renderable.force_material = (dummy->shock_timer & 1) ? spell_assets_get()->shock_material : NULL;
+            dummy->renderable.mesh_render.force_material = (dummy->shock_timer & 1) ? spell_assets_get()->shock_material : NULL;
         }
         return;
     } else if (health_is_frozen(&dummy->health)) {
-        dummy->renderable.force_material = spell_assets_get()->ice_material;
+        dummy->renderable.mesh_render.force_material = spell_assets_get()->ice_material;
         return;
     } else {
-        dummy->renderable.force_material = NULL;
+        dummy->renderable.mesh_render.force_material = NULL;
         dummy->shock_timer = 0;
 
         if (vector3Dot(&dummy->collision.velocity, &dummy->collision.velocity) > 0.0f) {
@@ -130,8 +124,6 @@ void training_dummy_init(struct training_dummy* dummy, struct training_dummy_def
 
     dummy->angularVelocity = gZeroVec;
     dummy->shock_timer = 0;
-
-    dummy->collision.center.y = dummy_collision.data.capsule.inner_half_height + dummy_collision.data.capsule.radius;
 
     collision_scene_add(&dummy->collision);
 

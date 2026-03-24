@@ -2,6 +2,8 @@
 
 #include "menu_common.h"
 #include "../resource/material_cache.h"
+#include "../player/staff.h"
+#include "../player/inventory.h"
 
 void inventory_menu_init(struct inventory_menu* menu) {
     menu->cursor_x = 0;

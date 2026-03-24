@@ -104,7 +104,7 @@ void mana_gem_update(void* data) {
         }
 
         struct Vector3 move_to;
-        vector3Add(player->position, &player->center, &move_to);
+        vector3Add(player->position, &player->type->center, &move_to);
         if (mana_gem_gravitate_towards(gem, &move_to)) {
             return;
         }

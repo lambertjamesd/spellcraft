@@ -322,7 +322,7 @@ void camera_controller_update(struct camera_controller* controller) {
             break;
     }
 
-    camera_wall_checker_update(&controller->wall_checker, &controller->looking_at, &controller->target);
+    camera_wall_checker_update(&controller->wall_checker, &controller->looking_at, &controller->target, CAMERA_FOLLOW_DISTANCE);
 
     vector3AddScaled(&controller->shake_velocity, &controller->shake_offset, -50.0f, &controller->shake_velocity);
     vector3AddScaled(&controller->shake_offset, &controller->shake_velocity, fixed_time_step, &controller->shake_offset);
@@ -430,4 +430,11 @@ void camera_shake(struct camera_controller* controller, float strength) {
     controller->shake_offset.x += randomInRangef(-strength, strength);
     controller->shake_offset.y += randomInRangef(-strength, strength);
     controller->shake_offset.z += randomInRangef(-strength, strength);
+}
+
+void camera_shift_by(struct camera_controller* controller, vector3_t* offset) {
+    vector3Add(&controller->look_target, offset, &controller->look_target);
+    vector3Add(&controller->target, offset, &controller->target);
+    vector3Add(&controller->looking_at, offset, &controller->looking_at);
+    vector3Add(&controller->stable_position, offset, &controller->stable_position);
 }

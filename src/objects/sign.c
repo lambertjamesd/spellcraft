@@ -7,6 +7,7 @@
 
 static struct dynamic_object_type sign_collider = {
     BOX_COLLIDER(0.5f, 0.25f, 0.05f),
+    .center = { 0.0f, 1.0f, 0.0f },
 };
 
 void sign_interact(struct interactable* interactable, entity_id from) {
@@ -34,7 +35,6 @@ void sign_init(sign_t* sign, struct sign_definition* def, entity_id entity_id) {
         &sign->transform.rotation
     );
 
-    sign->dynamic_object.center.y = 1.0f;
     sign->dynamic_object.is_fixed = 1;
     sign->dynamic_object.weight_class = WEIGHT_CLASS_SUPER_HEAVY;
 

@@ -46,6 +46,7 @@ static struct dynamic_object_type jelly_collider = {
     .bounce = 0.0f,
     // about a 40 degree slope
     .max_stable_slope = 0.219131191f,
+    .center = {0.0f, 1.0f, 0.0f},
 };
 
 static struct dynamic_object_type jelly_ice_collider = {
@@ -53,6 +54,7 @@ static struct dynamic_object_type jelly_ice_collider = {
     .friction = 0.025f,
     .bounce = 0.1f,
     .max_stable_slope = 0.0f,
+    .center = {0.0f, 1.0f, 0.0f},
 };
 
 static struct spatial_trigger_type jelly_vision_type = {
@@ -347,7 +349,6 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity
     jelly->collider.scale = jelly_recalc_radius(jelly);
     jelly->target_radius = jelly->collider.scale;
     jelly->transform.scale = jelly->collider.scale;
-    jelly->collider.center.y = 1.0f;
     jelly->jump_timer = 0.0f;
     jelly->current_target = 0;
 

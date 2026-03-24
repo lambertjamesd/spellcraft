@@ -88,18 +88,11 @@ static struct cutscene_actor_def player_actor_def = {
     .run_speed = PLAYER_RUN_ANIM_SPEED,
     .run_threshold = PLAYER_RUN_THRESHOLD,
     .rotate_speed = 2.0f,
-    .half_height = 0.75f,
     .collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
     .collision_group = COLLISION_GROUP_PLAYER,
     .collider = {
-        .minkowsi_sum = capsule_minkowski_sum,
-        .bounding_box = capsule_bounding_box,
-        .data = {
-            .capsule = {
-                .radius = 0.25f,
-                .inner_half_height = 0.5f,
-            }
-        },
+        CAPSULE_COLLIDER(0.25f, 0.5f),
+        .center = {0.75f},
         .max_stable_slope = MAX_STABLE_SLOPE,
         .friction = 0.2f,
     },
@@ -617,7 +610,7 @@ void player_carry(player_t* player, contact_t* ground_contact) {
         transform_sa_t* player_transform = &player->cutscene_actor.transform;
 
         struct Transform cast_transform;
-        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh->attatchments[0].bone_index, &cast_transform);
+        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attatchments[0].bone_index, &cast_transform);
 
         struct Vector3 position;
         vector3Scale(&cast_transform.position, &cast_transform.position, 1.0f / MODEL_SCALE);
@@ -865,7 +858,7 @@ bool player_cast_state(joypad_buttons_t buttons, int button_index) {
 
 void player_check_inventory(struct player* player) {
     struct staff_stats* staff = inventory_equipped_staff();
-    player->renderable.attachments[0] = staff->item_type == ITEM_TYPE_NONE ? NULL : player->assets.staffs[staff->staff_index];
+    player->renderable.mesh_render.attachments[0] = staff->item_type == ITEM_TYPE_NONE ? NULL : player->assets.staffs[staff->staff_index];
 }
 
 void player_update_spells(struct player* player, joypad_inputs_t input, joypad_buttons_t pressed) {
@@ -890,7 +883,7 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
 
     if (source->flags.is_animating) {
         struct Transform cast_transform;
-        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh->attatchments[0].bone_index, &cast_transform);
+        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attatchments[0].bone_index, &cast_transform);
 
         struct Vector3 direction;
         quatMultVector(&cast_transform.rotation, &gUp, &direction);
@@ -1141,7 +1134,7 @@ void player_init(struct player* player, struct player_definition* definition, st
         &transform,
         NPC_TYPE_PLAYER,
         0,
-        &player->renderable.armature,
+        &player->renderable.mesh_render.armature,
         "rom:/meshes/characters/apprentice.anim"
     );
 

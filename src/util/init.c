@@ -10,8 +10,11 @@
 #include "../cutscene/cutscene_runner.h"
 #include "../cutscene/cutscene_actor.h"
 #include "../audio/audio.h"
-#include "../entities/vehicle.h"
 #include "../menu/menu_common.h"
+#include "../spell/mana_pool.h"
+#include "../objects/assets.h"
+#include "../spell/assets.h"
+#include "../effects/assets.h"
 
 void init_engine() {
     spell_assets_init();
@@ -25,7 +28,6 @@ void init_engine() {
     mana_pool_reset();
     interactable_reset();
     menu_reset();
-    collectable_assets_load();
     dialog_box_init();
     cutscene_runner_init();
     cutscene_actor_reset();

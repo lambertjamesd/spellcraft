@@ -16,20 +16,13 @@ struct npc_information npc_information[] = {
             .rotate_speed = 2.0f,
             .collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_Z_TARGET,
             .collider = {
-                .minkowsi_sum = capsule_minkowski_sum,
-                .bounding_box = capsule_bounding_box,
-                .data = {
-                    .capsule = {
-                        .radius = 0.25f,
-                        .inner_half_height = 0.75f,
-                    },
-                },
+                CAPSULE_COLLIDER(0.25f, 0.75f),
                 // about a 40 degree slope
                 .max_stable_slope = 0.219131191f,
                 .friction = 0.5f,
                 .bounce = 0.1f,
+                .center = {0.0f, 1.0f, 0.0f},
             },
-            .half_height = 1.0f,
         },
     },
 };
@@ -62,7 +55,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id) {
         &npc->cutscene_actor.transform, 
         definiton->npc_type, 
         0, 
-        &npc->renderable.armature, 
+        &npc->renderable.mesh_render.armature, 
         information->animations
     );
 

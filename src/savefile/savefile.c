@@ -4,7 +4,6 @@
 #include <libdragon.h>
 #include <malloc.h>
 #include <stdint.h>
-#include "../menu/map_menu.h"
 #include "../config.h"
 
 #define AUTOSAVE_INTERVAL       180.0f
@@ -79,11 +78,6 @@ void savefile_check_for_data() {
     data_cache_hit_writeback_invalidate(current_savefile, ALIGN_BLOCK(size));
     dma_read_async(current_savefile, SRAM_ADDRESS + ALIGN_BLOCK(sizeof(struct savefile_header)), ALIGN_BLOCK(size));
     dma_wait();
-
-    uint8_t* map_revealed = map_get_revealed();
-    data_cache_hit_writeback_invalidate(map_revealed, MAP_BLOCK_SIZE);
-    dma_read_async(map_revealed, SRAM_ADDRESS + ALIGN_BLOCK(sizeof(struct savefile_header)) + ALIGN_BLOCK(size), MAP_BLOCK_SIZE);
-    dma_wait();
 }
 
 bool savefile_save() {
@@ -98,11 +92,6 @@ bool savefile_save() {
     
     data_cache_hit_writeback_invalidate(current_savefile, ALIGN_BLOCK(savefile.globals_size));
     dma_write_raw_async(current_savefile, SRAM_ADDRESS + ALIGN_BLOCK(sizeof(struct savefile_header)), ALIGN_BLOCK(savefile.globals_size));
-    dma_wait();
-    
-    uint8_t* map_revealed = map_get_revealed();
-    data_cache_hit_writeback_invalidate(map_revealed, MAP_BLOCK_SIZE);
-    dma_write_raw_async(map_revealed, SRAM_ADDRESS + ALIGN_BLOCK(sizeof(struct savefile_header)) + ALIGN_BLOCK(savefile.globals_size), MAP_BLOCK_SIZE);
     dma_wait();
 
     last_save_time = game_time;
@@ -127,8 +116,6 @@ void savefile_new() {
     savefile.header = HEADER_NAME;
     savefile.globals_size = size;
     savefile.last_scene[0] = '\0';
-
-    memset(map_get_revealed(), 0, MAP_BLOCK_SIZE);
 
     fclose(file);
 }

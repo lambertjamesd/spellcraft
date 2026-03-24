@@ -10,6 +10,7 @@
 static struct dynamic_object_type step_switch_type = {
     BOX_COLLIDER(0.5f, 0.1f, 0.5f),
     .surface_type = SURFACE_TYPE_STICKY,
+    .center = {0.0f, 0.1f, 0.0f},
 };
 
 #define PRESS_DISTANCE  0.1f
@@ -62,7 +63,6 @@ void step_switch_init(step_switch_t* step_switch, struct step_switch_definition*
     );
 
     step_switch->target_pos = definition->position.y;
-    step_switch->collider.center.y = 0.1f,
     step_switch->collider.is_fixed = 1;
     step_switch->collider.weight_class = WEIGHT_CLASS_HEAVY;
     step_switch->output = definition->output;

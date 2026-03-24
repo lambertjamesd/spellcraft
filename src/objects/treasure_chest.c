@@ -13,6 +13,7 @@ static struct dynamic_object_type treasure_chest_collision = {
     BOX_COLLIDER(0.4f, 0.35f, 0.35f),
     .bounce = 0.2f,
     .friction = 0.25f,
+    .center = { 0.0f, 0.35f, 0.0f },
 };
 
 void treasure_chest_interact(struct interactable* interactable, entity_id from) {
@@ -43,7 +44,7 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
 
 void treasure_chest_update(void* data) {
     struct treasure_chest* treasure_chest = (struct treasure_chest*)data;
-    animator_update(&treasure_chest->animator, &treasure_chest->renderable.armature, fixed_time_step);
+    animator_update(&treasure_chest->animator, &treasure_chest->renderable.mesh_render.armature, fixed_time_step);
 }
 
 void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition, entity_id id) {
@@ -62,7 +63,6 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
         0
     );
 
-    treasure_chest->dynamic_object.center.y = treasure_chest_collision.data.box.half_size.y;
     treasure_chest->dynamic_object.is_fixed = true;
 
     collision_scene_add(&treasure_chest->dynamic_object);
@@ -72,7 +72,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
     treasure_chest->animations.open = animation_set_find_clip(treasure_chest->animation_set, "open");
     treasure_chest->animations.idle = animation_set_find_clip(treasure_chest->animation_set, "idle");
 
-    animator_init(&treasure_chest->animator, treasure_chest->renderable.armature.bone_count);
+    animator_init(&treasure_chest->animator, treasure_chest->renderable.mesh_render.armature.bone_count);
     update_add(treasure_chest, treasure_chest_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     if (inventory_has_item(definition->item) && !inventory_is_upgrade_item(definition->item)) {

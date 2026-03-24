@@ -17,13 +17,11 @@
 #include "expression_evaluate.h"
 #include "../menu/dialog_box.h"
 #include "../collision/collision_scene.h"
-#include "../menu/map_menu.h"
 #include "../player/inventory.h"
-#include "../menu/main_menu.h"
 #include "../cutscene/cutscene_stopwatch.h"
 #include "cutscene_timer.h"
+#include "show_item.h"
 #include <assert.h>
-#include "../cutscene/race.h"
 #include "../effects/image_overlay.h"
 
 #define MAX_QUEUED_CUTSCENES   4
@@ -70,6 +68,8 @@ struct cutscene_runner {
     struct cutscene_active_entry active_cutscenes[MAX_CUTSCENE_CALL_DEPTH];
     int16_t current_cutscene;
 
+    show_item_t show_item;
+
     union cutscene_runner_data active_step_data;
 };
 
@@ -92,6 +92,14 @@ static inline int cutscene_prev_queue_index(int index) {
 }
 
 void cutscene_runner_start(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject);
+
+entity_id cutscene_runner_translate_entity(struct cutscene_active_entry* cutscene, entity_id id) {
+    if (id == ENTITY_ID_SUBJECT) {
+        return cutscene->subject;
+    }
+
+    return id;
+}
 
 cutscene_actor_t* cutscene_runner_lookup_actor(struct cutscene_active_entry* cutscene, entity_id input) {
     if (input == ENTITY_ID_SUBJECT) {

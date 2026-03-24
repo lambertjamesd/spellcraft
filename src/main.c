@@ -21,13 +21,10 @@
 #include "effects/area_title.h"
 #include "effects/fade_effect.h"
 #include "audio/audio.h"
-#include "repair/repair_scene.h"
 #include "config.h"
-#include "menu/main_menu.h"
 #include "overworld/overworld_load.h"
 #include "render/z_clear.h"
 #include "render/defs.h"
-#include "debug/rewind.h"
 #include "profile/profile.h"
 
 #include <libdragon.h>
@@ -101,8 +98,6 @@ void render_3d(surface_t* col, surface_t* z_buffer) {
 
     if (current_scene) {
         render_scene_render(&current_scene->camera, viewport, &frame_memory_pools[next_frame_memory_pool]);
-    } else if (current_repair_scene) {
-        repair_scene_render(current_repair_scene, viewport, pool);
     }
     
     next_frame_memory_pool ^= 1;
@@ -169,8 +164,6 @@ bool check_scene_load() {
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(1500)
 
 void step_simulation() {
-    rewind_update();
-
     if (update_has_layer(UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE)) {
         SC_PROFILE_START(main);
         collision_scene_collide();

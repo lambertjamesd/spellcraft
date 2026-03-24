@@ -137,7 +137,7 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
 
     render_scene_add_renderable(&wind->renderable, 1.0f);
 
-    for (int i = 0; i < MAX_WIND_BONES && wind->renderable.armature.bone_count; i += 1) {
+    for (int i = 0; i < MAX_WIND_BONES && wind->renderable.mesh_render.armature.bone_count; i += 1) {
         quatAxisAngle(&gUp, radius_per_second[i] * fixed_time_step, &wind->bone_rotations[i]);
     }
 
@@ -154,7 +154,7 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     wind->dynamic_object.collision_group = source->target;
 
     if (!effect_definition->sphere) {
-        wind->dynamic_object.center = (struct Vector3){
+        wind->dynamic_object.type->center = (struct Vector3){
             .x = 0.0f,
             .y = 0.0f,
             .z = wind_collider.data.cylinder.half_height,
@@ -270,10 +270,10 @@ bool wind_update_persistant(struct wind* wind, struct spell_event_listener* even
 }
 
 bool wind_update(struct wind* wind, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
-    for (int i = 0; i < MAX_WIND_BONES && wind->renderable.armature.bone_count; i += 1) {
+    for (int i = 0; i < MAX_WIND_BONES && wind->renderable.mesh_render.armature.bone_count; i += 1) {
         struct Quaternion tmp;
-        quatMultiply(&wind->renderable.armature.pose[i].rotation, &wind->bone_rotations[i], &tmp);
-        wind->renderable.armature.pose[i].rotation = tmp;
+        quatMultiply(&wind->renderable.mesh_render.armature.pose[i].rotation, &wind->bone_rotations[i], &tmp);
+        wind->renderable.mesh_render.armature.pose[i].rotation = tmp;
     }
 
     if (wind->definition->push.bursty) {

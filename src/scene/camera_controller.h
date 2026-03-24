@@ -69,4 +69,6 @@ bool camera_is_animating(struct camera_controller* controller);
 
 void camera_shake(struct camera_controller* controller, float strength);
 
+void camera_shift_by(struct camera_controller* controller, vector3_t* offset);
+
 #endif

@@ -11,6 +11,7 @@
 
 static dynamic_object_type_t fan_collider = {
     CYLINDER_COLLIDER(0.25f, 0.6f),
+    .center = { 0.0f, 0.6f, 0.0f }, 
 };
 
 void fan_switch_update(void* data) {
@@ -31,8 +32,8 @@ void fan_switch_update(void* data) {
         quatAxisAngle(&gUp, angular_velocity * fixed_time_step, &rotation_delta);
     
         quaternion_t final_rotation;
-        quatMultiply(&fan_switch->renderable.armature.pose[1].rotation, &rotation_delta, &final_rotation);
-        fan_switch->renderable.armature.pose[1].rotation = final_rotation;
+        quatMultiply(&fan_switch->renderable.mesh_render.armature.pose[1].rotation, &rotation_delta, &final_rotation);
+        fan_switch->renderable.mesh_render.armature.pose[1].rotation = final_rotation;
     }
 }
 
@@ -51,7 +52,6 @@ void fan_switch_init(fan_switch_t* fan_switch, struct fan_switch_definition* def
         NULL
     );
 
-    fan_switch->collider.center.y = fan_collider.data.cylinder.half_height;
     fan_switch->collider.is_fixed = 1;
     fan_switch->collider.weight_class = WEIGHT_CLASS_HEAVY;
 

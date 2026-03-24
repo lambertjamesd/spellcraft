@@ -9,12 +9,7 @@ struct mesh_animation* mesh_animation_new(struct Vector3* position, struct Vecto
 
     transformSaInit(&result->transform, position, rotation, 1.0f);
 
-    result->renderable.mesh = mesh;
-    result->renderable.force_material = NULL;
-    armature_init(&result->renderable.armature, &result->renderable.mesh->armature);
-    result->renderable.attachments = NULL;
-    transform_mixed_init_sa(&result->renderable.transform, &result->transform);
-    result->renderable.type = TRANSFORM_TYPE_SINGLE_AXIS;
+    renderable_single_axis_init_direct(&result->renderable, &result->transform, mesh);
 
     render_scene_add_renderable(&result->renderable, 1.0f);
 
@@ -25,7 +20,7 @@ struct mesh_animation* mesh_animation_new(struct Vector3* position, struct Vecto
 }
 
 bool mesh_animation_update(struct mesh_animation* mesh_animation) {
-    animator_update(&mesh_animation->animtor, &mesh_animation->renderable.armature, fixed_time_step);
+    animator_update(&mesh_animation->animtor, &mesh_animation->renderable.mesh_render.armature, fixed_time_step);
     return animator_is_running(&mesh_animation->animtor);
 }
 

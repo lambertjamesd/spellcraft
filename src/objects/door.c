@@ -21,6 +21,7 @@ static struct dynamic_object_type door_collision = {
     BOX_COLLIDER(2.16264f, 2.0f, 0.317424f),
     .bounce = 0.2f,
     .friction = 0.25f,
+    .center = { 0.0f, 2.0f, 0.0f },
 };
 
 void door_render(void* data, struct render_batch* batch) {
@@ -149,7 +150,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
 
 void door_update(void* data) {
     struct door* door = (struct door*)data;
-    animator_update(&door->animator, &door->renderable.armature, fixed_time_step);
+    animator_update(&door->animator, &door->renderable.mesh_render.armature, fixed_time_step);
 
     if (door->next_room != ROOM_NONE && !animator_is_running(&door->animator)) {
         scene_hide_room(current_scene, door->next_room == door->room_a ? door->room_b : door->room_a);
@@ -181,7 +182,6 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
         &door->transform.rotation
     );
 
-    door->collider.center.y = door_collision.data.box.half_size.y;
     door->collider.is_fixed = true;
     door->collider.weight_class = WEIGHT_CLASS_HEAVY;
     door->lock_model = tmesh_cache_load("rom:/meshes/objects/doors/lock.tmesh");
@@ -195,7 +195,7 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
     door->animations.open = animation_set_find_clip(door->animation_set, "open");
     door->animations.close = animation_set_find_clip(door->animation_set, "close");
 
-    animator_init(&door->animator, door->renderable.armature.bone_count);
+    animator_init(&door->animator, door->renderable.mesh_render.armature.bone_count);
     update_add(door, door_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
     animator_run_clip(&door->animator, door->animations.close, animation_clip_get_duration(door->animations.close), false);
 }

@@ -165,10 +165,6 @@ struct cutscene* cutscene_load(const char* filename) {
             case CUTSCENE_STEP_STOPWATCH_RUN:
                 fread(&step->data.stopwatch.value, 1, 1, file);
                 break;
-            case CUTSCENE_STEP_START_RACE:
-                step->data.race_start.on_finish = string_load(file);
-                fread(&step->data.race_start.lap_count, 4, 1, file);
-                break;
             case CUTSCENE_STEP_AUDIO_PAUSE:
                 fread(&step->data.audio_pause.is_paused, 1, 1, file);
                 break;
@@ -243,9 +239,6 @@ void cutscene_destroy(struct cutscene* cutscene) {
                 break;
             case CUTSCENE_STEP_START_TIMER:
                 free(step->data.start_timer.cutscene);
-                break;
-            case CUTSCENE_STEP_START_RACE:
-                free(step->data.race_start.on_finish);
                 break;
             case CUTSCENE_STEP_SHOW_IMAGE:
                 free(step->data.show_image.filename);

@@ -30,6 +30,7 @@ static uint8_t burning_thorn_offset(uint8_t input, uint8_t amount) {
 
 static struct dynamic_object_type burning_object_shape = {
     CYLINDER_COLLIDER(2.0f, 2.0f),
+    .center = { 0.0f, 2.0f, 0.0f },
 };
 
 void burning_thorns_update(void* data) {
@@ -44,7 +45,7 @@ void burning_thorns_update(void* data) {
     if (thorns->burn_time <= 0.0f) {
         entity_despawn(thorns->health.entity_id);
     } else if (thorns->burn_time < TRANSITION_TIME) {
-        thorns->renderable.force_material = thorns->burn_material;
+        thorns->renderable.mesh_render.force_material = thorns->burn_material;
         float lerp_value = thorns->burn_time * (1.0f / TRANSITION_TIME);
 
         color_t burn_color = coloru8_lerp(&burn_away_end, &burn_away_start, lerp_value);
@@ -99,7 +100,6 @@ void burning_thorns_init(burning_thorns_t* thorns, struct burning_thorns_definit
     thorns->collider.scale = definition->scale;
     thorns->collider.is_fixed = 1;
     thorns->collider.weight_class = WEIGHT_CLASS_SUPER_HEAVY;
-    thorns->collider.center.y = 2.0f;
     collision_scene_add(&thorns->collider);
 
     health_init(&thorns->health, id, 10.0f);

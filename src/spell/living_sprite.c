@@ -20,37 +20,20 @@
 static struct Vector2 sprite_max_rotation;
 
 static struct dynamic_object_type living_sprite_collision = {
-    .minkowsi_sum = capsule_minkowski_sum,
-    .bounding_box = capsule_bounding_box,
-    .data = {
-        .capsule = {
-            .radius = 0.25f,
-            .inner_half_height = 0.1f,
-        }
-    },
+    CAPSULE_COLLIDER(0.25f, 0.1f),
+    .center = {0.0f, 0.35, 0.0f},
     .friction = 0.2f,
     .bounce = 0.5f,
 };
 
 static struct dynamic_object_type living_sprite_vision = {
-    .minkowsi_sum = cylinder_minkowski_sum,
-    .bounding_box = cylinder_bounding_box,
-    .data = {
-        .cylinder = {
-            .radius = 6.0f,
-            .half_height = 2.0f,
-        }
-    },
+    CYLINDER_COLLIDER(6.0f, 2.0f),
+    .center = {0.0f, 0.35, 0.0f},
 };
 
 static struct dynamic_object_type living_sprite_exploision = {
-    .minkowsi_sum = sphere_minkowski_sum,
-    .bounding_box = sphere_bounding_box,
-    .data = {
-        .sphere = {
-            .radius = 4.0f,
-        }
-    },
+    SPHERE_COLLIDER(4.0f),
+    .center = {0.0f, 0.35f, 0.0f },
 };
 
 void living_sprite_render(void* data, struct render_batch* batch) {
@@ -129,10 +112,7 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
         &living_sprite->transform.rotation
     );
 
-    living_sprite->vision.center.y = living_sprite->collider.center.y;
     living_sprite->vision.trigger_type = TRIGGER_TYPE_BASIC;
-
-    living_sprite->collider.center.y = living_sprite_collision.data.capsule.radius + living_sprite_collision.data.capsule.inner_half_height;
 
     collision_scene_add(&living_sprite->collider);
     collision_scene_add(&living_sprite->vision);

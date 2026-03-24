@@ -89,7 +89,7 @@ void sprite_life_steal_effect(struct living_sprite* living_sprite, struct contac
     struct dynamic_object* dynamic = collision_scene_find_object(contact->other_object);
 
     if (dynamic) {
-        vector3Add(dynamic->position, &dynamic->center, &location);
+        vector3Add(dynamic->position, &dynamic->type->center, &location);
     } else {
         vector3Add(&living_sprite->transform.position, &gUp, &location);
     }
