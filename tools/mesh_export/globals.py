@@ -1,8 +1,13 @@
 import sys
 import argparse
-import cutscene.tokenizer
-import cutscene.parser
-import cutscene.variable_layout
+import os
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
+import mesh_export.cutscene.parser
+import mesh_export.cutscene.variable_layout
 
 mapping = {
     "fire_rune_level": 'SPELL_SYMBOL_FIRE',
@@ -36,13 +41,13 @@ if __name__ == "__main__":
     parser.add_argument('input', nargs='*')
 
     args = parser.parse_args()
-    result = cutscene.variable_layout.VariableLayoutBuilder()
+    result = mesh_export.cutscene.variable_layout.VariableLayoutBuilder()
 
     success = True
     
     for input in args.input:
         with open(input) as file:
-            current_cutscene = cutscene.parser.parse(file.read(), args.input)
+            current_cutscene = mesh_export.cutscene.parser.parse(file.read(), args.input)
 
             for global_var in current_cutscene.globals:
                 success = result.add_variable(global_var) and success

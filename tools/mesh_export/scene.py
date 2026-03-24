@@ -9,9 +9,6 @@ import io
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
-
-import mesh_export.parse
-print(mesh_export.parse.__file__)
     
 from mesh_export.entities import mesh as entities_mesh
 from mesh_export.entities import mesh_collider
@@ -283,7 +280,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
     for obj in collection.all_objects:
         final_transform = base_transform @ obj.matrix_world
 
-        if obj.type != "MESH":
+        if obj.type != "MESH" or not isinstance(obj.data, bpy.types.Mesh):
             continue
 
         obj_type = get_object_type(obj)
@@ -453,11 +450,11 @@ def find_scene_objects(scene, definitions, room_collection, base_transform):
                 continue
             if obj_type == 'static_particles':
                 scene.particles.append(ParticlesEntry(obj))
-            else:
+            elif isinstance(obj.data, bpy.types.Mesh):
                 scene.objects.append(process_linked_object(obj, obj.data, definitions, room_collection.get_obj_room_index(obj)))
             continue
 
-        if obj.type != "MESH":
+        if obj.type != "MESH" or not isinstance(obj.data, bpy.types.Mesh):
             continue
 
         final_transform = base_transform @ obj.matrix_world
@@ -601,8 +598,9 @@ def process_scene():
     enums = {}
     room_collection = entities_room.room_collection()
 
-    include_all(bpy.context.view_layer.layer_collection)
-    bpy.context.view_layer.update()
+    if bpy.context.view_layer:
+        include_all(bpy.context.view_layer.layer_collection)
+        bpy.context.view_layer.update()
 
     room_collection.get_room_index('room_default')
 

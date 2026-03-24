@@ -136,7 +136,7 @@ SCRIPTS := $(shell find assets -type f -name '*.script' | sort)
 SCRIPTS_COMPILED := $(SCRIPTS:assets/%=filesystem/%)
 
 build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/inventory_mapping.c: tools/mesh_export/globals.py assets/scripts/globals.script
-	@mkdir -p $(dir $@)
+	@mkdir -p build/assets/scripts/
 	python3 tools/mesh_export/globals.py build/assets/scripts/globals src/player/inventory_mapping.c assets/scripts/globals.script
 
 filesystem/scripts/globals.dat: build/assets/scripts/globals.dat

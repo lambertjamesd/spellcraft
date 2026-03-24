@@ -5,9 +5,11 @@ import sys
 import math
 import os.path
 
-sys.path.append(os.path.dirname(__file__))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-import entities.material
+import mesh_export.entities.material as entities_material
 
 script_args = sys.argv[sys.argv.index('--') + 1:]
 
@@ -29,7 +31,7 @@ def generate_shade_node(node_cache: dict[str, bpy.types.NodeSocket], material: b
 
     return node_cache[key]
 
-def generate_tex_node(node_cache: dict[str, bpy.types.NodeSocket], material: bpy.types.Material, source: entities.material.Material, key: str):
+def generate_tex_node(node_cache: dict[str, bpy.types.NodeSocket], material: bpy.types.Material, source: entities_material.Material, key: str):
     if key in node_cache:
         return node_cache[key]
     
@@ -48,7 +50,7 @@ def generate_tex_node(node_cache: dict[str, bpy.types.NodeSocket], material: bpy
         if not filename and with_tex.frames:
             filename = with_tex.frames[0]
 
-        image_path = os.path.join(os.getcwd(), filename)
+        image_path = os.path.join(os.getcwd(), filename or "")
         image.image = bpy.data.images.load(image_path)
         if with_tex.s.mirror or with_tex.t.mirror:
             image.extension = "MIRROR"
@@ -60,7 +62,10 @@ def generate_tex_node(node_cache: dict[str, bpy.types.NodeSocket], material: bpy
 
     return node_cache[key]
 
-def link_cycle_option(node_cache: dict[str, bpy.types.NodeSocket], value: str, material: bpy.types.Material, source: entities.material.Material, input: bpy.types.NodeSocket):
+def link_cycle_option(node_cache: dict[str, bpy.types.NodeSocket], value: str, material: bpy.types.Material, source: entities_material.Material, input: bpy.types.NodeSocket):
+    if not material.node_tree:
+        raise Exception('link_cycle_option: material.node_tree is not defined')
+
     if value == 'COMBINED':
         material.node_tree.links.new(input, generate_combine_cycle(node_cache, material, source, 0))
     if value == 'COMBINED_ALPHA':
@@ -80,12 +85,12 @@ def link_cycle_option(node_cache: dict[str, bpy.types.NodeSocket], value: str, m
     elif value == 'PRIM':
         color = source.prim_color
         if not color:
-            color = entities.material.Color(255, 255, 255, 255)
+            color = entities_material.Color(255, 255, 255, 255)
         input.default_value = (color.r / 255, color.g / 255, color.b / 255, color.a / 255)
     elif value == 'PRIM_ALPHA':
         color = source.prim_color
         if not color:
-            color = entities.material.Color(255, 255, 255, 255)
+            color = entities_material.Color(255, 255, 255, 255)
         input.default_value = (color.a / 255, color.a / 255, color.a / 255, color.a / 255)
     elif value == 'SHADE':
         shade_output = generate_shade_node(node_cache, material, 'SHADE')
@@ -96,19 +101,22 @@ def link_cycle_option(node_cache: dict[str, bpy.types.NodeSocket], value: str, m
     elif value == 'ENV':
         color = source.env_color
         if not color:
-            color = entities.material.Color(255, 255, 255, 255)
+            color = entities_material.Color(255, 255, 255, 255)
         input.default_value = (color.r / 255, color.g / 255, color.b / 255, color.a / 255)
     elif value == 'ENV_ALPHA':
         color = source.env_color
         if not color:
-            color = entities.material.Color(255, 255, 255, 255)
+            color = entities_material.Color(255, 255, 255, 255)
         input.default_value = (color.a / 255, color.a / 255, color.a / 255, color.a / 255)
     elif value == 'NOISE' or value == '1' or value == 'ONE':
         input.default_value = (1, 1, 1, 1)
     elif value == '0' or value == 'ZERO':
         input.default_value = (0, 0, 0, 1)
 
-def link_alpha_cycle_option(node_cache: dict[str, bpy.types.NodeSocket], value: str, material: bpy.types.Material, source: entities.material.Material, input: bpy.types.NodeSocket):
+def link_alpha_cycle_option(node_cache: dict[str, bpy.types.NodeSocket], value: str, material: bpy.types.Material, source: entities_material.Material, input: bpy.types.NodeSocket):
+    if not material.node_tree:
+        raise Exception('link_alpha_cycle_option: material.node_tree is not defined')
+
     if value == 'COMBINED':
         material.node_tree.links.new(input, generate_combine_alpha_cycle(node_cache, material, source, 0))
     elif value == 'TEX0':
@@ -135,7 +143,7 @@ def link_alpha_cycle_option(node_cache: dict[str, bpy.types.NodeSocket], value: 
     elif value == '0' or value == 'ZERO':
         input.default_value = 0
 
-def generate_combine_cycle(node_cache: dict[str, bpy.types.NodeSocket], material: bpy.types.Material, source: entities.material.Material, cycleIndex: int):
+def generate_combine_cycle(node_cache: dict[str, bpy.types.NodeSocket], material: bpy.types.Material, source: entities_material.Material, cycleIndex: int):
     cache_name = f"cyc{cycleIndex}"
 
     if cache_name in node_cache:
@@ -179,7 +187,7 @@ def generate_combine_cycle(node_cache: dict[str, bpy.types.NodeSocket], material
 
     return add.outputs['Color']
 
-def generate_combine_alpha_cycle(node_cache: dict[str, bpy.types.NodeSocket], material: bpy.types.Material, source: entities.material.Material, cycleIndex: int):
+def generate_combine_alpha_cycle(node_cache: dict[str, bpy.types.NodeSocket], material: bpy.types.Material, source: entities_material.Material, cycleIndex: int):
     cache_name = f"cyc{cycleIndex}_alpha"
 
     if cache_name in node_cache:
@@ -223,7 +231,7 @@ def generate_combine_alpha_cycle(node_cache: dict[str, bpy.types.NodeSocket], ma
 
     return add.outputs['Value']
 
-def generate_material(idx: int, material: bpy.types.Material, source: entities.material.Material):
+def generate_material(idx: int, material: bpy.types.Material, source: entities_material.Material):
     bpy.ops.mesh.primitive_plane_add(location=((idx % row_size) * 3, (idx // row_size) * 3, 0))
 
     bpy.ops.object.material_slot_add()
@@ -280,7 +288,7 @@ for obj in bpy.data.objects:
 
 for idx, material_filename in enumerate(material_files):
     print(f"generating material for {material_filename}")
-    material_source = entities.material.parse_material(material_filename)
+    material_source = entities_material.parse_material(material_filename)
 
     material_name = material_filename[len("assets/"):-len(".mat.json")]
     material = bpy.data.materials.new(material_name)

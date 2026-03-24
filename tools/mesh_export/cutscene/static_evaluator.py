@@ -2,8 +2,6 @@ import sys
 
 from . import parser
 
-sys.path.append("..")
-
 import mesh_export.parse.struct_parse
     
 global_constant_values: dict[str, int] = {

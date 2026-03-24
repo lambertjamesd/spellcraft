@@ -1,19 +1,21 @@
 import sys
 import os.path
 
-sys.path.append(os.path.dirname(__file__))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 import mathutils
 import io
-import entities.mesh_collider
+import mesh_export.entities.mesh_collider
 
-collider = entities.mesh_collider.MeshCollider()
+collider = mesh_export.entities.mesh_collider.MeshCollider()
 
 collider.vertices.append(mathutils.Vector((-10, -10, -10)))
 collider.vertices.append(mathutils.Vector((10, -10, 10)))
 collider.vertices.append(mathutils.Vector((0, 10, 0)))
 
-collider.triangles.append(entities.mesh_collider.MeshColliderTriangle([0, 1, 2]))
+collider.triangles.append(mesh_export.entities.mesh_collider.MeshColliderTriangle([0, 1, 2]))
 
 file_tmp = io.BytesIO()
 collider.write_out(file_tmp)

@@ -2,10 +2,12 @@ import bpy
 import sys
 import os.path
 
-sys.path.append(os.path.dirname(__file__))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-import entities.material_extract
-import entities.serialize
+import mesh_export.entities.material_extract
+import mesh_export.entities.serialize
 
 if __name__ == "__main__":
     output_directory = sys.argv[-1]
@@ -20,7 +22,7 @@ if __name__ == "__main__":
             output_filename = os.path.join(output_directory, material.name) + '.mat'
 
         print(f'Writing material to {output_filename}')
-        result = entities.material_extract.determine_material_from_f3d(material)
+        result = mesh_export.entities.material_extract.determine_material_from_f3d(material)
         print(result)
         os.makedirs(os.path.dirname(output_filename), exist_ok=True)
-        entities.serialize.serialize_material(output_filename, result)
+        mesh_export.entities.serialize.serialize_material(output_filename, result)

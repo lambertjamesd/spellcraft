@@ -7,22 +7,25 @@ bl_info = {
     "category": "Object",
 }
 
-from .level_editor import link_materials
-from .level_editor import game_object
-from .level_editor import material
-from .level_editor import scene
+import importlib.util
 
-def register():
-    link_materials.register()
-    game_object.register()
-    material.register()
-    scene.register()
+if importlib.util.find_spec('bpy'):
+    from .level_editor import link_materials
+    from .level_editor import game_object
+    from .level_editor import material
+    from .level_editor import scene
 
-def unregister():
-    link_materials.unregister()
-    game_object.unregister()
-    material.unregister()
-    scene.unregister()
+    def register():
+        link_materials.register()
+        game_object.register()
+        material.register()
+        scene.register()
 
-if __name__ == "__main__":
-    register()
+    def unregister():
+        link_materials.unregister()
+        game_object.unregister()
+        material.unregister()
+        scene.unregister()
+
+    if __name__ == "__main__":
+        register()

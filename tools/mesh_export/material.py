@@ -1,6 +1,13 @@
 import argparse
-import entities.material
-import entities.serialize
+import os
+import sys
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
+import mesh_export.entities.material
+import mesh_export.entities.serialize
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -17,9 +24,9 @@ if __name__ == "__main__":
     default_material = None
 
     if args.default != args.input and args.default:
-        default_material = entities.material.parse_material(args.default)
+        default_material = mesh_export.entities.material.parse_material(args.default)
 
     print(f'Writing material to {args.output}')
-    result = entities.material.parse_material(args.input)
+    result = mesh_export.entities.material.parse_material(args.input)
     print(result)
-    entities.serialize.serialize_material(args.output, result)
+    mesh_export.entities.serialize.serialize_material(args.output, result)
