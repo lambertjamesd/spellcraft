@@ -34,6 +34,6 @@ void dialog_box_hide();
 void dialog_box_destroy();
 bool dialog_box_get_response();
 
-void dialog_box_format_string(char* into, char* format, int* args);
+int dialog_box_format_string(char* into, char* format, int* args);
 
 #endif

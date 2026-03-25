@@ -35,6 +35,8 @@ void evaluation_context_push(struct evaluation_context* context, int value);
 int evaluation_context_pop(struct evaluation_context* context);
 void evaluation_context_popn(struct evaluation_context* context, int* into, int count);
 int evaluation_context_peek(struct evaluation_context* context);
+int evaluation_context_read(struct evaluation_context* context, int offset);
+void evaluation_context_store(struct evaluation_context* context, int offset, int value);
 
 static inline void evaluation_context_push_float(struct evaluation_context* context, float value) {
     int* int_ptr = (int*)&value;

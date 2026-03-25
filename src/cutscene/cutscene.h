@@ -47,6 +47,11 @@ enum cutscene_step_type {
     CUTSCENE_STEP_STOPWATCH_RUN,
     CUTSCENE_STEP_AUDIO_PAUSE,
     CUTSCENE_STEP_SHOW_IMAGE,
+    CUTSCENE_STEP_TEMPLATE_STRING,
+    CUTSCENE_STEP_SAVE_STRING_STACK,
+    CUTSCENE_STEP_REVERT_STRING_STACK,
+    CUTSCENE_STEP_FUNCTION_CALL,
+    CUTSCENE_STEP_RETURN,
 };
 
 typedef void (*cutscene_step_callback)(void* data);
@@ -173,6 +178,17 @@ union cutscene_step_data {
     struct {
         char* filename;
     } show_image;
+    struct {
+        struct templated_string message;
+    } template_string;
+    struct {
+        uint16_t fn_index;
+        uint16_t argc;
+    } function_call;
+    struct {
+        uint16_t argc;
+        uint16_t retc;
+    } ret;
 };
 
 struct cutscene_step {

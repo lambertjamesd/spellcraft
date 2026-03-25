@@ -89,6 +89,12 @@ void expression_debug_write(struct expression* expression) {
 
                 current += sizeof(union expression_data);
                 break;
+            case EXPRESSION_TYPE_COPY:
+            case EXPRESSION_TYPE_STORE:
+            case EXPRESSION_TYPE_REMOVE:
+                out += sprintf(out, "%d ", *current);
+                ++current;
+                break;
             default:
                 out += sprintf(out, "%02x ", instruction);
                 break;
@@ -241,6 +247,24 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
                     evaluation_context_popn(context, NULL, actual_result_count - data.fn_call.result_count);
                 }
                 break;
+            case EXPRESSION_TYPE_COPY: {
+                uint8_t offset = *current;
+                ++current;
+                evaluation_context_push(context, evaluation_context_read(context, offset));
+                break;
+            }
+            case EXPRESSION_TYPE_STORE: {
+                uint8_t offset = *current;
+                ++current;
+                evaluation_context_push(context, evaluation_context_read(context, offset));
+                break;
+            }
+            case EXPRESSION_TYPE_REMOVE: {
+                uint8_t count = *current;
+                ++current;
+                evaluation_context_popn(context, NULL, count);
+                break;
+            }
         }
     }
 }

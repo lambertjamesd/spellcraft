@@ -149,7 +149,9 @@ void dialog_box_render(void* data) {
     rdpq_sync_pipe();
 }
 
-void dialog_box_format_string(char* into, char* format, int* args) {
+int dialog_box_format_string(char* into, char* format, int* args) {
+    char* start = into;
+
     while (*format) {
         if (*format == '%') {
             format += 1;
@@ -177,6 +179,8 @@ void dialog_box_format_string(char* into, char* format, int* args) {
     }
 
     *into++ = '\0';
+
+    return into - start;
 }
 
 void dialog_box_show(char* message, int* args, dialog_end_callback end_callback, void* end_callback_data) {

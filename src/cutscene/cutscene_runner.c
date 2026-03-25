@@ -24,8 +24,13 @@
 #include <assert.h>
 #include "../effects/image_overlay.h"
 
-#define MAX_QUEUED_CUTSCENES   4
+#define MAX_QUEUED_CUTSCENES    4
 #define MAX_CUTSCENE_CALL_DEPTH 6
+#define MAX_STRING_STACK_SIZE   4096
+
+#define PACK_FN_REF(fn_index, instruction)  (((fn_index) << 16) | instruction)
+#define FN_REF_GET_FN(ref)  ((ref) >> 16)
+#define FN_REF_GET_INST(ref)    ((ref) & 0xFFFF)
 
 static color_t fade_colors[] = {
     {0, 0, 0, 0},
@@ -57,6 +62,8 @@ struct cutscene_active_entry {
     entity_id subject;
     struct evaluation_context context;
     int16_t current_instruction;
+    char string_stack[MAX_STRING_STACK_SIZE];
+    char* current_string_start;
 };
 
 struct cutscene_runner {
@@ -405,6 +412,27 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             }
             break;
         }
+        case CUTSCENE_STEP_TEMPLATE_STRING: {
+            int args[step->data.print.message.nargs];
+            evaluation_context_popn(&cutscene->context, args, step->data.template_string.message.nargs);
+            int str_length = dialog_box_format_string(cutscene->current_string_start, step->data.template_string.message.template, args);
+            evaluation_context_push(&cutscene->context, (int)cutscene->current_string_start);
+            cutscene->current_string_start += str_length;
+            assert(cutscene->current_string_start <= &cutscene->string_stack[MAX_STRING_STACK_SIZE]);
+        }
+        case CUTSCENE_STEP_SAVE_STRING_STACK: {
+            evaluation_context_push(&cutscene->context, (int)cutscene->current_string_start);
+        }
+        case CUTSCENE_STEP_REVERT_STRING_STACK: {
+            cutscene->current_string_start = (char*)evaluation_context_pop(&cutscene->context);
+            assert(cutscene->current_string_start >= cutscene->string_stack && cutscene->current_string_start <= &cutscene->string_stack[MAX_STRING_STACK_SIZE]);
+        }
+        case CUTSCENE_STEP_FUNCTION_CALL:
+            // logic is done in update step
+            break;
+        case CUTSCENE_STEP_RETURN:
+            // logic is done in update step
+            break;
     }
 }
 
@@ -444,6 +472,34 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
         case CUTSCENE_STEP_NPC_WAIT: {
             struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, cutscene_runner.active_step_data.npc_wait.target);
             return !subject || !cutscene_actor_is_moving(subject);
+        }
+        case CUTSCENE_STEP_FUNCTION_CALL: {
+            int curr_fn = cutscene->function - cutscene->cutscene->functions;
+            assert(curr_fn >= 0 && curr_fn < cutscene->cutscene->function_count);
+            evaluation_context_push(&cutscene->context, PACK_FN_REF(curr_fn, cutscene->current_instruction));
+
+            int next_fn = step->data.function_call.fn_index;
+            assert(next_fn >= 0 && next_fn < cutscene->cutscene->function_count);
+            cutscene->function = &cutscene->cutscene->functions[next_fn];
+            // the step is incremented to 0 after the step
+            cutscene->current_instruction = ~0;
+        }
+        case CUTSCENE_STEP_RETURN: {
+            int result[step->data.ret.retc];
+            evaluation_context_popn(&cutscene->context, result, step->data.ret.retc);
+            int ret_addr = evaluation_context_pop(&cutscene->context);
+            evaluation_context_popn(&cutscene->context, NULL, step->data.ret.argc);
+
+            for (int i = 0; i < step->data.ret.retc; i += 1) {
+                evaluation_context_push(&cutscene->context, result[i]);
+            }
+
+            int fn_index = FN_REF_GET_FN(ret_addr);
+            assert(fn_index >= 0 && fn_index < cutscene->cutscene->function_count);
+            cutscene->function = &cutscene->cutscene->functions[fn_index];
+            cutscene->current_instruction = FN_REF_GET_INST(ret_addr);
+
+            assert(cutscene->current_instruction >= 0 && cutscene->current_instruction < cutscene->function->step_count);
         }
         default:
             return true;
@@ -488,6 +544,7 @@ void cutscene_runner_start(struct cutscene* cutscene, int function_index, cutsce
     next->data = data;
     next->subject = subject;
     next->current_instruction = 0;
+    next->current_string_start = &next->string_stack[0];
     evaluation_context_init(&next->context, cutscene->locals_size);
 
     cutscene_runner_init_step(next, &fn->steps[0]);

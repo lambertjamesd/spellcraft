@@ -37,6 +37,16 @@ void evaluation_context_popn(struct evaluation_context* context, int* into, int 
     }
 }
 
+int evaluation_context_read(struct evaluation_context* context, int offset) {
+    assert(offset <= context->current_stack);
+    return context->stack[context->current_stack - offset];
+}
+
+void evaluation_context_store(struct evaluation_context* context, int offset, int value) {
+    assert(offset <= context->current_stack);
+    context->stack[context->current_stack - offset] = value;
+}
+
 int evaluation_context_load(void* data, enum data_type data_type, int word_offset) {
     switch (data_type) {
         case DATA_TYPE_NULL:
