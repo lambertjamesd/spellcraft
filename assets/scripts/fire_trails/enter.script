@@ -7,6 +7,8 @@ end
 
 world_pause;
 
+fade FADE_COLOR_NONE, 1;
+
 cam_animate "enter";
 
 interact_with_location INTERACTION_MOVE, NPC_TYPE_PLAYER, "enter_run_target";
