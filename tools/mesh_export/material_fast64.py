@@ -9,8 +9,12 @@ if ROOT not in sys.path:
 import mesh_export.entities.material_extract
 import mesh_export.entities.serialize
 
+from mesh_export.deps import generate_deps
+
 if __name__ == "__main__":
     output_directory = sys.argv[-1]
+
+    generate_deps.generate_deps(output_directory, os.path.relpath(__file__))
 
     for material in bpy.data.materials:
         if not 'f3d_mat' in material or not 'rdp_settings' in material['f3d_mat']:

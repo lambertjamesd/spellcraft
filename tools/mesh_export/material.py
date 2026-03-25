@@ -9,6 +9,8 @@ if ROOT not in sys.path:
 import mesh_export.entities.material
 import mesh_export.entities.serialize
 
+from mesh_export.deps import generate_deps
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog='Material Writer',
@@ -25,6 +27,8 @@ if __name__ == "__main__":
 
     if args.default != args.input and args.default:
         default_material = mesh_export.entities.material.parse_material(args.default)
+        
+    generate_deps.generate_deps(args.output, os.path.relpath(__file__))
 
     print(f'Writing material to {args.output}')
     result = mesh_export.entities.material.parse_material(args.input)

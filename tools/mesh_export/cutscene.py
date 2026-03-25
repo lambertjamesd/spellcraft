@@ -10,6 +10,8 @@ import mesh_export.cutscene.parser
 import mesh_export.cutscene.variable_layout
 import mesh_export.cutscene.step_generator
 
+from mesh_export.deps import generate_deps
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog='Material Writer',
@@ -34,6 +36,8 @@ if __name__ == "__main__":
     if args.cutscenes:
         with open(args.cutscenes) as file:
             scene_vars.deserialize(file)
+
+    generate_deps.generate_deps(args.output, os.path.relpath(__file__))
     
     try:
         with open(args.input) as file:

@@ -29,6 +29,8 @@ from mesh_export.cutscene import variable_layout
 from mesh_export.entities import camera_animation
 from mesh_export.entities import room
 
+from mesh_export.deps import generate_deps
+
 class StaticEntry():
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
         self.obj = obj
@@ -589,6 +591,8 @@ def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-2]
     overworld_filename = sys.argv[-1]
+
+    generate_deps.generate_deps(output_filename, os.path.relpath(__file__))
 
     scene = Scene()
     bpy.ops.object.mode_set(mode='OBJECT')

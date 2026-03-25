@@ -17,6 +17,8 @@ import mesh_export.entities.material_extract
 import mesh_export.entities.animation
 import mesh_export.entities.armature
 
+from mesh_export.deps import generate_deps
+
 def replace_extension(filename: str, ext: str) -> str:
     return os.path.splitext(filename)[0]+ext
 
@@ -27,6 +29,10 @@ APPLIED_MODIFIERS = {
 }
 
 def process_scene():
+    output_filename = sys.argv[-1]
+
+    generate_deps.generate_deps(output_filename, os.path.relpath(__file__))
+
     bpy.ops.object.mode_set(mode="OBJECT")
 
     base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
@@ -110,9 +116,9 @@ def process_scene():
     if 'light_source' in use_scene:
         settings.light_source = use_scene['light_source']
 
-    with open(sys.argv[-1], 'wb') as file:
+    with open(output_filename, 'wb') as file:
         mesh_export.entities.tiny3d_mesh_writer.write_mesh(meshes, arm, attatchments, settings, file)
 
-    mesh_export.entities.animation.export_animations(replace_extension(sys.argv[-1], '.anim'), arm, settings)
+    mesh_export.entities.animation.export_animations(replace_extension(output_filename, '.anim'), arm, settings)
     
 process_scene()
