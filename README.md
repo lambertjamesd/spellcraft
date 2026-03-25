@@ -77,6 +77,7 @@ Performance metric before kd tree
 ## TODO
 
 - bring changes over from jam project
+- include material/image dependencies in asset dependencies
 - implement functions in scripting langauge
 - direct camera control
 - load on background thread

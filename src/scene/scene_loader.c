@@ -360,6 +360,7 @@ struct scene* scene_load(const char* filename) {
 
     render_scene_add(NULL, 0.0f, scene_render, scene);
     update_add(scene, scene_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
+    pause_menu_init(&scene->pause_menu);
 
     scene_show_room(scene, current_room);
 

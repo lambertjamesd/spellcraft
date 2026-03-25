@@ -379,7 +379,7 @@ void animator_run_clip(struct animator* animator, struct animation_clip* clip, f
     animator->done = 0;
     animator->events.all = 0;
 
-    animator->blend_frames = should_blend ? 7 : 0;
+    animator->blend_frames = should_blend ? 1 : 0;
 
     animator_step(animator, 0.0f);
 }

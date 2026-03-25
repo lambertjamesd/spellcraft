@@ -421,9 +421,9 @@ void overworld_check_loaded_tiles(struct overworld* overworld) {
     overworld->load_next.y = NO_TILE_COORD;
 }
 
-#define COLLIDER_SPAWN_RADIUS   180.0f
-#define DESPAWN_RADIUS          160.0f
-#define SPAWN_IN_RADIUS         140.0f
+#define COLLIDER_SPAWN_RADIUS   120.0f
+#define DESPAWN_RADIUS          110.0f
+#define SPAWN_IN_RADIUS         100.0f
 
 struct overworld_actor* overworld_malloc_actor(struct overworld* overworld) {
     struct overworld_actor* result = overworld->next_free_actor;
