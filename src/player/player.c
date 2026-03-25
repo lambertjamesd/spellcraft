@@ -92,7 +92,7 @@ static struct cutscene_actor_def player_actor_def = {
     .collision_group = COLLISION_GROUP_PLAYER,
     .collider = {
         CAPSULE_COLLIDER(0.25f, 0.5f),
-        .center = {0.75f},
+        .center = {0.0f, 0.75f, 0.0f},
         .max_stable_slope = MAX_STABLE_SLOPE,
         .friction = 0.2f,
     },
