@@ -41,6 +41,10 @@ EXPRESSION_TYPE_FTOI = 25
 
 EXPRESSION_TYPE_BUILT_IN_FN = 26
 
+EXPRESSION_TYPE_COPY = 27
+EXPRESSION_TYPE_STORE = 28
+EXPRESSION_TYPE_REMOVE = 29
+
 command_to_name = {}
 
 command_to_name[EXPRESSION_TYPE_END] = 'end'
@@ -75,6 +79,10 @@ command_to_name[EXPRESSION_TYPE_NEGATEF] = '-f(unary)'
 
 command_to_name[EXPRESSION_TYPE_ITOF] = 'itof'
 command_to_name[EXPRESSION_TYPE_FTOI] = 'foti'
+
+command_to_name[EXPRESSION_TYPE_COPY] = 'copy'
+command_to_name[EXPRESSION_TYPE_STORE] = 'store'
+command_to_name[EXPRESSION_TYPE_REMOVE] = 'popn'
 
 data_type_mapping = {
     "i8": 1,
@@ -121,8 +129,8 @@ class ExpresionScriptLoad():
         location = command_to_name[self.command]
         return '{0} {1}: {2} 0x{3:08x}'.format(location, self.name, self.data_type, self.bit_offset)
     
-    def has_data(self) -> bool:
-        return True
+    def data_size(self) -> int:
+        return 4
     
     def serialize(self, file):
         file.write(struct.pack('>B', self.command))
@@ -139,8 +147,8 @@ class ExpresionScriptIntLiteral():
     def __str__(self):
         return f'int literal {str(self.value)}'
     
-    def has_data(self) -> bool:
-        return True
+    def data_size(self) -> int:
+        return 4
     
     def serialize(self, file):
         file.write(struct.pack('>Bi', self.command, self.value))
@@ -154,8 +162,8 @@ class ExpresionScriptFloatLiteral():
     def __str__(self):
         return 'float literal {0} 0x{1:08x}'.format(self.original_value, self.value)
 
-    def has_data(self) -> bool:
-        return True
+    def data_size(self) -> int:
+        return 4
     
     def serialize(self, file):
         file.write(struct.pack('>BI', self.command, self.value))
@@ -168,13 +176,55 @@ class ExpressionFunctionCall():
         self.result_count: int = result_count
         
     def __str__(self):
-        return f'float call {self.function_id}({self.arg_count}) -> {self.result_count}'
+        return f'call {self.function_id}({self.arg_count}) -> {self.result_count}'
 
-    def has_data(self) -> bool:
-        return True
+    def data_size(self) -> int:
+        return 4
     
     def serialize(self, file):
         file.write(struct.pack('>BHBB', self.command, self.function_id, self.arg_count, self.result_count))
+
+class ExpressionCopy():
+    def __init__(self, offset: int):
+        self.command: int = EXPRESSION_TYPE_COPY
+        self.offset: int = offset
+
+    def __str__(self):
+        return f'copy ${self.offset}'
+    
+    def data_size(self) -> int:
+        return 1
+    
+    def serialize(self, file):
+        file.write(struct.pack('>BB', self.command, self.offset))
+        
+class ExpressionStore():
+    def __init__(self, offset: int):
+        self.command: int = EXPRESSION_TYPE_STORE
+        self.offset: int = offset
+
+    def __str__(self):
+        return f'store ${self.offset}'
+    
+    def data_size(self) -> int:
+        return 1
+    
+    def serialize(self, file):
+        file.write(struct.pack('>BB', self.command, self.offset))
+        
+class ExpressionRemove():
+    def __init__(self, count: int):
+        self.command: int = EXPRESSION_TYPE_STORE
+        self.count: int = count
+
+    def __str__(self):
+        return f'remove ${self.count}'
+    
+    def data_size(self) -> int:
+        return 1
+    
+    def serialize(self, file):
+        file.write(struct.pack('>BB', self.command, self.count))
     
 class ExpressionCommand():
     def __init__(self, command: int):
@@ -183,8 +233,8 @@ class ExpressionCommand():
     def __str__(self):
         return command_to_name[self.command]
     
-    def has_data(self) -> bool:
-        return False
+    def data_size(self) -> int:
+        return 0
     
     def serialize(self, file):
         file.write(struct.pack('>B', self.command))
@@ -202,8 +252,7 @@ class ExpressionScript():
         byte_size = len(self.steps)
 
         for step in self.steps:
-            if step.has_data():
-                byte_size += 4
+            byte_size += step.data_size()
 
         file.write(struct.pack('>H', byte_size))
 
@@ -396,7 +445,34 @@ class ExpressionGenerator():
 
         else:
             raise Exception(f'Connot convert from {from_type} to {to_type}')
-            
+    
+    def generate_identifier_read(self, expression: parser.Identifier):
+        name = expression.name.value
+
+        local_offset = self.context.get_fn_local_offset(name)
+
+        if local_offset != None:
+            return ExpressionCopy(local_offset)
+        
+        source = EXPRESSION_TYPE_LOAD_GLOBAL
+
+        if self.context.is_local(name):
+            source = EXPRESSION_TYPE_LOAD_LOCAL
+        elif self.context.is_global(name):
+            source = EXPRESSION_TYPE_LOAD_GLOBAL
+        elif self.context.is_scene_var(name):
+            source = EXPRESSION_TYPE_LOAD_SCENE_VAR
+        else:
+            raise Exception(expression.name.format_message('Variable not found'))
+
+        data_type = self.context.get_variable_type(name)
+
+        if not data_type:
+            raise Exception(expression.name.format_message('Variable not found'))
+        
+        offset = self.context.get_variable_offset(name)
+
+        return ExpresionScriptLoad(source, name, data_type, offset)
 
     def generate(self, expression: parser.Expression, script: ExpressionScript):
         if not expression in self.static_evaluator.literal_value:
@@ -485,26 +561,7 @@ class ExpressionGenerator():
                     script.steps.append(ExpressionCommand(EXPRESSION_TYPE_DIVF))
 
         if isinstance(expression, parser.Identifier):
-            name = expression.name.value
-            source = EXPRESSION_TYPE_LOAD_GLOBAL
-
-            if self.context.is_local(name):
-                source = EXPRESSION_TYPE_LOAD_LOCAL
-            elif self.context.is_global(name):
-                source = EXPRESSION_TYPE_LOAD_GLOBAL
-            elif self.context.is_scene_var(name):
-                source = EXPRESSION_TYPE_LOAD_SCENE_VAR
-            else:
-                raise Exception(expression.name.format_message('Variable not found'))
-
-            data_type = self.context.get_variable_type(name)
-
-            if not data_type:
-                raise Exception(expression.name.format_message('Variable not found'))
-            
-            offset = self.context.get_variable_offset(name)
-
-            script.steps.append(ExpresionScriptLoad(source, name, data_type, offset))
+            script.steps.append(self.generate_identifier_read(expression))
 
         if isinstance(expression, parser.FunctionCall):
             built_in = built_in_functions.lookup(expression.name.value)

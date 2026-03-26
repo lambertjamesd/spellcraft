@@ -5,6 +5,7 @@ import base64
 from . import parser
 from . import static_evaluator
 from . import tokenizer
+from . import local_layout
 
 _type_bit_sizes = {
     'char': 8,
@@ -251,10 +252,14 @@ class VariableLayoutBuilder():
         return result
 
 class VariableContext():
-    def __init__(self, globals: VariableLayout, scene_vars: VariableLayout, locals: VariableLayout):
+    def __init__(self, globals: VariableLayout, scene_vars: VariableLayout, locals: VariableLayout, fn_locals: local_layout.LocalLayout | None = None):
         self.globals: VariableLayout = globals
         self.scene_vars: VariableLayout = scene_vars
         self.locals: VariableLayout = locals
+        self.fn_locals: local_layout.LocalLayout | None = fn_locals
+
+    def is_fn_local(self, name: str) -> bool:
+        return self.fn_locals != None and self.fn_locals.get_local_stack_position(name) != None
 
     def is_local(self, name: str) -> bool:
         return self.locals.has_variable(name)
@@ -264,6 +269,12 @@ class VariableContext():
     
     def is_scene_var(self, name: str) -> bool:
         return self.scene_vars.has_variable(name)
+    
+    def get_fn_local_offset(self, name: str) -> int | None:
+        if not self.fn_locals:
+            return None
+
+        return self.fn_locals.get_local_stack_position(name)
     
     def get_variable_offset(self, name: str) -> int:
         if self.locals.has_variable(name):
@@ -276,6 +287,9 @@ class VariableContext():
     
     def get_variable_type(self, name: str) -> str | None:
         return self.locals.get_variable_type(name) or self.scene_vars.get_variable_type(name) or self.globals.get_variable_type(name)
+    
+    def with_locals(self, fn_locals: local_layout.LocalLayout):
+        return VariableContext(self.globals, self.scene_vars, self.locals, fn_locals)
     
 int_types = {'i8': 1, 'i16': 2, 'i32': 3}
     

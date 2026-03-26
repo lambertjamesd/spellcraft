@@ -3,6 +3,13 @@ from . import tokenizer
 
 skippable = {'whitespace', 'comment'}
 
+class ParseError(Exception):
+    def __init__(self, message: str, source: tokenizer.Source, at: int):
+        super().__init__(source.format_message(message, at))
+        self.message = message
+        self.source = source
+        self.at = at
+
 class _ParseState():
     def __init__(self, tokens: list[tokenizer.Token], content: str, filename: str):
         self._tokens: list[tokenizer.Token] = tokens
@@ -11,8 +18,7 @@ class _ParseState():
         self.source = tokenizer.Source(content, filename)
 
     def error(self, message: str, at: int):
-        print(self.source.format_message(message, at))
-        raise Exception(message)
+        raise ParseError(message, self.source, at)
 
     def peek(self, offset = 0, include_whitespace = False) -> tokenizer.Token:
         skip_count = offset
@@ -561,6 +567,9 @@ def _parse_statement(parse_state: _ParseState):
     
     if _is_assignment(parse_state):
         return _parse_assignment(parse_state)
+    
+    if next.value == 'local':
+        return _parse_variable_definition(parse_state, 'local')
     
     return _parse_step(parse_state)
 

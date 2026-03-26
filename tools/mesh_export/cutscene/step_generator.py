@@ -6,6 +6,7 @@ from . import parser
 from . import expresion_generator
 from . import variable_layout
 from . import static_evaluator
+from . import local_layout
 
 CUTSCENE_STEP_DIALOG = 0
 CUTSCENE_STEP_SHOW_ITEM = 1
@@ -396,6 +397,16 @@ def validate_steps(statements: list, errors: list[str], context: variable_layout
     for statement in statements:
         _validate_step(statement, errors, context)
 
+def _generate_step_block(cutscene: Cutscene, block: list, context: variable_layout.VariableContext, return_label: str):
+    if context.fn_locals:
+        context.fn_locals.start_block(block)
+    
+    for statement in block:
+        _generate_step(cutscene, statement, context, return_label)
+
+    if context.fn_locals:
+        context.fn_locals.end_block()
+        
 def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableContext, return_label: str):
     if isinstance(step, parser.CutsceneStep):
         if step.name.value == 'return':
@@ -418,8 +429,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         cutscene.steps.append(if_step)
         size_before = len(cutscene.steps)
         
-        for statement in step.statements:
-            _generate_step(cutscene, statement, context, return_label)
+        _generate_step_block(cutscene, step.statements, context, return_label)
 
         if step.else_block:
             # setup the jump that skips over the else block
@@ -433,8 +443,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
 
             size_before = len(cutscene.steps)
 
-            for statement in step.else_block:
-                _generate_step(cutscene, statement, context, return_label)
+            _generate_step_block(cutscene, step.else_block, context, return_label)
 
             # update the correct jump offset
             skip_else.offset = len(cutscene.steps) - size_before
@@ -446,22 +455,47 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         expression = expresion_generator.generate_script(step.value, context)
         if not expression:
             raise Exception(f"Could not generate expression {step.value}")
-        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_EXPRESSION, expression.to_bytes()))
         
-        step_type = CUTSCENE_STEP_SET_LOCAL
+        stack_pos = context.get_fn_local_offset(step.name.value)
 
-        if context.is_global(step.name.value):
-            step_type = CUTSCENE_STEP_SET_GLOBAL
-        elif context.is_scene_var(step.name.value):
-            step_type = CUTSCENE_STEP_SET_SCENE
+        if stack_pos != None:
+            expression.steps.append(expresion_generator.ExpressionStore(stack_pos))
+            cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_EXPRESSION, expression.to_bytes()))
+        else:
+            cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_EXPRESSION, expression.to_bytes()))
 
-        var_type = context.get_variable_type(step.name.value)
-        bit_offset = context.get_variable_offset(step.name.value)
+            step_type = CUTSCENE_STEP_SET_LOCAL
 
-        cutscene.steps.append(CutsceneStep(
-            step_type, 
-            expresion_generator.generate_variable_address(var_type, bit_offset)
-        ))
+            if context.is_global(step.name.value):
+                step_type = CUTSCENE_STEP_SET_GLOBAL
+            elif context.is_scene_var(step.name.value):
+                step_type = CUTSCENE_STEP_SET_SCENE
+
+            var_type = context.get_variable_type(step.name.value)
+            bit_offset = context.get_variable_offset(step.name.value)
+
+            cutscene.steps.append(CutsceneStep(
+                step_type, 
+                expresion_generator.generate_variable_address(var_type, bit_offset)
+            ))
+
+    if isinstance(step, parser.VariableDefinition) and context.fn_locals:
+        if step.initializer:
+            expression = expresion_generator.generate_script(step.initializer, context)
+        else:
+            expression = expresion_generator.ExpressionScript()
+
+        context.fn_locals.define_local(step)
+        stack_pos = context.fn_locals.get_local_stack_position(step.name.value)
+
+        if not expression:
+            raise Exception('Could not generate variable definition expression')
+        if stack_pos == None:
+            raise Exception('Could not generate variable position')
+
+        expression.steps.append(expresion_generator.ExpressionStore(stack_pos))
+        
+
 
 def _idle_find_effected_actors(statements: list, actors: set):
     for statement in statements:
@@ -487,10 +521,13 @@ def _idle_effected_actors(cutscene: Cutscene, statements: list):
         cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, b''))
 
 def _generate_statement_list_steps(cutscene: Cutscene, statements: list, context: variable_layout.VariableContext, function_name: str):
-    for statement in statements:
-        _generate_step(cutscene, statement, context, f'$return_{function_name}')
+    context = context.with_locals(local_layout.LocalLayout(statements))
 
-    cutscene.add_label(f'$return_{function_name}')
+    return_label = f'$return_{function_name}'
+
+    _generate_step_block(cutscene, statements, context, return_label)
+
+    cutscene.add_label(return_label)
 
     _idle_effected_actors(cutscene, statements)
 

@@ -85,6 +85,12 @@ Performance metric before kd tree
 - camera logic
 -  do a better job with camera tracking logic
 
+## Scripting TODO
+
+- implement tools/mesh_export/cutscene/local_layout.py
+- adjust offsets to be from top of stack
+- auto add EXPRESSION_END to expression scripts
+
 ## Fire trails todo
 
 * Add a combat room after the fire wind puzzle

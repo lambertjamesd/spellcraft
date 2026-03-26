@@ -1,0 +1,12 @@
+
+func fun_test()
+    local local_a: i8;
+    local local_b: i8 = 5;
+
+    local_a = 10;
+    local_b = local_a + local_b;
+
+    local local_c: i8 = 10;
+
+    local_b = local_c + local_b;
+end
