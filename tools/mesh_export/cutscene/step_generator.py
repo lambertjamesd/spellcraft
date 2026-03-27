@@ -483,7 +483,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         if step.initializer:
             expression = expresion_generator.generate_script(step.initializer, context)
         else:
-            expression = expresion_generator.ExpressionScript()
+            expression = expresion_generator.ExpressionScript([expresion_generator.ExpresionScriptIntLiteral(0)])
 
         context.fn_locals.define_local(step)
         stack_pos = context.fn_locals.get_local_stack_position(step.name.value)
