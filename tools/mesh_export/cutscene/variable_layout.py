@@ -302,7 +302,7 @@ class VariableContext():
         return self.globals.get_variable_offset(name)
     
     def get_variable_type(self, name: str) -> str | None:
-        return self.locals.get_variable_type(name) or self.scene_vars.get_variable_type(name) or self.globals.get_variable_type(name)
+        return self.fn_locals.get_variable_type(name) or self.locals.get_variable_type(name) or self.scene_vars.get_variable_type(name) or self.globals.get_variable_type(name)
     
     def with_locals(self, fn_locals: local_layout.LocalLayout):
         return VariableContext(self.globals, self.scene_vars, self.locals, fn_locals)

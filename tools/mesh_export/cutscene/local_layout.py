@@ -174,6 +174,19 @@ class LocalLayout:
 
         return None
     
+    def get_variable_type(self, name: str) -> str | None:
+        var_def = self.variable_scopes.lookup_variable(name)
+
+        if var_def == None:
+            return None
+        
+        if isinstance(var_def, parser.VariableDefinition):
+            return var_def.type.name.value
+        if isinstance(var_def, parser.FunctionDefinitionArg):
+            return var_def.type_name.name.value
+        
+        raise Exception(f"could not get_variable_type on {var_def}")
+    
     def is_still_needed(self, name: str) -> bool:
         var_def = self.variable_scopes.lookup_variable(name)
 
@@ -181,6 +194,7 @@ class LocalLayout:
             return True
         
         return self.slots[self._var_to_pos[var_def]] == var_def
+        
 
     
     
