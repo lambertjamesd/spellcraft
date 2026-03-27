@@ -256,10 +256,16 @@ class VariableContext():
         self.globals: VariableLayout = globals
         self.scene_vars: VariableLayout = scene_vars
         self.locals: VariableLayout = locals
-        self.fn_locals: local_layout.LocalLayout | None = fn_locals
+        self.fn_locals: local_layout.LocalLayout = fn_locals or local_layout.LocalLayout([])
+
+    def get_stack_size(self) -> int:
+        return self.fn_locals.get_stack_size()
+    
+    def modify_stack_size(self, amount: int):
+        self.fn_locals.modify_stack(amount)
 
     def is_fn_local(self, name: str) -> bool:
-        return self.fn_locals != None and self.fn_locals.get_local_stack_position(name) != None
+        return self.fn_locals.get_local_stack_position(name) != None
 
     def is_local(self, name: str) -> bool:
         return self.locals.has_variable(name)
@@ -274,7 +280,17 @@ class VariableContext():
         if not self.fn_locals:
             return None
 
-        return self.fn_locals.get_local_stack_position(name)
+        result = self.fn_locals.get_local_stack_position(name)
+
+        if result == None:
+            return None
+        
+        stack_size = self.fn_locals.get_stack_size()
+
+        if stack_size <= result:
+            raise Exception("bad stack size")
+        
+        return stack_size - result - 1
     
     def get_variable_offset(self, name: str) -> int:
         if self.locals.has_variable(name):

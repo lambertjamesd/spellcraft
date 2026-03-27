@@ -118,7 +118,7 @@ def generate_variable_address(data_type: str, bit_offset: int) -> bytes:
 
 # script
 
-class ExpresionScriptLoad():
+class ExpressionScriptLoad():
     def __init__(self, source: int, name: str, data_type: str, bit_offset: int):
         self.command: int = source
         self.name: str = name
@@ -136,7 +136,7 @@ class ExpresionScriptLoad():
         file.write(struct.pack('>B', self.command))
         file.write(generate_variable_address(self.data_type, self.bit_offset))
 
-class ExpresionScriptIntLiteral():
+class ExpressionScriptIntLiteral():
     def __init__(self, value: int):
         if value == None:
             raise Exception('liternal must be an int')
@@ -153,7 +153,7 @@ class ExpresionScriptIntLiteral():
     def serialize(self, file):
         file.write(struct.pack('>Bi', self.command, self.value))
 
-class ExpresionScriptFloatLiteral():
+class ExpressionScriptFloatLiteral():
     def __init__(self, value: float):
         self.command: int = EXPRESSION_TYPE_LOAD_LITERAL
         self.value: int = struct.unpack("<I", struct.pack("<f", value))[0]
@@ -262,10 +262,12 @@ class ExpressionScript():
     def to_bytes(self) -> bytes:
         result = io.BytesIO()
         self.serialize(result)
+        # write EXPRESSION_TYPE_END
+        result.write(b'\0')
         return result.getvalue()
 
     def concat(self, other):        
-        return ExpressionScript(self.steps[0:-1] + other.steps)
+        return ExpressionScript(self.steps + other.steps)
 
 # types
 
@@ -472,7 +474,7 @@ class ExpressionGenerator():
         
         offset = self.context.get_variable_offset(name)
 
-        return ExpresionScriptLoad(source, name, data_type, offset)
+        return ExpressionScriptLoad(source, name, data_type, offset)
 
     def generate(self, expression: parser.Expression, script: ExpressionScript):
         if not expression in self.static_evaluator.literal_value:
@@ -484,9 +486,11 @@ class ExpressionGenerator():
             if type_from_pytype(literal_value) != self.type_info.expression_to_type[expression]:
                 raise Exception(f"mismatched type {type_from_pytype(literal_value)} {self.type_info.expression_to_type[expression]}")
             if type_from_pytype(literal_value) == 'int':
-                script.steps.append(ExpresionScriptIntLiteral(literal_value))
+                script.steps.append(ExpressionScriptIntLiteral(literal_value))
+                self.context.modify_stack_size(1)
             elif type_from_pytype(literal_value) == 'float':
-                script.steps.append(ExpresionScriptFloatLiteral(literal_value))
+                script.steps.append(ExpressionScriptFloatLiteral(literal_value))
+                self.context.modify_stack_size(1)
             else:
                 raise Exception(f"unknown literal type {type_from_pytype(literal_value)}")
             return
@@ -520,6 +524,8 @@ class ExpressionGenerator():
             else:
                 self.generate_to_type(expression.b, cast_to_type, script)
                 self.generate_to_type(expression.a, cast_to_type, script)
+
+            self.context.modify_stack_size(-1)
 
             if operator == 'and':
                 script.steps.append(ExpressionCommand(EXPRESSION_TYPE_AND))
@@ -562,6 +568,7 @@ class ExpressionGenerator():
 
         if isinstance(expression, parser.Identifier):
             script.steps.append(self.generate_identifier_read(expression))
+            self.context.modify_stack_size(1)
 
         if isinstance(expression, parser.FunctionCall):
             built_in = built_in_functions.lookup(expression.name.value)
@@ -573,6 +580,7 @@ class ExpressionGenerator():
                 self.generate_to_type(arg, built_in.get_arg_type(i), script)
 
             script.steps.append(ExpressionFunctionCall(built_in.index, len(expression.args), 1))
+            self.context.modify_stack_size(1 - len(expression.args))
 
 
 def generate_script(expression, context: variable_layout.VariableContext, expected_type: str | None = None) -> ExpressionScript | None:
@@ -595,5 +603,4 @@ def generate_script(expression, context: variable_layout.VariableContext, expect
     else:
         generator.generate(expression, result)
 
-    result.steps.append(ExpressionCommand(EXPRESSION_TYPE_END))
     return result

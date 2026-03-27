@@ -1,4 +1,5 @@
 import sys
+import typing
 from . import tokenizer
 
 skippable = {'whitespace', 'comment'}
@@ -100,18 +101,27 @@ class VariableDefinition():
 
     def __str__(self):
         return f"{self.name.value}: {self.type};"
+    
+    def append_string(self, result: list[str], depth: int):
+        space = '  ' * depth
+        result.append(f"{space}{self.name.value}: {self.type};")
 
 class IfStatement():
-    def __init__(self, condition: Expression, statements: list, else_block: list):
+    def __init__(self, condition: Expression, statements: list["Statement"], else_block: list["Statement"] | None):
         self.condition: Expression = condition
-        self.statements: list = statements
-        self.else_block: list = else_block
+        self.statements: list[Statement] = statements
+        self.else_block: list[Statement] | None = else_block
 
     def append_string(self, result: list[str], depth: int):
         space = '  ' * depth
         result.append(f"{space}if {self.condition} then")
         for statement in self.statements:
             statement.append_string(result, depth + 1)
+        if self.else_block:
+            result.append(f"{space}else")
+            for statement in self.else_block:
+                statement.append_string(result, depth + 1)
+
         result.append(f"{space}end")
         
 
@@ -129,12 +139,25 @@ class FunctionDefinitionArg():
         self.name: tokenizer.Token = name
         self.type_name: DataType = type_name
 
+    def __str__(self):
+        return f"${self.name.value}: ${self.type_name.name.value}"
+
 class FunctionDefinition():
-    def __init__(self, func: tokenizer.Token, name: tokenizer.Token, args: list[FunctionDefinitionArg], body: list):
+    def __init__(self, func: tokenizer.Token, name: tokenizer.Token, args: list[FunctionDefinitionArg], body: list["Statement"]):
         self.func: tokenizer.Token = func
         self.name: tokenizer.Token = name
         self.args: list[FunctionDefinitionArg] = args
-        self.body: list = body
+        self.body: list[Statement] = body
+
+    def append_string(self, result: list[str], depth: int):
+        space = '  ' * depth
+        result.append(f"{space}func ${self.name.value}(${', '.join([str(arg) for arg in self.args])})")
+
+        for step in self.body:
+            step.append_string(result, depth + 1)
+
+        result.append(f"{space}end")
+        
 
 class FunctionCall(Expression):
     def __init__(self, name: tokenizer.Token, args: list[Expression]):
@@ -143,9 +166,9 @@ class FunctionCall(Expression):
         self.args: list[Expression] = args
 
 class CutsceneStep():
-    def __init__(self, name: tokenizer.Token, parameters: list):
+    def __init__(self, name: tokenizer.Token, parameters: list[Expression]):
         self.name: tokenizer.Token = name
-        self.parameters: list = parameters
+        self.parameters: list[Expression] = parameters
 
     def append_string(self, result: list[str], depth: int):
         space = '  ' * depth
@@ -242,7 +265,7 @@ class Cutscene():
         self.scene_vars: list[VariableDefinition] = []
         self.locals: list[VariableDefinition] = []
         self.functions: list[FunctionDefinition] = []
-        self.statements = []
+        self.statements: list[Statement] = []
 
     def __str__(self):
         parts: list[str] = []
@@ -257,6 +280,10 @@ class Cutscene():
             statement.append_string(parts, 0)
 
         return '\n'.join(parts)
+    
+
+Statement = typing.Union[VariableDefinition, IfStatement, Assignment, FunctionDefinition, CutsceneStep]
+ExpressionUnion = typing.Union[FunctionCall, Identifier, Integer, Float, String, UnaryOperator, BinaryOperator]
 
 def _parse_type(parse_state: _ParseState):
     name = parse_state.require('identifier')
@@ -556,7 +583,7 @@ def _parse_step(parse_state: _ParseState):
 
     return CutsceneStep(name, parameters)
 
-def _parse_statement(parse_state: _ParseState):
+def _parse_statement(parse_state: _ParseState) -> Statement:
     next = parse_state.peek()
 
     if next.value == 'if':
