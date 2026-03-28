@@ -254,16 +254,17 @@ class ExpressionScript():
         for step in self.steps:
             byte_size += step.data_size()
 
-        file.write(struct.pack('>H', byte_size))
+        file.write(struct.pack('>H', byte_size + 1))
 
         for step in self.steps:
             step.serialize(file)
+            
+        # write EXPRESSION_TYPE_END
+        file.write(b'\0')
 
     def to_bytes(self) -> bytes:
         result = io.BytesIO()
         self.serialize(result)
-        # write EXPRESSION_TYPE_END
-        result.write(b'\0')
         return result.getvalue()
 
     def concat(self, other):        
