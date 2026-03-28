@@ -235,6 +235,7 @@ def build_template_string(string: parser.String, context: variable_layout.Variab
 
 def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext):
     pre_expression: expresion_generator.ExpressionScript | None = None
+    pop_count = 0
 
     for idx, arg in enumerate(args):
         parameter = step.parameters[idx]
@@ -243,6 +244,7 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
             if not isinstance(parameter, parser.String):
                 raise Exception('Parameter should be a string')
 
+            pop_count += len(parameter.replacements)
             for replacement in parameter.replacements:
                 expression = expresion_generator.generate_script(replacement.expr, context)
                 if not expression:
@@ -255,6 +257,8 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
         if arg.is_static:
             continue
+
+        pop_count += 1
 
         expression = None
 
@@ -276,8 +280,6 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
 
     data = io.BytesIO()
-
-    pop_count = 0
     
     for idx, arg in enumerate(args):
         parameter = step.parameters[idx]
@@ -288,7 +290,6 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
             data.write(struct.pack('>B', len(parameter.replacements)))
             data.write(_encode_string(build_template_string(parameter, context)))
-            pop_count += len(parameter.replacements)
             continue
             
         if arg.name == 'str':
@@ -300,8 +301,6 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
 
         if not arg.is_static:
             continue
-
-        pop_count += 1
 
         eval = static_evaluator.StaticEvaluator()
         static_value = eval.check_for_literals(parameter)
@@ -572,7 +571,8 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
     _idle_effected_actors(cutscene, statements)
 
     if fn_locals.get_stack_size() != start_stack_size:
-        raise Exception(f"failed to generate steps: mismatched stack size")
+        print(parser.statement_list_str(statements))
+        raise Exception(f"fn {function_name} mismatched stack size expected {start_stack_size} got {fn_locals.get_stack_size()}")
 
     if local_count:
         cutscene.steps.append(ExpressionCutsceneStep(

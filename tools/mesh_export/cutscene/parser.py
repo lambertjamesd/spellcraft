@@ -165,6 +165,9 @@ class FunctionCall(Expression):
         self.name: tokenizer.Token = name
         self.args: list[Expression] = args
 
+    def __str__(self) -> str:
+        return f"{self.name.value}({', '.join([str(arg) for arg in self.args])})"
+
 class CutsceneStep():
     def __init__(self, name: tokenizer.Token, parameters: list[Expression]):
         self.name: tokenizer.Token = name
@@ -240,7 +243,7 @@ class UnaryOperator(Expression):
         self.operand: Expression = operand
 
     def __str__(self):
-        return f"{self.operator.value}{self.operand}"
+        return f"{self.operator.value} {self.operand}"
 
 class BinaryOperator(Expression):
     def __init__(self, a: Expression, operator: tokenizer.Token, b: Expression):
@@ -623,3 +626,10 @@ def parse_expression(content: str, source: str):
     parse_state = _ParseState(tokenizer.tokenize(content, source), content, source)
     return _parse_expression(parse_state)
 
+def statement_list_str(block: list[Statement]):
+    result: list[str] = []
+
+    for statement in block:
+        statement.append_string(result, 0)
+
+    return '\n'.join(result)
