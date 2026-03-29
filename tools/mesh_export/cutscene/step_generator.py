@@ -232,6 +232,17 @@ def build_template_string(string: parser.String, context: variable_layout.Variab
         
     return ''.join(parts)
 
+def _is_numerical(type: parser.DataType) -> bool:
+    return type.name.value in expresion_generator.type_mapping
+
+def _can_assign(from_type: str, into: parser.DataType) -> bool:
+    if _is_numerical(into) and (from_type == 'int' or from_type == 'float'):
+        return True
+    
+    if from_type == 'str' and into.name.value == 'str':
+        return True
+
+    return False
 
 def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext):
     pre_expression: expresion_generator.ExpressionScript | None = None
@@ -327,10 +338,18 @@ def _generate_alias(cutscene: Cutscene, step: parser.CutsceneStep, alias: Alias,
         _generate_step(cutscene, statementStep, context, return_label)
 
 def _validate_step(step, errors: list[str], context: variable_layout.VariableContext):
+    if isinstance(step, parser.ReturnStatement):
+        if len(step.results) != len(context.fn_locals.results):
+            errors.append(step.return_token.format_message(f'expected {len(context.fn_locals.results)} got {len(step.results)}'))
+
+        type_info = expresion_generator.TypeChecker(context)
+        for index, result in enumerate(step.results):
+            parameter_type = type_info.determine_type(result)
+            if index < len(context.fn_locals.results) and not _can_assign(parameter_type, context.fn_locals.results[index]):
+                errors.append(result.at.format_message(f'cannot assign type {parameter_type} to {context.fn_locals.results[index]}'))
+            
+
     if isinstance(step, parser.CutsceneStep):
-        if step.name.value == 'return':
-            return
-        
         args = None
 
         if step.name.value in _step_args:
@@ -432,18 +451,25 @@ def _generate_step_block(cutscene: Cutscene, block: list, context: variable_layo
         context.fn_locals.end_block()
         
 def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableContext, return_label: str):
-    if isinstance(step, parser.CutsceneStep):
-        if step.name.value == 'return':
-            cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, return_label, step.name))
-            return
-        
+    if isinstance(step, parser.ReturnStatement):
+        return_expr: expresion_generator.ExpressionScript | None  = None
+
+        for index, result in enumerate(step.results):
+            return_expr = expresion_generator.expression_concat(return_expr, expresion_generator.generate_script(result, context, expresion_generator.type_mapping[context.fn_locals.results[index].name.value]))
+
+        if return_expr:
+            cutscene.steps.append(ExpressionCutsceneStep(return_expr))
+
+        cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, return_label, step.return_token))
+
+    elif isinstance(step, parser.CutsceneStep):
         if step.name.value in _aliases:
             _generate_alias(cutscene, step, _aliases[step.name.value], context, return_label)
             return
 
         _generate_function_step(cutscene, step, _step_args[step.name.value], context)
 
-    if isinstance(step, parser.IfStatement):
+    elif isinstance(step, parser.IfStatement):
         expression = expresion_generator.generate_script(step.condition, context)
         if not expression:
             raise Exception(f"Could not generate expression {step.condition}")
@@ -476,7 +502,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
             # update the correct jump offset
             if_step.offset = len(cutscene.steps) - size_before
 
-    if isinstance(step, parser.Assignment):
+    elif isinstance(step, parser.Assignment):
         expression = expresion_generator.generate_script(step.value, context)
         if not expression:
             raise Exception(f"Could not generate expression {step.value}")
@@ -507,7 +533,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
                 expresion_generator.generate_variable_address(var_type, bit_offset)
             ))
 
-    if isinstance(step, parser.VariableDefinition) and context.fn_locals:
+    elif isinstance(step, parser.VariableDefinition) and context.fn_locals:
         if step.initializer:
             expression = expresion_generator.generate_script(step.initializer, context)
         else:
@@ -550,9 +576,11 @@ def _idle_effected_actors(cutscene: Cutscene, statements: list):
         cutscene.steps.append(ExpressionCutsceneStep(expression))
         cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, b''))
 
-def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.Statement], context: variable_layout.VariableContext, function_name: str):
-    fn_locals = local_layout.LocalLayout(statements)
+def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.Statement], context: variable_layout.VariableContext, function_def: parser.FunctionDefinition | None):
+    fn_locals = local_layout.LocalLayout(statements, function_def.args if function_def else [], function_def.return_types if function_def else [])
     context = context.with_locals(fn_locals)
+
+    function_name = function_def.name.value if function_def else ''
 
     return_label = f'$return_{function_name}'
 
@@ -578,14 +606,14 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
 def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layout.VariableContext):
     cutscene = Cutscene()
 
-    _generate_statement_list_steps(cutscene, inputCutscene.statements, context, '')
+    _generate_statement_list_steps(cutscene, inputCutscene.statements, context, None)
 
     fn_length: list[int] = []
     main_length = len(cutscene.steps)
 
     for fn in inputCutscene.functions:
         before = len(cutscene.steps)
-        _generate_statement_list_steps(cutscene, fn.body, context, fn.name.value)
+        _generate_statement_list_steps(cutscene, fn.body, context, fn)
         fn_length.append(len(cutscene.steps) - before)
 
     errors = cutscene.apply_jump_labels()

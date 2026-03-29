@@ -256,7 +256,7 @@ class VariableContext():
         self.globals: VariableLayout = globals
         self.scene_vars: VariableLayout = scene_vars
         self.locals: VariableLayout = locals
-        self.fn_locals: local_layout.LocalLayout = fn_locals or local_layout.LocalLayout([])
+        self.fn_locals: local_layout.LocalLayout = fn_locals or local_layout.LocalLayout([], [], [])
 
     def get_stack_size(self) -> int:
         return self.fn_locals.get_stack_size()

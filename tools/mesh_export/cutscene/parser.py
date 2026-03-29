@@ -88,6 +88,12 @@ class DataType():
             return False
         
         return self.name.value == other.name.value and self.count == other.count
+    
+    def get_eval_type(self) -> str:
+        if self.name.value == 'float':
+            return 'float'
+        
+        return 'int'
 
 class Expression():
     def __init__(self, at: tokenizer.Token):
@@ -134,6 +140,16 @@ class Assignment():
         space = '  ' * depth
         result.append(f"{space}{self.name.value} = {self.value};")
 
+class ReturnStatement():
+    def __init__(self, return_token: tokenizer.Token, results: list[Expression]):
+        self.return_token: tokenizer.Token = return_token
+        self.results: list[Expression] = results
+        
+    def append_string(self, result: list[str], depth: int):
+        space = '  ' * depth
+        result.append(f"{space}return {', '.join([str(result) for result in self.results])};")
+
+
 class FunctionDefinitionArg():
     def __init__(self, name: tokenizer.Token, type_name: DataType):
         self.name: tokenizer.Token = name
@@ -143,10 +159,11 @@ class FunctionDefinitionArg():
         return f"${self.name.value}: ${self.type_name.name.value}"
 
 class FunctionDefinition():
-    def __init__(self, func: tokenizer.Token, name: tokenizer.Token, args: list[FunctionDefinitionArg], body: list["Statement"]):
+    def __init__(self, func: tokenizer.Token, name: tokenizer.Token, args: list[FunctionDefinitionArg], return_types: list[DataType], body: list["Statement"]):
         self.func: tokenizer.Token = func
         self.name: tokenizer.Token = name
         self.args: list[FunctionDefinitionArg] = args
+        self.return_types: list[DataType] = return_types
         self.body: list[Statement] = body
 
     def append_string(self, result: list[str], depth: int):
@@ -158,7 +175,6 @@ class FunctionDefinition():
 
         result.append(f"{space}end")
         
-
 class FunctionCall(Expression):
     def __init__(self, name: tokenizer.Token, args: list[Expression]):
         super().__init__(name)
@@ -285,10 +301,10 @@ class Cutscene():
         return '\n'.join(parts)
     
 
-Statement = typing.Union[VariableDefinition, IfStatement, Assignment, FunctionDefinition, CutsceneStep]
+Statement = typing.Union[VariableDefinition, IfStatement, Assignment, FunctionDefinition, CutsceneStep, ReturnStatement]
 ExpressionUnion = typing.Union[FunctionCall, Identifier, Integer, Float, String, UnaryOperator, BinaryOperator]
 
-def _parse_type(parse_state: _ParseState):
+def _parse_type(parse_state: _ParseState) -> DataType:
     name = parse_state.require('identifier')
     count = None
     if parse_state.optional('['):
@@ -328,10 +344,19 @@ def _parse_function_definition(parse_state: _ParseState) -> FunctionDefinition:
 
     parse_state.require(')')
 
+    expect_return_type = bool(parse_state.optional(':'))
+
+    return_types: list[DataType] = []
+
+    while expect_return_type:
+        return_types.append(_parse_type(parse_state))
+        expect_return_type = bool(parse_state.optional(','))
+
+
     body = _parse_block(parse_state, {'end'})
     parse_state.require('identifier', 'end')
 
-    return FunctionDefinition(func, name, args, body)
+    return FunctionDefinition(func, name, args, return_types, body)
 
 def _maybe_parse_cutscene_def(parse_state: _ParseState, into: Cutscene) -> bool:
     next = parse_state.peek()
@@ -574,6 +599,20 @@ def _parse_assignment(parse_state: _ParseState):
     parse_state.require(';')
     return Assignment(name, expression)
 
+def _parse_return_statement(parse_state: _ParseState):
+    return_token = parse_state.require('identifier', 'return')
+
+    results: list[Expression] = []
+    
+    while not parse_state.optional(';'):
+        results.append(_parse_expression(parse_state))
+        if not parse_state.optional(','):
+            parse_state.require(';')
+            break
+
+    return ReturnStatement(return_token, results)
+
+
 def _parse_step(parse_state: _ParseState):
     name = parse_state.require('identifier')
     parameters = []
@@ -600,6 +639,9 @@ def _parse_statement(parse_state: _ParseState) -> Statement:
     
     if next.value == 'local':
         return _parse_variable_definition(parse_state, 'local')
+    
+    if next.value == 'return':
+        return _parse_return_statement(parse_state)
     
     return _parse_step(parse_state)
 

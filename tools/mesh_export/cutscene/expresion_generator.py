@@ -269,6 +269,13 @@ class ExpressionScript():
 
     def concat(self, other):        
         return ExpressionScript(self.steps + other.steps)
+    
+def expression_concat(a: ExpressionScript | None, b: ExpressionScript | None) -> ExpressionScript | None:
+    if not a:
+        return b
+    if not b:
+        return a
+    return a.concat(b) 
 
 # types
 

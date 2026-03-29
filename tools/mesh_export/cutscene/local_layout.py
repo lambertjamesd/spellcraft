@@ -60,12 +60,12 @@ class VariableRangeTracker:
 
             self.variable_overlaps[other].add(use_definition)
 
-    def layout_variables(self, argc: int) -> tuple[dict[VariableType, int], int]:
+    def layout_variables(self) -> tuple[dict[VariableType, int], int]:
         result: dict[VariableType, int] = {}
         slots: list[VariableType] = []
 
         for index, var in enumerate(self.all_variables):
-            if index < argc:
+            if isinstance(var, parser.FunctionDefinitionArg):
                 result[var] = len(slots)
                 slots.append(var)
                 continue
@@ -126,23 +126,34 @@ def _searchRangesInBlock(block: list[parser.Statement], tracker: VariableRangeTr
 
     tracker.end_block()
 
-def _determineRanges(block: list[parser.Statement]) -> tuple[dict[VariableType, int], int]:
+def _determineRanges(block: list[parser.Statement], args: list[parser.FunctionDefinitionArg]) -> tuple[dict[VariableType, int], int]:
     tracker = VariableRangeTracker()
+    tracker.start_block()
+    for arg in args:
+        tracker.define_variable(arg)
     _searchRangesInBlock(block, tracker)
-    return tracker.layout_variables(0)
+    tracker.end_block()
+
+    return tracker.layout_variables()
 
 class LocalLayout:
-    def __init__(self, block: list[parser.Statement]):
+    def __init__(self, block: list[parser.Statement], args: list[parser.FunctionDefinitionArg], results: list[parser.DataType]):
         self.variable_scopes = VariableScopeStack()
-        var_to_pos, stack_size = _determineRanges(block)
+        var_to_pos, stack_size = _determineRanges(block, args)
         self._var_to_pos: dict[VariableType, int] = var_to_pos
         self.local_stack_size = stack_size
         self.slots: list[VariableType | None] = [None] * stack_size
+        self.args: list[parser.FunctionDefinitionArg] = args
+        self.results: list[parser.DataType] = results
 
         self.current_stack_pos = stack_size
 
+        self.variable_scopes.start_block()
+        for arg in args:
+            self.variable_scopes.define_variable(arg)
+
     def get_local_count(self) -> int:
-        return self.local_stack_size # - self.argc
+        return self.local_stack_size - len(self.args)
 
     def get_stack_size(self) -> int:
         return self.current_stack_pos
