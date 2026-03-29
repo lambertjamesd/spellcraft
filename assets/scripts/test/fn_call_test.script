@@ -10,3 +10,8 @@ func fun_test()
 
     local_b = local_c + local_b;
 end
+
+func local_test()
+    local local_a: i32 = 20 + 30;
+    local local_b: i32 = local_a * local_a;
+end

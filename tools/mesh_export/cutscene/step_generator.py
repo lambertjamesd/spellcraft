@@ -574,13 +574,6 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
         print(parser.statement_list_str(statements))
         raise Exception(f"fn {function_name} mismatched stack size expected {start_stack_size} got {fn_locals.get_stack_size()}")
 
-    if local_count:
-        cutscene.steps.append(ExpressionCutsceneStep(
-            expresion_generator.ExpressionScript([
-                expresion_generator.ExpressionRemove(local_count)
-            ])
-        ))
-
 
 def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layout.VariableContext):
     cutscene = Cutscene()
