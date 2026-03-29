@@ -460,6 +460,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         if return_expr:
             cutscene.steps.append(ExpressionCutsceneStep(return_expr))
 
+        context.modify_stack_size(len(step.results))
         cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, return_label, step.return_token))
 
     elif isinstance(step, parser.CutsceneStep):
