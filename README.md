@@ -4,7 +4,7 @@ A new original N64 game
 
 ## Building
 
-Use [libdragon](https://github.com/DragonMinded/libdragon) to build the project. You should use the preview branch to get opengl (sha 1559f4a02828508bf31d6c63252f20d887f32be8)
+Use [libdragon](https://github.com/DragonMinded/libdragon) to build the project.
 ```sh
 git clone --recurse-submodules https://github.com/lambertjamesd/spellcraft
 # or to init the submodule (after default clone)
