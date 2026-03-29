@@ -115,11 +115,7 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
 
         switch (instruction) {
             case EXPRESSION_TYPE_LOAD_LOCAL:
-                // this avoids alignment issues
-                memcpy(&data, current, sizeof(union expression_data));
-                
-                evaluation_context_push(context, evaluation_context_load(context->local_varaibles, data.load_variable.data_type, data.load_variable.word_offset));
-                current += sizeof(union expression_data);
+                assert(false);
                 break;
             case EXPRESSION_TYPE_LOAD_SCENE_VAR:
                 // this avoids alignment issues

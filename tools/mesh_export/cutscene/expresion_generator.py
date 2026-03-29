@@ -466,9 +466,7 @@ class ExpressionGenerator():
         
         source = EXPRESSION_TYPE_LOAD_GLOBAL
 
-        if self.context.is_local(name):
-            source = EXPRESSION_TYPE_LOAD_LOCAL
-        elif self.context.is_global(name):
+        if self.context.is_global(name):
             source = EXPRESSION_TYPE_LOAD_GLOBAL
         elif self.context.is_scene_var(name):
             source = EXPRESSION_TYPE_LOAD_SCENE_VAR

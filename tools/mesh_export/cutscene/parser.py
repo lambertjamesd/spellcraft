@@ -270,21 +270,12 @@ class BinaryOperator(Expression):
 
     def __str__(self):
         return f"({self.a} {self.operator.value} {self.b})"
-    
-class UseSceneDefinition():
-    def __init__(self, filename: String):
-        self.filename: String = filename
-
-    def __str__(self):
-        return f"use scene {str(self.filename)};"
 
 class Cutscene():
     def __init__(self):
         self.globals: list[VariableDefinition] = []
         self.scene_vars: list[VariableDefinition] = []
-        self.locals: list[VariableDefinition] = []
         self.functions: list[FunctionDefinition] = []
-        self.statements: list[Statement] = []
 
     def __str__(self):
         parts: list[str] = []
@@ -292,11 +283,11 @@ class Cutscene():
         for variable in self.globals:
             parts.append('global ' + str(variable))
 
-        for variable in self.locals:
-            parts.append('local ' + str(variable))
+        for scene_var in self.scene_vars:
+            parts.append('scene ' + str(scene_var))
 
-        for statement in self.statements:
-            statement.append_string(parts, 0)
+        for fn in self.functions:
+            fn.append_string(parts, 0)
 
         return '\n'.join(parts)
     
@@ -366,9 +357,6 @@ def _maybe_parse_cutscene_def(parse_state: _ParseState, into: Cutscene) -> bool:
         return True
     if next.value == 'scene':
         into.scene_vars.append(_parse_variable_definition(parse_state, 'scene'))
-        return True
-    if next.value == 'local':
-        into.locals.append(_parse_variable_definition(parse_state, 'local'))
         return True
     if next.value == 'func':
         into.functions.append(_parse_function_definition(parse_state))
@@ -582,12 +570,6 @@ def _parse_if(parse_state: _ParseState, if_token = 'if'):
         parse_state.require('identifier', 'end')
 
     return IfStatement(condition, body, else_block)
-    
-def _parse_use(parse_state: _ParseState):
-    parse_state.require('identifier', 'use')
-    parse_state.require('identifier', 'scene')
-    filename = _parse_string(parse_state)
-    return UseSceneDefinition(filename)
 
 def _is_assignment(parse_state: _ParseState):
     return parse_state.peek(0).token_type == 'identifier' and parse_state.peek(1).token_type == '='
@@ -631,9 +613,6 @@ def _parse_statement(parse_state: _ParseState) -> Statement:
     if next.value == 'if':
         return _parse_if(parse_state)
     
-    if next.value == 'use':
-        return _parse_use(parse_state)
-    
     if _is_assignment(parse_state):
         return _parse_assignment(parse_state)
     
@@ -652,7 +631,13 @@ def _parse_cutscene(parse_state: _ParseState) -> Cutscene:
         if _maybe_parse_cutscene_def(parse_state, result):
             continue
 
+        next = parse_state.peek()
+
+        parse_state.error(f'expected variable or function def got {next.value}', next.at)
+
         result.statements.append(_parse_statement(parse_state))
+
+    result.functions.sort(key=lambda x: (0 if x.name.value == 'main' else 1, x.name.value))
 
     return result
 
@@ -667,6 +652,10 @@ def parse_type(content: str) -> DataType:
 def parse_expression(content: str, source: str):
     parse_state = _ParseState(tokenizer.tokenize(content, source), content, source)
     return _parse_expression(parse_state)
+
+def parse_block(content: str, source: str) -> list[Statement]:
+    parse_state = _ParseState(tokenizer.tokenize(content, source), content, source)
+    return _parse_block(parse_state, {})
 
 def statement_list_str(block: list[Statement]):
     result: list[str] = []

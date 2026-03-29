@@ -332,9 +332,9 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
     cutscene.steps.append(CutsceneStep(_step_ids[step.name.value], data.getvalue()))
 
 def _generate_alias(cutscene: Cutscene, step: parser.CutsceneStep, alias: Alias, context:variable_layout.VariableContext, return_label: str):
-    cutscene_alias = parser.parse(alias.source, "alias")
+    cutscene_alias = parser.parse_block(alias.source, "alias")
 
-    for statementStep in cutscene_alias.statements:
+    for statementStep in cutscene_alias:
         _generate_step(cutscene, statementStep, context, return_label)
 
 def _validate_step(step, errors: list[str], context: variable_layout.VariableContext):
@@ -393,7 +393,7 @@ def _validate_step(step, errors: list[str], context: variable_layout.VariableCon
                     errors.append(parameter.at.format_message('expected string for parameter'))
                 continue
             
-            if arg_type.name == 'bool' or arg_type.name == 'int' or arg_type.name == 'entity_id':
+            if arg_type.name == 'bool' or arg_type.name == 'int' or arg_type.name == 'entity_id' or arg_type.name == 'entity_spawner':
                 if parameter_type != 'int':
                     errors.append(parameter.at.format_message(f'expected int got {parameter_type}'))
             elif arg_type.name == 'float':
@@ -436,9 +436,14 @@ def _validate_step(step, errors: list[str], context: variable_layout.VariableCon
         if not target_type in expresion_generator.type_mapping:
             errors.append(step.name.format_message(f'cannot assign type {target_type}'))
 
-def validate_steps(statements: list, errors: list[str], context: variable_layout.VariableContext):
+def validate_steps(statements: list[parser.Statement], errors: list[str], context: variable_layout.VariableContext):
     for statement in statements:
         _validate_step(statement, errors, context)
+
+def validate_cutscene(cutscene: parser.Cutscene, errors: list[str], context: variable_layout.VariableContext):
+    for fn in cutscene.functions:
+        local_context = context.with_locals(local_layout.LocalLayout(fn))
+        validate_steps(fn.body, errors, local_context)
 
 def _generate_step_block(cutscene: Cutscene, block: list, context: variable_layout.VariableContext, return_label: str):
     if context.fn_locals:
@@ -519,7 +524,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         else:
             cutscene.steps.append(ExpressionCutsceneStep(expression))
 
-            step_type = CUTSCENE_STEP_SET_LOCAL
+            step_type = CUTSCENE_STEP_SET_GLOBAL
 
             if context.is_global(step.name.value):
                 step_type = CUTSCENE_STEP_SET_GLOBAL
@@ -577,8 +582,8 @@ def _idle_effected_actors(cutscene: Cutscene, statements: list):
         cutscene.steps.append(ExpressionCutsceneStep(expression))
         cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, b''))
 
-def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.Statement], context: variable_layout.VariableContext, function_def: parser.FunctionDefinition | None):
-    fn_locals = local_layout.LocalLayout(statements, function_def.args if function_def else [], function_def.return_types if function_def else [])
+def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.Statement], context: variable_layout.VariableContext, function_def: parser.FunctionDefinition):
+    fn_locals = local_layout.LocalLayout(function_def)
     context = context.with_locals(fn_locals)
 
     function_name = function_def.name.value if function_def else ''
@@ -607,10 +612,7 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
 def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layout.VariableContext):
     cutscene = Cutscene()
 
-    _generate_statement_list_steps(cutscene, inputCutscene.statements, context, None)
-
     fn_length: list[int] = []
-    main_length = len(cutscene.steps)
 
     for fn in inputCutscene.functions:
         before = len(cutscene.steps)
@@ -626,9 +628,7 @@ def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layou
 
     file.write('CTSN'.encode())
 
-    file.write(struct.pack('>HH', len(cutscene.steps), 1 + len(inputCutscene.functions)))
-
-    context.locals.write_default_values(file)
+    file.write(struct.pack('>HH', len(cutscene.steps), len(inputCutscene.functions)))
 
     for step in cutscene.steps:
         file.write(struct.pack('>B', step.command))
@@ -638,8 +638,6 @@ def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layou
             file.write(struct.pack('>h', step.offset))
         elif isinstance(step, ExpressionCutsceneStep):
             file.write(step.expr.to_bytes())
-
-    file.write(struct.pack('>HB', main_length, 0))
 
     for length, fn in zip(fn_length, inputCutscene.functions):
         name_bytes = fn.name.value.encode()

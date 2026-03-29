@@ -72,9 +72,6 @@ struct cutscene {
 
     uint16_t function_count;
     cutscene_function_t* functions;
-    
-    uint16_t locals_size;
-    void* locals;
 };
 
 typedef struct cutscene cutscene_t;
@@ -198,7 +195,7 @@ struct cutscene_step {
 
 typedef struct cutscene_step cutscene_step_t;
 
-struct cutscene* cutscene_new(int capacity, int locals_capacity, int function_count);
+struct cutscene* cutscene_new(int capacity, int function_count);
 void cutscene_free(struct cutscene* cutscene);
 int cutscene_find_function_index(struct cutscene* cutscene, const char* name);
 

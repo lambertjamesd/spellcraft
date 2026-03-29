@@ -45,15 +45,12 @@ if __name__ == "__main__":
 
         local_builder = mesh_export.cutscene.variable_layout.VariableLayoutBuilder()
 
-        for local_var in result.locals:
-            local_builder.add_variable(local_var)
-
         locals = local_builder.build()
 
-        context = mesh_export.cutscene.variable_layout.VariableContext(globals, scene_vars, locals)
+        context = mesh_export.cutscene.variable_layout.VariableContext(globals, scene_vars)
 
         errors: list[str] = []
-        mesh_export.cutscene.step_generator.validate_steps(result.statements, errors, context)
+        mesh_export.cutscene.step_generator.validate_cutscene(result, errors, context)
 
         if len(errors) > 0:
             print('\n\n'.join(errors))

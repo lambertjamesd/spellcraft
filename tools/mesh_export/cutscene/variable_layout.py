@@ -252,11 +252,10 @@ class VariableLayoutBuilder():
         return result
 
 class VariableContext():
-    def __init__(self, globals: VariableLayout, scene_vars: VariableLayout, locals: VariableLayout, fn_locals: local_layout.LocalLayout | None = None):
+    def __init__(self, globals: VariableLayout, scene_vars: VariableLayout, fn_locals: local_layout.LocalLayout | None = None):
         self.globals: VariableLayout = globals
         self.scene_vars: VariableLayout = scene_vars
-        self.locals: VariableLayout = locals
-        self.fn_locals: local_layout.LocalLayout = fn_locals or local_layout.LocalLayout([], [], [])
+        self.fn_locals: local_layout.LocalLayout = fn_locals or local_layout.LocalLayout(None)
 
     def get_stack_size(self) -> int:
         return self.fn_locals.get_stack_size()
@@ -266,9 +265,6 @@ class VariableContext():
 
     def is_fn_local(self, name: str) -> bool:
         return self.fn_locals.get_local_stack_position(name) != None
-
-    def is_local(self, name: str) -> bool:
-        return self.locals.has_variable(name)
     
     def is_global(self, name: str) -> bool:
         return self.globals.has_variable(name)
@@ -293,19 +289,16 @@ class VariableContext():
         return stack_size - result - 1
     
     def get_variable_offset(self, name: str) -> int:
-        if self.locals.has_variable(name):
-            return self.locals.get_variable_offset(name)
-        
         if self.scene_vars.has_variable(name):
             return self.scene_vars.get_variable_offset(name)
         
         return self.globals.get_variable_offset(name)
     
     def get_variable_type(self, name: str) -> str | None:
-        return self.fn_locals.get_variable_type(name) or self.locals.get_variable_type(name) or self.scene_vars.get_variable_type(name) or self.globals.get_variable_type(name)
+        return self.fn_locals.get_variable_type(name) or self.scene_vars.get_variable_type(name) or self.globals.get_variable_type(name)
     
     def with_locals(self, fn_locals: local_layout.LocalLayout):
-        return VariableContext(self.globals, self.scene_vars, self.locals, fn_locals)
+        return VariableContext(self.globals, self.scene_vars, fn_locals)
     
 int_types = {'i8': 1, 'i16': 2, 'i32': 3}
     

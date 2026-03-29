@@ -69,15 +69,8 @@ struct cutscene* cutscene_load(const char* filename) {
     uint16_t function_count;
     fread(&function_count, 2, 1, file);
 
-    uint16_t locals_size;
-    fread(&locals_size, 2, 1, file);
-
     // release with cutscene_free()
-    struct cutscene* result = cutscene_new(step_count, locals_size, function_count);
-
-    if (locals_size) {
-        fread(result->locals, 1, locals_size, file);
-    }
+    struct cutscene* result = cutscene_new(step_count, function_count);
 
     for (int i = 0; i < step_count; i += 1) {
         struct cutscene_step* step = &result->steps[i];
@@ -191,17 +184,11 @@ struct cutscene* cutscene_load(const char* filename) {
     return result;
 }
 
-void cutscene_init(struct cutscene* cutscene, int capacity, int locals_size, int function_count) {
+void cutscene_init(struct cutscene* cutscene, int capacity, int function_count) {
     cutscene->steps = malloc(sizeof(struct cutscene_step) * capacity);
     cutscene->functions = malloc(sizeof(cutscene_function_t) * function_count);
     cutscene->step_count = capacity;
-    cutscene->locals_size = locals_size;
     cutscene->function_count = function_count;
-    if (locals_size) {
-        cutscene->locals = malloc(locals_size);
-    } else {
-        cutscene->locals = NULL;
-    }
 }
 
 void cutscene_destroy(struct cutscene* cutscene) {
@@ -253,13 +240,12 @@ void cutscene_destroy(struct cutscene* cutscene) {
     }
 
     free(cutscene->steps);
-    free(cutscene->locals);
     free(cutscene->functions);
 }
 
-struct cutscene* cutscene_new(int capacity, int locals_capacity, int function_count) {
+struct cutscene* cutscene_new(int capacity, int function_count) {
     struct cutscene* result = malloc(sizeof(struct cutscene));
-    cutscene_init(result, capacity, locals_capacity, function_count);
+    cutscene_init(result, capacity, function_count);
     return result;
 }
 
@@ -567,7 +553,7 @@ void cutscene_builder_fade(struct cutscene_builder* builder, enum fade_colors co
 // release with cutscene_free()
 struct cutscene* cutscene_builder_finish(struct cutscene_builder* builder) {
     // release with cutscene_free()
-    struct cutscene* result = cutscene_new(builder->step_count, 0, 1);
+    struct cutscene* result = cutscene_new(builder->step_count, 1);
     memcpy(result->steps, builder->steps, sizeof(struct cutscene_step) * builder->step_count);
     result->functions[0] = (cutscene_function_t){
         .name = NULL,

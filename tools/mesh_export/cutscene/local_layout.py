@@ -137,14 +137,18 @@ def _determineRanges(block: list[parser.Statement], args: list[parser.FunctionDe
     return tracker.layout_variables()
 
 class LocalLayout:
-    def __init__(self, block: list[parser.Statement], args: list[parser.FunctionDefinitionArg], results: list[parser.DataType]):
+    def __init__(self, fn: parser.FunctionDefinition | None):
+        body = fn.body if fn else []
+        args = fn.args if fn else []
+        return_types = fn.return_types if fn else []
+
         self.variable_scopes = VariableScopeStack()
-        var_to_pos, stack_size = _determineRanges(block, args)
+        var_to_pos, stack_size = _determineRanges(body, args)
         self._var_to_pos: dict[VariableType, int] = var_to_pos
         self.local_stack_size = stack_size
         self.slots: list[VariableType | None] = [None] * stack_size
         self.args: list[parser.FunctionDefinitionArg] = args
-        self.results: list[parser.DataType] = results
+        self.results: list[parser.DataType] = return_types
 
         self.current_stack_pos = stack_size
 

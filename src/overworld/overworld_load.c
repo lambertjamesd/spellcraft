@@ -442,7 +442,7 @@ struct overworld_actor* overworld_actor_spawn(struct overworld* overworld, struc
     struct overworld_actor_spawn_information* info = &tile->spawn_information[spawn_location->spawn_id_offset];
 
     struct evaluation_context context;
-    evaluation_context_init(&context, 0);
+    evaluation_context_init(&context);
     expression_evaluate(&context, &info->expression);
     int should_spawn = evaluation_context_pop(&context);
     evaluation_context_destroy(&context);

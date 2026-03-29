@@ -44,7 +44,7 @@ bool scene_load_check_condition(FILE* file) {
     fread(expression.expression_program, 1, byte_size, file);
 
     struct evaluation_context eval_context;
-    evaluation_context_init(&eval_context, 0);
+    evaluation_context_init(&eval_context);
 
     expression_evaluate(&eval_context, &expression);
 

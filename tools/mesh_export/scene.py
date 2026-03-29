@@ -655,7 +655,7 @@ def process_scene():
 
     build_variable_enum(enums, globals, scene_vars)
 
-    variable_context = variable_layout.VariableContext(globals, scene_vars, variable_layout.VariableLayout())
+    variable_context = variable_layout.VariableContext(globals, scene_vars, None)
 
     context = struct_serialize.SerializeContext(enums)
 

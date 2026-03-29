@@ -4,13 +4,12 @@
 #include <malloc.h>
 #include <memory.h>
 
-void evaluation_context_init(struct evaluation_context* context, int locals_size) {
+void evaluation_context_init(struct evaluation_context* context) {
     context->current_stack = 0;
-    context->local_varaibles = locals_size ? malloc(locals_size) : NULL;
 }
 
 void evaluation_context_destroy(struct evaluation_context* context) {
-    free(context->local_varaibles);
+    
 }
 
 void evaluation_context_push(struct evaluation_context* context, int value) {

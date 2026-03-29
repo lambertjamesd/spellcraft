@@ -361,7 +361,7 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
     room->entities = entity_count ? malloc(sizeof(loaded_entity_t) * entity_count) : NULL;
 
     struct evaluation_context eval_context;
-    evaluation_context_init(&eval_context, 0); 
+    evaluation_context_init(&eval_context); 
 
     for (int i = 0; i < entity_count; i += 1) {
         room->entities[i] = scene_load_entity(scene, &stream, &eval_context);

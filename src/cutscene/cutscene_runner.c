@@ -173,14 +173,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             // logic is done in update step
             break;
         case CUTSCENE_STEP_SET_LOCAL: {
-            struct evaluation_context* context = &cutscene->context;
-
-            evaluation_context_save(
-                context->local_varaibles,
-                step->data.store_variable.data_type,
-                step->data.store_variable.word_offset,
-                evaluation_context_pop(context)
-            );
+            assert(false);
             break;
         }
         case CUTSCENE_STEP_SET_SCENE: {
@@ -545,7 +538,7 @@ void cutscene_runner_start(struct cutscene* cutscene, int function_index, cutsce
     next->subject = subject;
     next->current_instruction = 0;
     next->current_string_start = &next->string_stack[0];
-    evaluation_context_init(&next->context, cutscene->locals_size);
+    evaluation_context_init(&next->context);
 
     cutscene_runner_init_step(next, &fn->steps[0]);
 }

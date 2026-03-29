@@ -23,12 +23,11 @@ typedef enum data_type data_type_t;
 struct evaluation_context {
     int stack[MAX_STACK_SIZE];
     uint16_t current_stack;
-    void* local_varaibles;
 };
 
 typedef struct evaluation_context evaluation_context_t;
 
-void evaluation_context_init(struct evaluation_context* context, int locals_size);
+void evaluation_context_init(struct evaluation_context* context);
 void evaluation_context_destroy(struct evaluation_context* context);
 
 void evaluation_context_push(struct evaluation_context* context, int value);
