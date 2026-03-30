@@ -1,6 +1,8 @@
 
-sign_start;
+func main()
+    sign_start;
 
-say "Fire spin will not lead";
+    say "Fire spin will not lead";
 
-sign_end;
+    sign_end;
+end

@@ -63,3 +63,5 @@ if __name__ == "__main__":
 
         if not isinstance(e, mesh_export.cutscene.parser.ParseError):
             raise e
+        else:
+            sys.exit(1)

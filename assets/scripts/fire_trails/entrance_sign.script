@@ -1,6 +1,8 @@
 
-sign_start;
+func main()
+    sign_start;
 
-say "warning: flammable vines";
+    say "warning: flammable vines";
 
-sign_end;
+    sign_end;
+end

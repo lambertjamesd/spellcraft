@@ -1,2 +1,4 @@
 
-say "You shouldn't be here";
+func main()
+    say "You shouldn't be here";
+end

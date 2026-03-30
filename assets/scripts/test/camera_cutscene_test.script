@@ -1,13 +1,15 @@
 
-world_pause;
+func main()
+    world_pause;
 
-fade FADE_COLOR_BLACK, 1;
-delay 1;
-cam_animate "cutscene_test";
-fade FADE_COLOR_NONE, 1;
-say "Watch out for the jelly enemies";
-cam_wait;
+    fade FADE_COLOR_BLACK, 1;
+    delay 1;
+    cam_animate "cutscene_test";
+    fade FADE_COLOR_NONE, 1;
+    say "Watch out for the jelly enemies";
+    cam_wait;
 
-cam_return;
+    cam_return;
 
-world_unpause;
+    world_unpause;
+end

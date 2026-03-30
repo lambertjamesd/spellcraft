@@ -1,6 +1,8 @@
 
-sign_start;
+func main()
+    sign_start;
 
-say "Only push is missing";
+    say "Only push is missing";
 
-sign_end;
+    sign_end;
+end

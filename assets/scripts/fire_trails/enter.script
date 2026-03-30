@@ -1,27 +1,29 @@
 
 global has_entered_fire_trials: bool;
 
-if has_entered_fire_trials then
-    return;
+func main()
+    if has_entered_fire_trials then
+        return;
+    end
+
+    world_pause;
+
+    fade FADE_COLOR_NONE, 1;
+
+    cam_animate "enter";
+
+    interact_with_location INTERACTION_MOVE, NPC_TYPE_PLAYER, "enter_run_target";
+    npc_set_speed NPC_TYPE_PLAYER, 0.65;
+
+    delay 15;
+    show_title "FIRE TRIALS";
+
+    npc_wait NPC_TYPE_PLAYER;
+    interact_with_location INTERACTION_LOOK, NPC_TYPE_PLAYER, "temple";
+    cam_wait;
+    cam_return;
+
+    world_unpause;
+
+    has_entered_fire_trials = true;
 end
-
-world_pause;
-
-fade FADE_COLOR_NONE, 1;
-
-cam_animate "enter";
-
-interact_with_location INTERACTION_MOVE, NPC_TYPE_PLAYER, "enter_run_target";
-npc_set_speed NPC_TYPE_PLAYER, 0.65;
-
-delay 15;
-show_title "FIRE TRIALS";
-
-npc_wait NPC_TYPE_PLAYER;
-interact_with_location INTERACTION_LOOK, NPC_TYPE_PLAYER, "temple";
-cam_wait;
-cam_return;
-
-world_unpause;
-
-has_entered_fire_trials = true;

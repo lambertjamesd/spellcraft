@@ -1,6 +1,8 @@
 
-sign_start;
+func main()
+    sign_start;
 
-say "Fire cannot touch fire spin";
+    say "Fire cannot touch fire spin";
 
-sign_end;
+    sign_end;
+end
