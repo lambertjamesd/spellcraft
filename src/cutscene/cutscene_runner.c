@@ -59,23 +59,28 @@ struct cutscene_stack_entry {
     cutscene_function_t* function;
     int16_t current_instruction;
     uint16_t string_stack_position;
+    uint16_t stack_position;
 };
 
 typedef struct cutscene_stack_entry cutscene_stack_entry_t;
 
-#define MAX_CALL_STACK_SIZE     8
+#define MAX_CALL_STACK_SIZE         8
+#define CUTSCENE_INACTIVE_DEPTH     -1
 
 struct cutscene_active_entry {
     cutscene_finish_callback finish_callback;
     void* data;
     entity_id subject;
-    uint16_t current_depth;
+    int16_t current_depth;
     cutscene_stack_entry_t call_stack[MAX_CALL_STACK_SIZE];
     struct evaluation_context context;
     char string_stack[MAX_STRING_STACK_SIZE];
     char* current_string_start;
 };
 
+typedef struct cutscene_active_entry cutscene_active_entry_t;
+
+#define CUTSCENE_IS_RUNNING(active_entry) ((active_entry)->current_depth != -1)
 #define CUTSCENE_CURR_FRAME(active_entry)   (&(active_entry)->call_stack[(active_entry)->current_depth])
 
 struct cutscene_runner {
@@ -84,8 +89,7 @@ struct cutscene_runner {
 
     struct cutscene_queue_entry queue[MAX_QUEUED_CUTSCENES];
 
-    struct cutscene_active_entry active_cutscenes[MAX_CUTSCENE_CALL_DEPTH];
-    int16_t current_cutscene;
+    cutscene_active_entry_t active_cutscene;
 
     show_item_t show_item;
 
@@ -495,6 +499,7 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, str
                 .cutscene = cutscene,
                 .function = fn,
                 .string_stack_position = 0,
+                .stack_position = evaluation_context_stack_size(&active_entry->context),
             };
         }
         default:
@@ -530,20 +535,18 @@ void cutscene_runner_start(struct cutscene* cutscene, int function_index, cutsce
         return;
     }
 
-    cutscene_runner.current_cutscene += 1;
-    assert(cutscene_runner.current_cutscene < MAX_CUTSCENE_CALL_DEPTH);
-
-    struct cutscene_active_entry* next = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
+    struct cutscene_active_entry* next = &cutscene_runner.active_cutscene;
     next->finish_callback = finish_callback;
     next->data = data;
     next->subject = subject;
     next->current_string_start = &next->string_stack[0];
     next->current_depth = 0;
     *CUTSCENE_CURR_FRAME(next) = (cutscene_stack_entry_t){
-        .current_instruction = 0,
+        .current_instruction = -1,
         .cutscene = cutscene,
         .function = fn,
         .string_stack_position = next->current_string_start - next->string_stack,
+        .stack_position = 0,
     };
     evaluation_context_init(&next->context);
 
@@ -563,15 +566,34 @@ void cutscene_runner_check_queue() {
     queue_entry->cutscene = NULL;
 }
 
-void cutscene_runner_step_instruction() {
-    struct cutscene_active_entry* active_cutscene = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
+void cutscene_runner_pop_call(cutscene_active_entry_t* entry, cutscene_stack_entry_t* prev) {
+    int retc = prev->function->return_count;
 
+    int current_size = evaluation_context_stack_size(&entry->context);
+    int pop_count = current_size - prev->stack_position;
+
+    assert(pop_count >= retc);
+
+    int result[retc];
+    evaluation_context_popn(&entry->context, result, retc);
     
-    cutscene_stack_entry_t* entry = CUTSCENE_CURR_FRAME(active_cutscene);
-    entry->current_instruction += 1;
+    pop_count -= retc;
+    if (pop_count >= 0) {
+        evaluation_context_popn(&entry->context, NULL, pop_count);
+    }
 
-    while (cutscene_runner.current_cutscene >= 0) {
-        active_cutscene = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
+    for (int i = 0; i < retc; i += 1) {
+        evaluation_context_push(&entry->context, result[i]);
+    }
+}
+
+void cutscene_runner_step_instruction() {
+    struct cutscene_active_entry* active_cutscene = &cutscene_runner.active_cutscene;
+
+    while (CUTSCENE_IS_RUNNING(active_cutscene)) {
+        cutscene_stack_entry_t* entry = CUTSCENE_CURR_FRAME(active_cutscene);
+        entry->current_instruction += 1;
+
         struct cutscene_step* step = &entry->function->steps[entry->current_instruction];
 
         if (entry->current_instruction < entry->function->step_count) {
@@ -579,7 +601,13 @@ void cutscene_runner_step_instruction() {
             return;
         }
 
-        cutscene_runner.current_cutscene -= 1;
+        --active_cutscene->current_depth;
+
+        if (active_cutscene->current_depth >= 0) {
+            cutscene_stack_entry_t* next = CUTSCENE_CURR_FRAME(active_cutscene);
+            cutscene_runner_pop_call(active_cutscene, entry);
+            continue;
+        }
 
         evaluation_context_destroy(&active_cutscene->context);
         if (active_cutscene->finish_callback) {
@@ -598,7 +626,7 @@ void cutscene_runner_update(void* data) {
     int i = 0;
 
     while (cutscene_runner_is_running() && get_ticks_us() - start_time < MAX_SCRIPT_TIME && i < MAX_INSTRUCTIONS_PER_FRAME) {
-        struct cutscene_active_entry* active_cutscene = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
+        struct cutscene_active_entry* active_cutscene = &cutscene_runner.active_cutscene;
         cutscene_stack_entry_t* entry = CUTSCENE_CURR_FRAME(active_cutscene);
         struct cutscene_step* step = &entry->function->steps[entry->current_instruction];
     
@@ -618,8 +646,7 @@ void cutscene_runner_render(void* data) {
 void cutscene_runner_init() {
     cutscene_runner.next_cutscene = 0;
     cutscene_runner.last_cutscene = 0;
-
-    cutscene_runner.current_cutscene = -1;
+    cutscene_runner.active_cutscene.current_depth = -1;
 
     show_item_init(&cutscene_runner.show_item);
     // update_remove() is never called
@@ -648,45 +675,27 @@ void cutscene_runner_enqueue(struct cutscene* cutscene, int function_index, cuts
 }
 
 void cutscene_runner_run(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
-    if (cutscene_runner.current_cutscene == -1) {
+    if (CUTSCENE_IS_RUNNING(&cutscene_runner.active_cutscene)) {
+        cutscene_runner_enqueue(cutscene, function_index, finish_callback, data, subject);
+    } else {
         cutscene_runner_start(cutscene, function_index, finish_callback, data, subject);
-        return;
     }
-
-    cutscene_runner_enqueue(cutscene, function_index, finish_callback, data, subject);
 }
 
 bool cutscene_runner_is_running() {
-    return cutscene_runner.current_cutscene != -1;
+    return CUTSCENE_IS_RUNNING(&cutscene_runner.active_cutscene);
 }
 
 void cutscene_cancel_active(struct cutscene_active_entry* active_entry) {
     cutscene_stack_entry_t* entry = CUTSCENE_CURR_FRAME(active_entry);
     cutscene_runner_cancel_step(active_entry, &entry->function->steps[entry->current_instruction]);
+    active_entry->current_depth = -1;
     if (active_entry->finish_callback) {
         active_entry->finish_callback(active_entry->call_stack[0].cutscene, active_entry->data);
     }
 }
 
-void cutscene_runner_cancel(struct cutscene* cutscene) {
-    if (cutscene_runner.current_cutscene == -1) {
-        return;
-    }
-
-    int next_cutscene = cutscene_runner.current_cutscene;
-
-    for (int i = 0; i <= cutscene_runner.current_cutscene; i += 1) {
-        if (cutscene_runner.active_cutscenes[i].call_stack[0].cutscene == cutscene) {
-            next_cutscene = i - 1;
-            break;
-        }
-    }
-
-    for (int i = cutscene_runner.current_cutscene; i > next_cutscene; i -= 1) {
-        cutscene_cancel_active(&cutscene_runner.active_cutscenes[i]);
-    }
-    cutscene_runner.current_cutscene = next_cutscene;
-
+void cutscene_runner_cancel_from_queue(struct cutscene* cutscene) {
     int curr = cutscene_runner.next_cutscene;
     int write_index = curr;
     int deletion_count = 0;
@@ -722,8 +731,15 @@ void cutscene_runner_cancel(struct cutscene* cutscene) {
         write_index = cutscene_next_queue_index(write_index);
         cutscene_runner.last_cutscene = cutscene_prev_queue_index(cutscene_runner.last_cutscene);
     }
+}
 
-    if (cutscene_runner.current_cutscene == -1) {
+void cutscene_runner_cancel(struct cutscene* cutscene) {
+    cutscene_runner_cancel_from_queue(cutscene);
+    
+    cutscene_active_entry_t* active_entry = &cutscene_runner.active_cutscene;
+
+    if (CUTSCENE_IS_RUNNING(active_entry) && active_entry->call_stack[0].cutscene == cutscene) {
+        cutscene_cancel_active(active_entry);
         cutscene_runner_check_queue();
     }
 }

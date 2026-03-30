@@ -42,7 +42,6 @@ enum expression_type {
 
     EXPRESSION_TYPE_COPY,
     EXPRESSION_TYPE_STORE,
-    EXPRESSION_TYPE_REMOVE,
 };
 
 union expression_data {

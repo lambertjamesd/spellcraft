@@ -87,9 +87,7 @@ Performance metric before kd tree
 
 ## Scripting TODO
 
-- implement tools/mesh_export/cutscene/local_layout.py
-- adjust offsets to be from top of stack
-- auto add EXPRESSION_END to expression scripts
+- implement function call step
 
 ## Fire trails todo
 

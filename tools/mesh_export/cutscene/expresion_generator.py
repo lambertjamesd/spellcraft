@@ -43,7 +43,6 @@ EXPRESSION_TYPE_BUILT_IN_FN = 26
 
 EXPRESSION_TYPE_COPY = 27
 EXPRESSION_TYPE_STORE = 28
-EXPRESSION_TYPE_REMOVE = 29
 
 command_to_name = {}
 
@@ -82,7 +81,6 @@ command_to_name[EXPRESSION_TYPE_FTOI] = 'foti'
 
 command_to_name[EXPRESSION_TYPE_COPY] = 'copy'
 command_to_name[EXPRESSION_TYPE_STORE] = 'store'
-command_to_name[EXPRESSION_TYPE_REMOVE] = 'popn'
 
 data_type_mapping = {
     "i8": 1,

@@ -337,6 +337,23 @@ def _generate_alias(cutscene: Cutscene, step: parser.CutsceneStep, alias: Alias,
     for statementStep in cutscene_alias:
         _generate_step(cutscene, statementStep, context, return_label)
 
+def _does_end_in_return(block: list[parser.Statement]) -> bool:
+    if len(block) == 0:
+        return False
+    
+    last_statement = block[-1]
+
+    if isinstance(last_statement, parser.ReturnStatement):
+        return True
+    
+    if isinstance(last_statement, parser.IfStatement):
+        if not last_statement.else_block:
+            return False
+        
+        return _does_end_in_return(last_statement.statements) and _does_end_in_return(last_statement.else_block)
+    
+    return False
+
 def _validate_step(step, errors: list[str], context: variable_layout.VariableContext):
     if isinstance(step, parser.ReturnStatement):
         if len(step.results) != len(context.fn_locals.results):
@@ -444,6 +461,9 @@ def validate_cutscene(cutscene: parser.Cutscene, errors: list[str], context: var
     for fn in cutscene.functions:
         local_context = context.with_locals(local_layout.LocalLayout(fn))
         validate_steps(fn.body, errors, local_context)
+
+        if len(fn.return_types) > 0 and not _does_end_in_return(fn.body):
+            errors.append(fn.name.format_message('not all code paths have a return statement'))
 
 def _generate_step_block(cutscene: Cutscene, block: list, context: variable_layout.VariableContext, return_label: str):
     if context.fn_locals:
