@@ -429,13 +429,6 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             cutscene->current_string_start += str_length;
             assert(cutscene->current_string_start <= &cutscene->string_stack[MAX_STRING_STACK_SIZE]);
         }
-        case CUTSCENE_STEP_SAVE_STRING_STACK: {
-            evaluation_context_push(&cutscene->context, (int)cutscene->current_string_start);
-        }
-        case CUTSCENE_STEP_REVERT_STRING_STACK: {
-            cutscene->current_string_start = (char*)evaluation_context_pop(&cutscene->context);
-            assert(cutscene->current_string_start >= cutscene->string_stack && cutscene->current_string_start <= &cutscene->string_stack[MAX_STRING_STACK_SIZE]);
-        }
         case CUTSCENE_STEP_FUNCTION_CALL:
             // logic is done in update step
             break;

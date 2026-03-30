@@ -50,6 +50,8 @@ CUTSCENE_STEP_STOPWATCH_SHOW = 36
 CUTSCENE_STEP_STOPWATCH_RUN = 37
 CUTSCENE_STEP_AUDIO_PAUSE = 38
 CUTSCENE_STEP_SHOW_IMAGE = 39
+CUTSCENE_STEP_TEMPLATE_STRING = 40
+CUTSCENE_STEP_FUNCTION_CALL = 41
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -176,12 +178,33 @@ class ExpressionCutsceneStep():
         self.command: int = CUTSCENE_STEP_EXPRESSION
         self.expr: expresion_generator.ExpressionScript = expr
 
-StepTypes = typing.Union[CutsceneStep, JumpCutsceneStep, ExpressionCutsceneStep, ExpressionCutsceneStep]
+class ExpressionFunctionCall():
+    def __init__(self, fn_index: int, argc: int, retc: int):
+        self.command: int = CUTSCENE_STEP_FUNCTION_CALL
+        self.fn_index = fn_index
+        self.argc: int = argc
+        self.retc: int = retc
+
+StepTypes = typing.Union[CutsceneStep, JumpCutsceneStep, ExpressionCutsceneStep, ExpressionCutsceneStep, ExpressionFunctionCall]
 
 class Cutscene():
     def __init__(self):
         self.steps: list[StepTypes] = []
         self.labels: dict[str, int] = {}
+
+        self.functions: list[parser.FunctionDefinition] = []
+        self.function_names: dict[str, int] = {}
+
+    def add_function(self, fn: parser.FunctionDefinition):
+        self.function_names[fn.name.value] = len(self.functions)
+        self.functions.append(fn)
+
+    def lookup_function(self, name: str) -> tuple[int, parser.FunctionDefinition | None]:
+        if name in self.function_names:
+            index = self.function_names[name]
+            return index, self.functions[index]
+        
+        return -1, None
 
     def add_label(self, label: str):
         self.labels[label] = len(self.steps)
@@ -243,6 +266,32 @@ def _can_assign(from_type: str, into: parser.DataType) -> bool:
         return True
 
     return False
+
+def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext) -> bool:
+    fn_index, fn = cutscene.lookup_function(step.name.value)
+
+    if not fn:
+        return False
+    
+    pre_expression: expresion_generator.ExpressionScript | None = None
+
+    for arg_index, arg in enumerate(step.parameters):
+        generate_to = 'int'
+
+        if fn.args[arg_index].type_name.name.value == 'float':
+            generate_to = 'float'
+
+        pre_expression = expresion_generator.expression_concat(
+            pre_expression, 
+            expresion_generator.generate_script(arg, context, generate_to)
+        )
+
+        
+    if pre_expression:
+        cutscene.steps.append(ExpressionCutsceneStep(pre_expression))
+
+    cutscene.steps.append(ExpressionFunctionCall(fn_index, len(step.parameters), len(fn.return_types)))
+
 
 def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext):
     pre_expression: expresion_generator.ExpressionScript | None = None
@@ -631,6 +680,9 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
 
 def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layout.VariableContext):
     cutscene = Cutscene()
+
+    for fn in inputCutscene.functions:
+        cutscene.add_function(fn)
 
     fn_length: list[int] = []
 

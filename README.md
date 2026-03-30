@@ -88,6 +88,7 @@ Performance metric before kd tree
 ## Scripting TODO
 
 - implement function call step
+- change all arguments to be passed via expression evaluate
 
 ## Fire trails todo
 
