@@ -51,7 +51,6 @@ enum cutscene_step_type {
     CUTSCENE_STEP_SAVE_STRING_STACK,
     CUTSCENE_STEP_REVERT_STRING_STACK,
     CUTSCENE_STEP_FUNCTION_CALL,
-    CUTSCENE_STEP_RETURN,
 };
 
 typedef void (*cutscene_step_callback)(void* data);
@@ -61,6 +60,8 @@ struct cutscene_step;
 struct cutscene_function {
     struct cutscene_step* steps;
     uint16_t step_count;
+    uint8_t arg_c;
+    uint8_t return_count;
     char* name;
 };
 
@@ -180,12 +181,9 @@ union cutscene_step_data {
     } template_string;
     struct {
         uint16_t fn_index;
-        uint16_t argc;
+        uint8_t argc;
+        uint8_t retc;
     } function_call;
-    struct {
-        uint16_t argc;
-        uint16_t retc;
-    } ret;
 };
 
 struct cutscene_step {

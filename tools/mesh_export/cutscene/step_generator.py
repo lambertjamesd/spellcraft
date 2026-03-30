@@ -642,6 +642,6 @@ def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layou
     for length, fn in zip(fn_length, inputCutscene.functions):
         name_bytes = fn.name.value.encode()
 
-        file.write(struct.pack('>HB', length, len(name_bytes)))
+        file.write(struct.pack('>HBBB', length, len(fn.args), len(fn.return_types), len(name_bytes)))
         file.write(name_bytes)
 

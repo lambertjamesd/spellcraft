@@ -54,17 +54,29 @@ struct cutscene_queue_entry {
     uint16_t function_index;
 };
 
-struct cutscene_active_entry {
+struct cutscene_stack_entry {
     cutscene_t* cutscene;
     cutscene_function_t* function;
+    int16_t current_instruction;
+    uint16_t string_stack_position;
+};
+
+typedef struct cutscene_stack_entry cutscene_stack_entry_t;
+
+#define MAX_CALL_STACK_SIZE     8
+
+struct cutscene_active_entry {
     cutscene_finish_callback finish_callback;
     void* data;
     entity_id subject;
+    uint16_t current_depth;
+    cutscene_stack_entry_t call_stack[MAX_CALL_STACK_SIZE];
     struct evaluation_context context;
-    int16_t current_instruction;
     char string_stack[MAX_STRING_STACK_SIZE];
     char* current_string_start;
 };
+
+#define CUTSCENE_CURR_FRAME(active_entry)   (&(active_entry)->call_stack[(active_entry)->current_depth])
 
 struct cutscene_runner {
     uint16_t next_cutscene;
@@ -423,20 +435,17 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         case CUTSCENE_STEP_FUNCTION_CALL:
             // logic is done in update step
             break;
-        case CUTSCENE_STEP_RETURN:
-            // logic is done in update step
-            break;
     }
 }
 
-bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct cutscene_step* step) {
+bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, struct cutscene_step* step) {
     switch (step->type)
     {
         case CUTSCENE_STEP_DIALOG:
         case CUTSCENE_STEP_ASK:
             if (!cutscene_runner.active_step_data.dialog.has_shown && !dialog_box_is_active()) {
                 int args[step->data.dialog.message.nargs];
-                evaluation_context_popn(&cutscene->context, args, step->data.dialog.message.nargs);
+                evaluation_context_popn(&active_entry->context, args, step->data.dialog.message.nargs);
                 if (step->type == CUTSCENE_STEP_DIALOG) {
                     dialog_box_show(step->data.dialog.message.template, args, NULL, NULL);
                 } else {
@@ -450,12 +459,12 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
         case CUTSCENE_STEP_SHOW_ITEM:
             return show_item_update(&cutscene_runner.show_item, &step->data);
         case CUTSCENE_STEP_JUMP_IF_NOT:
-            if (!evaluation_context_pop(&cutscene->context)) {
-                cutscene->current_instruction += step->data.jump.offset;
+            if (!evaluation_context_pop(&active_entry->context)) {
+                CUTSCENE_CURR_FRAME(active_entry)->current_instruction += step->data.jump.offset;
             }
             return true;
         case CUTSCENE_STEP_JUMP:
-            cutscene->current_instruction += step->data.jump.offset;
+            CUTSCENE_CURR_FRAME(active_entry)->current_instruction += step->data.jump.offset;
             return true;
         case CUTSCENE_STEP_DELAY:
             cutscene_runner.active_step_data.delay.time -= fixed_time_step;
@@ -463,36 +472,30 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* cutscene, struct 
         case CUTSCENE_STEP_CAMERA_WAIT:
             return !camera_is_animating(&current_scene->camera_controller);
         case CUTSCENE_STEP_NPC_WAIT: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, cutscene_runner.active_step_data.npc_wait.target);
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(active_entry, cutscene_runner.active_step_data.npc_wait.target);
             return !subject || !cutscene_actor_is_moving(subject);
         }
         case CUTSCENE_STEP_FUNCTION_CALL: {
-            int curr_fn = cutscene->function - cutscene->cutscene->functions;
-            assert(curr_fn >= 0 && curr_fn < cutscene->cutscene->function_count);
-            evaluation_context_push(&cutscene->context, PACK_FN_REF(curr_fn, cutscene->current_instruction));
-
+            cutscene_stack_entry_t* curr_frame = CUTSCENE_CURR_FRAME(active_entry);
+            cutscene_t* cutscene = curr_frame->cutscene;
             int next_fn = step->data.function_call.fn_index;
-            assert(next_fn >= 0 && next_fn < cutscene->cutscene->function_count);
-            cutscene->function = &cutscene->cutscene->functions[next_fn];
-            // the step is incremented to 0 after the step
-            cutscene->current_instruction = ~0;
-        }
-        case CUTSCENE_STEP_RETURN: {
-            int result[step->data.ret.retc];
-            evaluation_context_popn(&cutscene->context, result, step->data.ret.retc);
-            int ret_addr = evaluation_context_pop(&cutscene->context);
-            evaluation_context_popn(&cutscene->context, NULL, step->data.ret.argc);
+            assert(next_fn >= 0 && next_fn < cutscene->function_count);
 
-            for (int i = 0; i < step->data.ret.retc; i += 1) {
-                evaluation_context_push(&cutscene->context, result[i]);
-            }
+            ++active_entry->current_depth;
 
-            int fn_index = FN_REF_GET_FN(ret_addr);
-            assert(fn_index >= 0 && fn_index < cutscene->cutscene->function_count);
-            cutscene->function = &cutscene->cutscene->functions[fn_index];
-            cutscene->current_instruction = FN_REF_GET_INST(ret_addr);
+            assert(active_entry->current_depth < MAX_CALL_STACK_SIZE);
 
-            assert(cutscene->current_instruction >= 0 && cutscene->current_instruction < cutscene->function->step_count);
+            cutscene_function_t* fn = &cutscene->functions[next_fn];
+
+            assert(fn->arg_c == step->data.function_call.argc);
+            assert(fn->return_count == step->data.function_call.retc);
+            
+            *CUTSCENE_CURR_FRAME(active_entry) = (cutscene_stack_entry_t){
+                .current_instruction = -1,
+                .cutscene = cutscene,
+                .function = fn,
+                .string_stack_position = 0,
+            };
         }
         default:
             return true;
@@ -531,13 +534,17 @@ void cutscene_runner_start(struct cutscene* cutscene, int function_index, cutsce
     assert(cutscene_runner.current_cutscene < MAX_CUTSCENE_CALL_DEPTH);
 
     struct cutscene_active_entry* next = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
-    next->cutscene = cutscene;
-    next->function = fn;
     next->finish_callback = finish_callback;
     next->data = data;
     next->subject = subject;
-    next->current_instruction = 0;
     next->current_string_start = &next->string_stack[0];
+    next->current_depth = 0;
+    *CUTSCENE_CURR_FRAME(next) = (cutscene_stack_entry_t){
+        .current_instruction = 0,
+        .cutscene = cutscene,
+        .function = fn,
+        .string_stack_position = next->current_string_start - next->string_stack,
+    };
     evaluation_context_init(&next->context);
 
     cutscene_runner_init_step(next, &fn->steps[0]);
@@ -559,13 +566,15 @@ void cutscene_runner_check_queue() {
 void cutscene_runner_step_instruction() {
     struct cutscene_active_entry* active_cutscene = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
 
-    active_cutscene->current_instruction += 1;
+    
+    cutscene_stack_entry_t* entry = CUTSCENE_CURR_FRAME(active_cutscene);
+    entry->current_instruction += 1;
 
     while (cutscene_runner.current_cutscene >= 0) {
         active_cutscene = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
-        struct cutscene_step* step = &active_cutscene->function->steps[active_cutscene->current_instruction];
+        struct cutscene_step* step = &entry->function->steps[entry->current_instruction];
 
-        if (active_cutscene->current_instruction < active_cutscene->function->step_count) {
+        if (entry->current_instruction < entry->function->step_count) {
             cutscene_runner_init_step(active_cutscene, step);
             return;
         }
@@ -574,7 +583,7 @@ void cutscene_runner_step_instruction() {
 
         evaluation_context_destroy(&active_cutscene->context);
         if (active_cutscene->finish_callback) {
-            active_cutscene->finish_callback(active_cutscene->cutscene, active_cutscene->data);
+            active_cutscene->finish_callback(entry->cutscene, active_cutscene->data);
         }
     }
 
@@ -590,7 +599,8 @@ void cutscene_runner_update(void* data) {
 
     while (cutscene_runner_is_running() && get_ticks_us() - start_time < MAX_SCRIPT_TIME && i < MAX_INSTRUCTIONS_PER_FRAME) {
         struct cutscene_active_entry* active_cutscene = &cutscene_runner.active_cutscenes[cutscene_runner.current_cutscene];
-        struct cutscene_step* step = &active_cutscene->function->steps[active_cutscene->current_instruction];
+        cutscene_stack_entry_t* entry = CUTSCENE_CURR_FRAME(active_cutscene);
+        struct cutscene_step* step = &entry->function->steps[entry->current_instruction];
     
         if (!cutscene_runner_update_step(active_cutscene, step)) {
             return;
@@ -650,10 +660,11 @@ bool cutscene_runner_is_running() {
     return cutscene_runner.current_cutscene != -1;
 }
 
-void cutscene_cancel_active(struct cutscene_active_entry* entry) {
-    cutscene_runner_cancel_step(entry, &entry->function->steps[entry->current_instruction]);
-    if (entry->finish_callback) {
-        entry->finish_callback(entry->cutscene, entry->data);
+void cutscene_cancel_active(struct cutscene_active_entry* active_entry) {
+    cutscene_stack_entry_t* entry = CUTSCENE_CURR_FRAME(active_entry);
+    cutscene_runner_cancel_step(active_entry, &entry->function->steps[entry->current_instruction]);
+    if (active_entry->finish_callback) {
+        active_entry->finish_callback(active_entry->call_stack[0].cutscene, active_entry->data);
     }
 }
 
@@ -665,7 +676,7 @@ void cutscene_runner_cancel(struct cutscene* cutscene) {
     int next_cutscene = cutscene_runner.current_cutscene;
 
     for (int i = 0; i <= cutscene_runner.current_cutscene; i += 1) {
-        if (cutscene_runner.active_cutscenes[i].cutscene == cutscene) {
+        if (cutscene_runner.active_cutscenes[i].call_stack[0].cutscene == cutscene) {
             next_cutscene = i - 1;
             break;
         }

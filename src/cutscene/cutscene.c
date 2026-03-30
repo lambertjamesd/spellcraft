@@ -168,13 +168,16 @@ struct cutscene* cutscene_load(const char* filename) {
     }
     
     cutscene_step_t* function_steps = result->steps;
-    for (int i = 0; i < function_count; i += 1) {
+    cutscene_function_t* fn = result->functions;
+    for (int i = 0; i < function_count; i += 1, fn += 1) {
         uint16_t function_size;
         fread(&function_size, 2, 1, file);
+        fread(&fn->arg_c, 1, 1, file);
+        fread(&fn->return_count, 1, 1, file);
 
-        result->functions[i].steps = function_steps;
-        result->functions[i].step_count = function_size;
-        result->functions[i].name = string_load(file);
+        fn->steps = function_steps;
+        fn->step_count = function_size;
+        fn->name = string_load(file);
 
         function_steps += function_size;
     }
