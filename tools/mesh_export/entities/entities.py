@@ -52,7 +52,11 @@ class ObjectEntry():
         condition_text = self.condition or 'true'
         condition = parse_expression(condition_text, self.obj.name + ".condition")
         script = generate_script(condition, variable_context, 'int')
-        script.serialize(file)
+
+        if not script.final_expression:
+            raise Exception(f'failed to generate expression {condition_text}')
+
+        script.final_expression.serialize(file)
 
     def write_definition(self, context: SerializeContext, file):
         write_obj(file, self.obj, self.def_type, context)

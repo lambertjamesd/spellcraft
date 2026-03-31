@@ -52,7 +52,7 @@ def run_layout_test():
     print(mesh_export.cutscene.expresion_generator.generate_script(
         if_statement, 
         mesh_export.cutscene.variable_layout.VariableContext(globals, scene_vars)
-    ))
+    ).final_expression)
 
 def run_local_layout():
     result = mesh_export.cutscene.parser.parse("""
@@ -67,7 +67,7 @@ def run_local_layout():
 
     fn = result.functions[0]
 
-    fn_locals = mesh_export.cutscene.local_layout.LocalLayout(fn.body, fn.args, fn.return_types)
+    fn_locals = mesh_export.cutscene.local_layout.LocalLayout(fn)
 
     print("get_local_count", fn_locals.get_local_count())
 

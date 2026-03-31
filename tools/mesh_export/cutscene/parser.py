@@ -655,7 +655,7 @@ def parse_expression(content: str, source: str):
 
 def parse_block(content: str, source: str) -> list[Statement]:
     parse_state = _ParseState(tokenizer.tokenize(content, source), content, source)
-    return _parse_block(parse_state, {})
+    return _parse_block(parse_state, set())
 
 def statement_list_str(block: list[Statement]):
     result: list[str] = []

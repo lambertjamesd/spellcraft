@@ -250,12 +250,30 @@ class VariableLayoutBuilder():
             ))
 
         return result
+    
+class FunctionList():
+    def __init__(self):
+        self.functions: list[parser.FunctionDefinition] = []
+        self.function_names: dict[str, int] = {}
+
+    def add_function(self, fn: parser.FunctionDefinition):
+        self.function_names[fn.name.value] = len(self.functions)
+        self.functions.append(fn)
+
+    def lookup_function(self, name: str) -> tuple[int, parser.FunctionDefinition | None]:
+        if name in self.function_names:
+            index = self.function_names[name]
+            return index, self.functions[index]
+        
+        return -1, None
+
 
 class VariableContext():
-    def __init__(self, globals: VariableLayout, scene_vars: VariableLayout, fn_locals: local_layout.LocalLayout | None = None):
+    def __init__(self, globals: VariableLayout, scene_vars: VariableLayout, fn_locals: local_layout.LocalLayout | None = None, fn_list: FunctionList | None = None):
         self.globals: VariableLayout = globals
         self.scene_vars: VariableLayout = scene_vars
         self.fn_locals: local_layout.LocalLayout = fn_locals or local_layout.LocalLayout(None)
+        self.fn_list: FunctionList = fn_list or FunctionList()
 
     def get_stack_size(self) -> int:
         return self.fn_locals.get_stack_size()
@@ -297,8 +315,14 @@ class VariableContext():
     def get_variable_type(self, name: str) -> str | None:
         return self.fn_locals.get_variable_type(name) or self.scene_vars.get_variable_type(name) or self.globals.get_variable_type(name)
     
+    def lookup_function(self, name: str) -> tuple[int, parser.FunctionDefinition | None]:
+        return self.fn_list.lookup_function(name)
+    
     def with_locals(self, fn_locals: local_layout.LocalLayout):
         return VariableContext(self.globals, self.scene_vars, fn_locals)
+    
+    def with_functions(self, fn_list: FunctionList):
+        return VariableContext(self.globals, self.scene_vars, self.fn_locals, fn_list)
     
 int_types = {'i8': 1, 'i16': 2, 'i32': 3}
     

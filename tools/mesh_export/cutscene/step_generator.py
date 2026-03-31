@@ -204,20 +204,6 @@ class Cutscene():
         self.steps: list[StepTypes] = []
         self.labels: dict[str, int] = {}
 
-        self.functions: list[parser.FunctionDefinition] = []
-        self.function_names: dict[str, int] = {}
-
-    def add_function(self, fn: parser.FunctionDefinition):
-        self.function_names[fn.name.value] = len(self.functions)
-        self.functions.append(fn)
-
-    def lookup_function(self, name: str) -> tuple[int, parser.FunctionDefinition | None]:
-        if name in self.function_names:
-            index = self.function_names[name]
-            return index, self.functions[index]
-        
-        return -1, None
-
     def add_label(self, label: str):
         self.labels[label] = len(self.steps)
 
@@ -239,6 +225,22 @@ class Cutscene():
             step.offset = self.labels[step.label] - (idx + 1)
 
         return errors
+    
+    def combine_expr(self, start_idx: int):
+        idx = start_idx
+
+        while idx < len(self.steps):
+            if idx == start_idx:
+                continue
+
+            prev = self.steps[idx-1]
+            curr = self.steps[idx]
+
+            if isinstance(prev, ExpressionCutsceneStep) and isinstance(curr, ExpressionCutsceneStep):
+                self.steps[idx-1] = ExpressionCutsceneStep(prev.expr.concat(curr.expr))
+                del self.steps[idx]
+            else:
+                idx += 1
             
 def build_template_string(string: parser.String, context: variable_layout.VariableContext):
     parts: list[str] = []
@@ -280,7 +282,7 @@ def _can_assign(from_type: str, into: parser.DataType) -> bool:
     return False
 
 def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expected_count: int, context:variable_layout.VariableContext) -> bool:
-    fn_index, fn = cutscene.lookup_function(step.name.value)
+    fn_index, fn = context.lookup_function(step.name.value)
 
     if not fn:
         return False
@@ -415,7 +417,90 @@ def _does_end_in_return(block: list[parser.Statement]) -> bool:
     
     return False
 
-def _validate_step(step, errors: list[str], context: variable_layout.VariableContext):
+def _validate_local_fn_call(step: parser.CutsceneStep, errors: list[str], context: variable_layout.VariableContext, local_fn: parser.FunctionDefinition):
+    if len(step.parameters) != len(local_fn.args):
+        errors.append(step.name.format_message(f'expected {len(local_fn.args)} got {len(step.parameters)} arguments'))
+
+    type_info = expresion_generator.TypeChecker(context)
+    for index in range(min(len(step.parameters), len(local_fn.args))):
+        parameter_type = type_info.determine_type(step.parameters[index])
+
+        if not _can_assign(parameter_type, local_fn.args[index].type_name):
+            errors.append(step.parameters[index].at.format_message(f'Cannot assign {parameter_type} to type {local_fn.args[index].type_name}'))
+
+    errors += type_info.errors
+    
+def _validate_system_call(step: parser.CutsceneStep, errors: list[str], context: variable_layout.VariableContext):
+    args = None
+
+    if step.name.value in _step_args:
+        args = _step_args[step.name.value]
+    elif step.name.value in _aliases:
+        args = _aliases[step.name.value].parameters
+
+    if args == None:
+        errors.append(step.name.format_message(f'{step.name.value} is not a valid step name'))
+        return
+
+    if len(args) != len(step.parameters):
+        errors.append(step.name.format_message(f'incorrect number of parameters got {len(step.parameters)} expected {len(args)}'))
+    
+    type_info = expresion_generator.TypeChecker(context)
+    for i in range(min(len(args), len(step.parameters))):
+        parameter = step.parameters[i]
+        arg_type = args[i]
+
+        parameter_type = type_info.determine_type(parameter)
+
+        if arg_type.name == 'tstr':
+            if not isinstance(parameter, parser.String):
+                errors.append(parameter.at.format_message('expected string'))
+            else:
+                for replacement in parameter.replacements:
+                    replacement_type = type_info.determine_type(replacement.expr)
+                    
+                    if replacement_type != 'str' and replacement_type != 'int' and replacement_type != 'float':
+                        errors.append(replacement.expr.at.format_message(f'expected string, int or float but got {replacement_type}'))
+                        
+                    
+            continue
+        elif arg_type.name == 'str':
+            if isinstance(parameter, parser.String):
+                if len(parameter.replacements):
+                    errors.append(parameter.at.format_message('template parameters not allowed for basic strings'))
+            else:
+                errors.append(parameter.at.format_message('expected string for parameter'))
+            continue
+        
+        if arg_type.name == 'bool' or arg_type.name == 'int' or arg_type.name == 'entity_id' or arg_type.name == 'entity_spawner':
+            if parameter_type != 'int':
+                errors.append(parameter.at.format_message(f'expected int got {parameter_type}'))
+        elif arg_type.name == 'float':
+            if parameter_type != 'float' and parameter_type != 'int':
+                errors.append(parameter.at.format_message(f'expected float got {parameter_type}'))
+        else:
+            raise Exception(f'unknown type {arg_type.name}')
+        
+        if arg_type.is_static:
+            eval = static_evaluator.StaticEvaluator()
+            static_value = eval.check_for_literals(parameter)
+
+            if static_value == None:
+                errors.append(parameter.at.format_message(f'parameter must be a literal'))
+
+    errors += type_info.errors
+
+def _validate_fn_call(step: parser.CutsceneStep, errors: list[str], context: variable_layout.VariableContext):
+    _idx, local_fn = context.lookup_function(step.name.value)
+
+    if local_fn:
+        _validate_local_fn_call(step, errors, context, local_fn)
+    else:
+        _validate_system_call(step, errors, context)
+
+
+
+def _validate_step(step: parser.Statement, errors: list[str], context: variable_layout.VariableContext):
     if isinstance(step, parser.ReturnStatement):
         if len(step.results) != len(context.fn_locals.results):
             errors.append(step.return_token.format_message(f'expected {len(context.fn_locals.results)} got {len(step.results)}'))
@@ -428,64 +513,7 @@ def _validate_step(step, errors: list[str], context: variable_layout.VariableCon
             
 
     if isinstance(step, parser.CutsceneStep):
-        args = None
-
-        if step.name.value in _step_args:
-            args = _step_args[step.name.value]
-        elif step.name.value in _aliases:
-            args = _aliases[step.name.value].parameters
-
-        if args == None:
-            errors.append(step.name.format_message(f'{step.name.value} is not a valid step name'))
-            return
-
-        if len(args) != len(step.parameters):
-            errors.append(step.name.format_message(f'incorrect number of parameters got {len(step.parameters)} expected {len(args)}'))
-        
-        for i in range(min(len(args), len(step.parameters))):
-            parameter = step.parameters[i]
-            arg_type = args[i]
-
-            type_info = expresion_generator.TypeChecker(context)
-            parameter_type = type_info.determine_type(parameter)
-
-            errors += type_info.errors
-
-            if arg_type.name == 'tstr':
-                if not isinstance(parameter, parser.String):
-                    errors.append(parameter.at.format_message('expected string'))
-                else:
-                    for replacement in parameter.replacements:
-                        replacement_type = type_info.determine_type(replacement.expr)
-                        
-                        if replacement_type != 'str' and replacement_type != 'int' and replacement_type != 'float':
-                            errors.append(replacement.expr.at.format_message(f'expected string, int or float but got {replacement_type}'))
-                            
-                        
-                continue
-            elif arg_type.name == 'str':
-                if isinstance(parameter, parser.String):
-                    if len(parameter.replacements):
-                        errors.append(parameter.at.format_message('template parameters not allowed for basic strings'))
-                else:
-                    errors.append(parameter.at.format_message('expected string for parameter'))
-                continue
-            
-            if arg_type.name == 'bool' or arg_type.name == 'int' or arg_type.name == 'entity_id' or arg_type.name == 'entity_spawner':
-                if parameter_type != 'int':
-                    errors.append(parameter.at.format_message(f'expected int got {parameter_type}'))
-            elif arg_type.name == 'float':
-                if parameter_type != 'float' and parameter_type != 'int':
-                    errors.append(parameter.at.format_message(f'expected float got {parameter_type}'))
-            else:
-                raise Exception(f'unknown type {arg_type.name}')
-            
-            if arg_type.is_static:
-                eval = static_evaluator.StaticEvaluator()
-                static_value = eval.check_for_literals(parameter)
-
-                if static_value == None:
-                    errors.append(parameter.at.format_message(f'parameter must be a literal'))
+        _validate_fn_call(step, errors, context)
             
     if isinstance(step, parser.IfStatement):
         type_info = expresion_generator.TypeChecker(context)
@@ -676,6 +704,7 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
 
     local_count = fn_locals.get_local_count()
     start_stack_size = fn_locals.get_stack_size()
+    start_step_count = len(cutscene.steps)
 
     if local_count:
         cutscene.steps.append(ExpressionCutsceneStep(
@@ -691,6 +720,8 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
     if fn_locals.get_stack_size() != start_stack_size:
         print(parser.statement_list_str(statements))
         raise Exception(f"fn {function_name} mismatched stack size expected {start_stack_size} got {fn_locals.get_stack_size()}")
+        
+    cutscene.combine_expr(start_step_count)
 
 
 def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layout.VariableContext):

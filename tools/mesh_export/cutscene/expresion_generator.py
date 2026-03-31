@@ -1,5 +1,6 @@
 import struct
 import io
+import typing
 
 from . import parser
 from . import variable_layout
@@ -237,9 +238,11 @@ class ExpressionCommand():
     def serialize(self, file):
         file.write(struct.pack('>B', self.command))
 
+ExpressionStep = typing.Union[ExpressionScriptLoad, ExpressionScriptIntLiteral, ExpressionScriptFloatLiteral, ExpressionFunctionCall, ExpressionCopy, ExpressionStore, ExpressionRemove, ExpressionCommand]
+
 class ExpressionScript():
-    def __init__(self, steps: list | None = None):
-        self.steps: list = steps or []
+    def __init__(self, steps: list[ExpressionStep] | None = None):
+        self.steps: list[ExpressionStep] = steps or []
 
     def __str__(self):
         return '\n'.join([str(step) for step in self.steps])
@@ -267,6 +270,27 @@ class ExpressionScript():
 
     def concat(self, other):        
         return ExpressionScript(self.steps + other.steps)
+    
+class ExpressionChunk():
+    def __init__(self, script: ExpressionScript | None, fn_call: parser.FunctionCall):
+        self.script: ExpressionScript | None = script
+        self.fn_call: parser.FunctionCall = fn_call
+
+class ExpressionCollection():
+    def __init__(self) -> None:
+        self.chunks: list[ExpressionChunk] = []
+        self.final_expression: ExpressionScript | None = None
+
+    def add_step(self, step: ExpressionStep):
+        if self.final_expression:
+            self.final_expression.steps.append(step)
+        else:
+            self.final_expression = ExpressionScript([step])
+
+    def add_call(self, call: parser.FunctionCall):
+        self.chunks.append(ExpressionChunk(self.final_expression, call))
+        self.final_expression = None
+
     
 def expression_concat(a: ExpressionScript | None, b: ExpressionScript | None) -> ExpressionScript | None:
     if not a:
@@ -396,6 +420,8 @@ class TypeChecker():
             return 'error'
         
         if isinstance(expression, parser.FunctionCall):
+            local = self._context.fn_locals
+
             built_in = built_in_functions.lookup(expression.name.value)
 
             if built_in:
@@ -437,7 +463,7 @@ class ExpressionGenerator():
         self.type_info: TypeChecker = type_info
         self.static_evaluator: static_evaluator.StaticEvaluator = eval
 
-    def generate_to_type(self, expression: parser.Expression, to_type: str, script: ExpressionScript):
+    def generate_to_type(self, expression: parser.Expression, to_type: str, script: ExpressionCollection):
         self.generate(expression, script)
         
         from_type = self.type_info.expression_to_type[expression]
@@ -446,10 +472,10 @@ class ExpressionGenerator():
             return
         
         if from_type == 'int' and to_type == 'float':
-            script.steps.append(ExpressionCommand(EXPRESSION_TYPE_ITOF))
+            script.add_step(ExpressionCommand(EXPRESSION_TYPE_ITOF))
         
         elif from_type == 'float' and to_type == 'int':
-            script.steps.append(ExpressionCommand(EXPRESSION_TYPE_FTOI))
+            script.add_step(ExpressionCommand(EXPRESSION_TYPE_FTOI))
 
         else:
             raise Exception(f'Connot convert from {from_type} to {to_type}')
@@ -480,7 +506,7 @@ class ExpressionGenerator():
 
         return ExpressionScriptLoad(source, name, data_type, offset)
 
-    def generate(self, expression: parser.Expression, script: ExpressionScript):
+    def generate(self, expression: parser.Expression, script: ExpressionCollection):
         if not expression in self.static_evaluator.literal_value:
             raise Exception(expression.at.format_message('expression is missing a type'))
 
@@ -490,10 +516,10 @@ class ExpressionGenerator():
             if type_from_pytype(literal_value) != self.type_info.expression_to_type[expression]:
                 raise Exception(f"mismatched type {type_from_pytype(literal_value)} {self.type_info.expression_to_type[expression]}")
             if type_from_pytype(literal_value) == 'int':
-                script.steps.append(ExpressionScriptIntLiteral(literal_value))
+                script.add_step(ExpressionScriptIntLiteral(literal_value))
                 self.context.modify_stack_size(1)
             elif type_from_pytype(literal_value) == 'float':
-                script.steps.append(ExpressionScriptFloatLiteral(literal_value))
+                script.add_step(ExpressionScriptFloatLiteral(literal_value))
                 self.context.modify_stack_size(1)
             else:
                 raise Exception(f"unknown literal type {type_from_pytype(literal_value)}")
@@ -503,12 +529,12 @@ class ExpressionGenerator():
             self.generate(expression.operand, script)
             if expression.operator.value == '-':
                 if self.type_info.expression_to_type[expression] == 'int':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_NEGATE))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_NEGATE))
                 else:
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_NEGATEF))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_NEGATEF))
 
             if expression.operator.value == 'not':
-                script.steps.append(ExpressionCommand(EXPRESSION_TYPE_NOT))
+                script.add_step(ExpressionCommand(EXPRESSION_TYPE_NOT))
 
         if isinstance(expression, parser.BinaryOperator):
             operator = expression.operator.value
@@ -532,46 +558,46 @@ class ExpressionGenerator():
             self.context.modify_stack_size(-1)
 
             if operator == 'and':
-                script.steps.append(ExpressionCommand(EXPRESSION_TYPE_AND))
+                script.add_step(ExpressionCommand(EXPRESSION_TYPE_AND))
             if operator == 'or':
-                script.steps.append(ExpressionCommand(EXPRESSION_TYPE_OR))
+                script.add_step(ExpressionCommand(EXPRESSION_TYPE_OR))
 
             if operator == '==':
-                script.steps.append(ExpressionCommand(EXPRESSION_TYPE_EQ))
+                script.add_step(ExpressionCommand(EXPRESSION_TYPE_EQ))
             if operator == '!=':
-                script.steps.append(ExpressionCommand(EXPRESSION_TYPE_NEQ))
+                script.add_step(ExpressionCommand(EXPRESSION_TYPE_NEQ))
 
             if cast_to_type == 'int':
                 if operator == '>':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_GT))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_GT))
                 if operator == '>=':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_GTE))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_GTE))
                     
                 if operator == '+':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_ADD))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_ADD))
                 if operator == '-':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_SUB))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_SUB))
                 if operator == '*':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_MUL))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_MUL))
                 if operator == '/':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_DIV))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_DIV))
             else:
                 if operator == '>':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_GTF))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_GTF))
                 if operator == '>=':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_GTEF))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_GTEF))
 
                 if operator == '+':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_ADDF))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_ADDF))
                 if operator == '-':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_SUBF))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_SUBF))
                 if operator == '*':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_MULF))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_MULF))
                 if operator == '/':
-                    script.steps.append(ExpressionCommand(EXPRESSION_TYPE_DIVF))
+                    script.add_step(ExpressionCommand(EXPRESSION_TYPE_DIVF))
 
         if isinstance(expression, parser.Identifier):
-            script.steps.append(self.generate_identifier_read(expression))
+            script.add_step(self.generate_identifier_read(expression))
             self.context.modify_stack_size(1)
 
         if isinstance(expression, parser.FunctionCall):
@@ -583,24 +609,23 @@ class ExpressionGenerator():
             for i, arg in enumerate(expression.args):
                 self.generate_to_type(arg, built_in.get_arg_type(i), script)
 
-            script.steps.append(ExpressionFunctionCall(built_in.index, len(expression.args), 1))
+            script.add_step(ExpressionFunctionCall(built_in.index, len(expression.args), 1))
             self.context.modify_stack_size(1 - len(expression.args))
 
-
-def generate_script(expression, context: variable_layout.VariableContext, expected_type: str | None = None) -> ExpressionScript | None:
+def generate_script(expression, context: variable_layout.VariableContext, expected_type: str | None = None) -> ExpressionCollection:
     type_info = TypeChecker(context)
     actual_type = type_info.determine_type(expression)
 
     if len(type_info.errors):
         print('\n\n'.join(type_info.errors))
-        return None
+        return ExpressionCollection()
     
     eval = static_evaluator.StaticEvaluator()
     eval.check_for_literals(expression)
 
     generator = ExpressionGenerator(context, type_info, eval)
 
-    result = ExpressionScript()
+    result = ExpressionCollection()
     
     if expected_type != None and actual_type != expected_type:
         generator.generate_to_type(expression, expected_type, result)

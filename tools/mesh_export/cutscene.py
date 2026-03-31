@@ -49,6 +49,13 @@ if __name__ == "__main__":
 
         context = mesh_export.cutscene.variable_layout.VariableContext(globals, scene_vars)
 
+        fn_list = mesh_export.cutscene.variable_layout.FunctionList()
+
+        for fn_def in result.functions:
+            fn_list.add_function(fn_def)
+
+        context = context.with_functions(fn_list)
+
         errors: list[str] = []
         mesh_export.cutscene.step_generator.validate_cutscene(result, errors, context)
 
