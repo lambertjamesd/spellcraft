@@ -613,6 +613,15 @@ class ExpressionGenerator():
             self.context.modify_stack_size(1)
 
         if isinstance(expression, parser.FunctionCall):
+            _index, fn = self.context.lookup_function(expression.name.value)
+
+            if fn:
+                for arg in expression.args:
+                    self.generate(arg, script)
+
+                script.add_call(expression)
+                return
+
             built_in = built_in_functions.lookup(expression.name.value)
 
             if not built_in:
