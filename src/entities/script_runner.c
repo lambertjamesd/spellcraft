@@ -2,7 +2,7 @@
 
 #include "../time/time.h"
 
-void script_runner_finish(struct cutscene* cutscene, void* data) {
+void script_runner_finish(struct cutscene* cutscene, void* data, evaluation_context_t* context) {
     struct script_runner* script_runner = (struct script_runner*)data;
 
     if (script_runner->loop) {

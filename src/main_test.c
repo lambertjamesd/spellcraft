@@ -3,7 +3,7 @@
 
 #include "util/init.h"
 #include "test/framework_test.h"
-\
+
 void test_collide_object_swept_to_triangle(struct test_context* t);
 void test_collide_object_to_mesh_swept(struct test_context* t);
 void test_collision_scene_collide_single(struct test_context* t);
@@ -25,6 +25,7 @@ void test_kd_tree_lookup(struct test_context* t);
 void test_hash_map(struct test_context* t);
 void test_memory_leaks(struct test_context* t);
 void test_resource_cache(struct test_context* t);
+void test_cutscene_runner(struct test_context* t);
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(5000)
 
@@ -43,6 +44,8 @@ int main() {
 
     console_init();
     console_set_render_mode(RENDER_MANUAL);
+
+    test_run(test_cutscene_runner);
 
     test_run(test_kd_tree_lookup);
 

@@ -54,7 +54,7 @@ void cutscene_ref_run_then_callback(cutscene_ref_t* ref, cutscene_finish_callbac
             if (fn_index != -1) {
                 cutscene_runner_run(current_scene->cutscene, fn_index, finish_callback, data, subject);
             } else if (finish_callback) {
-                finish_callback(NULL, data);
+                finish_callback(NULL, data, NULL);
             }
             break;
         default:
@@ -72,16 +72,16 @@ struct nested_on_finish {
     enum cutscene_ref_type ref_type;
 };
 
-void cutscene_runner_destroy_with_callback(struct cutscene* cutscene, void* data) {
+void cutscene_runner_destroy_with_callback(struct cutscene* cutscene, void* data, evaluation_context_t* context) {
     if (!data) {
         return;
     }
 
     struct nested_on_finish* finish = (struct nested_on_finish*)data;
-    finish->on_finish(cutscene, finish->data);
+    finish->on_finish(cutscene, finish->data, context);
     
     if (finish->ref_type == CUTSCENE_REF_DIRECT) {
-        cutscene_runner_free_on_finish()(cutscene, NULL);
+        cutscene_runner_free_on_finish()(cutscene, NULL, context);
     }
 }
 

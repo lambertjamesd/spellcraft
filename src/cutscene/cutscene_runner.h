@@ -5,8 +5,9 @@
 #include "../scene/scene_definition.h"
 #include <stdbool.h>
 #include "../entity/entity_id.h"
+#include "evaluation_context.h"
 
-typedef void (*cutscene_finish_callback)(struct cutscene* cutscene, void* data);
+typedef void (*cutscene_finish_callback)(struct cutscene* cutscene, void* data, evaluation_context_t* context);
 
 void cutscene_runner_init();
 

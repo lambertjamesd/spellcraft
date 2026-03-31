@@ -166,6 +166,9 @@ class CutsceneStep():
         self.command: int = command
         self.data: bytes = data
 
+    def write_data(self, file):
+        file.write(self.data)
+
 class JumpCutsceneStep():
     def __init__(self, command: int, label: str | None = None, token: tokenizer.Token | None = None):
         self.command: int = command
@@ -173,10 +176,16 @@ class JumpCutsceneStep():
         self.label: str | None = label
         self.token: tokenizer.Token | None = token
 
+    def write_data(self, file):
+        file.write(struct.pack('>h', self.offset))
+
 class ExpressionCutsceneStep():
     def __init__(self, expr: expresion_generator.ExpressionScript):
         self.command: int = CUTSCENE_STEP_EXPRESSION
         self.expr: expresion_generator.ExpressionScript = expr
+        
+    def write_data(self, file):
+        self.expr.serialize(file)
 
 class ExpressionFunctionCall():
     def __init__(self, fn_index: int, argc: int, retc: int):
@@ -184,6 +193,9 @@ class ExpressionFunctionCall():
         self.fn_index = fn_index
         self.argc: int = argc
         self.retc: int = retc
+
+    def write_data(self, file):
+        file.write(struct.pack('>HBB', self.fn_index, self.argc, self.retc))
 
 StepTypes = typing.Union[CutsceneStep, JumpCutsceneStep, ExpressionCutsceneStep, ExpressionCutsceneStep, ExpressionFunctionCall]
 
@@ -267,7 +279,7 @@ def _can_assign(from_type: str, into: parser.DataType) -> bool:
 
     return False
 
-def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext) -> bool:
+def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expected_count: int, context:variable_layout.VariableContext) -> bool:
     fn_index, fn = cutscene.lookup_function(step.name.value)
 
     if not fn:
@@ -290,7 +302,7 @@ def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, args:
     if pre_expression:
         cutscene.steps.append(ExpressionCutsceneStep(pre_expression))
 
-    cutscene.steps.append(ExpressionFunctionCall(fn_index, len(step.parameters), len(fn.return_types)))
+    cutscene.steps.append(ExpressionFunctionCall(fn_index, len(step.parameters), expected_count))
 
 
 def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext):
@@ -538,6 +550,9 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, return_label, step.return_token))
 
     elif isinstance(step, parser.CutsceneStep):
+        if _generate_function_call(cutscene, step, 0, context):
+            return
+
         if step.name.value in _aliases:
             _generate_alias(cutscene, step, _aliases[step.name.value], context, return_label)
             return
@@ -704,12 +719,7 @@ def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layou
 
     for step in cutscene.steps:
         file.write(struct.pack('>B', step.command))
-        if isinstance(step, CutsceneStep):
-            file.write(step.data)
-        elif isinstance(step, JumpCutsceneStep):
-            file.write(struct.pack('>h', step.offset))
-        elif isinstance(step, ExpressionCutsceneStep):
-            file.write(step.expr.to_bytes())
+        step.write_data(file)
 
     for length, fn in zip(fn_length, inputCutscene.functions):
         name_bytes = fn.name.value.encode()

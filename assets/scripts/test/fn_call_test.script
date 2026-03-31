@@ -1,9 +1,13 @@
 
-func fun_test(a: i32, b: i32): i32
+func add(a: i32, b: i32): i32
     return a + b;
 end
 
-func local_test()
+func test_return(): i32
+    return 5;
+end
+
+func main()
     local local_a: i32 = 20 + 30;
     local local_b: i32 = local_a * local_a;
 end
