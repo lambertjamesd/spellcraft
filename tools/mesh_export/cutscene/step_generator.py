@@ -281,13 +281,27 @@ def _can_assign(from_type: str, into: parser.DataType) -> bool:
 
     return False
 
-def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expected_count: int, context:variable_layout.VariableContext) -> bool:
+def _generate_expression_collection(cutscene: Cutscene, collection: expresion_generator.ExpressionCollection, context: variable_layout.VariableContext):
+    for chunk in collection.chunks:
+        if chunk.script:
+            cutscene.steps.append(ExpressionCutsceneStep(chunk.script))
+        fn_index, fn = context.lookup_function(chunk.fn_call.name.value)
+
+        if not fn:
+            raise Exception(f'could not find function {chunk.fn_call.name.value}')
+
+        cutscene.steps.append(ExpressionFunctionCall(fn_index, len(chunk.fn_call.args), 1))
+
+    if collection.final_expression:
+        cutscene.steps.append(ExpressionCutsceneStep(collection.final_expression))
+
+def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expected_count: int, context: variable_layout.VariableContext) -> bool:
     fn_index, fn = context.lookup_function(step.name.value)
 
     if not fn:
         return False
     
-    pre_expression: expresion_generator.ExpressionScript | None = None
+    pre_expression: expresion_generator.ExpressionCollection = expresion_generator.ExpressionCollection()
 
     for arg_index, arg in enumerate(step.parameters):
         generate_to = 'int'
@@ -295,20 +309,17 @@ def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expec
         if fn.args[arg_index].type_name.name.value == 'float':
             generate_to = 'float'
 
-        pre_expression = expresion_generator.expression_concat(
-            pre_expression, 
-            expresion_generator.generate_script(arg, context, generate_to)
-        )
+        pre_expression = pre_expression.concat(expresion_generator.generate_script(arg, context, generate_to))
 
-        
-    if pre_expression:
-        cutscene.steps.append(ExpressionCutsceneStep(pre_expression))
+    _generate_expression_collection(cutscene, pre_expression, context)
 
     cutscene.steps.append(ExpressionFunctionCall(fn_index, len(step.parameters), expected_count))
 
+    return True
+
 
 def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext):
-    pre_expression: expresion_generator.ExpressionScript | None = None
+    pre_expression: expresion_generator.ExpressionCollection = expresion_generator.ExpressionCollection()
     pop_count = 0
 
     for idx, arg in enumerate(args):
@@ -324,10 +335,7 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
                 if not expression:
                     raise Exception(f"Could not generate expression {replacement}")   
 
-                if pre_expression:
-                    pre_expression = pre_expression.concat(expression)
-                else:
-                    pre_expression = expression
+                pre_expression = pre_expression.concat(expression)
 
         if arg.is_static:
             continue
@@ -344,14 +352,9 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
         if not expression:
             raise Exception(f"Could not generate expression {parameter}")
         
-        if pre_expression:
-            pre_expression = pre_expression.concat(expression)
-        else:
-            pre_expression = expression
+        pre_expression = pre_expression.concat(expression)
                 
-    if pre_expression:
-        cutscene.steps.append(ExpressionCutsceneStep(pre_expression))
-
+    _generate_expression_collection(cutscene, pre_expression, context)
 
     data = io.BytesIO()
     
@@ -566,13 +569,12 @@ def _generate_step_block(cutscene: Cutscene, block: list, context: variable_layo
         
 def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableContext, return_label: str):
     if isinstance(step, parser.ReturnStatement):
-        return_expr: expresion_generator.ExpressionScript | None  = None
+        return_expr: expresion_generator.ExpressionCollection = expresion_generator.ExpressionCollection()
 
         for index, result in enumerate(step.results):
-            return_expr = expresion_generator.expression_concat(return_expr, expresion_generator.generate_script(result, context, expresion_generator.type_mapping[context.fn_locals.results[index].name.value]))
+            return_expr = return_expr.concat(expresion_generator.generate_script(result, context, expresion_generator.type_mapping[context.fn_locals.results[index].name.value]))
 
-        if return_expr:
-            cutscene.steps.append(ExpressionCutsceneStep(return_expr))
+        _generate_expression_collection(cutscene, return_expr, context)
 
         context.modify_stack_size(-len(step.results))
         cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, return_label, step.return_token))
@@ -589,9 +591,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
 
     elif isinstance(step, parser.IfStatement):
         expression = expresion_generator.generate_script(step.condition, context)
-        if not expression:
-            raise Exception(f"Could not generate expression {step.condition}")
-        cutscene.steps.append(ExpressionCutsceneStep(expression))
+        _generate_expression_collection(cutscene, expression, context)
 
         context.modify_stack_size(-1)
         if_step = JumpCutsceneStep(CUTSCENE_STEP_JUMP_IF_NOT)
@@ -631,10 +631,13 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
 
         if stack_pos != None:
             if context.fn_locals and context.fn_locals.is_still_needed(step.name.value):
-                expression.steps.append(expresion_generator.ExpressionStore(stack_pos))
-                cutscene.steps.append(ExpressionCutsceneStep(expression))
+                expression.final_expression = expresion_generator.expression_concat(
+                    expression.final_expression, 
+                    expresion_generator.ExpressionScript([expresion_generator.ExpressionStore(stack_pos)])
+                )
+                _generate_expression_collection(cutscene, expression, context)
         else:
-            cutscene.steps.append(ExpressionCutsceneStep(expression))
+            _generate_expression_collection(cutscene, expression, context)
 
             step_type = CUTSCENE_STEP_SET_GLOBAL
 
@@ -646,6 +649,9 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
             var_type = context.get_variable_type(step.name.value)
             bit_offset = context.get_variable_offset(step.name.value)
 
+            if not var_type:
+                raise Exception(f'could not get variable {step.name.value}')
+
             cutscene.steps.append(CutsceneStep(
                 step_type, 
                 expresion_generator.generate_variable_address(var_type, bit_offset)
@@ -655,20 +661,19 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         if step.initializer:
             expression = expresion_generator.generate_script(step.initializer, context)
         else:
-            expression = expresion_generator.ExpressionScript([expresion_generator.ExpressionScriptIntLiteral(0)])
+            expression = expresion_generator.ExpressionCollection()
+            expression.final_expression = expresion_generator.ExpressionScript([expresion_generator.ExpressionScriptIntLiteral(0)])
             context.modify_stack_size(1)
 
         context.fn_locals.define_local(step)
         stack_pos = context.fn_locals.get_local_stack_position(step.name.value)
 
-        if not expression:
-            raise Exception('Could not generate variable definition expression')
         if stack_pos == None:
             raise Exception('Could not generate variable position')
-
-        expression.steps.append(expresion_generator.ExpressionStore(stack_pos))
+        
+        expression.final_expression = expresion_generator.expression_concat(expression.final_expression, expresion_generator.ExpressionScript([expresion_generator.ExpressionStore(stack_pos)]))
         context.modify_stack_size(-1)
-        cutscene.steps.append(ExpressionCutsceneStep(expression))
+        _generate_expression_collection(cutscene, expression, context)
         
 
 
@@ -708,7 +713,7 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
 
     if local_count:
         cutscene.steps.append(ExpressionCutsceneStep(
-            expresion_generator.ExpressionScript([expresion_generator.ExpressionScriptIntLiteral(0)] * local_count)
+            expresion_generator.ExpressionScript(list([expresion_generator.ExpressionScriptIntLiteral(0)] * local_count))
         ))
 
     _generate_step_block(cutscene, statements, context, return_label)
@@ -726,9 +731,6 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
 
 def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layout.VariableContext):
     cutscene = Cutscene()
-
-    for fn in inputCutscene.functions:
-        cutscene.add_function(fn)
 
     fn_length: list[int] = []
 

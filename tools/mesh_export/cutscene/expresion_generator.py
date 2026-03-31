@@ -275,6 +275,13 @@ class ExpressionChunk():
     def __init__(self, script: ExpressionScript | None, fn_call: parser.FunctionCall):
         self.script: ExpressionScript | None = script
         self.fn_call: parser.FunctionCall = fn_call
+    
+def expression_concat(a: ExpressionScript | None, b: ExpressionScript | None) -> ExpressionScript | None:
+    if not a:
+        return b
+    if not b:
+        return a
+    return a.concat(b) 
 
 class ExpressionCollection():
     def __init__(self) -> None:
@@ -291,13 +298,18 @@ class ExpressionCollection():
         self.chunks.append(ExpressionChunk(self.final_expression, call))
         self.final_expression = None
 
-    
-def expression_concat(a: ExpressionScript | None, b: ExpressionScript | None) -> ExpressionScript | None:
-    if not a:
-        return b
-    if not b:
-        return a
-    return a.concat(b) 
+    def concat(self, other):
+        result = ExpressionCollection()
+        if not self.final_expression:
+            result.chunks = self.chunks + other.chunks
+            result.final_expression = other.final_expression
+        elif len(other.chunks):
+            result.chunks = self.chunks + [ExpressionChunk(expression_concat(self.final_expression, other.chunks[0].script), other.chunks[0].fn_call)] + other.chunks[1:]
+            result.final_expression = other.final_expression
+        else:
+            result.chunks = self.chunks
+            result.final_expression = expression_concat(self.final_expression, other.final_expression)
+        return result
 
 # types
 
