@@ -231,6 +231,7 @@ class Cutscene():
 
         while idx < len(self.steps):
             if idx == start_idx:
+                idx += 1
                 continue
 
             prev = self.steps[idx-1]

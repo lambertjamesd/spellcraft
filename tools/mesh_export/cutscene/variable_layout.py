@@ -319,7 +319,7 @@ class VariableContext():
         return self.fn_list.lookup_function(name)
     
     def with_locals(self, fn_locals: local_layout.LocalLayout):
-        return VariableContext(self.globals, self.scene_vars, fn_locals)
+        return VariableContext(self.globals, self.scene_vars, fn_locals, self.fn_list)
     
     def with_functions(self, fn_list: FunctionList):
         return VariableContext(self.globals, self.scene_vars, self.fn_locals, fn_list)

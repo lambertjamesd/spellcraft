@@ -432,7 +432,25 @@ class TypeChecker():
             return 'error'
         
         if isinstance(expression, parser.FunctionCall):
-            local = self._context.fn_locals
+            index, fn = self._context.lookup_function(expression.name.value)
+
+            if fn:
+                if len(expression.args) != len(fn.args):
+                    self._report_error(expression.name.format_message(f"expected {len(fn.args)} arguments got {len(expression.args)}"))
+
+                for i in range(0, min(len(expression.args), len(fn.args))):
+                    element_type = self.determine_type(expression.args[i])
+
+                    if element_type != type_mapping[fn.args[i].type_name.name.value]:
+                        self._report_error(expression.args[i].at.format_message(f"expected {fn.args[i].type_name.name.value} got {element_type}"))
+                
+                if len(fn.return_types) > 0:
+                    return type_mapping[fn.return_types[0].name.value]
+                else:
+                    self._report_error(expression.name.format_message(f"function returns void expected a value"))
+                    return 'error'
+
+
 
             built_in = built_in_functions.lookup(expression.name.value)
 
@@ -444,7 +462,7 @@ class TypeChecker():
                     element_type = self.determine_type(expression.args[i])
 
                     if element_type != built_in.args[i].type:
-                        self._report_error(expression.args[i].at.format_message(f"expected {len(built_in.args)} arguments got {len(expression.args)}"))
+                        self._report_error(expression.args[i].at.format_message(f"expected {built_in.args[i].type} got {element_type}"))
                         
                 return built_in.return_type
             
