@@ -600,11 +600,10 @@ void cutscene_runner_step_instruction() {
             return;
         }
 
+        cutscene_runner_pop_call(active_cutscene, entry);
         --active_cutscene->current_depth;
 
         if (active_cutscene->current_depth >= 0) {
-            cutscene_stack_entry_t* next = CUTSCENE_CURR_FRAME(active_cutscene);
-            cutscene_runner_pop_call(active_cutscene, entry);
             continue;
         }
 
