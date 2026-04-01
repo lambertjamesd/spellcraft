@@ -433,6 +433,9 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         case CUTSCENE_STEP_FUNCTION_CALL:
             // logic is done in update step
             break;
+        case CUTSCENE_STEP_COUNT:
+            assert(false);
+            break;
     }
 }
 

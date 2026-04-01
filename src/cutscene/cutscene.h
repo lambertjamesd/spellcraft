@@ -49,6 +49,8 @@ enum cutscene_step_type {
     CUTSCENE_STEP_SHOW_IMAGE,
     CUTSCENE_STEP_TEMPLATE_STRING,
     CUTSCENE_STEP_FUNCTION_CALL,
+
+    CUTSCENE_STEP_COUNT,
 };
 
 typedef void (*cutscene_step_callback)(void* data);

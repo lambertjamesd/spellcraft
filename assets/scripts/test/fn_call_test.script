@@ -11,6 +11,10 @@ func test_call_add(): i32
     return add(3, 5);
 end
 
+func multi_return(): i32, i32
+    return 2, 3;
+end
+
 func main()
     local local_a: i32 = 20 + 30;
     local local_b: i32 = local_a * local_a;

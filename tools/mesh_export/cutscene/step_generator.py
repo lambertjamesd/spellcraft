@@ -45,13 +45,12 @@ CUTSCENE_STEP_DESPAWN = 31
 CUTSCENE_STEP_START_TIMER = 32
 CUTSCENE_STEP_CANCEL_TIMER = 33
 CUTSCENE_STEP_ASK = 34
-CUTSCENE_STEP_SHOW_MAIN_MENU = 35
-CUTSCENE_STEP_STOPWATCH_SHOW = 36
-CUTSCENE_STEP_STOPWATCH_RUN = 37
-CUTSCENE_STEP_AUDIO_PAUSE = 38
-CUTSCENE_STEP_SHOW_IMAGE = 39
-CUTSCENE_STEP_TEMPLATE_STRING = 40
-CUTSCENE_STEP_FUNCTION_CALL = 41
+CUTSCENE_STEP_STOPWATCH_SHOW = 35
+CUTSCENE_STEP_STOPWATCH_RUN = 36
+CUTSCENE_STEP_AUDIO_PAUSE = 37
+CUTSCENE_STEP_SHOW_IMAGE = 38
+CUTSCENE_STEP_TEMPLATE_STRING = 39
+CUTSCENE_STEP_FUNCTION_CALL = 40
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -132,7 +131,6 @@ _step_ids = {
     "despawn": CUTSCENE_STEP_DESPAWN,
     "start_timer": CUTSCENE_STEP_START_TIMER,
     "cancel_timer": CUTSCENE_STEP_CANCEL_TIMER,
-    "show_main_menu": CUTSCENE_STEP_SHOW_MAIN_MENU,
     "stopwatch_show": CUTSCENE_STEP_STOPWATCH_SHOW,
     "stopwatch_run": CUTSCENE_STEP_STOPWATCH_RUN,
     "audio_pause": CUTSCENE_STEP_AUDIO_PAUSE,
@@ -197,18 +195,47 @@ class ExpressionFunctionCall():
     def write_data(self, file):
         file.write(struct.pack('>HBB', self.fn_index, self.argc, self.retc))
 
-StepTypes = typing.Union[CutsceneStep, JumpCutsceneStep, ExpressionCutsceneStep, ExpressionCutsceneStep, ExpressionFunctionCall]
+class LabelStep():
+    def __init__(self, name: str):
+        self.name: str = name
+
+StepTypes = typing.Union[
+    CutsceneStep, 
+    JumpCutsceneStep, 
+    ExpressionCutsceneStep, 
+    ExpressionCutsceneStep, 
+    ExpressionFunctionCall, 
+    LabelStep,
+]
 
 class Cutscene():
     def __init__(self):
         self.steps: list[StepTypes] = []
-        self.labels: dict[str, int] = {}
+        self._label_count: int = 0
 
     def add_label(self, label: str):
-        self.labels[label] = len(self.steps)
+        self.steps.append(LabelStep(label))
+        self._label_count += 1
+
+    def step_count(self) -> int:
+        return len(self.steps) - self._label_count
 
     def apply_jump_labels(self) -> list[str]:
         errors = []
+
+        labels: dict[str, int] = {}
+
+        idx = 0
+        while idx < len(self.steps):
+            step = self.steps[idx]
+
+            if isinstance(step, LabelStep):
+                labels[step.name] = idx
+                del self.steps[idx]
+            else:
+                idx += 1
+
+        self._label_count = 0
 
         for idx, step in enumerate(self.steps):
             if not isinstance(step, JumpCutsceneStep):
@@ -216,17 +243,17 @@ class Cutscene():
             if not step.label:
                 continue
 
-            if not step.label in self.labels:
+            if not step.label in labels:
                 if step.token:
                     errors.append(step.token.format_message(f'the label {step.label} was not found'))
                 else:
                     errors.append(f'the label {step.label} was not found')
 
-            step.offset = self.labels[step.label] - (idx + 1)
+            step.offset = labels[step.label] - (idx + 1)
 
         return errors
     
-    def combine_expr(self, start_idx: int):
+    def simplify(self, start_idx: int):
         idx = start_idx
 
         while idx < len(self.steps):
@@ -240,6 +267,8 @@ class Cutscene():
             if isinstance(prev, ExpressionCutsceneStep) and isinstance(curr, ExpressionCutsceneStep):
                 self.steps[idx-1] = ExpressionCutsceneStep(prev.expr.concat(curr.expr))
                 del self.steps[idx]
+            elif isinstance(prev, JumpCutsceneStep) and isinstance(curr, LabelStep) and prev.label == curr.name:
+                del self.steps[idx-1]
             else:
                 idx += 1
             
@@ -315,6 +344,7 @@ def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expec
     _generate_expression_collection(cutscene, pre_expression, context)
 
     cutscene.steps.append(ExpressionFunctionCall(fn_index, len(step.parameters), expected_count))
+    context.modify_stack_size(expected_count - len(step.parameters))
 
     return True
 
@@ -727,7 +757,7 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
         print(parser.statement_list_str(statements))
         raise Exception(f"fn {function_name} mismatched stack size expected {start_stack_size} got {fn_locals.get_stack_size()}")
         
-    cutscene.combine_expr(start_step_count)
+    cutscene.simplify(start_step_count)
 
 
 def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layout.VariableContext):
@@ -736,9 +766,11 @@ def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layou
     fn_length: list[int] = []
 
     for fn in inputCutscene.functions:
-        before = len(cutscene.steps)
+        before = cutscene.step_count()
         _generate_statement_list_steps(cutscene, fn.body, context, fn)
-        fn_length.append(len(cutscene.steps) - before)
+        fn_length.append(cutscene.step_count() - before)
+
+        print(f'func {fn.name.value} len {cutscene.step_count() - before}')
 
     errors = cutscene.apply_jump_labels()
 
@@ -749,9 +781,11 @@ def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layou
 
     file.write('CTSN'.encode())
 
-    file.write(struct.pack('>HH', len(cutscene.steps), len(inputCutscene.functions)))
+    file.write(struct.pack('>HH', cutscene.step_count(), len(inputCutscene.functions)))
 
     for step in cutscene.steps:
+        if isinstance(step, LabelStep):
+            continue
         file.write(struct.pack('>B', step.command))
         step.write_data(file)
 

@@ -638,6 +638,7 @@ class ExpressionGenerator():
                     self.generate(arg, script)
 
                 script.add_call(expression)
+                self.context.modify_stack_size(1 - len(expression.args))
                 return
 
             built_in = built_in_functions.lookup(expression.name.value)

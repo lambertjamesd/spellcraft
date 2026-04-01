@@ -164,6 +164,17 @@ struct cutscene* cutscene_load(const char* filename) {
             case CUTSCENE_STEP_SHOW_IMAGE:
                 step->data.show_image.filename = string_load(file);
                 break;
+            case CUTSCENE_STEP_TEMPLATE_STRING:
+                cutscene_load_template_string(&step->data.template_string.message, file);
+                break;
+            case CUTSCENE_STEP_FUNCTION_CALL:
+                fread(&step->data.function_call.fn_index, 2, 1, file);
+                fread(&step->data.function_call.argc, 1, 1, file);
+                fread(&step->data.function_call.retc, 1, 1, file);
+                break;
+            default:
+                assert(step_type < CUTSCENE_STEP_COUNT);
+                break;
         }
     }
     
