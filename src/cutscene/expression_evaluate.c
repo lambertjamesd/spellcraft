@@ -252,7 +252,7 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
             case EXPRESSION_TYPE_STORE: {
                 uint8_t offset = *current;
                 ++current;
-                evaluation_context_push(context, evaluation_context_read(context, offset));
+                evaluation_context_store(context, offset, evaluation_context_pop(context));
                 break;
             }
             case EXPRESSION_TYPE_REMOVE: {
