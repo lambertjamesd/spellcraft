@@ -539,7 +539,7 @@ void cutscene_runner_start(struct cutscene* cutscene, int function_index, cutsce
     next->current_string_start = &next->string_stack[0];
     next->current_depth = 0;
     *CUTSCENE_CURR_FRAME(next) = (cutscene_stack_entry_t){
-        .current_instruction = -1,
+        .current_instruction = 0,
         .cutscene = cutscene,
         .function = fn,
         .string_stack_position = next->current_string_start - next->string_stack,
@@ -595,10 +595,9 @@ void cutscene_runner_step_instruction() {
     while (CUTSCENE_IS_RUNNING(active_cutscene)) {
         cutscene_stack_entry_t* entry = CUTSCENE_CURR_FRAME(active_cutscene);
         entry->current_instruction += 1;
-
-        struct cutscene_step* step = &entry->function->steps[entry->current_instruction];
-
+        
         if (entry->current_instruction < entry->function->step_count) {
+            struct cutscene_step* step = &entry->function->steps[entry->current_instruction];
             cutscene_runner_init_step(active_cutscene, step);
             return;
         }

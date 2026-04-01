@@ -494,8 +494,8 @@ class ExpressionGenerator():
         self.type_info: TypeChecker = type_info
         self.static_evaluator: static_evaluator.StaticEvaluator = eval
 
-    def generate_to_type(self, expression: parser.Expression, to_type: str, script: ExpressionCollection):
-        self.generate(expression, script)
+    def generate_to_type(self, expression: parser.Expression, to_type: str, script: ExpressionCollection, retc: int):
+        self.generate(expression, script, retc)
         
         from_type = self.type_info.expression_to_type[expression]
 
@@ -537,7 +537,7 @@ class ExpressionGenerator():
 
         return ExpressionScriptLoad(source, name, data_type, offset)
 
-    def generate(self, expression: parser.Expression, script: ExpressionCollection):
+    def generate(self, expression: parser.Expression, script: ExpressionCollection, retc: int):
         if not expression in self.static_evaluator.literal_value:
             raise Exception(expression.at.format_message('expression is missing a type'))
 
@@ -557,7 +557,7 @@ class ExpressionGenerator():
             return
         
         if isinstance(expression, parser.UnaryOperator):
-            self.generate(expression.operand, script)
+            self.generate(expression.operand, script, 1)
             if expression.operator.value == '-':
                 if self.type_info.expression_to_type[expression] == 'int':
                     script.add_step(ExpressionCommand(EXPRESSION_TYPE_NEGATE))
@@ -580,11 +580,11 @@ class ExpressionGenerator():
 
             if operator in mirrored_operators:
                 operator = mirrored_operators[operator]
-                self.generate_to_type(expression.a, cast_to_type, script)
-                self.generate_to_type(expression.b, cast_to_type, script)
+                self.generate_to_type(expression.a, cast_to_type, script, 1)
+                self.generate_to_type(expression.b, cast_to_type, script, 1)
             else:
-                self.generate_to_type(expression.b, cast_to_type, script)
-                self.generate_to_type(expression.a, cast_to_type, script)
+                self.generate_to_type(expression.b, cast_to_type, script, 1)
+                self.generate_to_type(expression.a, cast_to_type, script, 1)
 
             self.context.modify_stack_size(-1)
 
@@ -636,10 +636,10 @@ class ExpressionGenerator():
 
             if fn:
                 for arg in expression.args:
-                    self.generate(arg, script)
+                    self.generate(arg, script, 1)
 
                 script.add_call(expression)
-                self.context.modify_stack_size(1 - len(expression.args))
+                self.context.modify_stack_size(retc - len(expression.args))
                 return
 
             built_in = built_in_functions.lookup(expression.name.value)
@@ -648,12 +648,12 @@ class ExpressionGenerator():
                 raise Exception(expression.name.format_message(f"Could not find function {expression.name.value}"))
             
             for i, arg in enumerate(expression.args):
-                self.generate_to_type(arg, built_in.get_arg_type(i), script)
+                self.generate_to_type(arg, built_in.get_arg_type(i), script, 1)
 
             script.add_step(ExpressionFunctionCall(built_in.index, len(expression.args), 1))
             self.context.modify_stack_size(1 - len(expression.args))
 
-def generate_script(expression, context: variable_layout.VariableContext, expected_type: str | None = None) -> ExpressionCollection:
+def generate_script(expression, context: variable_layout.VariableContext, expected_type: str | None = None, retc: int = 1) -> ExpressionCollection:
     type_info = TypeChecker(context)
     actual_type = type_info.determine_type(expression)
 
@@ -669,8 +669,8 @@ def generate_script(expression, context: variable_layout.VariableContext, expect
     result = ExpressionCollection()
     
     if expected_type != None and actual_type != expected_type:
-        generator.generate_to_type(expression, expected_type, result)
+        generator.generate_to_type(expression, expected_type, result, retc)
     else:
-        generator.generate(expression, result)
+        generator.generate(expression, result, retc)
 
     return result

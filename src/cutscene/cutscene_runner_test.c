@@ -85,4 +85,15 @@ void test_cutscene_runner(struct test_context* t) {
         },
         "local_swap"
     );
+    
+    test_do_test(
+        cutscene, 
+        (on_fn_end_t){
+                .t = t,
+                .result = {5},
+                .result_count = 1,
+                .complete = false,
+        },
+        "unpack_fn"
+    );
 }

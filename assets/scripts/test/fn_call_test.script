@@ -24,6 +24,15 @@ func local_swap(): i32, i32
     return a, b;
 end
 
+func unpack_fn(): i32
+    local a: i32;
+    local b: i32;
+
+    a, b = multi_return();
+
+    return a + b;
+end
+
 func main()
     local local_a: i32 = 20 + 30;
     local local_b: i32 = local_a * local_a;

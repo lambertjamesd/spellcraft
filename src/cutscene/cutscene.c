@@ -244,6 +244,9 @@ void cutscene_destroy(struct cutscene* cutscene) {
             case CUTSCENE_STEP_SHOW_IMAGE:
                 free(step->data.show_image.filename);
                 break;
+            case CUTSCENE_STEP_TEMPLATE_STRING:
+                cutscene_destroy_template_string(&step->data.template_string.message);
+                break;
             default:
                 break;
         }

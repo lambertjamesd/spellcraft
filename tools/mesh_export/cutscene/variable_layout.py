@@ -302,7 +302,7 @@ class VariableContext():
         stack_size = self.fn_locals.get_stack_size()
 
         if stack_size <= result:
-            raise Exception("bad stack size")
+            raise Exception(f"bad stack size for variable {name}")
         
         return stack_size - result - 1
     

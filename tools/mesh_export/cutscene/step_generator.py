@@ -311,7 +311,7 @@ def _can_assign(from_type: str, into: parser.DataType) -> bool:
 
     return False
 
-def _generate_expression_collection(cutscene: Cutscene, collection: expresion_generator.ExpressionCollection, context: variable_layout.VariableContext):
+def _generate_expression_collection(cutscene: Cutscene, collection: expresion_generator.ExpressionCollection, context: variable_layout.VariableContext, retc: int = 1):
     for chunk in collection.chunks:
         if chunk.script:
             cutscene.steps.append(ExpressionCutsceneStep(chunk.script))
@@ -320,7 +320,7 @@ def _generate_expression_collection(cutscene: Cutscene, collection: expresion_ge
         if not fn:
             raise Exception(f'could not find function {chunk.fn_call.name.value}')
 
-        cutscene.steps.append(ExpressionFunctionCall(fn_index, len(chunk.fn_call.args), 1))
+        cutscene.steps.append(ExpressionFunctionCall(fn_index, len(chunk.fn_call.args), retc if chunk == collection.chunks[-1] else 1))
 
     if collection.final_expression:
         cutscene.steps.append(ExpressionCutsceneStep(collection.final_expression))
@@ -701,7 +701,8 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         first_right = step.right[0]
 
         if len(step.right) == 1 and isinstance(first_right, parser.FunctionCall):
-            raise Exception('TODO')
+            expression = expresion_generator.generate_script(first_right, context, retc = len(step.left))
+            _generate_expression_collection(cutscene, expression, context, len(step.left))
         else:
             expression = expresion_generator.ExpressionCollection()
             
@@ -710,38 +711,38 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
                 
             _generate_expression_collection(cutscene, expression, context)
             
-            for name in step.left:
-                stack_pos = context.get_fn_local_offset(name.value)
+        for name in step.left:
+            stack_pos = context.get_fn_local_offset(name.value)
 
-                if stack_pos != None:
-                    if context.fn_locals.is_still_needed(name.value):
-                        cutscene.steps.append(ExpressionCutsceneStep(
-                            expresion_generator.ExpressionScript([expresion_generator.ExpressionStore(stack_pos)])
-                        ))
-                    else:
-                        cutscene.steps.append(ExpressionCutsceneStep(
-                            expresion_generator.ExpressionScript([expresion_generator.ExpressionRemove(1)])
-                        ))
-                else:
-                    step_type = CUTSCENE_STEP_SET_GLOBAL
-
-                    if context.is_global(name.value):
-                        step_type = CUTSCENE_STEP_SET_GLOBAL
-                    elif context.is_scene_var(name.value):
-                        step_type = CUTSCENE_STEP_SET_SCENE
-
-                    var_type = context.get_variable_type(name.value)
-                    bit_offset = context.get_variable_offset(name.value)
-
-                    if not var_type:
-                        raise Exception(f'could not get variable {name.value}')
-
-                    cutscene.steps.append(CutsceneStep(
-                        step_type, 
-                        expresion_generator.generate_variable_address(var_type, bit_offset)
+            if stack_pos != None:
+                if context.fn_locals.is_still_needed(name.value):
+                    cutscene.steps.append(ExpressionCutsceneStep(
+                        expresion_generator.ExpressionScript([expresion_generator.ExpressionStore(stack_pos)])
                     ))
-                    
-                context.modify_stack_size(-1)
+                else:
+                    cutscene.steps.append(ExpressionCutsceneStep(
+                        expresion_generator.ExpressionScript([expresion_generator.ExpressionRemove(1)])
+                    ))
+            else:
+                step_type = CUTSCENE_STEP_SET_GLOBAL
+
+                if context.is_global(name.value):
+                    step_type = CUTSCENE_STEP_SET_GLOBAL
+                elif context.is_scene_var(name.value):
+                    step_type = CUTSCENE_STEP_SET_SCENE
+
+                var_type = context.get_variable_type(name.value)
+                bit_offset = context.get_variable_offset(name.value)
+
+                if not var_type:
+                    raise Exception(f'could not get variable {name.value}')
+
+                cutscene.steps.append(CutsceneStep(
+                    step_type, 
+                    expresion_generator.generate_variable_address(var_type, bit_offset)
+                ))
+                
+            context.modify_stack_size(-1)
 
     elif isinstance(step, parser.VariableDefinition) and context.fn_locals:
         if step.initializer:
@@ -841,6 +842,7 @@ def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layou
     for step in cutscene.steps:
         if isinstance(step, LabelStep):
             continue
+        print(step)
         file.write(struct.pack('>B', step.command))
         step.write_data(file)
 
