@@ -15,6 +15,15 @@ func multi_return(): i32, i32
     return 2, 3;
 end
 
+func local_swap(): i32, i32
+    local a: i32 = 3;
+    local b: i32 = 5;
+
+    a, b = b, a;
+
+    return a, b;
+end
+
 func main()
     local local_a: i32 = 20 + 30;
     local local_b: i32 = local_a * local_a;

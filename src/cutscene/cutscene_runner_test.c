@@ -74,4 +74,15 @@ void test_cutscene_runner(struct test_context* t) {
         },
         "multi_return"
     );
+    
+    test_do_test(
+        cutscene, 
+        (on_fn_end_t){
+                .t = t,
+                .result = {5, 3},
+                .result_count = 2,
+                .complete = false,
+        },
+        "local_swap"
+    );
 }

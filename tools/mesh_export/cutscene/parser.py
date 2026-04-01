@@ -572,7 +572,19 @@ def _parse_if(parse_state: _ParseState, if_token = 'if'):
     return IfStatement(condition, body, else_block)
 
 def _is_assignment(parse_state: _ParseState):
-    return parse_state.peek(0).token_type == 'identifier' and parse_state.peek(1).token_type == '='
+    offset = 0
+
+    while parse_state.peek(offset).token_type == 'identifier':
+        maybe_assign = parse_state.peek(offset+1).token_type
+
+        if maybe_assign == '=':
+            return True
+        elif maybe_assign == ',':
+            offset += 2
+        else:
+            return False
+
+    return False
 
 def _parse_assignment(parse_state: _ParseState):
     left = [parse_state.require('identifier')]

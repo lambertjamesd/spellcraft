@@ -543,6 +543,8 @@ def _can_assign_into_variable(name: tokenizer.Token, from_type: str, errors: lis
         errors.append(name.format_message('variable not defined'))
         return False
     
+    target_type = expresion_generator.type_mapping[target_type]
+    
     if target_type == from_type or expresion_generator.is_numerical_type(target_type) and expresion_generator.is_numerical_type(from_type):
         return True
 
@@ -605,6 +607,20 @@ def _validate_step(step: parser.Statement, errors: list[str], context: variable_
                 _can_assign_into_variable(name, value_type, errors, context)
 
             errors += type_info.errors
+
+    if isinstance(step, parser.VariableDefinition):
+        type_info = expresion_generator.TypeChecker(context)
+
+        value_type = None
+        if step.initializer:
+            value_type = type_info.determine_type(step.initializer)
+
+        context.fn_locals.define_local(step)
+        
+        if value_type:
+            _can_assign_into_variable(step.name, value_type, errors, context)
+
+        errors += type_info.errors
 
 def validate_steps(statements: list[parser.Statement], errors: list[str], context: variable_layout.VariableContext):
     for statement in statements:
@@ -685,7 +701,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         first_right = step.right[0]
 
         if len(step.right) == 1 and isinstance(first_right, parser.FunctionCall):
-            pass
+            raise Exception('TODO')
         else:
             expression = expresion_generator.ExpressionCollection()
             
