@@ -37,12 +37,12 @@ void evaluation_context_popn(struct evaluation_context* context, int* into, int 
 }
 
 int evaluation_context_read(struct evaluation_context* context, int offset) {
-    assert(offset <= context->current_stack);
+    assert(offset < context->current_stack && offset >= 0);
     return context->stack[context->current_stack - offset - 1];
 }
 
 void evaluation_context_store(struct evaluation_context* context, int offset, int value) {
-    assert(offset <= context->current_stack);
+    assert(offset < context->current_stack && offset >= 0);
     context->stack[context->current_stack - offset - 1] = value;
 }
 

@@ -137,6 +137,8 @@ _step_ids = {
     "show_image": CUTSCENE_STEP_SHOW_IMAGE,
 }
 
+_reverse_step_ids = {value: key for key, value in _step_ids.items()}
+
 _steps_that_need_idle = {
     "interact_with_npc",
     "interact_with_location",
@@ -167,6 +169,9 @@ class CutsceneStep():
     def write_data(self, file):
         file.write(self.data)
 
+    def __repr__(self):
+        return f'<{_reverse_step_ids[self.command] if self.command in _reverse_step_ids else self.command} {self.data}>'
+
 class JumpCutsceneStep():
     def __init__(self, command: int, label: str | None = None, token: tokenizer.Token | None = None):
         self.command: int = command
@@ -177,6 +182,10 @@ class JumpCutsceneStep():
     def write_data(self, file):
         file.write(struct.pack('>h', self.offset))
 
+    def __repr__(self):
+        return f'<jump {self.label} ({self.offset})>'
+
+
 class ExpressionCutsceneStep():
     def __init__(self, expr: expresion_generator.ExpressionScript):
         self.command: int = CUTSCENE_STEP_EXPRESSION
@@ -184,6 +193,9 @@ class ExpressionCutsceneStep():
         
     def write_data(self, file):
         self.expr.serialize(file)
+        
+    def __repr__(self):
+        return f'<expr {repr(self.expr)}>'
 
 class ExpressionFunctionCall():
     def __init__(self, fn_index: int, argc: int, retc: int):
@@ -194,6 +206,9 @@ class ExpressionFunctionCall():
 
     def write_data(self, file):
         file.write(struct.pack('>HBB', self.fn_index, self.argc, self.retc))
+    
+    def __repr__(self):
+        return f'<fn({self.fn_index}, {self.argc}, {self.retc})>'
 
 class LabelStep():
     def __init__(self, name: str):
@@ -212,6 +227,9 @@ class Cutscene():
     def __init__(self):
         self.steps: list[StepTypes] = []
         self._label_count: int = 0
+
+    def add_step(self, step: StepTypes):
+        self.steps.append(step)
 
     def add_label(self, label: str):
         self.steps.append(LabelStep(label))
@@ -314,16 +332,16 @@ def _can_assign(from_type: str, into: parser.DataType) -> bool:
 def _generate_expression_collection(cutscene: Cutscene, collection: expresion_generator.ExpressionCollection, context: variable_layout.VariableContext, retc: int = 1):
     for chunk in collection.chunks:
         if chunk.script:
-            cutscene.steps.append(ExpressionCutsceneStep(chunk.script))
+            cutscene.add_step(ExpressionCutsceneStep(chunk.script))
         fn_index, fn = context.lookup_function(chunk.fn_call.name.value)
 
         if not fn:
             raise Exception(f'could not find function {chunk.fn_call.name.value}')
 
-        cutscene.steps.append(ExpressionFunctionCall(fn_index, len(chunk.fn_call.args), retc if chunk == collection.chunks[-1] else 1))
+        cutscene.add_step(ExpressionFunctionCall(fn_index, len(chunk.fn_call.args), retc if chunk == collection.chunks[-1] else 1))
 
     if collection.final_expression:
-        cutscene.steps.append(ExpressionCutsceneStep(collection.final_expression))
+        cutscene.add_step(ExpressionCutsceneStep(collection.final_expression))
 
 def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expected_count: int, context: variable_layout.VariableContext) -> bool:
     fn_index, fn = context.lookup_function(step.name.value)
@@ -343,7 +361,7 @@ def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expec
 
     _generate_expression_collection(cutscene, pre_expression, context)
 
-    cutscene.steps.append(ExpressionFunctionCall(fn_index, len(step.parameters), expected_count))
+    cutscene.add_step(ExpressionFunctionCall(fn_index, len(step.parameters), expected_count))
     context.modify_stack_size(expected_count - len(step.parameters))
 
     return True
@@ -426,7 +444,7 @@ def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args:
         
     context.modify_stack_size(-pop_count)
 
-    cutscene.steps.append(CutsceneStep(_step_ids[step.name.value], data.getvalue()))
+    cutscene.add_step(CutsceneStep(_step_ids[step.name.value], data.getvalue()))
 
 def _generate_alias(cutscene: Cutscene, step: parser.CutsceneStep, alias: Alias, context:variable_layout.VariableContext, return_label: str):
     cutscene_alias = parser.parse_block(alias.source, "alias")
@@ -654,7 +672,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         _generate_expression_collection(cutscene, return_expr, context)
 
         context.modify_stack_size(-len(step.results))
-        cutscene.steps.append(JumpCutsceneStep(CUTSCENE_STEP_JUMP, return_label, step.return_token))
+        cutscene.add_step(JumpCutsceneStep(CUTSCENE_STEP_JUMP, return_label, step.return_token))
 
     elif isinstance(step, parser.CutsceneStep):
         if _generate_function_call(cutscene, step, 0, context):
@@ -672,8 +690,8 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
 
         context.modify_stack_size(-1)
         if_step = JumpCutsceneStep(CUTSCENE_STEP_JUMP_IF_NOT)
-        cutscene.steps.append(if_step)
-        size_before = len(cutscene.steps)
+        cutscene.add_step(if_step)
+        size_before = cutscene.step_count()
         
         _generate_step_block(cutscene, step.statements, context, return_label)
 
@@ -681,21 +699,21 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
             # setup the jump that skips over the else block
             # after the end of the if block
             skip_else = JumpCutsceneStep(CUTSCENE_STEP_JUMP)
-            cutscene.steps.append(skip_else)
+            cutscene.add_step(skip_else)
 
             # if there is an else block, skipping the if content should 
             # jump to the start of the else block
-            if_step.offset = len(cutscene.steps) - size_before
+            if_step.offset = cutscene.step_count() - size_before
 
-            size_before = len(cutscene.steps)
+            size_before = cutscene.step_count()
 
             _generate_step_block(cutscene, step.else_block, context, return_label)
 
             # update the correct jump offset
-            skip_else.offset = len(cutscene.steps) - size_before
+            skip_else.offset = cutscene.step_count() - size_before
         else:
             # update the correct jump offset
-            if_step.offset = len(cutscene.steps) - size_before
+            if_step.offset = cutscene.step_count() - size_before
 
     elif isinstance(step, parser.Assignment):
         first_right = step.right[0]
@@ -711,16 +729,18 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
                 
             _generate_expression_collection(cutscene, expression, context)
             
-        for name in step.left:
+        # start at the top of the stack
+        for name in reversed(step.left):
+            context.modify_stack_size(-1)
             stack_pos = context.get_fn_local_offset(name.value)
 
             if stack_pos != None:
                 if context.fn_locals.is_still_needed(name.value):
-                    cutscene.steps.append(ExpressionCutsceneStep(
+                    cutscene.add_step(ExpressionCutsceneStep(
                         expresion_generator.ExpressionScript([expresion_generator.ExpressionStore(stack_pos)])
                     ))
                 else:
-                    cutscene.steps.append(ExpressionCutsceneStep(
+                    cutscene.add_step(ExpressionCutsceneStep(
                         expresion_generator.ExpressionScript([expresion_generator.ExpressionRemove(1)])
                     ))
             else:
@@ -737,12 +757,10 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
                 if not var_type:
                     raise Exception(f'could not get variable {name.value}')
 
-                cutscene.steps.append(CutsceneStep(
+                cutscene.add_step(CutsceneStep(
                     step_type, 
                     expresion_generator.generate_variable_address(var_type, bit_offset)
                 ))
-                
-            context.modify_stack_size(-1)
 
     elif isinstance(step, parser.VariableDefinition) and context.fn_locals:
         if step.initializer:
@@ -752,14 +770,14 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
             expression.final_expression = expresion_generator.ExpressionScript([expresion_generator.ExpressionScriptIntLiteral(0)])
             context.modify_stack_size(1)
 
+        context.modify_stack_size(-1)
         context.fn_locals.define_local(step)
-        stack_pos = context.fn_locals.get_local_stack_position(step.name.value)
+        stack_pos = context.get_fn_local_offset(step.name.value)
 
         if stack_pos == None:
             raise Exception('Could not generate variable position')
         
         expression.final_expression = expresion_generator.expression_concat(expression.final_expression, expresion_generator.ExpressionScript([expresion_generator.ExpressionStore(stack_pos)]))
-        context.modify_stack_size(-1)
         _generate_expression_collection(cutscene, expression, context)
         
 
@@ -783,8 +801,8 @@ def _idle_effected_actors(cutscene: Cutscene, statements: list):
         expression = expresion_generator.ExpressionScript([
             expresion_generator.ExpressionScriptIntLiteral(actor),
         ])
-        cutscene.steps.append(ExpressionCutsceneStep(expression))
-        cutscene.steps.append(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, b''))
+        cutscene.add_step(ExpressionCutsceneStep(expression))
+        cutscene.add_step(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, b''))
 
 def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.Statement], context: variable_layout.VariableContext, function_def: parser.FunctionDefinition):
     fn_locals = local_layout.LocalLayout(function_def)
@@ -796,10 +814,10 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
 
     local_count = fn_locals.get_local_count()
     start_stack_size = fn_locals.get_stack_size()
-    start_step_count = len(cutscene.steps)
+    start_step_count = cutscene.step_count()
 
     if local_count:
-        cutscene.steps.append(ExpressionCutsceneStep(
+        cutscene.add_step(ExpressionCutsceneStep(
             expresion_generator.ExpressionScript(list([expresion_generator.ExpressionScriptIntLiteral(0)] * local_count))
         ))
 
@@ -842,7 +860,6 @@ def generate_steps(file, inputCutscene: parser.Cutscene, context: variable_layou
     for step in cutscene.steps:
         if isinstance(step, LabelStep):
             continue
-        print(step)
         file.write(struct.pack('>B', step.command))
         step.write_data(file)
 

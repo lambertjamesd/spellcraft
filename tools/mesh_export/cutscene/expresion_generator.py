@@ -129,6 +129,10 @@ class ExpressionScriptLoad():
         location = command_to_name[self.command]
         return '{0} {1}: {2} 0x{3:08x}'.format(location, self.name, self.data_type, self.bit_offset)
     
+    def __repr__(self):
+        location = command_to_name[self.command]
+        return f'<load {location} {self.name}: {self.data_type}>'
+
     def data_size(self) -> int:
         return 4
     
@@ -147,6 +151,9 @@ class ExpressionScriptIntLiteral():
     def __str__(self):
         return f'int literal {str(self.value)}'
     
+    def __repr__(self):
+        return f'<int literal {self.value}>'
+    
     def data_size(self) -> int:
         return 4
     
@@ -162,6 +169,9 @@ class ExpressionScriptFloatLiteral():
     def __str__(self):
         return 'float literal {0} 0x{1:08x}'.format(self.original_value, self.value)
 
+    def __repr__(self):
+        return f'<float literal {self.value}>'
+    
     def data_size(self) -> int:
         return 4
     
@@ -175,6 +185,9 @@ class ExpressionFunctionCall():
         self.arg_count: int = arg_count
         self.result_count: int = result_count
         
+    def __repr__(self):
+        return f'<call {self.function_id}({self.arg_count}) -> {self.result_count}>'
+    
     def __str__(self):
         return f'call {self.function_id}({self.arg_count}) -> {self.result_count}'
 
@@ -192,6 +205,9 @@ class ExpressionCopy():
     def __str__(self):
         return f'copy ${self.offset}'
     
+    def __repr__(self):
+        return f'<copy {self.offset}>'
+    
     def data_size(self) -> int:
         return 1
     
@@ -205,6 +221,9 @@ class ExpressionStore():
 
     def __str__(self):
         return f'store ${self.offset}'
+    
+    def __repr__(self):
+        return f'<store {self.offset}>'
     
     def data_size(self) -> int:
         return 1
@@ -220,6 +239,9 @@ class ExpressionRemove():
     def __str__(self):
         return f'remove ${self.count}'
     
+    def __repr__(self):
+        return f'<remove {self.count}>'
+    
     def data_size(self) -> int:
         return 1
     
@@ -232,6 +254,9 @@ class ExpressionCommand():
 
     def __str__(self):
         return command_to_name[self.command]
+    
+    def __repr__(self):
+        return f'<{command_to_name[self.command]}>'
     
     def data_size(self) -> int:
         return 0
@@ -247,6 +272,9 @@ class ExpressionScript():
 
     def __str__(self):
         return '\n'.join([str(step) for step in self.steps])
+    
+    def __repr__(self):
+        return f"<{' '.join([repr(step) for step in self.steps])}>"
     
     def serialize(self, file):
         file.write('EXPR'.encode())
