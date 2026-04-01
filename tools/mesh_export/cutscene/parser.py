@@ -132,13 +132,13 @@ class IfStatement():
         
 
 class Assignment():
-    def __init__(self, name: tokenizer.Token, value: Expression):
-        self.name: tokenizer.Token = name
-        self.value: Expression = value
+    def __init__(self, left: list[tokenizer.Token], right: list[Expression]):
+        self.left: list[tokenizer.Token] = left
+        self.right: list[Expression] = right
 
     def append_string(self, result: list[str], depth: int):
         space = '  ' * depth
-        result.append(f"{space}{self.name.value} = {self.value};")
+        result.append(f"{space}{', '.join([name.value for name in self.left])} = {', '.join([str(value) for value in self.right])};")
 
 class ReturnStatement():
     def __init__(self, return_token: tokenizer.Token, results: list[Expression]):
@@ -575,11 +575,19 @@ def _is_assignment(parse_state: _ParseState):
     return parse_state.peek(0).token_type == 'identifier' and parse_state.peek(1).token_type == '='
 
 def _parse_assignment(parse_state: _ParseState):
-    name = parse_state.require('identifier')
+    left = [parse_state.require('identifier')]
+
+    while parse_state.optional(','):
+        left.append(parse_state.require('identifier'))
+
     parse_state.require('=')
-    expression = _parse_expression(parse_state)
+    right: list[Expression] = [_parse_expression(parse_state)]
+
+    while parse_state.optional(','):
+        right.append(_parse_expression(parse_state))
+
     parse_state.require(';')
-    return Assignment(name, expression)
+    return Assignment(left, right)
 
 def _parse_return_statement(parse_state: _ParseState):
     return_token = parse_state.require('identifier', 'return')

@@ -506,7 +506,10 @@ def _validate_system_call(step: parser.CutsceneStep, errors: list[str], context:
                 errors.append(parameter.at.format_message('expected string for parameter'))
             continue
         
-        if arg_type.name == 'bool' or arg_type.name == 'int' or arg_type.name == 'entity_id' or arg_type.name == 'entity_spawner':
+        if arg_type.name == 'bool':
+            if parameter_type != 'int' and parameter_type != 'bool':
+                errors.append(parameter.at.format_message(f'expected bool got {parameter_type}'))
+        elif arg_type.name == 'int' or arg_type.name == 'entity_id' or arg_type.name == 'entity_spawner':
             if parameter_type != 'int':
                 errors.append(parameter.at.format_message(f'expected int got {parameter_type}'))
         elif arg_type.name == 'float':
@@ -533,6 +536,18 @@ def _validate_fn_call(step: parser.CutsceneStep, errors: list[str], context: var
         _validate_system_call(step, errors, context)
 
 
+def _can_assign_into_variable(name: tokenizer.Token, from_type: str, errors: list[str], context: variable_layout.VariableContext) -> bool:
+    target_type = context.get_variable_type(name.value)
+
+    if not target_type:
+        errors.append(name.format_message('variable not defined'))
+        return False
+    
+    if target_type == from_type or expresion_generator.is_numerical_type(target_type) and expresion_generator.is_numerical_type(from_type):
+        return True
+
+    errors.append(name.format_message(f'cannot assign from {from_type} to type {target_type}'))
+    return False
 
 def _validate_step(step: parser.Statement, errors: list[str], context: variable_layout.VariableContext):
     if isinstance(step, parser.ReturnStatement):
@@ -560,21 +575,36 @@ def _validate_step(step: parser.Statement, errors: list[str], context: variable_
         validate_steps(step.statements, errors, context)
 
     if isinstance(step, parser.Assignment):
-        type_info = expresion_generator.TypeChecker(context)
-        value_type = type_info.determine_type(step.value)
-        errors += type_info.errors
+        first_right = step.right[0]
+        if len(step.right) == 1 and isinstance(first_right, parser.FunctionCall):
+            idx, fn = context.lookup_function(first_right.name.value)
+            type_info = expresion_generator.TypeChecker(context)
+            type_info.determine_type(first_right)
 
-        target_type = context.get_variable_type(step.name.value)
+            if fn:
+                if len(fn.return_types) < len(step.left):
+                    errors.append(step.left[0].format_message(f'expected {len(step.left)} results but got {len(fn.return_types)}'))
 
-        if not expresion_generator.is_numerical_type(value_type):
-            errors.append(step.name.format_message(f'can only assign numerical types'))
+                for idx in range(min(len(fn.return_types), len(step.left))):
+                    from_type = expresion_generator.type_mapping[fn.return_types[idx].name.value]
+                    _can_assign_into_variable(step.left[idx], from_type, errors, context)
 
-        if not target_type:
-            errors.append(step.name.format_message('variable not defined'))
-            return
-        
-        if not target_type in expresion_generator.type_mapping:
-            errors.append(step.name.format_message(f'cannot assign type {target_type}'))
+            errors += type_info.errors
+        else:
+            if len(step.right) != len(step.left):
+                errors.append(step.left[0].format_message(f'unbalanced assignment left has {len(step.left)} right has {len(step.right)}'))
+
+            type_info = expresion_generator.TypeChecker(context)
+
+            for idx in range(min(len(step.right), len(step.left))):
+                name = step.left[idx]
+                value = step.right[idx]
+
+                value_type = type_info.determine_type(value)
+                
+                _can_assign_into_variable(name, value_type, errors, context)
+
+            errors += type_info.errors
 
 def validate_steps(statements: list[parser.Statement], errors: list[str], context: variable_layout.VariableContext):
     for statement in statements:
@@ -652,41 +682,50 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
             if_step.offset = len(cutscene.steps) - size_before
 
     elif isinstance(step, parser.Assignment):
-        expression = expresion_generator.generate_script(step.value, context)
-        if not expression:
-            raise Exception(f"Could not generate expression {step.value}")
-        
-        context.modify_stack_size(-1)
-        
-        stack_pos = context.get_fn_local_offset(step.name.value)
+        first_right = step.right[0]
 
-        if stack_pos != None:
-            if context.fn_locals and context.fn_locals.is_still_needed(step.name.value):
-                expression.final_expression = expresion_generator.expression_concat(
-                    expression.final_expression, 
-                    expresion_generator.ExpressionScript([expresion_generator.ExpressionStore(stack_pos)])
-                )
-                _generate_expression_collection(cutscene, expression, context)
+        if len(step.right) == 1 and isinstance(first_right, parser.FunctionCall):
+            pass
         else:
+            expression = expresion_generator.ExpressionCollection()
+            
+            for value in step.right:
+                expression = expression.concat(expresion_generator.generate_script(value, context))
+                
             _generate_expression_collection(cutscene, expression, context)
+            
+            for name in step.left:
+                stack_pos = context.get_fn_local_offset(name.value)
 
-            step_type = CUTSCENE_STEP_SET_GLOBAL
+                if stack_pos != None:
+                    if context.fn_locals.is_still_needed(name.value):
+                        cutscene.steps.append(ExpressionCutsceneStep(
+                            expresion_generator.ExpressionScript([expresion_generator.ExpressionStore(stack_pos)])
+                        ))
+                    else:
+                        cutscene.steps.append(ExpressionCutsceneStep(
+                            expresion_generator.ExpressionScript([expresion_generator.ExpressionRemove(1)])
+                        ))
+                else:
+                    step_type = CUTSCENE_STEP_SET_GLOBAL
 
-            if context.is_global(step.name.value):
-                step_type = CUTSCENE_STEP_SET_GLOBAL
-            elif context.is_scene_var(step.name.value):
-                step_type = CUTSCENE_STEP_SET_SCENE
+                    if context.is_global(name.value):
+                        step_type = CUTSCENE_STEP_SET_GLOBAL
+                    elif context.is_scene_var(name.value):
+                        step_type = CUTSCENE_STEP_SET_SCENE
 
-            var_type = context.get_variable_type(step.name.value)
-            bit_offset = context.get_variable_offset(step.name.value)
+                    var_type = context.get_variable_type(name.value)
+                    bit_offset = context.get_variable_offset(name.value)
 
-            if not var_type:
-                raise Exception(f'could not get variable {step.name.value}')
+                    if not var_type:
+                        raise Exception(f'could not get variable {name.value}')
 
-            cutscene.steps.append(CutsceneStep(
-                step_type, 
-                expresion_generator.generate_variable_address(var_type, bit_offset)
-            ))
+                    cutscene.steps.append(CutsceneStep(
+                        step_type, 
+                        expresion_generator.generate_variable_address(var_type, bit_offset)
+                    ))
+                    
+                context.modify_stack_size(-1)
 
     elif isinstance(step, parser.VariableDefinition) and context.fn_locals:
         if step.initializer:

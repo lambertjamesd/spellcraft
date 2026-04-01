@@ -110,8 +110,10 @@ def _searchRangesInStep(step: parser.Statement, tracker: VariableRangeTracker):
         if step.else_block:
             _searchRangesInBlock(step.else_block, tracker)
     elif isinstance(step, parser.Assignment):
-        tracker.mark_use(step.name.value)
-        _searchRangesInExpression(step.value, tracker)
+        for name in step.left:
+            tracker.mark_use(name.value)
+        for value in step.right:
+            _searchRangesInExpression(value, tracker)
     elif isinstance(step, VariableType):
         if step.initializer:
             _searchRangesInExpression(step.initializer, tracker)

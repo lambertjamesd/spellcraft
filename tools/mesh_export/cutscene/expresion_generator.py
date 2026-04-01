@@ -44,6 +44,7 @@ EXPRESSION_TYPE_BUILT_IN_FN = 26
 
 EXPRESSION_TYPE_COPY = 27
 EXPRESSION_TYPE_STORE = 28
+EXPRESSION_TYPE_REMOVE = 29
 
 command_to_name = {}
 
@@ -213,7 +214,7 @@ class ExpressionStore():
         
 class ExpressionRemove():
     def __init__(self, count: int):
-        self.command: int = EXPRESSION_TYPE_STORE
+        self.command: int = EXPRESSION_TYPE_REMOVE
         self.count: int = count
 
     def __str__(self):
@@ -337,7 +338,7 @@ mirrored_operators = {
 }
 
 def is_numerical_type(type: str):
-    return type == 'int' or type == 'float'
+    return type == 'int' or type == 'float' or type == 'bool'
 
 class TypeChecker():
     def __init__(self, context: variable_layout.VariableContext):
