@@ -12,11 +12,11 @@ class ParseError(Exception):
         self.at = at
 
 class _ParseState():
-    def __init__(self, tokens: list[tokenizer.Token], content: str, filename: str):
+    def __init__(self, tokens: list[tokenizer.Token], content: str, filename: str, start_line = 1, start_col = 1):
         self._tokens: list[tokenizer.Token] = tokens
         self.filename: str = filename
         self.current: int = 0
-        self.source = tokenizer.Source(content, filename)
+        self.source = tokenizer.Source(content, filename, start_line=start_line, start_col=start_col)
 
     def error(self, message: str, at: int):
         raise ParseError(message, self.source, at)
@@ -684,3 +684,11 @@ def statement_list_str(block: list[Statement]):
         statement.append_string(result, 0)
 
     return '\n'.join(result)
+
+def parse_function_definition(content: str, source: str, start_line = 1, start_col = 1):
+    parse_state = _ParseState(
+        tokenizer.tokenize(content, source, start_line = start_line, start_col = start_col), 
+        content, source, 
+        start_line = start_line, start_col = start_col
+    )
+    return _parse_function_definition(parse_state)

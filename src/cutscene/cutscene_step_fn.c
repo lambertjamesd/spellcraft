@@ -11,5 +11,5 @@ void cutscene_show_boss_health_init(cutscene_runner_context_t* context, void* ac
 }
 
 static cutscene_step_fn_t function_steps[] = {
-    {.init = cutscene_show_boss_health_init}, // func show_boss_health_init(name: str, boss_entity: entity_id)
+    {.init = cutscene_show_boss_health_init}, // func show_boss_health(name: str, boss_entity: entity_id)
 };

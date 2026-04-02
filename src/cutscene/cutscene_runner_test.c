@@ -17,8 +17,8 @@ void test_cutscene_end(cutscene_t* cutscene, void* data, cutscene_runner_context
     int result[4];
 
     test_neqi(expect->t, 0, (int)context);
-    test_eqi(expect->t, expect->result_count, context->current_stack);
-    evaluation_context_popn(context, result, expect->result_count);
+    test_eqi(expect->t, expect->result_count, context->eval.current_stack);
+    evaluation_context_popn(&context->eval, result, expect->result_count);
 
     for (int i = 0; i < expect->result_count; i += 1) {
         test_eqi(expect->t, expect->result[i], result[i]);

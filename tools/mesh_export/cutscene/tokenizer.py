@@ -1,17 +1,23 @@
 
 class Source():
-    def __init__(self, content: str, filename: str):
+    def __init__(self, content: str, filename: str, start_line = 1, start_col = 1):
         self.content: str = content
         self.filename: str = filename
+        self.start_line = start_line
+        self.start_col = start_col
 
     def get_source_line(self, at: int) -> str:
         line_start = self.content.rfind('\n', 0, at)
         line_end = self.content.find('\n', at)
+        
+        if line_start == -1:
+            line_start = 0
+
         return self.content[line_start:line_end]
 
     def determine_source_location(self, at: int) -> tuple[int, int]:
-        line = 1
-        col = 1
+        line = self.start_line
+        col = self.start_col
 
         for idx in range(at):
             if self.content[idx] == '\n':
@@ -24,7 +30,13 @@ class Source():
 
     def format_message(self, message: str, at: int):
         line, col = self.determine_source_location(at)
-        padding = ' ' * (col - 1)
+
+        src_offset = col
+
+        if line == self.start_line and self.start_col != 1:
+            src_offset -= self.start_col - 1
+
+        padding = ' ' * (src_offset - 1)
 
         return f'{self.filename}:{line}:{col} {message}\n{self.get_source_line(at)}\n{padding}^'
 
@@ -135,12 +147,12 @@ def _default_state(current: str):
     
     return _unknown_state
 
-def tokenize(content: str, filename: str) -> list[Token]:
+def tokenize(content: str, filename: str, start_line = 1, start_col = 1) -> list[Token]:
     result: list[Token] = []
     state = _default_state(content[0])
     last_start = 0
 
-    source = Source(content, filename)
+    source = Source(content, filename, start_line=start_line, start_col=start_col)
 
     for idx in range(1, len(content) + 1):
         character = '' if idx == len(content) else content[idx]
