@@ -72,7 +72,7 @@ struct nested_on_finish {
     enum cutscene_ref_type ref_type;
 };
 
-void cutscene_runner_destroy_with_callback(struct cutscene* cutscene, void* data, evaluation_context_t* context) {
+void cutscene_runner_destroy_with_callback(struct cutscene* cutscene, void* data, cutscene_runner_context_t* context) {
     if (!data) {
         return;
     }

@@ -26,7 +26,6 @@
 
 #define MAX_QUEUED_CUTSCENES    4
 #define MAX_CUTSCENE_CALL_DEPTH 6
-#define MAX_STRING_STACK_SIZE   4096
 
 #define PACK_FN_REF(fn_index, instruction)  (((fn_index) << 16) | instruction)
 #define FN_REF_GET_FN(ref)  ((ref) >> 16)
@@ -71,12 +70,9 @@ typedef struct cutscene_stack_entry cutscene_stack_entry_t;
 struct cutscene_active_entry {
     cutscene_finish_callback finish_callback;
     void* data;
-    entity_id subject;
     int16_t current_depth;
     cutscene_stack_entry_t call_stack[MAX_CALL_STACK_SIZE];
-    struct evaluation_context context;
-    char string_stack[MAX_STRING_STACK_SIZE];
-    char* current_string_start;
+    cutscene_runner_context_t context;
 };
 
 typedef struct cutscene_active_entry cutscene_active_entry_t;
@@ -117,26 +113,12 @@ static inline int cutscene_prev_queue_index(int index) {
 
 void cutscene_runner_start(struct cutscene* cutscene, int function_index, cutscene_finish_callback finish_callback, void* data, entity_id subject);
 
-entity_id cutscene_runner_translate_entity(struct cutscene_active_entry* cutscene, entity_id id) {
-    if (id == ENTITY_ID_SUBJECT) {
-        return cutscene->subject;
-    }
-
-    return id;
-}
-
 cutscene_actor_t* cutscene_runner_lookup_actor(struct cutscene_active_entry* cutscene, entity_id input) {
-    if (input == ENTITY_ID_SUBJECT) {
-        return cutscene_actor_find(cutscene->subject);
-    }
-
-    return cutscene_actor_find(input);
+    return cutscene_actor_find(cutscene_context_get_translate_entity(&cutscene->context, input));
 }
 
 vector3_t* cutscene_runner_lookup_pos(struct cutscene_active_entry* cutscene, entity_id id) {
-    if (id == ENTITY_ID_SUBJECT) {
-        id = cutscene->subject;
-    }
+    id = cutscene_context_get_translate_entity(&cutscene->context, id);
 
     cutscene_actor_t* actor = cutscene_actor_find(id);
 
@@ -183,7 +165,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             }
             break;
         case CUTSCENE_STEP_EXPRESSION:
-            expression_evaluate(&cutscene->context, &step->data.expression.expression);
+            expression_evaluate(&cutscene->context.eval, &step->data.expression.expression);
             break;
         case CUTSCENE_STEP_JUMP_IF_NOT:
         case CUTSCENE_STEP_JUMP:
@@ -194,7 +176,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_SET_SCENE: {
-            struct evaluation_context* context = &cutscene->context;
+            struct evaluation_context* context = &cutscene->context.eval;
 
             evaluation_context_save(
                 expression_get_scene_variables(),
@@ -205,7 +187,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_SET_GLOBAL: {
-            struct evaluation_context* context = &cutscene->context;
+            struct evaluation_context* context = &cutscene->context.eval;
 
             evaluation_context_save(
                 savefile_get_globals(GLOBAL_ACCESS_MODE_WRITE),
@@ -221,7 +203,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         }
         case CUTSCENE_STEP_INTERACT_WITH_NPC: {
             int entities[2];
-            evaluation_context_popn(&cutscene->context, entities, 2);
+            evaluation_context_popn(&cutscene->context.eval, entities, 2);
 
             struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, entities[0]);
             if (!subject) {
@@ -242,7 +224,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_IDLE_NPC: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context.eval));
             if (!subject) {
                 break;
             }
@@ -250,7 +232,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_CAMERA_LOOK_AT_NPC: {
-            entity_id entity_id = evaluation_context_pop(&cutscene->context);
+            entity_id entity_id = evaluation_context_pop(&cutscene->context.eval);
 
             struct cutscene_actor* target = cutscene_runner_lookup_actor(cutscene, entity_id);
             if (target) {
@@ -296,7 +278,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         case CUTSCENE_STEP_CAMERA_WAIT:
             break;
         case CUTSCENE_STEP_INTERACT_WITH_LOCATION: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context.eval));
             if (!subject) {
                 break;
             }
@@ -317,7 +299,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             fade_effect_set(fade_colors[step->data.fade.color], step->data.fade.duration);
             break;
         case CUTSCENE_STEP_INTERACT_WITH_POSITION: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context.eval));
             if (!subject) {
                 break;
             }
@@ -330,11 +312,11 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_NPC_WAIT: {
-            cutscene_runner.active_step_data.npc_wait.target = evaluation_context_pop(&cutscene->context);
+            cutscene_runner.active_step_data.npc_wait.target = evaluation_context_pop(&cutscene->context.eval);
             break;
         }
         case CUTSCENE_STEP_NPC_SET_SPEED: {
-            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context));
+            struct cutscene_actor* subject = cutscene_runner_lookup_actor(cutscene, evaluation_context_pop(&cutscene->context.eval));
             if (!subject) {
                 break;
             }
@@ -346,11 +328,10 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_SHOW_BOSS_HEALTH: {
-            hud_show_boss_health(&current_scene->hud, step->data.show_boss_health.name, cutscene_runner_translate_entity(cutscene, evaluation_context_pop(&cutscene->context)));
             break;
         }
         case CUTSCENE_STEP_LOOK_AT_SUBJECT: {
-            struct dynamic_object* subject = collision_scene_find_object(cutscene->subject);
+            struct dynamic_object* subject = collision_scene_find_object(cutscene->context.subject_id);
             if (!subject) {
                 break;
             }
@@ -358,7 +339,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_NPC_ANIMATE: {
-            entity_id subject_id = evaluation_context_pop(&cutscene->context);
+            entity_id subject_id = evaluation_context_pop(&cutscene->context.eval);
             cutscene_actor_t* subject = cutscene_runner_lookup_actor(cutscene, subject_id);
             if (!subject) {
                 break;
@@ -368,14 +349,14 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         }
         case CUTSCENE_STEP_PRINT: {
             int args[step->data.print.message.nargs];
-            evaluation_context_popn(&cutscene->context, args, step->data.print.message.nargs);
+            evaluation_context_popn(&cutscene->context.eval, args, step->data.print.message.nargs);
             char message[128];
             dialog_box_format_string(message, step->data.print.message.template, args);
             debugf("%s\n", message);
             break;
         }
         case CUTSCENE_STEP_SPAWN: {
-            int spawner = evaluation_context_pop(&cutscene->context);
+            int spawner = evaluation_context_pop(&cutscene->context.eval);
             scene_spawn_entity(current_scene, spawner >> 16, spawner & 0xFFFF);
             break;
         }
@@ -388,7 +369,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_DESPAWN: {
-            entity_despawn(evaluation_context_pop(&cutscene->context));
+            entity_despawn(evaluation_context_pop(&cutscene->context.eval));
             break;
         }
         case CUTSCENE_STEP_START_TIMER: {
@@ -424,11 +405,12 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         }
         case CUTSCENE_STEP_TEMPLATE_STRING: {
             int args[step->data.print.message.nargs];
-            evaluation_context_popn(&cutscene->context, args, step->data.template_string.message.nargs);
-            int str_length = dialog_box_format_string(cutscene->current_string_start, step->data.template_string.message.template, args);
-            evaluation_context_push(&cutscene->context, (int)cutscene->current_string_start);
-            cutscene->current_string_start += str_length;
-            assert(cutscene->current_string_start <= &cutscene->string_stack[MAX_STRING_STACK_SIZE]);
+            evaluation_context_popn(&cutscene->context.eval, args, step->data.template_string.message.nargs);
+            char* message = cutscene_context_peek_string(&cutscene->context);
+            int str_length = dialog_box_format_string(message, step->data.template_string.message.template, args);
+            evaluation_context_push(&cutscene->context.eval, (int)message);
+
+            cutscene_context_alloc_string(&cutscene->context, str_length);
         }
         case CUTSCENE_STEP_FUNCTION_CALL:
             // logic is done in update step
@@ -446,7 +428,7 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, str
         case CUTSCENE_STEP_ASK:
             if (!cutscene_runner.active_step_data.dialog.has_shown && !dialog_box_is_active()) {
                 int args[step->data.dialog.message.nargs];
-                evaluation_context_popn(&active_entry->context, args, step->data.dialog.message.nargs);
+                evaluation_context_popn(&active_entry->context.eval, args, step->data.dialog.message.nargs);
                 if (step->type == CUTSCENE_STEP_DIALOG) {
                     dialog_box_show(step->data.dialog.message.template, args, NULL, NULL);
                 } else {
@@ -460,7 +442,7 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, str
         case CUTSCENE_STEP_SHOW_ITEM:
             return show_item_update(&cutscene_runner.show_item, &step->data);
         case CUTSCENE_STEP_JUMP_IF_NOT:
-            if (!evaluation_context_pop(&active_entry->context)) {
+            if (!evaluation_context_pop(&active_entry->context.eval)) {
                 CUTSCENE_CURR_FRAME(active_entry)->current_instruction += step->data.jump.offset;
             }
             return true;
@@ -494,8 +476,8 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, str
                 .current_instruction = -1,
                 .cutscene = cutscene,
                 .function = fn,
-                .string_stack_position = 0,
-                .stack_position = evaluation_context_stack_size(&active_entry->context),
+                .string_stack_position = cutscene_context_string_bytes(&active_entry->context),
+                .stack_position = evaluation_context_stack_size(&active_entry->context.eval),
                 .retc = step->data.function_call.retc,
             };
         }
@@ -533,20 +515,18 @@ void cutscene_runner_start(struct cutscene* cutscene, int function_index, cutsce
     }
 
     struct cutscene_active_entry* next = &cutscene_runner.active_cutscene;
+    cutscene_context_init(&next->context, subject);
     next->finish_callback = finish_callback;
     next->data = data;
-    next->subject = subject;
-    next->current_string_start = &next->string_stack[0];
     next->current_depth = 0;
     *CUTSCENE_CURR_FRAME(next) = (cutscene_stack_entry_t){
         .current_instruction = 0,
         .cutscene = cutscene,
         .function = fn,
-        .string_stack_position = next->current_string_start - next->string_stack,
+        .string_stack_position = 0,
         .stack_position = 0,
         .retc = fn->return_count,
     };
-    evaluation_context_init(&next->context);
 
     cutscene_runner_init_step(next, &fn->steps[0]);
 }
@@ -567,25 +547,25 @@ void cutscene_runner_check_queue() {
 void cutscene_runner_pop_call(cutscene_active_entry_t* entry, cutscene_stack_entry_t* prev) {
     int retc = prev->function->return_count;
 
-    int current_size = evaluation_context_stack_size(&entry->context);
+    int current_size = evaluation_context_stack_size(&entry->context.eval);
     int pop_count = current_size - prev->stack_position;
 
     assert(pop_count >= retc);
 
     int result[retc];
-    evaluation_context_popn(&entry->context, result, retc);
+    evaluation_context_popn(&entry->context.eval, result, retc);
     
     pop_count -= retc;
     if (pop_count >= 0) {
-        evaluation_context_popn(&entry->context, NULL, pop_count);
+        evaluation_context_popn(&entry->context.eval, NULL, pop_count);
     }
 
     for (int i = 0; i < retc && i < prev->retc; i += 1) {
-        evaluation_context_push(&entry->context, result[i]);
+        evaluation_context_push(&entry->context.eval, result[i]);
     }
 
     for (int i = retc; i < prev->retc; i += 1) {
-        evaluation_context_push(&entry->context, 0);
+        evaluation_context_push(&entry->context.eval, 0);
     }
 }
 
@@ -613,7 +593,7 @@ void cutscene_runner_step_instruction() {
             active_cutscene->finish_callback(entry->cutscene, active_cutscene->data, &active_cutscene->context);
         }
 
-        evaluation_context_destroy(&active_cutscene->context);
+        cutscene_context_destroy(&active_cutscene->context);
     }
 
     cutscene_runner_check_queue();
@@ -745,7 +725,7 @@ void cutscene_runner_cancel(struct cutscene* cutscene) {
     }
 }
 
-void _cutscene_runner_free_on_finish(struct cutscene* cutscene, void* data, evaluation_context_t* context) {
+void _cutscene_runner_free_on_finish(struct cutscene* cutscene, void* data, cutscene_runner_context_t* context) {
     cutscene_free(cutscene);
 }
 

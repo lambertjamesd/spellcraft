@@ -213,7 +213,7 @@ void scene_destroy_cutscene(scene_t* scene) {
     expression_set_scene_variables(NULL);
 }
 
-void scene_fade_in(struct cutscene* cutscene, void* data, evaluation_context_t* context) {
+void scene_fade_in(struct cutscene* cutscene, void* data, cutscene_runner_context_t* context) {
     fade_effect_set((color_t){0, 0, 0, 0}, 0.5f);
 }
 

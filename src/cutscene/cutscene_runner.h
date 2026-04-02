@@ -6,8 +6,9 @@
 #include <stdbool.h>
 #include "../entity/entity_id.h"
 #include "evaluation_context.h"
+#include "cutscene_runner_context.h"
 
-typedef void (*cutscene_finish_callback)(struct cutscene* cutscene, void* data, evaluation_context_t* context);
+typedef void (*cutscene_finish_callback)(struct cutscene* cutscene, void* data, cutscene_runner_context_t* context);
 
 void cutscene_runner_init();
 
@@ -18,5 +19,6 @@ void cutscene_runner_cancel(struct cutscene* cutscene);
 
 // this is only a function that returns a callback to help balance out the pairing_checker
 cutscene_finish_callback cutscene_runner_free_on_finish();
+
 
 #endif

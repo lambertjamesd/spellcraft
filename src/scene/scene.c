@@ -131,7 +131,7 @@ void scene_check_despawns(struct scene* scene) {
     }
 }
 
-void scene_cutscene_finish(struct cutscene* cutscene, void* data, evaluation_context_t* context) {
+void scene_cutscene_finish(struct cutscene* cutscene, void* data, cutscene_runner_context_t* context) {
     scene_t* scene = (scene_t*)data;
     scene->is_running_step = false;
     scene->next_loaded_room_cutscene = NEXT_LOADED_ROOM(scene->next_loaded_room_cutscene);

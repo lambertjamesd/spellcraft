@@ -11,7 +11,7 @@ struct on_fn_end {
 
 typedef struct on_fn_end on_fn_end_t;
 
-void test_cutscene_end(cutscene_t* cutscene, void* data, evaluation_context_t* context) {
+void test_cutscene_end(cutscene_t* cutscene, void* data, cutscene_runner_context_t* context) {
     on_fn_end_t* expect = (on_fn_end_t*)data;
 
     int result[4];
