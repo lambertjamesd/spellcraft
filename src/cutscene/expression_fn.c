@@ -54,13 +54,13 @@ int expression_stopwatch_time(struct evaluation_context* context, int arg_count)
     return 1;
 }
 
-static expression_built_in_fn fn_array[EXPRESSION_BUILT_IN_COUNT] = {
-    [EXPRESSION_BUILT_IN_ARE_TOUCHING] = expression_are_touching, // func are_touching(a: entity_id, b: entity_id): bool
-    [EXPRESSION_BUILT_ASK_RESPONSE] = expression_ask_response, // func ask_response(): bool
-    [EXPRESSION_BUILT_STOPWATCH_TIME] = expression_stopwatch_time, // func stopwatch_time(): float
+static expression_built_in_fn fn_array[] = {
+    expression_are_touching, // func are_touching(a: entity_id, b: entity_id): bool
+    expression_ask_response, // func ask_response(): bool
+    expression_stopwatch_time, // func stopwatch_time(): float
 };
 
-expression_built_in_fn expression_lookup_fn(enum expression_built_in_type type) {
-    assert(type >= 0 && type < EXPRESSION_BUILT_IN_COUNT);
+expression_built_in_fn expression_lookup_fn(int type) {
+    assert(type >= 0 && type < sizeof(fn_array) / sizeof(*fn_array));
     return fn_array[type];
 }

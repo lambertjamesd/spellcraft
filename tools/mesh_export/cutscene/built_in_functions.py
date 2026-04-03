@@ -3,42 +3,13 @@ import json
 from . import parser
 from . import tokenizer
 
-EXPRESSION_BUILT_IN_ARE_TOUCHING = 0
-EXPRESSION_BUILT_ASK_RESPONSE = 1
-EXPRESSION_BUILT_STOPWATCH_TIME = 2
-
-class FunctionParameter():
-    def __init__(self, name: str, type: str):
-        self.name: str = name
-        self.type: str = type
-
 class BuiltInFunction():
-    def __init__(self, index: int, return_type: str, args: list[FunctionParameter]):
+    def __init__(self, index: int, definition: parser.FunctionDefinition):
         self.index: int = index
-        self.return_type: str = return_type
-        self.args: list[FunctionParameter] = args
+        self.definition: parser.FunctionDefinition = definition
 
-    def get_arg_type(self, index: int) -> str:
-        if index < len(self.args):
-            return self.args[index].type
-
-        return 'error'
-
-
-_built_in_functions = {
-    "are_touching": BuiltInFunction(EXPRESSION_BUILT_IN_ARE_TOUCHING, "int", [FunctionParameter("a", "int"), FunctionParameter("b", "int")]),
-    "ask_response": BuiltInFunction(EXPRESSION_BUILT_ASK_RESPONSE, "int", []),
-    "stopwatch_time": BuiltInFunction(EXPRESSION_BUILT_STOPWATCH_TIME, "float", []),
-}
-
-def lookup(name: str) -> BuiltInFunction | None:
-    if name in _built_in_functions:
-        return _built_in_functions[name]
-    
-    return None
-    
 blocking_functions: dict[str, tuple[int, parser.FunctionDefinition]] = {}
-non_blocking_functions: dict[str, tuple[int, parser.FunctionDefinition]] = {}
+non_blocking_functions: dict[str, BuiltInFunction] = {}
 
 def build_fake_token(value) -> tokenizer.Token:
     return tokenizer.Token('identifier', value, 0, None)
@@ -69,6 +40,13 @@ try:
 
         for index, definition_json in enumerate(file_contents['expr_defs']):
             definition = build_function_def(definition_json)
-            non_blocking_functions[definition.name.value] = (index, definition)
+            non_blocking_functions[definition.name.value] = BuiltInFunction(index, definition)
 except Exception as e:
     print(f'warning: failed to load function_defs {e}')
+
+
+def lookup(name: str) -> BuiltInFunction | None:
+    if name in non_blocking_functions:
+        return non_blocking_functions[name]
+    
+    return None

@@ -5,14 +5,6 @@
 
 typedef int (*expression_built_in_fn)(struct evaluation_context* context, int arg_count);
 
-enum expression_built_in_type {
-    EXPRESSION_BUILT_IN_ARE_TOUCHING,
-    EXPRESSION_BUILT_ASK_RESPONSE,
-    EXPRESSION_BUILT_STOPWATCH_TIME,
-
-    EXPRESSION_BUILT_IN_COUNT,
-};
-
-expression_built_in_fn expression_lookup_fn(enum expression_built_in_type type);
+expression_built_in_fn expression_lookup_fn(int type);
 
 #endif

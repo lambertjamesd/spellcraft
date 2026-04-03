@@ -463,6 +463,12 @@ class TypeChecker():
         if isinstance(expression, parser.FunctionCall):
             index, fn = self._context.lookup_function(expression.name.value)
 
+            if not fn:
+                built_in = built_in_functions.lookup(expression.name.value)
+
+                if built_in:
+                    fn = built_in.definition
+
             if fn:
                 if len(expression.args) != len(fn.args):
                     self._report_error(expression.name.format_message(f"expected {len(fn.args)} arguments got {len(expression.args)}"))
@@ -478,22 +484,6 @@ class TypeChecker():
                 else:
                     self._report_error(expression.name.format_message(f"function returns void expected a value"))
                     return 'error'
-
-
-
-            built_in = built_in_functions.lookup(expression.name.value)
-
-            if built_in:
-                if len(expression.args) != len(built_in.args):
-                    self._report_error(expression.name.format_message(f"expected {len(built_in.args)} arguments got {len(expression.args)}"))
-                
-                for i in range(0, min(len(expression.args), len(built_in.args))):
-                    element_type = self.determine_type(expression.args[i])
-
-                    if element_type != built_in.args[i].type:
-                        self._report_error(expression.args[i].at.format_message(f"expected {built_in.args[i].type} got {element_type}"))
-                        
-                return built_in.return_type
             
             self._report_error(expression.name.format_message(f"could not find function name {expression.name.value}"))
             return 'error'
@@ -676,7 +666,7 @@ class ExpressionGenerator():
                 raise Exception(expression.name.format_message(f"Could not find function {expression.name.value}"))
             
             for i, arg in enumerate(expression.args):
-                self.generate_to_type(arg, built_in.get_arg_type(i), script, 1)
+                self.generate(arg, script, 1)
 
             script.add_step(ExpressionFunctionCall(built_in.index, len(expression.args), 1))
             self.context.modify_stack_size(1 - len(expression.args))
