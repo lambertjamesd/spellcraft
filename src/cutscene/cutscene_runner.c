@@ -409,9 +409,9 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             evaluation_context_popn(&cutscene->context.eval, args, step->data.template_string.message.nargs);
             char* message = cutscene_context_peek_string(&cutscene->context);
             int str_length = dialog_box_format_string(message, step->data.template_string.message.template, args);
+            cutscene_context_alloc_string(&cutscene->context, str_length);
             evaluation_context_push(&cutscene->context.eval, (int)message);
 
-            cutscene_context_alloc_string(&cutscene->context, str_length);
         }
         case CUTSCENE_STEP_FUNCTION_CALL:
             // logic is done in update step

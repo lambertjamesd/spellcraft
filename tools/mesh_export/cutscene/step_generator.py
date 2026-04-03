@@ -185,6 +185,18 @@ class JumpCutsceneStep():
     def __repr__(self):
         return f'<jump {self.label} ({self.offset})>'
 
+class ExpressionTemplateString():
+    def __init__(self, template: str, argc: int):
+        self.command: int = CUTSCENE_STEP_TEMPLATE_STRING
+        self.template: str = template
+        self.argc: int = argc
+        
+    def write_data(self, file):
+        file.write(self.argc.to_bytes(1, 'big'))
+        file.write(_encode_string(self.template))
+        
+    def __repr__(self):
+        return f'<str {self.template}>'
 
 class ExpressionCutsceneStep():
     def __init__(self, expr: expresion_generator.ExpressionScript):
@@ -217,7 +229,7 @@ class LabelStep():
 StepTypes = typing.Union[
     CutsceneStep, 
     JumpCutsceneStep, 
-    ExpressionCutsceneStep, 
+    ExpressionTemplateString, 
     ExpressionCutsceneStep, 
     ExpressionFunctionCall, 
     LabelStep,
@@ -290,7 +302,7 @@ class Cutscene():
             else:
                 idx += 1
             
-def build_template_string(string: parser.String, context: variable_layout.VariableContext):
+def build_template_string(string: parser.String, context: variable_layout.VariableContext) -> str:
     parts: list[str] = []
 
     for idx, replacement in enumerate(string.replacements):
@@ -333,17 +345,23 @@ def _generate_expression_collection(cutscene: Cutscene, collection: expresion_ge
     for chunk in collection.chunks:
         if chunk.script:
             cutscene.add_step(ExpressionCutsceneStep(chunk.script))
-        fn_index, fn = context.lookup_function(chunk.fn_call.name.value)
 
-        if not fn:
-            raise Exception(f'could not find function {chunk.fn_call.name.value}')
+        if isinstance(chunk.sync_step, parser.FunctionCall):
+            fn_index, fn = context.lookup_function(chunk.sync_step.name.value)
 
-        cutscene.add_step(ExpressionFunctionCall(
-            fn_index, 
-            len(chunk.fn_call.args), 
-            retc if chunk == collection.chunks[-1] else 1,
-            fn.built_in
-        ))
+            if not fn:
+                raise Exception(f'could not find function {chunk.sync_step.name.value}')
+
+            cutscene.add_step(ExpressionFunctionCall(
+                fn_index, 
+                len(chunk.sync_step.args), 
+                retc if chunk == collection.chunks[-1] else 1,
+                fn.built_in
+            ))
+        elif isinstance(chunk.sync_step, parser.String):
+            cutscene.add_step(ExpressionTemplateString(build_template_string(chunk.sync_step, context), len(chunk.sync_step.replacements)))
+        else:
+            raise Exception(f'bad chunk sync_step {chunk.sync_step}')
 
     if collection.final_expression:
         cutscene.add_step(ExpressionCutsceneStep(collection.final_expression))

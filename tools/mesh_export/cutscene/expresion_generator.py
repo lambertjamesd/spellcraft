@@ -301,9 +301,9 @@ class ExpressionScript():
         return ExpressionScript(self.steps + other.steps)
     
 class ExpressionChunk():
-    def __init__(self, script: ExpressionScript | None, fn_call: parser.FunctionCall):
+    def __init__(self, script: ExpressionScript | None, fn_call: parser.FunctionCall | parser.String):
         self.script: ExpressionScript | None = script
-        self.fn_call: parser.FunctionCall = fn_call
+        self.sync_step: parser.FunctionCall | parser.String = fn_call
     
 def expression_concat(a: ExpressionScript | None, b: ExpressionScript | None) -> ExpressionScript | None:
     if not a:
@@ -325,6 +325,10 @@ class ExpressionCollection():
 
     def add_call(self, call: parser.FunctionCall):
         self.chunks.append(ExpressionChunk(self.final_expression, call))
+        self.final_expression = None
+
+    def add_string(self, string: parser.String):
+        self.chunks.append(ExpressionChunk(self.final_expression, string))
         self.final_expression = None
 
     def concat(self, other):
@@ -377,12 +381,15 @@ class TypeChecker():
     def _report_error(self, message: str):
         self.errors.append(message)
 
-    def _determine_type(self, expression):
+    def _determine_type(self, expression: parser.Expression) -> str:
         if isinstance(expression, parser.Integer):
             return 'int'
         if isinstance(expression, parser.Float):
             return 'float'
         if isinstance(expression, parser.String):
+            for arg in expression.replacements:
+                self.determine_type(arg.expr)
+
             return 'str'
         if isinstance(expression, parser.UnaryOperator):
             operand_type = self.determine_type(expression.operand)
@@ -488,9 +495,10 @@ class TypeChecker():
             self._report_error(expression.name.format_message(f"could not find function name {expression.name.value}"))
             return 'error'
     
-        raise Exception('unknown expression type')
+        self.errors.append(expression.at.format_message('unknown expression type'))
+        return 'error'
 
-    def determine_type(self, expression) -> str:
+    def determine_type(self, expression: parser.Expression) -> str:
         result = self._determine_type(expression)
         self.expression_to_type[expression] = result
         return result
@@ -670,6 +678,13 @@ class ExpressionGenerator():
 
             script.add_step(ExpressionFunctionCall(built_in.index, len(expression.args), 1))
             self.context.modify_stack_size(1 - len(expression.args))
+
+        if isinstance(expression, parser.String):
+            for arg in expression.replacements:
+                self.generate(arg.expr, script, 1)
+            
+            script.add_string(expression)
+            self.context.modify_stack_size(1 - len(expression.replacements))
 
 def generate_script(expression, context: variable_layout.VariableContext, expected_type: str | None = None, retc: int = 1) -> ExpressionCollection:
     type_info = TypeChecker(context)
