@@ -6,6 +6,7 @@ from . import parser
 from . import static_evaluator
 from . import tokenizer
 from . import local_layout
+from . import built_in_functions
 
 _type_bit_sizes = {
     'char': 8,
@@ -316,6 +317,9 @@ class VariableContext():
         return self.fn_locals.get_variable_type(name) or self.scene_vars.get_variable_type(name) or self.globals.get_variable_type(name)
     
     def lookup_function(self, name: str) -> tuple[int, parser.FunctionDefinition | None]:
+        if name in built_in_functions.blocking_functions:
+            return built_in_functions.blocking_functions[name]
+
         return self.fn_list.lookup_function(name)
     
     def with_locals(self, fn_locals: local_layout.LocalLayout):

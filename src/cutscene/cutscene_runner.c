@@ -494,8 +494,8 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, str
             if (fn->step && !fn->step(&active_entry->context)) {
                 return false;
             }
-            
-            evaluation_context_set_stack_size(&active_entry->context, active_entry->context.stack_depth + step->data.function_call.retc);            
+
+            evaluation_context_set_stack_size(&active_entry->context.eval, active_entry->context.stack_depth + step->data.function_call.retc);            
         }
         default:
             return true;

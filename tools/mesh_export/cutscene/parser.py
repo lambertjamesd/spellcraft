@@ -159,12 +159,13 @@ class FunctionDefinitionArg():
         return f"${self.name.value}: ${self.type_name.name.value}"
 
 class FunctionDefinition():
-    def __init__(self, func: tokenizer.Token, name: tokenizer.Token, args: list[FunctionDefinitionArg], return_types: list[DataType], body: list["Statement"]):
+    def __init__(self, func: tokenizer.Token, name: tokenizer.Token, args: list[FunctionDefinitionArg], return_types: list[DataType], body: list["Statement"], built_in = False):
         self.func: tokenizer.Token = func
         self.name: tokenizer.Token = name
         self.args: list[FunctionDefinitionArg] = args
         self.return_types: list[DataType] = return_types
         self.body: list[Statement] = body
+        self.built_in: bool = built_in
 
     def append_string(self, result: list[str], depth: int):
         space = '  ' * depth

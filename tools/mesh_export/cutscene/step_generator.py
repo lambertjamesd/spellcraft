@@ -39,7 +39,7 @@ CUTSCENE_STEP_NPC_ANIMATE = 25
 CUTSCENE_STEP_PRINT = 26
 CUTSCENE_STEP_SPAWN = 27
 CUTSCENE_STEP_CALLBACK = 28
-CUTSCENE_STEP_SHOW_BOSS_HEALTH = 29
+# CUTSCENE_STEP_SHOW_BOSS_HEALTH = 29
 CUTSCENE_STEP_LOAD_SCENE = 30
 CUTSCENE_STEP_DESPAWN = 31
 CUTSCENE_STEP_START_TIMER = 32
@@ -127,7 +127,6 @@ _step_ids = {
     "npc_animate": CUTSCENE_STEP_NPC_ANIMATE,
     "print": CUTSCENE_STEP_PRINT,
     "spawn": CUTSCENE_STEP_SPAWN,
-    "show_boss_health": CUTSCENE_STEP_SHOW_BOSS_HEALTH,
     "load_scene": CUTSCENE_STEP_LOAD_SCENE,
     "despawn": CUTSCENE_STEP_DESPAWN,
     "start_timer": CUTSCENE_STEP_START_TIMER,
@@ -199,8 +198,8 @@ class ExpressionCutsceneStep():
         return f'<expr {repr(self.expr)}>'
 
 class ExpressionFunctionCall():
-    def __init__(self, fn_index: int, argc: int, retc: int):
-        self.command: int = CUTSCENE_STEP_FUNCTION_CALL
+    def __init__(self, fn_index: int, argc: int, retc: int, built_in: bool):
+        self.command: int = CUTSCENE_STEP_BUILT_IN_FN if built_in else CUTSCENE_STEP_FUNCTION_CALL
         self.fn_index = fn_index
         self.argc: int = argc
         self.retc: int = retc
@@ -210,19 +209,6 @@ class ExpressionFunctionCall():
     
     def __repr__(self):
         return f'<fn({self.fn_index}, {self.argc}, {self.retc})>'
-    
-class ExpressionBuiltInFn():
-    def __init__(self, fn_index: int, argc: int, retc: int):
-        self.command: int = CUTSCENE_STEP_BUILT_IN_FN
-        self.fn_index = fn_index
-        self.argc: int = argc
-        self.retc: int = retc
-
-    def write_data(self, file):
-        file.write(struct.pack('>HBB', self.fn_index, self.argc, self.retc))
-    
-    def __repr__(self):
-        return f'<built in fn({self.fn_index}, {self.argc}, {self.retc})>'
 
 class LabelStep():
     def __init__(self, name: str):
@@ -352,7 +338,12 @@ def _generate_expression_collection(cutscene: Cutscene, collection: expresion_ge
         if not fn:
             raise Exception(f'could not find function {chunk.fn_call.name.value}')
 
-        cutscene.add_step(ExpressionFunctionCall(fn_index, len(chunk.fn_call.args), retc if chunk == collection.chunks[-1] else 1))
+        cutscene.add_step(ExpressionFunctionCall(
+            fn_index, 
+            len(chunk.fn_call.args), 
+            retc if chunk == collection.chunks[-1] else 1,
+            fn.built_in
+        ))
 
     if collection.final_expression:
         cutscene.add_step(ExpressionCutsceneStep(collection.final_expression))
@@ -367,15 +358,23 @@ def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expec
 
     for arg_index, arg in enumerate(step.parameters):
         generate_to = 'int'
+        expected_type = fn.args[arg_index].type_name.name.value
 
-        if fn.args[arg_index].type_name.name.value == 'float':
+        if expected_type == 'float':
             generate_to = 'float'
+        elif expected_type == 'str':
+            generate_to = 'str'
 
         pre_expression = pre_expression.concat(expresion_generator.generate_script(arg, context, generate_to))
 
     _generate_expression_collection(cutscene, pre_expression, context)
 
-    cutscene.add_step(ExpressionFunctionCall(fn_index, len(step.parameters), expected_count))
+    cutscene.add_step(ExpressionFunctionCall(
+        fn_index, 
+        len(step.parameters), 
+        expected_count,
+        fn.built_in
+    ))
     context.modify_stack_size(expected_count - len(step.parameters))
 
     return True
