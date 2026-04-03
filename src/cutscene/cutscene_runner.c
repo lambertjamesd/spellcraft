@@ -487,6 +487,7 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, str
                 .stack_position = evaluation_context_stack_size(&active_entry->context.eval),
                 .retc = step->data.function_call.retc,
             };
+            return true;
         }
         case CUTSCENE_STEP_BUILT_IN_FN: {
             cutscene_step_fn_t* fn = cutscene_step_lookup_fn(step->data.function_call.fn_index);

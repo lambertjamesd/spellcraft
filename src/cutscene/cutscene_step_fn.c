@@ -7,7 +7,7 @@ void cutscene_show_boss_health_init(cutscene_runner_context_t* context, int arg_
     int args[2];
     evaluation_context_popn(&context->eval, args, 2);
 
-    hud_show_boss_health(&current_scene->hud, (char*)&args[0], cutscene_context_get_translate_entity(context, args[1]));
+    hud_show_boss_health(&current_scene->hud, (char*)args[0], cutscene_context_get_translate_entity(context, args[1]));
 }
 
 static cutscene_step_fn_t function_steps[] = {

@@ -33,6 +33,8 @@ void test_near_equalf_raw(struct test_context* t, float expected, float actual, 
 
 void test_vec2_equal_raw(struct test_context* t, struct Vector2* expected, struct Vector2* actual, const char* location);
 
+void test_str_equal_raw(struct test_context* t, const char* expected, const char* actual, const char* location);
+
 #define test_fatal(t, message) test_fatal_raw(t, message, __FILE__ ":" STRINGIZE(__LINE__))
 
 #define test_eqi(t, expected, actual) test_eqi_raw(t, expected, actual, __FILE__ ":" STRINGIZE(__LINE__))
@@ -45,6 +47,8 @@ void test_vec2_equal_raw(struct test_context* t, struct Vector2* expected, struc
 #define test_near_equalf(t, expected, actual) test_near_equalf_raw(t, expected, actual, __FILE__ ":" STRINGIZE(__LINE__))
 
 #define test_vec2_equal(t, expected, actual) test_vec2_equal_raw(t, expected, actual, __FILE__ ":" STRINGIZE(__LINE__))
+
+#define test_str_equal(t, expected, actual) test_str_equal_raw(t, expected, actual, __FILE__ ":" STRINGIZE(__LINE__))
 
 void test_report_failures();
 

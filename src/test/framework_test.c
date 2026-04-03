@@ -33,7 +33,7 @@ void test_run_raw(test_callback callback, const char* name) {
     }
     test_call_deferred();
 
-    tmesh_cache_destroy();
+    // tmesh_cache_destroy();
 }
 
 void test_fatal_raw(struct test_context* t, const char* message, const char* location) {
@@ -114,6 +114,21 @@ void test_vec2_equal_raw(struct test_context* t, struct Vector2* expected, struc
         "ASSERTION FAILED expected <%f, %f> ~= <%f, %f> at %s\n", 
         expected->x, expected->y,
         actual->x, actual->y,
+        location
+    );
+    longjmp(t->jump, 1);
+}
+
+void test_str_equal_raw(struct test_context* t, const char* expected, const char* actual, const char* location) {
+    if (strcmp(expected, actual) == 0) {
+        return;
+    }
+
+    fprintf(
+        stderr, 
+        "ASSERTION FAILED expected <%s> = <%s> at %s\n", 
+        expected,
+        actual,
         location
     );
     longjmp(t->jump, 1);

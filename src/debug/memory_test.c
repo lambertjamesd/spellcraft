@@ -43,13 +43,13 @@ void test_memory_leaks(struct test_context* t) {
 
     tmesh_t player_mesh;
     heap_stats = test_memory_leak_start("tmesh_load_filename");
-    tmesh_load_filename(&player_mesh, "rom:/meshes/characters/NPC_scrapbot1.tmesh");
+    tmesh_load_filename(&player_mesh, "rom:/meshes/characters/apprentice.tmesh");
     tmesh_release(&player_mesh);
     test_memory_leak_end(t, &heap_stats);
 
     tmesh_cache_destroy();
     heap_stats = test_memory_leak_start("tmesh_cache_load");
-    tmesh_cache_release(tmesh_cache_load("rom:/meshes/characters/NPC_scrapbot1.tmesh"));
+    tmesh_cache_release(tmesh_cache_load("rom:/meshes/characters/apprentice.tmesh"));
     tmesh_cache_destroy();
     test_memory_leak_end(t, &heap_stats);
 

@@ -1,6 +1,7 @@
 #include "./cutscene_runner.h"
 #include "../test/framework_test.h"
 #include "../time/time.h"
+#include "../scene/scene.h"
 
 struct on_fn_end {
     struct test_context* t;
@@ -40,6 +41,8 @@ void test_do_test(cutscene_t* cutscene, on_fn_end_t expect, const char* name) {
 }
 
 void test_cutscene_runner(struct test_context* t) {
+    scene_t* prev_scene = current_scene;
+
     cutscene_t* cutscene = cutscene_load("rom:/scripts/test/fn_call_test.script");
 
     test_do_test(
@@ -48,7 +51,6 @@ void test_cutscene_runner(struct test_context* t) {
                 .t = t,
                 .result = {5},
                 .result_count = 1,
-                .complete = false,
         },
         "test_return"
     );
@@ -59,7 +61,6 @@ void test_cutscene_runner(struct test_context* t) {
                 .t = t,
                 .result = {8},
                 .result_count = 1,
-                .complete = false,
         },
         "test_call_add"
     );
@@ -70,7 +71,6 @@ void test_cutscene_runner(struct test_context* t) {
                 .t = t,
                 .result = {2, 3},
                 .result_count = 2,
-                .complete = false,
         },
         "multi_return"
     );
@@ -81,7 +81,6 @@ void test_cutscene_runner(struct test_context* t) {
                 .t = t,
                 .result = {5, 3},
                 .result_count = 2,
-                .complete = false,
         },
         "local_swap"
     );
@@ -92,8 +91,24 @@ void test_cutscene_runner(struct test_context* t) {
                 .t = t,
                 .result = {5},
                 .result_count = 1,
-                .complete = false,
         },
         "unpack_fn"
     );
+
+    scene_t tmp = {};
+    current_scene = &tmp;
+    
+    test_do_test(
+        cutscene, 
+        (on_fn_end_t){
+                .t = t,
+                .result = {},
+                .result_count = 0,
+        },
+        "built_in_call"
+    );
+
+    test_str_equal(t, "Name", tmp.hud.boss.name);
+
+    current_scene = prev_scene;
 }

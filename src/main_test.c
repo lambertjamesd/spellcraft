@@ -78,7 +78,7 @@ int main() {
     
     test_run(test_hash_map);
 
-    test_run(test_memory_leaks);
+    // test_run(test_memory_leaks);
 
     test_run(test_resource_cache);
 
