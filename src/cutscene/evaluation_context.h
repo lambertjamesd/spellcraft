@@ -55,4 +55,6 @@ static inline int evaluation_context_stack_size(struct evaluation_context* conte
     return context->current_stack;
 }
 
+void evaluation_context_set_stack_size(struct evaluation_context* context, int size);
+
 #endif

@@ -23,6 +23,7 @@
 #include "show_item.h"
 #include <assert.h>
 #include "../effects/image_overlay.h"
+#include "cutscene_step_fn.h"
 
 #define MAX_QUEUED_CUTSCENES    4
 #define MAX_CUTSCENE_CALL_DEPTH 6
@@ -415,6 +416,12 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
         case CUTSCENE_STEP_FUNCTION_CALL:
             // logic is done in update step
             break;
+        case CUTSCENE_STEP_BUILT_IN_FN: {
+            cutscene_step_fn_t* fn = cutscene_step_lookup_fn(step->data.function_call.fn_index);
+            cutscene_context_save_stack(&cutscene->context);
+            fn->init(&cutscene->context, step->data.function_call.argc);
+            break;
+        }
         case CUTSCENE_STEP_COUNT:
             assert(false);
             break;
@@ -480,6 +487,15 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, str
                 .stack_position = evaluation_context_stack_size(&active_entry->context.eval),
                 .retc = step->data.function_call.retc,
             };
+        }
+        case CUTSCENE_STEP_BUILT_IN_FN: {
+            cutscene_step_fn_t* fn = cutscene_step_lookup_fn(step->data.function_call.fn_index);
+            
+            if (fn->step && !fn->step(&active_entry->context)) {
+                return false;
+            }
+            
+            evaluation_context_set_stack_size(&active_entry->context, active_entry->context.stack_depth + step->data.function_call.retc);            
         }
         default:
             return true;

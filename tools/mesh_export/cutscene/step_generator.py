@@ -51,6 +51,7 @@ CUTSCENE_STEP_AUDIO_PAUSE = 37
 CUTSCENE_STEP_SHOW_IMAGE = 38
 CUTSCENE_STEP_TEMPLATE_STRING = 39
 CUTSCENE_STEP_FUNCTION_CALL = 40
+CUTSCENE_STEP_BUILT_IN_FN = 41
 
 class ParameterType():
     def __init__(self, name: str, is_static: bool):
@@ -209,6 +210,19 @@ class ExpressionFunctionCall():
     
     def __repr__(self):
         return f'<fn({self.fn_index}, {self.argc}, {self.retc})>'
+    
+class ExpressionBuiltInFn():
+    def __init__(self, fn_index: int, argc: int, retc: int):
+        self.command: int = CUTSCENE_STEP_BUILT_IN_FN
+        self.fn_index = fn_index
+        self.argc: int = argc
+        self.retc: int = retc
+
+    def write_data(self, file):
+        file.write(struct.pack('>HBB', self.fn_index, self.argc, self.retc))
+    
+    def __repr__(self):
+        return f'<built in fn({self.fn_index}, {self.argc}, {self.retc})>'
 
 class LabelStep():
     def __init__(self, name: str):

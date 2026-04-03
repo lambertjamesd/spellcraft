@@ -10,6 +10,7 @@
 
 struct cutscene_runner_context {
     entity_id subject_id;
+    uint16_t stack_depth;
     struct evaluation_context eval;
     char string_stack[MAX_STRING_STACK_SIZE];
     char* current_string_start;
@@ -44,6 +45,10 @@ void cutscene_context_init(cutscene_runner_context_t* context, entity_id subject
 
 static inline void cutscene_context_destroy(cutscene_runner_context_t* context) {
     evaluation_context_destroy(&context->eval);
+}
+
+static inline void cutscene_context_save_stack(cutscene_runner_context_t* context) {
+    context->stack_depth = evaluation_context_stack_size(&context->eval);
 }
 
 #endif

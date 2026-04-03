@@ -2,7 +2,7 @@
 #include "../menu/hud.h"
 #include "../scene/scene.h"
 
-void cutscene_show_boss_health_init(cutscene_runner_context_t* context, void* active_step_data, int arg_count) {
+void cutscene_show_boss_health_init(cutscene_runner_context_t* context, int arg_count) {
     assert(arg_count == 2);
     int args[2];
     evaluation_context_popn(&context->eval, args, 2);
@@ -13,3 +13,8 @@ void cutscene_show_boss_health_init(cutscene_runner_context_t* context, void* ac
 static cutscene_step_fn_t function_steps[] = {
     {.init = cutscene_show_boss_health_init}, // func show_boss_health(name: str, boss_entity: entity_id)
 };
+
+cutscene_step_fn_t* cutscene_step_lookup_fn(int type) {
+    assert(type >= 0 && type < sizeof(function_steps) / sizeof(*function_steps));
+    return &function_steps[type];
+}

@@ -61,9 +61,6 @@ static expression_built_in_fn fn_array[EXPRESSION_BUILT_IN_COUNT] = {
 };
 
 expression_built_in_fn expression_lookup_fn(enum expression_built_in_type type) {
-    if (type < EXPRESSION_BUILT_IN_COUNT) {
-        return fn_array[type];
-    }
-
-    return NULL;
+    assert(type >= 0 && type < EXPRESSION_BUILT_IN_COUNT);
+    return fn_array[type];
 }
