@@ -109,19 +109,13 @@ void door_interact(struct interactable* interactable, entity_id from) {
     cutscene_builder_camera_move_to(
         &builder, 
         &camera_target, 
-        &(camera_move_to_args_t){
-            .instant = true, 
-            .move_target = false
-        }
+        true
     );
     target.y += CAMERA_FOLLOW_HEIGHT;
-    cutscene_builder_camera_move_to(
+    cutscene_builder_camera_look_at_pos(
         &builder, 
         &target, 
-        &(camera_move_to_args_t){
-            .instant = true, 
-            .move_target = true
-        }
+        true
     );
     cutscene_builder_npc_wait(&builder, ENTITY_ID_PLAYER);
     cutscene_builder_callback(&builder, door_cutscene_close, door);
@@ -130,10 +124,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
     cutscene_builder_camera_move_to(
         &builder, 
         &camera_target, 
-        &(camera_move_to_args_t){
-            .instant = false, 
-            .move_target = false
-        }
+        false
     );
     cutscene_builder_camera_wait(&builder);
     cutscene_builder_camera_follow(&builder);

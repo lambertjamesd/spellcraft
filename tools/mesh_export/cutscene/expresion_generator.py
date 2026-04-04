@@ -337,7 +337,7 @@ class ExpressionCollection():
             result.chunks = self.chunks + other.chunks
             result.final_expression = other.final_expression
         elif len(other.chunks):
-            result.chunks = self.chunks + [ExpressionChunk(expression_concat(self.final_expression, other.chunks[0].script), other.chunks[0].fn_call)] + other.chunks[1:]
+            result.chunks = self.chunks + [ExpressionChunk(expression_concat(self.final_expression, other.chunks[0].script), other.chunks[0].sync_step)] + other.chunks[1:]
             result.final_expression = other.final_expression
         else:
             result.chunks = self.chunks

@@ -234,7 +234,11 @@ void cutscene_builder_call_function(struct cutscene_builder* builder, enum cutsc
 }
 
 void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode) {
-    cutscene_builder_call_function(builder, should_pause ? CUTSCENE_FN_PAUSE : CUTSCENE_FN_UNPAUSE, 0, 0);
+    if (should_change_game_mode) {
+        cutscene_builder_call_function(builder, should_pause ? CUTSCENE_FN_PAUSE : CUTSCENE_FN_UNPAUSE, 0, 0);
+    } else {
+        cutscene_builder_call_function(builder, should_pause ? CUTSCENE_FN_ENTER_MENU : CUTSCENE_FN_EXIT_MENU, 0, 0);
+    }
 }
 
 void cutscene_builder_dialog(struct cutscene_builder* builder, const char* message) {
