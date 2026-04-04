@@ -2,7 +2,7 @@
 global has_staff_default: bool;
 
 func main()
-    world_pause;
+    pause;
     interact_with_npc INTERACTION_LOOK_SPACE, ENTITY_ID_PLAYER, ENTITY_ID_SUBJECT;
     interact_with_npc INTERACTION_LOOK, ENTITY_ID_SUBJECT, ENTITY_ID_PLAYER;
     cam_look_npc ENTITY_ID_SUBJECT;
@@ -35,5 +35,5 @@ func main()
     end
 
     cam_return;
-    world_unpause;
+    unpause;
 end

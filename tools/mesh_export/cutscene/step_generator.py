@@ -10,16 +10,16 @@ from . import static_evaluator
 from . import local_layout
 from . import tokenizer
 
-CUTSCENE_STEP_DIALOG = 0
+# CUTSCENE_STEP_DIALOG = 0
 CUTSCENE_STEP_SHOW_ITEM = 1
-CUTSCENE_STEP_PAUSE = 2
+# CUTSCENE_STEP_PAUSE = 2
 CUTSCENE_STEP_EXPRESSION = 3
 CUTSCENE_STEP_JUMP_IF_NOT = 4
 CUTSCENE_STEP_JUMP = 5
 CUTSCENE_STEP_SET_LOCAL = 6
 CUTSCENE_STEP_SET_SCENE = 7
 CUTSCENE_STEP_SET_GLOBAL = 8
-CUTSCENE_STEP_DELAY = 9
+# CUTSCENE_STEP_DELAY = 9
 CUTSCENE_STEP_INTERACT_WITH_NPC = 10
 CUTSCENE_STEP_IDLE_NPC = 11
 CUTSCENE_STEP_CAMERA_LOOK_AT_NPC = 12
@@ -44,7 +44,7 @@ CUTSCENE_STEP_LOAD_SCENE = 30
 CUTSCENE_STEP_DESPAWN = 31
 CUTSCENE_STEP_START_TIMER = 32
 CUTSCENE_STEP_CANCEL_TIMER = 33
-CUTSCENE_STEP_ASK = 34
+# CUTSCENE_STEP_ASK = 34
 CUTSCENE_STEP_STOPWATCH_SHOW = 35
 CUTSCENE_STEP_STOPWATCH_RUN = 36
 CUTSCENE_STEP_AUDIO_PAUSE = 37
@@ -64,10 +64,6 @@ class Alias():
         self.parameters: list[ParameterType] = parameters
 
 _step_args = {
-    "say": [ParameterType("tstr", True)],
-    "ask": [ParameterType("tstr", True)],
-    "pause": [ParameterType("bool", True), ParameterType("bool", True)],
-    "delay": [ParameterType("float", True)],
     "interact_with_npc": [ParameterType("int", True), ParameterType("entity_id", False), ParameterType("entity_id", False)],
     "idle_npc": [ParameterType("entity_id", False)],
     "show_item": [ParameterType("int", True)],
@@ -105,10 +101,6 @@ _step_args = {
 }
 
 _step_ids = {
-    "say": CUTSCENE_STEP_DIALOG,
-    "ask": CUTSCENE_STEP_ASK,
-    "pause": CUTSCENE_STEP_PAUSE,
-    "delay": CUTSCENE_STEP_DELAY,
     "interact_with_npc": CUTSCENE_STEP_INTERACT_WITH_NPC,
     "idle_npc": CUTSCENE_STEP_IDLE_NPC,
     "show_item": CUTSCENE_STEP_SHOW_ITEM,
@@ -146,10 +138,8 @@ _steps_that_need_idle = {
 }
 
 _aliases: dict[str, Alias] = {
-    "sign_start": Alias("pause true, false; look_at_subject; cam_look_npc ENTITY_ID_SUBJECT;"),
-    "sign_end": Alias("pause false, false; cam_return;"),
-    "world_pause": Alias("pause true, false;"),
-    "world_unpause": Alias("pause false, false;"),
+    "sign_start": Alias("pause; look_at_subject; cam_look_npc ENTITY_ID_SUBJECT;"),
+    "sign_end": Alias("unpause; cam_return;"),
 }
 
 def _encode_string(string: str) -> bytes:

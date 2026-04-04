@@ -81,14 +81,6 @@ struct cutscene* cutscene_load(const char* filename) {
         step->type = step_type;
 
         switch (step_type) {
-            case CUTSCENE_STEP_DIALOG:
-            case CUTSCENE_STEP_ASK:
-                cutscene_load_template_string(&step->data.dialog.message, file);
-                break;
-            case CUTSCENE_STEP_PAUSE:
-                fread(&step->data.pause, 1, 2, file);
-                step->data.pause.layers = UPDATE_LAYER_WORLD;
-                break;
             case CUTSCENE_STEP_EXPRESSION:
                 expression_load(&step->data.expression.expression, file);
                 break;
@@ -103,9 +95,6 @@ struct cutscene* cutscene_load(const char* filename) {
             case CUTSCENE_STEP_SET_SCENE:
             case CUTSCENE_STEP_SET_GLOBAL:
                 fread(&step->data.store_variable, 4, 1, file);
-                break;
-            case CUTSCENE_STEP_DELAY:
-                fread(&step->data.delay.duration, 4, 1, file);
                 break;
             case CUTSCENE_STEP_INTERACT_WITH_NPC:
                 fread(&step->data.interact_with_npc.type, 4, 1, file);

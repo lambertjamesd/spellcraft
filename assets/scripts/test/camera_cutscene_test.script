@@ -1,6 +1,6 @@
 
 func main()
-    world_pause;
+    pause;
 
     fade FADE_COLOR_BLACK, 1;
     delay 1;
@@ -11,5 +11,5 @@ func main()
 
     cam_return;
 
-    world_unpause;
+    unpause;
 end

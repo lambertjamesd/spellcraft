@@ -151,17 +151,6 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             show_item_start(&cutscene_runner.show_item, &step->data);
             break;
         case CUTSCENE_STEP_PAUSE:
-            if (step->data.pause.should_pause) {
-                if (step->data.pause.should_change_game_mode) {
-                    current_game_mode = GAME_MODE_TRANSITION_TO_MENU;
-                }
-                update_pause_layers(step->data.pause.layers);
-            } else {
-                if (step->data.pause.should_change_game_mode) {
-                    current_game_mode = GAME_MODE_3D;
-                }
-                update_unpause_layers(step->data.pause.layers);
-            }
             break;
         case CUTSCENE_STEP_EXPRESSION:
             expression_evaluate(&cutscene->context.eval, &step->data.expression.expression);
@@ -197,7 +186,6 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_DELAY: {
-            cutscene_runner.active_step_data.delay.time = step->data.delay.duration;
             break;   
         }
         case CUTSCENE_STEP_INTERACT_WITH_NPC: {
@@ -439,9 +427,6 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, str
         case CUTSCENE_STEP_JUMP:
             CUTSCENE_CURR_FRAME(active_entry)->current_instruction += step->data.jump.offset;
             return true;
-        case CUTSCENE_STEP_DELAY:
-            cutscene_runner.active_step_data.delay.time -= fixed_time_step;
-            return cutscene_runner.active_step_data.delay.time <= 0.0f;
         case CUTSCENE_STEP_CAMERA_WAIT:
             return !camera_is_animating(&current_scene->camera_controller);
         case CUTSCENE_STEP_NPC_WAIT: {
