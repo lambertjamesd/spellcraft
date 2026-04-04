@@ -6,6 +6,7 @@
 
 #include "../time/time.h"
 #include "evaluation_context.h"
+#include "cutscene_step_fn.h"
 
 #define EXPECTED_HEADER 0x4354534E
 
@@ -198,66 +199,68 @@ struct cutscene_step* cutscene_builder_next_step(struct cutscene_builder* builde
     return result;
 }
 
-void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode, int layers) {
+void cutscene_builder_message(struct cutscene_builder* builder, const char* message) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
 
+    int len = strlen(message);
+    char* template = malloc(len + 1);
+    strcpy(template, message);
+
     *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_PAUSE,
+        .type = CUTSCENE_STEP_TEMPLATE_STRING,
         .data = {
-            .pause = {
-                .should_pause = should_pause,
-                .should_change_game_mode = should_change_game_mode,
-                .layers = layers,
+            .template_string = {
+                .message = {
+                    .template = template,
+                    .nargs = 0,
+                }
             },
         },
     };
+}
+
+void cutscene_builder_call_function(struct cutscene_builder* builder, enum cutscene_step_fn_index fn, int argc, int retc) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_BUILT_IN_FN,
+        .data = {
+            .function_call = {
+                .fn_index = fn,
+                .argc = argc,
+                .retc = retc,
+            },
+        },
+    };
+}
+
+void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode) {
+    cutscene_builder_call_function(builder, should_pause ? CUTSCENE_FN_PAUSE : CUTSCENE_FN_UNPAUSE, 0, 0);
 }
 
 void cutscene_builder_dialog(struct cutscene_builder* builder, const char* message) {
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
-
-    char* message_copy = malloc(strlen(message) + 1);
-    // free(message_copy) is done in cutscene_load_template_string
-    strcpy(message_copy, message);
-
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_DIALOG,
-        .data = {
-            .dialog = {
-                .message = {
-                    .template = message_copy,
-                    .nargs = 0,
-                },
-            },
-        },
-    };
+    cutscene_builder_message(builder, message);
+    cutscene_builder_call_function(builder, CUTSCENE_FN_SAY, 0, 0);
 }
 
 void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type item, bool should_show) {
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
-    
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_SHOW_ITEM,
-        .data = {
-            .show_item = {
-                .item = item,
-                .should_show = should_show,
-            },
-        },
-    };
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_literal(&expr, item);
+    expression_builder_load_literal(&expr, should_show);
+
+    cutscene_builder_expression(builder, &expr);
+
+    cutscene_builder_call_function(builder, CUTSCENE_FN_SHOW_ITEM, 2, 0);
 }
 
 void cutscene_builder_delay(struct cutscene_builder* builder, float delay) {
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_float(&expr, delay);
+
+    cutscene_builder_expression(builder, &expr);
     
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_DELAY,
-        .data = {
-            .delay = {
-                .duration = delay,
-            },
-        },
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_DELAY, 1, 0);
 }
 
 void cutscene_builder_interact_npc(
@@ -268,38 +271,23 @@ void cutscene_builder_interact_npc(
 ) {
     expression_builder_t expr;
     expression_builder_init(&expr);
+    expression_builder_load_literal(&expr, type);
     expression_builder_load_literal(&expr, subject);
     expression_builder_load_literal(&expr, target);
     cutscene_builder_expression(builder, &expr);
 
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
     
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_INTERACT_WITH_NPC,
-        .data = {
-            .interact_with_npc = {
-                .type = type,
-            },
-        },
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_INTERACT_NPC, 3, 0);
 }
 
 void cutscene_builder_npc_set_speed(struct cutscene_builder* builder, entity_id subject, float speed) {
     expression_builder_t expr;
     expression_builder_init(&expr);
     expression_builder_load_literal(&expr, subject);
+    expression_builder_load_float(&expr, speed);
     cutscene_builder_expression(builder, &expr);
 
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
-    
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_NPC_SET_SPEED,
-        .data = {
-            .npc_set_speed = {
-                .speed = speed,
-            },
-        },
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_NPC_SET_SPEED, 2, 0);
 }
 
 void cutscene_builder_interact_position(
@@ -310,20 +298,14 @@ void cutscene_builder_interact_position(
 ) {
     expression_builder_t expr;
     expression_builder_init(&expr);
+    expression_builder_load_literal(&expr, type);
     expression_builder_load_literal(&expr, subject);
+    expression_builder_load_float(&expr, position->x);
+    expression_builder_load_float(&expr, position->y);
+    expression_builder_load_float(&expr, position->z);
     cutscene_builder_expression(builder, &expr);
 
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
-    
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_INTERACT_WITH_POSITION,
-        .data = {
-            .interact_with_position = {
-                .type = type,
-                .position = *position,
-            },
-        },
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_INTERACT_POSITION, 5, 0);
 }
 
 void cutscene_builder_npc_wait(
@@ -335,59 +317,52 @@ void cutscene_builder_npc_wait(
     expression_builder_load_literal(&expr, subject);
     cutscene_builder_expression(builder, &expr);
 
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
-    
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_NPC_WAIT,
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_NPC_WAIT, 1, 0);
 }
 
 void cutscene_builder_camera_wait(struct cutscene_builder* builder) {
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
-    
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_CAMERA_WAIT,
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_CAMERA_WAIT, 0, 0);
 }
 
 void cutscene_builder_camera_follow(struct cutscene_builder* builder) {
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
-    
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_CAMERA_FOLLOW,
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_CAMERA_FOLLOW, 0, 0);
 }
 
 void cutscene_builder_camera_return(struct cutscene_builder* builder) {
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
-    
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_CAMERA_RETURN,
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_CAMERA_RETURN, 0, 0);
 }
 
 void cutscene_builder_camera_look_at(struct cutscene_builder* builder, entity_id target) {
-    struct cutscene_step* expression = cutscene_builder_next_step(builder);
-    struct cutscene_step* look = cutscene_builder_next_step(builder);
-    *expression = (struct cutscene_step){
-        .type = CUTSCENE_STEP_EXPRESSION,
-    };
-    expression_load_literal(&expression->data.expression.expression, target);
-    *look = (struct cutscene_step){
-        .type = CUTSCENE_STEP_CAMERA_LOOK_AT_NPC,
-    };
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_literal(&expr, target);
+    cutscene_builder_expression(builder, &expr);
+    
+    cutscene_builder_call_function(builder, CUTSCENE_FN_CAMERA_LOOK_AT_NPC, 1, 0);
 }
 
-void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, camera_move_to_args_t* args) {
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
+void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, bool instant) {
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_float(&expr, position->x);
+    expression_builder_load_float(&expr, position->y);
+    expression_builder_load_float(&expr, position->z);
+    expression_builder_load_literal(&expr, instant);
+    cutscene_builder_expression(builder, &expr);
 
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_CAMERA_MOVE_TO,
-        .data.camera_move_to = {
-            .target = {position->x, position->y, position->z},
-            .args = *args,
-        },
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_CAMERA_MOVE_TO, 4, 0);
+}
+
+void cutscene_builder_camera_look_at_pos(struct cutscene_builder* builder, struct Vector3* position, bool instant) {
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_float(&expr, position->x);
+    expression_builder_load_float(&expr, position->y);
+    expression_builder_load_float(&expr, position->z);
+    expression_builder_load_literal(&expr, instant);
+    cutscene_builder_expression(builder, &expr);
+
+    cutscene_builder_call_function(builder, CUTSCENE_FN_CAMERA_LOOK_AT_POS, 4, 0);
 }
 
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value) {
@@ -443,29 +418,18 @@ void cutscene_builder_expression(struct cutscene_builder* builder, expression_bu
 }
 
 void cutscene_builder_load_scene(struct cutscene_builder* builder, const char* scene) {
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
-    int name_len = strlen(scene);   
-    char* copy = malloc(name_len + 1);
-    strcpy(copy, scene);
-
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_LOAD_SCENE,
-        .data.load_scene = {
-            .scene = copy,
-        },
-    };
+    cutscene_builder_message(builder, scene);
+    cutscene_builder_call_function(builder, CUTSCENE_FN_LOAD_SCENE, 1, 0);
 }
 
 void cutscene_builder_fade(struct cutscene_builder* builder, enum fade_colors color, float duration) {
-    struct cutscene_step* step = cutscene_builder_next_step(builder);
+    expression_builder_t expr;
+    expression_builder_init(&expr);
+    expression_builder_load_literal(&expr, color);
+    expression_builder_load_float(&expr, duration);
+    cutscene_builder_expression(builder, &expr);
 
-    *step = (struct cutscene_step){
-        .type = CUTSCENE_STEP_FADE,
-        .data.fade = {
-            .color = color,
-            .duration = duration,
-        },
-    };
+    cutscene_builder_call_function(builder, CUTSCENE_FN_LOAD_FADE, 2, 0);
 }
 
 // release with cutscene_free()

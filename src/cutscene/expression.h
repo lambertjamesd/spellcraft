@@ -100,6 +100,13 @@ static inline void expression_builder_load_literal(expression_builder_t* builder
     });
 }
 
+static inline void expression_builder_load_float(expression_builder_t* builder, float value) {
+    expression_builder_add(builder, EXPRESSION_TYPE_LOAD_LITERAL, &(expression_data_t) {
+        .literal = *((int*)&value),
+    });
+}
+
+
 void expression_builder_finish(expression_builder_t* builder, expression_t* expression);
 
 #endif

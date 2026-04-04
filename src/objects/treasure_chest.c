@@ -24,7 +24,7 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
     struct cutscene_builder builder;
     cutscene_builder_init(&builder);
 
-    cutscene_builder_pause(&builder, true, false, UPDATE_LAYER_WORLD);
+    cutscene_builder_pause(&builder, true, false);
     cutscene_builder_delay(&builder, 1.0f);
 
     show_item_in_cutscene(&builder, treasure_chest->item_type);

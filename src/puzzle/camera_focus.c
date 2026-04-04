@@ -35,11 +35,11 @@ void camera_focus_update(void* data) {
     
     struct cutscene_builder builder;
     cutscene_builder_init(&builder);
-    cutscene_builder_pause(&builder, true, false, UPDATE_LAYER_WORLD);
+    cutscene_builder_pause(&builder, true, false);
     cutscene_builder_delay(&builder, PRE_DELAY);
     cutscene_builder_set_boolean(&builder, camera_focus->output, true);
     cutscene_builder_delay(&builder, POST_DELAY);
-    cutscene_builder_pause(&builder, false, false, UPDATE_LAYER_WORLD);
+    cutscene_builder_pause(&builder, false, false);
     cutscene_builder_camera_return(&builder);
 
     struct cutscene* cutscene = cutscene_builder_finish(&builder);

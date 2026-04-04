@@ -4,6 +4,12 @@
 #include "../menu/dialog_box.h"
 #include "../time/time.h"
 #include "../objects/empty.h"
+#include "../effects/image_overlay.h"
+#include "../effects/area_title.h"
+#include "../effects/fade_effect.h"
+#include "cutscene_stopwatch.h"
+#include "cutscene_timer.h"
+#include "show_item.h"
 
 #define READ_ARGS(context, expected, argc, args)    \
         assert(expected == argc); \
@@ -92,7 +98,7 @@ bool cutscene_show_item_step(cutscene_runner_context_t* context) {
 }
 
 void cutscene_show_item_cancel(cutscene_runner_context_t* context) {
-    return show_item_destroy();
+    show_item_cleanup();
 }
 
 // pause
@@ -149,7 +155,7 @@ void cutscene_interact_with_npc_init(cutscene_runner_context_t* context, int arg
 // idle_npc
 void cutscene_idle_npc_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 1, arg_count, args);
-    struct cutscene_actor* subject = cutscene_runner_lookup_actor(context, args[0]);
+    struct cutscene_actor* subject = cutscene_lookup_actor(context, args[0]);
     if (!subject) {
         return;
     }
@@ -161,7 +167,7 @@ void cutscene_camera_look_at_npc_init(cutscene_runner_context_t* context, int ar
     READ_ARGS(context, 1, arg_count, args);
     entity_id entity_id = args[0];
 
-    struct cutscene_actor* target = cutscene_runner_lookup_actor(context, entity_id);
+    struct cutscene_actor* target = cutscene_lookup_actor(context, entity_id);
     if (target) {
         camera_look_at(&current_scene->camera_controller, &target->transform.position);
         return;
@@ -238,7 +244,7 @@ bool cutscene_camera_wait_step(cutscene_runner_context_t* context) {
 void cutscene_interact_with_location_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 3, arg_count, args);
 
-    struct cutscene_actor* subject = cutscene_runner_lookup_actor(context, args[1]);
+    struct cutscene_actor* subject = cutscene_lookup_actor(context, args[1]);
     if (!subject) {
         return;
     }
@@ -264,7 +270,7 @@ void cutscene_fade_init(cutscene_runner_context_t* context, int arg_count) {
 // interact_with_position
 void cutscene_interact_with_position_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 5, arg_count, args);
-    struct cutscene_actor* subject = cutscene_runner_lookup_actor(context, args[1]);
+    struct cutscene_actor* subject = cutscene_lookup_actor(context, args[1]);
     if (!subject) {
         return;
     }
@@ -272,7 +278,7 @@ void cutscene_interact_with_position_init(cutscene_runner_context_t* context, in
     cutscene_actor_interact_with(
         subject,
         args[0],
-        (float*)&args[2]
+        (vector3_t*)&args[2]
     );
 }
 
@@ -281,10 +287,10 @@ void cutscene_npc_wait_init(cutscene_runner_context_t* context, int arg_count) {
     assert(arg_count == 1);
 }
 
-bool cutscene_npc_wait_step(cutscene_runner_context_t* context, int arg_count) {
+bool cutscene_npc_wait_step(cutscene_runner_context_t* context) {
     entity_id target = evaluation_context_pop(&context->eval);
 
-    struct cutscene_actor* subject = cutscene_runner_lookup_actor(context, target);
+    struct cutscene_actor* subject = cutscene_lookup_actor(context, target);
     if (!subject || !cutscene_actor_is_moving(subject)) {
         return true;
     }
@@ -297,7 +303,7 @@ bool cutscene_npc_wait_step(cutscene_runner_context_t* context, int arg_count) {
 void cutscene_set_npc_speed_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 2, arg_count, args);
 
-    struct cutscene_actor* subject = cutscene_runner_lookup_actor(context, args[0]);
+    struct cutscene_actor* subject = cutscene_lookup_actor(context, args[0]);
     if (!subject) {
         return;
     }
@@ -323,7 +329,7 @@ void cutscene_look_at_subject_init(cutscene_runner_context_t* context, int arg_c
 void cutscene_npc_animate_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 3, arg_count, args);
     entity_id subject_id = args[0];
-    cutscene_actor_t* subject = cutscene_runner_lookup_actor(context, subject_id);
+    cutscene_actor_t* subject = cutscene_lookup_actor(context, subject_id);
     if (!subject) {
         return;
     }
@@ -346,7 +352,7 @@ void cutscene_spawn_init(cutscene_runner_context_t* context, int arg_count) {
 // despawn 
 void cutscene_despawn_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 1, arg_count, args);
-    entity_despawn(evaluation_context_pop(args[0]));
+    entity_despawn(args[0]);
 }
 
 // load_scene
@@ -392,7 +398,7 @@ void cutscene_set_audio_pause_init(cutscene_runner_context_t* context, int arg_c
 // show_image
 void cutscene_show_image_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 1, arg_count, args);
-    char* filename = args[0];
+    char* filename = (char*)args[0];
     if (!filename || !*filename) {
         image_overlay_set(NULL);
     } else {
@@ -410,26 +416,27 @@ void cutscene_show_boss_health_init(cutscene_runner_context_t* context, int arg_
 }
 
 static cutscene_step_fn_t function_steps[] = {
-    {.init = cutscene_say_ask_init, .step = cutscene_say_step, .cancel = cutscene_say_ask_cancel}, // func say(message: str)
-    {.init = cutscene_say_ask_init, .step = cutscene_ask_step, .cancel = cutscene_say_ask_cancel}, // func ask(message: str): bool
-    {.init = cutscene_show_item_init, .step = cutscene_show_item_step, .cancel = cutscene_show_item_cancel }, // func show_item(item: i32, show: bool)
-    {.init = cutscene_step_pause_init }, // func pause()
-    {.init = cutscene_step_unpause_init }, // func unpause()
-    {.init = cutscene_step_delay_init, .step = cutscene_step_delay_step }, // func delay(duration: float)
-    {.init = cutscene_interact_with_npc_init }, // func interact_with_npc(interaction: i32, npc: entity_id, target: entity_id)
+    [CUTSCENE_FN_SAY] = {.init = cutscene_say_ask_init, .step = cutscene_say_step, .cancel = cutscene_say_ask_cancel}, // func say(message: str)
+    [CUTSCENE_FN_ASK] = {.init = cutscene_say_ask_init, .step = cutscene_ask_step, .cancel = cutscene_say_ask_cancel}, // func ask(message: str): bool
+    [CUTSCENE_FN_PAUSE] = {.init = cutscene_step_pause_init }, // func pause()
+    [CUTSCENE_FN_UNPAUSE] = {.init = cutscene_step_unpause_init }, // func unpause()
+    [CUTSCENE_FN_SHOW_ITEM] = {.init = cutscene_show_item_init, .step = cutscene_show_item_step, .cancel = cutscene_show_item_cancel }, // func show_item(item: i32, show: bool)
+    [CUTSCENE_FN_DELAY] = {.init = cutscene_step_delay_init, .step = cutscene_step_delay_step }, // func delay(duration: float)
+    [CUTSCENE_FN_INTERACT_NPC] = {.init = cutscene_interact_with_npc_init }, // func interact_with_npc(interaction: i32, npc: entity_id, target: entity_id)
+    [CUTSCENE_FN_NPC_SET_SPEED] = {.init = cutscene_set_npc_speed_init }, // func npc_set_speed(npc: entity_id, speed: float)
+    [CUTSCENE_FN_INTERACT_POSITION] = {.init = cutscene_interact_with_position_init }, // func interact_with_position(interaction: i32, npc: entity_id, x: float, y: float, z: float)
+    [CUTSCENE_FN_NPC_WAIT] = {.init = cutscene_npc_wait_init, .step = cutscene_npc_wait_step }, // func npc_wait(npc: entity_id)
+    [CUTSCENE_FN_CAMERA_WAIT] = {.init = cutscene_camera_wait_init, .step = cutscene_camera_wait_step }, // func cam_wait()
+    [CUTSCENE_FN_CAMERA_FOLLOW] = {.init = cutscene_cam_follow_player_init }, // func cam_follow()
+    [CUTSCENE_FN_CAMERA_RETURN] = {.init = cutscene_cam_return_init }, // func cam_return()
+    [CUTSCENE_FN_CAMERA_LOOK_AT_NPC] = {.init = cutscene_camera_look_at_npc_init }, // func cam_look_npc(target: entity_id)
+    [CUTSCENE_FN_CAMERA_MOVE_TO] = {.init = cutscene_cam_move_to_init }, // func cam_move_to_pos(x: float, y: float, z: float, instant: bool)
+    [CUTSCENE_FN_CAMERA_LOOK_AT_POS] = {.init = cutscene_cam_look_at_init }, // func cam_look_at_pos(x: float, y: float, z: float, instant: bool)
+    [CUTSCENE_FN_LOAD_SCENE] = {.init = cutscene_load_scene_init }, // func load_scene(scene_name: str)
+    [CUTSCENE_FN_LOAD_FADE] = {.init = cutscene_fade_init }, // func fade(fade_to: i32, duration: float)
     {.init = cutscene_idle_npc_init }, // func idle_npc(npc: entity_id)
-    {.init = cutscene_camera_look_at_npc_init }, // func cam_look_npc(target: entity_id)
-    {.init = cutscene_cam_follow_player_init }, // func cam_follow()
-    {.init = cutscene_cam_return_init }, // func cam_return()
     {.init = cutscene_cam_anim_init }, // func cam_animate(animation: str)
-    {.init = cutscene_cam_move_to_init }, // func cam_move_to_pos(x: float, y: float, z: float, instant: bool)
-    {.init = cutscene_cam_look_at_init }, // func cam_look_at_pos(x: float, y: float, z: float, instant: bool)
-    {.init = cutscene_camera_wait_init, .step = cutscene_camera_wait_step }, // func cam_wait()
     {.init = cutscene_interact_with_location_init }, // func interact_with_location(interaction: i32, npc: entity_id, name: str)
-    {.init = cutscene_fade_init }, // func fade(fade_to: i32, duration: float)
-    {.init = cutscene_interact_with_position_init }, // func interact_with_position(interaction: i32, npc: entity_id, x: float, y: float, z: float)
-    {.init = cutscene_npc_wait_init, .step = cutscene_npc_wait_step }, // func npc_wait(npc: entity_id)
-    {.init = cutscene_set_npc_speed_init }, // func npc_set_speed(npc: entity_id, speed: float)
     {.init = cutscene_show_title_init }, // func show_title(title: str)
     {.init = cutscene_look_at_subject_init }, // func look_at_subject()
     {.init = cutscene_npc_animate_init }, // func npc_animate(npc: entity_id, animation: str, loop: bool)
@@ -437,7 +444,6 @@ static cutscene_step_fn_t function_steps[] = {
     {.init = cutscene_spawn_init }, // func spawn(spawner: entity_spawner)
     {.init = cutscene_despawn_init }, // func despawn(entity: entity_id)
     {.init = cutscene_show_boss_health_init}, // func show_boss_health(name: str, boss_entity: entity_id)
-    {.init = cutscene_load_scene_init }, // func load_scene(scene_name: str)
     {.init = cutscene_start_timer_init }, // func start_timer(time: float, scene_name: str)
     {.init = cutscene_cancel_timer_init }, // func cancel_timer()
     {.init = cutscene_show_stopwatch_init }, // func set_stopwatch_show(value: bool)

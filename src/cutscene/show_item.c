@@ -277,7 +277,7 @@ bool show_item_update() {
 }
 
 void show_item_in_cutscene(struct cutscene_builder* cutscene_builder, enum inventory_item_type item) {
-    cutscene_builder_pause(cutscene_builder, true, true, UPDATE_LAYER_WORLD);
+    cutscene_builder_pause(cutscene_builder, true, true);
     cutscene_builder_show_item(cutscene_builder, item, true);
 
     const char* message = NULL;
@@ -293,5 +293,5 @@ void show_item_in_cutscene(struct cutscene_builder* cutscene_builder, enum inven
     }
 
     cutscene_builder_show_item(cutscene_builder, 1, false);
-    cutscene_builder_pause(cutscene_builder, false, true, UPDATE_LAYER_WORLD);
+    cutscene_builder_pause(cutscene_builder, false, true);
 }

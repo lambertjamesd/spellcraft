@@ -96,7 +96,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
 
     door->collider.collision_layers = 0;
 
-    cutscene_builder_pause(&builder, true, false, UPDATE_LAYER_WORLD);
+    cutscene_builder_pause(&builder, true, false);
     cutscene_builder_delay(&builder, 0.75f);
     cutscene_builder_interact_position(
         &builder, 
@@ -137,7 +137,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
     );
     cutscene_builder_camera_wait(&builder);
     cutscene_builder_camera_follow(&builder);
-    cutscene_builder_pause(&builder, false, false, UPDATE_LAYER_WORLD);
+    cutscene_builder_pause(&builder, false, false);
 
     cutscene_runner_run(
         cutscene_builder_finish(&builder),

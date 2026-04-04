@@ -168,7 +168,9 @@ typedef struct cutscene_builder cutscene_builder_t;
 struct cutscene* cutscene_load(const char* filename);
 void cutscene_builder_init(struct cutscene_builder* builder);
 
-void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode, int layers);
+void cutscene_builder_message(struct cutscene_builder* builder, const char* message);
+
+void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause, bool should_change_game_mode);
 void cutscene_builder_dialog(struct cutscene_builder* builder, const char* message);
 void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type item, bool should_show);
 void cutscene_builder_delay(struct cutscene_builder* builder, float delay);
@@ -193,7 +195,8 @@ void cutscene_builder_camera_wait(struct cutscene_builder* builder);
 void cutscene_builder_camera_follow(struct cutscene_builder* builder);
 void cutscene_builder_camera_return(struct cutscene_builder* builder);
 void cutscene_builder_camera_look_at(struct cutscene_builder* builder, entity_id target);
-void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, camera_move_to_args_t* args);
+void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, bool instant);
+void cutscene_builder_camera_look_at_pos(struct cutscene_builder* builder, struct Vector3* position, bool instant);
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value);
 void cutscene_builder_callback(struct cutscene_builder* builder, cutscene_step_callback callback, void* data);
 void cutscene_builder_expression(struct cutscene_builder* builder, expression_builder_t* expression);
