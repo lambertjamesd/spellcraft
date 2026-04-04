@@ -362,6 +362,7 @@ type_mapping = {
     'entity_id': 'int',
     'entity_spawner': 'int',
     'float': 'float',
+    'str': 'str',
 }
 
 mirrored_operators = {

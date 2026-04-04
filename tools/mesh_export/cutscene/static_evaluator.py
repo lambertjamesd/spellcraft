@@ -36,6 +36,8 @@ class StaticEvaluator():
         if isinstance(expression, parser.Float):
             return float(expression.value.value)
         if isinstance(expression, parser.String):
+            for replacement in expression.replacements:
+                self.check_for_literals(replacement.expr)
             return None
         if isinstance(expression, parser.UnaryOperator):
             operand_value = self.check_for_literals(expression.operand)

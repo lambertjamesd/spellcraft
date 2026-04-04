@@ -37,6 +37,11 @@ func built_in_call()
     show_boss_health "Name", 0;
 end
 
+func template_strings(): str
+    local value: i32 = 123;
+    return "this is {value} a test";
+end
+
 func main()
     local local_a: i32 = 20 + 30;
     local local_b: i32 = local_a * local_a;

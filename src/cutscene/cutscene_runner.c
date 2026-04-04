@@ -41,7 +41,6 @@ static color_t fade_colors[] = {
 extern struct scene* current_scene;
 
 union cutscene_runner_data {
-    struct { bool has_shown; } dialog;
     struct { float time; } delay;
     struct { entity_id target; } npc_wait;
 };
@@ -147,7 +146,6 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
     {
         case CUTSCENE_STEP_DIALOG:
         case CUTSCENE_STEP_ASK:
-            cutscene_runner.active_step_data.dialog.has_shown = false;
             break;
         case CUTSCENE_STEP_SHOW_ITEM:
             show_item_start(&cutscene_runner.show_item, &step->data);
@@ -418,7 +416,7 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         case CUTSCENE_STEP_BUILT_IN_FN: {
             cutscene_step_fn_t* fn = cutscene_step_lookup_fn(step->data.function_call.fn_index);
-            cutscene_context_save_stack(&cutscene->context);
+            cutscene_context_save_stack(&cutscene->context, step->data.function_call.argc);
             fn->init(&cutscene->context, step->data.function_call.argc);
             break;
         }
@@ -431,21 +429,6 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
 bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, struct cutscene_step* step) {
     switch (step->type)
     {
-        case CUTSCENE_STEP_DIALOG:
-        case CUTSCENE_STEP_ASK:
-            if (!cutscene_runner.active_step_data.dialog.has_shown && !dialog_box_is_active()) {
-                int args[step->data.dialog.message.nargs];
-                evaluation_context_popn(&active_entry->context.eval, args, step->data.dialog.message.nargs);
-                if (step->type == CUTSCENE_STEP_DIALOG) {
-                    dialog_box_show(step->data.dialog.message.template, args, NULL, NULL);
-                } else {
-                    dialog_box_ask(step->data.dialog.message.template, args, NULL, NULL);
-                }
-                cutscene_runner.active_step_data.dialog.has_shown = true;
-            } else if (cutscene_runner.active_step_data.dialog.has_shown) {
-                return !dialog_box_is_active();
-            }
-            return false;
         case CUTSCENE_STEP_SHOW_ITEM:
             return show_item_update(&cutscene_runner.show_item, &step->data);
         case CUTSCENE_STEP_JUMP_IF_NOT:

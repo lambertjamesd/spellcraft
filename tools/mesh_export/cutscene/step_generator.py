@@ -592,6 +592,10 @@ def _can_assign_into_variable(name: tokenizer.Token, from_type: str, errors: lis
         errors.append(name.format_message('variable not defined'))
         return False
     
+    if not target_type in expresion_generator.type_mapping:
+        errors.append(name.format_message(f'unknown variable type {target_type}'))
+        return False
+    
     target_type = expresion_generator.type_mapping[target_type]
     
     if target_type == from_type or expresion_generator.is_numerical_type(target_type) and expresion_generator.is_numerical_type(from_type):

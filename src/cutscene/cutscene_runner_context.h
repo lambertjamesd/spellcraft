@@ -47,8 +47,9 @@ static inline void cutscene_context_destroy(cutscene_runner_context_t* context) 
     evaluation_context_destroy(&context->eval);
 }
 
-static inline void cutscene_context_save_stack(cutscene_runner_context_t* context) {
-    context->stack_depth = evaluation_context_stack_size(&context->eval);
+static inline void cutscene_context_save_stack(cutscene_runner_context_t* context, int argc) {
+    context->stack_depth = evaluation_context_stack_size(&context->eval) - argc;
+    assert(context->stack_depth >= 0);
 }
 
 #endif

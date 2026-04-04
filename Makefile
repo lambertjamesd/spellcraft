@@ -146,6 +146,10 @@ SCRIPTS := $(shell find assets -type f -name '*.script' | sort)
 
 SCRIPTS_COMPILED := $(SCRIPTS:assets/%=filesystem/%)
 
+build/cutscene/function_defs.json: src/cutscene/cutscene_step_fn.c src/cutscene/expression_fn.c
+	@mkdir -p build/cutscene/
+	python3 tools/mesh_export/generate_function_defs.py
+
 build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/inventory_mapping.c: tools/mesh_export/globals.py assets/scripts/globals.script
 	@mkdir -p build/assets/scripts/
 	python3 tools/mesh_export/globals.py build/assets/scripts/globals src/player/inventory_mapping.c assets/scripts/globals.script
@@ -153,7 +157,7 @@ build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/in
 filesystem/scripts/globals.dat: build/assets/scripts/globals.dat
 	$(MK_ASSET) -o $(dir $@) -w 4 $<
 
-filesystem/scripts/%.script: assets/scripts/%.script build/assets/scripts/globals.json build/tools/mesh_export/cutscene.d.template
+filesystem/scripts/%.script: assets/scripts/%.script build/assets/scripts/globals.json build/cutscene/function_defs.json build/tools/mesh_export/cutscene.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
 	python3 tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json $< $(@:filesystem/%=build/assets/%)
@@ -174,7 +178,7 @@ SCENE_SOURCES := $(shell find assets/scenes -type f -name '*.blend' | sort)
 SCENES := $(SCENE_SOURCES:assets/scenes/%.blend=filesystem/scenes/%.scene)
 
 .SECONDEXPANSION:
-filesystem/scenes/%.scene: assets/scenes/%.blend $$(wildcard assets/scenes/%.script) build/assets/scripts/globals.json build/tools/mesh_export/scene.d.template
+filesystem/scenes/%.scene: assets/scenes/%.blend $$(wildcard assets/scenes/%.script) build/assets/scripts/globals.json build/cutscene/function_defs.json build/tools/mesh_export/scene.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene))
 	echo $@ $<

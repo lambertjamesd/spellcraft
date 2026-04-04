@@ -95,7 +95,7 @@ void evaluation_context_save(void* data, enum data_type data_type, int word_offs
 }
 
 void evaluation_context_set_stack_size(struct evaluation_context* context, int size) {
-    assert(size > 0 && size <= MAX_STACK_SIZE);
+    assert(size >= 0 && size <= MAX_STACK_SIZE);
 
     if (size < context->current_stack) {
         context->current_stack = size;
