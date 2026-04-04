@@ -5,10 +5,23 @@
 #include "../math/mathf.h"
 #include "../resource/material_cache.h"
 #include "../player/inventory.h"
+#include "../menu/menu_rendering.h"
 
 #define RUNE_SHOW_TIME              3.0f
 #define RUNE_FADE_TIME              0.25f
 #define RUNE_FLASH_TIME             2.0f
+
+struct show_item {
+    struct material* item_material;
+    sprite_t* item_sprite;
+    uint16_t showing_item;
+    uint16_t should_show;
+    float show_item_timer;
+};
+
+typedef struct show_item show_item_t;
+
+static show_item_t show_item;
 
 static const char* tablet_images[] = {
     "rom:/images/menu/tablets/tablet_level_1.sprite",
@@ -112,76 +125,11 @@ bool show_item_is_spell(enum inventory_item_type type) {
     return type >= SPELL_SYMBOL_FIRE && type <= SPELL_SYMBOL_LIFE;
 }
 
-void show_item_init(struct show_item* show_item) {
-    show_item->item_material = NULL;
-    show_item->item_sprite = NULL;
-    show_item->should_show = 0;
-    show_item->show_item_timer = 0.0f;
-    show_item->showing_item = 0;
-}
-
-void show_item_start(struct show_item* show_item, union cutscene_step_data* data) {
-    show_item->should_show = data->show_item.should_show;
-
-    if (data->show_item.should_show) {
-        const char* filename;
-
-        if (show_item_is_spell(data->show_item.item)) {
-            int level = inventory_get_item_level(data->show_item.item) - 1;
-
-            if (level < 0) {
-                level = 0;
-            } else if (level >= 5) {
-                level = 4;
-            }
-
-            show_item->showing_item = data->show_item.item;
-            show_item->show_item_timer = 0.0f;
-            filename = symbol_material;
-            show_item->item_sprite = sprite_load(tablet_images[level]);
-
-        } else {
-            show_item->showing_item = data->show_item.item;
-            show_item->show_item_timer = 0.0f;
-            filename = item_icon_materials[show_item->showing_item];
-            show_item->item_sprite = NULL;
-        }
-        show_item->item_material = material_cache_load(filename);
-    } else {
-        show_item->show_item_timer = RUNE_FADE_TIME;
-    }
-}
-
-bool show_item_update(struct show_item* show_item, union cutscene_step_data* data) {
-    float target = data->show_item.should_show ? RUNE_SHOW_TIME : 0.0f;
-    show_item->show_item_timer = mathfMoveTowards(show_item->show_item_timer, target, fixed_time_step);
-
-    joypad_buttons_t buttons = joypad_get_buttons_pressed(0);
-
-    if (buttons.start) {
-        show_item->show_item_timer = target;
-    }
-
-    bool result = show_item->show_item_timer == target;
-
-    if (result && target == 0) {
-        if (show_item->item_material) {
-            material_cache_release(show_item->item_material);
-        }
-        show_item->item_material = NULL;
-        if (show_item->item_sprite) {
-            sprite_free(show_item->item_sprite);
-        }
-    }
-
-    return result;
-}
-
-void show_item_render(struct show_item* show_item) {
-    if (show_item->showing_item && show_item->show_item_timer) {
+void show_item_render(void* data) {
+    if (show_item.showing_item && show_item.show_item_timer) {
         material_apply(solid_primitive_material);
 
-        float alpha = show_item->show_item_timer * (1.0f / RUNE_FADE_TIME);
+        float alpha = show_item.show_item_timer * (1.0f / RUNE_FADE_TIME);
 
         if (alpha > 1.0f) {
             alpha = 1.0f;
@@ -203,18 +151,18 @@ void show_item_render(struct show_item* show_item) {
             32, 32
         );
 
-        bool is_showing = !show_item->showing_item || show_item->show_item_timer > RUNE_FADE_TIME;
+        bool is_showing = !show_item.showing_item || show_item.show_item_timer > RUNE_FADE_TIME;
 
         int x = 160 - 24;
         int y = 80 - 24;
         int w = 48;
         int h = 48;
 
-        if (show_item->item_sprite && is_showing) {
+        if (show_item.item_sprite && is_showing) {
             material_apply(sprite_blit);
-            rdpq_sprite_blit(show_item->item_sprite, 160 - 24, 80 - 24, NULL);
+            rdpq_sprite_blit(show_item.item_sprite, 160 - 24, 80 - 24, NULL);
 
-            int level = inventory_get_item_level(show_item->showing_item) - 1;
+            int level = inventory_get_item_level(show_item.showing_item) - 1;
 
             if (level < 0) {
                 level = 0;
@@ -230,27 +178,27 @@ void show_item_render(struct show_item* show_item) {
             h = offsets->h;
         }
 
-        if (show_item->item_material && is_showing) {
-            material_apply(show_item->item_material);
+        if (show_item.item_material && is_showing) {
+            material_apply(show_item.item_material);
 
-            if (!show_item->showing_item) {
+            if (!show_item.showing_item) {
                 color_t color = {255, 255, 255, (uint8_t)(alpha * 255.0f)};
                 rdpq_set_prim_color(color);
             }
 
-            int offset = image_offset_x[show_item->showing_item];
-            int size = image_width_x[show_item->showing_item];
+            int offset = image_offset_x[show_item.showing_item];
+            int size = image_width_x[show_item.showing_item];
 
             rdpq_texture_rectangle_scaled(
                 TILE0, 
                 x, y,
                 x + w, y + h,
                 offset, 0,
-                size + offset, show_item->item_material->tex0.sprite->height
+                size + offset, show_item.item_material->tex0.sprite->height
             );
         }
 
-        float flash_time = show_item->show_item_timer - RUNE_FADE_TIME;
+        float flash_time = show_item.show_item_timer - RUNE_FADE_TIME;
 
         if (flash_time > 0.0f && flash_time < RUNE_FLASH_TIME) {
             float alpha = 1.0f - (flash_time * (1.0f / RUNE_FLASH_TIME));
@@ -262,6 +210,70 @@ void show_item_render(struct show_item* show_item) {
             rdpq_texture_rectangle(TILE0, 0, 0, 320, 240, 0, 0);
         }
     }
+}
+
+void show_item_start(enum inventory_item_type item, bool should_show) {
+    show_item.should_show = should_show;
+
+    if (should_show) {
+        const char* filename;
+
+        if (show_item_is_spell(item)) {
+            int level = inventory_get_item_level(item) - 1;
+
+            if (level < 0) {
+                level = 0;
+            } else if (level >= 5) {
+                level = 4;
+            }
+
+            show_item.showing_item = item;
+            show_item.show_item_timer = 0.0f;
+            filename = symbol_material;
+            show_item.item_sprite = sprite_load(tablet_images[level]);
+
+        } else {
+            show_item.showing_item = item;
+            show_item.show_item_timer = 0.0f;
+            filename = item_icon_materials[show_item.showing_item];
+            show_item.item_sprite = NULL;
+        }
+        show_item.item_material = material_cache_load(filename);
+
+        menu_add_callback(show_item_render, &show_item, MENU_PRIORITY_OVERLAY);
+    } else {
+        show_item.show_item_timer = RUNE_FADE_TIME;
+    }
+}
+
+void show_item_cleanup() {
+    if (show_item.item_material) {
+        material_cache_release(show_item.item_material);
+        menu_remove_callback(&show_item);
+    }
+    show_item.item_material = NULL;
+    if (show_item.item_sprite) {
+        sprite_free(show_item.item_sprite);
+    }
+}
+
+bool show_item_update() {
+    float target = show_item.should_show ? RUNE_SHOW_TIME : 0.0f;
+    show_item.show_item_timer = mathfMoveTowards(show_item.show_item_timer, target, fixed_time_step);
+
+    joypad_buttons_t buttons = joypad_get_buttons_pressed(0);
+
+    if (buttons.start) {
+        show_item.show_item_timer = target;
+    }
+
+    bool result = show_item.show_item_timer == target;
+
+    if (result && target == 0) {
+        show_item_cleanup();
+    }
+
+    return result;
 }
 
 void show_item_in_cutscene(struct cutscene_builder* cutscene_builder, enum inventory_item_type item) {

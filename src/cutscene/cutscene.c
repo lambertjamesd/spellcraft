@@ -91,67 +91,9 @@ struct cutscene* cutscene_load(const char* filename) {
                 step->data.jump.offset = offset;
                 break;
             }
-            case CUTSCENE_STEP_SET_LOCAL:
             case CUTSCENE_STEP_SET_SCENE:
             case CUTSCENE_STEP_SET_GLOBAL:
                 fread(&step->data.store_variable, 4, 1, file);
-                break;
-            case CUTSCENE_STEP_INTERACT_WITH_NPC:
-                fread(&step->data.interact_with_npc.type, 4, 1, file);
-                break;
-            case CUTSCENE_STEP_CAMERA_ANIMATE:
-                step->data.camera_animate.animation_name = string_load(file);
-                break;
-            case CUTSCENE_STEP_INTERACT_WITH_LOCATION: {
-                fread(&step->data.interact_with_location.type, 4, 1, file);
-                step->data.interact_with_location.location_name = string_load(file);
-                break;
-            }    
-            case CUTSCENE_STEP_FADE:
-                fread(&step->data.fade.color, 4, 1, file);
-                fread(&step->data.fade.duration, 4, 1, file);
-                break;
-            case CUTSCENE_STEP_INTERACT_WITH_POSITION: {
-                fread(&step->data.interact_with_position.type, 4, 1, file);
-                fread(&step->data.interact_with_position.position, 12, 1, file);
-                break;
-            }
-            case CUTSCENE_STEP_NPC_SET_SPEED: {
-                fread(&step->data.npc_set_speed.speed, 4, 1, file);
-                break;
-            }
-            case CUTSCENE_STEP_SHOW_TITLE: {
-                step->data.show_title.message = string_load(file);
-                break;
-            }
-            case CUTSCENE_STEP_NPC_ANIMATE: {
-                step->data.npc_animate.animation_name = string_load(file);
-                fread(&step->data.npc_animate.loop, 1, 1, file);
-                break;
-            }
-            case CUTSCENE_STEP_PRINT:
-                cutscene_load_template_string(&step->data.print.message, file);
-                break;
-            case CUTSCENE_STEP_SHOW_BOSS_HEALTH: {
-                step->data.show_boss_health.name = string_load(file);
-                break;
-            }
-            case CUTSCENE_STEP_LOAD_SCENE:
-                step->data.load_scene.scene = string_load(file);
-                break;
-            case CUTSCENE_STEP_START_TIMER:
-                fread(&step->data.start_timer.time, 4, 1, file);
-                step->data.start_timer.cutscene = string_load(file);
-                break;
-            case CUTSCENE_STEP_STOPWATCH_SHOW:
-            case CUTSCENE_STEP_STOPWATCH_RUN:
-                fread(&step->data.stopwatch.value, 1, 1, file);
-                break;
-            case CUTSCENE_STEP_AUDIO_PAUSE:
-                fread(&step->data.audio_pause.is_paused, 1, 1, file);
-                break;
-            case CUTSCENE_STEP_SHOW_IMAGE:
-                step->data.show_image.filename = string_load(file);
                 break;
             case CUTSCENE_STEP_TEMPLATE_STRING:
                 cutscene_load_template_string(&step->data.template_string.message, file);
@@ -200,39 +142,8 @@ void cutscene_destroy(struct cutscene* cutscene) {
         struct cutscene_step* step = &cutscene->steps[i];
 
         switch (step->type) {
-            case CUTSCENE_STEP_DIALOG:
-            case CUTSCENE_STEP_ASK:
-                cutscene_destroy_template_string(&step->data.dialog.message);
-                break;
             case CUTSCENE_STEP_EXPRESSION:
                 expression_destroy(&step->data.expression.expression);
-                break;
-            case CUTSCENE_STEP_CAMERA_ANIMATE:
-                free(step->data.camera_animate.animation_name);
-                break;
-            case CUTSCENE_STEP_INTERACT_WITH_LOCATION:
-                free(step->data.interact_with_location.location_name);
-                break;
-            case CUTSCENE_STEP_SHOW_TITLE:
-                free(step->data.show_title.message);
-                break;
-            case CUTSCENE_STEP_NPC_ANIMATE:
-                free(step->data.npc_animate.animation_name);
-                break;
-            case CUTSCENE_STEP_PRINT:
-                cutscene_destroy_template_string(&step->data.print.message);
-                break;
-            case CUTSCENE_STEP_SHOW_BOSS_HEALTH:
-                free(step->data.show_boss_health.name);
-                break;
-            case CUTSCENE_STEP_LOAD_SCENE:
-                free(step->data.load_scene.scene);
-                break;
-            case CUTSCENE_STEP_START_TIMER:
-                free(step->data.start_timer.cutscene);
-                break;
-            case CUTSCENE_STEP_SHOW_IMAGE:
-                free(step->data.show_image.filename);
                 break;
             case CUTSCENE_STEP_TEMPLATE_STRING:
                 cutscene_destroy_template_string(&step->data.template_string.message);

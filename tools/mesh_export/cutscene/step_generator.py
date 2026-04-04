@@ -10,132 +10,19 @@ from . import static_evaluator
 from . import local_layout
 from . import tokenizer
 
-# CUTSCENE_STEP_DIALOG = 0
-CUTSCENE_STEP_SHOW_ITEM = 1
-# CUTSCENE_STEP_PAUSE = 2
-CUTSCENE_STEP_EXPRESSION = 3
-CUTSCENE_STEP_JUMP_IF_NOT = 4
-CUTSCENE_STEP_JUMP = 5
-CUTSCENE_STEP_SET_LOCAL = 6
-CUTSCENE_STEP_SET_SCENE = 7
-CUTSCENE_STEP_SET_GLOBAL = 8
-# CUTSCENE_STEP_DELAY = 9
-CUTSCENE_STEP_INTERACT_WITH_NPC = 10
-CUTSCENE_STEP_IDLE_NPC = 11
-CUTSCENE_STEP_CAMERA_LOOK_AT_NPC = 12
-CUTSCENE_STEP_CAMERA_FOLLOW = 13
-CUTSCENE_STEP_CAMERA_RETURN = 14
-CUTSCENE_STEP_CAMERA_ANIMATE = 15
-CUTSCENE_STEP_CAMERA_MOVE_TO = 16
-CUTSCENE_STEP_CAMERA_WAIT = 17
-CUTSCENE_STEP_INTERACT_WITH_LOCATION = 18
-CUTSCENE_STEP_FADE = 19
-CUTSCENE_STEP_INTERACT_WITH_POSITION = 20
-CUTSCENE_STEP_NPC_WAIT = 21
-CUTSCENE_STEP_NPC_SET_SPEED = 22
-CUTSCENE_STEP_SHOW_TITLE = 23
-CUTSCENE_STEP_LOOK_AT_SUBJECT = 24
-CUTSCENE_STEP_NPC_ANIMATE = 25
-CUTSCENE_STEP_PRINT = 26
-CUTSCENE_STEP_SPAWN = 27
-CUTSCENE_STEP_CALLBACK = 28
-# CUTSCENE_STEP_SHOW_BOSS_HEALTH = 29
-CUTSCENE_STEP_LOAD_SCENE = 30
-CUTSCENE_STEP_DESPAWN = 31
-CUTSCENE_STEP_START_TIMER = 32
-CUTSCENE_STEP_CANCEL_TIMER = 33
-# CUTSCENE_STEP_ASK = 34
-CUTSCENE_STEP_STOPWATCH_SHOW = 35
-CUTSCENE_STEP_STOPWATCH_RUN = 36
-CUTSCENE_STEP_AUDIO_PAUSE = 37
-CUTSCENE_STEP_SHOW_IMAGE = 38
-CUTSCENE_STEP_TEMPLATE_STRING = 39
-CUTSCENE_STEP_FUNCTION_CALL = 40
-CUTSCENE_STEP_BUILT_IN_FN = 41
-
-class ParameterType():
-    def __init__(self, name: str, is_static: bool):
-        self.name: str = name
-        self.is_static: bool = is_static
+CUTSCENE_STEP_EXPRESSION = 0
+CUTSCENE_STEP_JUMP_IF_NOT = 1
+CUTSCENE_STEP_JUMP = 2
+CUTSCENE_STEP_SET_SCENE = 3
+CUTSCENE_STEP_SET_GLOBAL = 4
+CUTSCENE_STEP_CALLBACK = 5
+CUTSCENE_STEP_TEMPLATE_STRING = 6
+CUTSCENE_STEP_FUNCTION_CALL = 7
+CUTSCENE_STEP_BUILT_IN_FN = 8
 
 class Alias():
-    def __init__(self, source: str, parameters: list[ParameterType] = []):
+    def __init__(self, source: str):
         self.source: str = source
-        self.parameters: list[ParameterType] = parameters
-
-_step_args = {
-    "interact_with_npc": [ParameterType("int", True), ParameterType("entity_id", False), ParameterType("entity_id", False)],
-    "idle_npc": [ParameterType("entity_id", False)],
-    "show_item": [ParameterType("int", True)],
-    "cam_look_npc": [ParameterType("entity_id", False)],
-    "cam_follow": [],
-    "cam_return": [],
-    "cam_animate": [ParameterType("str", True)],
-    "cam_wait": [],
-    "interact_with_location": [ParameterType("int", True), ParameterType("entity_id", False), ParameterType("str", True)],
-    "fade": [ParameterType("int", True), ParameterType("float", True)],
-    "interact_with_position": [
-        ParameterType("int", True), 
-        ParameterType("entity_id", False), 
-        ParameterType("float", True), 
-        ParameterType("float", True), 
-        ParameterType("float", True)
-    ],
-    "npc_wait": [ParameterType("entity_id", False)],
-    "npc_set_speed": [ParameterType("entity_id", False), ParameterType("float", True)],
-    "show_title": [ParameterType("str", True)],
-    "look_at_subject": [],
-    "npc_animate": [ParameterType("entity_id", False), ParameterType("str", True), ParameterType("bool", True)],
-    "print": [ParameterType("tstr", True)],
-    "spawn": [ParameterType("entity_spawner", False)],
-    "show_boss_health": [ParameterType("str", True), ParameterType("entity_id", False)],
-    "despawn": [ParameterType("entity_id", False)],
-    "load_scene": [ParameterType("str", True)],
-    "start_timer": [ParameterType("float", True), ParameterType("str", True)],
-    "cancel_timer": [],
-    "show_main_menu": [],
-    "stopwatch_show": [ParameterType("bool", True)],
-    "stopwatch_run": [ParameterType("bool", True)],
-    "audio_pause": [ParameterType("bool", True)],
-    "show_image": [ParameterType("str", True)],
-}
-
-_step_ids = {
-    "interact_with_npc": CUTSCENE_STEP_INTERACT_WITH_NPC,
-    "idle_npc": CUTSCENE_STEP_IDLE_NPC,
-    "show_item": CUTSCENE_STEP_SHOW_ITEM,
-    "cam_look_npc": CUTSCENE_STEP_CAMERA_LOOK_AT_NPC,
-    "cam_follow": CUTSCENE_STEP_CAMERA_FOLLOW,
-    "cam_return": CUTSCENE_STEP_CAMERA_RETURN,
-    "cam_animate": CUTSCENE_STEP_CAMERA_ANIMATE,
-    "cam_wait": CUTSCENE_STEP_CAMERA_WAIT,
-    "interact_with_location": CUTSCENE_STEP_INTERACT_WITH_LOCATION,
-    "fade": CUTSCENE_STEP_FADE,
-    "interact_with_position": CUTSCENE_STEP_INTERACT_WITH_POSITION,
-    "npc_wait": CUTSCENE_STEP_NPC_WAIT,
-    "npc_set_speed": CUTSCENE_STEP_NPC_SET_SPEED,
-    "show_title": CUTSCENE_STEP_SHOW_TITLE,
-    "look_at_subject": CUTSCENE_STEP_LOOK_AT_SUBJECT,
-    "npc_animate": CUTSCENE_STEP_NPC_ANIMATE,
-    "print": CUTSCENE_STEP_PRINT,
-    "spawn": CUTSCENE_STEP_SPAWN,
-    "load_scene": CUTSCENE_STEP_LOAD_SCENE,
-    "despawn": CUTSCENE_STEP_DESPAWN,
-    "start_timer": CUTSCENE_STEP_START_TIMER,
-    "cancel_timer": CUTSCENE_STEP_CANCEL_TIMER,
-    "stopwatch_show": CUTSCENE_STEP_STOPWATCH_SHOW,
-    "stopwatch_run": CUTSCENE_STEP_STOPWATCH_RUN,
-    "audio_pause": CUTSCENE_STEP_AUDIO_PAUSE,
-    "show_image": CUTSCENE_STEP_SHOW_IMAGE,
-}
-
-_reverse_step_ids = {value: key for key, value in _step_ids.items()}
-
-_steps_that_need_idle = {
-    "interact_with_npc",
-    "interact_with_location",
-    "interact_with_position",
-}
 
 _aliases: dict[str, Alias] = {
     "sign_start": Alias("pause; look_at_subject; cam_look_npc ENTITY_ID_SUBJECT;"),
@@ -150,6 +37,18 @@ def _encode_string(string: str) -> bytes:
         return struct.pack('>B', length) + encoded
     else:
         return struct.pack('>BB', (length & 127) | 128, length // 128) + encoded
+
+_reverse_step_ids = {
+    CUTSCENE_STEP_EXPRESSION: 'expr',
+    CUTSCENE_STEP_JUMP_IF_NOT: 'jump if not',
+    CUTSCENE_STEP_JUMP: 'jump',
+    CUTSCENE_STEP_SET_SCENE: 'set scene var',
+    CUTSCENE_STEP_SET_GLOBAL: 'set global',
+    CUTSCENE_STEP_CALLBACK: 'callback',
+    CUTSCENE_STEP_TEMPLATE_STRING: 'str',
+    CUTSCENE_STEP_FUNCTION_CALL: 'fn',
+    CUTSCENE_STEP_BUILT_IN_FN: 'built in fn',
+}
 
 class CutsceneStep():
     def __init__(self, command: int, data: bytes):
@@ -387,86 +286,6 @@ def _generate_function_call(cutscene: Cutscene, step: parser.CutsceneStep, expec
 
     return True
 
-
-def _generate_function_step(cutscene: Cutscene, step: parser.CutsceneStep, args: list[ParameterType], context:variable_layout.VariableContext):
-    pre_expression: expresion_generator.ExpressionCollection = expresion_generator.ExpressionCollection()
-    pop_count = 0
-
-    for idx, arg in enumerate(args):
-        parameter = step.parameters[idx]
-
-        if arg.name == 'tstr':
-            if not isinstance(parameter, parser.String):
-                raise Exception('Parameter should be a string')
-
-            pop_count += len(parameter.replacements)
-            for replacement in parameter.replacements:
-                expression = expresion_generator.generate_script(replacement.expr, context)
-                if not expression:
-                    raise Exception(f"Could not generate expression {replacement}")   
-
-                pre_expression = pre_expression.concat(expression)
-
-        if arg.is_static:
-            continue
-
-        pop_count += 1
-
-        expression = None
-
-        if arg.name == 'int' or arg.name == 'bool' or arg.name == 'entity_spawner' or arg.name == 'entity_id':
-            expression = expresion_generator.generate_script(parameter, context, 'int')
-        elif arg.name == 'float':
-            expression = expresion_generator.generate_script(parameter, context, 'float')
-
-        if not expression:
-            raise Exception(f"Could not generate expression {parameter}")
-        
-        pre_expression = pre_expression.concat(expression)
-                
-    _generate_expression_collection(cutscene, pre_expression, context)
-
-    data = io.BytesIO()
-    
-    for idx, arg in enumerate(args):
-        parameter = step.parameters[idx]
-
-        if arg.name == 'tstr':
-            if not isinstance(parameter, parser.String):
-                raise Exception("Expected tstr but didn't get string")
-
-            data.write(struct.pack('>B', len(parameter.replacements)))
-            data.write(_encode_string(build_template_string(parameter, context)))
-            continue
-            
-        if arg.name == 'str':
-            if not isinstance(parameter, parser.String):
-                raise Exception("Expected str but didn't get string")
-
-            data.write(_encode_string(parameter.contents[0]))
-            continue
-
-        if not arg.is_static:
-            continue
-
-        eval = static_evaluator.StaticEvaluator()
-        static_value = eval.check_for_literals(parameter)
-
-        if arg.name == 'bool':
-            data.write(struct.pack('>B', 1 if static_value else 0))
-        elif arg.name == 'int':
-            data.write(struct.pack('>i', int(static_value or 0)))
-        elif arg.name == 'entity_id':
-            data.write(struct.pack('>H', int(static_value or 0)))
-        elif arg.name == 'float':
-            data.write(struct.pack('>f', float(static_value or 0)))
-        else:
-            raise Exception(f"could not write arg of type {arg.name}")
-        
-    context.modify_stack_size(-pop_count)
-
-    cutscene.add_step(CutsceneStep(_step_ids[step.name.value], data.getvalue()))
-
 def _generate_alias(cutscene: Cutscene, step: parser.CutsceneStep, alias: Alias, context:variable_layout.VariableContext, return_label: str):
     cutscene_alias = parser.parse_block(alias.source, "alias")
 
@@ -506,10 +325,8 @@ def _validate_local_fn_call(step: parser.CutsceneStep, errors: list[str], contex
 def _validate_system_call(step: parser.CutsceneStep, errors: list[str], context: variable_layout.VariableContext):
     args = None
 
-    if step.name.value in _step_args:
-        args = _step_args[step.name.value]
-    elif step.name.value in _aliases:
-        args = _aliases[step.name.value].parameters
+    if step.name.value in _aliases:
+        args = []
 
     if args == None:
         errors.append(step.name.format_message(f'{step.name.value} is not a valid step name'))
@@ -517,54 +334,6 @@ def _validate_system_call(step: parser.CutsceneStep, errors: list[str], context:
 
     if len(args) != len(step.parameters):
         errors.append(step.name.format_message(f'incorrect number of parameters got {len(step.parameters)} expected {len(args)}'))
-    
-    type_info = expresion_generator.TypeChecker(context)
-    for i in range(min(len(args), len(step.parameters))):
-        parameter = step.parameters[i]
-        arg_type = args[i]
-
-        parameter_type = type_info.determine_type(parameter)
-
-        if arg_type.name == 'tstr':
-            if not isinstance(parameter, parser.String):
-                errors.append(parameter.at.format_message('expected string'))
-            else:
-                for replacement in parameter.replacements:
-                    replacement_type = type_info.determine_type(replacement.expr)
-                    
-                    if replacement_type != 'str' and replacement_type != 'int' and replacement_type != 'float':
-                        errors.append(replacement.expr.at.format_message(f'expected string, int or float but got {replacement_type}'))
-                        
-                    
-            continue
-        elif arg_type.name == 'str':
-            if isinstance(parameter, parser.String):
-                if len(parameter.replacements):
-                    errors.append(parameter.at.format_message('template parameters not allowed for basic strings'))
-            else:
-                errors.append(parameter.at.format_message('expected string for parameter'))
-            continue
-        
-        if arg_type.name == 'bool':
-            if parameter_type != 'int' and parameter_type != 'bool':
-                errors.append(parameter.at.format_message(f'expected bool got {parameter_type}'))
-        elif arg_type.name == 'int' or arg_type.name == 'entity_id' or arg_type.name == 'entity_spawner':
-            if parameter_type != 'int':
-                errors.append(parameter.at.format_message(f'expected int got {parameter_type}'))
-        elif arg_type.name == 'float':
-            if parameter_type != 'float' and parameter_type != 'int':
-                errors.append(parameter.at.format_message(f'expected float got {parameter_type}'))
-        else:
-            raise Exception(f'unknown type {arg_type.name}')
-        
-        if arg_type.is_static:
-            eval = static_evaluator.StaticEvaluator()
-            static_value = eval.check_for_literals(parameter)
-
-            if static_value == None:
-                errors.append(parameter.at.format_message(f'parameter must be a literal'))
-
-    errors += type_info.errors
 
 def _validate_fn_call(step: parser.CutsceneStep, errors: list[str], context: variable_layout.VariableContext):
     _idx, local_fn = context.lookup_function(step.name.value)
@@ -707,7 +476,7 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
             _generate_alias(cutscene, step, _aliases[step.name.value], context, return_label)
             return
 
-        _generate_function_step(cutscene, step, _step_args[step.name.value], context)
+        raise Exception(f'could not find function {step.name.value}')
 
     elif isinstance(step, parser.IfStatement):
         expression = expresion_generator.generate_script(step.condition, context)
@@ -804,30 +573,6 @@ def _generate_step(cutscene: Cutscene, step, context: variable_layout.VariableCo
         
         expression.final_expression = expresion_generator.expression_concat(expression.final_expression, expresion_generator.ExpressionScript([expresion_generator.ExpressionStore(stack_pos)]))
         _generate_expression_collection(cutscene, expression, context)
-        
-
-
-def _idle_find_effected_actors(statements: list, actors: set):
-    for statement in statements:
-        if isinstance(statement, parser.IfStatement):
-            _idle_find_effected_actors(statement.statements, actors)
-
-        if isinstance(statement, parser.CutsceneStep) and statement.name.value in _steps_that_need_idle:
-            actors.add(static_evaluator.StaticEvaluator().check_for_literals(statement.parameters[1]))
-
-def _idle_effected_actors(cutscene: Cutscene, statements: list):
-    actors = set[int]()
-
-    _idle_find_effected_actors(statements, actors)
-
-    for actor in actors:
-        if actor == None:
-            continue
-        expression = expresion_generator.ExpressionScript([
-            expresion_generator.ExpressionScriptIntLiteral(actor),
-        ])
-        cutscene.add_step(ExpressionCutsceneStep(expression))
-        cutscene.add_step(CutsceneStep(CUTSCENE_STEP_IDLE_NPC, b''))
 
 def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.Statement], context: variable_layout.VariableContext, function_def: parser.FunctionDefinition):
     fn_locals = local_layout.LocalLayout(function_def)
@@ -849,8 +594,6 @@ def _generate_statement_list_steps(cutscene: Cutscene, statements: list[parser.S
     _generate_step_block(cutscene, statements, context, return_label)
 
     cutscene.add_label(return_label)
-
-    _idle_effected_actors(cutscene, statements)
 
     if fn_locals.get_stack_size() != start_stack_size:
         print(parser.statement_list_str(statements))

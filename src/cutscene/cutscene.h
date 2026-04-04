@@ -8,45 +8,12 @@
 #include "expression.h"
 
 enum cutscene_step_type {
-    CUTSCENE_STEP_DIALOG,
-    CUTSCENE_STEP_SHOW_ITEM,
-    CUTSCENE_STEP_PAUSE,
     CUTSCENE_STEP_EXPRESSION,
     CUTSCENE_STEP_JUMP_IF_NOT,
     CUTSCENE_STEP_JUMP,
-    CUTSCENE_STEP_SET_LOCAL,
     CUTSCENE_STEP_SET_SCENE,
     CUTSCENE_STEP_SET_GLOBAL,
-    CUTSCENE_STEP_DELAY,
-    CUTSCENE_STEP_INTERACT_WITH_NPC,
-    CUTSCENE_STEP_IDLE_NPC,
-    CUTSCENE_STEP_CAMERA_LOOK_AT_NPC,
-    CUTSCENE_STEP_CAMERA_FOLLOW,
-    CUTSCENE_STEP_CAMERA_RETURN,
-    CUTSCENE_STEP_CAMERA_ANIMATE,
-    CUTSCENE_STEP_CAMERA_MOVE_TO,
-    CUTSCENE_STEP_CAMERA_WAIT,
-    CUTSCENE_STEP_INTERACT_WITH_LOCATION,
-    CUTSCENE_STEP_FADE,
-    CUTSCENE_STEP_INTERACT_WITH_POSITION,
-    CUTSCENE_STEP_NPC_WAIT,
-    CUTSCENE_STEP_NPC_SET_SPEED,
-    CUTSCENE_STEP_SHOW_TITLE,
-    CUTSCENE_STEP_LOOK_AT_SUBJECT,
-    CUTSCENE_STEP_NPC_ANIMATE,
-    CUTSCENE_STEP_PRINT,
-    CUTSCENE_STEP_SPAWN,
     CUTSCENE_STEP_CALLBACK,
-    CUTSCENE_STEP_SHOW_BOSS_HEALTH,
-    CUTSCENE_STEP_LOAD_SCENE,
-    CUTSCENE_STEP_DESPAWN,
-    CUTSCENE_STEP_START_TIMER,
-    CUTSCENE_STEP_CANCEL_TIMER,
-    CUTSCENE_STEP_ASK,
-    CUTSCENE_STEP_STOPWATCH_SHOW,
-    CUTSCENE_STEP_STOPWATCH_RUN,
-    CUTSCENE_STEP_AUDIO_PAUSE,
-    CUTSCENE_STEP_SHOW_IMAGE,
     CUTSCENE_STEP_TEMPLATE_STRING,
     CUTSCENE_STEP_FUNCTION_CALL,
     CUTSCENE_STEP_BUILT_IN_FN,
@@ -81,11 +48,6 @@ typedef struct cutscene cutscene_t;
 struct templated_string {
     char* template;
     uint16_t nargs;
-};
-
-struct camera_move_to_args {
-    bool instant: 1;
-    bool move_target: 1; 
 };
 
 typedef struct camera_move_to_args camera_move_to_args_t;
@@ -125,10 +87,6 @@ union cutscene_step_data {
     struct {
         char* animation_name;
     } camera_animate;
-    struct {
-        struct Vector3 target;
-        camera_move_to_args_t args;
-    } camera_move_to;
     struct {
         enum interaction_type type;
         char* location_name;
