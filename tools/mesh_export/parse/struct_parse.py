@@ -1,8 +1,9 @@
 
 class StructureAttribute:
-    def __init__(self, name: str, data_type: str):
+    def __init__(self, name: str, data_type: str, count: int | None):
         self.name: str = name
         self.data_type: str = data_type
+        self.count: int | None = count
     
     def __str__(self):
         return f"{self.name}: {self.data_type}"
@@ -28,6 +29,9 @@ class StructureInfo:
 class PointerType:
     def __init__(self, sub_type):
         self.sub_type = sub_type
+
+    def __str__(self):
+        return f'*{str(self.sub_type)}'
 
 class EnumValue:
     def __init__(self, name: str, value: int):
@@ -158,7 +162,7 @@ def token_error(chr: str):
     
     return (token_error, None)
 
-single_tokens = {'{', '}', ';', ',', '*', '='}
+single_tokens = {'{', '}', ';', ',', '*', '=', '[', ']'}
 
 def token_default_state(chr: str):
     if chr.isalpha() or chr == '_':
@@ -288,9 +292,18 @@ def parse_struct(state: ParseState):
         
         data_type = _parse_type(state)
         field_name = state.require('identifier')
+
+        count = None
+        if state.optional('['):
+            if state.optional(']'):
+                count = -1
+            else:
+                count = int(state.require('int').value)
+                state.require(']')
+
         state.require(';')
 
-        children.append(StructureAttribute(field_name.value, data_type))
+        children.append(StructureAttribute(field_name.value, data_type, count))
 
     return StructureInfo('' if name is None else name.value, children)
 
@@ -415,7 +428,8 @@ def find_structs(file_string: str) -> dict[str, StructureInfo]:
 
         struct_type = determine_type(file_string, current_position, next_end)
 
-        result[struct_type.name] = struct_type
+        if isinstance(struct_type, StructureInfo):
+            result[struct_type.name] = struct_type
 
         current_position = file_string.find('struct ', next_end)
 

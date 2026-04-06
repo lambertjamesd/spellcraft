@@ -17,6 +17,7 @@ struct entity_field_type_location {
 
 enum entity_field_types {
     ENTITY_FIELD_TYPE_STRING,
+    ENTITY_FIELD_TYPE_LINE_MESH,
 };
 
 struct entity_definition {

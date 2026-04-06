@@ -483,7 +483,8 @@ struct named_location* scene_find_location(char* name) {
 void scene_entity_apply_types(void* definition, char* string_table, struct entity_field_type_location* type_locations, int type_location_count) {
     for (int i = 0; i < type_location_count; i += 1) {
         switch (type_locations[i].type) {
-            case ENTITY_FIELD_TYPE_STRING: {
+            case ENTITY_FIELD_TYPE_STRING:
+            case ENTITY_FIELD_TYPE_LINE_MESH: {
                 char** entry_location = (char**)((char*)definition + type_locations[i].offset);
                 *entry_location += (int)string_table;
                 break;

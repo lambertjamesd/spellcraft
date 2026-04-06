@@ -19,6 +19,7 @@
 #include "../objects/burning_thorns.h"
 #include "../objects/sign.h"
 #include "../objects/trigger_cube.h"
+#include "../objects/line_mesh.h"
 #include "../entities/script_runner.h"
 // include_list insert point
 
@@ -62,6 +63,9 @@ static struct entity_field_type_location fields_sign[] = {
     { .offset = offsetof(struct sign_definition, message), .type = ENTITY_FIELD_TYPE_STRING },
 };
 
+static struct entity_field_type_location fields_line_mesh[] = {
+    { .offset = offsetof(struct line_mesh_definition, mesh), .type = ENTITY_FIELD_TYPE_LINE_MESH },
+};
 
 static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(empty, fields_empty),
@@ -91,6 +95,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(pottery_wheel, fields_empty),
     ENTITY_DEFINITION(fan_switch, fields_empty),
     ENTITY_DEFINITION(trigger_cube, fields_empty),
+    ENTITY_DEFINITION(line_mesh, fields_line_mesh),
     ENTITY_DEFINITION(script_runner, fields_script_runner),
     // scene_entity_definitions insert point
 };

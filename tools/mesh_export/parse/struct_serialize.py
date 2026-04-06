@@ -4,11 +4,13 @@ import math
 import struct
 
 from . import struct_parse
+from . import line_mesh_builder
 
 class SerializeContext():
     def __init__(self, enums):
         self.enums = enums
         self._strings: dict[str, int] = {}
+        self._line_meshes: dict[bpy.types.Object, int] = {}
         self._string_data: list[bytes] = []
         self._current_offset = 0
         self._did_write = False
@@ -28,6 +30,23 @@ class SerializeContext():
         self._current_offset += len(string_data)
 
         return result
+    
+    def get_line_mesh_offset(self, value: bpy.types.Object):
+        if value in self._line_meshes:
+            return self._line_meshes[value]
+        
+        if self._did_write:
+            raise Exception(f'tried to layout line mesh {value} after bytes were written')
+        
+        result = self._current_offset
+
+        self._line_meshes[value] = result
+        mesh_data = line_mesh_builder.build_line_mesh(value, _get_transform(value))
+        self._string_data.append(mesh_data)
+        self._current_offset += len(mesh_data)
+
+        return result
+    
     
     def search_enums(self, value: str):
         for single_enum in self.enums.values():
@@ -66,6 +85,7 @@ fixed_sizes = {
     'bool': 1,
     'boolean_variable': 2,
     'integer_variable': 2,
+    'line_mesh_data_ref': 4,
 }
 
 fixed_alignments = {
@@ -87,6 +107,7 @@ fixed_alignments = {
     'bool': 1,
     'boolean_variable': 2,
     'integer_variable': 2,
+    'line_mesh_data_ref': 4,
 }
 
 struct_formats = {
@@ -129,7 +150,7 @@ def get_value(obj: bpy.types.Object, key: str, default_value):
     if key in obj:
         return obj[key]
     
-    if key in obj.data:
+    if obj.data and key in obj.data:
         return obj.data[key]
     
     return default_value
@@ -150,6 +171,9 @@ def get_scale(obj: bpy.types.Object) -> mathutils.Vector:
 def layout_strings(obj: bpy.types.Object, definition, context: SerializeContext, field_name = None):
     if _is_string_type(definition):
         context.get_string_offset(str(get_value(obj, field_name, "")))
+
+    if definition == "line_mesh_data_ref":
+        context.get_line_mesh_offset(obj)
 
     if isinstance(definition, struct_parse.StructureInfo):
         for child in definition.children:
@@ -239,15 +263,15 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
                 else:
                     file.write(struct.pack('>fff', 0, 0, 0))
                 return offset + 12
-        if definition == 'struct Vector2':
+        elif definition == 'struct Vector2':
             if field_name == 'rotation':
                 write_vector2_rotation(file, obj)
                 return offset + 8
-        if definition == 'struct Quaternion':
+        elif definition == 'struct Quaternion':
             if field_name == 'rotation':
                 write_quaternion_rotation(file, obj)
                 return offset + 16
-        if definition == 'float':
+        elif definition == 'float':
             if field_name == 'scale':
                 value = get_scale(obj).x
             elif field_name == 'fov' and obj.type == 'CAMERA':
@@ -256,7 +280,7 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
                 value = get_value(obj, field_name, 0)
             file.write(struct.pack(">f", value))
             return offset + 4
-        if definition in struct_formats:
+        elif definition in struct_formats:
             value = get_value(obj, field_name, struct_format_defaults[definition] if definition in struct_format_defaults else 0)
 
             if value == True:
@@ -270,7 +294,7 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
 
             file.write(struct.pack(">" + struct_formats[definition], value))
             return offset + fixed_sizes[definition]
-        if definition in context.enums:
+        elif definition in context.enums:
             value = get_value(obj, field_name, None)
 
             if value == None:
@@ -279,6 +303,9 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
                 value = context.enums[definition].str_to_int(value)
 
             file.write(struct.pack(">I", value))
+            return offset + 4
+        elif definition == 'line_mesh_data_ref':
+            file.write(struct.pack(">I", context.get_line_mesh_offset(obj)))
             return offset + 4
          
         raise Exception(f"unknown field type '{definition}' {field_name}")

@@ -36,6 +36,7 @@ enum entity_type_id {
     ENTITY_TYPE_pottery_wheel,
     ENTITY_TYPE_fan_switch,
     ENTITY_TYPE_trigger_cube,
+    ENTITY_TYPE_line_mesh,
     ENTITY_TYPE_script_runner,
     // type enum insert point
     
@@ -104,6 +105,14 @@ typedef uint16_t integer_variable;
 
 typedef char* script_location;
 typedef char* scene_entry_point;
+
+struct line_mesh_data {
+    uint8_t point_count;
+    uint8_t line_count;
+    char data[];
+};
+
+typedef struct line_mesh_data *line_mesh_data_ref;
 
 struct collectable_definition {
     struct Vector3 position;
@@ -323,6 +332,11 @@ struct trigger_cube_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     struct Vector3 scale;
+};
+
+struct line_mesh_definition {
+    struct Vector3 position;
+    line_mesh_data_ref mesh;
 };
 
 // definition insert point
