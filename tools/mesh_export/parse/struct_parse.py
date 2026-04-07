@@ -159,6 +159,8 @@ def token_comment_start(chr: str):
 def token_error(chr: str):
     if chr == '':
         return (token_error, 'error')
+    elif chr.isspace():
+        return (token_white, 'error')
     
     return (token_error, None)
 
@@ -339,6 +341,11 @@ def parse_enum(state: ParseState):
 
     return EnumInfo(name.value, values)
 
+def skip_typedef(state: ParseState):
+    state.require('identifier', 'typedef')
+    while not state.optional(';') and state.peek(0).token_type != 'eof':
+        state.advance()
+
 def _parse_type_scalar(state: ParseState):
     next = state.peek(0)
 
@@ -366,11 +373,6 @@ def _parse_type(state: ParseState):
 def determine_enum(source: str, starting_at: int, ending_at: int):
     struct_source = source[starting_at:ending_at]
     return parse_enum(ParseState(tokenize(struct_source, starting_at), source))
-
-
-def determine_type(source: str, starting_at: int, ending_at: int):
-    struct_source = source[starting_at:ending_at]
-    return _parse_type(ParseState(tokenize(struct_source, starting_at), source))
 
 def find_end_curly(file_string: str, starting_at: int):
     depth = 0
@@ -416,21 +418,22 @@ def find_enums(file_string: str) -> dict[str, EnumInfo]:
 
 
 def find_structs(file_string: str) -> dict[str, StructureInfo]:
-    current_position = file_string.find('struct ')
+    parse_state = ParseState(tokenize(file_string, 0), file_string)
 
     result: dict[str, StructureInfo] = {}
 
-    while current_position != -1:
-        next_end = find_end_curly(file_string, current_position)
+    while parse_state.peek(0).token_type != 'eof':
+        next = parse_state.peek(0)
 
-        if next_end == -1:
-            raise Exception('Unmatched curly braces')
+        if next.value == 'struct':
+            struct_type = _parse_type(parse_state)
 
-        struct_type = determine_type(file_string, current_position, next_end)
+            if isinstance(struct_type, StructureInfo):
+                result[struct_type.name] = struct_type
+        elif next.value == 'typedef':
+            skip_typedef(parse_state)
+        else:
+            parse_state.advance()
 
-        if isinstance(struct_type, StructureInfo):
-            result[struct_type.name] = struct_type
-
-        current_position = file_string.find('struct ', next_end)
 
     return result
