@@ -50,6 +50,14 @@ enum fixed_entity_ids {
     ENTITY_ID_FIRST_DYNAMIC,
 };
 
+typedef uint32_t collectable_sub_type;
+
+#define ROOM_NONE 0xFFFF
+
+typedef uint16_t room_id;
+
+typedef uint32_t entity_spawner;
+
 struct empty_definition {
     struct Vector3 position;
     struct Vector2 rotation;
@@ -59,6 +67,7 @@ struct crate_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     float scale;
+    entity_spawner line_mesh;
 };
 
 enum collectable_type {
@@ -82,14 +91,6 @@ enum inventory_item_type {
 
     ITEM_TYPE_COUNT,
 };
-
-typedef uint32_t collectable_sub_type;
-
-#define ROOM_NONE 0xFFFF
-
-typedef uint16_t room_id;
-
-typedef uint32_t entity_spawner;
 
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT
 

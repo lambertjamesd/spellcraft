@@ -149,7 +149,9 @@ void scene_clear_next();
 bool scene_show_room(struct scene* scene, int room_index);
 void scene_hide_room(struct scene* scene, int room_index);
 
-void scene_spawn_entity(struct scene* scene, int room_index, int entity_index);
+void scene_spawn_entity(struct scene* scene, entity_spawner spawner);
+
+entity_id scene_lookup_entity(struct scene* scene, entity_spawner spawner);
 
 bool scene_is_showing_room(struct scene* scene, int room_index);
 

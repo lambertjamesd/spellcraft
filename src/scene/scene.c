@@ -427,7 +427,9 @@ loaded_room_t* scene_find_room(struct scene* scene, int room_index) {
 }
 
 
-void scene_spawn_entity(struct scene* scene, int room_index, int entity_index) {
+void scene_spawn_entity(struct scene* scene, entity_spawner spawner) {
+    int room_index = spawner >> 16;
+    int entity_index = spawner & 0xFFFF;
     loaded_room_t* room = scene_find_room(scene, room_index);
 
     if (room == NULL) {
@@ -453,6 +455,22 @@ void scene_spawn_entity(struct scene* scene, int room_index, int entity_index) {
     expression_set_integer(entity->script_location, id);
 }
 
+entity_id scene_lookup_entity(struct scene* scene, entity_spawner spawner) {
+    int room_index = spawner >> 16;
+    int entity_index = spawner & 0xFFFF;
+
+    loaded_room_t* room = scene_find_room(scene, room_index);
+
+    if (room == NULL) {
+        return 0;
+    }
+
+    if (entity_index < 0 || entity_index >= room->entity_count) {
+        return 0;
+    }
+
+    return room->entities[entity_index].id;
+}
 
 bool scene_is_showing_room(struct scene* scene, int room_index) {
     return scene_find_room(scene, room_index) != NULL;

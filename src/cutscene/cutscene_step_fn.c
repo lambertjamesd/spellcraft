@@ -361,7 +361,7 @@ void cutscene_print_init(cutscene_runner_context_t* context, int arg_count) {
 void cutscene_spawn_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 1, arg_count, args);
     uint32_t spawner = args[0];
-    scene_spawn_entity(current_scene, spawner >> 16, spawner & 0xFFFF);
+    scene_spawn_entity(current_scene, spawner);
 }
 
 // despawn 
