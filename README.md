@@ -76,9 +76,8 @@ Performance metric before kd tree
 
 ## TODO
 
-- bring changes over from jam project
 - include material/image dependencies in asset dependencies
-- implement functions in scripting langauge
+- create fixed point camera regions
 - direct camera control
 - load on background thread
 - particle rendering in mesh
@@ -87,8 +86,7 @@ Performance metric before kd tree
 
 ## Scripting TODO
 
-- implement function call step
-- change all arguments to be passed via expression evaluate
+- function imports
 
 ## Fire trails todo
 

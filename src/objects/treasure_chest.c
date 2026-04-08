@@ -64,6 +64,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
     );
 
     treasure_chest->dynamic_object.is_fixed = true;
+    treasure_chest->dynamic_object.weight_class = WEIGHT_CLASS_HEAVY;
 
     collision_scene_add(&treasure_chest->dynamic_object);
 
