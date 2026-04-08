@@ -20,7 +20,7 @@ struct slot_offset {
 
 static struct slot_offset slot_offsets[] = {
     [SPELL_SYMBOL_FIRE] = { SPELL_SLOT_OFFSET * 2, SPELL_SLOT_OFFSET },
-    [SPELL_SYMBOL_ICE] = { 0, SPELL_SLOT_OFFSET },
+    [SPELL_SYMBOL_WATER] = { 0, SPELL_SLOT_OFFSET },
     [SPELL_SYMBOL_EARTH] = { SPELL_SLOT_OFFSET, SPELL_SLOT_OFFSET * 2 },
     [SPELL_SYMBOL_AIR] = { SPELL_SLOT_OFFSET, 0 },
 };
@@ -28,7 +28,7 @@ static struct slot_offset slot_offsets[] = {
 static color_t spell_active_colors[] = {
     [ITEM_TYPE_NONE] = { 255, 255, 255, 255 },
     [SPELL_SYMBOL_FIRE] = { 240, 100, 10, 255 },
-    [SPELL_SYMBOL_ICE] = { 10, 200, 240, 255 },
+    [SPELL_SYMBOL_WATER] = { 10, 200, 240, 255 },
     [SPELL_SYMBOL_EARTH] = { 10, 200, 40, 255 },
     [SPELL_SYMBOL_AIR] = { 240, 240, 10, 255 },
 };

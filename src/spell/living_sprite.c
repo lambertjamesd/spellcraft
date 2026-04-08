@@ -125,7 +125,7 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
     living_sprite->flags.is_mine = false;
     living_sprite->flags.did_apply_aeo = false;
     living_sprite->flags.has_fire = event_options.rune.flaming;
-    living_sprite->flags.has_ice = event_options.rune.icy;
+    living_sprite->flags.has_ice = event_options.rune.watery;
     living_sprite->definition = definition;
     living_sprite->explode_timer = 0.0f;
 

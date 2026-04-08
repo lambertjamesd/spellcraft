@@ -26,7 +26,7 @@ enum spell_icon {
 struct rune_pattern {
     uint8_t primary_rune: 3;
     uint8_t flaming: 1;
-    uint8_t icy: 1;
+    uint8_t watery: 1;
     uint8_t windy: 1;
     uint8_t living: 1;
     uint8_t earthy: 1;

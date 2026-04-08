@@ -35,7 +35,7 @@ struct spell projectile_spell = {
 
 struct spell lightning_spell = {
     .symbols = {
-        {.primary_rune = SPELL_SYMBOL_FIRE, .icy = 1}
+        {.primary_rune = SPELL_SYMBOL_FIRE, .watery = 1}
     },
     .length = 1,
 

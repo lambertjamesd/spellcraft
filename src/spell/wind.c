@@ -29,7 +29,7 @@ static struct wind_definition wind_definitions[] = {
         },
         .base_scale = 1.0f,
     },
-    [ELEMENT_TYPE_ICE] = {
+    [ELEMENT_TYPE_WATER] = {
         .push = {
             .acceleration = 16.0f,
             .top_speed = 10.0f,
@@ -72,7 +72,7 @@ static struct wind_definition wind_sphere_definitions[] = {
         .base_scale = 1.0f,
         .sphere = true,
     },
-    [ELEMENT_TYPE_ICE] = {
+    [ELEMENT_TYPE_WATER] = {
         .push = {
             .acceleration = 16.0f,
             .top_speed = 10.0f,

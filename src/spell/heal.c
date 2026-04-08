@@ -56,7 +56,7 @@ void spell_heal_init(struct spell_heal* heal, struct spell_data_source* source, 
         heal->flags.instant = 0;
     }
 
-    if (event_options.rune.icy) {
+    if (event_options.rune.watery) {
         heal->flags.reverse = 1;
     } else {
         heal->flags.reverse = 0;

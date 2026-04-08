@@ -100,8 +100,8 @@ bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_ty
         case SPELL_SYMBOL_FIRE:
             curr.flaming = live_cast_toggle(curr.flaming, has_room);
             break;
-        case SPELL_SYMBOL_ICE:
-            curr.icy = live_cast_toggle(curr.icy, has_room);
+        case SPELL_SYMBOL_WATER:
+            curr.watery = live_cast_toggle(curr.watery, has_room);
             break;
         case SPELL_SYMBOL_EARTH:
             curr.earthy = live_cast_toggle(curr.earthy, has_room);

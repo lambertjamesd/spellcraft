@@ -70,15 +70,15 @@ void spell_data_source_apply_transform_sa(struct spell_data_source* data_source,
 
 enum element_type spell_data_source_determine_element(rune_pattern_t rune) {
     if (rune.flaming) {
-        if (rune.icy) {
+        if (rune.watery) {
             return ELEMENT_TYPE_LIGHTNING;
         }
 
         return ELEMENT_TYPE_FIRE;
     }
 
-    if (rune.icy) {
-        return ELEMENT_TYPE_ICE;
+    if (rune.watery) {
+        return ELEMENT_TYPE_WATER;
     }
 
     return ELEMENT_TYPE_NONE;

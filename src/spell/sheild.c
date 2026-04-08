@@ -43,7 +43,7 @@ bool shield_should_block(void *data, struct damage_info* damage) {
         shield->parry_timer = 0.0f;
     }
 
-    if (shield->element == ELEMENT_TYPE_ICE) {
+    if (shield->element == ELEMENT_TYPE_WATER) {
         shield->lifetime = 0.0f;
     }
 
@@ -59,7 +59,7 @@ void shield_init(struct shield* shield, struct spell_data_source* source, struct
     shield->hold_radius = 0.5f;
     shield->lifetime = element == ELEMENT_TYPE_FIRE ? PARRY_WINDOW : MAX_SHEILD_LIFETIME;
     shield->element = element;
-    shield->parry_timer = element == ELEMENT_TYPE_ICE ? MAX_SHEILD_LIFETIME : PARRY_WINDOW;
+    shield->parry_timer = element == ELEMENT_TYPE_WATER ? MAX_SHEILD_LIFETIME : PARRY_WINDOW;
     shield->flags.did_parry = false;
 
     shield->start_animation = mesh_animation_new(

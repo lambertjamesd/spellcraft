@@ -54,7 +54,7 @@ static struct spell_level_messages spell_level_message[] = {
             "You mastered the fire rune tablet!\n\nYou can now combine all 4 additional elements and fire spells are stronger.",
         },
     },
-    [SPELL_SYMBOL_ICE] = {
+    [SPELL_SYMBOL_WATER] = {
         .messages = {
             "You got the ice rune tablet!\n\nPress C-left to cast ice sword",
         },
@@ -84,7 +84,7 @@ static char* item_get_message[] = {
 
 static const char image_offset_x[] = {
     [SPELL_SYMBOL_FIRE] = 0,
-    [SPELL_SYMBOL_ICE] = 24,
+    [SPELL_SYMBOL_WATER] = 24,
     [SPELL_SYMBOL_EARTH] = 48,
     [SPELL_SYMBOL_AIR] = 96,
     [SPELL_SYMBOL_LIFE] = 120,
@@ -97,7 +97,7 @@ static const char image_offset_x[] = {
 
 static const char image_width_x[] = {
     [SPELL_SYMBOL_FIRE] = 24,
-    [SPELL_SYMBOL_ICE] = 24,
+    [SPELL_SYMBOL_WATER] = 24,
     [SPELL_SYMBOL_EARTH] = 24,
     [SPELL_SYMBOL_AIR] = 24,
     [SPELL_SYMBOL_LIFE] = 24,

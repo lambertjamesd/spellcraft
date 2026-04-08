@@ -48,8 +48,8 @@ bool rune_pattern_has_secondary(rune_pattern_t pattern, enum inventory_item_type
     {
     case SPELL_SYMBOL_FIRE:
         return pattern.flaming;
-    case SPELL_SYMBOL_ICE:
-        return pattern.icy;
+    case SPELL_SYMBOL_WATER:
+        return pattern.watery;
     case SPELL_SYMBOL_EARTH:
         return pattern.earthy;
     case SPELL_SYMBOL_AIR:
@@ -66,7 +66,7 @@ int rune_pattern_symbol_count(rune_pattern_t pattern) {
 
     if (pattern.primary_rune != ITEM_TYPE_NONE) ++result;
     if (pattern.flaming) ++result;
-    if (pattern.icy) ++result;
+    if (pattern.watery) ++result;
     if (pattern.earthy) ++result;
     if (pattern.windy) ++result;
     if (pattern.living) ++result;

@@ -234,21 +234,21 @@ static struct living_sprite_definition life_steal_sprite = {
     .on_contact = sprite_life_steal_effect,
 };
 
-struct living_sprite_definition* living_sprite_find_def(enum element_type element_type, bool has_air, bool has_fire, bool has_ice) {
+struct living_sprite_definition* living_sprite_find_def(enum element_type element_type, bool has_air, bool has_fire, bool has_water) {
     switch (element_type)
     {
     case ELEMENT_TYPE_FIRE:
-        return has_ice ? &sprite_definitions[ELEMENT_TYPE_LIGHTNING] : &sprite_definitions[ELEMENT_TYPE_FIRE];
+        return has_water ? &sprite_definitions[ELEMENT_TYPE_LIGHTNING] : &sprite_definitions[ELEMENT_TYPE_FIRE];
     case ELEMENT_TYPE_ICE:
-        return has_fire ? &sprite_definitions[ELEMENT_TYPE_WATER] : &sprite_definitions[ELEMENT_TYPE_ICE];
+        return &sprite_definitions[ELEMENT_TYPE_ICE];
     case ELEMENT_TYPE_LIGHTNING:
         return &sprite_definitions[ELEMENT_TYPE_LIGHTNING];
     case ELEMENT_TYPE_WATER:
-        return &sprite_definitions[ELEMENT_TYPE_WATER];
+        return has_fire ? &sprite_definitions[ELEMENT_TYPE_ICE] : &sprite_definitions[ELEMENT_TYPE_WATER];
     case ELEMENT_TYPE_AIR:
         return &sprite_definitions[ELEMENT_TYPE_AIR];
     case ELEMENT_TYPE_LIFE:
-        return has_ice ? &life_steal_sprite : &sprite_definitions[ELEMENT_TYPE_LIFE];
+        return has_water ? &life_steal_sprite : &sprite_definitions[ELEMENT_TYPE_LIFE];
     default:
         return NULL;
     }

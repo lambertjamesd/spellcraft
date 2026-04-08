@@ -11,7 +11,7 @@ import mesh_export.cutscene.variable_layout
 
 mapping = {
     "fire_rune_level": 'SPELL_SYMBOL_FIRE',
-    "ice_rune_level": 'SPELL_SYMBOL_ICE',
+    "ice_rune_level": 'SPELL_SYMBOL_WATER',
     "earth_rune_level": 'SPELL_SYMBOL_EARTH',
     "air_rune_level": 'SPELL_SYMBOL_AIR',
     "life_rune_level": 'SPELL_SYMBOL_LIFE',

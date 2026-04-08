@@ -914,7 +914,7 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
     } else if (pressed.c_right) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_FIRE);
     } else if (pressed.c_left) {
-        live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_ICE);
+        live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_WATER);
     } else if (live_cast_has_pending_spell(&player->live_cast) && pressed.r) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_BREAK);
     }

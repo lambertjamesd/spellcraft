@@ -39,29 +39,29 @@ void spell_slot_init(
             break;
         case SPELL_SYMBOL_FIRE:
             if (rune.living) {
-                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_FIRE, rune.windy, rune.flaming, rune.icy);
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_FIRE, rune.windy, rune.flaming, rune.watery);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
             } else if (rune.windy) {
                 slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
-                wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(rune.icy ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE, rune.earthy));
+                wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(rune.watery ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE, rune.earthy));
             } else {
-                if (!rune.icy) {
+                if (!rune.watery) {
                     slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
                     elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_FIRE);
                 } else if (rune.earthy) {
                     slot->type = SPELL_EXEC_SLOT_TYPE_LIGHTNING_STORM;
                     lightning_storm_init(&slot->data.lightning_storm, input, event_options);
                 } else {
-                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, rune.earthy, rune.windy, rune.flaming, rune.icy);
+                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, rune.earthy, rune.windy, rune.flaming, rune.watery);
                     slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
                     element_emitter_init(&slot->data.element_emitter, input, event_options, def);
                 }
             }
             break;
-        case SPELL_SYMBOL_ICE:
+        case SPELL_SYMBOL_WATER:
             if (rune.living) {
-                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_ICE, rune.windy, rune.flaming, rune.icy);
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_WATER, rune.windy, rune.flaming, rune.watery);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
             } else if (rune.windy) {
@@ -75,16 +75,16 @@ void spell_slot_init(
                     }
                 } else {
                     slot->type = SPELL_EXEC_SLOT_TYPE_WIND;
-                    wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(rune.flaming ? ELEMENT_TYPE_NONE : ELEMENT_TYPE_ICE, rune.earthy));
+                    wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(rune.flaming ? ELEMENT_TYPE_ICE : ELEMENT_TYPE_WATER, rune.earthy));
                 }
             } else {
                 if (!rune.flaming) {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
-                    elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_ICE);
-                } else {
-                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_ICE, rune.earthy, rune.windy, rune.flaming, rune.icy);
+                    struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_WATER, rune.earthy, rune.windy, rune.flaming, rune.watery);
                     slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
                     element_emitter_init(&slot->data.element_emitter, input, event_options, def);
+                } else {
+                    slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
+                    elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_ICE);
                 }
             }
             break;
@@ -94,18 +94,18 @@ void spell_slot_init(
             break;
         case SPELL_SYMBOL_AIR:
             if (rune.living) {
-                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_AIR, rune.windy, rune.flaming, rune.icy);
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_AIR, rune.windy, rune.flaming, rune.watery);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
             } else {
                 if (rune.earthy) {
-                    if (rune.flaming && rune.icy) {
+                    if (rune.flaming && rune.watery) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_TELEPORT;
                         teleport_init(&slot->data.teleport, input, event_options, TELEPORT_DIR_UP_DOWN);
                     } else if (rune.flaming) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_JUMP;
                         jump_init(&slot->data.jump, input, event_options, &jump_def_fire);
-                    } else if (rune.icy) {
+                    } else if (rune.watery) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_STASIS;
                         stasis_init(&slot->data.stasis, input, event_options);
                     } else {
@@ -113,13 +113,13 @@ void spell_slot_init(
                         jump_init(&slot->data.jump, input, event_options, &jump_def_basic);
                     }
                 } else {
-                    if (rune.flaming && rune.icy) {
+                    if (rune.flaming && rune.watery) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_TELEPORT;
                         teleport_init(&slot->data.teleport, input, event_options, TELEPORT_DIR_SIDE);
                     } else if (rune.flaming) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
                         push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_FIRE);
-                    } else if (rune.icy) {
+                    } else if (rune.watery) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_PUSH;
                         push_init(&slot->data.push, input, event_options, ELEMENT_TYPE_ICE);
                     } else {
@@ -131,7 +131,7 @@ void spell_slot_init(
             break;
         case SPELL_SYMBOL_LIFE:
             if (rune.windy) {
-                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_LIFE, rune.windy, rune.flaming, rune.icy);
+                struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_LIFE, rune.windy, rune.flaming, rune.watery);
                 slot->type = SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE;
                 living_sprite_init(&slot->data.living_sprite, input, event_options, def);
             } else {

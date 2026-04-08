@@ -80,7 +80,7 @@ enum collectable_type {
 enum inventory_item_type {
     ITEM_TYPE_NONE,
     SPELL_SYMBOL_FIRE,
-    SPELL_SYMBOL_ICE,
+    SPELL_SYMBOL_WATER,
     SPELL_SYMBOL_EARTH,
     SPELL_SYMBOL_AIR,
     SPELL_SYMBOL_LIFE,
