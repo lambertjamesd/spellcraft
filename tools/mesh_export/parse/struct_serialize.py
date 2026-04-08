@@ -14,6 +14,7 @@ class SerializeContext():
         self._string_data: list[bytes] = []
         self._current_offset = 0
         self._did_write = False
+        self._obj_spawner_mapping: dict[str, int] = {}
 
     def get_string_offset(self, value: str):
         if value in self._strings:
@@ -41,7 +42,7 @@ class SerializeContext():
         result = self._current_offset
 
         self._line_meshes[value] = result
-        mesh_data = line_mesh_builder.build_line_mesh(value, _get_transform(value))
+        mesh_data = line_mesh_builder.build_line_mesh(value, coordinate_convert_invert @ value.matrix_world)
         self._string_data.append(mesh_data)
         self._current_offset += len(mesh_data)
 
@@ -65,6 +66,15 @@ class SerializeContext():
         file.write(struct.pack('>H', len(all_bytes)))
         file.write(all_bytes)
 
+    def add_object_mapping(self, obj_name: str, room_index: int, entity_index: int):
+        self._obj_spawner_mapping[obj_name] = (room_index << 16) | entity_index
+
+    def get_spawner_id(self, obj_name: str) -> int:
+        if obj_name in self._obj_spawner_mapping:
+            return self._obj_spawner_mapping[obj_name]
+        
+        return 0xFFFFFFFF
+
 
 fixed_sizes = {
     'float': 4,
@@ -86,6 +96,7 @@ fixed_sizes = {
     'boolean_variable': 2,
     'integer_variable': 2,
     'line_mesh_data_ref': 4,
+    'entity_spawner': 4,
 }
 
 fixed_alignments = {
@@ -108,6 +119,7 @@ fixed_alignments = {
     'boolean_variable': 2,
     'integer_variable': 2,
     'line_mesh_data_ref': 4,
+    'entity_spawner': 4,
 }
 
 struct_formats = {
@@ -146,7 +158,10 @@ def _is_string_type(definition):
 coordinate_convert = mathutils.Matrix.Rotation(math.pi * 0.5, 4, 'X')
 coordinate_convert_invert = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
 
-def get_value(obj: bpy.types.Object, key: str, default_value):
+def get_value(obj: bpy.types.Object, key: str | None, default_value):
+    if not key:
+        return default_value
+
     if key in obj:
         return obj[key]
     
@@ -240,7 +255,7 @@ def _write_padding(file, offset: int, definition, context: SerializeContext) -> 
     
     return new_offset
 
-def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext, field_name = None, offset: int = 0) -> int:
+def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext, field_name: str | None = None, offset: int = 0) -> int:
     offset = _write_padding(file, offset, definition, context)
 
     if _is_string_type(definition):
@@ -307,6 +322,10 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
         elif definition == 'line_mesh_data_ref':
             file.write(struct.pack(">I", context.get_line_mesh_offset(obj)))
             return offset + 4
+        elif definition == 'entity_spawner':
+            spawner_name = get_value(obj, field_name, '')
+            file.write(struct.pack(">I", context.get_spawner_id(spawner_name)))
+            return offset + 4
          
         raise Exception(f"unknown field type '{definition}' {field_name}")
     
@@ -341,7 +360,7 @@ def _obj_gather_types(definition, context: SerializeContext, current_offset: int
         raise Exception(f"{definition} is not a known size")
     
     if isinstance(definition, struct_parse.PointerType):
-        return current_offset + 4, 4
+        return current_offset + 4
     
     if isinstance(definition, struct_parse.StructureInfo):
         for child in definition.children:

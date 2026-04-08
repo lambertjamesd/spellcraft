@@ -5,6 +5,8 @@
 #include "../render/render_scene.h"
 #include "../time/time.h"
 #include "../entity/entity_spawner.h"
+#include "../scene/scene.h"
+#include "line_mesh.h"
 
 static struct dynamic_object_type crate_collision_type = {
     .minkowsi_sum = box_minkowski_sum,
@@ -18,10 +20,39 @@ static struct dynamic_object_type crate_collision_type = {
     .bounce = 0.0f,
 };
 
+void create_snap_to_path(struct crate* crate) {
+    if (crate->line_path_spawner == ENTITY_SPAWNER_UNLINKED) {
+        return;
+    }    
+
+    if (!crate->line_path_id) {
+        entity_id id = scene_lookup_entity(current_scene, crate->line_path_spawner);
+
+        if (!id) {
+            return;
+        }
+
+        crate->line_path_id = id;
+    }
+
+    line_mesh_t* mesh = line_mesh_lookup(crate->line_path_id); 
+
+    if (!mesh) {
+        crate->line_path_id = 0;
+        crate->current_edge = NO_EDGE;
+        return;
+    }
+
+    line_mesh_constrain_to_mesh(mesh, &crate->transform.position, &crate->dynamic_object.velocity, &crate->current_edge);
+}
+
 void crate_update(struct crate* crate) {
     if (crate->health.current_health <= 0.0f) {
         entity_despawn(crate->health.entity_id);
+        return;
     }
+
+    create_snap_to_path(crate);
 }
 
 void crate_init(struct crate* crate, struct crate_definition* definition, entity_id id) {
@@ -45,6 +76,10 @@ void crate_init(struct crate* crate, struct crate_definition* definition, entity
     collision_scene_add(&crate->dynamic_object);
 
     health_init(&crate->health, id, 10.0f);
+
+    crate->line_path_spawner = definition->line_mesh;
+    crate->line_path_id = 0;
+    crate->current_edge = NO_EDGE;
 }
 
 void crate_destroy(struct crate* crate) {

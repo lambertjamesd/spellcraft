@@ -691,6 +691,11 @@ def process_scene():
         if not has_overworld:
             grouped, shared_entity_index, shared_entities = read_room_objects(scene, scene_vars, context)
 
+        for room_index in range(len(room_collection.rooms)):
+            if room_index in grouped:
+                for entity_index, obj in enumerate(grouped[room_index]):
+                    context.add_object_mapping(obj.obj.name, room_index, entity_index)
+
         context.write_strings(file)
 
         write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file)

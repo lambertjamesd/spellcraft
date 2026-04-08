@@ -57,6 +57,7 @@ typedef uint32_t collectable_sub_type;
 typedef uint16_t room_id;
 
 typedef uint32_t entity_spawner;
+#define ENTITY_SPAWNER_UNLINKED 0xFFFFFFFF
 
 struct empty_definition {
     struct Vector3 position;

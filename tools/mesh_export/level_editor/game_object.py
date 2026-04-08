@@ -45,6 +45,21 @@ def _get_objects(self, context):
         result.append((game_object_def["name"], game_object_def["name"], game_object_def["description"]))
     return result
 
+def _get_entities(self, context):
+    object_definitions.load()
+    
+    result = []
+
+    print(context)
+
+    for obj in bpy.data.objects:
+        if 'type' in obj or (obj.data and 'type' in obj.data):
+            name = obj.name
+            result.append((name, name, name))
+
+
+    return result
+
 class NODE_OT_game_object_item_type(bpy.types.Operator):
     """Set custom property"""
     bl_idname = "node.game_object_item_type"
@@ -223,6 +238,29 @@ class NODE_OT_game_object_positions(bpy.types.Operator):
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
     
+class NODE_OT_game_object_spawners(bpy.types.Operator):
+    """Set custom property"""
+    bl_idname = "node.game_object_spawners"
+    bl_label = "Links entities to each other"
+    bl_description = "Sets an entity spawner into another"
+    bl_property = "selected_item"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    selected_item: bpy.props.EnumProperty(items=_get_entities)
+    name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        context.object[self.name] = self.selected_item
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
+    
 _enum_mapping = {
     'collectable_sub_type': NODE_OT_game_object_item_type.bl_idname,
     'enum inventory_item_type': NODE_OT_game_object_item_type.bl_idname,
@@ -232,11 +270,12 @@ _enum_mapping = {
     'boolean_variable': NODE_OT_game_object_boolean_variable.bl_idname,
     'integer_variable': NODE_OT_game_object_integer_variable.bl_idname,
     'struct Vector3': NODE_OT_game_object_positions.bl_idname,
+    'entity_spawner': NODE_OT_game_object_spawners.bl_idname,
 }
 
 global_attributes = [
-    struct_parse.StructureAttribute("condition", "string"),
-    struct_parse.StructureAttribute("on_despawn", "boolean_variable"),
+    struct_parse.StructureAttribute("condition", "string", None),
+    struct_parse.StructureAttribute("on_despawn", "boolean_variable", None),
 ]
 
 def _get_obj_def(current_object):
@@ -302,6 +341,8 @@ def _init_default_properties(target):
         elif attr.data_type == 'boolean_variable' or attr.data_type == 'integer_variable':
             target[attr.name] = 'disconnected'
         elif attr.data_type == 'struct Vector3':
+            target[attr.name] = ''
+        elif attr.data_type == 'entity_spawner':
             target[attr.name] = ''
         else:
             print('could not generate default for ' + attr.data_type)
@@ -602,6 +643,7 @@ _classes = [
     NODE_OT_game_object_add_loading_zone,
     NODE_OT_game_object_init,
     NODE_OT_game_object_positions,
+    NODE_OT_game_object_spawners,
     LoadingZonePanel,
     GameObjectPanel,
     EntryPointPanel,

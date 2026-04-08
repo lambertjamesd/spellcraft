@@ -161,7 +161,7 @@ bool check_scene_load() {
     return false;
 }
 
-#define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(1500)
+#define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(2500)
 
 void step_simulation() {
     if (update_has_layer(UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE)) {

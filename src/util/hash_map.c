@@ -5,7 +5,7 @@
 
 // a 32 bit prime number
 #define MAGIC_PRIME 2748002342
-#define MIN_CAPACITY    32
+#define MIN_CAPACITY    8
 
 static inline struct hash_map_entry* hash_map_next_entry(struct hash_map* hash_map, struct hash_map_entry* curr, struct hash_map_entry* end) {
     curr += 1;

@@ -13,6 +13,9 @@ struct crate {
     struct renderable renderable;
     struct dynamic_object dynamic_object;
     struct health health;
+    entity_spawner line_path_spawner;
+    entity_id line_path_id;
+    uint8_t current_edge;
 };
 
 void crate_init(struct crate* crate, struct crate_definition* definition, entity_id id);
