@@ -67,7 +67,6 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
 
     collision_scene_add(&treasure_chest->dynamic_object);
 
-
     treasure_chest->animation_set = animation_cache_load("rom:/meshes/objects/treasurechest.anim");
     treasure_chest->animations.open = animation_set_find_clip(treasure_chest->animation_set, "open");
     treasure_chest->animations.idle = animation_set_find_clip(treasure_chest->animation_set, "idle");
@@ -78,10 +77,10 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
     if (inventory_has_item(definition->item) && !inventory_is_upgrade_item(definition->item)) {
         animator_run_clip(&treasure_chest->animator, treasure_chest->animations.open, animation_clip_get_duration(treasure_chest->animations.open), false);
         treasure_chest->item_type = ITEM_TYPE_NONE;
-        interactable_init(&treasure_chest->interactable, id, INTERACT_TYPE_OPEN, treasure_chest_interact, treasure_chest);
+        interactable_init(&treasure_chest->interactable, id, INTERACT_TYPE_NONE, treasure_chest_interact, treasure_chest);
     } else {
         animator_run_clip(&treasure_chest->animator, treasure_chest->animations.idle, 0.0f, false);
-        interactable_init(&treasure_chest->interactable, id, INTERACT_TYPE_NONE, treasure_chest_interact, treasure_chest);
+        interactable_init(&treasure_chest->interactable, id, INTERACT_TYPE_OPEN, treasure_chest_interact, treasure_chest);
     }
 }
 
