@@ -243,7 +243,7 @@ void cutscene_builder_pause(struct cutscene_builder* builder, bool should_pause,
 
 void cutscene_builder_dialog(struct cutscene_builder* builder, const char* message) {
     cutscene_builder_message(builder, message);
-    cutscene_builder_call_function(builder, CUTSCENE_FN_SAY, 0, 0);
+    cutscene_builder_call_function(builder, CUTSCENE_FN_SAY, 1, 0);
 }
 
 void cutscene_builder_show_item(struct cutscene_builder* builder, enum inventory_item_type item, bool should_show) {

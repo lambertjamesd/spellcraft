@@ -116,7 +116,7 @@ void cutscene_step_unpause_init(cutscene_runner_context_t* context, int arg_coun
 
 // enter_menu
 
-void cutscene_step_enter_mnu(cutscene_runner_context_t* context, int arg_count) {
+void cutscene_step_enter_menu(cutscene_runner_context_t* context, int arg_count) {
     assert(arg_count == 0);
     update_pause_layers(UPDATE_LAYER_WORLD);
     current_game_mode = GAME_MODE_TRANSITION_TO_MENU;
@@ -435,8 +435,8 @@ static cutscene_step_fn_t function_steps[] = {
     [CUTSCENE_FN_ASK] = {.init = cutscene_say_ask_init, .step = cutscene_ask_step, .cancel = cutscene_say_ask_cancel}, // func ask(message: str): bool
     [CUTSCENE_FN_PAUSE] = {.init = cutscene_step_pause_init }, // func pause()
     [CUTSCENE_FN_UNPAUSE] = {.init = cutscene_step_unpause_init }, // func unpause()
-    [CUTSCENE_FN_ENTER_MENU] = { .init = cutscene_step_enter_mnu }, // func enter_menu()
-    [CUTSCENE_FN_EXIT_MENU] = { .init = cutscene_step_enter_mnu }, // func exit_menu()
+    [CUTSCENE_FN_ENTER_MENU] = { .init = cutscene_step_enter_menu }, // func enter_menu()
+    [CUTSCENE_FN_EXIT_MENU] = { .init = cutscene_step_exit_menu }, // func exit_menu()
     [CUTSCENE_FN_SHOW_ITEM] = {.init = cutscene_show_item_init, .step = cutscene_show_item_step, .cancel = cutscene_show_item_cancel }, // func show_item(item: i32, show: bool)
     [CUTSCENE_FN_DELAY] = {.init = cutscene_step_delay_init, .step = cutscene_step_delay_step }, // func delay(duration: float)
     [CUTSCENE_FN_INTERACT_NPC] = {.init = cutscene_interact_with_npc_init }, // func interact_with_npc(interaction: i32, npc: entity_id, target: entity_id)
