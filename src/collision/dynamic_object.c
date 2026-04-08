@@ -22,6 +22,7 @@ void dynamic_object_init(
     object->velocity = gZeroVec;
     object->time_scalar = 1.0f;
     object->has_gravity = 1;
+    object->skip_mesh_collision = 0;
     object->trigger_type = TRIGGER_TYPE_NONE;
     object->is_fixed = 0;
     object->is_pushed = 0;

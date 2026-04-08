@@ -5,6 +5,13 @@
 #define MAX_CONSTRAIN_ITERATIONS  4
 #define MAX_EDGE_ITERATIONS  4
 
+struct line_mesh_clamp_candidate {
+    vector3_t pos;
+    uint8_t edge_index;
+    float distance;
+    float lerp;
+};
+
 static hash_map_t line_mesh_mapping;
 
 void line_mesh_init(line_mesh_t* line_mesh, struct line_mesh_definition* definition, entity_id entity_id) {
@@ -44,6 +51,34 @@ line_mesh_t* line_mesh_lookup(entity_id id) {
     return hash_map_get(&line_mesh_mapping, id);
 }
 
+void line_mesh_calc_clamp_candidate(line_mesh_t* mesh, uint8_t edge_index, vector3_t* pos, struct line_mesh_clamp_candidate* candidate) {
+    line_mesh_edge_t* edge = &mesh->edges[edge_index];
+
+    vector3_t* a = &mesh->points[edge->a];
+    vector3_t* b = &mesh->points[edge->b];
+
+    vector3_t offset;
+    vector3Sub(a, b, &offset);
+
+    vector3_t pos_offset;
+    vector3Sub(pos, b, &pos_offset);
+
+    float offset_inv = 1.0f / vector3MagSqrd(&offset);
+
+    float lerp = vector3Dot(&pos_offset, &offset) * offset_inv;
+
+    if (lerp < 0.0) {
+        lerp = 0.0f;
+    } else if (lerp > 1.0f) {
+        lerp = 1.0f;
+    }
+    
+    candidate->edge_index = edge_index;
+    vector3AddScaled(b, &offset, lerp, &candidate->pos);
+    candidate->distance = vector3DistSqrd(&candidate->pos, pos);
+    candidate->lerp = lerp;
+}
+
 uint8_t line_mesh_find_edge_for_vertex(line_mesh_t* mesh, uint8_t point_index) {
     line_mesh_edge_t* end = mesh->edges + mesh->line_count;
     
@@ -56,44 +91,35 @@ uint8_t line_mesh_find_edge_for_vertex(line_mesh_t* mesh, uint8_t point_index) {
     return NO_EDGE;
 }
 
-uint8_t line_mesh_find_edge_at_vertex(line_mesh_t* mesh, uint8_t vertex_index, uint8_t edge_index, vector3_t* pos) {
-    float score = 0.0f;
+void line_mesh_find_candidates_at_vertex(line_mesh_t* mesh, uint8_t vertex_index, uint8_t edge_index, vector3_t* pos, struct line_mesh_clamp_candidate* candidate) {
     uint8_t prev = NO_EDGE;
     uint8_t start_edge = edge_index;
-    uint8_t result = NO_EDGE;
     
     vector3_t* from = &mesh->points[vertex_index];
     vector3_t pos_offset;
     vector3Sub(pos, from, &pos_offset);
     
     for (int iter = 0; iter < MAX_EDGE_ITERATIONS && (prev == NO_EDGE || edge_index != start_edge); ++iter) {
+        struct line_mesh_clamp_candidate check;
+        line_mesh_calc_clamp_candidate(mesh, edge_index, pos, &check);
+
+        if (candidate->edge_index == NO_EDGE || check.distance < candidate->distance) {
+            *candidate = check;
+        }
+
         line_mesh_edge_t* edge = &mesh->edges[edge_index];
 
-        vector3_t* to;
         uint8_t to_edge;
 
         if (edge->a == vertex_index) {
-            to = &mesh->points[edge->b];
-            to_edge = edge->next_edge_b;
-        } else {
-            to = &mesh->points[edge->a];
             to_edge = edge->next_edge_a;
+        } else {
+            to_edge = edge->next_edge_b;
         }
-
-        vector3_t edge_offset;
-        vector3Sub(to, from, &edge_offset);
-
-        float curr_score = vector3Dot(&edge_offset, &pos_offset);
         
-        if (curr_score > score) {
-            score = curr_score;
-            result = to_edge;
-        }
-
         prev = edge_index;
+        edge_index = to_edge;
     }
-
-    return result;
 }
 
 uint8_t line_mesh_find_closest_edge(line_mesh_t* mesh, vector3_t* pos) {
@@ -126,47 +152,37 @@ void line_mesh_constrain_to_mesh(line_mesh_t* mesh, vector3_t* pos, vector3_t* v
             return;
         }
     }
+    
+    line_mesh_edge_t* edge = &mesh->edges[search_edge];
 
-    for (int iter = 0; iter < MAX_CONSTRAIN_ITERATIONS; ++iter) {
-        line_mesh_edge_t* edge = &mesh->edges[search_edge];
+    vector3_t* a = &mesh->points[edge->a];
+    vector3_t* b = &mesh->points[edge->b];
 
-        vector3_t* a = &mesh->points[edge->a];
-        vector3_t* b = &mesh->points[edge->b];
+    struct line_mesh_clamp_candidate best_candidate = {.edge_index = NO_EDGE};
+    
+    if (vector3DistSqrd(a, pos) < vector3DistSqrd(b, pos)) {
+        line_mesh_find_candidates_at_vertex(mesh, edge->a, search_edge, pos, &best_candidate);
+    } else {
+        line_mesh_find_candidates_at_vertex(mesh, edge->b, search_edge, pos, &best_candidate);
+    }
+
+    *pos = best_candidate.pos;
+
+    *current_edge = best_candidate.edge_index;
+
+    if (!vel) {
+        return;
+    }
+
+    if (best_candidate.lerp == 0.0f || best_candidate.lerp == 1.0f) {
+        *vel = gZeroVec;
+    } else {
+        edge = &mesh->edges[best_candidate.edge_index];
+        a = &mesh->points[edge->a];
+        b = &mesh->points[edge->b];
 
         vector3_t offset;
         vector3Sub(a, b, &offset);
-
-        vector3_t pos_offset;
-        vector3Sub(pos, b, &pos_offset);
-
-        float offset_inv = 1.0f / vector3MagSqrd(&offset);
-
-        float lerp = vector3Dot(&pos_offset, &offset) * offset_inv;
-        vector3Scale(&offset, vel, offset_inv * vector3Dot(vel, &offset));
-
-        if (lerp >= 0.0f && lerp <= 1.0f){
-            vector3AddScaled(b, &offset, lerp, pos);
-            break;
-        }
-        
-        if (lerp > 1.0f) {
-            search_edge = line_mesh_find_edge_at_vertex(mesh, edge->a, search_edge, pos);
-
-            if (search_edge == NO_EDGE) {
-                vector3AddScaled(b, &offset, 1.0f, pos);
-                *vel = gZeroVec;
-                break;
-            }
-        } else {
-            search_edge = line_mesh_find_edge_at_vertex(mesh, edge->b, search_edge, pos);
-
-            if (search_edge == NO_EDGE) {
-                vector3AddScaled(b, &offset, 0.0f, pos);
-                *vel = gZeroVec;
-                break;
-            }
-        }
+        vector3Scale(&offset, vel, vector3Dot(&offset, vel) / vector3MagSqrd(&offset));
     }
-
-    *current_edge = search_edge;
 }

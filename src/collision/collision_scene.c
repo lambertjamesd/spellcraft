@@ -351,7 +351,7 @@ void collision_scene_recalc_bb(struct dynamic_object* object, vector3_t* prev_po
 #define MAX_SWEPT_ITERATIONS    5
 
 void collision_scene_collide_single(struct dynamic_object* object, struct Vector3* prev_pos) {
-    if (!object->collision_layers) {
+    if (!object->collision_layers || object->skip_mesh_collision) {
         return;
     }
 

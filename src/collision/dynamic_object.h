@@ -95,6 +95,7 @@ struct dynamic_object {
     uint16_t has_gravity: 1;
     uint16_t trigger_type: 2;
     uint16_t is_fixed: 1;
+    uint16_t skip_mesh_collision;
     uint16_t is_pushed: 2;
     uint16_t is_jumping: 2;
     uint16_t disable_friction: 2;

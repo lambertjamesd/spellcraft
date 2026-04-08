@@ -20,7 +20,7 @@ def _write_edge_vtx(result: io.BytesIO, vtx_to_edge: dict[int, list[int]], vtx_i
     next_index = edge_list.index(edge_index) + 1
     if next_index == len(edge_list):
         next_index = 0
-    result.write(struct.pack('>BB', vtx_index, next_index))
+    result.write(struct.pack('>BB', vtx_index, edge_list[next_index]))
 
 def build_line_mesh(input: bpy.types.Object, obj_transform: mathutils.Matrix) -> bytes:
     result = io.BytesIO()
