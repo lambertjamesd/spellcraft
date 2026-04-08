@@ -125,6 +125,7 @@ void player_run_clip_keep_translation(struct player* player, enum player_animati
     struct Transform before;
     armature_bone_transform(player->cutscene_actor.armature, 0, &before);
     player_run_clip(player, clip);
+    player->cutscene_actor.animator.blend_frames = 0;
     animator_update(&player->cutscene_actor.animator, player->cutscene_actor.armature, fixed_time_step);
     struct Transform after;
     armature_bone_transform(player->cutscene_actor.armature, 0, &after);
