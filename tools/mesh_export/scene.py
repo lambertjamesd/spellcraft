@@ -96,7 +96,7 @@ def get_object_type(obj: bpy.types.Object) -> str | None:
     
     return None
 
-def process_linked_object(obj: bpy.types.Object, mesh: bpy.types.Mesh, definitions: dict[str, struct_parse.StructureInfo], room_index: int):
+def process_linked_object(obj: bpy.types.Object, definitions: dict[str, struct_parse.StructureInfo], room_index: int):
     type = get_object_type(obj)
 
     if not type:
@@ -282,9 +282,6 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
     for obj in collection.all_objects:
         final_transform = base_transform @ obj.matrix_world
 
-        if obj.type != "MESH" or not isinstance(obj.data, bpy.types.Mesh):
-            continue
-
         obj_type = get_object_type(obj)
 
         if obj_type != None:
@@ -295,9 +292,12 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
                 if particles:
                     particle_list.append(particles)
             else:
-                entity = process_linked_object(obj, obj.data, definitions, 0)
+                entity = process_linked_object(obj, definitions, 0)
                 if entity:
                     entity_list.append(entity)
+            continue
+        
+        if obj.type != "MESH" or not isinstance(obj.data, bpy.types.Mesh):
             continue
 
         mesh: bpy.types.Mesh = obj.data
@@ -363,8 +363,6 @@ def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
             for var in scene_vars_parse_tree.scene_vars:
                 success = scene_vars_builder.add_variable(var) and success
 
-            # main function
-            function_names.append("")
             for fn in scene_vars_parse_tree.functions:
                 function_names.append(fn.name.value)
 
@@ -452,8 +450,8 @@ def find_scene_objects(scene, definitions, room_collection, base_transform):
                 continue
             if obj_type == 'static_particles':
                 scene.particles.append(ParticlesEntry(obj))
-            elif isinstance(obj.data, bpy.types.Mesh):
-                scene.objects.append(process_linked_object(obj, obj.data, definitions, room_collection.get_obj_room_index(obj)))
+            else:
+                scene.objects.append(process_linked_object(obj, definitions, room_collection.get_obj_room_index(obj)))
             continue
 
         if obj.type != "MESH" or not isinstance(obj.data, bpy.types.Mesh):
