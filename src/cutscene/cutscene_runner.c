@@ -277,27 +277,68 @@ void cutscene_runner_check_queue() {
     queue_entry->cutscene = NULL;
 }
 
+char* cutscene_copy_string(char* dest, const char* src) {
+    while ((*dest++ = *src++));
+    return dest;
+}
+
+char* cutscene_runner_compact_strings(int* retv, int retc, char* stack_start, char* stack_end) {
+    for (int iteration = 0; iteration < retc; iteration += 1) {
+        char* closest_result = stack_end;
+        int ret_index = 0;
+        
+        for (int i = 0; i < retc; i += 1) {
+            if (retv[i] >= (int)stack_start && retv[i] < (int)closest_result) {
+                closest_result = (char*)retv[i];
+                ret_index = i;
+            }
+        }
+
+        if (closest_result < stack_end) {
+            if (stack_start == (char*)retv[ret_index]) {
+                stack_start += strlen((char*)retv[ret_index]) + 1;
+            } else {
+                assert((int)stack_start < retv[ret_index]);
+                char* next_stack_start = cutscene_copy_string(stack_start, (char*)retv[ret_index]);
+                retv[ret_index] = (int)stack_start;
+                stack_start = next_stack_start;
+            }
+        }
+    }
+
+    return stack_start;
+}
+
 void cutscene_runner_pop_call(cutscene_active_entry_t* entry, cutscene_stack_entry_t* prev) {
-    int retc = prev->function->return_count;
+    int actual_retc = prev->function->return_count;
 
     int current_size = evaluation_context_stack_size(&entry->context.eval);
     int pop_count = current_size - prev->stack_position;
 
-    assert(pop_count >= retc);
+    assert(pop_count >= actual_retc);
 
-    int result[retc];
-    evaluation_context_popn(&entry->context.eval, result, retc);
+    int result[actual_retc];
+    evaluation_context_popn(&entry->context.eval, result, actual_retc);
     
-    pop_count -= retc;
+    pop_count -= actual_retc;
     if (pop_count >= 0) {
         evaluation_context_popn(&entry->context.eval, NULL, pop_count);
     }
 
-    for (int i = 0; i < retc && i < prev->retc; i += 1) {
+    int expected_retc = prev->retc;
+
+    entry->context.current_string_start = cutscene_runner_compact_strings(
+        result, 
+        expected_retc,
+        &entry->context.string_stack[prev->string_stack_position],
+        entry->context.current_string_start
+    );
+
+    for (int i = 0; i < actual_retc && i < expected_retc; i += 1) {
         evaluation_context_push(&entry->context.eval, result[i]);
     }
 
-    for (int i = retc; i < prev->retc; i += 1) {
+    for (int i = actual_retc; i < expected_retc; i += 1) {
         evaluation_context_push(&entry->context.eval, 0);
     }
 }

@@ -42,6 +42,11 @@ func template_strings(): str
     return "this is {value} a test";
 end
 
+func compact_strings(): str
+    print "another string";
+    return "this is a string";
+end
+
 func main()
     local local_a: i32 = 20 + 30;
     local local_b: i32 = local_a * local_a;
