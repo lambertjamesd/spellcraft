@@ -12,10 +12,7 @@ static struct dynamic_object_type sign_collider = {
 
 void sign_interact(struct interactable* interactable, entity_id from) {
     sign_t* sign = (sign_t*)interactable->data;
-    if (!sign->read_cutscene) {
-        return;
-    }
-    cutscene_runner_run(sign->read_cutscene, 0, NULL, NULL, sign->dynamic_object.entity_id);
+    cutscene_ref_run(&sign->read_cutscene, sign->dynamic_object.entity_id);
 }
 
 void sign_init(sign_t* sign, struct sign_definition* def, entity_id entity_id) {
@@ -40,11 +37,7 @@ void sign_init(sign_t* sign, struct sign_definition* def, entity_id entity_id) {
 
     collision_scene_add(&sign->dynamic_object);
 
-    if (def->message) {
-        sign->read_cutscene = cutscene_load(def->message);
-    } else {
-        sign->read_cutscene = NULL;
-    }
+    cutscene_ref_init(&sign->read_cutscene, def->message);
 }
 
 void sign_destroy(sign_t* sign) {
@@ -52,7 +45,7 @@ void sign_destroy(sign_t* sign) {
     renderable_destroy(&sign->renderable);
     render_scene_remove(&sign->renderable);
     collision_scene_remove(&sign->dynamic_object);
-    cutscene_free(sign->read_cutscene);
+    cutscene_ref_destroy(&sign->read_cutscene);
 }
 
 void sign_common_init() {

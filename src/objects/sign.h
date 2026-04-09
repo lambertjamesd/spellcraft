@@ -7,13 +7,14 @@
 #include "../entity/interactable.h"
 #include "../collision/dynamic_object.h"
 #include "../cutscene/cutscene.h"
+#include "../cutscene/cutscene_reference.h"
 
 struct sign {
     struct TransformSingleAxis transform;
     renderable_t renderable; 
     interactable_t interactable;
     dynamic_object_t dynamic_object;
-    struct cutscene* read_cutscene;
+    cutscene_ref_t read_cutscene;
 };
 
 typedef struct sign sign_t;
