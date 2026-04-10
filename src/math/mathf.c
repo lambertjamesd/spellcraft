@@ -16,6 +16,10 @@ float randomInRangef(float min, float max) {
     return randomInt() * (max - min) * (1.0f / MAX_INT_VALUE) + min;
 }
 
+bool randomChance(float probability) {
+    return randomInt() < (int)(probability * MAX_INT_VALUE);
+}
+
 float fabsf(float input) {
     if (input < 0) {
         return -input;

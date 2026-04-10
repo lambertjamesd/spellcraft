@@ -10,13 +10,34 @@
 #include "../entity/health.h"
 #include "../render/animator.h"
 
-struct biter_animations {
-    struct animation_clip* idle;
-    struct animation_clip* run;
-    struct animation_clip* attack;
+enum biter_animation {
+    BITER_ANIMATION_IDLE,
+    BITER_ANIMATION_SEE,
+    BITER_ANIMATION_WALK,
+    BITER_ANIMATION_REST,
+    BITER_ANIMATION_TRIP,
+    BITER_ANIMATION_CONFUSED,
+    BITER_ANIMATION_BITE,
+    BITER_ANIMATION_DIE,
+
+    BITER_ANIMATION_COUNT,
 };
 
+enum biter_state {
+    BITER_STATE_IDLE,
+    BITER_STATE_SEE,
+    BITER_STATE_CHASE,
+    BITER_STATE_REST,
+    BITER_STATE_TRIP,
+    BITER_STATE_LOSE_PLAYER,
+    BITER_STATE_ATTACK,
+    BITER_STATE_DIE,
+};
+
+typedef enum biter_state biter_state_t;
+
 struct biter {
+    biter_state_t current_state;
     struct TransformSingleAxis transform;
     struct renderable renderable;
     struct dynamic_object dynamic_object;
@@ -24,10 +45,11 @@ struct biter {
     struct health health;
 
     struct animation_set* animation_set;
-    struct biter_animations animations;
+    animation_clip_t* animations[BITER_ANIMATION_COUNT];
     struct animator animator;
 
     entity_id current_target;
+    float rest_timer;
 };
 
 void biter_init(struct biter* biter, struct biter_definition* definition, entity_id id);

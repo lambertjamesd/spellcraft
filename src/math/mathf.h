@@ -14,9 +14,12 @@
 
 #define DEG_TO_RAD(angle)   ((angle) * (PI_F / 180.0f))
 
+#include <stdbool.h>
+
 int randomInt();
 int randomInRange(int min, int maxPlusOne);
 float randomInRangef(float min, float max);
+bool randomChance(float probability);
 
 float mathfLerp(float from, float to, float t);
 float mathfInvLerp(float from, float to, float value);
