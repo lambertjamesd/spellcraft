@@ -71,9 +71,6 @@ Have earth + life be recast
 
 "basketball"
 
-Performance metric before kd tree
-56ms when touching mid room vines
-
 ## TODO
 
 - include material/image dependencies in asset dependencies
@@ -82,7 +79,9 @@ Performance metric before kd tree
 - load on background thread
 - particle rendering in mesh
 - camera logic
--  do a better job with camera tracking logic
+- do a better job with camera tracking logic
+- assert(found_index != -1); inside of collision_scene.c was triggered
+- speed up plugin loading
 
 ## Scripting TODO
 
