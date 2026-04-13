@@ -19,7 +19,8 @@ enum spell_cast_state {
 
 enum spell_animation {
     SPELL_ANIMATION_NONE,
-    SPELL_ANIMATION_SWING,
+    SPELL_ANIMATION_SWING_0,
+    SPELL_ANIMATION_SWING_1,
     SPELL_ANIMATION_SPIN,
     SPELL_ANIMATION_CAST_UP,
 };
@@ -29,6 +30,7 @@ union spell_source_flags {
         uint16_t cast_state: 2;
         uint16_t has_animator: 1;
         uint16_t is_animating: 1;
+        uint16_t can_recast: 1;
     };
     uint16_t all;
 };

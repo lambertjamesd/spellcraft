@@ -448,8 +448,11 @@ void player_check_for_animation_request(struct player* player, struct spell_data
 
         enum player_animation to_play = PLAYER_ANIMATION_COUNT;
         switch (source->request_animation) {
-            case SPELL_ANIMATION_SWING:
-                to_play = PLAYER_ANIMATION_SWING_ATTACK;
+            case SPELL_ANIMATION_SWING_0:
+                to_play = PLAYER_ANIMATION_SWING_ATTACK_0;
+                break;
+            case SPELL_ANIMATION_SWING_1:
+                to_play = PLAYER_ANIMATION_SWING_ATTACK_1;
                 break;
             case SPELL_ANIMATION_SPIN:
                 to_play = PLAYER_ANIMATION_SPIN_ATTACK;
@@ -476,6 +479,10 @@ bool player_check_for_casting(struct player* player) {
     struct spell_data_source* source = &player->player_spell_sources[4];
     
     if (source->flags.is_animating) {
+        if (pressed.a && spell_exec_has_recast(&player->spell_exec, 4)) {
+            spell_exec_start(&player->spell_exec, 4, live_cast_use_spell(&player->live_cast), source);
+            player_check_for_animation_request(player, source);
+        }
         return true;
     } else {
         player_check_for_animation_request(player, source);
@@ -896,8 +903,10 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
         if (!animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
             source->flags.is_animating = 0;
             source->flags.cast_state = SPELL_CAST_STATE_INACTIVE;
+            source->flags.can_recast = false;
         } else {
             source->flags.cast_state = player->cutscene_actor.animator.events.attack ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+            source->flags.can_recast = player->cutscene_actor.animator.events.can_recast;
         }
     } else {
         source->direction = castDirection;
@@ -1069,7 +1078,8 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_KNOCKBACK_FLY] = "knockback_fly",
     [PLAYER_ANIMATION_KNOCKBACK_LAND] = "knockback_land",
 
-    [PLAYER_ANIMATION_SWING_ATTACK] = "swing_attack_0",
+    [PLAYER_ANIMATION_SWING_ATTACK_0] = "swing_attack_0",
+    [PLAYER_ANIMATION_SWING_ATTACK_1] = "swing_attack_1",
     [PLAYER_ANIMATION_SPIN_ATTACK] = "spin_attack",
     [PLAYER_ANIMATION_CAST_UP] = "cast_up",
     

@@ -34,6 +34,7 @@ struct elemental_sword {
 
     uint16_t needs_mana_check: 1;
     uint16_t has_animation: 1;
+    uint16_t attack_parity: 1;
     
     float power_ratio;
     float animation_time;
@@ -43,5 +44,6 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
 void elemental_sword_destroy(struct elemental_sword* elemental_sword);
 
 bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spell_event_listener* event_listener, struct spell_sources* spell_sources);
+void elemental_sword_recast(struct elemental_sword* elemental_sword);
 
 #endif

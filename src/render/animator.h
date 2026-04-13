@@ -10,7 +10,8 @@
 
 union animator_events {
     struct {
-        uint16_t reserved: 14;
+        uint16_t reserved: 13;
+        uint16_t can_recast: 1;
         uint16_t step: 1;
         uint16_t attack: 1;
     };

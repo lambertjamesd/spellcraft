@@ -333,9 +333,11 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
 
 void spell_slot_recast(struct spell_exec* exec, int spell_slot_index) {
     struct spell_exec_slot* slot = &exec->slots[spell_slot_index];
+    slot->has_recast = false;
 
     switch (slot->type) {
         case SPELL_EXEC_SLOT_TYPE_SWORD:
+            elemental_sword_recast(&slot->data.sword);
             break;
         default:
             assert(false);
@@ -473,6 +475,10 @@ void spell_exec_destroy(struct spell_exec* exec) {
         }
     }
     update_remove(exec);
+}
+
+bool spell_exec_has_recast(struct spell_exec* exec, int button_index) {
+    return exec->pending_recast[button_index][0] != NO_PENDING_RECAST;
 }
 
 void spell_exec_recast(struct spell_exec* exec, int button_index, struct spell_data_source* data_source) {

@@ -15,7 +15,7 @@ static struct elemental_sword_definition swing_definitions[] = {
             .type = DAMAGE_TYPE_FIRE | DAMAGE_TYPE_KNOCKBACK,
             .knockback_strength = 2.0f,
         },
-        .animation = SPELL_ANIMATION_SWING,
+        .animation = SPELL_ANIMATION_SWING_0,
         .sword_length = 1.0f,
         .mana_cost = 1.0f,
 
@@ -30,7 +30,7 @@ static struct elemental_sword_definition swing_definitions[] = {
             .type = DAMAGE_TYPE_ICE | DAMAGE_TYPE_KNOCKBACK,
             .knockback_strength = 2.0f,
         },
-        .animation = SPELL_ANIMATION_SWING,
+        .animation = SPELL_ANIMATION_SWING_0,
         .sword_length = 1.0f,
         .mana_cost = 1.0f,
 
@@ -142,6 +142,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
     damaged_set_reset(&elemental_sword->damaged_set);
 
     elemental_sword->needs_mana_check = 1;
+    elemental_sword->attack_parity = 0;
     elemental_sword->power_ratio = 0.0f;
     elemental_sword->animation_time = 0.0f;
 }
@@ -170,6 +171,10 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
         is_attacking = elemental_sword->power_ratio > 0.0f && elemental_sword->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE;
         pos = elemental_sword->data_source->position;
         dir = elemental_sword->data_source->direction;
+
+        if (elemental_sword->data_source->flags.can_recast) {
+            spell_event_listener_add(event_listener, SPELL_EVENT_ADD_RECAST, NULL, 0.0f);
+        }
     } else {
         is_active = elemental_sword->animation_time < elemental_sword->definition->free_swing_time;
         is_attacking = true;
@@ -206,4 +211,9 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
     }
 
     return is_active;
+}
+
+void elemental_sword_recast(struct elemental_sword* elemental_sword) {
+    elemental_sword->attack_parity = !elemental_sword->attack_parity;
+    elemental_sword->has_animation = spell_data_source_request_animation(elemental_sword->data_source, elemental_sword->definition->animation + elemental_sword->attack_parity);
 }

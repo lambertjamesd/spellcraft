@@ -260,7 +260,8 @@ class ArmatureBone:
     
 event_names = [
     "event_attack",
-    "event_step"
+    "event_step",
+    "event_can_recast"
 ]
 
 class ArmatureData:

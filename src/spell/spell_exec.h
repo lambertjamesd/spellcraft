@@ -5,6 +5,8 @@
 #define MAX_SOURCE_MODIFIERS    32
 #define MAX_BUTTON_INDEX        8    
 
+#include <stdbool.h>
+
 #include "spell.h"
 
 #include "../math/vector3.h"
@@ -100,6 +102,7 @@ struct spell_exec {
 
 void spell_exec_init(struct spell_exec* exec);
 void spell_exec_destroy(struct spell_exec* exec);
+bool spell_exec_has_recast(struct spell_exec* exec, int button_index);
 void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* spell, struct spell_data_source* data_source);
 void spell_exec_update(struct spell_exec* exec);
 void spell_exec_stop(struct spell_exec* exec, int button_index);
