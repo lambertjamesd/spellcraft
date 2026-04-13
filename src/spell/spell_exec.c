@@ -88,10 +88,6 @@ void spell_slot_init(
                 }
             }
             break;
-        case SPELL_SYMBOL_BREAK:
-            slot->type = SPELL_EXEC_SLOT_TYPE_RECAST;
-            recast_init(&slot->data.recast, input, event_options, RECAST_MODE_RECAST);
-            break;
         case SPELL_SYMBOL_AIR:
             if (rune.living) {
                 struct living_sprite_definition* def = living_sprite_find_def(ELEMENT_TYPE_AIR, rune.windy, rune.flaming, rune.watery);
@@ -148,12 +144,61 @@ void spell_slot_init(
     slot->button_index = button_index;
     slot->for_spell = *for_spell;
     slot->rune_index = rune_index;
+    slot->has_recast = false;
+}
+
+void spell_slot_remove_recast(struct spell_exec* exec, int slot_index) {
+    struct spell_exec_slot* slot = &exec->slots[slot_index];
+
+    if (!slot->has_recast) {
+        return;
+    }
+
+    int remove_index = -1;
+    int current_length = 0;
+
+    uint8_t* recast = exec->pending_recast[slot->button_index];
+
+    for (; recast[current_length] != NO_PENDING_RECAST && current_length < MAX_PENDING_RECASTS; current_length += 1) {
+        if (recast[current_length] == slot_index) {
+            remove_index = current_length;
+        }
+
+        current_length += 1;
+    }
+
+    assert(remove_index != -1);
+    slot->has_recast = false;
+
+    if (remove_index != current_length - 1) {
+        recast[remove_index] = recast[current_length - 1];
+    }
+
+    recast[current_length - 1] = NO_PENDING_RECAST;
+}
+
+void spell_slot_add_recast(struct spell_exec* exec, int slot_index) {
+    struct spell_exec_slot* slot = &exec->slots[slot_index];
+
+    if (slot->has_recast) {
+        return;
+    }
+
+    uint8_t* recast = exec->pending_recast[slot->button_index];
+
+    for (int i = 0; i < MAX_PENDING_RECASTS; i += 1) {
+        if (recast[i] == NO_PENDING_RECAST) {
+            slot->has_recast = true;
+            recast[i] = slot_index;
+            return;
+        }
+    }
+
+    return;
 }
 
 void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
     struct spell_exec_slot* slot = &exec->slots[slot_index];
-
-    struct recast* remove_recast = NULL;
 
     switch (slot->type) {
         case SPELL_EXEC_SLOT_TYPE_PROJECTILE:
@@ -164,10 +209,6 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
             element_emitter_destroy(&slot->data.element_emitter);
-            break;
-        case SPELL_EXEC_SLOT_TYPE_RECAST:
-            recast_destroy(&slot->data.recast);
-            remove_recast = &slot->data.recast;
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             push_destroy(&slot->data.push);
@@ -206,24 +247,7 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
             break;
     }
 
-    if (remove_recast) {
-        struct recast* prev = NULL;
-        struct recast* curr = exec->pending_recast[slot->button_index];
-
-        while (curr) {
-            if (curr == remove_recast) {
-                if (prev) {
-                    prev->next_recast = curr->next_recast;
-                } else {
-                    exec->pending_recast[slot->button_index] = curr->next_recast;
-                }
-                break;
-            }
-
-            prev = curr;
-            curr = curr->next_recast;
-        }
-    }
+    spell_slot_remove_recast(exec, slot_index);
 
     exec->ids[slot_index] = 0;
 }
@@ -245,9 +269,6 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER:
             isActive = element_emitter_update(&slot->data.element_emitter, &event_listener, &exec->spell_sources);
-            break;
-        case SPELL_EXEC_SLOT_TYPE_RECAST:
-            isActive = recast_update(&slot->data.recast, &event_listener, &exec->spell_sources);
             break;
         case SPELL_EXEC_SLOT_TYPE_PUSH:
             isActive = push_update(&slot->data.push, &event_listener, &exec->spell_sources);
@@ -300,10 +321,25 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             if (event_start < spell_get_length(&slot->for_spell)) {
                 spell_exec_step(exec, slot->button_index, &slot->for_spell, event_start, event->data_source, event->burst_mana);
             }
+        } else if (event->type == SPELL_EVENT_ADD_RECAST) {
+            spell_slot_add_recast(exec, spell_slot_index);
+        } else if (event->type == SPELL_EVENT_REMOVE_RECAST) {
+            spell_slot_remove_recast(exec, spell_slot_index);
         }
     }
 
     spell_event_listener_destroy(&event_listener);
+}
+
+void spell_slot_recast(struct spell_exec* exec, int spell_slot_index) {
+    struct spell_exec_slot* slot = &exec->slots[spell_slot_index];
+
+    switch (slot->type) {
+        case SPELL_EXEC_SLOT_TYPE_SWORD:
+            break;
+        default:
+            assert(false);
+    }
 }
 
 int spell_exec_find_slot(struct spell_exec* exec) {
@@ -418,11 +454,6 @@ void spell_exec_step(struct spell_exec* exec, int button_index, struct spell* sp
         spell,
         col
     );
-
-    if (slot->type == SPELL_EXEC_SLOT_TYPE_RECAST) {
-        slot->data.recast.next_recast = exec->pending_recast[button_index];
-        exec->pending_recast[button_index] = &slot->data.recast;
-    }
 }
 
 void spell_exec_init(struct spell_exec* exec) {
@@ -432,7 +463,7 @@ void spell_exec_init(struct spell_exec* exec) {
     memset(&exec->ids, 0, sizeof(exec->ids));
     memset(&exec->modifier_ids, 0, sizeof(exec->modifier_ids));
     update_add(exec, (update_callback)spell_exec_update, UPDATE_PRIORITY_SPELLS, UPDATE_LAYER_WORLD);
-    memset(exec->pending_recast, 0, sizeof(exec->pending_recast));
+    memset(exec->pending_recast, NO_PENDING_RECAST, sizeof(exec->pending_recast));
 }
 
 void spell_exec_destroy(struct spell_exec* exec) {
@@ -445,31 +476,27 @@ void spell_exec_destroy(struct spell_exec* exec) {
 }
 
 void spell_exec_recast(struct spell_exec* exec, int button_index, struct spell_data_source* data_source) {
-    struct recast* recast = exec->pending_recast[button_index];
+    uint8_t* recast = exec->pending_recast[button_index];
     
     int count = 0;
 
-    while (recast) {
+    while (count < MAX_PENDING_RECASTS && recast[count] != NO_PENDING_RECAST) {
         count += 1;
-        recast = recast->next_recast;
     }
 
     recast = exec->pending_recast[button_index];
 
     float burst_amount = mana_pool_request_charged_mana(&exec->spell_sources.mana_pool) / count;
 
-    while (recast) {
-        recast_recast(recast, data_source, burst_amount);     
-        struct recast* next = recast->next_recast;
-        recast->next_recast = 0;
-        recast = next;
+    
+    for (count = 0; count < MAX_PENDING_RECASTS && recast[count] != NO_PENDING_RECAST; count += 1) {
+        spell_slot_recast(exec, recast[count]);
+        recast[count] = NO_PENDING_RECAST;
     }
-
-    exec->pending_recast[button_index] = 0;
 }
 
 void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* spell, struct spell_data_source* data_source) {
-    if (exec->pending_recast[button_index]) {
+    if (exec->pending_recast[button_index][0] != NO_PENDING_RECAST) {
         spell_exec_recast(exec, button_index, data_source);
         return;
     }
@@ -483,7 +510,7 @@ void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* s
 
 bool spell_exec_charge(struct spell_exec* exec) {
     for (int i = 0; i < MAX_BUTTON_INDEX; i += 1) {
-        if (exec->pending_recast[i]) {
+        if (exec->pending_recast[i][0] != NO_PENDING_RECAST) {
             mana_pool_charge(&exec->spell_sources.mana_pool, 10.0f);
             return true;
         }

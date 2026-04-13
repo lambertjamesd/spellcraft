@@ -8,6 +8,8 @@
 
 enum spell_event_type {
     SPELL_EVENT_PRIMARY,
+    SPELL_EVENT_ADD_RECAST,
+    SPELL_EVENT_REMOVE_RECAST,
 };
 
 struct spell_event {

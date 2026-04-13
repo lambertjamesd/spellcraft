@@ -32,7 +32,6 @@ union spell_exec_data {
     struct projectile projectile;
     struct shield shield;
     struct element_emitter element_emitter;
-    struct recast recast;
     struct push push;
     struct jump jump;
     struct living_sprite living_sprite;
@@ -53,7 +52,6 @@ enum spell_exec_slot_type {
     SPELL_EXEC_SLOT_TYPE_SHEILD,
     SPELL_EXEC_SLOT_TYPE_PUSH,
     SPELL_EXEC_SLOT_TYPE_JUMP,
-    SPELL_EXEC_SLOT_TYPE_RECAST,
     SPELL_EXEC_SLOT_TYPE_LIVING_SPRITE,
     SPELL_EXEC_SLOT_TYPE_HEAL,
     SPELL_EXEC_SLOT_TYPE_TELEPORT,
@@ -70,6 +68,7 @@ struct spell_exec_slot {
     struct spell for_spell;
     uint8_t rune_index;
     uint8_t button_index;
+    uint8_t has_recast;
     enum spell_exec_slot_type type;
     union spell_exec_data data;
 };
@@ -80,6 +79,11 @@ struct spell_source_modifier {
     union spell_source_flags flag_mask;
 };
 
+#define MAX_PENDING_RECASTS     8
+#define NO_PENDING_RECAST       0xFF
+
+typedef uint8_t recast_entry_t[MAX_PENDING_RECASTS];
+
 struct spell_exec {
     // 0 when the cooresponding slot isn't active
     spell_slot_id ids[MAX_SPELL_EXECUTORS];
@@ -87,7 +91,7 @@ struct spell_exec {
     struct spell_exec_slot slots[MAX_SPELL_EXECUTORS];
     struct spell_source_modifier modifiers[MAX_SOURCE_MODIFIERS];
     struct spell_sources spell_sources;
-    struct recast* pending_recast[MAX_BUTTON_INDEX];
+    recast_entry_t pending_recast[MAX_BUTTON_INDEX];
     uint8_t next_slot;
     uint8_t next_modifier;
     spell_slot_id next_id;
