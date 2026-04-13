@@ -3,11 +3,13 @@ import bpy
 from bpy.path import abspath
 import os.path
 import json
+import time
 from ..parse.struct_parse import find_structs, find_enums
 from ..entities import entry_point
 from ..cutscene import parser
 
 int_types = {'i8', 'i16', 'i32'}
+entry_cache_location = 'build/assets/scenes/entry_cache.json'
 
 class Definitions:
     def __init__(self):
@@ -64,36 +66,60 @@ class Definitions:
 
         return result
 
-    def _search_entry_points(self, start_path):
+    def _search_entry_points(self, start_path: str, repo_path: str):
         siblings = self._search_blend_files(start_path)
 
-        result = []
+        result: list[str] = []
         base_path = abspath('//')
 
+        cache: dict[str, dict[str, list[str] | float]] = {}
+
+        try:
+            with open(os.path.join(repo_path, entry_cache_location), 'r') as cache_file:
+                cache = json.load(cache_file)
+        except:
+            pass
+
         for sibling in siblings:
-            relative_path = os.path.relpath(os.path.join(base_path, sibling), start_path).replace('.blend', '.scene').replace('\\', '/')
+            full_path = os.path.join(base_path, sibling)
+            relative_path = os.path.relpath(full_path, start_path).replace('.blend', '.scene').replace('\\', '/')
+
+            stat_result = os.stat(full_path)
+            modified = stat_result.st_mtime
 
             if 'repair/' in relative_path:
                 result.append(f"rom:/{relative_path}".replace('.scene', '.repair'))
                 continue
 
-            try:
-                with bpy.data.libraries.load("//" + sibling, link=True) as (data_from, data_to):
-                    for obj_name in data_from.objects:
-                        if not obj_name.startswith(entry_point.ENTRY_PREFIX):
-                            continue
-                        
-                        result.append(f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}")
-            except:
-                print(f"failed to load file {sibling}")
+            if relative_path in cache and cache[relative_path]['modified'] == modified:
+                result += cache[relative_path]['entries']
+            else:
+                try:
+                    entries: list[str] = []
+                    with bpy.data.libraries.load("//" + sibling, link=True) as (data_from, data_to):
+                        for obj_name in data_from.objects:
+                            if not obj_name.startswith(entry_point.ENTRY_PREFIX):
+                                continue
+                            
+                            entry = f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}"
+                            result.append(entry)
+                            entries.append(entry)
+
+                    cache[relative_path] = {'entries': entries, 'modified': modified}
+                except:
+                    print(f"failed to load file {sibling}")
+                    del cache[relative_path]
 
         relative_path = os.path.relpath(bpy.data.filepath, start_path).replace('.blend', '.scene')
 
         for obj_name in bpy.data.objects.keys():
             if not obj_name.startswith(entry_point.ENTRY_PREFIX):
                 continue
-            result.append(f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}")
+            entry = f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}"
+            result.append(entry)
 
+        with open(os.path.join(repo_path, entry_cache_location), 'w') as cache_file:
+            json.dump(cache, cache_file, indent=4)
 
         result.sort()
 
@@ -161,6 +187,9 @@ class Definitions:
             return
 
         self._objects_for_library_path = {}
+
+        print("loading game objects")
+        start_time = time.time()
         
         with open(os.path.join(repo_path, "assets/game_objects.json"), "r") as file:
             self.objects = json.load(file)
@@ -178,7 +207,7 @@ class Definitions:
             self._objects_for_library_path[obj['type']] = obj
 
 
-        print("Found repo path at " + str(repo_path))
+        print(f"Found repo path at {repo_path} t={time.time() - start_time}")
 
         scene_config_path = os.path.join(repo_path, 'src/scene/scene_definition.h')
 
@@ -190,18 +219,18 @@ class Definitions:
             self.definitions = find_structs(file_contents)
             self.enums = find_enums(file_contents)
 
-            print("Found definitions " , self.definitions.keys())
+            print(f"Found definitions {str(self.definitions.keys)} t={time.time() - start_time}")
 
         self.materials = list(filter(lambda x: x.endswith('.mat.blend'), self._search_blend_files(os.path.join(repo_path, 'assets/materials'))))
 
-        print("searching for scripts")
+        print(f"searching for scripts t={time.time() - start_time}")
         self.scripts = self._search_scripts(os.path.join(repo_path, 'assets'))
-        print("searching for entry points")
-        self.entry_points = self._search_entry_points(os.path.join(repo_path, 'assets'))
-        print("loading variables")
+        print(f"searching for entry points t={time.time() - start_time}")
+        self.entry_points = self._search_entry_points(os.path.join(repo_path, 'assets'), repo_path)
+        print(f"loading variables t={time.time() - start_time}")
         fn_scripts = self._load_variables(repo_path)
         self.scripts.extend(fn_scripts)
-        print("finished")
+        print(f"finished t={time.time() - start_time}")
         
 
 
