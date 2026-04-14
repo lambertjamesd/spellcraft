@@ -66,7 +66,7 @@ EXPORT_SOURCE := $(shell find tools/mesh_export/ -type f -name '*.py' | sort)
 # t3d_meshes
 ###
 
-# BLENDER_4 := /home/james/Blender/blender-4.0.2-linux-x64/blender
+# BLENDER_4 := /home/james/Blender/blender-4.5.8-linux-x64/blender
 
 MESH_SOURCES := $(shell find assets/meshes -type f -name '*.blend' | sort)
 
