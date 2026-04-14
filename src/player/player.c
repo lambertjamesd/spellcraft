@@ -1022,7 +1022,12 @@ void player_update(struct player* player) {
         return;
     }
 
-    struct contact* ground = dynamic_object_get_ground(&player->cutscene_actor.collider);
+    struct contact ground_contact;
+    struct contact* ground = NULL;
+    
+    if (dynamic_object_get_combined_ground(&player->cutscene_actor.collider, &ground_contact)) {
+        ground = &ground_contact;
+    }
     
     player_update_state(player, ground);
 

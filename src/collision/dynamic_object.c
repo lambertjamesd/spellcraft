@@ -215,6 +215,36 @@ struct contact* dynamic_object_get_ground(struct dynamic_object* object) {
     return result;
 }
 
+bool dynamic_object_get_combined_ground(struct dynamic_object* object, struct contact* result) {
+    int contact_count = 0;
+    struct contact* contact = object->active_contacts;
+
+    result->normal = gZeroVec;
+    result->next = NULL;
+
+    while (contact) {
+        if (contact->normal.y > 0.001f) {
+            contact_count += 1;
+            vector3Add(&result->normal, &contact->normal, &result->normal);
+            result->surface_type = contact->surface_type;
+            result->collision_layers = contact->collision_layers;
+            result->point = contact->point;
+            result->other_object = contact->other_object;
+        }
+
+        contact = contact->next;
+    }
+
+    if (contact_count == 0 && object->shadow_contact && object->shadow_contact->point.y + SHADOW_AS_GROUND_TOLERNACE > object->bounding_box.min.y) {
+        *result = *object->shadow_contact;
+        return true;
+    }
+
+    vector3Normalize(&result->normal, &result->normal);
+
+    return contact_count > 0;
+}
+
 void dynamic_object_set_scale(struct dynamic_object* object, float scale) {
     object->scale = scale;
     dynamic_object_recalc_bb(object);

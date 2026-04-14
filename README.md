@@ -81,6 +81,7 @@ Have earth + life be recast
 
 ## TODO
 
+- implement sliding state
 - include material/image dependencies in asset dependencies
 - create fixed point camera regions
 - direct camera control
@@ -89,17 +90,15 @@ Have earth + life be recast
 - camera logic
 - do a better job with camera tracking logic
 - assert(found_index != -1); inside of collision_scene.c was triggered
-- speed up plugin loading
 
 ## Scripting TODO
 
 - function imports
 
+
 ## Fire trails todo
 
-* Add a combat room after the fire wind puzzle
-* Add visual cues to enemies noticing player
-* Change cube puzzles to use navmesh
+* Make it look better
 
 ## Setup the blender plugin
 
