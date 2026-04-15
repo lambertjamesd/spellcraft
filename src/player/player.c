@@ -30,7 +30,8 @@
 #define SHADOW_AS_GROUND_DISTANCE   0.15f
 
 #define CARRY_GRAB_TIME   (11.0f / 30.0f)
-#define CARRY_DROP_TIME   (11.0f / 30.0f)
+#define CARRY_DROP_TIME   (5.0f / 30.0f)
+#define CARRY_DROP_SPEED    3.2f
 
 #define INTERACT_Y_LOWER        -0.75f
 #define INTERACT_Y_UPEER        1.25f
@@ -82,6 +83,8 @@ static struct climb_up_data climb_up_data[CLIMB_UP_COUNT] = {
 #define LOOK_DEADZONE       0.03f
 #define MOVE_DEADZONE       0.1f
 
+#define PLAYER_RADIUS       0.25f
+
 static struct cutscene_actor_def player_actor_def = {
     .eye_level = 1.26273f,
     .move_speed = PLAYER_WALK_ANIM_SPEED,
@@ -91,7 +94,7 @@ static struct cutscene_actor_def player_actor_def = {
     .collision_layers = COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_LIGHTING_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER,
     .collision_group = COLLISION_GROUP_PLAYER,
     .collider = {
-        CAPSULE_COLLIDER(0.25f, 0.5f),
+        CAPSULE_COLLIDER(PLAYER_RADIUS, 0.5f),
         .center = {0.0f, 0.75f, 0.0f},
         .max_stable_slope = MAX_STABLE_SLOPE,
         .friction = 0.2f,
@@ -604,6 +607,26 @@ void player_climbing_up(struct player* player, struct contact* ground_contact) {
     player->state_data.climbing_up.timer += fixed_time_step;
 }
 
+void player_position_drop(player_t* player, dynamic_object_t* obj) {
+    vector3_t target;
+
+    transform_sa_t* player_transform = &player->cutscene_actor.transform;
+
+    vector3_t forward;
+    vector2ToLookDir(&player_transform->rotation, &forward);
+
+    vector3_t object_edge;
+    vector3Negate(&forward, &forward);
+    dynamic_object_minkowski_sum(obj, &forward, &object_edge);
+
+    obj->position->x += -PLAYER_RADIUS * forward.x + player_transform->position.x - object_edge.x;
+    obj->position->z += -PLAYER_RADIUS * forward.z + player_transform->position.z - object_edge.z;
+
+    obj->velocity.x = player->cutscene_actor.collider.velocity.x;
+    obj->velocity.y = player->cutscene_actor.collider.velocity.y - CARRY_DROP_SPEED;
+    obj->velocity.z = player->cutscene_actor.collider.velocity.z;
+}
+
 void player_carry(player_t* player, contact_t* ground_contact) {
     state_data_t* state_data = (state_data_t*)&player->state_data;
 
@@ -646,6 +669,7 @@ void player_carry(player_t* player, contact_t* ground_contact) {
 
     if (player_is_running(player, PLAYER_ANIMATION_CARRY_DROP)) {
         if (animator_get_time(&player->cutscene_actor.animator) > CARRY_DROP_TIME) {
+            player_position_drop(player, obj);
             player->state_data.carrying.should_carry = false;
             obj->is_fixed = false;
             obj->weight_class =  WEIGHT_CLASS_LIGHT;
