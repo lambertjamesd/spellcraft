@@ -81,7 +81,6 @@ Have earth + life be recast
 
 ## TODO
 
-- dropping ball should work better
 - implement sliding state
 - lightning ball needs to have 2 clear states
 - include material/image dependencies in asset dependencies

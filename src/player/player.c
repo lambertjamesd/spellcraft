@@ -515,6 +515,20 @@ void player_update_sliding(struct player* player, struct contact* ground_contact
         player_enter_falling_state(player);
     } else if (!dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
         player_enter_grounded_state(player);
+    } else {
+        vector3_t slide_direction = ground_contact->normal;
+        slide_direction.y = 0.0f;
+        vector2_t target_rotation;
+
+        transform_sa_t* transform = &player->cutscene_actor.transform;
+
+        vector2LookDir(&target_rotation, &slide_direction);
+
+        if (vector2Dot(&target_rotation, &transform->rotation) < 0) {
+            vector2Negate(&target_rotation, &target_rotation);
+        }
+
+        vector2RotateTowards(&transform->rotation, &target_rotation, &player_max_rotation, &transform->rotation);
     }
 }
 
