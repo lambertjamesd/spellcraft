@@ -82,6 +82,7 @@ Have earth + life be recast
 ## TODO
 
 - implement sliding state
+- implement crushing check
 - lightning ball needs to have 2 clear states
 - include material/image dependencies in asset dependencies
 - create fixed point camera regions
