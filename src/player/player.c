@@ -25,7 +25,7 @@
 #define PLAYER_RUN_ANIM_SPEED   4.2f
 #define PLAYER_WALK_ANIM_SPEED   0.64f
 
-#define PLAYER_SLIDE_SPEED          1.0f
+#define PLAYER_SLIDE_SPEED          2.0f
 #define PLAYER_SLIDE_ACCEL_SPEED    7.0f
 
 #define SLIDE_DELAY 0.25f
@@ -772,15 +772,20 @@ void player_update_knockback(struct player* player, struct contact* ground_conta
 
 void player_update_grounded(struct player* player, struct contact* ground_contact) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
+    vector3_t* vel = &player->cutscene_actor.collider.velocity;
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
     if (ground_contact && dynamic_object_should_slide(MAX_SLIDING_SLOPE, ground_contact->normal.y, SURFACE_TYPE_DEFAULT)) {
         player_enter_falling_state(player);
-        return;
     }
 
     if (ground_contact && dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
-        player_enter_slide_state(player, ground_contact);
+        if (vel->x * ground_contact->normal.x + vel->z * ground_contact->normal.z > 0.0f) {
+            player_enter_slide_state(player, ground_contact);
+            return;
+        } else {
+            vel->y = 0.0f;
+        }
         return;
     }
  
