@@ -84,6 +84,8 @@ Have earth + life be recast
 - implement sliding state
 - implement crushing check
 - lightning ball needs to have 2 clear states
+- prevent z lock on held object
+- refactor how the animator works
 - include material/image dependencies in asset dependencies
 - create fixed point camera regions
 - direct camera control

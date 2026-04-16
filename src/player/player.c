@@ -25,6 +25,9 @@
 #define PLAYER_RUN_ANIM_SPEED   4.2f
 #define PLAYER_WALK_ANIM_SPEED   0.64f
 
+#define PLAYER_SLIDE_SPEED          1.0f
+#define PLAYER_SLIDE_ACCEL_SPEED    7.0f
+
 #define SLIDE_DELAY 0.25f
 #define COYOTE_TIME 0.1f
 #define SHADOW_AS_GROUND_DISTANCE   0.15f
@@ -328,6 +331,11 @@ bool player_check_grab(struct player* player, struct Vector3* target_direction) 
     return false;
 }
 
+void player_enter_slide_state(struct player* player, struct contact* ground_contact) {
+    player->state = PLAYER_SLIDING;
+    player_loop_animation(player, PLAYER_ANIMATION_SLIDE_FORWARD, 1.0f);
+}
+
 void player_enter_grounded_state(struct player* player) {
     player->coyote_time = 0.0f;
     player->state = PLAYER_GROUNDED;
@@ -517,7 +525,13 @@ void player_update_sliding(struct player* player, struct contact* ground_contact
         player_enter_grounded_state(player);
     } else {
         vector3_t slide_direction = ground_contact->normal;
+        
+        struct Vector3 target_direction;
+        player_get_input_direction(player, &target_direction);
+        vector3AddScaled(&slide_direction, &target_direction, ground_contact->normal.y * 0.75f, &slide_direction);
+        
         slide_direction.y = 0.0f;
+
         vector2_t target_rotation;
 
         transform_sa_t* transform = &player->cutscene_actor.transform;
@@ -529,6 +543,13 @@ void player_update_sliding(struct player* player, struct contact* ground_contact
         }
 
         vector2RotateTowards(&transform->rotation, &target_rotation, &player_max_rotation, &transform->rotation);
+
+        vector3_t target_vel;
+        vector3ProjectPlane(&slide_direction, &ground_contact->normal, &target_vel);
+        vector3Normalize(&target_vel, &target_vel);
+        vector3Scale(&target_vel, &target_vel, PLAYER_SLIDE_SPEED);
+        vector3_t* vel = &player->cutscene_actor.collider.velocity;
+        vector3MoveTowards(vel, &target_vel, PLAYER_SLIDE_ACCEL_SPEED * fixed_time_step, vel);
     }
 }
 
@@ -550,11 +571,11 @@ void player_update_falling(struct player* player, struct contact* ground_contact
 
     if (ground_contact && !dynamic_object_should_slide(MAX_SLIDING_SLOPE, ground_contact->normal.y, SURFACE_TYPE_DEFAULT)) {
         if (dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
-            player->state = PLAYER_SLIDING;
+            player_enter_slide_state(player, ground_contact);
         } else {
             player_enter_grounded_state(player);
+            player_run_clip(player, PLAYER_ANIMATION_LAND);
         }
-        player_run_clip(player, PLAYER_ANIMATION_LAND);
         return;
     } else if (collider->under_water) {
         player->state = PLAYER_SWIMMING;
@@ -759,7 +780,7 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     }
 
     if (ground_contact && dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
-        player->state = PLAYER_SLIDING;
+        player_enter_slide_state(player, ground_contact);
         return;
     }
  
@@ -1135,6 +1156,8 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_CARRY_RUN] = "carry_run",
     [PLAYER_ANIMATION_CARRY_WALK] = "carry_walk",
     [PLAYER_ANIMATION_CARRY_DROP] = "carry_drop",
+
+    [PLAYER_ANIMATION_SLIDE_FORWARD] = "slide_forward",
 };
 
 static const char* sound_names[PLAYER_SOUND_COUNT] = {};
