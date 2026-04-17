@@ -13,6 +13,7 @@ struct contact {
     struct contact* next;
     struct Vector3 point;
     struct Vector3 normal;
+    float penetration;
     entity_id other_object;
     enum surface_type surface_type;
     uint16_t collision_layers;

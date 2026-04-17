@@ -227,6 +227,7 @@ bool dynamic_object_get_combined_ground(struct dynamic_object* object, struct co
             contact_count += 1;
             vector3Add(&result->normal, &contact->normal, &result->normal);
             result->surface_type = contact->surface_type;
+            result->penetration = contact->penetration;
             result->collision_layers = contact->collision_layers;
             result->point = contact->point;
             result->other_object = contact->other_object;

@@ -128,8 +128,8 @@ struct player {
     
     struct drop_shadow drop_shadow;
 
-    struct Vector3 last_good_footing;
-    float slide_timer;
+    vector3_t last_good_footing;
+    vector3_t last_footing_normal;
     float coyote_time;
 
     enum player_state state;

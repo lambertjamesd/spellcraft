@@ -346,9 +346,15 @@ void player_enter_falling_state(struct player* player) {
     player_run_clip(player, PLAYER_ANIMATION_JUMP_PEAK);
 }
 
-bool player_handle_ground_movement(struct player* player, struct contact* ground_contact, struct Vector3* target_direction, float* speed) {
+enum player_ground_movement_result {
+    GROUND_MOVEMENT_RESULT_GROUNDED,
+    GROUND_MOVEMENT_RESULT_SLIDE,
+    GROUND_MOVEMENT_RESULT_FALL,
+};
+
+enum player_ground_movement_result player_handle_ground_movement(struct player* player, struct contact* ground_contact, struct Vector3* target_direction, float* speed) {
     contact_t fake_contact = {
-        .normal = gUp,
+        .normal = player->last_footing_normal,
         .point = player->cutscene_actor.transform.position,
         .surface_type = SURFACE_TYPE_COYOTE,
     };
@@ -361,24 +367,30 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
         player->coyote_time += fixed_time_step;
         ground_contact = &fake_contact;
     } else {
-        return false;
+        return GROUND_MOVEMENT_RESULT_FALL;
     }
 
-    if (dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
-        // TODO handle sliding logic
-        player->slide_timer += fixed_time_step;
+    bool is_good_footing = ground_contact->other_object == 0 && ground_contact->surface_type != SURFACE_TYPE_COYOTE;
+    vector3_t* vel = &player->cutscene_actor.collider.velocity;
+    vector3_t* pos = &player->cutscene_actor.transform.position;
 
-        if (player->slide_timer > SLIDE_DELAY) {
-            return true;
+    if (dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
+        if (vel->x * ground_contact->normal.x + vel->z * ground_contact->normal.z > 0.0f) {
+            return GROUND_MOVEMENT_RESULT_SLIDE;
+        } else if (ground_contact->other_object == 0) {
+            vector3_t offset;
+            vector3Sub(pos, &player->last_good_footing, &offset);
+            vector3ProjectPlane(vel, &player->last_footing_normal, vel);
+            vector3ProjectPlane(&offset, &player->last_footing_normal, &offset);
+            vector3Add(&player->last_good_footing, &offset, pos);
+            is_good_footing = false;
         }
-    } else {
-        player->slide_timer = 0.0f;
     }
 
     player_handle_look(player, target_direction);
 
     if (player->cutscene_actor.collider.is_pushed) {
-        return true;
+        return GROUND_MOVEMENT_RESULT_GROUNDED;
     }
 
     float movement_alignment;
@@ -392,7 +404,7 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
     }
 
     if (vector3MagSqrd(target_direction) < MOVE_DEADZONE || movement_alignment < 0.0f) {
-        player->cutscene_actor.collider.velocity = gZeroVec;
+        *vel = gZeroVec;
     } else {
         // TODO adjust for deadzone
         struct Vector3 projected_target_direction;
@@ -405,11 +417,11 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
 
         vector3Scale(&projected_target_direction, &projected_target_direction, movement_alignment / sqrtf(vector3MagSqrd(&projected_normalized)));
 
-        float prev_y = player->cutscene_actor.collider.velocity.y;
+        float prev_y = vel->y;
 
-        vector3Scale(&projected_target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
+        vector3Scale(&projected_target_direction, vel, PLAYER_MAX_SPEED);
         if (ground_contact->surface_type == SURFACE_TYPE_COYOTE) {
-            player->cutscene_actor.collider.velocity.y = prev_y;
+            vel->y = prev_y;
         }
     }
 
@@ -417,13 +429,16 @@ bool player_handle_ground_movement(struct player* player, struct contact* ground
         struct dynamic_object* ground_object = collision_scene_find_object(ground_contact->other_object);
 
         if (ground_object) {
-            vector3Add(&player->cutscene_actor.collider.velocity, &ground_object->velocity, &player->cutscene_actor.collider.velocity);
+            vector3Add(vel, &ground_object->velocity, vel);
         }
-    } else if (ground_contact->surface_type != SURFACE_TYPE_COYOTE) {
-        player->last_good_footing = player->cutscene_actor.transform.position;
     }
 
-    return true;
+    if (is_good_footing) {
+        player->last_good_footing = player->cutscene_actor.transform.position;
+        player->last_footing_normal = ground_contact->normal;
+    }
+
+    return GROUND_MOVEMENT_RESULT_GROUNDED;
 }
 
 void player_handle_air_movement(struct player* player, contact_t* ground_contact) {
@@ -732,8 +747,18 @@ void player_carry(player_t* player, contact_t* ground_contact) {
 
     float speed;
 
-    if (!player_handle_ground_movement(player, ground_contact, &target_direction, &speed)) {
+    enum player_ground_movement_result move_result = player_handle_ground_movement(player, ground_contact, &target_direction, &speed);
+
+    if (move_result == GROUND_MOVEMENT_RESULT_FALL) {
         player_loop_animation(player, PLAYER_ANIMATION_CARRY_IDLE, 1.0f);
+        return;
+    }
+
+    if (move_result == GROUND_MOVEMENT_RESULT_SLIDE) {
+        player->state_data.carrying.should_carry = false;
+        obj->is_fixed = false;
+        obj->weight_class =  WEIGHT_CLASS_LIGHT;
+        player_enter_slide_state(player, ground_contact);
         return;
     }
 
@@ -773,20 +798,11 @@ void player_update_knockback(struct player* player, struct contact* ground_conta
 void player_update_grounded(struct player* player, struct contact* ground_contact) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
     vector3_t* vel = &player->cutscene_actor.collider.velocity;
+    vector3_t* pos = & player->cutscene_actor.transform.position;
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
     if (ground_contact && dynamic_object_should_slide(MAX_SLIDING_SLOPE, ground_contact->normal.y, SURFACE_TYPE_DEFAULT)) {
         player_enter_falling_state(player);
-    }
-
-    if (ground_contact && dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
-        if (vel->x * ground_contact->normal.x + vel->z * ground_contact->normal.z > 0.0f) {
-            player_enter_slide_state(player, ground_contact);
-            return;
-        } else {
-            vel->y = 0.0f;
-        }
-        return;
     }
  
     entity_id interact_entity_id = 0;
@@ -825,9 +841,16 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     }
 
     float speed;
-    if (!player_handle_ground_movement(player, ground_contact, &target_direction, &speed)) {
+    enum player_ground_movement_result move_result = player_handle_ground_movement(player, ground_contact, &target_direction, &speed);
+
+    if (move_result == GROUND_MOVEMENT_RESULT_FALL) {
         player_run_clip(player, PLAYER_ANIMATION_JUMP_PEAK);
         player->state = PLAYER_FALLING;
+        return;
+    }
+
+    if (move_result == GROUND_MOVEMENT_RESULT_SLIDE) {
+        player_enter_slide_state(player, ground_contact);
         return;
     }
 
@@ -1094,6 +1117,8 @@ void player_update(struct player* player) {
     }
     
     player_update_state(player, ground);
+    
+    vector3_t* pos = &player->cutscene_actor.transform.position;
 
     if (player->cutscene_actor.collider.hit_kill_plane) {
         player->cutscene_actor.transform.position = player->last_good_footing;
@@ -1195,6 +1220,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->cutscene_actor.transform.rotation = definition->rotation;
 
     player->last_good_footing = definition->location;
+    player->last_footing_normal = gUp;
     player->coyote_time = 0.0f;
 
     render_scene_add_renderable(&player->renderable, 2.0f);

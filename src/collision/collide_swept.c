@@ -244,6 +244,7 @@ void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_obj
         if (b->trigger_type == TRIGGER_TYPE_BASIC) {
             contact->normal = gZeroVec;
             contact->point = *a->position;
+            contact->penetration = 0.0f;
             contact->other_object = a->entity_id;
             contact->collision_layers = a->collision_layers;
             contact->surface_type = a->type->surface_type;
@@ -253,6 +254,7 @@ void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_obj
         } else {
             contact->normal = gZeroVec;
             contact->point = *b->position;
+            contact->penetration = 0.0f;
             contact->other_object = b->entity_id;
             contact->collision_layers = b->collision_layers;
             contact->surface_type = b->type->surface_type;
@@ -309,10 +311,12 @@ void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_obj
         }
     
         contact->normal = result.normal;
+        contact->penetration = result.penetration;
         contact->point = result.contactA;
         contact->other_object = a->entity_id;
         contact->surface_type = a->type->surface_type;
         contact->collision_layers = a->collision_layers;
+        contact->penetration = 0.0f;
     
         contact->next = b->active_contacts;
         b->active_contacts = contact;
@@ -327,9 +331,11 @@ void collide_object_to_object_swept(struct dynamic_object* a, struct dynamic_obj
         
         vector3Negate(&result.normal, &contact->normal);
         contact->point = result.contactB;
+        contact->penetration = result.penetration;
         contact->other_object = b->entity_id;
         contact->surface_type = b->type->surface_type;
         contact->collision_layers = b->collision_layers;
+        contact->penetration = 0.0f;
     
         contact->next = a->active_contacts;
         a->active_contacts = contact;

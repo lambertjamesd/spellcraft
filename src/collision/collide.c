@@ -208,6 +208,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         if (b->trigger_type == TRIGGER_TYPE_BASIC) {
             contact->normal = gZeroVec;
             contact->point = *a->position;
+            contact->penetration = 0.0f;
             contact->other_object = a->entity_id;
             contact->collision_layers = a->collision_layers;
             contact->surface_type = a->type->surface_type;
@@ -217,6 +218,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         } else {
             contact->normal = gZeroVec;
             contact->point = *b->position;
+            contact->penetration = 0.0f;
             contact->other_object = b->entity_id;
             contact->collision_layers = b->collision_layers;
             contact->surface_type = b->type->surface_type;
@@ -269,6 +271,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
     
         contact->normal = result.normal;
         contact->point = result.contactA;
+        contact->penetration = result.penetration;
         contact->other_object = a->entity_id;
         contact->surface_type = a->type->surface_type;
         contact->collision_layers = a->collision_layers;
@@ -286,6 +289,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         
         vector3Negate(&result.normal, &contact->normal);
         contact->point = result.contactB;
+        contact->penetration = result.penetration;
         contact->other_object = b->entity_id;
         contact->surface_type = b->type->surface_type;
         contact->collision_layers = b->collision_layers;
@@ -316,6 +320,7 @@ void collide_object_to_trigger(struct dynamic_object* obj, struct spatial_trigge
     
     contact->normal = gZeroVec;
     contact->point = *obj->position;
+    contact->penetration = 0.0f;
     contact->other_object = obj->entity_id;
     contact->surface_type = obj->type->surface_type;
     contact->collision_layers = obj->collision_layers;
@@ -333,6 +338,7 @@ void collide_add_contact(struct dynamic_object* object, struct EpaResult* result
 
     contact->normal = result->normal;
     contact->point = result->contactA;
+    contact->penetration = result->penetration;
     contact->other_object = 0;
     contact->surface_type = surface_type;
     // TODO add collision layers

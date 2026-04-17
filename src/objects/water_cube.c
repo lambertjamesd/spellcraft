@@ -45,6 +45,7 @@ void water_cube_update(void* data) {
             other->normal = gUp;
             other->other_object = 0;
             other->point = *obj->position;
+            other->penetration = 0.0f;
             other->point.y = water_top;
             other->surface_type = SURFACE_TYPE_WATER;
             other->collision_layers = 0;
