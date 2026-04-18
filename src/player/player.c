@@ -336,9 +336,14 @@ void player_enter_slide_state(struct player* player, struct contact* ground_cont
     player_loop_animation(player, PLAYER_ANIMATION_SLIDE_FORWARD, 1.0f);
 }
 
-void player_enter_grounded_state(struct player* player) {
+void player_enter_grounded_state(struct player* player, struct contact* ground_contact) {
     player->coyote_time = 0.0f;
     player->state = PLAYER_GROUNDED;
+    player->last_good_footing = player->cutscene_actor.transform.position;
+
+    if (ground_contact) {
+        player->last_footing_normal = ground_contact->normal;
+    }
 }
 
 void player_enter_falling_state(struct player* player) {
@@ -537,7 +542,7 @@ void player_update_sliding(struct player* player, struct contact* ground_contact
     if (ground_contact == NULL || dynamic_object_should_slide(MAX_SLIDING_SLOPE, ground_contact->normal.y, SURFACE_TYPE_DEFAULT)) {
         player_enter_falling_state(player);
     } else if (!dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
-        player_enter_grounded_state(player);
+        player_enter_grounded_state(player, ground_contact);
     } else {
         vector3_t slide_direction = ground_contact->normal;
         
@@ -574,7 +579,7 @@ void player_update_jumping(struct player* player, struct contact* ground_contact
     if (collider->velocity.y < 0.0f) {
         player_enter_falling_state(player);
     } else if (ground_contact) {
-        player_enter_grounded_state(player);
+        player_enter_grounded_state(player, ground_contact);
         player_run_clip(player, PLAYER_ANIMATION_LAND);
     }
 }
@@ -588,7 +593,7 @@ void player_update_falling(struct player* player, struct contact* ground_contact
         if (dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
             player_enter_slide_state(player, ground_contact);
         } else {
-            player_enter_grounded_state(player);
+            player_enter_grounded_state(player, ground_contact);
             player_run_clip(player, PLAYER_ANIMATION_LAND);
         }
         return;
@@ -609,7 +614,7 @@ void player_update_swimming(struct player* player, struct contact* ground_contac
     player_handle_air_movement(player, ground_contact);
 
     if (ground_contact) {
-        player->state = PLAYER_GROUNDED;
+        player_enter_grounded_state(player, ground_contact);
         player_run_clip(player, PLAYER_ANIMATION_LAND);
         return;
     } else if (!collider->under_water) {
@@ -627,7 +632,7 @@ void player_update_swimming(struct player* player, struct contact* ground_contac
 
 void player_getting_up(struct player* player, struct contact* ground_contact) {
     if (!player_is_running(player, PLAYER_ANIMATION_KNOCKBACK_LAND)) {
-        player->state = PLAYER_GROUNDED;
+        player_enter_grounded_state(player, ground_contact);
     }
 }
 
@@ -636,7 +641,7 @@ void player_climbing_up(struct player* player, struct contact* ground_contact) {
     struct climb_up_data* climb_up = &climb_up_data[state->climbing_up.climb_up_index];
 
     if (state->climbing_up.timer > climb_up->end_jump_time && !player_is_running(player, PLAYER_ANIMATION_CLIMB_UP_0 + state->climbing_up.climb_up_index)) {
-        player->state = PLAYER_GROUNDED;
+        player_enter_grounded_state(player, ground_contact);
         player_run_clip_keep_translation(player, PLAYER_ANIMATION_IDLE);
         return;
     }
