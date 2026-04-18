@@ -31,6 +31,7 @@ struct animator {
     uint8_t loop;
     uint8_t done;
     uint8_t blend_frames;
+    uint8_t dirty;
     animator_events_t events;
     uint8_t image_frame_0;
     uint8_t image_frame_1;
@@ -43,6 +44,7 @@ typedef struct animator animator_t;
 void animator_init(struct animator* animator, int bone_count);
 void animator_destroy(struct animator* animator);
 void animator_update(struct animator* animator, struct armature* armature, float delta_time);
+void animator_apply(struct animator* animator, struct armature* armature);
 void animator_run_clip(struct animator* animator, struct animation_clip* clip, float start_time, bool loop);
 int animator_is_running(struct animator* animator);
 bool animator_is_running_clip(struct animator* animator, struct animation_clip* clip);

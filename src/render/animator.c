@@ -260,10 +260,15 @@ int animator_clamp_frame(struct animator* animator, int frame) {
     return animator->current_clip->frame_count - 1;
 }
 
-void animator_step(struct animator* animator, float delta_time) {
+void animator_step_time(struct animator* animator, float delta_time) {
     struct animation_clip* current_clip = animator->current_clip;
 
     if (!current_clip) {
+        return;
+    }
+
+    if (animator->done) {
+        animator->current_clip = NULL;
         return;
     }
 
@@ -279,6 +284,12 @@ void animator_step(struct animator* animator, float delta_time) {
             animator->done = 1;
         }
     }
+
+    animator->dirty = true;
+}
+
+void animator_request_needed_frames(struct animator* animator) {
+    struct animation_clip* current_clip = animator->current_clip;
 
     float current_frame_fractional = animator->current_time * current_clip->frames_per_second;
     int prev_frame = (int)floorf(current_frame_fractional);
@@ -331,11 +342,24 @@ void animator_step(struct animator* animator, float delta_time) {
     }
 }
 
+void animator_step(struct animator* animator, float delta_time) {
+    animator_step_time(animator, delta_time);
+    animator_request_needed_frames(animator);
+}
+
 void animator_copy_attributes(struct animator* animator, struct armature* armature) {
     armature->image_frame_0 = animator->image_frame_0;
     armature->image_frame_1 = animator->image_frame_1;
     armature->prim_color = animator->prim_color;
     armature->env_color = animator->env_color;
+}
+
+void animator_check_dirty(struct animator* animator) {
+    if (!animator->dirty) {
+        return;
+    }
+
+    animator->dirty = false;
 }
 
 void animator_update(struct animator* animator, struct armature* armature, float delta_time) {
@@ -353,6 +377,12 @@ void animator_update(struct animator* animator, struct armature* armature, float
     }
 
     animator_step(animator, delta_time);
+    animator_copy_attributes(animator, armature);
+}
+
+void animator_apply(struct animator* animator, struct armature* armature) {
+    animator_check_dirty(animator);
+    animator_read_transform(animator, armature->pose);
     animator_copy_attributes(animator, armature);
 }
 
@@ -380,6 +410,7 @@ void animator_run_clip(struct animator* animator, struct animation_clip* clip, f
     animator->events.all = 0;
 
     animator->blend_frames = should_blend ? 1 : 0;
+    animator->dirty = true;
 
     animator_step(animator, 0.0f);
 }
