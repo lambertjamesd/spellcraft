@@ -4,8 +4,8 @@
 #include "../collision/collision_scene.h"
 #include "../collision/shapes/sphere.h"
 
-static color_t lit_color = {0xAE, 0xD8, 0x25, 0xFF};
-static color_t unlit_color = {0x2A, 0x34, 0x09, 0xFF};
+static color_t lit_color = {0x19, 0x56, 0x53, 0xFF};
+static color_t unlit_color = {0x00, 0x00, 0x00, 0x00};
 
 #define MAX_PENDING_BALLS   4
 
