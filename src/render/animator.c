@@ -407,11 +407,11 @@ void animator_run_clip(struct animator* animator, struct animation_clip* clip, f
 }
 
 int animator_is_running(struct animator* animator) {
-    return animator->current_clip != NULL;
+    return animator->current_clip != NULL && !animator->done;
 }
 
 bool animator_is_running_clip(struct animator* animator, struct animation_clip* clip) {
-    return clip != NULL && animator->current_clip == clip;
+    return clip != NULL && animator->current_clip == clip && !animator->done;
 }
 
 float animator_get_time(struct animator* animator) {
