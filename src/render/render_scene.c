@@ -44,6 +44,10 @@ void render_scene_render_renderable(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
+    if (renderable->mesh_render.animator) {
+        animator_apply(renderable->mesh_render.animator, &renderable->mesh_render.armature);
+    }
+
     struct render_batch_element* element = render_batch_add_tmesh(
         batch, 
         renderable->mesh_render.mesh, 
@@ -76,6 +80,10 @@ void render_scene_render_renderable_single_axis(void* data, struct render_batch*
 
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
+
+    if (renderable->mesh_render.animator) {
+        animator_apply(renderable->mesh_render.animator, &renderable->mesh_render.armature);
+    }
 
     struct render_batch_element* element = render_batch_add_tmesh(
         batch, 

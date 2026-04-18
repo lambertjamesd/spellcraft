@@ -44,7 +44,7 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
 
 void treasure_chest_update(void* data) {
     struct treasure_chest* treasure_chest = (struct treasure_chest*)data;
-    animator_update(&treasure_chest->animator, &treasure_chest->renderable.mesh_render.armature, fixed_time_step);
+    animator_update(&treasure_chest->animator, fixed_time_step);
 }
 
 void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition, entity_id id) {
@@ -52,6 +52,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
     transformSaInit(&treasure_chest->transform, &definition->position, &definition->rotation, 1.0f);
 
     renderable_single_axis_init(&treasure_chest->renderable, &treasure_chest->transform, "rom:/meshes/objects/treasurechest.tmesh");
+    renderable_set_animator(&treasure_chest->renderable, &treasure_chest->animator);
     render_scene_add_renderable(&treasure_chest->renderable, 0.8f);
 
     dynamic_object_init(

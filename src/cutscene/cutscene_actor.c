@@ -125,7 +125,7 @@ void cutscene_actor_check_anim_events(struct cutscene_actor* actor) {
 
 bool cutscene_actor_update(struct cutscene_actor* actor) {
     actor->last_animator_events = actor->animator.events;
-    animator_update(&actor->animator, actor->armature, fixed_time_step * actor->animate_speed);
+    animator_update(&actor->animator, fixed_time_step * actor->animate_speed);
 
     cutscene_actor_check_anim_events(actor);
 

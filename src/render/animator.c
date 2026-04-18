@@ -359,28 +359,20 @@ void animator_check_dirty(struct animator* animator) {
         return;
     }
 
+    animator_request_needed_frames(animator);
+
     animator->dirty = false;
 }
 
-void animator_update(struct animator* animator, struct armature* armature, float delta_time) {
-    struct animation_clip* current_clip = animator->current_clip;
-
-    if (!current_clip) {
-        return;
-    }
-
-    animator_read_transform(animator, armature->pose);
-
-    if (animator->done) {
-        animator->current_clip = NULL;
-        return;
-    }
-
-    animator_step(animator, delta_time);
-    animator_copy_attributes(animator, armature);
+void animator_update(struct animator* animator, float delta_time) {
+    animator_step_time(animator, delta_time);
 }
 
 void animator_apply(struct animator* animator, struct armature* armature) {
+    if (!animator->current_clip) {
+        return;
+    }
+
     animator_check_dirty(animator);
     animator_read_transform(animator, armature->pose);
     animator_copy_attributes(animator, armature);

@@ -141,7 +141,7 @@ void door_interact(struct interactable* interactable, entity_id from) {
 
 void door_update(void* data) {
     struct door* door = (struct door*)data;
-    animator_update(&door->animator, &door->renderable.mesh_render.armature, fixed_time_step);
+    animator_update(&door->animator, fixed_time_step);
 
     if (door->next_room != ROOM_NONE && !animator_is_running(&door->animator)) {
         scene_hide_room(current_scene, door->next_room == door->room_a ? door->room_b : door->room_a);
@@ -162,6 +162,7 @@ void door_init(struct door* door, struct door_definition* definition, entity_id 
     door->preview_room = ROOM_NONE;
 
     renderable_single_axis_init(&door->renderable, &door->transform, "rom:/meshes/objects/doors/door.tmesh");
+    renderable_set_animator(&door->renderable, &door->animator);
     render_scene_add(&door->transform.position, 1.4f, door_render, door);
 
     dynamic_object_init(

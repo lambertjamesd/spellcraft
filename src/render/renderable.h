@@ -6,6 +6,7 @@
 #include "../math/transform_mixed.h"
 #include "../render/render_batch.h"
 #include "armature.h"
+#include "animator.h"
 
 struct renderable {
     struct transform_mixed transform;
@@ -15,6 +16,7 @@ struct renderable {
             struct armature armature;
             struct material* force_material;
             struct tmesh** attachments;
+            animator_t* animator;
         } mesh_render;
         struct {
             TPXParticle particle_data;
@@ -51,5 +53,9 @@ static inline struct armature* renderable_get_armature(struct renderable* render
     return &renderable->mesh_render.armature;
 }
 
+static inline void renderable_set_animator(struct renderable* renderable, animator_t* animator) {
+    assert(renderable->type != TRANSFORM_TYPE_POSITION);
+    renderable->mesh_render.animator = animator;
+}
 
 #endif

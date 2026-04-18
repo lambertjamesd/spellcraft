@@ -132,7 +132,7 @@ void player_run_clip_keep_translation(struct player* player, enum player_animati
     armature_bone_transform(player->cutscene_actor.armature, 0, &before);
     player_run_clip(player, clip);
     player->cutscene_actor.animator.blend_frames = 0;
-    animator_update(&player->cutscene_actor.animator, player->cutscene_actor.armature, fixed_time_step);
+    animator_apply(&player->cutscene_actor.animator, player->cutscene_actor.armature);
     struct Transform after;
     armature_bone_transform(player->cutscene_actor.armature, 0, &after);
 
@@ -1210,6 +1210,7 @@ void player_unload_sound(struct player* player) {
 void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
     transformSaInitIdentity(&player->cutscene_actor.transform);
     renderable_single_axis_init(&player->renderable, &player->cutscene_actor.transform, "rom:/meshes/characters/apprentice.tmesh");
+    renderable_set_animator(&player->renderable, &player->cutscene_actor.animator);
 
     player->camera_transform = camera_transform;
 

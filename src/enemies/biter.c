@@ -232,7 +232,7 @@ void biter_update_die(struct biter* biter) {
 }
 
 void biter_update(struct biter* biter) {
-    animator_update(&biter->animator, &biter->renderable.mesh_render.armature, fixed_time_step);
+    animator_update(&biter->animator, fixed_time_step);
 
     switch (biter->current_state) {
         case BITER_STATE_IDLE:
@@ -281,6 +281,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition, entity
     transformSaInit(&biter->transform, &definition->position, &definition->rotation, 1.0f);
 
     renderable_single_axis_init(&biter->renderable, &biter->transform, "rom:/meshes/enemies/enemy1.tmesh");
+    renderable_set_animator(&biter->renderable, &biter->animator);
     dynamic_object_init(
         id, 
         &biter->dynamic_object, 

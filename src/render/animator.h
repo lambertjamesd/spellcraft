@@ -43,7 +43,7 @@ typedef struct animator animator_t;
 
 void animator_init(struct animator* animator, int bone_count);
 void animator_destroy(struct animator* animator);
-void animator_update(struct animator* animator, struct armature* armature, float delta_time);
+void animator_update(struct animator* animator, float delta_time);
 void animator_apply(struct animator* animator, struct armature* armature);
 void animator_run_clip(struct animator* animator, struct animation_clip* clip, float start_time, bool loop);
 int animator_is_running(struct animator* animator);

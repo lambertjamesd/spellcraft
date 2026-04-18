@@ -43,6 +43,7 @@ void npc_init(struct npc* npc, struct npc_definition* definiton, entity_id id) {
 
     transformSaInit(&npc->cutscene_actor.transform, &definiton->position, &definiton->rotation, 1.0f);
     renderable_single_axis_init(&npc->renderable, &npc->cutscene_actor.transform, information->mesh);
+    renderable_set_animator(&npc->renderable, &npc->cutscene_actor.animator);
 
     render_scene_add_renderable(&npc->renderable, 2.0f);
 

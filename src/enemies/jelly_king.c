@@ -570,6 +570,7 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
     renderable_single_axis_init(&jelly_king->renderable, &jelly_king->cutscene_actor.transform, "rom:/meshes/enemies/jelly_king.tmesh");
 
     render_scene_add_renderable(&jelly_king->renderable, 3.0f);
+    renderable_set_animator(&jelly_king->renderable, &jelly_king->cutscene_actor.animator);
     
     jelly_king->actor_def = jelly_cutscene_actor;
     jelly_king->actor_def.collision_group = id;

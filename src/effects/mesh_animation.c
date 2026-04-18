@@ -10,6 +10,7 @@ struct mesh_animation* mesh_animation_new(struct Vector3* position, struct Vecto
     transformSaInit(&result->transform, position, rotation, 1.0f);
 
     renderable_single_axis_init_direct(&result->renderable, &result->transform, mesh);
+    renderable_set_animator(&result->renderable, &result->animtor);
 
     render_scene_add_renderable(&result->renderable, 1.0f);
 
@@ -20,7 +21,7 @@ struct mesh_animation* mesh_animation_new(struct Vector3* position, struct Vecto
 }
 
 bool mesh_animation_update(struct mesh_animation* mesh_animation) {
-    animator_update(&mesh_animation->animtor, &mesh_animation->renderable.mesh_render.armature, fixed_time_step);
+    animator_update(&mesh_animation->animtor, fixed_time_step);
     return animator_is_running(&mesh_animation->animtor);
 }
 
