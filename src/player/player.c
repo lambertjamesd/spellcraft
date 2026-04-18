@@ -800,10 +800,6 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     vector3_t* vel = &player->cutscene_actor.collider.velocity;
     vector3_t* pos = & player->cutscene_actor.transform.position;
     struct dynamic_object* collider = &player->cutscene_actor.collider;
-
-    if (ground_contact && dynamic_object_should_slide(MAX_SLIDING_SLOPE, ground_contact->normal.y, SURFACE_TYPE_DEFAULT)) {
-        player_enter_falling_state(player);
-    }
  
     entity_id interact_entity_id = 0;
     interactable_t* interactable = player_find_interactable(player, &interact_entity_id);
