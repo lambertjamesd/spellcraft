@@ -136,7 +136,7 @@ bool dynamic_object_should_slide(float max_stable_slope, float normal_y, enum su
 
 bool dynamic_object_is_grounded(struct dynamic_object* object);
 struct contact* dynamic_object_get_ground(struct dynamic_object* object);
-bool dynamic_object_get_combined_ground(struct dynamic_object* object, struct contact* result);
+contact_t* dynamic_object_get_combined_ground(struct dynamic_object* object, contact_t* combined_contact);
 
 void dynamic_object_set_scale(struct dynamic_object* object, float scale);
 

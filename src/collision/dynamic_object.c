@@ -187,22 +187,39 @@ int8_t surface_ground_priorities[SURFACE_TYPE_COUNT] = {
     [SURFACE_TYPE_STICKY] = 1,
 };
 
-struct contact* dynamic_object_get_ground(struct dynamic_object* object) {
-    struct contact* contact = object->active_contacts;
+static inline contact_t* dynamic_object_choose_better_floor(contact_t* prev, contact_t* curr) {
+    if (!prev) {
+        return curr;
+    }
 
-    struct contact* result = NULL;
-    int ground_priority = 0;
+    int prev_priority = surface_ground_priorities[prev->surface_type];
+    int curr_priority = surface_ground_priorities[curr->surface_type];
+
+    if (curr_priority > prev_priority) {
+        return curr;
+    }
+
+    if (prev_priority > curr_priority) {
+        return prev;
+    }
+
+    if (curr->normal.y > prev->normal.y) {
+        return curr;
+    }
+
+    return prev;
+}
+
+contact_t* dynamic_object_get_ground(struct dynamic_object* object) {
+    contact_t* contact = object->active_contacts;
+
+    contact_t* result = NULL;
 
     while (contact) {
         int priority = surface_ground_priorities[(int)contact->surface_type];
 
-        if (contact->normal.y > 0.001f && (
-            !result || 
-            priority > ground_priority || 
-            (priority == ground_priority && contact->normal.y > result->normal.y)
-        )) {
-            result = contact;
-            ground_priority = priority;
+        if (contact->normal.y > 0.001f) {
+            result = dynamic_object_choose_better_floor(result, contact);
         }
 
         contact = contact->next;
@@ -215,35 +232,40 @@ struct contact* dynamic_object_get_ground(struct dynamic_object* object) {
     return result;
 }
 
-bool dynamic_object_get_combined_ground(struct dynamic_object* object, struct contact* result) {
-    int contact_count = 0;
-    struct contact* contact = object->active_contacts;
+contact_t* dynamic_object_get_combined_ground(struct dynamic_object* object, contact_t* combined_ground) {
+    contact_t* contact = object->active_contacts;
 
-    result->normal = gZeroVec;
-    result->next = NULL;
+    combined_ground->normal = gZeroVec;
+    combined_ground->next = NULL;
+
+    contact_t* result = NULL;
 
     while (contact) {
         if (contact->normal.y > 0.001f) {
-            contact_count += 1;
-            vector3Add(&result->normal, &contact->normal, &result->normal);
-            result->surface_type = contact->surface_type;
-            result->penetration = contact->penetration;
-            result->collision_layers = contact->collision_layers;
-            result->point = contact->point;
-            result->other_object = contact->other_object;
+            result = dynamic_object_choose_better_floor(result, contact);
+
+            vector3Add(&combined_ground->normal, &contact->normal, &combined_ground->normal);
+            combined_ground->surface_type = contact->surface_type;
+            combined_ground->penetration = contact->penetration;
+            combined_ground->collision_layers = contact->collision_layers;
+            combined_ground->point = contact->point;
+            combined_ground->other_object = contact->other_object;
         }
 
         contact = contact->next;
     }
 
-    if (contact_count == 0 && object->shadow_contact && object->shadow_contact->point.y + SHADOW_AS_GROUND_TOLERNACE > object->bounding_box.min.y) {
-        *result = *object->shadow_contact;
-        return true;
+    if (!result) {
+        if (object->shadow_contact && object->shadow_contact->point.y + SHADOW_AS_GROUND_TOLERNACE > object->bounding_box.min.y) {
+            return object->shadow_contact;
+        }
+
+        return NULL;
     }
 
-    vector3Normalize(&result->normal, &result->normal);
+    vector3Normalize(&combined_ground->normal, &combined_ground->normal);
 
-    return contact_count > 0;
+    return dynamic_object_choose_better_floor(result, combined_ground);
 }
 
 void dynamic_object_set_scale(struct dynamic_object* object, float scale) {
