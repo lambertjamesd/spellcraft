@@ -263,12 +263,7 @@ int animator_clamp_frame(struct animator* animator, int frame) {
 void animator_step_time(struct animator* animator, float delta_time) {
     struct animation_clip* current_clip = animator->current_clip;
 
-    if (!current_clip) {
-        return;
-    }
-
-    if (animator->done) {
-        animator->current_clip = NULL;
+    if (!current_clip || animator->done) {
         return;
     }
 
@@ -376,6 +371,10 @@ void animator_apply(struct animator* animator, struct armature* armature) {
     animator_check_dirty(animator);
     animator_read_transform(animator, armature->pose);
     animator_copy_attributes(animator, armature);
+
+    if (animator->done) {
+        animator->current_clip = NULL;
+    }
 }
 
 void animator_run_clip(struct animator* animator, struct animation_clip* clip, float start_time, bool loop) {
@@ -449,11 +448,6 @@ void animation_blender_blend(animation_blender_t* blender, animator_t* animator,
     if (animator->next_frame_state_index != -1) {
         animator->events.all = 0;
         animator_read_transform_with_weight(animator, blender->armature->pose, weight);
-    }
-
-    if (animator->done) {
-        animator->current_clip = NULL;
-        return;
     }
 
     animator_step(animator, delta_time);
