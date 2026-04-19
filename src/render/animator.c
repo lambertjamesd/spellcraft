@@ -280,7 +280,7 @@ void animator_step_time(struct animator* animator, float delta_time) {
         }
     }
 
-    animator->dirty = true;
+    animator->last_applied_armature = NULL;
 }
 
 void animator_request_needed_frames(struct animator* animator) {
@@ -349,26 +349,18 @@ void animator_copy_attributes(struct animator* animator, struct armature* armatu
     armature->env_color = animator->env_color;
 }
 
-void animator_check_dirty(struct animator* animator) {
-    if (!animator->dirty) {
-        return;
-    }
-
-    animator_request_needed_frames(animator);
-
-    animator->dirty = false;
-}
-
 void animator_update(struct animator* animator, float delta_time) {
     animator_step_time(animator, delta_time);
 }
 
 void animator_apply(struct animator* animator, struct armature* armature) {
-    if (!animator->current_clip) {
+    if (!animator->current_clip || animator->last_applied_armature == armature) {
         return;
     }
 
-    animator_check_dirty(animator);
+    animator->last_applied_armature = armature;
+
+    animator_request_needed_frames(animator);
     animator_read_transform(animator, armature->pose);
     animator_copy_attributes(animator, armature);
 
@@ -401,7 +393,7 @@ void animator_run_clip(struct animator* animator, struct animation_clip* clip, f
     animator->events.all = 0;
 
     animator->blend_frames = should_blend ? 1 : 0;
-    animator->dirty = true;
+    animator->last_applied_armature = NULL;
 
     animator_step(animator, 0.0f);
 }

@@ -268,6 +268,29 @@ contact_t* dynamic_object_get_combined_ground(struct dynamic_object* object, con
     return dynamic_object_choose_better_floor(result, combined_ground);
 }
 
+bool dynamic_object_is_crushed(struct dynamic_object* object) {
+    contact_t* deepest_contact = NULL;
+    for (contact_t* curr = object->active_contacts; curr; curr = curr->next) {
+        if (!deepest_contact || curr->penetration < deepest_contact->penetration) {
+            deepest_contact = curr;
+        }
+    }
+
+    for (contact_t* curr = object->active_contacts; curr; curr = curr->next) {
+        if (curr == deepest_contact) {
+            continue;
+        }
+
+        float crush_amount = vector3Dot(&deepest_contact->normal, &curr->normal) * (deepest_contact->penetration + curr->penetration);
+
+        if (crush_amount > 0.05f) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void dynamic_object_set_scale(struct dynamic_object* object, float scale) {
     object->scale = scale;
     dynamic_object_recalc_bb(object);

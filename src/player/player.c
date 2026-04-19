@@ -1122,6 +1122,10 @@ void player_update(struct player* player) {
         player->cutscene_actor.collider.velocity = gZeroVec;
         player->cutscene_actor.collider.hit_kill_plane = 0;
     }
+
+    if (dynamic_object_is_crushed(&player->cutscene_actor.collider)) {
+        debugf("crushed!\n");
+    }
 }
 
 void player_knockback(struct player* player) {

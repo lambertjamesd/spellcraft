@@ -31,12 +31,12 @@ struct animator {
     uint8_t loop;
     uint8_t done;
     uint8_t blend_frames;
-    uint8_t dirty;
     animator_events_t events;
     uint8_t image_frame_0;
     uint8_t image_frame_1;
     color_t prim_color;
     color_t env_color;
+    armature_t* last_applied_armature;
 };
 
 typedef struct animator animator_t;
