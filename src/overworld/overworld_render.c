@@ -241,11 +241,17 @@ void overworld_create_2d_clipping_planes(quaternion_t* camera_rotation, float ta
 
 #define LEVEL2_MIN_DISTANCE     500
 
-void overworld_render_lod_1_entries(struct overworld_lod1* lod1, int camera_x, int camera_z, T3DMat4FP* mtx, T3DMat4FP* skybox_mtx, vector2s16_t* clipping_planes) {
+void overworld_render_lod_1_entries(struct overworld_lod1* lod1, int camera_x, int camera_z, struct Camera* camera, T3DMat4FP* mtx, T3DMat4FP* skybox_mtx, vector2s16_t* clipping_planes) {
     struct overworld_lod1_sort_entry order[lod1->entry_count];
 
     struct overworld_lod1_entry* end = lod1->entries + lod1->entry_count;
     struct overworld_lod1_sort_entry* entry = order;
+
+    vector3_t forward;
+    quatMultVector(&camera->transform.rotation, &gForward, &forward);
+    vector3Negate(&forward, &forward);
+
+    int camera_dir = overworld_lod_1_direction_index(forward.x, forward.z);
     
     for (struct overworld_lod1_entry* curr = lod1->entries; curr < end; curr += 1) {
         vector2s16_t delta = {
@@ -278,8 +284,15 @@ void overworld_render_lod_1_entries(struct overworld_lod1* lod1, int camera_x, i
         }
 
         entry->priority = (distance >> 2) + ((uint32_t)curr->priority << 24);
+
+        int tile_dir = overworld_lod_1_direction_index(delta.x, delta.y);
+
+        if (abs(delta.x) < 200 && abs(delta.y) < 200) {
+            tile_dir = camera_dir;
+        }
+
         
-        entry->mesh = &curr->meshes[overworld_lod_1_direction_index(delta.x, delta.y)];
+        entry->mesh = &curr->meshes[tile_dir];
         entry += 1;
 
         if (should_skip_children) {
@@ -379,7 +392,7 @@ void overworld_render_lod_1(struct overworld* overworld, struct Camera* camera, 
 
     vector2s16_t clipping_planes[2];
     overworld_create_2d_clipping_planes(&camera->transform.rotation, tan_fov, aspect_ratio, clipping_planes);
-    overworld_render_lod_1_entries(&overworld->lod1, camera_x, camera_z, mtx_fp, skybox_mtx, clipping_planes);
+    overworld_render_lod_1_entries(&overworld->lod1, camera_x, camera_z, camera, mtx_fp, skybox_mtx, clipping_planes);
 
     rdpq_sync_pipe();
     rdpq_mode_zbuf(true, true);

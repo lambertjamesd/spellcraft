@@ -299,7 +299,6 @@ int main(void)
     #else
             step_simulation();
     #endif
-            mixer_try_play();
             
             vi_delay += VI_PER_FRAME;
 

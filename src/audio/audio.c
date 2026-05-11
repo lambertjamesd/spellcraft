@@ -294,9 +294,7 @@ void audio_player_update() {
         }
     }
 
-    if (audio_can_write()) {
-        mixer_try_play();
-    }
+    mixer_try_play();
 
     if (active_sounds[0].wav && !mixer_ch_playing(0)) {
         active_sounds[0].wav = NULL;
