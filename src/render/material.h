@@ -56,4 +56,6 @@ void material_release(struct material* material);
 
 void material_apply(struct material* material);
 
+void material_debug(struct material* material, const char* name);
+
 #endif

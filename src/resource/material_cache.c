@@ -16,6 +16,7 @@ struct material* material_cache_load(const char* filename) {
         
         FILE* material_file = asset_fopen(filename, NULL);
         material_load(result, material_file);
+        material_debug(result, filename);
         fclose(material_file);
 
         resource_cache_set_resource(&material_resource_cache, entry, result);

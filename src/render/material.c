@@ -4,6 +4,8 @@
 #include "../resource/sprite_cache.h"
 #include "../render/defs.h"
 #include "../time/time.h"
+#include "../config.h"
+#include "../util/rspq.h"
 
 void material_init(struct material* material) {
     material->block = 0;
@@ -184,6 +186,34 @@ void material_use_tex(rdpq_tile_t tile, struct material_tex* tex) {
     }
 }
 
+enum mat_def_cmd_type {
+    MAT_DEF_CMD_SET_DRAW_FLAGS,
+    MAT_DEF_CMD_SET_VERTEX_FX,
+    MAT_DEF_CMD_SET_FOG_ENABLED,
+    MAT_DEF_CMD_SET_FOG_RANGE,
+    MAT_DEF_CMD_SET_LIGHT_COUNT,
+
+    MAT_DEF_CMD_COUNT,
+};
+
+struct mat_def_cmd {
+    enum mat_def_cmd_type type;
+    union {
+        uint16_t draw_flags;
+        struct {
+            uint8_t type;
+            uint8_t width;
+            uint8_t height;
+        } set_vertex_fx;
+        bool set_fog_enabled;
+        struct {
+            uint16_t min;
+            uint16_t max;
+        } set_fog_range;
+        uint8_t light_count;
+    };
+};
+
 void material_load(struct material* into, FILE* material_file) {
     int header;
     fread(&header, 1, 4, material_file);
@@ -206,6 +236,9 @@ void material_load(struct material* into, FILE* material_file) {
     bool has_palette = false;
     
     rdpq_blender_t fog_mode = RDPQ_FOG_STANDARD;
+
+    struct mat_def_cmd deferred_comands[MAT_DEF_CMD_COUNT];
+    uint8_t deferred_command_count = 0;
 
     while (has_more) {
         uint8_t nextCommand;
@@ -260,6 +293,10 @@ void material_load(struct material* into, FILE* material_file) {
                     if ((blendMode & SOM_Z_WRITE) == 0) {
                         into->sort_priority = SORT_PRIORITY_TRANSPARENT;
                     }
+
+                    if (!(blendMode & SOM_Z_COMPARE)) {
+                        into->sort_priority = SORT_PRIORITY_NO_DEPTH_TEST;
+                    }
                 }
                 break;
             case COMMAND_ENV:
@@ -287,7 +324,10 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint16_t flags;
                     fread(&flags, 2, 1, material_file);
-                    t3d_state_set_drawflags(flags);
+                    deferred_comands[deferred_command_count++] = (struct mat_def_cmd){
+                        .type = MAT_DEF_CMD_SET_DRAW_FLAGS,
+                        .draw_flags = flags,
+                    };
                 }
                 break;
             case COMMAND_PALETTE:
@@ -308,10 +348,22 @@ void material_load(struct material* into, FILE* material_file) {
 
                     switch (fn) {
                         case T3D_VERTEX_FX_NONE:
-                            t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
+                            deferred_comands[deferred_command_count++] = (struct mat_def_cmd){
+                                .type = MAT_DEF_CMD_SET_VERTEX_FX,
+                                .set_vertex_fx = {
+                                    .type = T3D_VERTEX_FX_NONE,
+                                },
+                            };
                             break;
                         case T3D_VERTEX_FX_SPHERICAL_UV:
-                            t3d_state_set_vertex_fx(T3D_VERTEX_FX_SPHERICAL_UV, into->tex0.sprite->width, into->tex0.sprite->height);
+                            deferred_comands[deferred_command_count++] = (struct mat_def_cmd){
+                                .type = MAT_DEF_CMD_SET_VERTEX_FX,
+                                .set_vertex_fx = {
+                                    .type = T3D_VERTEX_FX_SPHERICAL_UV,
+                                    .width = into->tex0.sprite->width,
+                                    .height = into->tex0.sprite->height,
+                                },
+                            };
                             break;
                     }
                 }
@@ -320,7 +372,10 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint8_t enabled;
                     fread(&enabled, 1, 1, material_file);
-                    t3d_fog_set_enabled(enabled);
+                    deferred_comands[deferred_command_count++] = (struct mat_def_cmd){
+                        .type = MAT_DEF_CMD_SET_FOG_ENABLED,
+                        .set_fog_enabled = enabled,
+                    };
                     if (enabled) {
                         rdpq_mode_fog(fog_mode);
                     } else {
@@ -347,14 +402,24 @@ void material_load(struct material* into, FILE* material_file) {
                         min = BIGGEST_MIN_VALUE;
                     }
 
-                    t3d_fog_set_range(min * WORLD_SCALE, max * WORLD_SCALE);
+                    deferred_comands[deferred_command_count++] = (struct mat_def_cmd){
+                        .type = MAT_DEF_CMD_SET_FOG_RANGE,
+                        .set_fog_range = {
+                            .min = min,
+                            .max = max,
+                        },
+                    };
                 }
                 break;
             case COMMAND_LIGHT_COUNT:
                 {
                     uint8_t light_count;
                     fread(&light_count, 1, 1, material_file);
-                    t3d_light_set_count(light_count);
+                    
+                    deferred_comands[deferred_command_count++] = (struct mat_def_cmd){
+                        .type = MAT_DEF_CMD_SET_LIGHT_COUNT,
+                        .light_count = light_count,
+                    };
                 }
                 break;
         }
@@ -385,12 +450,36 @@ void material_load(struct material* into, FILE* material_file) {
         material_use_tex(TILE1, &into->tex1);
     }
 
+    for (int i = 0; i < deferred_command_count; i += 1) {
+        struct mat_def_cmd* cmd = &deferred_comands[i];
+        switch (cmd->type) {
+            case MAT_DEF_CMD_SET_DRAW_FLAGS:
+                t3d_state_set_drawflags(cmd->draw_flags);
+                break;
+            case MAT_DEF_CMD_SET_VERTEX_FX:
+                t3d_state_set_vertex_fx(cmd->set_vertex_fx.type, cmd->set_vertex_fx.width, cmd->set_vertex_fx.height);
+                break;
+            case MAT_DEF_CMD_SET_FOG_ENABLED:
+                t3d_fog_set_enabled(cmd->set_fog_enabled);
+                break;
+            case MAT_DEF_CMD_SET_FOG_RANGE:
+                t3d_fog_set_range(cmd->set_fog_range.min * WORLD_SCALE, cmd->set_fog_range.max * WORLD_SCALE);
+                break;
+            case MAT_DEF_CMD_SET_LIGHT_COUNT:
+                t3d_light_set_count(cmd->light_count);
+                break;
+            default:
+                assert(false);
+        }
+    }
+
     into->block = rspq_block_end();
 }
 
 void material_load_file(struct material* into, const char* filename) {
     FILE* material_file = asset_fopen(filename, NULL);
     material_load(into, material_file);
+    material_debug(into, filename);
     fclose(material_file);
 }
 
@@ -429,4 +518,13 @@ void material_apply(struct material* material) {
 
     material_check_texture_scroll(TILE0, &material->tex0);
     material_check_texture_scroll(TILE1, &material->tex1);
+}
+
+void material_debug(struct material* material, const char* name) {
+#if DEBUG_MATERIALS
+    uint32_t overlay;
+    debugf("checking mat %s ", name);
+    uint32_t switch_count = rspq_count_overlay_switches(material->block, &overlay);
+    debugf( " switch %d overlay %x\n", switch_count, overlay);
+#endif
 }
