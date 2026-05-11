@@ -52,9 +52,13 @@ class LoadingZone():
         self.obj: bpy.types.Object = obj
         self.target: str = target
 
-    def bounding_box(self, scene_rotation: mathutils.Matrix) -> tuple[mathutils.Vector, mathutils.Vector]:
-        final_transform = scene_rotation @ self.obj.matrix_world
-        transformed = [final_transform @ mathutils.Vector(vtx) for vtx in self.obj.bound_box]
+    def bounding_box(self, scene_rotation: mathutils.Matrix) -> tuple[mathutils.Vector, mathutils.Vector, float]:
+        object_transform = scene_rotation @ self.obj.matrix_world
+        rotation_vector = (object_transform @ mathutils.Vector((1, 0, 0))) - (object_transform @ mathutils.Vector((0, 0, 0)))
+        rotation = math.atan2(rotation_vector.z, rotation_vector.x)
+        mesh: bpy.types.Mesh = self.obj.data
+        final_transform = mathutils.Matrix.Rotation(rotation, 4, 'Y') @ object_transform
+        transformed = [final_transform @ mathutils.Vector(vtx.co) for vtx in mesh.vertices]
 
         bb_min = transformed[0]
         bb_max = transformed[0]
@@ -71,7 +75,7 @@ class LoadingZone():
                 max(bb_max.z, vtx.z)
             ))
 
-        return bb_min, bb_max
+        return bb_min, bb_max, rotation
 
 class Scene():
     def __init__(self):
@@ -496,9 +500,10 @@ def write_loading_zones(scene, base_transform, context, file):
     file.write(struct.pack(">H", len(scene.loading_zones)))
 
     for loading_zone in scene.loading_zones:
-        bb_min, bb_max = loading_zone.bounding_box(base_transform)
+        bb_min, bb_max, rotation = loading_zone.bounding_box(base_transform)
         file.write(struct.pack(">fff", bb_min.x, bb_min.y, bb_min.z))
         file.write(struct.pack(">fff", bb_max.x, bb_max.y, bb_max.z))
+        file.write(struct.pack(">ff", math.cos(rotation), math.sin(rotation)))
         file.write(struct.pack(">I", context.get_string_offset(loading_zone.target)))
 
 def read_room_objects(scene: Scene, scene_vars, context) -> tuple[dict[int, list[ObjectEntry]], dict[int, list[int]], list[ObjectEntry]]:

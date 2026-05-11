@@ -23,6 +23,7 @@ struct static_entity {
 
 struct loading_zone {
     struct Box3D bounding_box;
+    vector2_t rotation;
     char* scene_name;
 };
 

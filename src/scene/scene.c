@@ -173,7 +173,12 @@ void scene_update(void* data) {
 
     SC_PROFILE_START(scene);
     for (int i = 0; i < scene->loading_zone_count; i += 1) {
-        if (box3DContainsPoint(&scene->loading_zones[i].bounding_box, &player_center)) {
+        struct loading_zone* zone = &scene->loading_zones[i];
+
+        vector3_t rotated_center;
+        vector3RotateWith2Inv(&player_center, &zone->rotation, &rotated_center);
+
+        if (box3DContainsPoint(&zone->bounding_box, &rotated_center)) {
             cutscene_builder_t cutscene;
             cutscene_builder_init(&cutscene);
             cutscene_builder_pause(&cutscene, true, false);
@@ -184,7 +189,7 @@ void scene_update(void* data) {
 
             cutscene_runner_run(cutscene_builder_finish(&cutscene), 0, cutscene_runner_free_on_finish(), NULL, 0);
 
-            // kinda hacky
+            // kinda hacky way to prevent another loading zone from triggering
             scene->loading_zone_count = 0;
         }
     }
