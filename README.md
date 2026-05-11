@@ -58,6 +58,7 @@ make
 * Big biter
 * Something underground
 * Magic user
+* Ranged attacker
 * Fighter (weakness is parry)
 * Enemies that are individually weak but come in groups
 * Single difficult fight
@@ -81,9 +82,7 @@ Have earth + life be recast
 
 ## TODO
 
-- implement sliding state
 - implement crushing check
-- lightning ball needs to have 2 clear states
 - prevent z lock on held object
 - refactor how the animator works
 - include material/image dependencies in asset dependencies
@@ -99,10 +98,14 @@ Have earth + life be recast
 
 - function imports
 
-
 ## Fire trails todo
 
 * Make it look better
+
+## Short ideas
+
+* Crush check logic
+* Sloped surface check
 
 ## Setup the blender plugin
 

@@ -108,7 +108,8 @@ class Definitions:
                     cache[relative_path] = {'entries': entries, 'modified': modified}
                 except:
                     print(f"failed to load file {sibling}")
-                    del cache[relative_path]
+                    if relative_path in cache:
+                        del cache[relative_path]
 
         relative_path = os.path.relpath(bpy.data.filepath, start_path).replace('.blend', '.scene')
 
