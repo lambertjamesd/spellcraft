@@ -527,6 +527,8 @@ bool player_check_for_casting(struct player* player) {
         }
         player_check_for_animation_request(player, source);
         return true;
+    } else if (player->last_spell_animation && cutscene_actor_is_animating_clip(&player->cutscene_actor, player->last_spell_animation)) {
+        player_run_clip(player, PLAYER_ANIMATION_IDLE);
     }
     player_check_for_animation_request(player, source);
 

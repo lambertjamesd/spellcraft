@@ -272,12 +272,17 @@ bool wind_update_burst(struct wind* wind, struct spell_event_listener* event_lis
 
 bool wind_update_persistant(struct wind* wind, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
     spell_data_source_apply_transform_sa(wind->data_source, &wind->transform);
-    spell_data_source_request_animation(wind->data_source, SPELL_ANIMATION_CAST_FORWARD_HOLD);
 
     if (wind->definition->sphere) {
         wind_apply_sphere_push_velocity(wind);
     } else {
         wind_apply_push_velocity(wind);
+    }
+
+    if (wind->data_source->flags.cast_held) {
+        spell_data_source_request_animation(wind->data_source, SPELL_ANIMATION_CAST_FORWARD_HOLD);
+    } else {
+        spell_data_source_cancel_animation(wind->data_source);
     }
 
     return wind->data_source->flags.cast_held;

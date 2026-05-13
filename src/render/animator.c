@@ -398,6 +398,11 @@ void animator_run_clip(struct animator* animator, struct animation_clip* clip, f
     animator_step(animator, 0.0f);
 }
 
+void animator_stop(struct animator* animator) {
+    animator->current_clip = NULL;
+    animator->done = 0;
+}
+
 int animator_is_running(struct animator* animator) {
     return animator->current_clip != NULL && !animator->done;
 }
