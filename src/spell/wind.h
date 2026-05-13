@@ -8,6 +8,7 @@
 #include "../collision/dynamic_object.h"
 #include "elements.h"
 #include "push_single_target.h"
+#include <stdbool.h>
 
 struct wind_definition {
     struct push_single_definition push;
@@ -28,9 +29,12 @@ struct wind {
 
     struct Quaternion bone_rotations[MAX_WIND_BONES];
 
+    entity_id id;
+
     float push_timer;
 
-    uint8_t did_burst: 1;
+    bool did_burst;
+    bool is_casting;
 };
 
 void wind_init(struct wind* wind, struct spell_data_source* source, struct spell_event_options event_options, struct wind_definition* effect_definition);

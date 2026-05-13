@@ -491,6 +491,9 @@ void player_check_for_animation_request(struct player* player, struct spell_data
             case SPELL_ANIMATION_CAST_UP:
                 to_play = PLAYER_ANIMATION_CAST_UP;
                 break;
+            case SPELL_ANIMATION_CAST_FORWARD:
+                to_play = PLAYER_ANIMATION_ATTACK;
+                break;
         }
         
         if (to_play != PLAYER_ANIMATION_COUNT) {
@@ -500,7 +503,11 @@ void player_check_for_animation_request(struct player* player, struct spell_data
             player->last_spell_animation = NULL;
         }
         source->request_animation = 0;
-        player->player_spell_sources[4].flags.cast_state = SPELL_CAST_STATE_INACTIVE;
+
+        spell_data_source_t* source = &player->player_spell_sources[4];
+
+        source->flags.cast_state = SPELL_CAST_STATE_INACTIVE;
+        source->flags.animator_attack = false;
     }
 }
 
@@ -992,8 +999,10 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
             source->flags.is_animating = 0;
             source->flags.cast_state = SPELL_CAST_STATE_INACTIVE;
             source->flags.can_recast = false;
+            source->flags.animator_attack = false;
         } else {
             source->flags.cast_state = player->cutscene_actor.animator.events.attack ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+            source->flags.animator_attack = player->cutscene_actor.animator.events.attack;
             source->flags.can_recast = player->cutscene_actor.animator.events.can_recast;
         }
     } else {
@@ -1001,6 +1010,7 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
         source->position = player->cutscene_actor.transform.position;
         source->position.y += 1.0f;
         source->flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
+        source->flags.cast_held = input.btn.a;
     }
 
     if (pressed.b) {
