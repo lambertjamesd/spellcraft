@@ -57,6 +57,10 @@ bool spell_data_source_request_animation(struct spell_data_source* data_source, 
     return true;
 }
 
+void spell_data_source_cancel_animation(struct spell_data_source* data_source) {
+    data_source->flags.is_animating = false;
+}
+
 void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform) {
     transform->position = data_source->position;
 

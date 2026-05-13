@@ -24,6 +24,7 @@ enum spell_animation {
     SPELL_ANIMATION_SPIN,
     SPELL_ANIMATION_CAST_UP,
     SPELL_ANIMATION_CAST_FORWARD,
+    SPELL_ANIMATION_CAST_FORWARD_HOLD,
 };
 
 union spell_source_flags {
@@ -68,6 +69,7 @@ struct spell_data_source* spell_data_source_pool_get(struct spell_data_source_po
 struct spell_data_source* spell_data_source_retain(struct spell_data_source* data_source);
 void spell_data_source_release(struct spell_data_source* data_source);
 bool spell_data_source_request_animation(struct spell_data_source* data_source, enum spell_animation animation);
+void spell_data_source_cancel_animation(struct spell_data_source* data_source);
 
 void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform);
 

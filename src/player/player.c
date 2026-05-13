@@ -494,10 +494,15 @@ void player_check_for_animation_request(struct player* player, struct spell_data
             case SPELL_ANIMATION_CAST_FORWARD:
                 to_play = PLAYER_ANIMATION_ATTACK;
                 break;
+            case SPELL_ANIMATION_CAST_FORWARD_HOLD:
+                to_play = PLAYER_ANIMATION_ATTACK_HOLD;
+                break;
         }
         
         if (to_play != PLAYER_ANIMATION_COUNT) {
-            player_run_clip(player, to_play);
+            if (!player_is_running(player, to_play)) {
+                player_run_clip(player, to_play);
+            }
             player->last_spell_animation = player->animations[to_play];
         } else {
             player->last_spell_animation = NULL;
@@ -519,12 +524,11 @@ bool player_check_for_casting(struct player* player) {
     if (source->flags.is_animating) {
         if (pressed.a && spell_exec_has_recast(&player->spell_exec, 4)) {
             spell_exec_start(&player->spell_exec, 4, live_cast_use_spell(&player->live_cast), source);
-            player_check_for_animation_request(player, source);
         }
-        return true;
-    } else {
         player_check_for_animation_request(player, source);
+        return true;
     }
+    player_check_for_animation_request(player, source);
 
     bool has_spell = live_cast_has_pending_spell(&player->live_cast);
 
@@ -1010,8 +1014,8 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
         source->position = player->cutscene_actor.transform.position;
         source->position.y += 1.0f;
         source->flags.cast_state = input.btn.a ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
-        source->flags.cast_held = input.btn.a;
     }
+    source->flags.cast_held = input.btn.a;
 
     if (pressed.b) {
         live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_LIFE);
