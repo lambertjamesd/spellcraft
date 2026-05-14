@@ -7,6 +7,7 @@
 #include "../collision/shapes/cylinder.h"
 #include "../collision/shapes/cone.h"
 #include "../collision/shapes/sphere.h"
+#include "spell_data_source.h"
 
 void* fire_effect_start(struct Vector3* pos, struct Vector3* direction, float radius) {
     return scale_in_fade_out_new(spell_assets_get()->fire_sweep_mesh, pos, direction, radius);
@@ -210,6 +211,8 @@ static struct element_emitter_definition lightning_definition = {
     .on_effect_stop = effect_nop_stop,
     .is_effect_running = effect_always_stopped,
     .effect_free = (effect_free)lightning_effect_free,
+    .cast_animation = SPELL_ANIMATION_CAST_FORWARD,
+    .cast_loop_animation = SPELL_ANIMATION_CAST_FORWARD_HOLD,
 };
 
 static struct element_emitter_definition lightning_around_definition = {

@@ -16,6 +16,8 @@
 #define MOVE_SPEED          6.5f
 #define MOVE_ACCELERATION   8.0f
 
+#define BITER_HEALTH        30.0f
+
 static struct Vector2 biter_max_rotation;
 
 static struct dynamic_object_type biter_collision_type = {
@@ -308,7 +310,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition, entity
 
     render_scene_add_renderable(&biter->renderable, 1.73f);
 
-    health_init(&biter->health, id, 10.0f);
+    health_init(&biter->health, id, BITER_HEALTH);
 
     biter->animation_set = animation_cache_load("rom:/meshes/enemies/enemy1.anim");
 

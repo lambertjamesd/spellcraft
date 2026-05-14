@@ -27,6 +27,8 @@ struct element_emitter_definition {
     on_effect_stop on_effect_stop;
     is_effect_running is_effect_running;
     effect_free effect_free;
+    uint8_t cast_animation;
+    uint8_t cast_loop_animation;
 };
 
 struct element_emitter {
@@ -36,6 +38,7 @@ struct element_emitter {
     struct element_emitter_definition* effect_definition;
     void* effect;
     bool is_active;
+    bool is_casting;
 };
 
 void element_emitter_init(struct element_emitter* element_emitter, struct spell_data_source* source, struct spell_event_options event_options, struct element_emitter_definition* effect_definition);

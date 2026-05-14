@@ -339,7 +339,6 @@ void animator_request_needed_frames(struct animator* animator) {
 
 void animator_step(struct animator* animator, float delta_time) {
     animator_step_time(animator, delta_time);
-    animator_request_needed_frames(animator);
 }
 
 void animator_copy_attributes(struct animator* animator, struct armature* armature) {

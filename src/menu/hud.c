@@ -20,11 +20,11 @@
 
 #define MANA_TO_SIZE(mana)  (int)((mana) * MANA_WIDTH_RATIO)
 
-#define MANA_BAR_X              20
-#define MANA_BAR_Y              214
+#define MANA_BAR_X              24
+#define MANA_BAR_Y              28
 #define MANA_BAR_HEIGHT         4
 
-#define HEALTH_BAR_Y            206
+#define HEALTH_BAR_Y            20
 
 #define BUTTON_ICON_X           258
 #define BUTTON_ICON_Y           30
