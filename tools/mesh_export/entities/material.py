@@ -4,6 +4,7 @@ import numbers
 import struct
 import re
 import json
+from enum import Enum
 
 class PngMetadata():
     def __init__(self, filename):
@@ -184,6 +185,47 @@ class CombineMode():
 
         return bool((self.cyc1 and self.cyc1.uses(attr)) or (self.cyc2 and self.cyc2.uses(attr)))
 
+class CycleType(Enum):
+    CYCLE_1 = 0
+    CYCLE_2 = 1
+    CYCLE_COPY = 2
+    CYCLE_FILL = 3
+
+class TlutType(Enum):
+    TLUT_RGBA = 0
+    TLUTIA = 0
+    
+class SampleType(Enum):
+    POINT_SAMPLE = 0
+    QUAD_SAMPLE = 0
+
+class RgbDitherSel(Enum):
+    MAGIC_SQUARE = 0
+    STANDARD = 1
+    NOISE = 2
+    NONE = 3
+
+class AlphaDitherSel(Enum):
+    PATTERN = 0
+    INV_PATTERN = 1
+    NOISE = 2
+    NONE = 3
+
+class ZMode(Enum):
+    OPAQUE = 0
+    INTER = 1
+    TRANSPARENT = 2
+    DECAL = 3
+
+class CvgDest(Enum):
+    CLAMP = 0
+    WRAP = 1
+    ZAP = 2
+    SAVE = 3
+
+class ZSourceSel(Enum):
+    PIXEL = 0
+    PRIM = 1
     
 class BlendModeCycle():
     def __init__(self, a1, b1, a2, b2):
@@ -207,39 +249,76 @@ class BlendModeCycle():
     def copy(self):
         return BlendModeCycle(self.a1, self.b1, self.a2, self.b2)
 
-class BlendMode():
+class OtherModes():
     def __init__(
-            self, 
-            cyc1: BlendModeCycle, 
-            cyc2: BlendModeCycle | None,
-            z_mode: str = 'OPAQUE',
-            z_write: bool = True,
-            z_compare: bool = True,
-            aa: bool = False,
-            alpha_compare: str = 'NONE',
-            coverage_dest: str = 'CLAMP',
-            color_on_coverage: bool = False,
-            x_coverage_alpha: bool = False,
-            alpha_coverage: bool = False,
-            force_blend: bool = False,
-            image_read: bool = False
+            self,
+            cyc1: BlendModeCycle = BlendModeCycle('IN', '0', 'IN', '1'), 
+            cyc2: BlendModeCycle | None = None,
+            atomic_prim: bool = False,
+            cycle_type: CycleType = CycleType.CYCLE_1,
+            persp_tex_en = False,
+            detail_tex_en = False,
+            sharpen_tex_en = False,
+            tex_lod_en = False,
+            en_tlut = False,
+            tlut_type: TlutType = TlutType.TLUT_RGBA,
+            sample_type: SampleType = SampleType.POINT_SAMPLE,
+            mid_texel = False,
+            bi_lerp_0 = False,
+            bi_lerp_1 = False,
+            convert_one = False,
+            key_en = False,
+            rgb_dither_sel: RgbDitherSel = RgbDitherSel.NONE,
+            alpha_dither_sel: AlphaDitherSel = AlphaDitherSel.NONE,
+            force_blend = False,
+            alpha_cvg_select = False,
+            cvg_times_alpha = False,
+            z_mode: ZMode = ZMode.OPAQUE,
+            coverage_dest: CvgDest = CvgDest.CLAMP,
+            color_on_cvg = False,
+            image_read_en = False,
+            z_write = False,
+            z_compare = False,
+            antialias_en = False,
+            z_source_sel: ZSourceSel = ZSourceSel.PIXEL,
+            dither_alpha = False,
+            alpha_compare = False
         ):
         self.cyc1: BlendModeCycle = cyc1
         self.cyc2: BlendModeCycle | None = cyc2
-        self.z_mode = z_mode
-        self.z_write = z_write
-        self.z_compare: bool = z_compare
-        self.aa: bool = aa,
-        self.alpha_compare = alpha_compare
-        self.coverage_dest = coverage_dest
-        self.color_on_coverage = color_on_coverage
-        self.x_coverage_alpha = x_coverage_alpha
-        self.alpha_coverage = alpha_coverage
-        self.force_blend = force_blend
-        self.image_read = image_read
 
+        self.atomic_prim: bool = atomic_prim
+        self.cycle_type: CycleType = cycle_type
+        self.persp_tex_en: bool = persp_tex_en
+        self.detail_tex_en: bool = detail_tex_en
+        self.sharpen_tex_en: bool = sharpen_tex_en
+        self.tex_lod_en: bool = tex_lod_en
+        self.en_tlut: bool = en_tlut
+        self.tlut_type: TlutType = tlut_type
+        self.sample_type: SampleType = sample_type
+        self.mid_texel: bool = mid_texel
+        self.bi_lerp_0: bool = bi_lerp_0
+        self.bi_lerp_1: bool = bi_lerp_1
+        self.convert_one: bool = convert_one
+        self.key_en: bool = key_en
+        self.rgb_dither_sel: RgbDitherSel = rgb_dither_sel
+        self.alpha_dither_sel: AlphaDitherSel = alpha_dither_sel
+        self.force_blend: bool = force_blend
+        self.alpha_cvg_select: bool = alpha_cvg_select
+        self.cvg_times_alpha: bool = cvg_times_alpha
+        self.z_mode: ZMode = z_mode
+        self.coverage_dest: CvgDest = coverage_dest
+        self.color_on_cvg: bool = color_on_cvg
+        self.image_read_en: bool = image_read_en
+        self.z_write: bool = z_write
+        self.z_compare: bool = z_compare
+        self.antialias_en: bool = antialias_en
+        self.z_source_sel: ZSourceSel = z_source_sel
+        self.dither_alpha: bool = dither_alpha
+        self.alpha_compare: bool = alpha_compare
+        
     def __eq__(self, value: object) -> bool:
-        if not value or not isinstance(value, BlendMode):
+        if not value or not isinstance(value, OtherModes):
             return False
         
         return self.cyc1 == value.cyc1 and self.cyc2 == value.cyc2 and self.alpha_compare == value.alpha_compare and \
@@ -255,7 +334,7 @@ class BlendMode():
         return f"1 cycle {self.cyc1} {self.z_mode}"
     
     def copy(self):
-        result = BlendMode(
+        result = OtherModes(
             self.cyc1 and self.cyc1.copy() or None,
             self.cyc2 and self.cyc2.copy() or None
         )
@@ -472,7 +551,7 @@ class Fog():
 class Material():
     def __init__(self):
         self.combine_mode: CombineMode | None = None
-        self.blend_mode: BlendMode | None = None
+        self.other_modes: OtherModes | None = None
         self.env_color: Color | None = None
         self.prim_color: Color | None = None
         self.blend_color: Color | None = None
@@ -490,7 +569,7 @@ class Material():
     def copy(self):
         result = Material()
         result.combine_mode = self.combine_mode.copy() if self.combine_mode else None
-        result.blend_mode = self.blend_mode.copy() if self.blend_mode else None
+        result.other_modes = self.other_modes.copy() if self.other_modes else None
         result.env_color = self.env_color.copy() if self.env_color else None
         result.prim_color = self.prim_color.copy() if self.prim_color else None
         result.blend_color = self.blend_color.copy() if self.blend_color else None
@@ -536,7 +615,7 @@ class Material():
         if self.priority != None:
             return self.priority
 
-        if not self.blend_mode:
+        if not self.other_modes:
             return 10
         
         if self.blend_mode.z_mode == 'OPAQUE':

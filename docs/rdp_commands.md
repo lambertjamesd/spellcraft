@@ -1,0 +1,23 @@
+
+0x3D - set texture image
+0x35 - set tile
+0x34 - load tile
+0x33 - load block
+0x32 - set tile size
+0x30 - tlut
+0x3c - set combine mode
+0x2f - set other modes
+0x3b - set env color
+0x3a - set prim color
+0x39 - set blend color
+0x38 - set fog color
+0x37 - set fill color
+0x2e - set prim depth
+0x2d - set scissor
+0x2c - set convert
+0x2b - set key r
+0x2a - set key gb
+0x29 - sync full
+0x31 - sync load
+0x27 - sync pipe
+0x28 - sync tile
