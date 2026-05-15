@@ -220,12 +220,18 @@ class ZMode(Enum):
 class CvgDest(Enum):
     CLAMP = 0
     WRAP = 1
-    ZAP = 2
+    FULL = 2
     SAVE = 3
 
 class ZSourceSel(Enum):
     PIXEL = 0
     PRIM = 1
+
+class AlphaCompare(Enum):
+    NONE = 0
+    THRESHOLD = 1
+    DITHER = 2
+
     
 class BlendModeCycle():
     def __init__(self, a1, b1, a2, b2):
@@ -271,18 +277,17 @@ class OtherModes():
             rgb_dither_sel: RgbDitherSel = RgbDitherSel.NONE,
             alpha_dither_sel: AlphaDitherSel = AlphaDitherSel.NONE,
             force_blend = False,
-            alpha_cvg_select = False,
-            cvg_times_alpha = False,
+            alpha_coverage = False,
+            x_coverage_alpha = False,
             z_mode: ZMode = ZMode.OPAQUE,
             coverage_dest: CvgDest = CvgDest.CLAMP,
-            color_on_cvg = False,
-            image_read_en = False,
-            z_write = False,
-            z_compare = False,
-            antialias_en = False,
+            color_on_coverage = False,
+            image_read = False,
+            z_write = True,
+            z_compare = True,
+            aa = False,
             z_source_sel: ZSourceSel = ZSourceSel.PIXEL,
-            dither_alpha = False,
-            alpha_compare = False
+            alpha_compare: AlphaCompare = AlphaCompare.NONE
         ):
         self.cyc1: BlendModeCycle = cyc1
         self.cyc2: BlendModeCycle | None = cyc2
@@ -304,28 +309,51 @@ class OtherModes():
         self.rgb_dither_sel: RgbDitherSel = rgb_dither_sel
         self.alpha_dither_sel: AlphaDitherSel = alpha_dither_sel
         self.force_blend: bool = force_blend
-        self.alpha_cvg_select: bool = alpha_cvg_select
-        self.cvg_times_alpha: bool = cvg_times_alpha
+        self.alpha_coverage: bool = alpha_coverage
+        self.x_coverage_alpha: bool = x_coverage_alpha
         self.z_mode: ZMode = z_mode
         self.coverage_dest: CvgDest = coverage_dest
-        self.color_on_cvg: bool = color_on_cvg
-        self.image_read_en: bool = image_read_en
+        self.color_on_coverage: bool = color_on_coverage
+        self.image_read: bool = image_read
         self.z_write: bool = z_write
         self.z_compare: bool = z_compare
-        self.antialias_en: bool = antialias_en
+        self.aa: bool = aa
         self.z_source_sel: ZSourceSel = z_source_sel
-        self.dither_alpha: bool = dither_alpha
-        self.alpha_compare: bool = alpha_compare
+        self.alpha_compare: AlphaCompare = alpha_compare
         
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, OtherModes):
             return False
         
-        return self.cyc1 == value.cyc1 and self.cyc2 == value.cyc2 and self.alpha_compare == value.alpha_compare and \
-            self.z_mode == value.z_mode and self.z_write == value.z_write and self.z_compare == value.z_compare and \
-            self.aa == value.aa and self.coverage_dest == value.coverage_dest and self.color_on_coverage == value.color_on_coverage and \
-            self.x_coverage_alpha == value.x_coverage_alpha and self.alpha_coverage == value.alpha_coverage and \
-            self.force_blend == value.force_blend and self.image_read == value.image_read
+        return self.cyc1 == value.cyc1 and self.cyc2 == value.cyc2 and \
+            self.atomic_prim == value.atomic_prim and \
+            self.cycle_type == value.cycle_type and \
+            self.persp_tex_en == value.persp_tex_en and \
+            self.detail_tex_en == value.detail_tex_en and \
+            self.sharpen_tex_en == value.sharpen_tex_en and \
+            self.tex_lod_en == value.tex_lod_en and \
+            self.en_tlut == value.en_tlut and \
+            self.tlut_type == value.tlut_type and \
+            self.sample_type == value.sample_type and \
+            self.mid_texel == value.mid_texel and \
+            self.bi_lerp_0 == value.bi_lerp_0 and \
+            self.bi_lerp_1 == value.bi_lerp_1 and \
+            self.convert_one == value.convert_one and \
+            self.key_en == value.key_en and \
+            self.rgb_dither_sel == value.rgb_dither_sel and \
+            self.alpha_dither_sel == value.alpha_dither_sel and \
+            self.force_blend == value.force_blend and \
+            self.alpha_coverage == value.alpha_coverage and \
+            self.x_coverage_alpha == value.x_coverage_alpha and \
+            self.z_mode == value.z_mode and \
+            self.coverage_dest == value.coverage_dest and \
+            self.color_on_coverage == value.color_on_coverage and \
+            self.image_read == value.image_read and \
+            self.z_write == value.z_write and \
+            self.z_compare == value.z_compare and \
+            self.aa == value.aa and \
+            self.z_source_sel == value.z_source_sel and \
+            self.alpha_compare == value.alpha_compare
 
     def __str__(self):
         if self.cyc2:
@@ -334,24 +362,38 @@ class OtherModes():
         return f"1 cycle {self.cyc1} {self.z_mode}"
     
     def copy(self):
-        result = OtherModes(
+        return OtherModes(
             self.cyc1 and self.cyc1.copy() or None,
-            self.cyc2 and self.cyc2.copy() or None
+            self.cyc2 and self.cyc2.copy() or None,
+            self.atomic_prim,
+            self.cycle_type,
+            self.persp_tex_en,
+            self.detail_tex_en,
+            self.sharpen_tex_en,
+            self.tex_lod_en,
+            self.en_tlut,
+            self.tlut_type,
+            self.sample_type,
+            self.mid_texel,
+            self.bi_lerp_0,
+            self.bi_lerp_1,
+            self.convert_one,
+            self.key_en,
+            self.rgb_dither_sel,
+            self.alpha_dither_sel,
+            self.force_blend,
+            self.alpha_coverage,
+            self.x_coverage_alpha,
+            self.z_mode,
+            self.coverage_dest,
+            self.color_on_coverage,
+            self.image_read,
+            self.z_write,
+            self.z_compare,
+            self.aa,
+            self.z_source_sel,
+            self.alpha_compare,
         )
-
-        result.z_mode = self.z_mode
-        result.z_write = self.z_write
-        result.z_compare = self.z_compare
-        result.aa = self.aa
-        result.alpha_compare = self.alpha_compare
-        result.coverage_dest = self.coverage_dest
-        result.color_on_coverage = self.color_on_coverage
-        result.x_coverage_alpha = self.x_coverage_alpha
-        result.alpha_coverage = self.alpha_coverage
-        result.force_blend = self.force_blend
-        result.image_read = self.image_read
-
-        return result
     
     def enable_fog(self):
         result = self.copy()
@@ -618,13 +660,13 @@ class Material():
         if not self.other_modes:
             return 10
         
-        if self.blend_mode.z_mode == 'OPAQUE':
+        if self.other_modes.z_mode == 'OPAQUE':
             return 10
-        if self.blend_mode.z_mode == 'INTER':
+        if self.other_modes.z_mode == 'INTER':
             return 10
-        if self.blend_mode.z_mode == 'TRANSPARENT':
+        if self.other_modes.z_mode == 'TRANSPARENT':
             return 20
-        if self.blend_mode.z_mode == 'DECAL':
+        if self.other_modes.z_mode == 'DECAL':
             return 30
         
         return 10
@@ -673,7 +715,7 @@ class Material():
     def __str__(self):
         return f"""Material:
     combine_mode = {self.combine_mode}
-    blend_mode = {self.blend_mode}
+    other_modes = {self.other_modes}
     env_color = {self.env_color}
     prim_color = {self.prim_color}
     blend_color = {self.blend_color}
@@ -945,25 +987,27 @@ def _parse_blend_mode(result: Material, json_data):
     blend_mode = json_data['blendMode']
 
     if blend_mode == 'OPAQUE':
-        result.blend_mode = BlendMode(BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.other_modes = OtherModes(BlendModeCycle("IN", "0", "IN", "1"), None)
         return
 
     if blend_mode == 'TRANSPARENT':
-        result.blend_mode = BlendMode(BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
-        result.blend_mode.z_write = False
-        result.blend_mode.z_mode = 'TRANSPARENT'
+        result.other_modes = OtherModes(BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
+        result.other_modes.z_write = False
+        result.other_modes.z_mode = ZMode.TRANSPARENT
+        result.other_modes.image_read = True
         return
     
     if blend_mode == 'ALPHA_CLIP':
-        result.blend_mode = BlendMode(BlendModeCycle("IN", "0", "IN", "1"), None)
-        result.blend_mode.alpha_compare = 'THRESHOLD'
+        result.other_modes = OtherModes(BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.other_modes.alpha_compare = AlphaCompare.THRESHOLD
         result.blend_color = Color(0, 0, 0, 128)
         return
     
     if blend_mode == 'ADD':
-        result.blend_mode = BlendMode(BlendModeCycle("IN", "IN_A", "MEMORY", "1"), None)
-        result.blend_mode.z_write = False
-        result.blend_mode.z_mode = 'TRANSPARENT'
+        result.other_modes = OtherModes(BlendModeCycle("IN", "IN_A", "MEMORY", "1"), None)
+        result.other_modes.z_write = False
+        result.other_modes.z_mode = ZMode.TRANSPARENT
+        result.other_modes.image_read = True
         return
 
     if not 'cyc1' in blend_mode:
@@ -975,19 +1019,19 @@ def _parse_blend_mode(result: Material, json_data):
     if 'cyc2' in blend_mode:
         cyc2 = _parse_blend_mode_cycle(blend_mode['cyc2'], 'blendMode.cyc2')
 
-    result.blend_mode = BlendMode(cyc1, cyc2)
+    result.other_modes = OtherModes(cyc1, cyc2)
 
     if 'zMode' in blend_mode:
         _check_is_enum(blend_mode['zMode'], 'blendMode.zMode', ['OPAQUE', 'INTER', 'TRANSPARENT', 'DECAL'])
-        result.blend_mode.z_mode = blend_mode['zMode']
+        result.other_modes.z_mode = ZMode[blend_mode['zMode']]
 
     if 'zWrite' in blend_mode:
         _check_is_boolean(blend_mode['zWrite'], 'blendMode.zWrite')
-        result.blend_mode.z_write = blend_mode['zWrite']
+        result.other_modes.z_write = blend_mode['zWrite']
 
     if 'zCompare' in blend_mode:
         _check_is_boolean(blend_mode['zCompare'], 'blendMode.zCompare')
-        result.blend_mode.z_compare = blend_mode['zCompare']
+        result.other_modes.z_compare = blend_mode['zCompare']
 
     if 'alphaCompare' in blend_mode:
         _check_is_enum(blend_mode['alphaCompare'], 'blendMode.alphaCompare', ['NONE', 'THRESHOLD', 'NOISE'])

@@ -169,21 +169,21 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
         result.culling = False
 
     if mat.blend_method == 'CLIP':
-        result.blend_mode = material.BlendMode(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
-        result.blend_mode.alpha_compare = 'THRESHOLD'
+        result.other_modes = material.OtherModes(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
+        result.other_modes.alpha_compare = material.AlphaCompare.THRESHOLD
         result.blend_color = material.Color(0, 0, 0, 128)
     elif mat.blend_method == 'BLEND':
-        result.blend_mode = material.BlendMode(material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'), None)
-        result.blend_mode.z_write = False
+        result.other_modes = material.OtherModes(material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'), None)
+        result.other_modes.z_write = False
     elif mat.blend_method == 'HASHED':
-        result.blend_mode = material.BlendMode(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
-        result.blend_mode.alpha_compare = 'NOISE'
+        result.other_modes = material.OtherModes(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
+        result.other_modes.alpha_compare = material.AlphaCompare.DITHER
     else:
-        result.blend_mode = material.BlendMode(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
+        result.other_modes = material.OtherModes(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
 
     if 'decal' in mat and mat['decal']:
-        result.blend_mode.z_mode = 'DECAL'
-        result.blend_mode.z_write = False
+        result.other_modes.z_mode = material.ZMode.DECAL
+        result.other_modes.z_write = False
 
 def _determine_combiner_from_f3d(combiner) -> material.CombineModeCycle:
      return material.CombineModeCycle(
@@ -353,39 +353,19 @@ enumBlendMix = [
     '0'
 ]
 
-enumZMode = [
-    'OPAQUE',
-    'INTER',
-    'TRANSPARENT',
-    'DECAL',
-]
-
-enumAlphaCompare = [
-    'NONE',
-    'THRESHOLD',
-    'DITHER',
-]
-
-enumCoverageDest = [
-    'CLAMP',
-    'WRAP',
-    'FULL',
-    'SAVE',
-]
-
-def determine_materail_blend_f3d(rdp_settings) -> material.BlendMode:
+def determine_materail_blend_f3d(rdp_settings) -> material.OtherModes:
     is_2_cycle = rdp_settings['g_mdsft_cycletype'] == 1
 
     if rdp_settings['rendermode_advanced_enabled']:
-        return material.BlendMode(
+        return material.OtherModes(
             material.BlendModeCycle(enumBlendColor[rdp_settings['blend_p1']], enumBlendAlpha[rdp_settings['blend_a1']], enumBlendColor[rdp_settings['blend_m1']], enumBlendMix[rdp_settings['blend_b1']]),
             material.BlendModeCycle(enumBlendColor[rdp_settings['blend_p2']], enumBlendAlpha[rdp_settings['blend_a2']], enumBlendColor[rdp_settings['blend_m2']], enumBlendMix[rdp_settings['blend_b2']]) if is_2_cycle else None,
-            z_mode = enumZMode[rdp_settings['zmode']],
+            z_mode = material.ZMode(rdp_settings['zmode']),
             z_write = rdp_settings['z_upd'],
             z_compare = rdp_settings['z_cmp'],
             aa = rdp_settings['aa_en'],
-            alpha_compare = enumAlphaCompare[rdp_settings['g_mdsft_alpha_compare']],
-            coverage_dest = enumCoverageDest[rdp_settings['cvg_dst']],
+            alpha_compare = material.AlphaCompare(rdp_settings['g_mdsft_alpha_compare']),
+            coverage_dest = material.CvgDest(rdp_settings['cvg_dst']),
             color_on_coverage = rdp_settings['clr_on_cvg'],
             x_coverage_alpha = rdp_settings['cvg_x_alpha'],
             alpha_coverage = rdp_settings['alpha_cvg_sel'],
@@ -397,7 +377,7 @@ def determine_materail_blend_f3d(rdp_settings) -> material.BlendMode:
             _CYCLE_1_PRESETS[rdp_settings['rendermode_preset_cycle_1']],
             _CYCLE_2_PRESETS[rdp_settings['rendermode_preset_cycle_2']] if is_2_cycle else None
         )
-        result.alpha_compare = enumAlphaCompare[rdp_settings['g_mdsft_alpha_compare']]
+        result.alpha_compare = material.AlphaCompare(rdp_settings['g_mdsft_alpha_compare'])
         return result
 
 def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
@@ -420,30 +400,32 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     draw_layer = f3d_mat['draw_layer']['sm64']
 
     if draw_layer == 0 or draw_layer == 1:
-        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
-        result.blend_mode.z_mode = 'OPAQUE'
+        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.other_modes.z_mode = material.ZMode.OPAQUE
     elif draw_layer == 2:
-        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
-        result.blend_mode.z_mode = 'DECAL'
+        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.other_modes.z_mode =  material.ZMode.DECAL
     elif draw_layer == 3:
-        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "0", "IN", "1"), None)
-        result.blend_mode.z_mode = 'INTER'
+        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.other_modes.z_mode = material.ZMode.INTER
     elif draw_layer == 4:
-        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
-        result.blend_mode.z_mode = 'TRANSPARENT'
-        result.blend_mode.z_write = False
+        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
+        result.other_modes.z_mode = material.ZMode.TRANSPARENT
+        result.other_modes.z_write = False
     elif draw_layer == 5 or draw_layer == 6 or draw_layer == 7:
-        result.blend_mode = material.BlendMode(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
-        result.blend_mode.z_mode = 'TRANSPARENT'
-        result.blend_mode.z_write = False
+        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
+        result.other_modes.z_mode = material.ZMode.TRANSPARENT
+        result.other_modes.z_write = False
+    else:
+        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "0", "IN", "1"), None)
 
     if rdp_settings['g_mdsft_alpha_compare'] == 1:
-        result.blend_mode.alpha_compare = 'THRESHOLD'
+        result.other_modes.alpha_compare = material.AlphaCompare.THRESHOLD
     elif rdp_settings['g_mdsft_alpha_compare'] == 2:
-        result.blend_mode.alpha_compare = 'NOISE'
+        result.other_modes.alpha_compare = material.AlphaCompare.DITHER
 
     if rdp_settings['set_rendermode']:
-        result.blend_mode = determine_materail_blend_f3d(rdp_settings)
+        result.other_modes = determine_materail_blend_f3d(rdp_settings)
 
     if f3d_mat['set_env']:
         result.env_color = _determine_color_from_f3d(f3d_mat['env_color'])

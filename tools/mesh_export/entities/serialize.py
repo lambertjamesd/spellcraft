@@ -245,7 +245,7 @@ SOM_Z_WRITE = 1 << 5
 SOM_READ_ENABLE = 1 << 6
 SOM_BLENDING = 1 << 14
 
-def _serialize_blend(file, blend: material.BlendMode, force_cyc2: bool):
+def _serialize_other_modes(file, blend: material.OtherModes, force_cyc2: bool):
     a1 = BLEND_A[blend.cyc1.a1]
     b1 = BLEND_B1[blend.cyc1.b1]
     a2 = BLEND_A[blend.cyc1.a2]
@@ -256,10 +256,10 @@ def _serialize_blend(file, blend: material.BlendMode, force_cyc2: bool):
     a2_2 = a2
     b2_2 = b2
 
-    other_flags = ZMODE[blend.z_mode] | ALPHACOMPARE[blend.alpha_compare]
+    other_flags = ZMODE[blend.z_mode.name] | ALPHACOMPARE[blend.alpha_compare.name]
 
     if blend.coverage_dest:
-        other_flags |= COVERAGE_DEST[blend.coverage_dest]
+        other_flags |= COVERAGE_DEST[blend.coverage_dest.name]
 
     if blend.force_blend:
         other_flags |= SOM_BLENDING
@@ -356,7 +356,7 @@ def _serialize_palette(file, palette: list, palette_offset: int):
 def flags_for_material(mat: material.Material) -> int:
     flags = 0
 
-    if mat.blend_mode and (mat.blend_mode.z_compare or mat.blend_mode.z_write):
+    if mat.other_modes and (mat.other_modes.z_compare or mat.other_modes.z_write):
         flags |= T3D_FLAG_DEPTH
 
     if mat.z_buffer:
@@ -389,7 +389,7 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
     if mat.combine_mode and mat.combine_mode.cyc2:
         force_cyc2 = True
 
-    if mat.blend_mode and mat.blend_mode.cyc2:
+    if mat.other_modes and mat.other_modes.cyc2:
         force_cyc2 = True
 
     if mat.fog:
@@ -399,9 +399,9 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
         output.write(COMMAND_COMBINE.to_bytes(1, 'big'))
         _serialize_combine(output, mat.combine_mode, force_cyc2)
 
-    if mat.blend_mode:
+    if mat.other_modes:
         output.write(COMMAND_BLEND.to_bytes(1, 'big'))
-        _serialize_blend(output, mat.blend_mode, force_cyc2)
+        _serialize_other_modes(output, mat.other_modes, force_cyc2)
     
     if mat.env_color:
         output.write(COMMAND_ENV.to_bytes(1, 'big'))

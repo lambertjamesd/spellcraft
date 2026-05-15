@@ -483,11 +483,11 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
             mat = mat.copy()
             mat.z_buffer = False
 
-            if mat.blend_mode:
-                mat.blend_mode.z_compare = False
-                mat.blend_mode.z_write = False
+            if mat.other_modes:
+                mat.other_modes.z_compare = False
+                mat.other_modes.z_write = False
             else:
-                mat.blend_mode = material.BlendMode(
+                mat.other_modes = material.OtherModes(
                     material.BlendModeCycle('IN', '0', 'IN', '1'),
                     None,
                     z_compare=False,

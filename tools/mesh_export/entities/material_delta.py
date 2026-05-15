@@ -51,8 +51,8 @@ def determine_material_delta(start: material.Material, end: material.Material) -
     if end.combine_mode and (not start.combine_mode or start.combine_mode != end.combine_mode):
         result.combine_mode = end.combine_mode
     
-    if end.blend_mode and (not start.blend_mode or start.blend_mode != end.blend_mode):
-        result.blend_mode = end.blend_mode
+    if end.other_modes and (not start.other_modes or start.other_modes != end.other_modes):
+        result.other_modes = end.other_modes
 
     if end.env_color and (not start.env_color or start.env_color != end.env_color):
         result.env_color = end.env_color
@@ -112,7 +112,7 @@ def determine_material_cost(mat: material.Material) -> float:
     if mat.combine_mode:
         result += COMBINE_MODE_TIME
 
-    if mat.blend_mode:
+    if mat.other_modes:
         result += BLEND_MODE_TIME
 
     if mat.env_color:
@@ -176,8 +176,8 @@ def apply_material_delta(delta: material.Material, into: material.Material):
     if delta.combine_mode != None:
         into.combine_mode = delta.combine_mode
 
-    if delta.blend_mode != None:
-        into.blend_mode = delta.blend_mode
+    if delta.other_modes != None:
+        into.other_modes = delta.other_modes
 
     if delta.env_color != None:
         into.env_color = delta.env_color

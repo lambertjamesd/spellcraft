@@ -247,10 +247,10 @@ def generate_material(idx: int, material: bpy.types.Material, source: entities_m
 
     node_cache = {}
 
-    if source.blend_mode:
-        if source.blend_mode.alpha_compare == 'THRESHOLD':
+    if source.other_modes:
+        if source.other_modes.alpha_compare:
             material.blend_method = 'CLIP'
-        elif source.blend_mode.z_mode == 'TRANSPARENT':
+        elif source.other_modes.z_mode == entities_material.ZMode.TRANSPARENT:
             material.blend_method = 'BLEND'
 
     output_node = None
