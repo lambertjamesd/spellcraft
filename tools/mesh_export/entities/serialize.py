@@ -292,7 +292,7 @@ def _serialize_other_modes(file, blend: material.OtherModes, force_cyc2: bool):
         a2 = BLEND_A['IN']
         b2 = BLEND_B2['1']
 
-    file.write(struct.pack('>L',
+    file.write(struct.pack('>Q',
         (a1 << 30) | (b1 << 26) | (a2 << 22) | (b2 << 18) |
         (a1_2 << 28) | (b1_2 << 24) | (a2_2 << 20) | (b2_2 << 16) |
         other_flags    

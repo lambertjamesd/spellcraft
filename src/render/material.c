@@ -6,6 +6,7 @@
 #include "../time/time.h"
 #include "../config.h"
 #include "../util/rspq.h"
+#include "../ext/libdragon.h"
 
 void material_init(struct material* material) {
     material->block = 0;
@@ -257,44 +258,31 @@ void material_load(struct material* into, FILE* material_file) {
                 break;
             case COMMAND_BLEND:
                 {
-                    rdpq_blender_t blendMode;
-                    fread(&blendMode, sizeof(rdpq_blender_t), 1, material_file);
-                    rdpq_mode_blender(blendMode & SOM_BLEND_MASK);
+                    uint64_t otherModes;
+                    fread(&otherModes, 8, 1, material_file);
+                    rdpq_write_other_modes_raw((uint32_t)(otherModes >> 32), (uint32_t)otherModes);
 
-                    fog_mode = blendMode & 0xCCCC0000;
+                    fog_mode = otherModes & 0xCCCC0000;
                     fog_mode |= fog_mode >> 2;
 
-                    if (blendMode & SOM_Z_COMPARE) {
+                    if (otherModes & SOM_Z_COMPARE) {
                         into->flags |= MATERIAL_FLAGS_Z_READ;
                     }                  
 
-                    if (blendMode & SOM_Z_WRITE) {
+                    if (otherModes & SOM_Z_WRITE) {
                         into->flags |= MATERIAL_FLAGS_Z_WRITE;
                     }
 
-                    if ((blendMode & SOM_ALPHACOMPARE_MASK) != 0) {
-                        if ((blendMode & SOM_ALPHACOMPARE_MASK) == SOM_ALPHACOMPARE_THRESHOLD) {
-                            rdpq_mode_alphacompare(128);
-                        } else {
-                            rdpq_mode_alphacompare(-1);
-                        }
-                    } else {
-                        rdpq_mode_alphacompare(0);
-                    }
-
-                    int flags = SOM_ZMODE_MASK | SOM_READ_ENABLE | SOM_BLENDING | SOM_COVERAGE_DEST_MASK;
-                    rdpq_change_other_modes_raw(flags, blendMode & flags);
-
                     // TODO check when the zmode is decal
-                    if ((blendMode & SOM_ZMODE_MASK) == SOM_ZMODE_DECAL) {
+                    if ((otherModes & SOM_ZMODE_MASK) == SOM_ZMODE_DECAL) {
                         into->sort_priority = SORT_PRIORITY_DECAL;
                     }
 
-                    if ((blendMode & SOM_Z_WRITE) == 0) {
+                    if ((otherModes & SOM_Z_WRITE) == 0) {
                         into->sort_priority = SORT_PRIORITY_TRANSPARENT;
                     }
 
-                    if (!(blendMode & SOM_Z_COMPARE)) {
+                    if (!(otherModes & SOM_Z_COMPARE)) {
                         into->sort_priority = SORT_PRIORITY_NO_DEPTH_TEST;
                     }
                 }
@@ -310,7 +298,7 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     color_t color;
                     fread(&color, sizeof(color_t), 1, material_file);
-                    rdpq_set_prim_color(color);
+                    rdpq_set_prim_register_raw(color, 0, 0);
                 }
                 break;
             case COMMAND_BLEND_COLOR:
@@ -376,11 +364,6 @@ void material_load(struct material* into, FILE* material_file) {
                         .type = MAT_DEF_CMD_SET_FOG_ENABLED,
                         .set_fog_enabled = enabled,
                     };
-                    if (enabled) {
-                        rdpq_mode_fog(fog_mode);
-                    } else {
-                        rdpq_mode_fog(0);
-                    }
                 }
                 break;
             case COMMAND_FOG_COLOR:
