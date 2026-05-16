@@ -230,10 +230,6 @@ void material_load(struct material* into, FILE* material_file) {
     rspq_block_begin();
     rdpq_sync_pipe();
 
-    rdpq_mode_begin();
-
-    rdpq_mode_filter(FILTER_BILINEAR);
-
     bool has_palette = false;
     
     rdpq_blender_t fog_mode = RDPQ_FOG_STANDARD;
@@ -253,7 +249,7 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     rdpq_combiner_t combineMode;
                     fread(&combineMode, sizeof(rdpq_combiner_t), 1, material_file);
-                    rdpq_mode_combiner(combineMode);
+                    rdpq_set_combiner_raw(combineMode);
                 }
                 break;
             case COMMAND_BLEND:
@@ -407,8 +403,6 @@ void material_load(struct material* into, FILE* material_file) {
                 break;
         }
     }
-
-    rdpq_mode_end();
 
     if (into->tex0.texture_enabled) {
         if (into->tex0.sprite) {

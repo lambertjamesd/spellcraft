@@ -193,11 +193,12 @@ class CycleType(Enum):
 
 class TlutType(Enum):
     TLUT_RGBA = 0
-    TLUTIA = 0
+    TLUTIA = 1
     
 class SampleType(Enum):
-    POINT_SAMPLE = 0
-    QUAD_SAMPLE = 0
+    POINT = 0
+    MEDIAN = 1
+    BILINEAR = 2
 
 class RgbDitherSel(Enum):
     MAGIC_SQUARE = 0
@@ -232,6 +233,10 @@ class AlphaCompare(Enum):
     THRESHOLD = 1
     DITHER = 2
 
+class TextureDetail(Enum):
+    CLAMP = 0
+    SHARPEN = 1
+    DETAIL = 2
     
 class BlendModeCycle():
     def __init__(self, a1, b1, a2, b2):
@@ -263,13 +268,11 @@ class OtherModes():
             atomic_prim: bool = False,
             cycle_type: CycleType = CycleType.CYCLE_1,
             persp_tex_en = False,
-            detail_tex_en = False,
-            sharpen_tex_en = False,
+            tex_detail: TextureDetail = TextureDetail.CLAMP,
             tex_lod_en = False,
             en_tlut = False,
             tlut_type: TlutType = TlutType.TLUT_RGBA,
-            sample_type: SampleType = SampleType.POINT_SAMPLE,
-            mid_texel = False,
+            sample_type: SampleType = SampleType.POINT,
             bi_lerp_0 = False,
             bi_lerp_1 = False,
             convert_one = False,
@@ -295,13 +298,11 @@ class OtherModes():
         self.atomic_prim: bool = atomic_prim
         self.cycle_type: CycleType = cycle_type
         self.persp_tex_en: bool = persp_tex_en
-        self.detail_tex_en: bool = detail_tex_en
-        self.sharpen_tex_en: bool = sharpen_tex_en
+        self.tex_detail: TextureDetail = tex_detail
         self.tex_lod_en: bool = tex_lod_en
         self.en_tlut: bool = en_tlut
         self.tlut_type: TlutType = tlut_type
         self.sample_type: SampleType = sample_type
-        self.mid_texel: bool = mid_texel
         self.bi_lerp_0: bool = bi_lerp_0
         self.bi_lerp_1: bool = bi_lerp_1
         self.convert_one: bool = convert_one
@@ -329,13 +330,11 @@ class OtherModes():
             self.atomic_prim == value.atomic_prim and \
             self.cycle_type == value.cycle_type and \
             self.persp_tex_en == value.persp_tex_en and \
-            self.detail_tex_en == value.detail_tex_en and \
-            self.sharpen_tex_en == value.sharpen_tex_en and \
+            self.tex_detail == value.tex_detail and \
             self.tex_lod_en == value.tex_lod_en and \
             self.en_tlut == value.en_tlut and \
             self.tlut_type == value.tlut_type and \
             self.sample_type == value.sample_type and \
-            self.mid_texel == value.mid_texel and \
             self.bi_lerp_0 == value.bi_lerp_0 and \
             self.bi_lerp_1 == value.bi_lerp_1 and \
             self.convert_one == value.convert_one and \
@@ -368,13 +367,11 @@ class OtherModes():
             self.atomic_prim,
             self.cycle_type,
             self.persp_tex_en,
-            self.detail_tex_en,
-            self.sharpen_tex_en,
+            self.tex_detail,
             self.tex_lod_en,
             self.en_tlut,
             self.tlut_type,
             self.sample_type,
-            self.mid_texel,
             self.bi_lerp_0,
             self.bi_lerp_1,
             self.convert_one,

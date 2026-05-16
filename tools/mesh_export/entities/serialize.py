@@ -162,6 +162,24 @@ ALPHACOMPARE = {
     "DITHER": 3,
 }
 
+CYCLE_TYPE = {
+    "CYCLE_1": 0 << 52,
+    "CYCLE_2": 1 << 52,
+    "CYCLE_COPY": 2 << 52,
+    "CYCLE_FILL": 3 << 52,
+}
+
+TLUT_TYPE = {
+    "TLUT_RGBA": 0 << 46,
+    "TLUTIA": 1 << 46,
+}
+
+SAMPLE_TYPE = {
+    "POINT": 0 << 44,
+    "MEDIAN": 3 << 44,
+    "BILINEAR": 2 << 44,
+}
+
 UV_GEN = {
     'none': 0,
     'spherical': 1,
@@ -179,6 +197,31 @@ TEX_FMT = {
     'FMT_IA16': 14,
     'FMT_I4': 16,
     'FMT_I8': 17,
+}
+
+RGB_DITHER = {
+    "MAGIC_SQUARE": 0 << 38,
+    "STANDARD": 1 << 38,
+    "NOISE": 2 << 38,
+    "NONE": 3 << 38,
+}
+
+ALPHA_DITHER = {
+    "PATTERN": 0 << 36,
+    "INV_PATTERN": 1 << 36,
+    "NOISE": 2 << 36,
+    "NONE": 3 << 36,
+}
+
+Z_SOURCE = {
+    "PIXEL": 0 << 2,
+    "PRIM": 1 << 2,
+}
+
+TEX_DETAIL = {
+    "CLAMP": 0 << 49,
+    "SHARPEN": 1 << 49,
+    "DETAIL": 2 << 49,
 }
 
 RDPQ_COMBINER_2PASS = 1 << 63
@@ -240,10 +283,23 @@ def _serialize_combine(file, combine: material.CombineMode, force_cyc2: bool):
         flags \
     ))
 
-SOM_Z_COMPARE = 1 << 4
-SOM_Z_WRITE = 1 << 5
-SOM_READ_ENABLE = 1 << 6
+SOM_ATOMIC_PRIM = 1 << 55
+SOM_TEXTURE_PERSP = 1 << 51
+SOM_TEXTURE_LOD = 1 << 48
+SOM_TLUT = 1 << 47
+SOM_TF0 = 1 << 43
+SOM_TF1 = 1 << 42
+SOM_TF1YUV = 1 << 41
+SOM_CHROMA_KEY = 1 << 40
+
 SOM_BLENDING = 1 << 14
+SOM_ALPHA_COVERAGE = 1 << 13
+SOM_CVG_TIMES_ALPHA = 1 << 12
+SOM_COLOR_ON_CVG_OVERFLOW = 1 << 7
+SOM_READ_ENABLE = 1 << 6
+SOM_Z_WRITE = 1 << 5
+SOM_Z_COMPARE = 1 << 4
+SOM_AA = 1 << 3
 
 def _serialize_other_modes(file, blend: material.OtherModes, force_cyc2: bool):
     a1 = BLEND_A[blend.cyc1.a1]
@@ -256,22 +312,62 @@ def _serialize_other_modes(file, blend: material.OtherModes, force_cyc2: bool):
     a2_2 = a2
     b2_2 = b2
 
-    other_flags = ZMODE[blend.z_mode.name] | ALPHACOMPARE[blend.alpha_compare.name]
+    other_flags = ZMODE[blend.z_mode.name] | \
+        ALPHACOMPARE[blend.alpha_compare.name] | \
+        TLUT_TYPE[blend.tlut_type.name] | \
+        SAMPLE_TYPE[blend.sample_type.name] | \
+        RGB_DITHER[blend.rgb_dither_sel.name] | \
+        ALPHA_DITHER[blend.alpha_dither_sel.name] | \
+        COVERAGE_DEST[blend.coverage_dest.name] | \
+        Z_SOURCE[blend.z_source_sel.name] | \
+        TEX_DETAIL[blend.tex_detail.name]
 
-    if blend.coverage_dest:
-        other_flags |= COVERAGE_DEST[blend.coverage_dest.name]
+    if blend.atomic_prim:
+        other_flags |= SOM_ATOMIC_PRIM
+        
+    if blend.persp_tex_en:
+        other_flags |= SOM_TEXTURE_PERSP
+        
+    if blend.tex_lod_en:
+        other_flags |= SOM_TEXTURE_LOD
+        
+    if blend.bi_lerp_0:
+        other_flags |= SOM_TF0
+
+    if blend.bi_lerp_1:
+        other_flags |= SOM_TF1
+        
+    if blend.convert_one:
+        other_flags |= SOM_TF1YUV
+
+    if blend.key_en:
+        other_flags |= SOM_CHROMA_KEY
 
     if blend.force_blend:
         other_flags |= SOM_BLENDING
 
-    if blend.cyc1.needs_read():
+    if blend.alpha_coverage:
+        other_flags |= SOM_ALPHA_COVERAGE
+    
+    if blend.x_coverage_alpha:
+        other_flags |= SOM_CVG_TIMES_ALPHA
+
+    if blend.color_on_coverage:
+        other_flags |= SOM_COLOR_ON_CVG_OVERFLOW
+
+    if blend.image_read or blend.cyc1.needs_read():
         other_flags |= SOM_READ_ENABLE
+
+    if blend.z_write:
+        other_flags |= SOM_Z_WRITE
 
     if blend.z_compare:
         other_flags |= SOM_Z_COMPARE
 
-    if blend.z_write:
-        other_flags |= SOM_Z_WRITE
+    if blend.aa:
+        other_flags |= SOM_AA
+
+    cycle_type = blend.cycle_type
 
     if blend.cyc2:
         a1_2 = BLEND_A[blend.cyc2.a1]
@@ -282,15 +378,15 @@ def _serialize_other_modes(file, blend: material.OtherModes, force_cyc2: bool):
         if blend.cyc2.needs_read():
             other_flags |= SOM_READ_ENABLE
     elif force_cyc2:
-        a1_2 = a1
-        b1_2 = b1
-        a2_2 = a2
-        b2_2 = b2
-
         a1 = BLEND_A['IN']
         b1 = BLEND_B1['0']
         a2 = BLEND_A['IN']
         b2 = BLEND_B2['1']
+
+        if cycle_type == material.CycleType.CYCLE_1:
+            cycle_type = material.CycleType.CYCLE_2
+
+    other_flags |= CYCLE_TYPE[cycle_type.name]
 
     file.write(struct.pack('>Q',
         (a1 << 30) | (b1 << 26) | (a2 << 22) | (b2 << 18) |
@@ -310,7 +406,7 @@ def _serialize_tex_axis(file, axis: material.TexAxis):
     file.write(int(axis.mask & 0xFF).to_bytes(1, 'big'))
     file.write(int(axis.shift & 0xFF).to_bytes(1, 'big'))
 
-def _serialize_tex(file, tex: material.Tex, prev_tex: material.Tex = None):
+def _serialize_tex(file, tex: material.Tex | None, prev_tex: material.Tex | None = None):
     if not tex:
         file.write(b'\0')
         return
