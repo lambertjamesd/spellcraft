@@ -259,6 +259,9 @@ class BlendModeCycle():
     
     def copy(self):
         return BlendModeCycle(self.a1, self.b1, self.a2, self.b2)
+    
+    def should_blend(self):
+        return self.a1 != 'IN' or self.a2 != 'IN'
 
 class OtherModes():
     def __init__(
@@ -397,6 +400,9 @@ class OtherModes():
         )
 
         return result
+    
+    def should_blend(self) -> bool:
+        return self.cyc1.should_blend() or self.cyc2 != None and self.cyc2.should_blend()
     
 class Palette():
     def __init__(self):

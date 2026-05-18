@@ -248,7 +248,6 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint64_t other_modes;
                     fread(&other_modes, 8, 1, material_file);
-                    other_modes |= SOM_BLENDING;
                     rdpq_write_other_modes_raw((uint32_t)(other_modes >> 32), (uint32_t)other_modes);
 
                     if (other_modes & SOM_Z_COMPARE) {

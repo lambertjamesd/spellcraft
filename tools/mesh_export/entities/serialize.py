@@ -338,7 +338,7 @@ def _serialize_other_modes(file, blend: material.OtherModes, force_cyc2: bool):
     if blend.key_en:
         other_flags |= SOM_CHROMA_KEY
 
-    if blend.force_blend:
+    if blend.force_blend or blend.should_blend():
         other_flags |= SOM_BLENDING
 
     if blend.alpha_coverage:
