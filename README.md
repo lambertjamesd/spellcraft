@@ -93,6 +93,7 @@ Have earth + life be recast
 - camera logic
 - do a better job with camera tracking logic
 - assert(found_index != -1); inside of collision_scene.c was triggered
+- crash debug_collider_disable - callback_list_remove
 
 ## Scripting TODO
 

@@ -273,9 +273,7 @@ class OtherModes():
             en_tlut = False,
             tlut_type: TlutType = TlutType.TLUT_RGBA,
             sample_type: SampleType = SampleType.POINT,
-            bi_lerp_0 = False,
-            bi_lerp_1 = False,
-            convert_one = False,
+            yuv_en = False,
             key_en = False,
             rgb_dither_sel: RgbDitherSel = RgbDitherSel.NONE,
             alpha_dither_sel: AlphaDitherSel = AlphaDitherSel.NONE,
@@ -303,9 +301,7 @@ class OtherModes():
         self.en_tlut: bool = en_tlut
         self.tlut_type: TlutType = tlut_type
         self.sample_type: SampleType = sample_type
-        self.bi_lerp_0: bool = bi_lerp_0
-        self.bi_lerp_1: bool = bi_lerp_1
-        self.convert_one: bool = convert_one
+        self.yuv_en: bool = yuv_en
         self.key_en: bool = key_en
         self.rgb_dither_sel: RgbDitherSel = rgb_dither_sel
         self.alpha_dither_sel: AlphaDitherSel = alpha_dither_sel
@@ -335,9 +331,7 @@ class OtherModes():
             self.en_tlut == value.en_tlut and \
             self.tlut_type == value.tlut_type and \
             self.sample_type == value.sample_type and \
-            self.bi_lerp_0 == value.bi_lerp_0 and \
-            self.bi_lerp_1 == value.bi_lerp_1 and \
-            self.convert_one == value.convert_one and \
+            self.yuv_en == value.yuv_en and \
             self.key_en == value.key_en and \
             self.rgb_dither_sel == value.rgb_dither_sel and \
             self.alpha_dither_sel == value.alpha_dither_sel and \
@@ -355,10 +349,12 @@ class OtherModes():
             self.alpha_compare == value.alpha_compare
 
     def __str__(self):
+        rest = f"{self.z_mode.name} {self.cycle_type.name} {self.tlut_type.name}{self.atomic_prim and ' atm' or ''}{self.persp_tex_en and ' tpersp' or ''}"
+
         if self.cyc2:
-            return f"2 cycle {self.cyc1} {self.cyc2} {self.z_mode}"
+            return f"2 cycle {self.cyc1} {self.cyc2} {rest}"
         
-        return f"1 cycle {self.cyc1} {self.z_mode}"
+        return f"1 cycle {self.cyc1} {rest}"
     
     def copy(self):
         return OtherModes(
@@ -372,9 +368,7 @@ class OtherModes():
             self.en_tlut,
             self.tlut_type,
             self.sample_type,
-            self.bi_lerp_0,
-            self.bi_lerp_1,
-            self.convert_one,
+            self.yuv_en,
             self.key_en,
             self.rgb_dither_sel,
             self.alpha_dither_sel,

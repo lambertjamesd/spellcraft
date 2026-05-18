@@ -179,12 +179,6 @@ void material_use_tex(rdpq_tile_t tile, struct material_tex* tex) {
     );
 
     rdpq_set_tile_size_fx(tile, tex->s0, tex->t0, tex->s1, tex->t1);
-
-    if (tex->fmt == FMT_CI4 || tex->fmt == FMT_CI8) {
-        rdpq_mode_tlut(TLUT_RGBA16);
-    } else {
-        rdpq_mode_tlut(TLUT_NONE);
-    }
 }
 
 enum mat_def_cmd_type {
@@ -231,8 +225,6 @@ void material_load(struct material* into, FILE* material_file) {
     rdpq_sync_pipe();
 
     bool has_palette = false;
-    
-    rdpq_blender_t fog_mode = RDPQ_FOG_STANDARD;
 
     struct mat_def_cmd deferred_comands[MAT_DEF_CMD_COUNT];
     uint8_t deferred_command_count = 0;
@@ -247,38 +239,35 @@ void material_load(struct material* into, FILE* material_file) {
                 break;
             case COMMAND_COMBINE:
                 {
-                    rdpq_combiner_t combineMode;
-                    fread(&combineMode, sizeof(rdpq_combiner_t), 1, material_file);
-                    rdpq_set_combiner_raw(combineMode);
+                    rdpq_combiner_t combine_mode;
+                    fread(&combine_mode, sizeof(rdpq_combiner_t), 1, material_file);
+                    rdpq_set_combiner_raw(combine_mode);
                 }
                 break;
             case COMMAND_BLEND:
                 {
-                    uint64_t otherModes;
-                    fread(&otherModes, 8, 1, material_file);
-                    rdpq_write_other_modes_raw((uint32_t)(otherModes >> 32), (uint32_t)otherModes);
+                    uint64_t other_modes;
+                    fread(&other_modes, 8, 1, material_file);
+                    rdpq_write_other_modes_raw((uint32_t)(other_modes >> 32), (uint32_t)other_modes);
 
-                    fog_mode = otherModes & 0xCCCC0000;
-                    fog_mode |= fog_mode >> 2;
-
-                    if (otherModes & SOM_Z_COMPARE) {
+                    if (other_modes & SOM_Z_COMPARE) {
                         into->flags |= MATERIAL_FLAGS_Z_READ;
                     }                  
 
-                    if (otherModes & SOM_Z_WRITE) {
+                    if (other_modes & SOM_Z_WRITE) {
                         into->flags |= MATERIAL_FLAGS_Z_WRITE;
                     }
 
                     // TODO check when the zmode is decal
-                    if ((otherModes & SOM_ZMODE_MASK) == SOM_ZMODE_DECAL) {
+                    if ((other_modes & SOM_ZMODE_MASK) == SOM_ZMODE_DECAL) {
                         into->sort_priority = SORT_PRIORITY_DECAL;
                     }
 
-                    if ((otherModes & SOM_Z_WRITE) == 0) {
+                    if ((other_modes & SOM_Z_WRITE) == 0) {
                         into->sort_priority = SORT_PRIORITY_TRANSPARENT;
                     }
 
-                    if (!(otherModes & SOM_Z_COMPARE)) {
+                    if (!(other_modes & SOM_Z_COMPARE)) {
                         into->sort_priority = SORT_PRIORITY_NO_DEPTH_TEST;
                     }
                 }

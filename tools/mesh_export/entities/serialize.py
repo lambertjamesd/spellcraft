@@ -259,8 +259,6 @@ def _serialize_combine(file, combine: material.CombineMode, force_cyc2: bool):
         ab1 = ACOMB_A[combine.cyc2.ab]
         ac1 = ACOMB_MUL[combine.cyc2.ac]
         ad1 = ACOMB_A[combine.cyc2.ad]
-
-        flags |= RDPQ_COMBINER_2PASS
     elif force_cyc2:
         a1 = COMB_A['0']
         b1 = COMB_B['0']
@@ -271,8 +269,6 @@ def _serialize_combine(file, combine: material.CombineMode, force_cyc2: bool):
         ab1 = ACOMB_A['0']
         ac1 = ACOMB_MUL['0']
         ad1 = ACOMB_A['COMBINED']
-
-        flags |= RDPQ_COMBINER_2PASS
 
 
     file.write(struct.pack('>Q', \
@@ -330,15 +326,14 @@ def _serialize_other_modes(file, blend: material.OtherModes, force_cyc2: bool):
         
     if blend.tex_lod_en:
         other_flags |= SOM_TEXTURE_LOD
-        
-    if blend.bi_lerp_0:
-        other_flags |= SOM_TF0
 
-    if blend.bi_lerp_1:
-        other_flags |= SOM_TF1
+    if blend.en_tlut:
+        other_flags |= SOM_TLUT
         
-    if blend.convert_one:
+    if blend.yuv_en:
         other_flags |= SOM_TF1YUV
+    else:
+        other_flags |= SOM_TF0 | SOM_TF1
 
     if blend.key_en:
         other_flags |= SOM_CHROMA_KEY

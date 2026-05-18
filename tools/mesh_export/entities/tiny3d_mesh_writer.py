@@ -350,8 +350,8 @@ def _pack_color(color):
         min(int(color[3] * 255), 255)
     )
 
-def _pack_uv(uv, materail: material.Material):
-    w, h = materail.get_image_size()
+def _pack_uv(uv, material: material.Material):
+    w, h = material.get_image_size()
 
     return struct.pack(
         '>HH',

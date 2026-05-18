@@ -353,7 +353,7 @@ enumBlendMix = [
     '0'
 ]
 
-def determine_materail_blend_f3d(rdp_settings) -> material.OtherModes:
+def determine_material_blend_f3d(rdp_settings) -> material.OtherModes:
     is_2_cycle = rdp_settings['g_mdsft_cycletype'] == 1
 
     if rdp_settings['rendermode_advanced_enabled']:
@@ -383,15 +383,19 @@ def determine_materail_blend_f3d(rdp_settings) -> material.OtherModes:
             alpha_compare = material.AlphaCompare(rdp_settings['g_mdsft_alpha_compare']),
 
             # TODO
-            # bi_lerp_0 = False,
-            # bi_lerp_1 = False,
-            # convert_one = False,
+            # yuv_en = False,
         )
     else:
         result = blend_modes.combine_blend_mode(
             _CYCLE_1_PRESETS[rdp_settings['rendermode_preset_cycle_1']],
             _CYCLE_2_PRESETS[rdp_settings['rendermode_preset_cycle_2']] if is_2_cycle else None
         )
+        result.alpha_compare = material.AlphaCompare(rdp_settings['g_mdsft_alpha_compare'])
+        result.persp_tex_en = rdp_settings['g_mdsft_textpersp'] == 1
+        result.sample_type = material.SampleType(rdp_settings['g_mdsft_text_filt'])
+        result.rgb_dither_sel = material.RgbDitherSel(rdp_settings['g_mdsft_rgb_dither'])
+        result.alpha_dither_sel = material.AlphaDitherSel(rdp_settings['g_mdsft_alpha_dither'])
+        result.z_source_sel = material.ZSourceSel(rdp_settings['g_mdsft_zsrcsel'])
         result.alpha_compare = material.AlphaCompare(rdp_settings['g_mdsft_alpha_compare'])
         return result
 
@@ -439,8 +443,7 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     elif rdp_settings['g_mdsft_alpha_compare'] == 2:
         result.other_modes.alpha_compare = material.AlphaCompare.DITHER
 
-    if rdp_settings['set_rendermode']:
-        result.other_modes = determine_materail_blend_f3d(rdp_settings)
+    result.other_modes = determine_material_blend_f3d(rdp_settings)
 
     if f3d_mat['set_env']:
         result.env_color = _determine_color_from_f3d(f3d_mat['env_color'])
@@ -462,6 +465,7 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
 
     if result.tex0 and result.tex0.palette_data or result.tex1 and result.tex1.palette_data:
         result.other_modes.en_tlut = True
+        result.other_modes.tlut_type = material.TlutType.TLUT_RGBA
 
     if rdp_settings['g_cull_back']:
         result.culling = True
