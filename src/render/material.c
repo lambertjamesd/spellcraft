@@ -400,10 +400,6 @@ void material_load(struct material* into, FILE* material_file) {
             material_upload_placeholder(TILE0, &into->tex0);
         }
 
-        if (!has_palette && into->tex0.sprite && sprite_get_palette(into->tex0.sprite)) {
-            rdpq_tex_upload_tlut(sprite_get_palette(into->tex0.sprite), 0, 16);
-        }
-
         material_use_tex(TILE0, &into->tex0);
     }
     if (into->tex1.texture_enabled) {
