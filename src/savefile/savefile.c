@@ -126,12 +126,11 @@ bool savefile_has_save() {
 
 void savefile_set_last_scene(const char* name, const char* entry) {
     savefile_schedule_save(DIRTY_AUTOSAVE_INTERVAL);
-    strcpy(savefile.last_scene, name);
 
     if (*entry) {
-        int len = strlen(name);
-        savefile.last_scene[len] = '#';
-        strcpy(savefile.last_scene + len + 1, entry);
+        snprintf(savefile.last_scene, sizeof(savefile.last_scene), "%s#%s", name, entry);
+    } else {
+        snprintf(savefile.last_scene, sizeof(savefile.last_scene), "%s", name);
     }
 }
 
