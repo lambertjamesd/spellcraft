@@ -43,7 +43,10 @@ class PngMetadata():
             
             index += 8 + chunk_length + 4  # Move to next chunk (including CRC)
         
-        self.palette = self._get_palette_from_png(palette, transparency)
+        if self.fmt == 'FMT_CI4' or self.fmt == 'FMT_CI8':
+            self.palette = self._get_palette_from_png(palette, transparency)
+        else:
+            self.palette = None
 
     def _get_palette_from_png(self, palette, transparency):
         if not palette or len(palette) == 0:
