@@ -403,8 +403,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
     t3d_state_set_drawflags(T3D_FLAG_DEPTH | T3D_FLAG_SHADED | T3D_FLAG_TEXTURED);
 
     bool is_sprite_mode = false;
-    bool z_write = true;
-    bool z_read = true;
     enum light_source light_source = LIGHT_SOURCE_NONE;
     render_batch_setup_light(batch, light_source);
 
@@ -436,15 +434,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 material_apply(element->material);
             } else {
                 rdpq_sync_pipe();
-            }
-
-            bool need_z_write = (element->material->flags & MATERIAL_FLAGS_Z_WRITE) != 0;
-            bool need_z_read = (element->material->flags & MATERIAL_FLAGS_Z_READ) != 0;
-
-            if (need_z_write != z_write || need_z_read != z_read) {
-                rdpq_mode_zbuf(need_z_read, need_z_write);
-                z_write = need_z_write;
-                z_read = need_z_read;
             }
 
             current_mat = element->material;
@@ -483,7 +472,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         rdpq_set_lookup_address(attr->offset+1, (void*)PhysicalAddr(attr->image.sprite->data));
                         break;
                     case ELEMENT_ATTR_PRIM_COLOR:
-                        rdpq_set_prim_color(attr->color);
+                        rdpq_set_prim_register_raw(attr->color, 0, 0);
                         break;
                     case ELEMENT_ATTR_ENV_COLOR:
                         rdpq_set_env_color(attr->color);
