@@ -352,7 +352,16 @@ class OtherModes():
             self.alpha_compare == value.alpha_compare
 
     def __str__(self):
-        rest = f"{self.z_mode.name} {self.cycle_type.name} {self.tlut_type.name}{self.atomic_prim and ' atm' or ''}{self.persp_tex_en and ' tpersp' or ''}"
+        rest = f"{self.z_mode.name} {self.cycle_type.name} {self.tlut_type.name}"
+
+        if self.atomic_prim:
+            rest = f"{rest} atm"
+
+        if self.persp_tex_en:
+            rest = f"{rest} tpersp"
+
+        if self.image_read:
+            rest = f"{rest} im_read"
 
         if self.cyc2:
             return f"2 cycle {self.cyc1} {self.cyc2} {rest}"
