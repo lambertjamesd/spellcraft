@@ -406,6 +406,6 @@ void material_debug(struct material* material, const char* name) {
     uint32_t overlay;
     debugf("checking mat %s ", name);
     uint32_t switch_count = rspq_count_overlay_switches(material->block, &overlay);
-    debugf( " switch %d overlay %x\n", switch_count, overlay);
+    debugf( " switch %d overlay %x\n", (int)switch_count, (int)overlay);
 #endif
 }
