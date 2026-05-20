@@ -354,7 +354,7 @@ void cutscene_npc_animate_init(cutscene_runner_context_t* context, int arg_count
 // print
 void cutscene_print_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 1, arg_count, args);
-    debugf("%s\n", args[0]);
+    debugf("%s\n", (char*)args[0]);
 }
 
 // spawn

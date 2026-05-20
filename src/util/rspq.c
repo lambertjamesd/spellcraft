@@ -143,7 +143,7 @@ uint32_t rspq_count_overlay_switches_cmd(uint32_t* cmd, uint32_t* ending_overlay
             uint8_t cmd_size = command_size[command_id];
 
             if (!cmd_size) {
-                debugf("cmd %02x has no size\n", command_id);
+                debugf("cmd %02x has no size\n", (int)command_id);
             }
 
             assert(cmd_size);
@@ -152,7 +152,7 @@ uint32_t rspq_count_overlay_switches_cmd(uint32_t* cmd, uint32_t* ending_overlay
             uint32_t overlay_id = overlay_mapping[command_id >> 4];
 
             if (*ending_overlay != overlay_id && overlay_id != 0) {
-                debugf(" %02x -> %02x ", *ending_overlay, overlay_id);
+                debugf(" %02x -> %02x ", (int)*ending_overlay, (int)overlay_id);
                 result += 1;
                 *ending_overlay = overlay_id;
             }

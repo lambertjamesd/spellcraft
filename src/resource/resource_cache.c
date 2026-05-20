@@ -280,7 +280,7 @@ bool resource_cache_free(struct resource_cache* cache, void* resource) {
                 }
             }
 
-            debugf("something was wrong! %d %d %d %d\n", index_check, cache->entry_capacity, entry_index, resource_index);
+            debugf("something was wrong! %d %d %d %d\n", (int)index_check, cache->entry_capacity, entry_index, resource_index);
         }
 #endif
 
