@@ -9,6 +9,8 @@
 #define SORT_PRIORITY_DECAL         100
 #define SORT_PRIORITY_TRANSPARENT   200
 
+#define DEBUG_MATERIALS 0
+
 struct material_tex {
     bool texture_enabled;
     sprite_t* sprite;

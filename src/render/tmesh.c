@@ -121,6 +121,9 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
 
         for (int i = 0; i < transition_count; i += 1) {
             material_load(&tmesh->transition_materials[i], file);
+#if DEBUG_MATERIALS
+            material_debug(&tmesh->transition_materials[i], "transition");
+#endif
         }
     } else {
         tmesh->transition_materials = NULL;
