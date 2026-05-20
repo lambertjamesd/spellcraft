@@ -152,11 +152,7 @@ int material_size_to_clamp(int size) {
 
 void material_upload_tex(rdpq_tile_t tile, struct material_tex* tex) {
     surface_t surf = sprite_get_pixels(tex->sprite);
-    rdpq_texparms_t tex_parms = {
-        .palette = tex->params.palette,
-        .tmem_addr = tex->tmem_addr,
-    };
-    rdpq_tex_upload(tile, &surf, &tex_parms);
+    rdpq_tex_upload_raw(tile, &surf, &tex->params, tex->tmem_addr);
 }
 
 void material_upload_placeholder(rdpq_tile_t tile, struct material_tex* tex) {
@@ -310,7 +306,7 @@ void material_load(struct material* into, FILE* material_file) {
                     into->palette.tlut = malloc(sizeof(uint16_t) * into->palette.size);
                     fread(into->palette.tlut, sizeof(uint16_t), into->palette.size, material_file);
                     data_cache_index_writeback_invalidate(into->palette.tlut, sizeof(uint16_t) * into->palette.size);
-                    rdpq_tex_upload_tlut(into->palette.tlut, into->palette.idx, into->palette.size);
+                    rdpq_tex_upload_tlut_raw(into->palette.tlut, into->palette.idx, into->palette.size);
                     has_palette = true;
                 }
                 break;
