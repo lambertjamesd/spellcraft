@@ -219,7 +219,7 @@ int main(void)
             SC_PROFILE_END(main, overworld_check_unload_queue);
         }
 
-        // while (vi_delay > 0) {}
+        while (vi_delay > 0) {}
 
         int update_count = -vi_delay / VI_PER_FRAME + 1;
 

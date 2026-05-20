@@ -152,7 +152,11 @@ int material_size_to_clamp(int size) {
 
 void material_upload_tex(rdpq_tile_t tile, struct material_tex* tex) {
     surface_t surf = sprite_get_pixels(tex->sprite);
-    rdpq_tex_upload_raw(tile, &surf, &tex->params, tex->tmem_addr);
+    rdpq_texparms_t tex_parms = {
+        .palette = tex->params.palette,
+        .tmem_addr = tex->tmem_addr,
+    };
+    rdpq_tex_upload(tile, &surf, &tex_parms);
 }
 
 void material_upload_placeholder(rdpq_tile_t tile, struct material_tex* tex) {
@@ -214,7 +218,7 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint64_t other_modes;
                     fread(&other_modes, 8, 1, material_file);
-                    rdpq_write_other_modes_raw((uint32_t)(other_modes >> 32), (uint32_t)other_modes);
+                    rdpq_set_other_modes_unsafe(other_modes);
 
                     if (other_modes & SOM_Z_COMPARE) {
                         into->flags |= MATERIAL_FLAGS_Z_READ;
