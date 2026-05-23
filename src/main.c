@@ -117,7 +117,20 @@ void render_menu() {
     screen_debug_render();
 }
 
+#if ENABLE_PROFILE_rsp
+static uint64_t render_start_time;
+
+void render_finish_callback(void* data) {
+    debugf("render: %f\n", (float)(get_ticks_us() - render_start_time) * 0.001f);
+}
+
+#endif
+
 void render(surface_t* col, surface_t* zbuffer) {
+#if ENABLE_PROFILE_rsp
+    render_start_time = get_ticks_us();
+#endif
+
     update_render_time();
 
     if (current_game_mode == GAME_MODE_3D || current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
@@ -131,6 +144,7 @@ void render(surface_t* col, surface_t* zbuffer) {
         rdpq_tex_blit(&background, 0, 0, NULL);
     }
     render_menu();
+    rdpq_call_deferred(render_finish_callback, NULL);
 }
 
 #define MAX_FRAME_CATCHUP   2

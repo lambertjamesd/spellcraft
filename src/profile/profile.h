@@ -8,6 +8,8 @@
 #define ENABLE_PROFILE_render_particles     0
 #define ENABLE_PROFILE_overworld_update     0
 
+#define ENABLE_PROFILE_rsp                  1
+
 void profile_start();
 void profile_end(const char* name);
 
