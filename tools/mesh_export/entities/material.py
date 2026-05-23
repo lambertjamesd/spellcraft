@@ -611,7 +611,6 @@ class Material():
         self.tex1: Tex | None = None
         self.palette: int = 0
         self.culling: bool | None = None
-        self.z_buffer: bool | None = None
         self.vtx_effect: str | None = None
         self.fog: Fog | None = None
         self.light_count: int | None = None
@@ -629,7 +628,6 @@ class Material():
         result.tex1 = self.tex1.copy() if self.tex1 else None
         result.palette = self.palette
         result.culling = self.culling
-        result.z_buffer = self.z_buffer
         result.vtx_effect = self.vtx_effect
         result.fog = self.fog.copy() if self.fog else None
         result.light_count = self.light_count
@@ -718,8 +716,7 @@ class Material():
 
     def is_empty(self):
         return self.combine_mode == None and self.blend_color == None and self.env_color == None and self.prim_color == None and \
-            self.blend_color == None and self.lighting == None and self.tex0 == None and self.tex1 == None and self.culling == None and \
-            self.z_buffer == None
+            self.blend_color == None and self.lighting == None and self.tex0 == None and self.tex1 == None and self.culling == None
 
     def __str__(self):
         return f"""Material:
@@ -1165,7 +1162,9 @@ def parse_material(filename: str):
     result.lighting = json_data['lighting'] if 'lighting' in json_data else None
 
     result.culling = _optional_boolean(json_data, 'culling', 'culling', True)
-    result.z_buffer = _optional_boolean(json_data, 'zBuffer', 'zBuffer', True)
+    if not _optional_boolean(json_data, 'zBuffer', 'zBuffer', True) and result.other_modes:
+        result.other_modes.z_compare = False
+        result.other_modes.z_write = False
 
     result.vtx_effect = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
 

@@ -77,9 +77,6 @@ def determine_material_delta(start: material.Material, end: material.Material) -
     if end.culling != None and (start.culling == None or start.culling != end.culling):
         result.culling = end.culling
 
-    if end.z_buffer != None and (start.z_buffer == None or start.z_buffer != end.z_buffer):
-        result.z_buffer = end.z_buffer
-
     if end.vtx_effect != None and (start.vtx_effect == None or start.vtx_effect != end.vtx_effect):
         result.vtx_effect = end.vtx_effect
 
@@ -130,7 +127,7 @@ def determine_material_cost(mat: material.Material) -> float:
     result += determine_texture_cost(mat.tex0)
     result += determine_texture_cost(mat.tex1)
 
-    if mat.culling != None or mat.z_buffer:
+    if mat.culling != None:
         result += CHANGE_MODE
 
     if mat.fog:
@@ -199,9 +196,6 @@ def apply_material_delta(delta: material.Material, into: material.Material):
 
     if delta.culling != None:
         into.culling = delta.culling
-
-    if delta.z_buffer != None:
-        into.z_buffer = delta.z_buffer
 
     if delta.vtx_effect != None:
         into.vtx_effect = delta.vtx_effect

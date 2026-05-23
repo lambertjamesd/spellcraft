@@ -450,9 +450,6 @@ def flags_for_material(mat: material.Material) -> int:
     if mat.other_modes and (mat.other_modes.z_compare or mat.other_modes.z_write):
         flags |= T3D_FLAG_DEPTH
 
-    if mat.z_buffer:
-        flags |= T3D_FLAG_DEPTH
-
     if mat.culling == 'front':
         flags |= T3D_FLAG_CULL_FRONT
     elif mat.culling == True:

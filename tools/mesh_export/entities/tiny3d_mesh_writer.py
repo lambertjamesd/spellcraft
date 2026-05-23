@@ -481,7 +481,6 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
 
         if settings.sort_direction:
             mat = mat.copy()
-            mat.z_buffer = False
 
             if mat.other_modes:
                 mat.other_modes.z_compare = False
