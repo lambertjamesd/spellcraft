@@ -216,7 +216,9 @@ build/blender_results.txt: $(EXPORT_SOURCE)
 
 SOURCES := $(shell find src/ ! -name '*_test.c' ! -name 'main.c' ! -name 'inventory_mapping.c' -type f -name '*.c' | sort) src/player/inventory_mapping.c
 SOURCE_OBJS := $(SOURCES:src/%.c=$(BUILD_DIR)/%.o)
-OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS)
+UCODES := $(shell find src/ -type f -name '*.S' | sort)
+UCODE_OBJS := $(UCODES:src/%.S=$(BUILD_DIR)/%.o)
+OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS) $(UCODE_OBJS)
 
 TEST_SOURCES := $(shell find src/ -type f -name '*_test.c' | sort)
 TEST_SOURCE_OBJS := $(TEST_SOURCES:src/%.c=$(BUILD_DIR)/%.o)
