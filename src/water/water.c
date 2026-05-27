@@ -51,6 +51,9 @@ void water_simulation_update(water_simulation_t* simulation) {
     int16_t* vel = simulation->velocity_buffer;
     int16_t* in = simulation->position_buffers[simulation->read_buffer];
     int16_t* out = simulation->position_buffers[write_index];
+
+    int block_y_stride = simulation->width * Y_STRIDE;
+    int simluation_stride = (simulation->width - 8) * 2;
     
     for (int y = 0; y + Y_STRIDE+1 < simulation->height; y += Y_STRIDE) {
         int16_t* vel_x = vel;
@@ -58,16 +61,16 @@ void water_simulation_update(water_simulation_t* simulation) {
         int16_t* out_x = out;
 
         for (int x = 0; x + X_STRIDE+1 < simulation->width; x += X_STRIDE) {    
-            rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK, simulation->width - 8, PhysicalAddr(vel_x), PhysicalAddr(in_x), PhysicalAddr(out_x));
+            rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK, simluation_stride, PhysicalAddr(vel_x), PhysicalAddr(in_x), PhysicalAddr(out_x));
 
             vel_x += X_STRIDE;
             in_x += X_STRIDE;
             out_x += X_STRIDE;
         }
 
-        vel += simulation->width * Y_STRIDE;
-        in += simulation->width * Y_STRIDE;
-        out += simulation->width * Y_STRIDE;
+        vel += block_y_stride;
+        in += block_y_stride;
+        out += block_y_stride;
     }
 
     simulation->read_buffer = write_index;

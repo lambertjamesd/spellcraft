@@ -34,6 +34,7 @@
     # a3: out_pos
 WaterCmd_ProcessBlock:
     # Load the velocity block
+    andi a0, a0, 0xFFFF
     move t1, a0
     move s0, a1
     li s4, %lo(VEL)
