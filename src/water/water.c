@@ -5,6 +5,8 @@
 static uint32_t WATER_OVERLAY_ID = 0;
 static uint8_t simulation_count = 0;
 
+#define PROCESS_BLOCK   0
+
 DEFINE_RSP_UCODE(rsp_water);
 
 void water_simulation_init(water_simulation_t* simulation, int width, int height) {
@@ -40,6 +42,33 @@ void water_simulation_destroy(water_simulation_t* simulation) {
     simulation->velocity_buffer = NULL;
 }
 
-void water_simulation_update(water_simulation_t* simulation) {
+#define X_STRIDE    6
+#define Y_STRIDE    6
 
+void water_simulation_update(water_simulation_t* simulation) {
+    int write_index = 1 - simulation->read_buffer;
+
+    int16_t* vel = simulation->velocity_buffer;
+    int16_t* in = simulation->position_buffers[simulation->read_buffer];
+    int16_t* out = simulation->position_buffers[write_index];
+    
+    for (int y = 0; y + Y_STRIDE+1 < simulation->height; y += Y_STRIDE) {
+        int16_t* vel_x = vel;
+        int16_t* in_x = in;
+        int16_t* out_x = out;
+
+        for (int x = 0; x + X_STRIDE+1 < simulation->width; x += X_STRIDE) {    
+            rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK, simulation->width - 8, PhysicalAddr(vel_x), PhysicalAddr(in_x), PhysicalAddr(out_x));
+
+            vel_x += X_STRIDE;
+            in_x += X_STRIDE;
+            out_x += X_STRIDE;
+        }
+
+        vel += simulation->width * Y_STRIDE;
+        in += simulation->width * Y_STRIDE;
+        out += simulation->width * Y_STRIDE;
+    }
+
+    simulation->read_buffer = write_index;
 }
