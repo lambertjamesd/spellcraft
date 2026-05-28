@@ -121,6 +121,12 @@
             "type": "water_cube"
         },
         {
+            "name": "objects_water_waves",
+            "description": "",
+            "mesh": "meshes/objects/water_waves.blend#Plane",
+            "type": "water_waves"
+        },
+        {
             "name": "pickups_mana_plant",
             "description": "",
             "mesh": "meshes/pickups/mana_plant.blend#mana_plant",

@@ -21,6 +21,7 @@
 #include "../objects/trigger_cube.h"
 #include "../objects/line_mesh.h"
 #include "../entities/script_runner.h"
+#include "../entities/water_waves.h"
 // include_list insert point
 
 #include "../puzzle/bool_and_logic.h"
@@ -97,6 +98,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(trigger_cube, fields_empty),
     ENTITY_DEFINITION(line_mesh, fields_line_mesh),
     ENTITY_DEFINITION(script_runner, fields_script_runner),
+    ENTITY_DEFINITION(water_waves, fields_empty),
     // scene_entity_definitions insert point
 };
 

@@ -28,7 +28,7 @@ void water_simulation_init(water_simulation_t* simulation, int width, int height
 
     simulation->read_buffer = 0;
 
-    memset(simulation->velocity_buffer, 0, pixel_count * total_size);
+    memset(simulation->velocity_buffer, 0, total_size);
 }
 
 void water_simulation_destroy(water_simulation_t* simulation) {
