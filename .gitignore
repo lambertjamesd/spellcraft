@@ -11,6 +11,8 @@ filesystem/
 *.blend1
 
 *.z64
+spellcraft.pak
+spellcraft.ram
 
 tools/mesh_export.zip
 

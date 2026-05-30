@@ -144,7 +144,9 @@ void render(surface_t* col, surface_t* zbuffer) {
         rdpq_tex_blit(&background, 0, 0, NULL);
     }
     render_menu();
+#if ENABLE_PROFILE_rsp
     rdpq_call_deferred(render_finish_callback, NULL);
+#endif
 }
 
 #define MAX_FRAME_CATCHUP   2

@@ -8,12 +8,12 @@
     RSPQ_BeginSavedState
         .align 4
         ADJACENT_WEIGHT: 
-            .half 0x0000, 0x0080, 0x0080, 0x0080
-            .half 0x0080, 0x0080, 0x0080, 0x0000
+            .half 0x0000, 0x0480, 0x0480, 0x0480
+            .half 0x0480, 0x0480, 0x0480, 0x0000
         .align 4
         CENTER_WEIGHT: 
-            .half 0x0000, 0x0800, 0x0800, 0x0800
-            .half 0x0800, 0x0800, 0x0800, 0x0000
+            .half 0x0000, 0x0400, 0x0400, 0x0400
+            .half 0x0400, 0x0400, 0x0400, 0x0000
         .align 4
         DELTA_TIME: 
             .half 0x0000, 0x0888, 0x0888, 0x0888
@@ -116,9 +116,18 @@ WaterCmd_ProcessBlock_Next:
     bltz t0, WaterCmd_ProcessBlock_Next
     addi out_ptr, out_ptr, 16
 
+# end loop
+
+    # Save the velocity block
+    move t1, a0
+    add s0, a1, a0
+    li s4, %lo(VEL)+16
+    jal DMAOut
+    li t0, DMA_SIZE(16, 6)
+
     # Save the position block
     move t1, a0
-    move s0, a1
+    add s0, a3, a0
     li s4, %lo(OUT_POS)+16
     li t0, DMA_SIZE(16, 6)
     jal_and_j DMAOut, RSPQ_Loop

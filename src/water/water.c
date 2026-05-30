@@ -53,7 +53,7 @@ void water_simulation_update(water_simulation_t* simulation) {
     int16_t* out = simulation->position_buffers[write_index];
 
     int block_y_stride = simulation->width * Y_STRIDE;
-    int simluation_stride = (simulation->width - 8) * 2;
+    int simluation_stride = simulation->width * sizeof(int16_t);
     
     for (int y = 0; y + Y_STRIDE+1 < simulation->height; y += Y_STRIDE) {
         int16_t* vel_x = vel;
