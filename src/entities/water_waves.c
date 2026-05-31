@@ -47,10 +47,10 @@ void water_waves_init(water_waves_t* water_waves, struct water_waves_definition*
 
     int16_t* pix = water_waves->simulation.position_buffers[0];
 
-    for (int y = 4; y < 8; y += 1) {
-        for (int x = 4; x < 8; x += 1) {
-            pix[y * 32 + x] = 0x7000;
-        }
+    for (int y = 4; y < 10; y += 1) {
+        pix[y * 32 + y] = 0x7000;
+        // for (int x = 6; x < 7; x += 1) {
+        // }
     }
 
     data_cache_hit_writeback_invalidate(pix, sizeof(int16_t) * 32 * 32);

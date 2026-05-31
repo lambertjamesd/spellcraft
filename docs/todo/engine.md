@@ -6,7 +6,7 @@
 * Object modifiers being applied on export
 * Ignore collection in blender
 * Get material priority working
-
+* Move action indicator float over target instead of in the UI
 
 Details
 

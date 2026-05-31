@@ -32,6 +32,7 @@
 #define ROW_SIM_COUNT   6
 
 #define FIRST_STEP      12
+#define SECOND_STEP     (ROW_STRIDE-FIRST_STEP)
 
 .text
     ##########################################
@@ -84,7 +85,7 @@ WaterCmd_ProcessBlock:
     lqv dt, 0x20, t0
 
     li pos_ptr, %lo(IN_POS)
-    li left_ptr, %lo(IN_POS)+14
+    li left_ptr, %lo(IN_POS)-2
     li right_ptr, %lo(IN_POS)+2
     li vel_ptr, %lo(VEL)
     li out_ptr, %lo(OUT_POS)
@@ -93,7 +94,7 @@ WaterCmd_ProcessBlock_Next:
     lqv pos_center, ROW_STRIDE, pos_ptr
     lqv pos_up, 0, pos_ptr
     lqv pos_down, 2*ROW_STRIDE, pos_ptr
-    lrv pos_left, ROW_STRIDE, left_ptr
+    lrv pos_left, ROW_STRIDE+VECTOR_SIZE, left_ptr
     lqv pos_right, ROW_STRIDE, right_ptr
     lqv vel, ROW_STRIDE, vel_ptr
     # accumlate offset * mask factor
@@ -132,8 +133,8 @@ WaterCmd_ProcessBlock_Next:
     lrv pos_up, VECTOR_SIZE, pos_ptr
     lqv pos_down, 2*ROW_STRIDE, pos_ptr
     lrv pos_down, 2*ROW_STRIDE+VECTOR_SIZE, pos_ptr
-    lqv pos_left, ROW_STRIDE-VECTOR_SIZE, left_ptr
-    lrv pos_left, ROW_STRIDE, left_ptr
+    lqv pos_left, ROW_STRIDE, left_ptr
+    lrv pos_left, ROW_STRIDE+VECTOR_SIZE, left_ptr
     lqv pos_right, ROW_STRIDE, right_ptr
     lrv pos_right, ROW_STRIDE+VECTOR_SIZE, right_ptr
     lqv vel, ROW_STRIDE, vel_ptr
@@ -160,15 +161,15 @@ WaterCmd_ProcessBlock_Next:
     srv pos_center, ROW_STRIDE+VECTOR_SIZE, out_ptr
 
     # increment pointers
-    addi pos_ptr, pos_ptr, ROW_STRIDE-FIRST_STEP
-    addi left_ptr, left_ptr, ROW_STRIDE-FIRST_STEP
-    addi right_ptr, right_ptr, ROW_STRIDE-FIRST_STEP
-    addi vel_ptr, vel_ptr, ROW_STRIDE-FIRST_STEP
+    addi pos_ptr, pos_ptr, SECOND_STEP
+    addi left_ptr, left_ptr, SECOND_STEP
+    addi right_ptr, right_ptr, SECOND_STEP
+    addi vel_ptr, vel_ptr, SECOND_STEP
 
     li t0, %lo(IN_POS)+ROW_SIM_COUNT*ROW_STRIDE
     sub t0, pos_ptr, t0
     bltz t0, WaterCmd_ProcessBlock_Next
-    addi out_ptr, out_ptr, ROW_STRIDE-FIRST_STEP
+    addi out_ptr, out_ptr, SECOND_STEP
 
 # end loop
 
