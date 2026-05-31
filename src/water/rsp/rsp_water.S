@@ -94,8 +94,10 @@ WaterCmd_ProcessBlock_Next:
     lqv pos_center, ROW_STRIDE, pos_ptr
     lqv pos_up, 0, pos_ptr
     lqv pos_down, 2*ROW_STRIDE, pos_ptr
+    lqv pos_left, ROW_STRIDE, left_ptr
     lrv pos_left, ROW_STRIDE+VECTOR_SIZE, left_ptr
     lqv pos_right, ROW_STRIDE, right_ptr
+    lrv pos_right, ROW_STRIDE+VECTOR_SIZE, right_ptr
     lqv vel, ROW_STRIDE, vel_ptr
     # accumlate offset * mask factor
     vmudm pos_offset, pos_up, K16384
@@ -103,12 +105,11 @@ WaterCmd_ProcessBlock_Next:
     vmadm pos_offset, pos_left, K16384
     vmadm pos_offset, pos_right, K16384
     vsub pos_offset, pos_offset, pos_center
-
-    vmudm pos_offset, pos_offset, spring_k
-
-    # apply acceleration to velocity
-    vadd vel, vel, pos_offset
+    
     vmudm vel, vel, vel_damping
+    # apply acceleration to velocity
+    vmadm vel, pos_offset, spring_k
+
     sqv vel, ROW_STRIDE, vel_ptr
 
     # apply pos by delta time (masked)
@@ -146,11 +147,10 @@ WaterCmd_ProcessBlock_Next:
     vmadm pos_offset, pos_right, K16384
     vsub pos_offset, pos_offset, pos_center
 
-    vmudm pos_offset, pos_offset, spring_k
-
-    # apply acceleration to velocity
-    vadd vel, vel, pos_offset
     vmudm vel, vel, vel_damping
+    # apply acceleration to velocity
+    vmadm vel, pos_offset, spring_k
+
     sqv vel, ROW_STRIDE, vel_ptr
     srv vel, ROW_STRIDE+VECTOR_SIZE, vel_ptr
 
