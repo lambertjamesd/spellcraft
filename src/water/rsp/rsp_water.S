@@ -7,13 +7,13 @@
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
-        ADJACENT_WEIGHT: 
-            .half 0x0000, 0x0480, 0x0480, 0x0480
-            .half 0x0480, 0x0480, 0x0480, 0x0000
+        SPRING_K: 
+            .half 0x0000, 0x1999, 0x1999, 0x1999
+            .half 0x1999, 0x1999, 0x1999, 0x0000
         .align 4
-        CENTER_WEIGHT: 
-            .half 0x0000, 0x0400, 0x0400, 0x0400
-            .half 0x0400, 0x0400, 0x0400, 0x0000
+        VEL_DAMPING:
+            .half 0x0000, 0xFEB8, 0xFEB8, 0xFEB8
+            .half 0xFEB8, 0xFEB8, 0xFEB8, 0x0000
         .align 4
         DELTA_TIME: 
             .half 0x0000, 0x0888, 0x0888, 0x0888
@@ -54,9 +54,8 @@ WaterCmd_ProcessBlock:
     #define vel_ptr s5
     #define out_ptr s4
 
-
-    #define adj_weight $v01
-    #define center_weight $v02
+    #define spring_k $v01
+    #define vel_damping $v02
     #define dt $v03
     
     #define pos_neg $v04
@@ -70,9 +69,9 @@ WaterCmd_ProcessBlock:
     #define pos_offset $v10
     #define vel $v11
 
-    li t0, %lo(ADJACENT_WEIGHT)
-    lqv adj_weight, 0x00, t0
-    lqv center_weight, 0x10, t0
+    li t0, %lo(SPRING_K)
+    lqv spring_k, 0x00, t0
+    lqv vel_damping, 0x10, t0
     lqv dt, 0x20, t0
 
     li pos_ptr, %lo(IN_POS)
@@ -89,15 +88,17 @@ WaterCmd_ProcessBlock_Next:
     lqv pos_right, 16, right_ptr
     lqv vel, 16, vel_ptr
     # accumlate offset * mask factor
-    vsub pos_neg, vzero, pos_center
-    vmudm pos_offset, pos_up, adj_weight
-    vmadm pos_offset, pos_down, adj_weight
-    vmadm pos_offset, pos_left, adj_weight
-    vmadm pos_offset, pos_right, adj_weight
-    vmadm pos_offset, pos_neg, center_weight
+    vmudm pos_offset, pos_up, K16384
+    vmadm pos_offset, pos_down, K16384
+    vmadm pos_offset, pos_left, K16384
+    vmadm pos_offset, pos_right, K16384
+    vsub pos_offset, pos_offset, pos_center
+
+    vmudm pos_offset, pos_offset, spring_k
 
     # apply acceleration to velocity
     vadd vel, vel, pos_offset
+    vmudm vel, vel, vel_damping
     sqv vel, 16, vel_ptr
 
     # apply pos by delta time (masked)

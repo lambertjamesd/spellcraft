@@ -49,7 +49,7 @@ void water_waves_init(water_waves_t* water_waves, struct water_waves_definition*
 
     for (int y = 4; y < 8; y += 1) {
         for (int x = 4; x < 8; x += 1) {
-            pix[y * 32 + x] = 0x7f7f;
+            pix[y * 32 + x] = 0x7000;
         }
     }
 
