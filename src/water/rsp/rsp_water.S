@@ -21,9 +21,14 @@
     RSPQ_EndSavedState
 .bss
     .align 4
-    VEL:     .space 128
-    IN_POS:  .space 128
-    OUT_POS: .space 128
+    VEL:     .space 256
+    IN_POS:  .space 256
+    OUT_POS: .space 256
+
+#define ROW_STRIDE      32
+#define ROW_LOAD_COUNT  8
+#define ROW_SIM_COUNT   6
+
 .text
     ##########################################
     # WaterCmd_ProcessBlock
@@ -39,14 +44,14 @@ WaterCmd_ProcessBlock:
     move s0, a1
     li s4, %lo(VEL)
     jal DMAIn
-    li t0, DMA_SIZE(16, 8)
+    li t0, DMA_SIZE(ROW_STRIDE, ROW_LOAD_COUNT)
     
     # Load the position block
     move t1, a0
     move s0, a2
     li s4, %lo(IN_POS)
     jal DMAIn
-    li t0, DMA_SIZE(16, 8)
+    li t0, DMA_SIZE(ROW_STRIDE, ROW_LOAD_COUNT)
 
     #define pos_ptr s1
     #define left_ptr s2
@@ -81,12 +86,12 @@ WaterCmd_ProcessBlock:
     li out_ptr, %lo(OUT_POS)
 WaterCmd_ProcessBlock_Next:
     # load data
-    lqv pos_center, 16, pos_ptr
+    lqv pos_center, ROW_STRIDE, pos_ptr
     lqv pos_up, 0, pos_ptr
-    lqv pos_down, 32, pos_ptr
-    lrv pos_left, 16, left_ptr
-    lqv pos_right, 16, right_ptr
-    lqv vel, 16, vel_ptr
+    lqv pos_down, 2*ROW_STRIDE, pos_ptr
+    lrv pos_left, ROW_STRIDE, left_ptr
+    lqv pos_right, ROW_STRIDE, right_ptr
+    lqv vel, ROW_STRIDE, vel_ptr
     # accumlate offset * mask factor
     vmudm pos_offset, pos_up, K16384
     vmadm pos_offset, pos_down, K16384
@@ -99,37 +104,37 @@ WaterCmd_ProcessBlock_Next:
     # apply acceleration to velocity
     vadd vel, vel, pos_offset
     vmudm vel, vel, vel_damping
-    sqv vel, 16, vel_ptr
+    sqv vel, ROW_STRIDE, vel_ptr
 
     # apply pos by delta time (masked)
     vmudm vel, vel, dt
     vadd pos_center, pos_center, vel
-    sqv pos_center, 16, out_ptr
+    sqv pos_center, ROW_STRIDE, out_ptr
 
     # increment pointers
-    addi pos_ptr, pos_ptr, 16
-    addi left_ptr, left_ptr, 16
-    addi right_ptr, right_ptr, 16
-    addi vel_ptr, vel_ptr, 16
+    addi pos_ptr, pos_ptr, ROW_STRIDE
+    addi left_ptr, left_ptr, ROW_STRIDE
+    addi right_ptr, right_ptr, ROW_STRIDE
+    addi vel_ptr, vel_ptr, ROW_STRIDE
 
-    li t0, %lo(IN_POS)+128
+    li t0, %lo(IN_POS)+ROW_SIM_COUNT*ROW_STRIDE
     sub t0, pos_ptr, t0
     bltz t0, WaterCmd_ProcessBlock_Next
-    addi out_ptr, out_ptr, 16
+    addi out_ptr, out_ptr, ROW_STRIDE
 
 # end loop
 
     # Save the velocity block
     move t1, a0
     add s0, a1, a0
-    li s4, %lo(VEL)+16
+    li s4, %lo(VEL)+ROW_STRIDE
     jal DMAOut
-    li t0, DMA_SIZE(16, 6)
+    li t0, DMA_SIZE(ROW_STRIDE, ROW_SIM_COUNT)
 
     # Save the position block
     move t1, a0
     add s0, a3, a0
-    li s4, %lo(OUT_POS)+16
-    li t0, DMA_SIZE(16, 6)
+    li s4, %lo(OUT_POS)+ROW_STRIDE
+    li t0, DMA_SIZE(ROW_STRIDE, ROW_SIM_COUNT)
     jal_and_j DMAOut, RSPQ_Loop
 
