@@ -25,9 +25,13 @@
     IN_POS:  .space 256
     OUT_POS: .space 256
 
+#define VECTOR_SIZE     16
+
 #define ROW_STRIDE      32
 #define ROW_LOAD_COUNT  8
 #define ROW_SIM_COUNT   6
+
+#define FIRST_STEP      12
 
 .text
     ##########################################
@@ -112,15 +116,59 @@ WaterCmd_ProcessBlock_Next:
     sqv pos_center, ROW_STRIDE, out_ptr
 
     # increment pointers
-    addi pos_ptr, pos_ptr, ROW_STRIDE
-    addi left_ptr, left_ptr, ROW_STRIDE
-    addi right_ptr, right_ptr, ROW_STRIDE
-    addi vel_ptr, vel_ptr, ROW_STRIDE
+    addi pos_ptr, pos_ptr, FIRST_STEP
+    addi left_ptr, left_ptr, FIRST_STEP
+    addi right_ptr, right_ptr, FIRST_STEP
+    addi vel_ptr, vel_ptr, FIRST_STEP
+    addi out_ptr, out_ptr, FIRST_STEP
+    
+    ####################
+    # second half
+
+    # load data
+    lqv pos_center, ROW_STRIDE, pos_ptr
+    lrv pos_center, ROW_STRIDE+VECTOR_SIZE, pos_ptr
+    lqv pos_up, 0, pos_ptr
+    lrv pos_up, VECTOR_SIZE, pos_ptr
+    lqv pos_down, 2*ROW_STRIDE, pos_ptr
+    lrv pos_down, 2*ROW_STRIDE+VECTOR_SIZE, pos_ptr
+    lqv pos_left, ROW_STRIDE-VECTOR_SIZE, left_ptr
+    lrv pos_left, ROW_STRIDE, left_ptr
+    lqv pos_right, ROW_STRIDE, right_ptr
+    lrv pos_right, ROW_STRIDE+VECTOR_SIZE, right_ptr
+    lqv vel, ROW_STRIDE, vel_ptr
+    lrv vel, ROW_STRIDE+VECTOR_SIZE, vel_ptr
+    # accumlate offset * mask factor
+    vmudm pos_offset, pos_up, K16384
+    vmadm pos_offset, pos_down, K16384
+    vmadm pos_offset, pos_left, K16384
+    vmadm pos_offset, pos_right, K16384
+    vsub pos_offset, pos_offset, pos_center
+
+    vmudm pos_offset, pos_offset, spring_k
+
+    # apply acceleration to velocity
+    vadd vel, vel, pos_offset
+    vmudm vel, vel, vel_damping
+    sqv vel, ROW_STRIDE, vel_ptr
+    srv vel, ROW_STRIDE+VECTOR_SIZE, vel_ptr
+
+    # apply pos by delta time (masked)
+    vmudm vel, vel, dt
+    vadd pos_center, pos_center, vel
+    sqv pos_center, ROW_STRIDE, out_ptr
+    srv pos_center, ROW_STRIDE+VECTOR_SIZE, out_ptr
+
+    # increment pointers
+    addi pos_ptr, pos_ptr, ROW_STRIDE-FIRST_STEP
+    addi left_ptr, left_ptr, ROW_STRIDE-FIRST_STEP
+    addi right_ptr, right_ptr, ROW_STRIDE-FIRST_STEP
+    addi vel_ptr, vel_ptr, ROW_STRIDE-FIRST_STEP
 
     li t0, %lo(IN_POS)+ROW_SIM_COUNT*ROW_STRIDE
     sub t0, pos_ptr, t0
     bltz t0, WaterCmd_ProcessBlock_Next
-    addi out_ptr, out_ptr, ROW_STRIDE
+    addi out_ptr, out_ptr, ROW_STRIDE-FIRST_STEP
 
 # end loop
 
