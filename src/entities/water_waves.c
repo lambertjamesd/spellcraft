@@ -45,12 +45,12 @@ void water_waves_init(water_waves_t* water_waves, struct water_waves_definition*
 
     menu_add_callback(water_waves_debug_render, water_waves, MENU_PRIORITY_OVERLAY);
 
-    int16_t* pix = water_waves->simulation.velocity_buffer;
+    int16_t* pix = water_waves->simulation.position_buffers[0];
 
-    for (int y = 3; y < 10; y += 1) {
-        pix[y * 32 + 6] = 0x7000;
-        // for (int x = 6; x < 7; x += 1) {
-        // }
+    for (int y = 4; y < 8; y += 1) {
+        for (int x = 4; x < 8; x += 1) {
+            pix[y * 32 + x] = 0x7f00;
+        }
     }
 
     data_cache_hit_writeback_invalidate(pix, sizeof(int16_t) * 32 * 32);

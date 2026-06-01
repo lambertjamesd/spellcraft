@@ -60,7 +60,7 @@ void water_simulation_update(water_simulation_t* simulation) {
         int16_t* in_x = in;
         int16_t* out_x = out;
 
-        for (int x = 0; x + X_STRIDE+1 < 16; x += X_STRIDE) {    
+        for (int x = 0; x + X_STRIDE+1 < simulation->width; x += X_STRIDE) {    
             rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK, simluation_stride, PhysicalAddr(vel_x), PhysicalAddr(in_x), PhysicalAddr(out_x));
 
             vel_x += X_STRIDE;

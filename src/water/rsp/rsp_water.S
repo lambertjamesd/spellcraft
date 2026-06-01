@@ -57,6 +57,13 @@ WaterCmd_ProcessBlock:
     li s4, %lo(IN_POS)
     jal DMAIn
     li t0, DMA_SIZE(ROW_STRIDE, ROW_LOAD_COUNT)
+    
+    # Load the position block
+    move t1, a0
+    move s0, a3
+    li s4, %lo(OUT_POS)
+    jal DMAIn
+    li t0, DMA_SIZE(ROW_STRIDE, ROW_LOAD_COUNT)
 
     #define pos_ptr s1
     #define left_ptr s2
@@ -94,10 +101,8 @@ WaterCmd_ProcessBlock_Next:
     lqv pos_center, ROW_STRIDE, pos_ptr
     lqv pos_up, 0, pos_ptr
     lqv pos_down, 2*ROW_STRIDE, pos_ptr
-    lqv pos_left, ROW_STRIDE, left_ptr
     lrv pos_left, ROW_STRIDE+VECTOR_SIZE, left_ptr
     lqv pos_right, ROW_STRIDE, right_ptr
-    lrv pos_right, ROW_STRIDE+VECTOR_SIZE, right_ptr
     lqv vel, ROW_STRIDE, vel_ptr
     # accumlate offset * mask factor
     vmudm pos_offset, pos_up, K16384
@@ -130,6 +135,8 @@ WaterCmd_ProcessBlock_Next:
     # load data
     lqv pos_center, ROW_STRIDE, pos_ptr
     lrv pos_center, ROW_STRIDE+VECTOR_SIZE, pos_ptr
+    # preserve pixel on edge
+    lsv pos_center.e0, ROW_STRIDE, out_ptr
     lqv pos_up, 0, pos_ptr
     lrv pos_up, VECTOR_SIZE, pos_ptr
     lqv pos_down, 2*ROW_STRIDE, pos_ptr
