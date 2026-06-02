@@ -180,11 +180,6 @@ SAMPLE_TYPE = {
     "BILINEAR": 2 << 44,
 }
 
-UV_GEN = {
-    'none': 0,
-    'spherical': 1,
-}
-
 TEX_FMT = {
     'FMT_NONE': 0,
     'FMT_RGBA16': 2,
@@ -510,7 +505,7 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
 
     if mat.vtx_effect:
         output.write(COMMAND_UV_GEN.to_bytes(1, 'big'))
-        output.write(UV_GEN[mat.vtx_effect].to_bytes(1, 'big'))
+        mat.vtx_effect.serialize(output)
 
     if mat.fog:
         output.write(COMMAND_FOG.to_bytes(1, 'big'))

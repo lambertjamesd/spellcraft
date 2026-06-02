@@ -218,6 +218,7 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint64_t other_modes;
                     fread(&other_modes, 8, 1, material_file);
+
                     rdpq_set_other_modes_unsafe(other_modes);
 
                     if (other_modes & SOM_Z_COMPARE) {
@@ -290,9 +291,13 @@ void material_load(struct material* into, FILE* material_file) {
                         case T3D_VERTEX_FX_NONE:
                             t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 1, 1);
                             break;
-                        case T3D_VERTEX_FX_SPHERICAL_UV:
-                            t3d_state_set_vertex_fx(T3D_VERTEX_FX_SPHERICAL_UV, into->tex0.sprite->width, into->tex0.sprite->height);
+                        case T3D_VERTEX_FX_SPHERICAL_UV: {
+                            uint8_t width, height;
+                            fread(&width, 1, 1, material_file);
+                            fread(&height, 1, 1, material_file);
+                            t3d_state_set_vertex_fx(T3D_VERTEX_FX_SPHERICAL_UV, width, height);
                             break;
+                        }
                     }
                 }
                 break;

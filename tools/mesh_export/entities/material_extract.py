@@ -473,9 +473,14 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
         result.culling = False
 
     if rdp_settings['g_tex_gen']:
-        result.vtx_effect = 'spherical'
+        use_tex = result.tex0 or result.tex1
+
+        if not use_tex:
+            raise Exception('Cannot do spherical uv without a texture')
+
+        result.vtx_effect = material.VtxEffect(material.VtxEffectType.VTX_EFFECT_SPHERICAL, use_tex.width, use_tex.height)
     else:
-        result.vtx_effect = 'none'
+        result.vtx_effect = material.VtxEffect(material.VtxEffectType.VTX_EFFECT_NONE)
 
     result.fog = material.Fog()
     result.fog.enabled = rdp_settings['g_fog'] and f3d_mat['set_fog'] and True or False

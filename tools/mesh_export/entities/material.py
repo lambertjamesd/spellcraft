@@ -599,6 +599,32 @@ class Fog():
     def __str__(self):
         return f"enabled {str(self.enabled)} use_global {str(self.use_global)} {str(self.fog_color)} min {str(self.min_distance)} max {str(self.max_distance)}"
 
+class VtxEffectType(Enum):
+    VTX_EFFECT_NONE = 0
+    VTX_EFFECT_SPHERICAL = 1
+
+class VtxEffect:
+    def __init__(self, type: VtxEffectType, width: int | None = None, height: int | None = None):
+        self.type: VtxEffectType = type
+        self.width: int | None = width
+        self.height: int | None = height
+
+    def serialize(self, file):
+        file.write(self.type.value.to_bytes(1, 'big'))
+        if self.type == VtxEffectType.VTX_EFFECT_SPHERICAL:
+            if not self.width or not self.height:
+                raise Exception('cannot have spherical effect without texture width or height')
+            file.write(struct.pack('>BB', self.width, self.height))
+
+    def __eq__(self, value: object) -> bool:
+        if not value or not isinstance(value, VtxEffect):
+            return False
+
+        return self.type == value.type and self.width == value.width and self.height == value.height
+    
+    def __str__(self) -> str:
+        return str(self.type)
+
 class Material():
     def __init__(self):
         self.combine_mode: CombineMode | None = None
@@ -611,7 +637,7 @@ class Material():
         self.tex1: Tex | None = None
         self.palette: int = 0
         self.culling: bool | None = None
-        self.vtx_effect: str | None = None
+        self.vtx_effect: VtxEffect | None = None
         self.fog: Fog | None = None
         self.light_count: int | None = None
         self.priority: int | None = None
@@ -1166,7 +1192,15 @@ def parse_material(filename: str):
         result.other_modes.z_compare = False
         result.other_modes.z_write = False
 
-    result.vtx_effect = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
+    vtx_effect = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
+
+    if vtx_effect == 'spherical':
+        use_tex = result.tex0 or result.tex1
+
+        if not use_tex:
+            raise Exception('need a texture to do spherical uv')
+
+        result.vtx_effect = VtxEffect(VtxEffectType.VTX_EFFECT_SPHERICAL, use_tex.width, use_tex.height)
 
     result.priority = _optional_number(json_data, 'priority', 'priority', None)
 
