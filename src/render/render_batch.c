@@ -378,19 +378,6 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         order[i] = i;
     }
 
-    // used to scale billboard sprites
-    float scale_x = sqrtf(
-        view_proj_matrix[0][0] * view_proj_matrix[0][0] + 
-        view_proj_matrix[0][1] * view_proj_matrix[0][1] +
-        view_proj_matrix[0][2] * view_proj_matrix[0][2]
-    ) * 0.5f * 4;
-
-    float scale_y = sqrtf(
-        view_proj_matrix[1][0] * view_proj_matrix[1][0] + 
-        view_proj_matrix[1][1] * view_proj_matrix[1][1] +
-        view_proj_matrix[1][2] * view_proj_matrix[1][2]
-    ) * 0.5f * 4;
-
     sort_indices(order, batch->element_count, batch, (sort_compare)render_batch_compare_element);
 
     struct material* current_mat = 0;
