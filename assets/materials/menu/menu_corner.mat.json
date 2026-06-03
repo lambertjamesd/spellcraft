@@ -16,5 +16,6 @@
     }],
     "primColor": [12, 24, 80, 255],
     "envColor": [8, 15, 52, 255],
-    "blendMode": "OPAQUE"
+    "blendMode": "OPAQUE",
+    "zBuffer": false
 }

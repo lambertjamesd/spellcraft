@@ -15,5 +15,6 @@
         "alpha": ["TEX0", "0", "PRIM", "0"]
     }],
     "blendMode": "ALPHA_CLIP",
-    "primColor": [255, 255, 255, 255]
+    "primColor": [255, 255, 255, 255],
+    "zBuffer": false
 }

@@ -15,5 +15,6 @@
         "alpha": ["PRIM", "0", "TEX0", "0"]
     }],
     "blendMode": "TRANSPARENT",
-    "primColor": [49, 46, 200, 255]
+    "primColor": [49, 46, 200, 255],
+    "zBuffer": false
 }
