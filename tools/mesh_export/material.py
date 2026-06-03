@@ -8,6 +8,7 @@ if ROOT not in sys.path:
 
 import mesh_export.entities.material
 import mesh_export.entities.serialize
+import mesh_export.entities.material_delta
 
 from mesh_export.deps import generate_deps
 
@@ -27,10 +28,18 @@ if __name__ == "__main__":
 
     if args.default != args.input and args.default:
         default_material = mesh_export.entities.material.parse_material(args.default)
+    else:
+        default_material = mesh_export.entities.material.Material()
+        default_material.vtx_effect = mesh_export.entities.material.VtxEffect(mesh_export.entities.material.VtxEffectType.VTX_EFFECT_NONE)
         
     generate_deps.generate_deps(args.output, os.path.relpath(__file__))
 
     print(f'Writing material to {args.output}')
-    result = mesh_export.entities.material.parse_material(args.input)
-    print(result)
-    mesh_export.entities.serialize.serialize_material(args.output, result)
+    
+    with open(args.output, 'wb') as output:
+        result = mesh_export.entities.material.parse_material(args.input)
+        print(result)
+        mesh_export.entities.serialize.serialize_material_file(output, result)
+
+        revert = mesh_export.entities.material_delta.determine_material_delta(result, default_material)
+        mesh_export.entities.serialize.serialize_material_file(output, revert)

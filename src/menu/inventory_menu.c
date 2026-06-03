@@ -58,7 +58,7 @@ void inventory_menu_render(struct inventory_menu* menu) {
         int x = MENU_X + ICON_X(equipped_staff->staff_index);
         int y = MENU_Y + COL_SPACING;
 
-        material_apply(current_spell_icon);
+        material_pair_apply(current_spell_icon, NULL);
         rdpq_texture_rectangle_scaled(
             TILE0, 
             x, y,
@@ -69,9 +69,9 @@ void inventory_menu_render(struct inventory_menu* menu) {
     }
 
     for (int i = 0; i < INV_STAFF_COUNT; i += 1) {
-        struct material* material = menu->assets.staff_icons[i];
+        material_pair_t* material_pair = menu->assets.staff_icons[i];
 
-        if (!material) {
+        if (!material_pair) {
             continue;
         }
 
@@ -79,7 +79,7 @@ void inventory_menu_render(struct inventory_menu* menu) {
             continue;
         }
 
-        material_apply(material);
+        material_pair_apply(material_pair, NULL);
 
         int icon_x = MENU_X + ICON_X(i);
 
@@ -88,11 +88,11 @@ void inventory_menu_render(struct inventory_menu* menu) {
             icon_x, MENU_Y + COL_SPACING,
             icon_x + ICON_W, MENU_Y + COL_SPACING + ICON_H,
             0, 0,
-            material->tex0.sprite->width, material->tex0.sprite->height
+            material_pair->apply.tex0.sprite->width, material_pair->apply.tex0.sprite->height
         );
     }
 
-    material_apply(spell_cursor_material);
+    material_pair_apply(spell_cursor_material, NULL);
 
     int x = MENU_X + ICON_X(menu->cursor_x);
     int y = MENU_Y + COL_SPACING;
@@ -102,6 +102,6 @@ void inventory_menu_render(struct inventory_menu* menu) {
         x, y,
         x + 32, y + 32,
         0, 0,
-        spell_cursor_material->tex0.sprite->width, spell_cursor_material->tex0.sprite->height
+        spell_cursor_material->apply.tex0.sprite->width, spell_cursor_material->apply.tex0.sprite->height
     );
 }

@@ -534,8 +534,3 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
         output.write(mat.light_count.to_bytes(1, 'big'))
 
     output.write(COMMAND_EOF.to_bytes(1, 'big'))
-
-
-def serialize_material(filename, mat: material.Material):
-    with open(filename, 'wb') as output:
-        serialize_material_file(output, mat)

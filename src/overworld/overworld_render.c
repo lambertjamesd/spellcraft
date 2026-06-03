@@ -304,7 +304,7 @@ void overworld_render_lod_1_entries(struct overworld_lod1* lod1, int camera_x, i
 
     qsort(order, final_count, sizeof(struct overworld_lod1_sort_entry), overworld_entry_sort);
 
-    struct material* mat = NULL;
+    material_pair_t* mat = NULL;
 
     T3DMat4FP* curr_mtx = NULL;
     
@@ -320,7 +320,7 @@ void overworld_render_lod_1_entries(struct overworld_lod1* lod1, int camera_x, i
         struct tmesh* mesh = order[i].mesh;
 
         if (mat != mesh->material) {
-            material_apply(mesh->material);
+            material_pair_apply(mesh->material, mat);
             mat = mesh->material;
         }
 
@@ -469,7 +469,7 @@ void overworld_render_low_priority(overworld_tile_render_info_t* curr) {
     t3d_matrix_push(curr->transform);
     
     for (int i = 0; i < curr->layer->pre_scrolling_mesh_count; i += 1) {
-        material_apply(curr->layer->scrolling_meshes[i].material);
+        material_pair_apply(curr->layer->scrolling_meshes[i].material, NULL);
         rdpq_mode_zbuf(false, false);
         rspq_block_run(curr->layer->scrolling_meshes[i].block);
     }
@@ -483,7 +483,7 @@ void overworld_render_tile(overworld_tile_render_info_t* curr) {
     rspq_block_run(curr->layer->render_block);
 
     for (int i = curr->layer->pre_scrolling_mesh_count; i < curr->layer->scrolling_mesh_count; i += 1) {
-        material_apply(curr->layer->scrolling_meshes[i].material);
+        material_pair_apply(curr->layer->scrolling_meshes[i].material, NULL);
         rspq_block_run(curr->layer->scrolling_meshes[i].block);
     }
 

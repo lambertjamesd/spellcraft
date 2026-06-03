@@ -18,7 +18,7 @@ struct static_particle_instance_data {
 typedef struct static_particle_instance_data static_particle_instance_data_t;
 
 struct static_particles {
-    struct material* material;
+    material_pair_t* material;
     static_particle_instance_data_t* instance_data;
     uint16_t instance_count;
     render_batch_particles_t particles;

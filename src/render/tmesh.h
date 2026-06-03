@@ -21,7 +21,7 @@ struct armature_attatchment {
 };
 
 struct tmesh {
-    struct material* material;
+    material_pair_t* material;
     struct material* transition_materials;
     rspq_block_t* block;
     T3DVertPacked* vertices;

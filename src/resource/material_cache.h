@@ -7,10 +7,10 @@
 // load a material or reuse the existing one if already loaded
 // callers of this function must call material_cache_release
 // when they are done with the material
-struct material* material_cache_load(const char* filename);
-void material_cache_release(struct material* material);
+material_pair_t* material_cache_load(const char* filename);
+void material_cache_release(material_pair_t* material);
 
-struct material* material_cache_load_from_file(FILE* file);
+material_pair_t* material_cache_load_from_file(FILE* file);
 
 void material_cache_destroy();
 

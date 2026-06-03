@@ -128,7 +128,7 @@ void dialog_box_render(void* data) {
     }
 
     if (dialog_box.paused) {
-        material_apply(menu_icons_material);
+        material_pair_apply(menu_icons_material, NULL);
         if (dialog_box.end_of_message && dialog_box.is_asking_question) {
             int x = dialog_box.last_response ? 220 : 260;
             rdpq_texture_rectangle(

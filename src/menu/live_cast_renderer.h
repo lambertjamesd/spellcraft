@@ -15,8 +15,8 @@ struct symbol_modifier_parameters {
 
 struct live_cast_renderer {
     live_cast_t* live_cast;
-    material_t* icon_background;
-    material_t* spell_icons;
+    material_pair_t* icon_background;
+    material_pair_t* spell_icons;
 
     struct symbol_modifier_parameters symbol_modifiers[4];
     int16_t prev_runes_offset;

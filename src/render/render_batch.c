@@ -211,7 +211,7 @@ struct render_batch_element* render_batch_add_tmesh(
     return element;
 }
 
-void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data) {
+void render_batch_add_callback(struct render_batch* batch, material_pair_t* material, RenderCallback callback, void* data) {
     struct render_batch_element* element = render_batch_add(batch);
 
     if (!element) {
@@ -226,7 +226,7 @@ void render_batch_add_callback(struct render_batch* batch, struct material* mate
 
 struct render_batch_element* render_batch_add_particles(
     struct render_batch* batch, 
-    struct material* material, 
+    material_pair_t* material, 
     render_batch_particles_t* particles, 
     T3DMat4FP* mtx
 ) {
@@ -243,7 +243,7 @@ struct render_batch_element* render_batch_add_particles(
 
 struct render_batch_element* render_batch_add_dynamic_particles(
     struct render_batch* batch, 
-    struct material* material, 
+    material_pair_t* material, 
     int count, 
     const struct render_batch_particle_size* size,
     T3DMat4FP* mtx
@@ -318,8 +318,8 @@ int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, u
         return 0;
     }
 
-    if (a->material->sort_priority != b->material->sort_priority) {
-        return a->material->sort_priority - b->material->sort_priority;
+    if (a->material->apply.sort_priority != b->material->apply.sort_priority) {
+        return a->material->apply.sort_priority - b->material->apply.sort_priority;
     }
 
     if (a->material != b->material) {
@@ -380,7 +380,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
     sort_indices(order, batch->element_count, batch, (sort_compare)render_batch_compare_element);
 
-    struct material* current_mat = 0;
+    material_pair_t* current_mat = 0;
 
     rdpq_sync_pipe();
     rdpq_set_mode_standard();
@@ -417,8 +417,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         struct render_batch_element* element = &batch->elements[index];
 
         if (current_mat != element->material) {
-            if (element->material->block) {
-                material_apply(element->material);
+            if (element->material) {
+                material_pair_apply(element->material, current_mat);
             } else {
                 rdpq_sync_pipe();
             }
@@ -470,7 +470,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         break;
                     case ELEMENT_ATTR_SCROLL:
                         if (current_mat) {
-                            struct material_tex* tex = &current_mat->tex0;
+                            struct material_tex* tex = &current_mat->apply.tex0;
                             rdpq_set_tile_size_fx(
                                 TILE0, 
                                 attr->scroll.x + tex->s0, attr->scroll.y + tex->t0, 
@@ -499,7 +499,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 t3d_matrix_pop(transform_count);
             }
         } else if (element->type == RENDER_BATCH_PARTICLES) {
-            static_particles_render(element->particles.particles, element->particles.transform, current_mat != NULL && current_mat->tex0.sprite != NULL);
+            static_particles_render(element->particles.particles, element->particles.transform, current_mat != NULL && current_mat->apply.tex0.sprite != NULL);
         } else if (element->type == RENDER_BATCH_CALLBACK) {
             element->callback.callback(element->callback.data, batch);
         }

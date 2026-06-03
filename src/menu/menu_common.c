@@ -4,15 +4,15 @@
 
 #include "../spell/spell.h"
 
-static struct material* menu_background_material;
-static struct material* menu_border_material;
+static material_pair_t* menu_background_material;
+static material_pair_t* menu_border_material;
 
-struct material* menu_icons_material;
-struct material* menu_spell_icons[SPELL_ICON_COUNT];
-struct material* spell_cursor_material;
-struct material* solid_primitive_material;
-struct material* current_spell_icon;
-struct material* sprite_blit;
+material_pair_t* menu_icons_material;
+material_pair_t* menu_spell_icons[SPELL_ICON_COUNT];
+material_pair_t* spell_cursor_material;
+material_pair_t* solid_primitive_material;
+material_pair_t* current_spell_icon;
+material_pair_t* sprite_blit;
 
 static char* menu_spell_icon_filename[SPELL_ICON_COUNT] = {
     "rom:/materials/spell/icons/00_fire.mat",
@@ -50,7 +50,7 @@ void menu_common_init() {
 }
 
 void menu_common_render_background(int x, int y, int w, int h) {
-    material_apply(menu_border_material);
+    material_pair_apply(menu_border_material, NULL);
 
     rdpq_texture_rectangle(
         TILE0,
@@ -112,7 +112,7 @@ void menu_common_render_background(int x, int y, int w, int h) {
         9, 6
     );
 
-    material_apply(menu_background_material);
+    material_pair_apply(menu_background_material, NULL);
 
     rdpq_texture_rectangle_scaled(
         TILE0,

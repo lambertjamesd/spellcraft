@@ -8,6 +8,8 @@ if ROOT not in sys.path:
 
 import mesh_export.entities.material_extract
 import mesh_export.entities.serialize
+import mesh_export.entities.material
+import mesh_export.entities.material_delta
 
 from mesh_export.deps import generate_deps
 
@@ -15,6 +17,9 @@ if __name__ == "__main__":
     output_directory = sys.argv[-1]
 
     generate_deps.generate_deps(output_directory, os.path.relpath(__file__))
+    
+    default_material = mesh_export.entities.material.Material()
+    default_material.vtx_effect = mesh_export.entities.material.VtxEffect(mesh_export.entities.material.VtxEffectType.VTX_EFFECT_NONE)
 
     for material in bpy.data.materials:
         if not 'f3d_mat' in material or not 'rdp_settings' in material['f3d_mat']:
@@ -26,7 +31,11 @@ if __name__ == "__main__":
             output_filename = os.path.join(output_directory, material.name) + '.mat'
 
         print(f'Writing material to {output_filename}')
-        result = mesh_export.entities.material_extract.determine_material_from_f3d(material)
-        print(result)
-        os.makedirs(os.path.dirname(output_filename), exist_ok=True)
-        mesh_export.entities.serialize.serialize_material(output_filename, result)
+        with open(output_filename, 'wb') as output:
+            result = mesh_export.entities.material_extract.determine_material_from_f3d(material)
+            print(result)
+            os.makedirs(os.path.dirname(output_filename), exist_ok=True)
+            mesh_export.entities.serialize.serialize_material_file(output, result)
+
+            revert = mesh_export.entities.material_delta.determine_material_delta(result, default_material)
+            mesh_export.entities.serialize.serialize_material_file(output, revert)

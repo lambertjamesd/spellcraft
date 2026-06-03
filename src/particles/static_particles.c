@@ -86,7 +86,7 @@ void static_particles_render(render_batch_particles_t* particles, T3DMat4FP* tra
 void static_particles_render_instances(static_particles_t* particle_list, int particles_count, frame_memory_pool_t* pool, vector3_t* camera_pos) {
     struct Transform transform;
     quatIdent(&transform.rotation);
-    material_t* curr_material = NULL;
+    material_pair_t* curr_material = NULL;
 
     SC_PROFILE_START(render_particles);
 
@@ -124,7 +124,7 @@ void static_particles_render_instances(static_particles_t* particle_list, int pa
             }
         
             if (curr_material != particles->material) {
-                material_apply(particles->material);
+                material_pair_apply(particles->material, curr_material);
                 curr_material = particles->material;
             }
         
@@ -148,7 +148,7 @@ void static_particles_render_instances(static_particles_t* particle_list, int pa
             SC_LOOP_PROFILE_END(render_particles, 0);
         
             SC_LOOP_PROFILE_START(render_particles, 1);
-            static_particles_render(batch_particles, mtxfp, particles->material->tex0.sprite != NULL);
+            static_particles_render(batch_particles, mtxfp, particles->material->apply.tex0.sprite != NULL);
             SC_LOOP_PROFILE_END(render_particles, 1);
         }
     }

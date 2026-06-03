@@ -22,13 +22,13 @@ overworld_tile_layer_t overworld_tile_load_layer(tmesh_t** detail_meshes, T3DMat
 
     tmesh_load(&result.terrain_mesh, file);
     rspq_block_begin();
-    material_apply(result.terrain_mesh.material);
+    material_pair_apply(result.terrain_mesh.material, NULL);
     rspq_block_run(result.terrain_mesh.block);
     
     uint16_t block_detail_count;
     fread(&block_detail_count, 2, 1, file);
     
-    struct material* curr_material = result.terrain_mesh.material;
+    material_pair_t* curr_material = result.terrain_mesh.material;
     for (int detail_index = 0; detail_index < block_detail_count; detail_index += 1) {
         uint16_t detail_type;
         fread(&detail_type, 2, 1, file);
@@ -38,7 +38,7 @@ overworld_tile_layer_t overworld_tile_load_layer(tmesh_t** detail_meshes, T3DMat
         struct tmesh* mesh = detail_meshes[detail_type];
 
         if (curr_material != mesh->material) {
-            material_apply(mesh->material);
+            material_pair_apply(mesh->material, curr_material);
             curr_material = mesh->material;
         }
 

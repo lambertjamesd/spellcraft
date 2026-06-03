@@ -7,7 +7,7 @@
 #include "../resource/material_cache.h"
 #include "../time/time.h"
 
-static struct material* spell_symbol_material;
+static material_pair_t* spell_symbol_material;
 
 #define SPELL_SYMBOLS_PER_ROW   6
 

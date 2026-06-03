@@ -13,7 +13,7 @@ static float current_time;
 static bool is_active;
 
 static color_t flash_color;
-static material_t* solid_primitive_material;
+static material_pair_t* solid_primitive_material;
 
 color_t fade_effect_calculate_color() {
     if (flash_color.a != 0) {
@@ -40,7 +40,7 @@ void fade_effect_update(void* data) {
 }
 
 void fade_effect_render(void* data) {
-    material_apply(solid_primitive_material);
+    material_pair_apply(solid_primitive_material, NULL);
 
     color_t color = fade_effect_calculate_color();
 

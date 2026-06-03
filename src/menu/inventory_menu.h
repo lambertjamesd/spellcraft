@@ -6,9 +6,9 @@
 #include "../render/material.h"
 
 struct inventory_menu_assets {
-    struct material* staff_icons[INV_STAFF_COUNT];
-    struct material* select_cursor;
-    struct material* hover_cursor;
+    material_pair_t* staff_icons[INV_STAFF_COUNT];
+    material_pair_t* select_cursor;
+    material_pair_t* hover_cursor;
 };
 
 struct inventory_menu {

@@ -46,6 +46,13 @@ struct material {
 
 typedef struct material material_t;
 
+struct material_pair {
+    material_t apply;
+    material_t revert;
+};
+
+typedef struct material_pair material_pair_t;
+
 void material_init(struct material* material);
 void material_destroy(struct material* material);
 
@@ -59,5 +66,22 @@ void material_release(struct material* material);
 void material_apply(struct material* material);
 
 void material_debug(struct material* material, const char* name);
+
+static inline void material_pair_load(material_pair_t* material, FILE* file) {
+    material_load(&material->apply, file);
+    material_load(&material->revert, file);
+}
+
+static inline void material_pair_release(material_pair_t* material) {
+    material_release(&material->apply);
+    material_release(&material->revert);
+}
+
+static inline void material_pair_apply(material_pair_t* material, material_pair_t* prev) {
+    if (prev) {
+        rspq_block_run(prev->revert.block);
+    }
+    material_apply(&material->apply);
+}
 
 #endif

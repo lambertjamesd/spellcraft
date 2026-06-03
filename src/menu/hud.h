@@ -17,7 +17,7 @@ struct hud_boss {
 struct hud {
     struct player* player;
     live_cast_renderer_t live_cast_renderer;
-    material_t* button_icon;
+    material_pair_t* button_icon;
     struct hud_boss boss;
 };
 

@@ -11,13 +11,13 @@ struct spell_assets {
     struct animation_clip* projectile_appear_clip;
     struct tmesh* sheild_mesh;
     
-    struct material* fire_particle_mesh;
-    struct material* ice_particle_mesh;
-    struct material* dash_trail_material;
-    struct material* sword_trail_material;
+    material_pair_t* fire_particle_mesh;
+    material_pair_t* ice_particle_mesh;
+    material_pair_t* dash_trail_material;
+    material_pair_t* sword_trail_material;
 
-    struct material* ice_material;
-    struct material* shock_material;
+    material_pair_t* ice_material;
+    material_pair_t* shock_material;
 
     struct tmesh* fire_around_mesh;
     struct tmesh* fire_sweep_mesh;
@@ -33,9 +33,9 @@ struct spell_assets {
     struct tmesh* lightning_strike;
     struct tmesh* lightning_cloud;
     struct tmesh* lightning_impact;
-    struct material* thunder_cloud;
+    material_pair_t* thunder_cloud;
     
-    struct material* spell_symbols;
+    material_pair_t* spell_symbols;
 
     struct tmesh* fire_sprite;
     

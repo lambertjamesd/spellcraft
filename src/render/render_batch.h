@@ -92,7 +92,7 @@ static inline element_attr_t element_attr_end() {
 }
 
 struct render_batch_element {
-    struct material* material;
+    material_pair_t* material;
     uint16_t type;
     uint8_t light_source;
     union {
@@ -136,18 +136,18 @@ struct render_batch_element* render_batch_add_tmesh(
     struct element_attr* additional_attrs
 );
 
-void render_batch_add_callback(struct render_batch* batch, struct material* material, RenderCallback callback, void* data);
+void render_batch_add_callback(struct render_batch* batch, material_pair_t* material, RenderCallback callback, void* data);
 
 struct render_batch_element* render_batch_add_particles(
     struct render_batch* batch, 
-    struct material* material, 
+    material_pair_t* material, 
     render_batch_particles_t* particles, 
     T3DMat4FP* mtx
 );
 
 struct render_batch_element* render_batch_add_dynamic_particles(
     struct render_batch* batch, 
-    struct material* material, 
+    material_pair_t* material, 
     int count, 
     const struct render_batch_particle_size* size,
     T3DMat4FP* mtx

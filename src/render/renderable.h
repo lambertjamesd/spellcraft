@@ -14,14 +14,14 @@ struct renderable {
         struct {
             struct tmesh* mesh;
             struct armature armature;
-            struct material* force_material;
+            material_pair_t* force_material;
             struct tmesh** attachments;
             animator_t* animator;
         } mesh_render;
         struct {
             TPXParticle particle_data;
             render_batch_particles_t particles;
-            struct material* material;
+            material_pair_t* material;
             uint8_t frame_max_x;
             uint8_t frame_step;
             uint8_t current_stall_frame;

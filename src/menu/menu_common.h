@@ -4,12 +4,12 @@
 #include "../render/material.h"
 #include "../spell/spell.h"
 
-extern struct material* menu_icons_material;
-extern struct material* menu_spell_icons[SPELL_ICON_COUNT];
-extern struct material* spell_cursor_material;
-extern struct material* solid_primitive_material;
-extern struct material* current_spell_icon;
-extern struct material* sprite_blit;
+extern material_pair_t* menu_icons_material;
+extern material_pair_t* menu_spell_icons[SPELL_ICON_COUNT];
+extern material_pair_t* spell_cursor_material;
+extern material_pair_t* solid_primitive_material;
+extern material_pair_t* current_spell_icon;
+extern material_pair_t* sprite_blit;
 
 void menu_common_init();
 

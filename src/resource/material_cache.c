@@ -8,15 +8,15 @@
 
 struct resource_cache material_resource_cache;
 
-struct material* material_cache_load(const char* filename) {
+material_pair_t* material_cache_load(const char* filename) {
     struct resource_cache_entry* entry = resource_cache_use(&material_resource_cache, filename);
 
     if (!entry->resource) {
-        struct material* result = malloc(sizeof(struct material));
+        material_pair_t* result = malloc(sizeof(material_pair_t));
         
         FILE* material_file = asset_fopen(filename, NULL);
-        material_load(result, material_file);
-        material_debug(result, filename);
+        material_pair_load(result, material_file);
+        material_debug(&result->apply, filename);
         fclose(material_file);
 
         resource_cache_set_resource(&material_resource_cache, entry, result);
@@ -25,14 +25,14 @@ struct material* material_cache_load(const char* filename) {
     return entry->resource;
 }
 
-void material_cache_release(struct material* material) {
+void material_cache_release(material_pair_t* material) {
     if (resource_cache_free(&material_resource_cache, material)) {
-        material_release(material);
+        material_pair_release(material);
         free(material);
     }
 }
 
-struct material* material_cache_load_from_file(FILE* file) {
+material_pair_t* material_cache_load_from_file(FILE* file) {
     uint8_t material_name_length;
     fread(&material_name_length, 1, 1, file);
 

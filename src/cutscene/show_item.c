@@ -12,7 +12,7 @@
 #define RUNE_FLASH_TIME             2.0f
 
 struct show_item {
-    struct material* item_material;
+    material_pair_t* item_material;
     sprite_t* item_sprite;
     uint16_t showing_item;
     uint16_t should_show;
@@ -127,7 +127,7 @@ bool show_item_is_spell(enum inventory_item_type type) {
 
 void show_item_render(void* data) {
     if (show_item.showing_item && show_item.show_item_timer) {
-        material_apply(solid_primitive_material);
+        material_pair_apply(solid_primitive_material, NULL);
 
         float alpha = show_item.show_item_timer * (1.0f / RUNE_FADE_TIME);
 
@@ -142,7 +142,7 @@ void show_item_render(void* data) {
 
         int size = (int)(32.0f * alpha);
 
-        material_apply(current_spell_icon);
+        material_pair_apply(current_spell_icon, NULL);
         rdpq_texture_rectangle_scaled(
             TILE0, 
             160 - size, 80 - size,
@@ -159,7 +159,7 @@ void show_item_render(void* data) {
         int h = 48;
 
         if (show_item.item_sprite && is_showing) {
-            material_apply(sprite_blit);
+            material_pair_apply(sprite_blit, NULL);
             rdpq_sprite_blit(show_item.item_sprite, 160 - 24, 80 - 24, NULL);
 
             int level = inventory_get_item_level(show_item.showing_item) - 1;
@@ -179,7 +179,7 @@ void show_item_render(void* data) {
         }
 
         if (show_item.item_material && is_showing) {
-            material_apply(show_item.item_material);
+            material_pair_apply(show_item.item_material, NULL);
 
             if (!show_item.showing_item) {
                 color_t color = {255, 255, 255, (uint8_t)(alpha * 255.0f)};
@@ -194,7 +194,7 @@ void show_item_render(void* data) {
                 x, y,
                 x + w, y + h,
                 offset, 0,
-                size + offset, show_item.item_material->tex0.sprite->height
+                size + offset, show_item.item_material->apply.tex0.sprite->height
             );
         }
 
@@ -204,7 +204,7 @@ void show_item_render(void* data) {
             float alpha = 1.0f - (flash_time * (1.0f / RUNE_FLASH_TIME));
             alpha *= alpha;
 
-            material_apply(solid_primitive_material);
+            material_pair_apply(solid_primitive_material, NULL);
             color_t color = {255, 255, 255, (uint8_t)(alpha * 255.0f)};
             rdpq_set_prim_color(color);
             rdpq_texture_rectangle(TILE0, 0, 0, 320, 240, 0, 0);
