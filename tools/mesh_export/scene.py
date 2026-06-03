@@ -433,7 +433,7 @@ def find_scene_objects(scene, definitions, room_collection, base_transform):
     object_blacklist = find_static_blacklist()
 
     for obj in bpy.data.objects:
-        if obj.name.startswith('fast64_f3d_material_library_'):
+        if obj.name.startswith('fast64_f3d_material_library_') or obj.hide_render:
             continue
 
         if 'loading_zone' in obj:
