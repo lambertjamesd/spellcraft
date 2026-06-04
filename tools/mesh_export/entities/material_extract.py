@@ -496,6 +496,8 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
 
     if 'priority' in mat:
         result.priority = mat['priority']
+    else:
+        result.priority = f3d_mat['draw_layer']['sm64']
 
     return result
 

@@ -657,7 +657,7 @@ class Material():
         result.vtx_effect = self.vtx_effect
         result.fog = self.fog.copy() if self.fog else None
         result.light_count = self.light_count
-        result.priority =  self.priority
+        result.priority = self.priority
         return result
     
     def does_scroll(self) -> bool:

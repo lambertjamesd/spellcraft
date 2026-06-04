@@ -463,6 +463,7 @@ def flags_for_material(mat: material.Material) -> int:
 
 def serialize_material_file(output, mat: material.Material, current_state: material.Material | None = None):
     output.write('MATR'.encode())
+    output.write(struct.pack('>h', mat.priority or 1))
 
     _serialize_tex(output, mat.tex0)
     _serialize_tex(output, mat.tex1, mat.tex0)

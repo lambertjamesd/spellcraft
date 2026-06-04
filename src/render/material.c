@@ -189,6 +189,7 @@ void material_load(struct material* into, FILE* material_file) {
     bool has_more = true;
 
     material_init(into);
+    fread(&into->sort_priority, sizeof(int16_t), 1, material_file);
 
     material_load_tex(&into->tex0, material_file);
     material_load_tex(&into->tex1, material_file);
