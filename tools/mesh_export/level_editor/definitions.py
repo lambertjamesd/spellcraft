@@ -23,6 +23,7 @@ class Definitions:
         self.entry_points = []
         self.boolean_variables = []
         self.integer_variables = []
+        self.music: list[str] | None = None
 
         self._objects_for_library_path = {}
 
@@ -182,6 +183,7 @@ class Definitions:
 
         self.loaded_path = current_path
         self.repo_path = repo_path
+        self.music = None
 
         if not repo_path:
             print("No repo path found")
@@ -247,15 +249,11 @@ class Definitions:
                 curr = next
         
         return curr
-    
-    def needs_reload(self):
-        return bpy.data.filepath != self.loaded_path
 
     def get_structure_type(self, name):
         def_type_name = f"{name}_definition" 
 
-        if self.needs_reload():
-            self.load()
+        self.load()
 
         if not self.definitions:
             return None
@@ -329,6 +327,24 @@ class Definitions:
     
     def reload(self):
         self.loaded_path = None
+
+    def get_music(self):
+        self.load()
+
+        if not self.music:
+            result: list[str] = []
+            self.music = result
+
+            music_folder = os.path.join(self.repo_path or "", "assets/music")
+
+            for name in os.listdir(music_folder):
+                path = os.path.join(music_folder, name)
+                if os.path.isfile(path):
+                    result.append(f"rom:/music/{os.path.splitext(name)[0]}.wav64")
+
+            return result
+        
+        return self.music
 
 
 object_definitions = Definitions()
