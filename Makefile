@@ -55,10 +55,6 @@ filesystem/%.sprite: assets/%.png $$(wildcard assets/%.json)
 ###
 # script dependencies
 ###
-
-build/tools/mesh_export/%.d.template: tools/mesh_export/%.py tools/generate_python_deps.py
-	@mkdir -p $(dir $@)
-	python3 tools/generate_python_deps.py $<
 	
 EXPORT_SOURCE := $(shell find tools/mesh_export/ -type f -name '*.py' | sort)
 
@@ -66,21 +62,21 @@ EXPORT_SOURCE := $(shell find tools/mesh_export/ -type f -name '*.py' | sort)
 # t3d_meshes
 ###
 
-# BLENDER_4 := /home/james/Blender/blender-4.5.8-linux-x64/blender
+# BLENDER_5 := /home/james/Blender/blender-4.5.8-linux-x64/blender
 
 MESH_SOURCES := $(shell find assets/meshes -type f -name '*.blend' | sort)
 
 TMESHES := $(MESH_SOURCES:assets/meshes/%.blend=filesystem/meshes/%.tmesh)
 
-filesystem/meshes/%.tmesh filesystem/meshes/%.anim: assets/meshes/%.blend build/tools/mesh_export/t3d_mesh.d.template
+filesystem/meshes/%.tmesh filesystem/meshes/%.anim: assets/meshes/%.blend tools/mesh_export/t3d_mesh.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh))
-	$(BLENDER_4) $< --background --factory-startup --python-exit-code 1 --python tools/mesh_export/t3d_mesh.py -- $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)
+	$(BLENDER_5) $< --background --factory-startup --python-exit-code 1 --python tools/mesh_export/t3d_mesh.py -- $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)
 	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)
 	-cp $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.anim) $(@:%.tmesh=%.anim)
 
 assets/game_objects.json: tools/mesh_export/rebuild_prefabs.py $(EXPORT_SOURCE)
-	$(BLENDER_4) --background --factory-startup --python-exit-code 1 --python tools/mesh_export/rebuild_prefabs.py -- assets/game_objects.json
+	$(BLENDER_5) --background --factory-startup --python-exit-code 1 --python tools/mesh_export/rebuild_prefabs.py -- assets/game_objects.json
 
 ###
 # materials
@@ -91,16 +87,16 @@ MATERIAL_BLENDER_SOURCES := $(shell find assets/ -type f -name '*.mat.blend' | s
 
 MATERIALS := $(MATERIAL_SOURCES:assets/%.mat.json=filesystem/%.mat) $(MATERIAL_BLENDER_SOURCES:assets/%.mat.blend=filesystem/%.mat)
 
-filesystem/%.mat: assets/%.mat.json build/tools/mesh_export/material.d.template
+filesystem/%.mat: assets/%.mat.json tools/mesh_export/material.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%.mat=build/assets/%.mat))
 	python3 tools/mesh_export/material.py --default assets/materials/default.mat.json $< $(@:filesystem/%.mat=build/assets/%.mat)
 	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
 
-filesystem/%.mat: assets/%.mat.blend build/tools/mesh_export/material_fast64.d.template
+filesystem/%.mat: assets/%.mat.blend tools/mesh_export/material_fast64.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%.mat=build/assets/%.mat))
-	$(BLENDER_4) $< --background --factory-startup --python-exit-code 1 --python tools/mesh_export/material_fast64.py -- $@
+	$(BLENDER_5) $< --background --factory-startup --python-exit-code 1 --python tools/mesh_export/material_fast64.py -- $@
 
 list_materials: $(MATERIALS)
 	echo $(MATERIALS)
@@ -136,7 +132,7 @@ filesystem/%.wav64: assets/%.mp3 $$(wildcard assets/%.txt)
 ###
 
 assets/materials/materials.blend: tools/mesh_export/material_generator.py $(MATERIAL_SOURCES)
-	$(BLENDER_4) --background --factory-startup --python-exit-code 1 --python tools/mesh_export/material_generator.py -- $@ $(MATERIAL_SOURCES)
+	$(BLENDER_5) --background --factory-startup --python-exit-code 1 --python tools/mesh_export/material_generator.py -- $@ $(MATERIAL_SOURCES)
 
 ###
 # cutscenes
@@ -157,13 +153,13 @@ build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/in
 filesystem/scripts/globals.dat: build/assets/scripts/globals.dat
 	$(MK_ASSET) -o $(dir $@) -w 4 $<
 
-filesystem/scripts/%.script: assets/scripts/%.script build/assets/scripts/globals.json build/cutscene/function_defs.json build/tools/mesh_export/cutscene.d.template
+filesystem/scripts/%.script: assets/scripts/%.script build/assets/scripts/globals.json build/cutscene/function_defs.json tools/mesh_export/cutscene.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
 	python3 tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json $< $(@:filesystem/%=build/assets/%)
 	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%=build/assets/%)
 	
-filesystem/scenes/%.script: assets/scenes/%.script build/assets/scenes/%.json assets/scenes/%.blend build/assets/scripts/globals.json build/tools/mesh_export/cutscene.d.template
+filesystem/scenes/%.script: assets/scenes/%.script build/assets/scenes/%.json assets/scenes/%.blend build/assets/scripts/globals.json tools/mesh_export/cutscene.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%=build/assets/%))
 	python3 tools/mesh_export/cutscene.py -g build/assets/scripts/globals.json -c $(@:filesystem/%.script=build/assets/%.json) $< $(@:filesystem/%=build/assets/%)
@@ -178,11 +174,11 @@ SCENE_SOURCES := $(shell find assets/scenes -type f -name '*.blend' | sort)
 SCENES := $(SCENE_SOURCES:assets/scenes/%.blend=filesystem/scenes/%.scene)
 
 .SECONDEXPANSION:
-filesystem/scenes/%.scene: assets/scenes/%.blend $$(wildcard assets/scenes/%.script) build/assets/scripts/globals.json build/cutscene/function_defs.json build/tools/mesh_export/scene.d.template
+filesystem/scenes/%.scene: assets/scenes/%.blend $$(wildcard assets/scenes/%.script) build/assets/scripts/globals.json build/cutscene/function_defs.json tools/mesh_export/scene.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene))
 	echo $@ $<
-	$(BLENDER_4) $< --background --factory-startup --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene) $(@:%.scene=%.overworld)
+	$(BLENDER_5) $< --background --factory-startup --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene) $(@:%.scene=%.overworld)
 	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene)
 	-cp $(@:filesystem/scenes/%.scene=build/assets/scenes/%.sanim) $(@:%.scene=%.sanim)
 
@@ -190,7 +186,7 @@ filesystem/scenes/%.overworld build/assets/scenes/%.json: filesystem/scenes/%.sc
 
 build/assets/scenes/%_exits.txt: assets/scenes/%.blend tools/mesh_export/find_exits.py
 	@mkdir -p $(dir $@)
-	$(BLENDER_4) $< --background --factory-startup --python-exit-code 1 --python tools/mesh_export/find_exits.py -- $@
+	$(BLENDER_5) $< --background --factory-startup --python-exit-code 1 --python tools/mesh_export/find_exits.py -- $@
 
 all_exits: $(SCENE_SOURCES:assets/scenes/%.blend=build/assets/scenes/%_exits.txt)
 .PHONY: all_exits
@@ -207,7 +203,7 @@ build/test_result.txt: $(EXPORT_SOURCE)
 
 build/blender_results.txt: $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
-	$(BLENDER_4) --background --factory-startup --python-exit-code 1 --python tools/mesh_export/tests.py
+	$(BLENDER_5) --background --factory-startup --python-exit-code 1 --python tools/mesh_export/tests.py
 	echo "success" > $@
 
 ###
@@ -259,7 +255,7 @@ tools/mesh_export.zip: tools/mesh_export/__init__.py
 	cd tools; zip -r mesh_export.zip mesh_export/
 
 build/strings.txt: tools/mesh_export/export_text.py $(SCRIPTS)
-	$(BLENDER_4) --background --factory-startup --python-exit-code 1 --python tools/mesh_export/export_text.py -- $@ $(SCRIPTS)
+	$(BLENDER_5) --background --factory-startup --python-exit-code 1 --python tools/mesh_export/export_text.py -- $@ $(SCRIPTS)
 
 DEPENDENCY_FILES := $(shell find build/ -name '*.d' 2>/dev/null)
 

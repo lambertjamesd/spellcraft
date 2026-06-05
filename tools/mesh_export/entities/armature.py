@@ -4,6 +4,7 @@ import os
 import mathutils
 import struct
 import math
+import bpy_extras.anim_utils
 
 from . import export_settings
 from . import material_extract
@@ -279,7 +280,7 @@ class ArmatureData:
         self.image_frame_list_1: list[str] = []
 
     def check_connected_mesh_object(self, obj: bpy.types.Object):
-        if obj.type != "MESH":
+        if obj.type != "MESH" or not obj.data or not isinstance(obj.data, bpy.types.Mesh):
             return
 
         if obj.parent is None or obj.parent.data != self.armature:
@@ -300,6 +301,9 @@ class ArmatureData:
             self.mark_bone_used(obj.vertex_groups[group_index].name)
 
         for material in mesh.materials:
+            if not material:
+                continue
+
             parsed_filename = material_extract.load_material_with_name(material)
 
             if parsed_filename.tex0 and parsed_filename.tex0.frames:
@@ -366,13 +370,16 @@ class ArmatureData:
         return self._ordered_bones
     
     def is_action_compatible(self, action: bpy.types.Action) -> bool:
-        if len(action.groups) == 0:
-            return False
+        for slot in action.slots:
+            channelbag = bpy_extras.anim_utils.action_get_channelbag_for_slot(action, slot)
 
-        for group in action.groups:
-            if group.name in self.armature.bones:
-                return True
-            
+            if not channelbag:
+                continue
+
+            for group in channelbag.groups:
+                if group.name in self.armature.bones:
+                    return True
+                
         return False
     
     def generate_pose_data(self, settings: export_settings.ExportSettings) -> list[PackedArmatureData]:

@@ -1,16 +1,12 @@
 
-* Upgrade to blender 5.0
 * Material rendering
 * Particle group improvements
 * Scene fog
 * Object modifiers being applied on export
 * Ignore collection in blender
-* Get material priority working
 * Move action indicator float over target instead of in the UI
 
 Details
-
-[2] I updated my fast64, so far not much seems different aside from the fact it now works on blender 5.0 (still hoping for 5.1 support soon). Looks like you may not have to do much if any fixing after all, but it's something to keep an eye on.
 
 [3]
 I saw you were doing a material system refactor? Having control of all the options would be great including all the stuff like IM_RD and the coverage stuff etc (in the future I would like to experiment with doing AA on the characters only and not the environment, kinda like Rare did). Or the texture filter type, because I'm sure being able to have a material with an unfiltered texture will come in handy at some point. And the four-sample filter might be handy for some menu stuff. 
@@ -35,9 +31,6 @@ I'd say we could pick which modifiers to apply based on whether they're enabled 
 
 [7]
 I would very much like to have an "ignore" folder/collection in Blender, that I an put anything into that I need but that doesn't end up in the compile. This is also another thing I spent a lot of time on with JR with keeping stuff in the work file but not the export file etc. Ignored files might be used by certain modifiers, so I hope it's possible to remove them only after the modifiers have already been applied. 
-
-[8]
-The material priority setting would be very useful to get reliably working.
 
 [9]
 Materials seem to work differently on the overworld than in the maps. I think we talked about this too. We should eventually have material parity between both, even when it comes to LODs (but I'm guessing you were already working toward this anyway).

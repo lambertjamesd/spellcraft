@@ -39,12 +39,12 @@ RUN cd /opt &&\
     cd /
 
 # Install Blender
-ENV BLENDER_4=/opt/blender/blender
-RUN wget https://download.blender.org/release/Blender4.5/blender-4.5.8-linux-x64.tar.xz
+ENV BLENDER_5=/opt/blender/blender
+RUN wget https://download.blender.org/release/Blender5.1/blender-5.1.2-linux-x64.tar.xz
 RUN apt-get install xz-utils -y &&\
-    tar -xvf blender-4.5.8-linux-x64.tar.xz &&\
-    mv blender-4.5.8-linux-x64 /opt/blender &&\
-    rm blender-4.5.8-linux-x64.tar.xz
+    tar -xvf blender-5.1.2-linux-x64.tar.xz &&\
+    mv blender-5.1.2-linux-x64 /opt/blender &&\
+    rm blender-5.1.2-linux-x64.tar.xz
 
 # Install Blender Dependencies
 RUN apt-get install -y \
