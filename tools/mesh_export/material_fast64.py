@@ -21,9 +21,22 @@ if __name__ == "__main__":
     default_material = mesh_export.entities.material.Material()
     default_material.vtx_effect = mesh_export.entities.material.VtxEffect(mesh_export.entities.material.VtxEffectType.VTX_EFFECT_NONE)
 
+    did_export = None
+
     for material in bpy.data.materials:
-        if not 'f3d_mat' in material or not 'rdp_settings' in material['f3d_mat']:
+        f3d_mat = None
+
+        if 'f3d_mat' in material:
+            f3d_mat = material['f3d_mat']
+        elif hasattr(material, 'f3d_mat') and material.is_f3d:
+            f3d_mat = material.f3d_mat
+
+        if not f3d_mat or (not 'rdp_settings' in f3d_mat and not hasattr(f3d_mat, 'rdp_settings')):
+            print(f'skipping material {material.name}')
             continue
+
+        if did_export:
+            raise Exception(f'found two materials {did_export} and {material.name}')
         
         if output_directory.endswith('.mat'):
             output_filename= output_directory
@@ -39,3 +52,8 @@ if __name__ == "__main__":
 
             revert = mesh_export.entities.material_delta.determine_material_delta(result, default_material)
             mesh_export.entities.serialize.serialize_material_file(output, revert)
+
+            did_export = material.name
+
+    if not did_export:
+        raise Exception('no material found to export')

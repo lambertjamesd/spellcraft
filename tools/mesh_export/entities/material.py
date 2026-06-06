@@ -230,8 +230,8 @@ class CombineModeCycle():
             self.aa == value.aa and self.ab == value.ab and self.ac == value.ac and self.ad == value.ad
 
     def uses(self, attr: str):
-        return self.a == attr or self.b == attr or self.c == attr or self.c == f'{attr}_ALPHA' or self.d == attr or \
-            self.aa == attr or self.ab == attr or self.ac == attr or self.ad == attr
+        return self.a.name == attr or self.b.name == attr or self.c.name == attr or self.c.name == f'{attr}_ALPHA' or self.d.name == attr or \
+            self.aa.name == attr or self.ab.name == attr or self.ac.name == attr or self.ad.name == attr
 
 class CombineMode():
     def __init__(self, cyc1: CombineModeCycle | None, cyc2: CombineModeCycle | None):

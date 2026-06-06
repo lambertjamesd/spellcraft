@@ -5,6 +5,9 @@
 * Object modifiers being applied on export
 * Ignore collection in blender
 * Move action indicator float over target instead of in the UI
+* Texture convert in other modes
+* _CYCLE_1_PRESETS
+* animation scrolling
 
 Details
 

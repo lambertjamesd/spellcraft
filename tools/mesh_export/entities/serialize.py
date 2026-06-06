@@ -27,119 +27,6 @@ T3D_FLAG_CULL_BACK  = 1 << 4
 def _serialize_color(file, color: material.Color):
     file.write(struct.pack('>BBBB', color.r, color.g, color.b, color.a))
 
-COMB_A = {
-    "COMBINED": 0,
-    "TEX0": 1,
-    "TEX1": 2,
-    "PRIM": 3,
-    "SHADE": 4,
-    "ENV": 5,
-    "ONE": 6,
-    "1": 6,
-    "NOISE": 7,
-    "ZERO": 8,
-    "0": 8,
-}
-
-COMB_B = {
-    "COMBINED": 0,
-    "TEX0": 1,
-    "TEX1": 2,
-    "PRIM": 3,
-    "SHADE": 4,
-    "ENV": 5,
-    "KEYCENTER": 6,
-    "K4": 7,
-    "ZERO": 8,
-    "0": 8,
-}
-
-COMB_C = {
-    "COMBINED": 0,
-    "TEX0": 1,
-    "TEX1": 2,
-    "PRIM": 3,
-    "SHADE": 4,
-    "ENV": 5,
-    "KEYSCALE": 6,
-    "COMBINED_ALPHA": 7,
-    "TEX0_ALPHA": 8,
-    "TEX1_ALPHA": 9,
-    "PRIM_ALPHA": 10,
-    "SHADE_ALPHA": 11,
-    "ENV_ALPHA": 12,
-    "LOD_FRAC": 13,
-    "PRIM_LOD_FRAC": 14,
-    "K5": 15,
-    "ZERO": 16,
-    "0": 16,
-}
-
-COMB_D = {
-    "COMBINED": 0,
-    "TEX0": 1,
-    "TEX1": 2,
-    "PRIM": 3,
-    "SHADE": 4,
-    "ENV": 5,
-    
-    "ONE": 6,
-    "1": 6,
-    "ZERO": 7,
-    "0": 7,
-}
-
-ACOMB_A = {
-    "COMBINED": 0,
-    "TEX0": 1,
-    "TEX1": 2,
-    "PRIM": 3,
-    "SHADE": 4,
-    "ENV": 5,
-    
-    "ONE": 6,
-    "1": 6,
-    "ZERO": 7,
-    "0": 7,
-}
-
-ACOMB_MUL = {
-    "LOD_FRAC": 0,
-    "TEX0": 1,
-    "TEX1": 2,
-    "PRIM": 3,
-    "SHADE": 4,
-    "ENV": 5,
-    "PRIM_LOD_FRAC": 6,
-    "ZERO": 7,
-    "0": 7,
-}
-
-BLEND_A = {
-    "IN": 0,
-    "MEMORY": 1,
-    "BLEND": 2,
-    "FOG": 3,
-}
-
-BLEND_B1 = {
-    "IN_A": 0,
-    "FOG_A": 1,
-    "SHADE_A": 2,
-    "ZERO": 3,
-    "0": 3,
-}
-
-BLEND_B2 = {
-    "INV_MUX_A": 0,
-    "MEMORY_CVG": 1,
-    'MEM_A': 1,
-    "ONE": 2,
-    "1": 2,
-    "ZERO": 3,
-    "0": 3,
-}
-
 ZMODE = {
     "OPAQUE": 0 << 10,
     "INTER": 1 << 10,
@@ -222,15 +109,18 @@ TEX_DETAIL = {
 RDPQ_COMBINER_2PASS = 1 << 63
 
 def _serialize_combine(file, combine: material.CombineMode, force_cyc2: bool):
-    a0 = COMB_A[combine.cyc1.a]
-    b0 = COMB_B[combine.cyc1.b]
-    c0 = COMB_C[combine.cyc1.c]
-    d0 = COMB_D[combine.cyc1.d]
+    if not combine.cyc1:
+        raise Exception('needs cycle 1 to serialize combine')
 
-    aa0 = ACOMB_A[combine.cyc1.aa]
-    ab0 = ACOMB_A[combine.cyc1.ab]
-    ac0 = ACOMB_MUL[combine.cyc1.ac]
-    ad0 = ACOMB_A[combine.cyc1.ad]
+    a0 = combine.cyc1.a.value
+    b0 = combine.cyc1.b.value
+    c0 = combine.cyc1.c.value
+    d0 = combine.cyc1.d.value
+
+    aa0 = combine.cyc1.aa.value
+    ab0 = combine.cyc1.ab.value
+    ac0 = combine.cyc1.ac.value
+    ad0 = combine.cyc1.ad.value
 
     a1 = a0
     b1 = b0
@@ -245,25 +135,25 @@ def _serialize_combine(file, combine: material.CombineMode, force_cyc2: bool):
     flags = 0
 
     if combine.cyc2:
-        a1 = COMB_A[combine.cyc2.a]
-        b1 = COMB_B[combine.cyc2.b]
-        c1 = COMB_C[combine.cyc2.c]
-        d1 = COMB_D[combine.cyc2.d]
+        a1 = combine.cyc2.a.value
+        b1 = combine.cyc2.b.value
+        c1 = combine.cyc2.c.value
+        d1 = combine.cyc2.d.value
 
-        aa1 = ACOMB_A[combine.cyc2.aa]
-        ab1 = ACOMB_A[combine.cyc2.ab]
-        ac1 = ACOMB_MUL[combine.cyc2.ac]
-        ad1 = ACOMB_A[combine.cyc2.ad]
+        aa1 = combine.cyc2.aa.value
+        ab1 = combine.cyc2.ab.value
+        ac1 = combine.cyc2.ac.value
+        ad1 = combine.cyc2.ad.value
     elif force_cyc2:
-        a1 = COMB_A['0']
-        b1 = COMB_B['0']
-        c1 = COMB_C['0']
-        d1 = COMB_D['COMBINED']
+        a1 = material.CombineA._0.value
+        b1 = material.CombineB._0.value
+        c1 = material.CombineC._0.value
+        d1 = material.CombineC.COMBINED.value
 
-        aa1 = ACOMB_A['0']
-        ab1 = ACOMB_A['0']
-        ac1 = ACOMB_MUL['0']
-        ad1 = ACOMB_A['COMBINED']
+        aa1 = material.ACombine._0.value
+        ab1 = material.ACombine._0.value
+        ac1 = material.ACombineMul._0.value
+        ad1 = material.ACombine.COMBINED.value
 
 
     file.write(struct.pack('>Q', \
@@ -293,10 +183,10 @@ SOM_Z_COMPARE = 1 << 4
 SOM_AA = 1 << 3
 
 def _serialize_other_modes(file, blend: material.OtherModes, force_cyc2: bool):
-    a1 = BLEND_A[blend.cyc1.a1]
-    b1 = BLEND_B1[blend.cyc1.b1]
-    a2 = BLEND_A[blend.cyc1.a2]
-    b2 = BLEND_B2[blend.cyc1.b2]
+    a1 = blend.cyc1.a1.value
+    b1 = blend.cyc1.b1.value
+    a2 = blend.cyc1.a2.value
+    b2 = blend.cyc1.b2.value
 
     a1_2 = a1
     b1_2 = b1
@@ -360,18 +250,18 @@ def _serialize_other_modes(file, blend: material.OtherModes, force_cyc2: bool):
     cycle_type = blend.cycle_type
 
     if blend.cyc2:
-        a1_2 = BLEND_A[blend.cyc2.a1]
-        b1_2 = BLEND_B1[blend.cyc2.b1]
-        a2_2 = BLEND_A[blend.cyc2.a2]
-        b2_2 = BLEND_B2[blend.cyc2.b2]
+        a1_2 = blend.cyc2.a1.value
+        b1_2 = blend.cyc2.b1.value
+        a2_2 = blend.cyc2.a2.value
+        b2_2 = blend.cyc2.b2.value
 
         if blend.cyc2.needs_read():
             other_flags |= SOM_READ_ENABLE
     elif force_cyc2:
-        a1 = BLEND_A['IN']
-        b1 = BLEND_B1['0']
-        a2 = BLEND_A['IN']
-        b2 = BLEND_B2['1']
+        a1 = material.BlendColor.IN.value
+        b1 = material.BlendAlpha._0.value
+        a2 = material.BlendColor.IN.value
+        b2 = material.BlendMix._1.value
 
         if cycle_type == material.CycleType.CYCLE_1:
             cycle_type = material.CycleType.CYCLE_2

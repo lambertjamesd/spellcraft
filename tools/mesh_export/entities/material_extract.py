@@ -439,41 +439,41 @@ _CYCLE_1_PRESETS = {
 
 _CYCLE_2_PRESETS = {
     0: blend_modes.RM_ZB_OPA_SURF,
-    'G_RM_ZB_OPA_SURF': blend_modes.RM_ZB_OPA_SURF,
+    'G_RM_ZB_OPA_SURF2': blend_modes.RM_ZB_OPA_SURF,
     1: blend_modes.RM_AA_ZB_OPA_SURF,
-    'G_RM_AA_ZB_OPA_SURF': blend_modes.RM_AA_ZB_OPA_SURF,
+    'G_RM_AA_ZB_OPA_SURF2': blend_modes.RM_AA_ZB_OPA_SURF,
     2: blend_modes.RM_AA_ZB_OPA_DECAL,
-    'G_RM_AA_ZB_OPA_DECAL': blend_modes.RM_AA_ZB_OPA_DECAL,
+    'G_RM_AA_ZB_OPA_DECAL2': blend_modes.RM_AA_ZB_OPA_DECAL,
     3: blend_modes.RM_AA_ZB_OPA_INTER,
-    'G_RM_AA_ZB_OPA_INTER': blend_modes.RM_AA_ZB_OPA_INTER,
+    'G_RM_AA_ZB_OPA_INTER2': blend_modes.RM_AA_ZB_OPA_INTER,
     4: blend_modes.RM_AA_ZB_TEX_EDGE,
-    'G_RM_AA_ZB_TEX_EDGE': blend_modes.RM_AA_ZB_TEX_EDGE,
+    'G_RM_AA_ZB_TEX_EDGE2': blend_modes.RM_AA_ZB_TEX_EDGE,
     5: blend_modes.RM_AA_ZB_XLU_SURF,
-    'G_RM_AA_ZB_XLU_SURF': blend_modes.RM_AA_ZB_XLU_SURF,
+    'G_RM_AA_ZB_XLU_SURF2': blend_modes.RM_AA_ZB_XLU_SURF,
     6: blend_modes.RM_AA_ZB_XLU_DECAL,
-    'G_RM_AA_ZB_XLU_DECAL': blend_modes.RM_AA_ZB_XLU_DECAL,
+    'G_RM_AA_ZB_XLU_DECAL2': blend_modes.RM_AA_ZB_XLU_DECAL,
     7: blend_modes.RM_AA_ZB_XLU_INTER,
-    'G_RM_AA_ZB_XLU_INTER': blend_modes.RM_AA_ZB_XLU_INTER,
+    'G_RM_AA_ZB_XLU_INTER2': blend_modes.RM_AA_ZB_XLU_INTER,
     8: blend_modes.RM_ADD,
-    'G_RM_ADD': blend_modes.RM_ADD,
+    'G_RM_ADD2': blend_modes.RM_ADD,
     9: blend_modes.RM_NOOP,
-    'G_RM_NOOP': blend_modes.RM_NOOP,
+    'G_RM_NOOP2': blend_modes.RM_NOOP,
     10: blend_modes.RM_ZB_OPA_SURF,
-    'G_RM_ZB_OPA_SURF': blend_modes.RM_ZB_OPA_SURF,
+    'G_RM_ZB_OPA_SURF2': blend_modes.RM_ZB_OPA_SURF,
     11: blend_modes.RM_ZB_OPA_DECAL,
-    'G_RM_ZB_OPA_DECAL': blend_modes.RM_ZB_OPA_DECAL,
+    'G_RM_ZB_OPA_DECAL2': blend_modes.RM_ZB_OPA_DECAL,
     12: blend_modes.RM_ZB_XLU_SURF,
-    'G_RM_ZB_XLU_SURF': blend_modes.RM_ZB_XLU_SURF,
+    'G_RM_ZB_XLU_SURF2': blend_modes.RM_ZB_XLU_SURF,
     13: blend_modes.RM_ZB_XLU_DECAL,
-    'G_RM_ZB_XLU_DECAL': blend_modes.RM_ZB_XLU_DECAL,
+    'G_RM_ZB_XLU_DECAL2': blend_modes.RM_ZB_XLU_DECAL,
     14: blend_modes.RM_ZB_CLD_SURF,
-    'G_RM_ZB_CLD_SURF': blend_modes.RM_ZB_CLD_SURF,
+    'G_RM_ZB_CLD_SURF2': blend_modes.RM_ZB_CLD_SURF,
     15: blend_modes.RM_ZB_OVL_SURF,
-    'G_RM_ZB_OVL_SURF': blend_modes.RM_ZB_OVL_SURF,
+    'G_RM_ZB_OVL_SURF2': blend_modes.RM_ZB_OVL_SURF,
     16: blend_modes.RM_AA_ZB_TEX_TERR,
-    'G_RM_AA_ZB_TEX_TERR': blend_modes.RM_AA_ZB_TEX_TERR,
+    'G_RM_AA_ZB_TEX_TERR2': blend_modes.RM_AA_ZB_TEX_TERR,
     17: blend_modes.RM_OPA_SURF,
-    'G_RM_OPA_SURF': blend_modes.RM_OPA_SURF,
+    'G_RM_OPA_SURF2': blend_modes.RM_OPA_SURF,
 }
 
 texDetail = {
@@ -608,7 +608,7 @@ class PropertyWalker():
         
         type_name = type(result).__name__
         
-        if isinstance(result, int) or isinstance(result, str) or isinstance(result, float) or isinstance(result, bool) or type_name == 'bpy_prop_array':
+        if isinstance(result, int) or isinstance(result, str) or isinstance(result, float) or isinstance(result, bool) or type_name == 'bpy_prop_array' or type_name == 'Image':
             return result
         
         return PropertyWalker(result)
@@ -689,7 +689,7 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     if 'priority' in mat:
         result.priority = mat['priority']
     else:
-        result.priority = f3d_mat['draw_layer']['sm64']
+        result.priority = int(f3d_mat['draw_layer']['sm64'])
 
     return result
 

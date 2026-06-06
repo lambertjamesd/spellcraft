@@ -1,1 +1,3 @@
-FILENAME: tools/mesh_export/material_fast64.py
+FILENAME: tools/mesh_export/material_fast64.py \
+    tools/mesh_export/entities/serialize.py \
+    tools/mesh_export/entities/material_extract.py
