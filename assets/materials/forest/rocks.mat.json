@@ -3,8 +3,8 @@
         "filename": "../../images/forest/rocks.png"
     },
     "combineMode": [{
-        "color": ["TEX0", "0", "SHADE", "0"],
-        "alpha": ["0", "0", "0", "1"]
+        "color": ["TEX0", "_0", "SHADE", "_0"],
+        "alpha": ["_0", "_0", "_0", "_1"]
     }],
     "blendMode": "OPAQUE",
     "lighting": false,

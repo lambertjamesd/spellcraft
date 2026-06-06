@@ -12,7 +12,7 @@
     },
     "combineMode": [{
         "color": ["PRIM", "ENV", "TEX0", "ENV"],
-        "alpha": ["0", "0", "0", "1"]
+        "alpha": ["_0", "_0", "_0", "_1"]
     }],
     "primColor": [12, 24, 80, 255],
     "envColor": [8, 15, 52, 255],

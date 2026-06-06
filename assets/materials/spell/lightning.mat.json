@@ -11,15 +11,15 @@
         }
     },
     "combineMode": [{
-        "color": ["TEX0", "0", "PRIM", "0"],
-        "alpha": ["PRIM", "0", "TEX0", "0"]
+        "color": ["TEX0", "_0", "PRIM", "_0"],
+        "alpha": ["PRIM", "_0", "TEX0", "_0"]
     },{
-        "color": ["1", "0", "COMBINED", "TEX1"],
-        "alpha": ["0", "0", "0", "TEX1"]
+        "color": ["_1", "_0", "COMBINED", "TEX1"],
+        "alpha": ["_0", "_0", "_0", "TEX1"]
     }],
     "primColor": [50, 24, 127, 255],
     "blendMode": {
-        "cyc1": ["IN", "0", "IN", "1"],
+        "cyc1": ["IN", "_0", "IN", "_1"],
         "cyc2": ["IN", "IN_A", "MEMORY", "INV_MUX_A"],
         "zMode": "TRANSPARENT",
         "zWrite": false,

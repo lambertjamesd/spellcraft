@@ -1,8 +1,8 @@
 {
     "tex0": "../../images/test/test1.png",
     "combineMode": [{
-        "color": ["0", "0", "0", "PRIM"],
-        "alpha": ["0", "0", "0", "PRIM"]
+        "color": ["_0", "_0", "_0", "PRIM"],
+        "alpha": ["_0", "_0", "_0", "PRIM"]
     }],
     "primColor": [255, 0, 255, 255],
     "zBuffer": false

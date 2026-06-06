@@ -1,8 +1,8 @@
 {
     "tex0": "../../../images/characters/apprentice/hair_hands_buckles_palette2.png",
     "combineMode": [{
-        "color": ["0", "0", "0", "TEX0"],
-        "alpha": ["0", "0", "0", "1"]
+        "color": ["_0", "_0", "_0", "TEX0"],
+        "alpha": ["_0", "_0", "_0", "_1"]
     }],
     "blendMode": "OPAQUE",
     "lighting": false,

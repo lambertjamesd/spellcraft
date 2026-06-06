@@ -3,10 +3,10 @@
     "tex1": "../../images/desert/sand.png",
     "combineMode": [{
         "color": ["TEX1", "TEX0", "SHADE_ALPHA", "TEX0"],
-        "alpha": ["0", "0", "0", "1"]
+        "alpha": ["_0", "_0", "_0", "_1"]
     }, {
-        "color": ["COMBINED", "0", "SHADE", "0"],
-        "alpha": ["0", "0", "0", "1"]
+        "color": ["COMBINED", "_0", "SHADE", "_0"],
+        "alpha": ["_0", "_0", "_0", "_1"]
     }],
     "culling": true,
     "blendMode": "OPAQUE",

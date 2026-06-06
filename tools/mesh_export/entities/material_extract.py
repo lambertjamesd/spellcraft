@@ -9,6 +9,15 @@ from . import serialize
 from . import blend_modes
 from . import filename
 
+def _get_safe(obj, key: str, attr_key: str | None = None):
+    if hasattr(obj, attr_key or key):
+        return getattr(obj, attr_key or key)
+    
+    if key in obj:
+        return obj[key]
+    
+    raise Exception(f"Cannot get {attr_key or key} from {obj}")
+
 def search_node_input(from_node: bpy.types.Node, input_name: str):
     for input in from_node.inputs:
         if input.name == input_name:
@@ -142,16 +151,16 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
     if result.lighting:
         result.combine_mode = material.CombineMode(
             material.CombineModeCycle(
-                color_name, '0', 'SHADE', '0',
-                color_name, '0', 'SHADE', '0'
+                getattr(material.CombineA, color_name), material.CombineB._0, material.CombineC.SHADE, material.CombineD._0,
+                getattr(material.ACombine, color_name), material.ACombine._0, material.ACombineMul.SHADE, material.ACombine._0
             ),
             None
         )
     else:
         result.combine_mode = material.CombineMode(
             material.CombineModeCycle(
-                '0', '0', '0', color_name,
-                '0', '0', '0', color_name
+                material.CombineA._0, material.CombineB._0, material.CombineC._0, getattr(material.CombineD, color_name),
+                material.ACombine._0, material.ACombine._0, material.ACombineMul._0, getattr(material.ACombine, color_name)
             ),
             None
         )
@@ -529,100 +538,75 @@ alphaCompare = {
 }
 
 def determine_material_blend_f3d(rdp_settings) -> material.OtherModes:
-    is_2_cycle = _lookup_mix_bool('G_CYC_2CYCLE', rdp_settings['g_mdsft_cycletype'])
+    is_2_cycle = _lookup_mix_bool('G_CYC_2CYCLE', _get_safe(rdp_settings, 'g_mdsft_cycletype'))
 
-    if rdp_settings['rendermode_advanced_enabled']:
+    if _get_safe(rdp_settings, 'rendermode_advanced_enabled'):
         return material.OtherModes(
             material.BlendModeCycle(
-                _lookup_mixed_enum(enumBlendColor, material.BlendColor, rdp_settings['blend_p1']), 
-                _lookup_mixed_enum(enumBlendAlpha, material.BlendAlpha, rdp_settings['blend_a1']), 
-                _lookup_mixed_enum(enumBlendColor, material.BlendColor, rdp_settings['blend_m1']), 
-                _lookup_mixed_enum(enumBlendMix, material.BlendMix, rdp_settings['blend_b1']),
+                _lookup_mixed_enum(enumBlendColor, material.BlendColor, _get_safe(rdp_settings, 'blend_p1')), 
+                _lookup_mixed_enum(enumBlendAlpha, material.BlendAlpha, _get_safe(rdp_settings, 'blend_a1')), 
+                _lookup_mixed_enum(enumBlendColor, material.BlendColor, _get_safe(rdp_settings, 'blend_m1')), 
+                _lookup_mixed_enum(enumBlendMix, material.BlendMix, _get_safe(rdp_settings, 'blend_b1')),
             ),
             material.BlendModeCycle(
-                _lookup_mixed_enum(enumBlendColor, material.BlendColor, rdp_settings['blend_p2']), 
-                _lookup_mixed_enum(enumBlendAlpha, material.BlendAlpha, rdp_settings['blend_a2']), 
-                _lookup_mixed_enum(enumBlendColor, material.BlendColor, rdp_settings['blend_m2']), 
-                _lookup_mixed_enum(enumBlendMix, material.BlendMix, rdp_settings['blend_b2'])
+                _lookup_mixed_enum(enumBlendColor, material.BlendColor, _get_safe(rdp_settings, 'blend_p2')), 
+                _lookup_mixed_enum(enumBlendAlpha, material.BlendAlpha, _get_safe(rdp_settings, 'blend_a2')), 
+                _lookup_mixed_enum(enumBlendColor, material.BlendColor, _get_safe(rdp_settings, 'blend_m2')), 
+                _lookup_mixed_enum(enumBlendMix, material.BlendMix, _get_safe(rdp_settings, 'blend_b2'))
             ) if is_2_cycle else None,
-            atomic_prim = _lookup_mix_bool('G_PM_NPRIMITIVE', rdp_settings['g_mdsft_pipeline']),
-            cycle_type = _lookup_mixed_enum(cycleType, material.CycleType, rdp_settings['g_mdsft_cycletype']),
-            persp_tex_en = _lookup_mix_bool('G_TP_PERSP', rdp_settings['g_mdsft_textpersp']),
-            tex_detail = _lookup_mixed_enum(texDetail, material.TextureDetail, rdp_settings['g_mdsft_textdetail']),
-            tex_lod_en = _lookup_mix_bool('G_TL_LOD', rdp_settings['g_mdsft_textlod']),
-            sample_type = _lookup_mixed_enum(sampleType, material.SampleType, rdp_settings['g_mdsft_text_filt']),
-            key_en = _lookup_mix_bool('G_CK_KEY', rdp_settings['g_mdsft_combkey']),
-            rgb_dither_sel = _lookup_mixed_enum(rgbDither, material.RgbDitherSel, rdp_settings['g_mdsft_rgb_dither']),
-            alpha_dither_sel = _lookup_mixed_enum(alphaDither, material.AlphaDitherSel, rdp_settings['g_mdsft_alpha_dither']),
-            force_blend = bool(rdp_settings['force_bl']),
-            alpha_coverage = bool(rdp_settings['alpha_cvg_sel']),
-            x_coverage_alpha = bool(rdp_settings['cvg_x_alpha']),
-            z_mode = _lookup_mixed_enum(zMode, material.ZMode, rdp_settings['zmode']),
-            coverage_dest = _lookup_mixed_enum(cvgDest, material.CvgDest, rdp_settings['cvg_dst']),
-            color_on_coverage = bool(rdp_settings['clr_on_cvg']),
-            image_read = bool(rdp_settings['im_rd']),
-            z_write = bool(rdp_settings['z_upd']),
-            z_compare = bool(rdp_settings['z_cmp']),
-            aa = bool(rdp_settings['aa_en']),
-            z_source_sel = _lookup_mixed_enum(zSourceSel, material.ZSourceSel, rdp_settings['g_mdsft_zsrcsel']),
-            alpha_compare = _lookup_mixed_enum(alphaCompare, material.AlphaCompare, rdp_settings['g_mdsft_alpha_compare']),
+            atomic_prim = _lookup_mix_bool('G_PM_NPRIMITIVE', _get_safe(rdp_settings, 'g_mdsft_pipeline')),
+            cycle_type = _lookup_mixed_enum(cycleType, material.CycleType, _get_safe(rdp_settings, 'g_mdsft_cycletype')),
+            persp_tex_en = _lookup_mix_bool('G_TP_PERSP', _get_safe(rdp_settings, 'g_mdsft_textpersp')),
+            tex_detail = _lookup_mixed_enum(texDetail, material.TextureDetail, _get_safe(rdp_settings, 'g_mdsft_textdetail')),
+            tex_lod_en = _lookup_mix_bool('G_TL_LOD', _get_safe(rdp_settings, 'g_mdsft_textlod')),
+            sample_type = _lookup_mixed_enum(sampleType, material.SampleType, _get_safe(rdp_settings, 'g_mdsft_text_filt')),
+            key_en = _lookup_mix_bool('G_CK_KEY', _get_safe(rdp_settings, 'g_mdsft_combkey')),
+            rgb_dither_sel = _lookup_mixed_enum(rgbDither, material.RgbDitherSel, _get_safe(rdp_settings, 'g_mdsft_rgb_dither')),
+            alpha_dither_sel = _lookup_mixed_enum(alphaDither, material.AlphaDitherSel, _get_safe(rdp_settings, 'g_mdsft_alpha_dither')),
+            force_blend = bool(_get_safe(rdp_settings, 'force_bl')),
+            alpha_coverage = bool(_get_safe(rdp_settings, 'alpha_cvg_sel')),
+            x_coverage_alpha = bool(_get_safe(rdp_settings, 'cvg_x_alpha')),
+            z_mode = _lookup_mixed_enum(zMode, material.ZMode, _get_safe(rdp_settings, 'zmode')),
+            coverage_dest = _lookup_mixed_enum(cvgDest, material.CvgDest, _get_safe(rdp_settings, 'cvg_dst')),
+            color_on_coverage = bool(_get_safe(rdp_settings, 'clr_on_cvg')),
+            image_read = bool(_get_safe(rdp_settings, 'im_rd')),
+            z_write = bool(_get_safe(rdp_settings, 'z_upd')),
+            z_compare = bool(_get_safe(rdp_settings, 'z_cmp')),
+            aa = bool(_get_safe(rdp_settings, 'aa_en')),
+            z_source_sel = _lookup_mixed_enum(zSourceSel, material.ZSourceSel, _get_safe(rdp_settings, 'g_mdsft_zsrcsel')),
+            alpha_compare = _lookup_mixed_enum(alphaCompare, material.AlphaCompare, _get_safe(rdp_settings, 'g_mdsft_alpha_compare')),
 
             # TODO
             # yuv_en = False,
         )
     else:
         result = blend_modes.combine_blend_mode(
-            _CYCLE_1_PRESETS[rdp_settings['rendermode_preset_cycle_1']],
-            _CYCLE_2_PRESETS[rdp_settings['rendermode_preset_cycle_2']] if is_2_cycle else None
+            _CYCLE_1_PRESETS[_get_safe(rdp_settings, 'rendermode_preset_cycle_1')],
+            _CYCLE_2_PRESETS[_get_safe(rdp_settings, 'rendermode_preset_cycle_2')] if is_2_cycle else None
         )
-        result.alpha_compare = _lookup_mixed_enum(alphaCompare, material.AlphaCompare, rdp_settings['g_mdsft_alpha_compare'])
-        result.persp_tex_en = _lookup_mix_bool('g_mdsft_textpersp', rdp_settings['g_mdsft_textpersp'])
-        result.sample_type = _lookup_mixed_enum(sampleType, material.SampleType, rdp_settings['g_mdsft_text_filt'])
-        result.rgb_dither_sel = _lookup_mixed_enum(rgbDither, material.RgbDitherSel, rdp_settings['g_mdsft_rgb_dither'])
-        result.alpha_dither_sel = _lookup_mixed_enum(alphaDither, material.AlphaDitherSel, rdp_settings['g_mdsft_alpha_dither'])
-        result.z_source_sel = _lookup_mixed_enum(zSourceSel, material.ZSourceSel, rdp_settings['g_mdsft_zsrcsel'])
-        result.tex_detail = _lookup_mixed_enum(texDetail, material.TextureDetail, rdp_settings['g_mdsft_textdetail'])
-        result.tex_lod_en = _lookup_mix_bool('G_TL_LOD', rdp_settings['g_mdsft_textlod'])
-        result.atomic_prim = _lookup_mix_bool('G_PM_NPRIMITIVE', rdp_settings['g_mdsft_pipeline'])
-        result.cycle_type = _lookup_mixed_enum(cycleType, material.CycleType, rdp_settings['g_mdsft_cycletype'])
-        result.persp_tex_en = _lookup_mix_bool('G_TP_PERSP', rdp_settings['g_mdsft_textpersp'])
-        result.tex_detail = _lookup_mixed_enum(texDetail, material.TextureDetail, rdp_settings['g_mdsft_textdetail'])
-        result.tex_lod_en = _lookup_mix_bool('G_TL_LOD', rdp_settings['g_mdsft_textlod'])
-        result.key_en = _lookup_mix_bool('G_CK_KEY', rdp_settings['g_mdsft_combkey'])
+        result.alpha_compare = _lookup_mixed_enum(alphaCompare, material.AlphaCompare, _get_safe(rdp_settings, 'g_mdsft_alpha_compare'))
+        result.persp_tex_en = _lookup_mix_bool('g_mdsft_textpersp', _get_safe(rdp_settings, 'g_mdsft_textpersp'))
+        result.sample_type = _lookup_mixed_enum(sampleType, material.SampleType, _get_safe(rdp_settings, 'g_mdsft_text_filt'))
+        result.rgb_dither_sel = _lookup_mixed_enum(rgbDither, material.RgbDitherSel, _get_safe(rdp_settings, 'g_mdsft_rgb_dither'))
+        result.alpha_dither_sel = _lookup_mixed_enum(alphaDither, material.AlphaDitherSel, _get_safe(rdp_settings, 'g_mdsft_alpha_dither'))
+        result.z_source_sel = _lookup_mixed_enum(zSourceSel, material.ZSourceSel, _get_safe(rdp_settings, 'g_mdsft_zsrcsel'))
+        result.tex_detail = _lookup_mixed_enum(texDetail, material.TextureDetail, _get_safe(rdp_settings, 'g_mdsft_textdetail'))
+        result.tex_lod_en = _lookup_mix_bool('G_TL_LOD', _get_safe(rdp_settings, 'g_mdsft_textlod'))
+        result.atomic_prim = _lookup_mix_bool('G_PM_NPRIMITIVE', _get_safe(rdp_settings, 'g_mdsft_pipeline'))
+        result.cycle_type = _lookup_mixed_enum(cycleType, material.CycleType, _get_safe(rdp_settings, 'g_mdsft_cycletype'))
+        result.persp_tex_en = _lookup_mix_bool('G_TP_PERSP', _get_safe(rdp_settings, 'g_mdsft_textpersp'))
+        result.tex_detail = _lookup_mixed_enum(texDetail, material.TextureDetail, _get_safe(rdp_settings, 'g_mdsft_textdetail'))
+        result.tex_lod_en = _lookup_mix_bool('G_TL_LOD', _get_safe(rdp_settings, 'g_mdsft_textlod'))
+        result.key_en = _lookup_mix_bool('G_CK_KEY', _get_safe(rdp_settings, 'g_mdsft_combkey'))
         return result
-    
-class PropertyWalker():
-    def __init__(self, obj):
-        self.obj = obj
-
-    def __getitem__(self, key: str):
-        result = None
-
-        if isinstance(key, str) and hasattr(self.obj, key):
-            result = getattr(self.obj, key)
-        elif key in self.obj:
-            result = self[key]
-
-        if result == None:
-            return None
-        
-        type_name = type(result).__name__
-        
-        if isinstance(result, int) or isinstance(result, str) or isinstance(result, float) or isinstance(result, bool) or type_name == 'bpy_prop_array' or type_name == 'Image':
-            return result
-        
-        return PropertyWalker(result)
-    
-    def __contains__(self, item):
-        return item in self.obj or isinstance(item, str) and hasattr(self.obj, item)
         
 
 def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
-    f3d_mat = PropertyWalker(mat)['f3d_mat']
+    f3d_mat = _get_safe(mat, 'f3d_mat')
 
-    rdp_settings = f3d_mat['rdp_settings']
+    rdp_settings = _get_safe(f3d_mat, 'rdp_settings')
 
-    is_2_cycle = _lookup_mix_bool('G_CYC_2CYCLE', rdp_settings['g_mdsft_cycletype'])
+    is_2_cycle = _lookup_mix_bool('G_CYC_2CYCLE', _get_safe(rdp_settings, 'g_mdsft_cycletype'))
 
     base_path = sys.argv[1]
 
@@ -631,40 +615,40 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     
     result: material.Material = material.Material()
     result.combine_mode = material.CombineMode(
-        _determine_combiner_from_f3d(f3d_mat['combiner1']),
-        _determine_combiner_from_f3d(f3d_mat['combiner2']) if is_2_cycle else None,
+        _determine_combiner_from_f3d(_get_safe(f3d_mat, 'combiner1')),
+        _determine_combiner_from_f3d(_get_safe(f3d_mat, 'combiner2')) if is_2_cycle else None,
     )
 
     result.other_modes = determine_material_blend_f3d(rdp_settings)
 
-    if f3d_mat['set_env']:
-        result.env_color = _determine_color_from_f3d(f3d_mat['env_color'])
+    if _get_safe(f3d_mat, 'set_env'):
+        result.env_color = _determine_color_from_f3d(_get_safe(f3d_mat, 'env_color'))
 
-    if f3d_mat['set_prim']:
-        result.prim_color = _determine_color_from_f3d(f3d_mat['prim_color'])
+    if _get_safe(f3d_mat, 'set_prim'):
+        result.prim_color = _determine_color_from_f3d(_get_safe(f3d_mat, 'prim_color'))
 
-    if f3d_mat['set_blend']:
-        result.blend_color = _determine_color_from_f3d(f3d_mat['blend_color'])
+    if _get_safe(f3d_mat, 'set_blend'):
+        result.blend_color = _determine_color_from_f3d(_get_safe(f3d_mat, 'blend_color'))
 
-    uv_anim_0 = f3d_mat['UVanim0'] if 'UVanim0' in f3d_mat else None
-    uv_anim_1 = f3d_mat['UVanim1'] if 'UVanim1' in f3d_mat else None
+    uv_anim_0 = _get_safe(f3d_mat, 'UVanim0') if 'UVanim0' in f3d_mat else None
+    uv_anim_1 = _get_safe(f3d_mat, 'UVanim1') if 'UVanim1' in f3d_mat else None
 
     flipbook_0 = 'flipbook_0' in mat and mat['flipbook_0']
 
-    result.tex0 = _determine_tex_from_f3d(f3d_mat['tex0'], uv_anim_0, base_path, flipbook = flipbook_0) if result.combine_mode.uses('TEX0') else None
-    result.tex1 = _determine_tex_from_f3d(f3d_mat['tex1'], uv_anim_1, base_path) if result.combine_mode.uses('TEX1') else None
+    result.tex0 = _determine_tex_from_f3d(_get_safe(f3d_mat, 'tex0'), uv_anim_0, base_path, flipbook = flipbook_0) if result.combine_mode.uses('TEX0') else None
+    result.tex1 = _determine_tex_from_f3d(_get_safe(f3d_mat, 'tex1'), uv_anim_1, base_path) if result.combine_mode.uses('TEX1') else None
     result.layout_textures()
 
     if result.tex0 and result.tex0.palette_data or result.tex1 and result.tex1.palette_data:
         result.other_modes.en_tlut = True
         result.other_modes.tlut_type = material.TlutType.TLUT_RGBA
 
-    if rdp_settings['g_cull_back']:
+    if _get_safe(rdp_settings, 'g_cull_back'):
         result.culling = True
     else:
         result.culling = False
 
-    if rdp_settings['g_tex_gen']:
+    if _get_safe(rdp_settings, 'g_tex_gen'):
         use_tex = result.tex0 or result.tex1
 
         if not use_tex:
@@ -675,13 +659,13 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
         result.vtx_effect = material.VtxEffect(material.VtxEffectType.VTX_EFFECT_NONE)
 
     result.fog = material.Fog()
-    result.fog.enabled = rdp_settings['g_fog'] and True or False
-    result.fog.use_global = f3d_mat['use_global_fog'] and True or False
-    result.fog.fog_color = _determine_color_from_f3d(f3d_mat['fog_color'])
-    result.fog.min_distance = f3d_mat['fog_position'][0]
-    result.fog.max_distance = f3d_mat['fog_position'][1]
+    result.fog.enabled = _get_safe(rdp_settings, 'g_fog') and True or False
+    result.fog.use_global = _get_safe(f3d_mat, 'use_global_fog') and True or False
+    result.fog.fog_color = _determine_color_from_f3d(_get_safe(f3d_mat, 'fog_color'))
+    result.fog.min_distance = _get_safe(f3d_mat, 'fog_position')[0]
+    result.fog.max_distance = _get_safe(f3d_mat, 'fog_position')[1]
 
-    if f3d_mat['set_lights']:
+    if _get_safe(f3d_mat, 'set_lights'):
         result.light_count = 1
     else:
         result.light_count = 0
@@ -689,7 +673,7 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     if 'priority' in mat:
         result.priority = mat['priority']
     else:
-        result.priority = int(f3d_mat['draw_layer']['sm64'])
+        result.priority = int(_get_safe(_get_safe(f3d_mat, 'draw_layer'), 'sm64'))
 
     return result
 

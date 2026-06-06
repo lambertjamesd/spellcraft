@@ -1,11 +1,11 @@
 {
     "tex0": "../../images/buildings/stoneslabs.png",
     "combineMode": [{
-        "color": ["TEX0", "0", "SHADE", "0"],
-        "alpha": ["0", "0", "0", "1"]
+        "color": ["TEX0", "_0", "SHADE", "_0"],
+        "alpha": ["_0", "_0", "_0", "_1"]
     }, {
-        "color": ["1", "0", "COMBINED", "COMBINED"],
-        "alpha": ["0", "0", "0", "1"]
+        "color": ["_1", "_0", "COMBINED", "COMBINED"],
+        "alpha": ["_0", "_0", "_0", "_1"]
     }],
     "blendMode": "OPAQUE",
     "lighting": false,

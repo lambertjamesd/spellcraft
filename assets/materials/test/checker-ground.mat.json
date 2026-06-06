@@ -2,7 +2,7 @@
     "tex0": "../../images/test/checker.png",
     "combineMode": [{
         "color": ["ENV", "PRIM", "TEX0", "PRIM"],
-        "alpha": ["0", "0", "0", "1"]
+        "alpha": ["_0", "_0", "_0", "_1"]
     }],
     "blendMode": "OPAQUE",
     "envColor": [128, 255, 128, 255],

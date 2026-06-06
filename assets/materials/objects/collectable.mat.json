@@ -1,8 +1,8 @@
 {
     "tex0": "../../images/objects/collectable.png",
     "combineMode": [{
-        "color": ["0", "0", "0", "TEX0"],
-        "alpha": ["0", "0", "0", "TEX0"]
+        "color": ["_0", "_0", "_0", "TEX0"],
+        "alpha": ["_0", "_0", "_0", "TEX0"]
     }],
     "blendMode": "ALPHA_CLIP",
     "zBuffer": true

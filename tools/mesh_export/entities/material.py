@@ -902,155 +902,24 @@ def _parse_combine_mode_cycle(json_data, key_path):
     if not isinstance(color, list) or len(color) != 4:
         raise Exception(f"{key_path}.color must be an array of length 4")
     
-    _check_is_enum(
-        color[0], 
-        f'{key_path}.color[0]', 
-        [
-            "COMBINED",
-            "TEX0",
-            "TEX1",
-            "PRIM",
-            "SHADE",
-            "ENV",
-            "NOISE",
-            "1",
-            "0"
-        ],
-    )
-
-    _check_is_enum(
-        color[1], 
-        f'{key_path}.color[1]', 
-        [
-            "COMBINED",
-            "TEX0",
-            "TEX1",
-            "PRIM",
-            "SHADE",
-            "ENV",
-            "CENTER",
-            "K4",
-            "0"
-        ],
-    )
-
-    _check_is_enum(
-        color[2], 
-        f'{key_path}.color[2]', 
-        [
-            "COMBINED",
-            "TEX0",
-            "TEX1",
-            "PRIM",
-            "SHADE",
-            "ENV",
-            "SCALE",
-            "COMBINED_ALPHA",
-            "TEX0_ALPHA",
-            "TEX1_ALPHA",
-            "PRIM_ALPHA",
-            "SHADE_ALPHA",
-            "ENV_ALPHA",
-            "LOD_FRACTION",
-            "PRIM_LOD_FRAC",
-            "K5",
-            "0"
-        ],
-    )
-
-    _check_is_enum(
-        color[3], 
-        f'{key_path}.color[3]', 
-        [
-            "COMBINED",
-            "TEX0",
-            "TEX1",
-            "PRIM",
-            "SHADE",
-            "ENV",
-            "1",
-            "0"
-        ],
-    )
-    
     alpha = json_data['alpha']
 
     if not alpha:
-        alpha = ["0", "0", "0", "1"]
+        alpha = ["_0", "_0", "_0", "_1"]
 
     if not isinstance(alpha, list) or len(alpha) != 4:
         raise Exception(f"{key_path}.alpha must be an array of length 4")
 
-    _check_is_enum(
-        alpha[0], 
-        f'{key_path}.alpha[0]', 
-        [
-            "COMBINED",
-            "TEX0",
-            "TEX1",
-            "PRIM",
-            "SHADE",
-            "ENV",
-            "1",
-            "0"
-        ],
-    )
-
-    _check_is_enum(
-        alpha[1], 
-        f'{key_path}.alpha[1]', 
-        [
-            "COMBINED",
-            "TEX0",
-            "TEX1",
-            "PRIM",
-            "SHADE",
-            "ENV",
-            "1",
-            "0"
-        ],
-    )
-
-    _check_is_enum(
-        alpha[2], 
-        f'{key_path}.alpha[2]', 
-        [
-            "TEX0",
-            "TEX1",
-            "PRIM",
-            "SHADE",
-            "ENV",
-            "LOD_FRACTION",
-            "PRIM_LOD_FRAC",
-            "0"
-        ],
-    )
-
-    _check_is_enum(
-        alpha[3], 
-        f'{key_path}.alpha[3]', 
-        [
-            "COMBINED",
-            "TEX0",
-            "TEX1",
-            "PRIM",
-            "SHADE",
-            "ENV",
-            "1",
-            "0"
-        ],
-    )
-
     return CombineModeCycle(
-        color[0],
-        color[1],
-        color[2],
-        color[3],
+        getattr(CombineA, color[0]),
+        getattr(CombineB, color[1]),
+        getattr(CombineC, color[2]),
+        getattr(CombineD, color[3]),
 
-        alpha[0],
-        alpha[1],
-        alpha[2],
-        alpha[3],
+        getattr(ACombine, alpha[0]),
+        getattr(ACombine, alpha[1]),
+        getattr(ACombineMul, alpha[2]),
+        getattr(ACombine, alpha[3]),
     )
 
 def _parse_combine_mode(result: Material, json_data):
@@ -1077,31 +946,12 @@ def _parse_blend_mode_cycle(json_data, key_path):
     if not isinstance(json_data, list) or len(json_data) != 4:
         raise Exception(f"{key_path} must be an array of length 4")
 
-    _check_is_enum(
-        json_data[0],
-        f"{key_path}[0]",
-        ["IN", "MEMORY", "BLEND", "FOG"]
+    return BlendModeCycle(
+        getattr(BlendColor, json_data[0]), 
+        getattr(BlendAlpha, json_data[1]), 
+        getattr(BlendColor, json_data[2]), 
+        getattr(BlendMix, json_data[3])
     )
-
-    _check_is_enum(
-        json_data[1],
-        f"{key_path}[1]",
-        ["IN_A", "FOG_A", "SHADE_A", "0", "ZERO"]
-    )
-
-    _check_is_enum(
-        json_data[2],
-        f"{key_path}[2]",
-        ["IN", "MEMORY", "BLEND", "FOG"]
-    )
-
-    _check_is_enum(
-        json_data[3],
-        f"{key_path}[3]",
-        ["INV_MUX_A", "MEMORY_CVG", "ONE", "1", "ZERO", "0"]
-    )
-
-    return BlendModeCycle(json_data[0], json_data[1], json_data[2], json_data[3])
 
 def _parse_blend_mode(result: Material, json_data):
     if not 'blendMode' in json_data:

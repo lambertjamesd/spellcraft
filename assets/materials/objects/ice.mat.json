@@ -1,8 +1,8 @@
 {
     "tex0": "../../images/objects/ice_map.png",
     "combineMode": [{
-        "color": ["PRIM", "0", "TEX0", "0"],
-        "alpha": ["0", "0", "0", "1"]
+        "color": ["PRIM", "_0", "TEX0", "_0"],
+        "alpha": ["_0", "_0", "_0", "_1"]
     }],
     "blendMode": "OPAQUE",
     "primColor": [16, 200, 220, 255],

@@ -11,8 +11,8 @@
         }
     },
     "combineMode": [{
-        "color": ["0", "0", "0", "PRIM"],
-        "alpha": ["TEX0", "0", "PRIM", "0"]
+        "color": ["_0", "_0", "_0", "PRIM"],
+        "alpha": ["TEX0", "_0", "PRIM", "_0"]
     }],
     "blendMode": "ALPHA_CLIP",
     "primColor": [255, 255, 255, 255],

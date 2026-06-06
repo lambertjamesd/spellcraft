@@ -3,11 +3,11 @@
         "filename": "../../images/forest/rocks_top.png"
     },
     "combineMode": [{
-        "color": ["TEX0", "0", "SHADE", "0"],
-        "alpha": ["0", "0", "0", "1"]
+        "color": ["TEX0", "_0", "SHADE", "_0"],
+        "alpha": ["_0", "_0", "_0", "_1"]
     }, {
         "color": ["COMBINED", "SHADE", "SHADE_ALPHA", "SHADE"],
-        "alpha": ["0", "0", "0", "1"]
+        "alpha": ["_0", "_0", "_0", "_1"]
     }],
     "blendMode": "OPAQUE",
     "lighting": false,

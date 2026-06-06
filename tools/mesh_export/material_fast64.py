@@ -26,10 +26,10 @@ if __name__ == "__main__":
     for material in bpy.data.materials:
         f3d_mat = None
 
-        if 'f3d_mat' in material:
-            f3d_mat = material['f3d_mat']
-        elif hasattr(material, 'f3d_mat') and material.is_f3d:
+        if hasattr(material, 'f3d_mat') and material.is_f3d:
             f3d_mat = material.f3d_mat
+        elif 'f3d_mat' in material:
+            f3d_mat = material['f3d_mat']
 
         if not f3d_mat or (not 'rdp_settings' in f3d_mat and not hasattr(f3d_mat, 'rdp_settings')):
             print(f'skipping material {material.name}')
