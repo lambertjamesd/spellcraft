@@ -120,18 +120,91 @@ class Color():
     
     def __str__(self):
         return f"Color({self.r} {self.g} {self.b} {self.a})"
+    
+class CombineA(Enum):
+    COMBINED = 0
+    TEX0 = 1
+    TEX1 = 2
+    PRIM = 3
+    SHADE = 4
+    ENV = 5
+    _1 = 6
+    NOISE = 7
+    _0 = 8
+
+class CombineB(Enum):
+    COMBINED = 0
+    TEX0 = 1
+    TEX1 = 2
+    PRIM = 3
+    SHADE = 4
+    ENV = 5
+    KEYCENTER = 6
+    K4 = 7
+    _0 = 8
+
+class CombineC(Enum):
+    COMBINED = 0
+    TEX0 = 1
+    TEX1 = 2
+    PRIM = 3
+    SHADE = 4
+    ENV = 5
+    KEYSCALE = 6
+    COMBINED_ALPHA = 7
+    TEX0_ALPHA = 8
+    TEX1_ALPHA = 9
+    PRIM_ALPHA = 10
+    SHADE_ALPHA = 11
+    ENV_ALPHA = 12
+    LOD_FRAC = 13
+    PRIM_LOD_FRAC = 14
+    K5 = 15
+    _0 = 16
+
+class CombineD(Enum):
+    COMBINED = 0
+    TEX0 = 1
+    TEX1 = 2
+    PRIM = 3
+    SHADE = 4
+    ENV = 5
+    
+    _1 = 6
+    _0 = 7
+
+class ACombine(Enum):
+    COMBINED = 0
+    TEX0 = 1
+    TEX1 = 2
+    PRIM = 3
+    SHADE = 4
+    ENV = 5
+    
+    _1 = 6
+    _0 = 7
+
+class ACombineMul(Enum):
+    LOD_FRAC = 0
+    TEX0 = 1
+    TEX1 = 2
+    PRIM = 3
+    SHADE = 4
+    ENV = 5
+    PRIM_LOD_FRAC = 6
+    _0 = 7
 
 class CombineModeCycle():
-    def __init__(self, a, b, c, d, aa, ab, ac, ad):
-        self.a = a
-        self.b = b
-        self.c = c
-        self.d = d
+    def __init__(self, a: CombineA, b: CombineB, c: CombineC, d: CombineD, aa: ACombine, ab: ACombine, ac: ACombineMul, ad: ACombine):
+        self.a: CombineA = a
+        self.b: CombineB = b
+        self.c: CombineC = c
+        self.d: CombineD = d
 
-        self.aa = aa
-        self.ab = ab
-        self.ac = ac
-        self.ad = ad
+        self.aa: ACombine = aa
+        self.ab: ACombine = ab
+        self.ac: ACombineMul = ac
+        self.ad: ACombine = ad
 
     def copy(self):
         return CombineModeCycle(
@@ -240,13 +313,31 @@ class TextureDetail(Enum):
     CLAMP = 0
     SHARPEN = 1
     DETAIL = 2
+
+class BlendColor(Enum):
+    IN = 0
+    MEMORY = 1
+    BLEND = 2
+    FOG = 3
+
+class BlendAlpha(Enum):
+    IN_A = 0
+    FOG_A = 1
+    SHADE_A = 2
+    _0 = 3
+
+class BlendMix(Enum):
+    INV_MUX_A = 0
+    MEM_A = 1
+    _1 = 2
+    _0 = 3
     
 class BlendModeCycle():
-    def __init__(self, a1, b1, a2, b2):
-        self.a1 = a1
-        self.b1 = b1
-        self.a2 = a2
-        self.b2 = b2
+    def __init__(self, a1: BlendColor, b1: BlendAlpha, a2: BlendColor, b2: BlendMix):
+        self.a1: BlendColor = a1
+        self.b1: BlendAlpha = b1
+        self.a2: BlendColor = a2
+        self.b2: BlendMix = b2
 
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, BlendModeCycle):
@@ -269,7 +360,7 @@ class BlendModeCycle():
 class OtherModes():
     def __init__(
             self,
-            cyc1: BlendModeCycle = BlendModeCycle('IN', '0', 'IN', '1'), 
+            cyc1: BlendModeCycle = BlendModeCycle(BlendColor.IN, BlendAlpha._0, BlendColor.IN, BlendMix._1), 
             cyc2: BlendModeCycle | None = None,
             atomic_prim: bool = False,
             cycle_type: CycleType = CycleType.CYCLE_1,
@@ -405,10 +496,10 @@ class OtherModes():
         result = self.copy()
 
         result.cyc1 = BlendModeCycle(
-            'IN',
-            'SHADE_A',
-            'FOG',
-            'INV_MUX_A'
+            BlendColor.IN,
+            BlendAlpha.SHADE_A,
+            BlendColor.FOG,
+            BlendMix.INV_MUX_A
         )
 
         return result
@@ -1019,24 +1110,24 @@ def _parse_blend_mode(result: Material, json_data):
     blend_mode = json_data['blendMode']
 
     if blend_mode == 'OPAQUE':
-        result.other_modes = OtherModes(BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.other_modes = OtherModes(BlendModeCycle(BlendColor.IN, BlendAlpha._0, BlendColor.IN, BlendMix._1), None)
         return
 
     if blend_mode == 'TRANSPARENT':
-        result.other_modes = OtherModes(BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
+        result.other_modes = OtherModes(BlendModeCycle(BlendColor.IN, BlendAlpha.IN_A, BlendColor.MEMORY, BlendMix.INV_MUX_A), None)
         result.other_modes.z_write = False
         result.other_modes.z_mode = ZMode.TRANSPARENT
         result.other_modes.image_read = True
         return
     
     if blend_mode == 'ALPHA_CLIP':
-        result.other_modes = OtherModes(BlendModeCycle("IN", "0", "IN", "1"), None)
+        result.other_modes = OtherModes(BlendModeCycle(BlendColor.IN, BlendAlpha._0, BlendColor.IN, BlendMix._1), None)
         result.other_modes.alpha_compare = AlphaCompare.THRESHOLD
         result.blend_color = Color(0, 0, 0, 128)
         return
     
     if blend_mode == 'ADD':
-        result.other_modes = OtherModes(BlendModeCycle("IN", "IN_A", "MEMORY", "1"), None)
+        result.other_modes = OtherModes(BlendModeCycle(BlendColor.IN, BlendAlpha.IN_A, BlendColor.MEMORY, BlendMix._1), None)
         result.other_modes.z_write = False
         result.other_modes.z_mode = ZMode.TRANSPARENT
         result.other_modes.image_read = True

@@ -31,7 +31,7 @@ def build_blend_mode(
 	)
 
 RM_AA_ZB_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	aa = True, 
 	z_compare = True, 
 	z_write = True, 
@@ -43,264 +43,264 @@ RM_AA_ZB_OPA_SURF = build_blend_mode(
 	
 
 RM_RA_ZB_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	aa = True, z_compare = True, z_write = True, coverage_dest = material.CvgDest.CLAMP,
 	z_mode = material.ZMode.OPAQUE, alpha_coverage = True
 )
 
 RM_AA_ZB_XLU_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, z_compare = True, image_read = True, coverage_dest = material.CvgDest.WRAP,  color_on_coverage = True,
 	force_blend = True, z_mode = material.ZMode.TRANSPARENT,
 )
 
 RM_AA_ZB_OPA_DECAL = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	aa = True, z_compare = True, image_read = True, coverage_dest = material.CvgDest.WRAP,  alpha_coverage = True,
 	z_mode = material.ZMode.DECAL,
 )
 
 RM_RA_ZB_OPA_DECAL = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	aa = True, z_compare = True, coverage_dest = material.CvgDest.WRAP,  alpha_coverage = True,
 	z_mode = material.ZMode.DECAL,
 )
 
 RM_AA_ZB_XLU_DECAL = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, z_compare = True, image_read = True, coverage_dest = material.CvgDest.WRAP,  color_on_coverage = True,
 	force_blend = True, z_mode = material.ZMode.DECAL
 )
 
 RM_AA_ZB_OPA_INTER = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	aa = True, z_compare = True, z_write = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	alpha_coverage = True,	z_mode = material.ZMode.INTER,
 )
 
 RM_RA_ZB_OPA_INTER = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	aa = True, z_compare = True, z_write = True, coverage_dest = material.CvgDest.CLAMP,
 	alpha_coverage = True,	z_mode = material.ZMode.INTER,
 )
 
 RM_AA_ZB_XLU_INTER = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, z_compare = True, image_read = True, coverage_dest = material.CvgDest.WRAP,  color_on_coverage = True,
 	force_blend = True, z_mode = material.ZMode.INTER,
 )
 
 RM_AA_ZB_XLU_LINE = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, z_compare = True, image_read = True, coverage_dest = material.CvgDest.CLAMP, x_coverage_alpha = True,
 	alpha_coverage = True, force_blend = True, z_mode = material.ZMode.TRANSPARENT,
 )
 
 RM_AA_ZB_DEC_LINE = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, z_compare = True, image_read = True, coverage_dest = material.CvgDest.SAVE, x_coverage_alpha = True,
 	alpha_coverage = True, force_blend = True, z_mode = material.ZMode.DECAL,
 )
 
 RM_AA_ZB_TEX_EDGE = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.MEM_A),
 	aa = True, z_compare = True, z_write = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	x_coverage_alpha = True, alpha_coverage = True, z_mode = material.ZMode.OPAQUE, 
 )
 
 RM_AA_ZB_TEX_INTER = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.MEM_A),
 	aa = True, z_compare = True, z_write = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	x_coverage_alpha = True, alpha_coverage = True, z_mode = material.ZMode.INTER, 
 )
 
 RM_AA_ZB_SUB_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.MEM_A),
 	aa = True, z_compare = True, z_write = True, image_read = True, coverage_dest = material.CvgDest.FULL,
 	z_mode = material.ZMode.OPAQUE, alpha_coverage = True,
 )
 
 RM_AA_ZB_PCL_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, z_compare = True, z_write = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	z_mode = material.ZMode.OPAQUE, alpha_compare= material.AlphaCompare.DITHER,
 )
 
 RM_AA_ZB_OPA_TERR = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, z_compare = True, z_write = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	z_mode = material.ZMode.OPAQUE, alpha_coverage = True,
 )
 
 RM_AA_ZB_TEX_TERR = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, z_compare = True, z_write = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	x_coverage_alpha = True, alpha_coverage = True, z_mode = material.ZMode.OPAQUE, 
 )
 
 RM_AA_ZB_SUB_TERR = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, z_compare = True, z_write = True, image_read = True, coverage_dest = material.CvgDest.FULL,
 	z_mode = material.ZMode.OPAQUE, alpha_coverage = True,
 )
 
 
 RM_AA_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	z_mode = material.ZMode.OPAQUE, alpha_coverage = True,
 )
 
 RM_RA_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	aa = True, coverage_dest = material.CvgDest.CLAMP,
 	z_mode = material.ZMode.OPAQUE, alpha_coverage = True,
 )
 
 RM_AA_XLU_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.WRAP,  color_on_coverage = True, force_blend = True,
 	z_mode = material.ZMode.OPAQUE,
 )
 
 RM_AA_XLU_LINE = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.CLAMP, x_coverage_alpha = True,
 	alpha_coverage = True, force_blend = True, z_mode = material.ZMode.OPAQUE,
 )
 
 RM_AA_DEC_LINE = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.FULL, x_coverage_alpha = True,
 	alpha_coverage = True, force_blend = True, z_mode = material.ZMode.OPAQUE,
 )
 
 RM_AA_TEX_EDGE = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.MEM_A),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	x_coverage_alpha = True, alpha_coverage = True, z_mode = material.ZMode.OPAQUE, 
 )
 
 RM_AA_SUB_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'MEM_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.MEM_A),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.FULL,
 	z_mode = material.ZMode.OPAQUE, alpha_coverage = True,
 )
 
 RM_AA_PCL_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	z_mode = material.ZMode.OPAQUE, alpha_compare= material.AlphaCompare.DITHER,
 )
 
 RM_AA_OPA_TERR = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	z_mode = material.ZMode.OPAQUE, alpha_coverage = True,
 )
 
 RM_AA_TEX_TERR = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.CLAMP,
 	x_coverage_alpha = True, alpha_coverage = True, z_mode = material.ZMode.OPAQUE,
 ) 
 
 RM_AA_SUB_TERR = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	aa = True, image_read = True, coverage_dest = material.CvgDest.FULL,
 	z_mode = material.ZMode.OPAQUE, alpha_coverage = True,
 )
 
 
 RM_ZB_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	z_compare = True, z_write = True, coverage_dest = material.CvgDest.FULL, alpha_coverage = True,
 	z_mode = material.ZMode.OPAQUE,
 )
 	
 RM_ZB_XLU_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	z_compare = True, image_read = True, coverage_dest = material.CvgDest.FULL, force_blend = True, z_mode = material.ZMode.TRANSPARENT,
 )
 	
 RM_ZB_OPA_DECAL = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	z_compare = True, coverage_dest = material.CvgDest.FULL, alpha_coverage = True, z_mode = material.ZMode.DECAL,
 )
 	
 RM_ZB_XLU_DECAL = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	z_compare = True, image_read = True, coverage_dest = material.CvgDest.FULL, force_blend = True, z_mode = material.ZMode.DECAL,
 )
 	
 RM_ZB_CLD_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	z_compare = True, image_read = True, coverage_dest = material.CvgDest.SAVE, force_blend = True, z_mode = material.ZMode.TRANSPARENT,
 )
 	
 RM_ZB_OVL_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	z_compare = True, image_read = True, coverage_dest = material.CvgDest.SAVE, force_blend = True, z_mode = material.ZMode.DECAL,
 )
 	
 RM_ZB_PCL_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	z_compare = True, z_write = True, coverage_dest = material.CvgDest.FULL, z_mode = material.ZMode.OPAQUE,
 	alpha_compare= material.AlphaCompare.DITHER,
 )
 
 
 RM_OPA_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	coverage_dest = material.CvgDest.CLAMP, force_blend = True, z_mode = material.ZMode.OPAQUE,
 )
 
 RM_XLU_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	image_read = True, coverage_dest = material.CvgDest.FULL, force_blend = True, z_mode = material.ZMode.OPAQUE,
 )
 
 RM_TEX_EDGE = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	coverage_dest = material.CvgDest.CLAMP, x_coverage_alpha = True, alpha_coverage = True, force_blend = True,
 	z_mode = material.ZMode.OPAQUE,  aa = True,
 )
 
 RM_CLD_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A),
 	image_read = True, coverage_dest = material.CvgDest.SAVE, force_blend = True, z_mode = material.ZMode.OPAQUE,
 )
 
 RM_PCL_SURF = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	coverage_dest = material.CvgDest.FULL, force_blend = True, z_mode = material.ZMode.OPAQUE,
 	alpha_compare= material.AlphaCompare.DITHER,
 )
 
 RM_ADD = build_blend_mode(
-	material.BlendModeCycle('IN', 'FOG_A', 'MEMORY', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.FOG_A, material.BlendColor.MEMORY, material.BlendMix._1),
 	image_read = True, coverage_dest = material.CvgDest.SAVE, force_blend = True, z_mode = material.ZMode.OPAQUE,
 )
 
 RM_NOOP = build_blend_mode(
-	material.BlendModeCycle('IN', 'IN_A', 'IN', 'INV_MUX_A')
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.IN, material.BlendMix.INV_MUX_A)
 )
 
 RM_VISCVG = build_blend_mode(
-	material.BlendModeCycle('IN', '0', '1', 'MEM_A'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.BLEND, material.BlendMix.MEM_A),
 	image_read = True, force_blend = True,
 )
 
 RM_OPA_CI = build_blend_mode(
-	material.BlendModeCycle('IN', '0', 'IN', '1'),
+	material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
 	coverage_dest = material.CvgDest.CLAMP, z_mode = material.ZMode.OPAQUE,
 )
 
 # there is a difference bewteen what libultra defines and what seems to work
-# RM_FOG_SHADE_A = build_blend_mode(material.BlendModeCycle('FOG', 'SHADE_A', 'IN', 'INV_MUX_A'))
-RM_FOG_SHADE_A = build_blend_mode(material.BlendModeCycle('IN', 'SHADE_A', 'FOG', 'INV_MUX_A'))
-RM_FOG_PRIM_A	= build_blend_mode(material.BlendModeCycle('FOG', 'FOG_A', 'IN', 'INV_MUX_A'))
-RM_PASS = build_blend_mode(material.BlendModeCycle('IN', '0', 'IN', '1'))
+# RM_FOG_SHADE_A = build_blend_mode(material.BlendModeCycle(material.BlendColor.FOG, material.BlendAlpha.SHADE_A, material.BlendColor.IN, material.BlendMix.INV_MUX_A))
+RM_FOG_SHADE_A = build_blend_mode(material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.SHADE_A, material.BlendColor.FOG, material.BlendMix.INV_MUX_A))
+RM_FOG_PRIM_A	= build_blend_mode(material.BlendModeCycle(material.BlendColor.FOG, material.BlendAlpha.FOG_A, material.BlendColor.IN, material.BlendMix.INV_MUX_A))
+RM_PASS = build_blend_mode(material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1))
 
 def combine_blend_mode(a: material.OtherModes, b: material.OtherModes | None):
 	if not b:

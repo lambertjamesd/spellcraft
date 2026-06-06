@@ -9,13 +9,6 @@ from . import serialize
 from . import blend_modes
 from . import filename
 
-def _reverse_lookup(mapping: dict, value):
-    for entry in mapping.items():
-        if entry[1] == value:
-            return entry[0]
-
-    raise Exception(f'Could not find value {value} in reverse lookup')
-
 def search_node_input(from_node: bpy.types.Node, input_name: str):
     for input in from_node.inputs:
         if input.name == input_name:
@@ -169,40 +162,153 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
         result.culling = False
 
     if mat.blend_method == 'CLIP':
-        result.other_modes = material.OtherModes(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
+        result.other_modes = material.OtherModes(material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1), None)
         result.other_modes.alpha_compare = material.AlphaCompare.THRESHOLD
         result.blend_color = material.Color(0, 0, 0, 128)
     elif mat.blend_method == 'BLEND':
-        result.other_modes = material.OtherModes(material.BlendModeCycle('IN', 'IN_A', 'MEMORY', 'INV_MUX_A'), None)
+        result.other_modes = material.OtherModes(material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha.IN_A, material.BlendColor.MEMORY, material.BlendMix.INV_MUX_A), None)
         result.other_modes.z_write = False
     elif mat.blend_method == 'HASHED':
-        result.other_modes = material.OtherModes(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
+        result.other_modes = material.OtherModes(material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1), None)
         result.other_modes.alpha_compare = material.AlphaCompare.DITHER
     else:
-        result.other_modes = material.OtherModes(material.BlendModeCycle('IN', '0', 'IN', '1'), None)
+        result.other_modes = material.OtherModes(material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1), None)
 
     if 'decal' in mat and mat['decal']:
         result.other_modes.z_mode = material.ZMode.DECAL
         result.other_modes.z_write = False
 
-def _determine_combiner_from_f3d(combiner) -> material.CombineModeCycle:
-     return material.CombineModeCycle(
-        _reverse_lookup(serialize.COMB_A, combiner['A']),
-        _reverse_lookup(serialize.COMB_B, combiner['B']),
-        _reverse_lookup(serialize.COMB_C, combiner['C']),
-        _reverse_lookup(serialize.COMB_D, combiner['D']),
-        _reverse_lookup(serialize.ACOMB_A, combiner['A_alpha']),
-        _reverse_lookup(serialize.ACOMB_A, combiner['B_alpha']),
-        _reverse_lookup(serialize.ACOMB_MUL, combiner['C_alpha']),
-        _reverse_lookup(serialize.ACOMB_A, combiner['D_alpha']),
-    )
+combA = {
+    "COMBINED": material.CombineA.COMBINED,
+    "TEXEL0": material.CombineA.TEX0,
+    "TEXEL1": material.CombineA.TEX1,
+    "PRIMITIVE": material.CombineA.PRIM,
+    "SHADE": material.CombineA.SHADE,
+    "ENVIRONMENT": material.CombineA.ENV,
+    "1": material.CombineA._1,
+    "NOISE": material.CombineA.NOISE,
+    "0": material.CombineA._0,
+}
 
-def _determine_blend_from_f3d(rdp_settings, index) -> material.BlendModeCycle:
-    return material.BlendModeCycle(
-        _reverse_lookup(serialize.BLEND_A,rdp_settings[f'blend_p{index}']),
-        _reverse_lookup(serialize.BLEND_B1,rdp_settings[f'blend_a{index}']),
-        _reverse_lookup(serialize.BLEND_A,rdp_settings[f'blend_m{index}']),
-        _reverse_lookup(serialize.BLEND_B1,rdp_settings[f'blend_b{index}']),
+combB = {
+    "COMBINED": material.CombineB.COMBINED,
+    "TEXEL0": material.CombineB.TEX0,
+    "TEXEL1": material.CombineB.TEX1,
+    "PRIMITIVE": material.CombineB.PRIM,
+    "SHADE": material.CombineB.SHADE,
+    "ENVIRONMENT": material.CombineB.ENV,
+    "CENTER": material.CombineB.KEYCENTER,
+    "K4": material.CombineB.K4,
+    "0": material.CombineB._0,
+}
+
+combC = {
+    "COMBINED": material.CombineC.COMBINED,
+    "TEXEL0": material.CombineC.TEX0,
+    "TEXEL1": material.CombineC.TEX1,
+    "PRIMITIVE": material.CombineC.PRIM,
+    "SHADE": material.CombineC.SHADE,
+    "ENVIRONMENT": material.CombineC.ENV,
+    "SCALE": material.CombineC.KEYSCALE,
+    "COMBINED_ALPHA": material.CombineC.COMBINED_ALPHA,
+    "TEXEL0_ALPHA": material.CombineC.TEX0_ALPHA,
+    "TEXEL1_ALPHA": material.CombineC.TEX1_ALPHA,
+    "PRIMITIVE_ALPHA": material.CombineC.PRIM_ALPHA,
+    "SHADE_ALPHA": material.CombineC.SHADE_ALPHA,
+    "ENV_ALPHA": material.CombineC.ENV_ALPHA,
+    "LOD_FRACTION": material.CombineC.LOD_FRAC,
+    "PRIM_LOD_FRAC": material.CombineC.PRIM_LOD_FRAC,
+    "K5": material.CombineC.K5,
+    "0": material.CombineC._0,
+}
+
+combD = {
+    "COMBINED": material.CombineD.COMBINED,
+    "TEXEL0": material.CombineD.TEX0,
+    "TEXEL1": material.CombineD.TEX1,
+    "PRIMITIVE": material.CombineD.PRIM,
+    "SHADE": material.CombineD.SHADE,
+    "ENVIRONMENT": material.CombineD.ENV,
+    "1": material.CombineD._1,
+    "0": material.CombineD._0,
+}
+
+aComb = {
+    "COMBINED": material.ACombine.COMBINED,
+    "TEXEL0": material.ACombine.TEX0,
+    "TEXEL1": material.ACombine.TEX1,
+    "PRIMITIVE": material.ACombine.PRIM,
+    "SHADE": material.ACombine.SHADE,
+    "ENVIRONMENT": material.ACombine.ENV,
+    "1": material.ACombine._1,
+    "0": material.ACombine._0,
+}
+
+aCombMul = {
+    "LOD_FRACTION": material.ACombineMul.LOD_FRAC,
+    "TEXEL0": material.ACombineMul.TEX0,
+    "TEXEL1": material.ACombineMul.TEX1,
+    "PRIMITIVE": material.ACombineMul.PRIM,
+    "SHADE": material.ACombineMul.SHADE,
+    "ENVIRONMENT": material.ACombineMul.ENV,
+    "PRIM_LOD_FRAC": material.ACombineMul.PRIM_LOD_FRAC,
+    "0": material.ACombineMul._0,
+}
+
+enumBlendColor = {
+    'G_BL_CLR_IN': material.BlendColor.IN,
+    'G_BL_CLR_MEM': material.BlendColor.MEMORY,
+    'G_BL_CLR_BL': material.BlendColor.BLEND,
+    'G_BL_CLR_FOG': material.BlendColor.FOG,
+}
+
+enumBlendAlpha = {
+    'G_BL_A_IN': material.BlendAlpha.IN_A,
+    'G_BL_A_FOG': material.BlendAlpha.FOG_A,
+    'G_BL_A_SHADE': material.BlendAlpha.SHADE_A,
+    'G_BL_0': material.BlendAlpha._0,
+}
+
+enumBlendMix = {
+    'G_BL_1MA': material.BlendMix.INV_MUX_A,
+    'G_BL_A_MEM': material.BlendMix.MEM_A,
+    'G_BL_1': material.BlendMix._1,
+    'G_BL_0': material.BlendMix._0,
+}
+
+cycleType = {
+    'G_CYC_1CYCLE': material.CycleType.CYCLE_1,
+    'G_CYC_2CYCLE': material.CycleType.CYCLE_2,
+    'G_CYC_COPY': material.CycleType.CYCLE_COPY,
+    'G_CYC_FILL': material.CycleType.CYCLE_FILL,
+}
+
+def _lookup_mixed_enum(strMapping: dict, enum, value):
+    if isinstance(value, str):
+        return strMapping[value]
+    if isinstance(value, int):
+        return enum(value)
+    
+    raise Exception(f"unknown type {value}")
+
+def _lookup_mix_bool(strTrue: str, value) -> bool:
+    if isinstance(value, str):
+        return value == strTrue
+    if isinstance(value, int):
+        return value == 1
+    
+    raise Exception(f"unknown type {value}")
+
+def _determine_combiner_from_f3d(combiner) -> material.CombineModeCycle:
+    return material.CombineModeCycle(
+        _lookup_mixed_enum(combA, material.CombineA, combiner['A']),
+        _lookup_mixed_enum(combB, material.CombineB, combiner['B']),
+        _lookup_mixed_enum(combC, material.CombineC, combiner['C']),
+        _lookup_mixed_enum(combD, material.CombineD, combiner['D']),
+        _lookup_mixed_enum(aComb, material.ACombine, combiner['A_alpha']),
+        _lookup_mixed_enum(aComb, material.ACombine, combiner['B_alpha']),
+        _lookup_mixed_enum(aCombMul, material.ACombineMul, combiner['C_alpha']),
+        _lookup_mixed_enum(aComb, material.ACombine, combiner['D_alpha']),
     )
 
 def _determine_color_from_f3d(color) -> material.Color:
@@ -288,99 +394,178 @@ def _determine_tex_from_f3d(tex, uv_scroll, base_path: str, flipbook: bool = Fal
 
     return result
 
-_CYCLE_1_PRESETS = [
-    blend_modes.RM_ZB_OPA_SURF,
-    blend_modes.RM_AA_ZB_OPA_SURF,
-    blend_modes.RM_AA_ZB_OPA_DECAL,
-    blend_modes.RM_AA_ZB_OPA_INTER,
-    blend_modes.RM_AA_ZB_TEX_EDGE,
-    blend_modes.RM_AA_ZB_XLU_SURF,
-    blend_modes.RM_AA_ZB_XLU_DECAL,
-    blend_modes.RM_AA_ZB_XLU_INTER,
-    blend_modes.RM_FOG_SHADE_A,
-    blend_modes.RM_FOG_PRIM_A,
-    blend_modes.RM_PASS,
-    blend_modes.RM_ADD,
-    blend_modes.RM_NOOP,
-    blend_modes.RM_ZB_OPA_SURF,
-    blend_modes.RM_ZB_OPA_DECAL,
-    blend_modes.RM_ZB_XLU_SURF,
-    blend_modes.RM_ZB_XLU_DECAL,
-    blend_modes.RM_OPA_SURF,
-    blend_modes.RM_ZB_CLD_SURF,
-    blend_modes.RM_AA_ZB_TEX_TERR,
-]
+_CYCLE_1_PRESETS = {
+    0: blend_modes.RM_ZB_OPA_SURF,
+    'G_RM_ZB_OPA_SURF': blend_modes.RM_ZB_OPA_SURF,
+    1: blend_modes.RM_AA_ZB_OPA_SURF,
+    'G_RM_AA_ZB_OPA_SURF': blend_modes.RM_AA_ZB_OPA_SURF,
+    2: blend_modes.RM_AA_ZB_OPA_DECAL,
+    'G_RM_AA_ZB_OPA_DECAL': blend_modes.RM_AA_ZB_OPA_DECAL,
+    3: blend_modes.RM_AA_ZB_OPA_INTER,
+    'G_RM_AA_ZB_OPA_INTER': blend_modes.RM_AA_ZB_OPA_INTER,
+    4: blend_modes.RM_AA_ZB_TEX_EDGE,
+    'G_RM_AA_ZB_TEX_EDGE': blend_modes.RM_AA_ZB_TEX_EDGE,
+    5: blend_modes.RM_AA_ZB_XLU_SURF,
+    'G_RM_AA_ZB_XLU_SURF': blend_modes.RM_AA_ZB_XLU_SURF,
+    6: blend_modes.RM_AA_ZB_XLU_DECAL,
+    'G_RM_AA_ZB_XLU_DECAL': blend_modes.RM_AA_ZB_XLU_DECAL,
+    7: blend_modes.RM_AA_ZB_XLU_INTER,
+    'G_RM_AA_ZB_XLU_INTER': blend_modes.RM_AA_ZB_XLU_INTER,
+    8: blend_modes.RM_FOG_SHADE_A,
+    'G_RM_FOG_SHADE_A': blend_modes.RM_FOG_SHADE_A,
+    9: blend_modes.RM_FOG_PRIM_A,
+    'G_RM_FOG_PRIM_A': blend_modes.RM_FOG_PRIM_A,
+    10: blend_modes.RM_PASS,
+    'G_RM_PASS': blend_modes.RM_PASS,
+    11: blend_modes.RM_ADD,
+    'G_RM_ADD': blend_modes.RM_ADD,
+    12: blend_modes.RM_NOOP,
+    'G_RM_NOOP': blend_modes.RM_NOOP,
+    13: blend_modes.RM_ZB_OPA_SURF,
+    'G_RM_ZB_OPA_SURF': blend_modes.RM_ZB_OPA_SURF,
+    14: blend_modes.RM_ZB_OPA_DECAL,
+    'G_RM_ZB_OPA_DECAL': blend_modes.RM_ZB_OPA_DECAL,
+    15: blend_modes.RM_ZB_XLU_SURF,
+    'G_RM_ZB_XLU_SURF': blend_modes.RM_ZB_XLU_SURF,
+    16: blend_modes.RM_ZB_XLU_DECAL,
+    'G_RM_ZB_XLU_DECAL': blend_modes.RM_ZB_XLU_DECAL,
+    17: blend_modes.RM_OPA_SURF,
+    'G_RM_OPA_SURF': blend_modes.RM_OPA_SURF,
+    18: blend_modes.RM_ZB_CLD_SURF,
+    'G_RM_ZB_CLD_SURF': blend_modes.RM_ZB_CLD_SURF,
+    19: blend_modes.RM_AA_ZB_TEX_TERR,
+    'G_RM_AA_ZB_TEX_TERR': blend_modes.RM_AA_ZB_TEX_TERR,
+}
 
-_CYCLE_2_PRESETS = [
-    blend_modes.RM_ZB_OPA_SURF,
-    blend_modes.RM_AA_ZB_OPA_SURF,
-    blend_modes.RM_AA_ZB_OPA_DECAL,
-    blend_modes.RM_AA_ZB_OPA_INTER,
-    blend_modes.RM_AA_ZB_TEX_EDGE,
-    blend_modes.RM_AA_ZB_XLU_SURF,
-    blend_modes.RM_AA_ZB_XLU_DECAL,
-    blend_modes.RM_AA_ZB_XLU_INTER,
-    blend_modes.RM_ADD,
-    blend_modes.RM_NOOP,
-    blend_modes.RM_ZB_OPA_SURF,
-    blend_modes.RM_ZB_OPA_DECAL,
-    blend_modes.RM_ZB_XLU_SURF,
-    blend_modes.RM_ZB_XLU_DECAL,
-    blend_modes.RM_ZB_CLD_SURF,
-    blend_modes.RM_ZB_OVL_SURF,
-    blend_modes.RM_AA_ZB_TEX_TERR,
-    blend_modes.RM_OPA_SURF,
-]
+_CYCLE_2_PRESETS = {
+    0: blend_modes.RM_ZB_OPA_SURF,
+    'G_RM_ZB_OPA_SURF': blend_modes.RM_ZB_OPA_SURF,
+    1: blend_modes.RM_AA_ZB_OPA_SURF,
+    'G_RM_AA_ZB_OPA_SURF': blend_modes.RM_AA_ZB_OPA_SURF,
+    2: blend_modes.RM_AA_ZB_OPA_DECAL,
+    'G_RM_AA_ZB_OPA_DECAL': blend_modes.RM_AA_ZB_OPA_DECAL,
+    3: blend_modes.RM_AA_ZB_OPA_INTER,
+    'G_RM_AA_ZB_OPA_INTER': blend_modes.RM_AA_ZB_OPA_INTER,
+    4: blend_modes.RM_AA_ZB_TEX_EDGE,
+    'G_RM_AA_ZB_TEX_EDGE': blend_modes.RM_AA_ZB_TEX_EDGE,
+    5: blend_modes.RM_AA_ZB_XLU_SURF,
+    'G_RM_AA_ZB_XLU_SURF': blend_modes.RM_AA_ZB_XLU_SURF,
+    6: blend_modes.RM_AA_ZB_XLU_DECAL,
+    'G_RM_AA_ZB_XLU_DECAL': blend_modes.RM_AA_ZB_XLU_DECAL,
+    7: blend_modes.RM_AA_ZB_XLU_INTER,
+    'G_RM_AA_ZB_XLU_INTER': blend_modes.RM_AA_ZB_XLU_INTER,
+    8: blend_modes.RM_ADD,
+    'G_RM_ADD': blend_modes.RM_ADD,
+    9: blend_modes.RM_NOOP,
+    'G_RM_NOOP': blend_modes.RM_NOOP,
+    10: blend_modes.RM_ZB_OPA_SURF,
+    'G_RM_ZB_OPA_SURF': blend_modes.RM_ZB_OPA_SURF,
+    11: blend_modes.RM_ZB_OPA_DECAL,
+    'G_RM_ZB_OPA_DECAL': blend_modes.RM_ZB_OPA_DECAL,
+    12: blend_modes.RM_ZB_XLU_SURF,
+    'G_RM_ZB_XLU_SURF': blend_modes.RM_ZB_XLU_SURF,
+    13: blend_modes.RM_ZB_XLU_DECAL,
+    'G_RM_ZB_XLU_DECAL': blend_modes.RM_ZB_XLU_DECAL,
+    14: blend_modes.RM_ZB_CLD_SURF,
+    'G_RM_ZB_CLD_SURF': blend_modes.RM_ZB_CLD_SURF,
+    15: blend_modes.RM_ZB_OVL_SURF,
+    'G_RM_ZB_OVL_SURF': blend_modes.RM_ZB_OVL_SURF,
+    16: blend_modes.RM_AA_ZB_TEX_TERR,
+    'G_RM_AA_ZB_TEX_TERR': blend_modes.RM_AA_ZB_TEX_TERR,
+    17: blend_modes.RM_OPA_SURF,
+    'G_RM_OPA_SURF': blend_modes.RM_OPA_SURF,
+}
 
-enumBlendColor = [
-    'IN',
-    'MEMORY',
-    'BLEND',
-    'FOG',
-]
+texDetail = {
+    'G_TD_CLAMP': material.TextureDetail.CLAMP,
+    'G_TD_SHARPEN': material.TextureDetail.SHARPEN,
+    'G_TD_DETAIL': material.TextureDetail.DETAIL,
+}
 
-enumBlendAlpha = [
-    'IN_A',
-    'FOG_A',
-    'SHADE_A',
-    '0',
-]
+zMode = {
+    'ZMODE_OPA': material.ZMode.OPAQUE,
+    'ZMODE_INTER': material.ZMode.INTER,
+    'ZMODE_XLU': material.ZMode.TRANSPARENT,
+    'ZMODE_DEC': material.ZMode.DECAL,
+}
 
-enumBlendMix = [
-    'INV_MUX_A',
-    'MEM_A',
-    '1',
-    '0'
-]
+cvgDest = {
+    'CVG_DST_CLAMP': material.CvgDest.CLAMP,
+    'CVG_DST_WRAP': material.CvgDest.WRAP,
+    'CVG_DST_FULL': material.CvgDest.FULL,
+    'CVG_DST_SAVE': material.CvgDest.SAVE,
+}
+
+sampleType = {
+    'G_TF_POINT': material.SampleType.POINT,
+    'G_TF_AVERAGE': material.SampleType.MEDIAN,
+    'G_TF_BILERP': material.SampleType.BILINEAR,
+}
+
+rgbDither = {
+    'G_CD_MAGICSQ': material.RgbDitherSel.MAGIC_SQUARE,
+    'G_CD_BAYER': material.RgbDitherSel.STANDARD,
+    'G_CD_NOISE': material.RgbDitherSel.NOISE,
+    'G_CD_DISABLE': material.RgbDitherSel.NONE,
+    'G_CD_ENABLE': material.RgbDitherSel.MAGIC_SQUARE,
+}
+
+alphaDither = {
+    'G_AD_PATTERN': material.AlphaDitherSel.PATTERN,
+    'G_AD_NOTPATTERN': material.AlphaDitherSel.INV_PATTERN,
+    'G_AD_NOISE': material.AlphaDitherSel.NOISE,
+    'G_AD_DISABLE': material.AlphaDitherSel.NONE,
+}
+
+zSourceSel = {
+    'G_ZS_PIXEL': material.ZSourceSel.PIXEL,
+    'G_ZS_PRIM': material.ZSourceSel.PRIM,
+}
+
+alphaCompare = {
+    'G_AC_NONE': material.AlphaCompare.NONE,
+    'G_AC_THRESHOLD': material.AlphaCompare.THRESHOLD,
+    'G_AC_DITHER': material.AlphaCompare.DITHER,
+}
 
 def determine_material_blend_f3d(rdp_settings) -> material.OtherModes:
-    is_2_cycle = rdp_settings['g_mdsft_cycletype'] == 1
+    is_2_cycle = _lookup_mix_bool('G_CYC_2CYCLE', rdp_settings['g_mdsft_cycletype'])
 
     if rdp_settings['rendermode_advanced_enabled']:
         return material.OtherModes(
-            material.BlendModeCycle(enumBlendColor[rdp_settings['blend_p1']], enumBlendAlpha[rdp_settings['blend_a1']], enumBlendColor[rdp_settings['blend_m1']], enumBlendMix[rdp_settings['blend_b1']]),
-            material.BlendModeCycle(enumBlendColor[rdp_settings['blend_p2']], enumBlendAlpha[rdp_settings['blend_a2']], enumBlendColor[rdp_settings['blend_m2']], enumBlendMix[rdp_settings['blend_b2']]) if is_2_cycle else None,
-            atomic_prim = rdp_settings['g_mdsft_pipeline'] == 1,
-            cycle_type = material.CycleType(rdp_settings['g_mdsft_cycletype']),
-            persp_tex_en = rdp_settings['g_mdsft_textpersp'] == 1,
-            tex_detail = material.TextureDetail(rdp_settings['g_mdsft_textdetail']),
-            tex_lod_en = rdp_settings['g_mdsft_textlod'] == 1,
-            sample_type = material.SampleType(rdp_settings['g_mdsft_text_filt']),
-            key_en = rdp_settings['g_mdsft_combkey'] == 1,
-            rgb_dither_sel = material.RgbDitherSel(rdp_settings['g_mdsft_rgb_dither']),
-            alpha_dither_sel = material.AlphaDitherSel(rdp_settings['g_mdsft_alpha_dither']),
-            force_blend = rdp_settings['force_bl'] == 1,
-            alpha_coverage = rdp_settings['alpha_cvg_sel'] == 1,
-            x_coverage_alpha = rdp_settings['cvg_x_alpha'] == 1,
-            z_mode = material.ZMode(rdp_settings['zmode']),
-            coverage_dest = material.CvgDest(rdp_settings['cvg_dst']),
-            color_on_coverage = rdp_settings['clr_on_cvg'] == 1,
-            image_read = rdp_settings['im_rd'] == 1,
-            z_write = rdp_settings['z_upd'] == 1,
-            z_compare = rdp_settings['z_cmp'] == 1,
-            aa = rdp_settings['aa_en'] == 1,
-            z_source_sel = material.ZSourceSel(rdp_settings['g_mdsft_zsrcsel']),
-            alpha_compare = material.AlphaCompare(rdp_settings['g_mdsft_alpha_compare']),
+            material.BlendModeCycle(
+                _lookup_mixed_enum(enumBlendColor, material.BlendColor, rdp_settings['blend_p1']), 
+                _lookup_mixed_enum(enumBlendAlpha, material.BlendAlpha, rdp_settings['blend_a1']), 
+                _lookup_mixed_enum(enumBlendColor, material.BlendColor, rdp_settings['blend_m1']), 
+                _lookup_mixed_enum(enumBlendMix, material.BlendMix, rdp_settings['blend_b1']),
+            ),
+            material.BlendModeCycle(
+                _lookup_mixed_enum(enumBlendColor, material.BlendColor, rdp_settings['blend_p2']), 
+                _lookup_mixed_enum(enumBlendAlpha, material.BlendAlpha, rdp_settings['blend_a2']), 
+                _lookup_mixed_enum(enumBlendColor, material.BlendColor, rdp_settings['blend_m2']), 
+                _lookup_mixed_enum(enumBlendMix, material.BlendMix, rdp_settings['blend_b2'])
+            ) if is_2_cycle else None,
+            atomic_prim = _lookup_mix_bool('G_PM_NPRIMITIVE', rdp_settings['g_mdsft_pipeline']),
+            cycle_type = _lookup_mixed_enum(cycleType, material.CycleType, rdp_settings['g_mdsft_cycletype']),
+            persp_tex_en = _lookup_mix_bool('G_TP_PERSP', rdp_settings['g_mdsft_textpersp']),
+            tex_detail = _lookup_mixed_enum(texDetail, material.TextureDetail, rdp_settings['g_mdsft_textdetail']),
+            tex_lod_en = _lookup_mix_bool('G_TL_LOD', rdp_settings['g_mdsft_textlod']),
+            sample_type = _lookup_mixed_enum(sampleType, material.SampleType, rdp_settings['g_mdsft_text_filt']),
+            key_en = _lookup_mix_bool('G_CK_KEY', rdp_settings['g_mdsft_combkey']),
+            rgb_dither_sel = _lookup_mixed_enum(rgbDither, material.RgbDitherSel, rdp_settings['g_mdsft_rgb_dither']),
+            alpha_dither_sel = _lookup_mixed_enum(alphaDither, material.AlphaDitherSel, rdp_settings['g_mdsft_alpha_dither']),
+            force_blend = bool(rdp_settings['force_bl']),
+            alpha_coverage = bool(rdp_settings['alpha_cvg_sel']),
+            x_coverage_alpha = bool(rdp_settings['cvg_x_alpha']),
+            z_mode = _lookup_mixed_enum(zMode, material.ZMode, rdp_settings['zmode']),
+            coverage_dest = _lookup_mixed_enum(cvgDest, material.CvgDest, rdp_settings['cvg_dst']),
+            color_on_coverage = bool(rdp_settings['clr_on_cvg']),
+            image_read = bool(rdp_settings['im_rd']),
+            z_write = bool(rdp_settings['z_upd']),
+            z_compare = bool(rdp_settings['z_cmp']),
+            aa = bool(rdp_settings['aa_en']),
+            z_source_sel = _lookup_mixed_enum(zSourceSel, material.ZSourceSel, rdp_settings['g_mdsft_zsrcsel']),
+            alpha_compare = _lookup_mixed_enum(alphaCompare, material.AlphaCompare, rdp_settings['g_mdsft_alpha_compare']),
 
             # TODO
             # yuv_en = False,
@@ -390,20 +575,54 @@ def determine_material_blend_f3d(rdp_settings) -> material.OtherModes:
             _CYCLE_1_PRESETS[rdp_settings['rendermode_preset_cycle_1']],
             _CYCLE_2_PRESETS[rdp_settings['rendermode_preset_cycle_2']] if is_2_cycle else None
         )
-        result.alpha_compare = material.AlphaCompare(rdp_settings['g_mdsft_alpha_compare'])
-        result.persp_tex_en = rdp_settings['g_mdsft_textpersp'] == 1
-        result.sample_type = material.SampleType(rdp_settings['g_mdsft_text_filt'])
-        result.rgb_dither_sel = material.RgbDitherSel(rdp_settings['g_mdsft_rgb_dither'])
-        result.alpha_dither_sel = material.AlphaDitherSel(rdp_settings['g_mdsft_alpha_dither'])
-        result.z_source_sel = material.ZSourceSel(rdp_settings['g_mdsft_zsrcsel'])
-        result.alpha_compare = material.AlphaCompare(rdp_settings['g_mdsft_alpha_compare'])
+        result.alpha_compare = _lookup_mixed_enum(alphaCompare, material.AlphaCompare, rdp_settings['g_mdsft_alpha_compare'])
+        result.persp_tex_en = _lookup_mix_bool('g_mdsft_textpersp', rdp_settings['g_mdsft_textpersp'])
+        result.sample_type = _lookup_mixed_enum(sampleType, material.SampleType, rdp_settings['g_mdsft_text_filt'])
+        result.rgb_dither_sel = _lookup_mixed_enum(rgbDither, material.RgbDitherSel, rdp_settings['g_mdsft_rgb_dither'])
+        result.alpha_dither_sel = _lookup_mixed_enum(alphaDither, material.AlphaDitherSel, rdp_settings['g_mdsft_alpha_dither'])
+        result.z_source_sel = _lookup_mixed_enum(zSourceSel, material.ZSourceSel, rdp_settings['g_mdsft_zsrcsel'])
+        result.tex_detail = _lookup_mixed_enum(texDetail, material.TextureDetail, rdp_settings['g_mdsft_textdetail'])
+        result.tex_lod_en = _lookup_mix_bool('G_TL_LOD', rdp_settings['g_mdsft_textlod'])
+        result.atomic_prim = _lookup_mix_bool('G_PM_NPRIMITIVE', rdp_settings['g_mdsft_pipeline'])
+        result.cycle_type = _lookup_mixed_enum(cycleType, material.CycleType, rdp_settings['g_mdsft_cycletype'])
+        result.persp_tex_en = _lookup_mix_bool('G_TP_PERSP', rdp_settings['g_mdsft_textpersp'])
+        result.tex_detail = _lookup_mixed_enum(texDetail, material.TextureDetail, rdp_settings['g_mdsft_textdetail'])
+        result.tex_lod_en = _lookup_mix_bool('G_TL_LOD', rdp_settings['g_mdsft_textlod'])
+        result.key_en = _lookup_mix_bool('G_CK_KEY', rdp_settings['g_mdsft_combkey'])
         return result
+    
+class PropertyWalker():
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __getitem__(self, key: str):
+        result = None
+
+        if isinstance(key, str) and hasattr(self.obj, key):
+            result = getattr(self.obj, key)
+        elif key in self.obj:
+            result = self[key]
+
+        if result == None:
+            return None
+        
+        type_name = type(result).__name__
+        
+        if isinstance(result, int) or isinstance(result, str) or isinstance(result, float) or isinstance(result, bool) or type_name == 'bpy_prop_array':
+            return result
+        
+        return PropertyWalker(result)
+    
+    def __contains__(self, item):
+        return item in self.obj or isinstance(item, str) and hasattr(self.obj, item)
+        
 
 def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
-    f3d_mat = mat['f3d_mat']
+    f3d_mat = PropertyWalker(mat)['f3d_mat']
+
     rdp_settings = f3d_mat['rdp_settings']
 
-    is_2_cycle = rdp_settings['g_mdsft_cycletype'] == 1
+    is_2_cycle = _lookup_mix_bool('G_CYC_2CYCLE', rdp_settings['g_mdsft_cycletype'])
 
     base_path = sys.argv[1]
 
@@ -415,33 +634,6 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
         _determine_combiner_from_f3d(f3d_mat['combiner1']),
         _determine_combiner_from_f3d(f3d_mat['combiner2']) if is_2_cycle else None,
     )
-
-    draw_layer = f3d_mat['draw_layer']['sm64']
-
-    if draw_layer == 0 or draw_layer == 1:
-        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "0", "IN", "1"), None)
-        result.other_modes.z_mode = material.ZMode.OPAQUE
-    elif draw_layer == 2:
-        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "0", "IN", "1"), None)
-        result.other_modes.z_mode =  material.ZMode.DECAL
-    elif draw_layer == 3:
-        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "0", "IN", "1"), None)
-        result.other_modes.z_mode = material.ZMode.INTER
-    elif draw_layer == 4:
-        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
-        result.other_modes.z_mode = material.ZMode.TRANSPARENT
-        result.other_modes.z_write = False
-    elif draw_layer == 5 or draw_layer == 6 or draw_layer == 7:
-        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "IN_A", "MEMORY", "INV_MUX_A"), None)
-        result.other_modes.z_mode = material.ZMode.TRANSPARENT
-        result.other_modes.z_write = False
-    else:
-        result.other_modes = material.OtherModes(material.BlendModeCycle("IN", "0", "IN", "1"), None)
-
-    if rdp_settings['g_mdsft_alpha_compare'] == 1:
-        result.other_modes.alpha_compare = material.AlphaCompare.THRESHOLD
-    elif rdp_settings['g_mdsft_alpha_compare'] == 2:
-        result.other_modes.alpha_compare = material.AlphaCompare.DITHER
 
     result.other_modes = determine_material_blend_f3d(rdp_settings)
 
@@ -483,7 +675,7 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
         result.vtx_effect = material.VtxEffect(material.VtxEffectType.VTX_EFFECT_NONE)
 
     result.fog = material.Fog()
-    result.fog.enabled = rdp_settings['g_fog'] and f3d_mat['set_fog'] and True or False
+    result.fog.enabled = rdp_settings['g_fog'] and True or False
     result.fog.use_global = f3d_mat['use_global_fog'] and True or False
     result.fog.fog_color = _determine_color_from_f3d(f3d_mat['fog_color'])
     result.fog.min_distance = f3d_mat['fog_position'][0]

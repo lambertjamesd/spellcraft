@@ -487,7 +487,7 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
                 mat.other_modes.z_write = False
             else:
                 mat.other_modes = material.OtherModes(
-                    material.BlendModeCycle('IN', '0', 'IN', '1'),
+                    material.BlendModeCycle(material.BlendColor.IN, material.BlendAlpha._0, material.BlendColor.IN, material.BlendMix._1),
                     None,
                     z_compare=False,
                     z_write=False
