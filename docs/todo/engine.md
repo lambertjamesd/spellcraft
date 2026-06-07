@@ -11,15 +11,6 @@
 
 Details
 
-[3]
-I saw you were doing a material system refactor? Having control of all the options would be great including all the stuff like IM_RD and the coverage stuff etc (in the future I would like to experiment with doing AA on the characters only and not the environment, kinda like Rare did). Or the texture filter type, because I'm sure being able to have a material with an unfiltered texture will come in handy at some point. And the four-sample filter might be handy for some menu stuff. 
-The only things I'm pretty sure I won't need are:
-Pipeline span buffer coherency
-Per-material dither type settings, can't think of a use
-Texture LUT behavior
-the "LoD (does nothing)" checkbox, obviously
-large texture mode, if I need large textures I'll handle it manually (for several reasons)
-
 [4]
 Particle group objects are still a bit problematic in regards to position, size and rotation, which causes a lot of time spent trying to get them right in game by trial and error.
 Also I can handle the blender geometry nodes setup myself, but I can't seem to figure out exactly how the size of the particle instance object (the single one that gets copied all over for each particle) relates to the size in game, it doesn't seem 1:1. Ideally I'd like if the instance ofject is 1 by 1 meter for example, it ends up the same size in game. Actually a max size of say 2 by 2 meters would be cool so we could maybe use it for tree leaves or things like that.

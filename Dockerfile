@@ -66,4 +66,9 @@ RUN apt-get install -y \
     python3 \
     && apt-get clean
 
+# Install Fast64
+RUN wget https://github.com/Fast-64/fast64/archive/refs/heads/main.zip
+USER ubuntu
+RUN /opt/blender/blender --command extension install-file -r user_default --enable main.zip
+
 WORKDIR /spellcraft
