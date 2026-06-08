@@ -1,2 +1,4 @@
 FILENAME:  tools/mesh_export/t3d_mesh.py \
-    tools/mesh_export/entities/armature.py
+    tools/mesh_export/entities/armature.py \
+    tools/mesh_export/entities/tiny3d_mesh_writer.py \
+    tools/mesh_export/entities/material_delta.py
