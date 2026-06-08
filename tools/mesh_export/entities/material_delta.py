@@ -51,8 +51,8 @@ def determine_material_delta(start: material.Material, end: material.Material) -
     if end.combine_mode and (not start.combine_mode or start.combine_mode != end.combine_mode):
         result.combine_mode = end.combine_mode
     
-    # if end.other_modes and (not start.other_modes or start.other_modes != end.other_modes):
-    result.other_modes = end.other_modes
+    if end.other_modes and (not start.other_modes or start.other_modes != end.other_modes):
+        result.other_modes = end.other_modes
 
     if end.env_color and (not start.env_color or start.env_color != end.env_color):
         result.env_color = end.env_color
@@ -81,6 +81,10 @@ def determine_material_delta(start: material.Material, end: material.Material) -
         result.vtx_effect = end.vtx_effect
 
     result.fog = determine_fog_delta(start.fog, end.fog)
+
+    # not sure why this is needed
+    if result.tex0 or result.tex1:
+        result.other_modes = end.other_modes
 
     return result
 
