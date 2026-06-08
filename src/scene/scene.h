@@ -91,6 +91,13 @@ typedef struct loaded_room loaded_room_t;
 
 #define NEXT_LOADED_ROOM(curr)  (((curr) + 1) % MAX_LOADED_ROOM)
 
+struct scene_fog {
+    float min, max;
+    color_t color;
+};
+
+typedef struct scene_fog scene_fog_t;
+
 struct scene {
     struct static_entity* static_entities;
     struct static_entity_range* room_static_ranges;
@@ -113,6 +120,7 @@ struct scene {
     vector2_t minimap_max;
     vector2_t minimap_location;
     float minimap_rotation;
+    scene_fog_t fog;
 
     room_entity_block_t* room_entities;
     shared_entity_block_t shared_entities;

@@ -75,6 +75,12 @@ void scene_mini_location(scene_t* scene, FILE* file) {
     fread(&scene->minimap_rotation, sizeof(float), 1, file);
 }
 
+void scene_load_fog(scene_fog_t* fog, FILE* file) {
+    fread(&fog->min, 4, 1, file);
+    fread(&fog->max, 4, 1, file);
+    fread(&fog->color, 4, 1, file);
+}
+
 void scene_load_camera_animations(struct camera_animation_list* list, const char* filename, FILE* file) {
     uint16_t count;
     fread(&count, sizeof(count), 1, file);
@@ -351,6 +357,8 @@ struct scene* scene_load(const char* filename) {
 
     scene_load_minimap(scene, file);
     scene_mini_location(scene, file);
+
+    scene_load_fog(&scene->fog, file);
 
     scene_load_camera_animations(&scene->camera_animations, filename, file);
 

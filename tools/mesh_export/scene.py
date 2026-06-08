@@ -584,6 +584,17 @@ def write_minimap_location(base_transform: mathutils.Matrix, file):
 
     file.write(struct.pack('>fff', center.x, center.z, rotation))
 
+def write_fog(file):
+    if not hasattr(bpy.context.scene, 'fast64'):
+        file.write(struct.pack('>ffBBBB', 50, 200, 0, 0, 0, 255))
+    
+    min = bpy.context.scene.fast64.renderSettings.clippingPlanes[0]
+    max = bpy.context.scene.fast64.renderSettings.clippingPlanes[1]
+
+    color = material.color_from_vec(bpy.context.scene.fast64.renderSettings.fogPreviewColor)
+    file.write(struct.pack('>ff', min, max))
+    color.write(file)
+
 def include_all(collection):
     collection.exclude = False
 
@@ -716,6 +727,8 @@ def process_scene():
         write_minimap_range(base_transform, file)
 
         write_minimap_location(base_transform, file)
+
+        write_fog(file)
 
         camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
 

@@ -36,12 +36,6 @@ def determine_fog_delta(start: material.Fog | None, end: material.Fog | None) ->
     result = material.Fog()
 
     result.enabled = end.enabled
-    result.use_global = end.use_global
-    if not result.use_global:
-        if start.fog_color != end.fog_color:
-            result.fog_color = end.fog_color
-        result.min_distance = end.min_distance
-        result.max_distance = end.max_distance
 
     return result
 
@@ -136,8 +130,6 @@ def determine_material_cost(mat: material.Material) -> float:
 
     if mat.fog:
         result += CHANGE_MODE
-        if mat.fog.fog_color:
-            result += COLOR_CHANGE_TIME
 
     return result
 

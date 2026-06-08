@@ -320,14 +320,6 @@ def _determine_combiner_from_f3d(combiner) -> material.CombineModeCycle:
         _lookup_mixed_enum(aComb, material.ACombine, combiner['D_alpha']),
     )
 
-def _determine_color_from_f3d(color) -> material.Color:
-    return material.Color(
-        int((color[0] ** 0.454545) * 255),
-        int((color[1] ** 0.454545) * 255),
-        int((color[2] ** 0.454545) * 255),
-        int(color[3] * 255)
-    )
-
 def _determine_tex_axis_from_f3d(axis, image_size, uv_scroll, result: material.TexAxis):
     result.shift = axis['shift']
 
@@ -622,13 +614,13 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     result.other_modes = determine_material_blend_f3d(rdp_settings)
 
     if _get_safe(f3d_mat, 'set_env'):
-        result.env_color = _determine_color_from_f3d(_get_safe(f3d_mat, 'env_color'))
+        result.env_color = material.color_from_vec(_get_safe(f3d_mat, 'env_color'))
 
     if _get_safe(f3d_mat, 'set_prim'):
-        result.prim_color = _determine_color_from_f3d(_get_safe(f3d_mat, 'prim_color'))
+        result.prim_color = material.color_from_vec(_get_safe(f3d_mat, 'prim_color'))
 
     if _get_safe(f3d_mat, 'set_blend'):
-        result.blend_color = _determine_color_from_f3d(_get_safe(f3d_mat, 'blend_color'))
+        result.blend_color = material.color_from_vec(_get_safe(f3d_mat, 'blend_color'))
 
     uv_anim_0 = _get_safe(f3d_mat, 'UVanim0') if 'UVanim0' in f3d_mat else None
     uv_anim_1 = _get_safe(f3d_mat, 'UVanim1') if 'UVanim1' in f3d_mat else None
@@ -660,10 +652,6 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
 
     result.fog = material.Fog()
     result.fog.enabled = _get_safe(rdp_settings, 'g_fog') and True or False
-    result.fog.use_global = _get_safe(f3d_mat, 'use_global_fog') and True or False
-    result.fog.fog_color = _determine_color_from_f3d(_get_safe(f3d_mat, 'fog_color'))
-    result.fog.min_distance = _get_safe(f3d_mat, 'fog_position')[0]
-    result.fog.max_distance = _get_safe(f3d_mat, 'fog_position')[1]
 
     if _get_safe(f3d_mat, 'set_lights'):
         result.light_count = 1

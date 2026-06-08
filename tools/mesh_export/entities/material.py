@@ -111,6 +111,9 @@ class Color():
 
     def copy(self):
         return Color(self.r, self.g, self.b, self.a)
+    
+    def write(self, file):
+        file.write(struct.pack('>BBBB', self.r, self.g, self.b, self.a))
 
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, Color):
@@ -120,6 +123,14 @@ class Color():
     
     def __str__(self):
         return f"Color({self.r} {self.g} {self.b} {self.a})"
+    
+def color_from_vec(color) -> Color:
+    return Color(
+        int((color[0] ** 0.454545) * 255),
+        int((color[1] ** 0.454545) * 255),
+        int((color[2] ** 0.454545) * 255),
+        int(color[3] * 255)
+    )
     
 class CombineA(Enum):
     COMBINED = 0
@@ -663,32 +674,20 @@ class Tex():
 class Fog():
     def __init__(self):
         self.enabled: bool = False
-        self.use_global: bool = False
-        self.fog_color: Color | None = None
-        self.min_distance: float = 0
-        self.max_distance: float = 0
 
     def copy(self):
         result = Fog()
         result.enabled = self.enabled
-        result.use_global = self.use_global
-        result.fog_color = self.fog_color.copy() if self.fog_color else None
-        result.min_distance = self.min_distance
-        result.max_distance = self.max_distance
         return result
 
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, Fog):
             return False
         
-        return self.enabled == value.enabled and \
-            self.use_global == value.use_global and \
-            self.fog_color == value.fog_color and \
-            self.min_distance == value.min_distance and \
-            self.max_distance == value.max_distance
+        return self.enabled == value.enabled
     
     def __str__(self):
-        return f"enabled {str(self.enabled)} use_global {str(self.use_global)} {str(self.fog_color)} min {str(self.min_distance)} max {str(self.max_distance)}"
+        return f"enabled {str(self.enabled)}"
 
 class VtxEffectType(Enum):
     VTX_EFFECT_NONE = 0

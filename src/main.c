@@ -97,6 +97,8 @@ void render_3d(surface_t* col, surface_t* z_buffer) {
     *viewport = t3d_viewport_create();
 
     if (current_scene) {
+        rdpq_set_fog_color(current_scene->fog.color);
+        t3d_fog_set_range(current_scene->fog.min * WORLD_SCALE, current_scene->fog.max * WORLD_SCALE);
         render_scene_render(&current_scene->camera, viewport, &frame_memory_pools[next_frame_memory_pool]);
     }
     

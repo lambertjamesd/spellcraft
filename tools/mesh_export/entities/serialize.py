@@ -24,9 +24,6 @@ T3D_FLAG_SHADED     = 1 << 2
 T3D_FLAG_CULL_FRONT = 1 << 3
 T3D_FLAG_CULL_BACK  = 1 << 4
 
-def _serialize_color(file, color: material.Color):
-    file.write(struct.pack('>BBBB', color.r, color.g, color.b, color.a))
-
 ZMODE = {
     "OPAQUE": 0 << 10,
     "INTER": 1 << 10,
@@ -379,15 +376,15 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
     
     if mat.env_color:
         output.write(COMMAND_ENV.to_bytes(1, 'big'))
-        _serialize_color(output, mat.env_color)
+        mat.env_color.write(output)
 
     if mat.prim_color:
         output.write(COMMAND_PRIM.to_bytes(1, 'big'))
-        _serialize_color(output, mat.prim_color)
+        mat.prim_color.write(output)
 
     if mat.blend_color:
         output.write(COMMAND_BLEND_COLOR.to_bytes(1, 'big'))
-        _serialize_color(output, mat.blend_color)
+        mat.blend_color.write(output)
 
     palette_data, palette_offset = mat.get_palette_data()
 
@@ -401,16 +398,6 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
     if mat.fog:
         output.write(COMMAND_FOG.to_bytes(1, 'big'))
         output.write((mat.fog.enabled and 1 or 0).to_bytes(1, 'big'))
-
-        if not mat.fog.use_global:
-            if mat.fog.fog_color:
-                output.write(COMMAND_FOG_COLOR.to_bytes(1, 'big'))
-                _serialize_color(output, mat.fog.fog_color)
-
-            if mat.fog.min_distance != mat.fog.max_distance:
-                output.write(COMMAND_FOG_RANGE.to_bytes(1, 'big'))
-                output.write(int(mat.fog.min_distance).to_bytes(2, 'big'))
-                output.write(int(mat.fog.max_distance).to_bytes(2, 'big'))
 
     flags = flags_for_material(mat)
 
