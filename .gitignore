@@ -30,3 +30,4 @@ load.bat
 build clean.bat
 
 venv/
+docker image update.bat
