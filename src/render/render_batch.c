@@ -504,5 +504,10 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             element->callback.callback(element->callback.data, batch);
         }
     }
+
+    if (is_sprite_mode) {
+        static_particles_end();
+    }
+
     rdpq_sync_pipe();
 }

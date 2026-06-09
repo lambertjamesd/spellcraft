@@ -14,14 +14,20 @@ def _get_instance_info(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, ma
 
     bb = obj.bound_box
 
+    min_x = bb[0][0]
+    max_x = min_x
+
     min_y = bb[0][1]
     max_y = min_y
 
     for vertex in bb:
+        min_x = min(min_x, vertex[0])
+        max_x = max(max_x, vertex[0])
+
         min_y = min(min_y, vertex[1])
         max_y = max(max_y, vertex[1])
 
-    return mesh, obj.dimensions, (min_y + max_y) * 0.5
+    return mesh, mathutils.Vector((max_x - min_x, max_y - min_y, 0)), (min_y + max_y) * 0.5
 
 def find_mesh_instance(obj: bpy.types.Object) -> tuple[bpy.types.Mesh | None, mathutils.Vector | None, float | None]:
     if 'particle_instance_obj' in obj and obj['particle_instance_obj']:
@@ -79,6 +85,9 @@ class ParticleInstance:
         self.position: mathutils.Vector = position
         self.scale: mathutils.Vector = scale
 
+PARTICLE_SIZE_ERROR_CORRECTION = 0.85
+WORLD_SCALE = 32
+
 class Particles:
     def __init__(self, obj: bpy.types.Object):
         self.obj: bpy.types.Object = obj
@@ -98,7 +107,7 @@ class Particles:
         self.instances.append(ParticleInstance(position, scale))
 
     def set_dimensions(self, dimensions: mathutils.Vector):
-        scaled = dimensions * 16
+        scaled = dimensions * WORLD_SCALE * PARTICLE_SIZE_ERROR_CORRECTION
         self.particle_size = math.ceil(max(scaled.x, scaled.y))
         self.particle_scale_width = math.floor(0x7FFF * scaled.x / self.particle_size)
         self.particle_scale_height = math.floor(0x7FFF * scaled.y / self.particle_size)
@@ -237,7 +246,7 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
 
     result = Particles(obj)
 
-    result.add_instnace(mid_point, scale * 0.5)
+    result.add_instnace(mid_point, scale)
     result.particle_count = len(mesh.vertices)
     result.set_dimensions(dimensions)
     result.material = mesh.materials[0]
@@ -280,7 +289,7 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
 
         particle_data.write(pack_pos(posA, size_a))
 
-        size_b = next_vertex.groups[size.index].weight if next_vertex and size else 1
+        size_b = next_vertex.groups[size.index].weight if next_vertex and size else 0
 
         particle_data.write(pack_pos(posB, size_b))
 

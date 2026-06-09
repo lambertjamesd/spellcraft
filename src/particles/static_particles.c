@@ -57,14 +57,10 @@ void static_particles_release(static_particles_t* particles, int count) {
 void static_particles_start() {
     rdpq_sync_pipe();
     tpx_state_from_t3d();
-    rdpq_mode_zoverride(true, 0, 0);
-    rdpq_mode_persp(false);
 }
 
 void static_particles_end() {
     rdpq_sync_pipe();
-    rdpq_mode_zoverride(false, 0, 0);
-    rdpq_mode_persp(true);
 }
 
 void static_particles_render(render_batch_particles_t* particles, T3DMat4FP* transform, bool has_tex) {
