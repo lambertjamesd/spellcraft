@@ -5,7 +5,7 @@ class ExportSettings():
     def __init__(self):
         self.fixed_point_scale: int = 64
         self.world_scale: int = 32
-        self.default_material: material.Material = material.Material()
+        self.default_material: material.Material = material.Material("Default")
         self.default_material_name: str = 'rom:/materials/default.mat'
         self.sort_direction: mathutils.Vector | None = None
         self.fog_scale = 1

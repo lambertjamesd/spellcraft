@@ -18,12 +18,6 @@ COMMAND_FOG_COLOR = 10
 COMMAND_FOG_RANGE = 11
 COMMAND_LIGHT_COUNT = 12
 
-T3D_FLAG_DEPTH      = 1 << 0
-T3D_FLAG_TEXTURED   = 1 << 1
-T3D_FLAG_SHADED     = 1 << 2
-T3D_FLAG_CULL_FRONT = 1 << 3
-T3D_FLAG_CULL_BACK  = 1 << 4
-
 ZMODE = {
     "OPAQUE": 0 << 10,
     "INTER": 1 << 10,
@@ -326,25 +320,14 @@ def _serialize_palette(file, palette: list, palette_offset: int):
     for color in palette:
         file.write(color.to_bytes(2, 'big'))
 
-def flags_for_material(mat: material.Material) -> int:
+def flags_for_material(mat: material.Material) -> int | None:
+    if mat.flags == None:
+        return None
+
     flags = 0
 
-    if mat.other_modes and (mat.other_modes.z_compare or mat.other_modes.z_write):
-        flags |= T3D_FLAG_DEPTH
-
-    if mat.culling == 'front':
-        flags |= T3D_FLAG_CULL_FRONT
-    elif mat.culling == True:
-        flags |= T3D_FLAG_CULL_BACK
-
-    if mat.tex0 or mat.tex1:
-        flags |= T3D_FLAG_TEXTURED
-
-    if mat.combine_mode and mat.combine_mode.uses('SHADE'):
-        flags |= T3D_FLAG_SHADED
-
-    if mat.fog and mat.fog.enabled:
-        flags |= T3D_FLAG_SHADED
+    for flag in mat.flags:
+        flags |= 1 << flag.value
 
     return flags
 
@@ -401,11 +384,9 @@ def serialize_material_file(output, mat: material.Material, current_state: mater
 
     flags = flags_for_material(mat)
 
-    if current_state:
-        flags |= flags_for_material(current_state)
-
-    output.write(COMMAND_FLAGS.to_bytes(1, 'big'))
-    output.write(flags.to_bytes(2, 'big'))
+    if flags != None:
+        output.write(COMMAND_FLAGS.to_bytes(1, 'big'))
+        output.write(flags.to_bytes(2, 'big'))
 
     if mat.light_count != None:
         output.write(COMMAND_LIGHT_COUNT.to_bytes(1, 'big'))

@@ -714,9 +714,17 @@ class VtxEffect:
     
     def __str__(self) -> str:
         return str(self.type)
+    
+class Flags(Enum):
+    T3D_FLAG_DEPTH      = 0
+    T3D_FLAG_TEXTURED   = 1
+    T3D_FLAG_SHADED     = 2
+    T3D_FLAG_CULL_FRONT = 3
+    T3D_FLAG_CULL_BACK  = 4
 
 class Material():
-    def __init__(self):
+    def __init__(self, name: str = "Unknown"):
+        self.name: str = name
         self.combine_mode: CombineMode | None = None
         self.other_modes: OtherModes | None = None
         self.env_color: Color | None = None
@@ -731,9 +739,10 @@ class Material():
         self.fog: Fog | None = None
         self.light_count: int | None = None
         self.priority: int | None = None
+        self.flags: set[Flags] | None = None
 
     def copy(self):
-        result = Material()
+        result = Material(self.name)
         result.combine_mode = self.combine_mode.copy() if self.combine_mode else None
         result.other_modes = self.other_modes.copy() if self.other_modes else None
         result.env_color = self.env_color.copy() if self.env_color else None
@@ -748,7 +757,30 @@ class Material():
         result.fog = self.fog.copy() if self.fog else None
         result.light_count = self.light_count
         result.priority = self.priority
+        result.flags = set(self.flags) if self.flags else None
         return result
+    
+    def determine_flags(self):
+        result = set()
+
+        if self.other_modes and (self.other_modes.z_write or self.other_modes.z_compare):
+            result.add(Flags.T3D_FLAG_DEPTH)
+
+        if self.tex0 or self.tex1:
+            result.add(Flags.T3D_FLAG_TEXTURED)
+
+        if self.combine_mode and self.combine_mode.uses('SHADE'):
+            result.add(Flags.T3D_FLAG_SHADED)
+
+        if self.fog and self.fog.enabled:
+            result.add(Flags.T3D_FLAG_SHADED)
+
+        if self.culling == 'front':
+            result.add(Flags.T3D_FLAG_CULL_FRONT)
+        elif self.culling == True:
+            result.add(Flags.T3D_FLAG_CULL_BACK)
+
+        self.flags = result
     
     def does_scroll(self) -> bool:
         return bool((self.tex0 and self.tex0.does_scroll()) or (self.tex1 and self.tex1.does_scroll()))
@@ -831,11 +863,12 @@ class Material():
         return list(map(lambda x: x or 0, result[index_start:])), index_start
 
     def is_empty(self):
-        return self.combine_mode == None and self.blend_color == None and self.env_color == None and self.prim_color == None and \
-            self.blend_color == None and self.lighting == None and self.tex0 == None and self.tex1 == None and self.culling == None
+        return self.combine_mode == None and self.other_modes == None and self.env_color == None and self.prim_color == None and \
+            self.blend_color == None and self.lighting == None and self.tex0 == None and self.tex1 == None and self.culling == None and \
+            self.vtx_effect == None and self.fog == None and self.flags == None
 
     def __str__(self):
-        return f"""Material:
+        return f"""Material {self.name}: 
     combine_mode = {self.combine_mode}
     other_modes = {self.other_modes}
     env_color = {self.env_color}
@@ -847,6 +880,7 @@ class Material():
     tex1 = {self.tex1}
     fog = {self.fog}
     vtx_effect = {self.vtx_effect}
+    flags = {self.flags}
 """
 
 def _check_is_enum(value, key_path, enum_list):
@@ -1112,7 +1146,7 @@ def parse_material(filename: str):
     with open(filename, 'r') as json_file:
         json_data = json.load(json_file)
 
-    result = Material()
+    result = Material(filename)
 
     result.tex0 = _parse_tex(json_data['tex0'], 'tex0', filename) if 'tex0' in json_data else None
     result.tex1 = _parse_tex(json_data['tex1'], 'tex1', filename) if 'tex1' in json_data else None
@@ -1145,5 +1179,7 @@ def parse_material(filename: str):
     result.priority = _optional_number(json_data, 'priority', 'priority', None)
 
     result.fog = Fog()
+
+    result.determine_flags()
 
     return result

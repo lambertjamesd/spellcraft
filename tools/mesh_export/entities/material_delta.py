@@ -76,6 +76,9 @@ def determine_material_delta(start: material.Material, end: material.Material) -
 
     result.fog = determine_fog_delta(start.fog, end.fog)
 
+    if end.flags and (not start.flags or start.flags != end.flags):
+        result.flags = end.flags
+
     # not sure why this is needed
     if result.tex0 or result.tex1:
         result.other_modes = end.other_modes
@@ -129,6 +132,9 @@ def determine_material_cost(mat: material.Material) -> float:
         result += CHANGE_MODE
 
     if mat.fog:
+        result += CHANGE_MODE
+
+    if mat.flags:
         result += CHANGE_MODE
 
     return result
@@ -198,3 +204,6 @@ def apply_material_delta(delta: material.Material, into: material.Material):
 
     if delta.fog != None:
         into.fog = delta.fog
+
+    if delta.flags != None:
+        into.flags = delta.flags

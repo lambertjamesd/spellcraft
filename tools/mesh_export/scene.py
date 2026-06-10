@@ -268,6 +268,8 @@ def find_static_blacklist():
 
     return result
 
+STATIC_SCALE = 16
+
 def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: str, definitions, enums, variable_context):
     settings = export_settings.ExportSettings()
 
@@ -292,7 +294,7 @@ def check_for_overworld(base_transform: mathutils.Matrix, overworld_filename: st
             if obj_type == 'none':
                 continue
             elif obj_type == 'static_particles':
-                particles = entities_particles.build_particles(obj, base_transform)
+                particles = entities_particles.build_particles(obj, base_transform, STATIC_SCALE)
                 if particles:
                     particle_list.append(particles)
             else:

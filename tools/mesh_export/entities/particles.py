@@ -86,7 +86,7 @@ class ParticleInstance:
         self.scale: mathutils.Vector = scale
 
 PARTICLE_SIZE_ERROR_CORRECTION = 0.85
-WORLD_SCALE = 32
+DEFAULT_WORLD_SCALE = 32
 
 class Particles:
     def __init__(self, obj: bpy.types.Object):
@@ -106,8 +106,8 @@ class Particles:
         self.scale = scale
         self.instances.append(ParticleInstance(position, scale))
 
-    def set_dimensions(self, dimensions: mathutils.Vector):
-        scaled = dimensions * WORLD_SCALE * PARTICLE_SIZE_ERROR_CORRECTION
+    def set_dimensions(self, dimensions: mathutils.Vector, world_scale: float):
+        scaled = dimensions * world_scale * PARTICLE_SIZE_ERROR_CORRECTION
         self.particle_size = math.ceil(max(scaled.x, scaled.y))
         self.particle_scale_width = math.floor(0x7FFF * scaled.x / self.particle_size)
         self.particle_scale_height = math.floor(0x7FFF * scaled.y / self.particle_size)
@@ -191,7 +191,7 @@ def extract_color(index, color, alpha, has_texture):
 
     return pack_color(result)
 
-def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> Particles | None:
+def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix, world_scale = DEFAULT_WORLD_SCALE) -> Particles | None:
     if obj.type != 'MESH':
         print(f'WARNING: static_particle object should be a mesh for object {obj.name}')
         return None
@@ -248,7 +248,7 @@ def build_particles(obj: bpy.types.Object, base_transform: mathutils.Matrix) -> 
 
     result.add_instnace(mid_point, scale)
     result.particle_count = len(mesh.vertices)
-    result.set_dimensions(dimensions)
+    result.set_dimensions(dimensions, world_scale)
     result.material = mesh.materials[0]
 
     material = material_extract.load_material_with_name(mesh.materials[0])

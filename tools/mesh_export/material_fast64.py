@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     generate_deps.generate_deps(output_directory, os.path.relpath(__file__))
     
-    default_material = mesh_export.entities.material.Material()
+    default_material = mesh_export.entities.material.Material("Default")
     default_material.vtx_effect = mesh_export.entities.material.VtxEffect(mesh_export.entities.material.VtxEffectType.VTX_EFFECT_NONE)
 
     did_export = None

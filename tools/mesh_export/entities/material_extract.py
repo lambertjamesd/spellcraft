@@ -605,7 +605,7 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     if mat.library:
         base_path = os.path.normpath(os.path.join(os.path.dirname(base_path), mat.library.filepath[2:]))
     
-    result: material.Material = material.Material()
+    result: material.Material = material.Material(mat.name)
     result.combine_mode = material.CombineMode(
         _determine_combiner_from_f3d(_get_safe(f3d_mat, 'combiner1')),
         _determine_combiner_from_f3d(_get_safe(f3d_mat, 'combiner2')) if is_2_cycle else None,
@@ -663,6 +663,8 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     else:
         result.priority = int(_get_safe(_get_safe(f3d_mat, 'draw_layer'), 'sm64'))
 
+    result.determine_flags()
+
     return result
 
 def material_can_extract(bpy_mat: bpy.types.Material) -> bool:
@@ -698,10 +700,12 @@ def load_material_with_name(bpy_mat: bpy.types.Material) -> material.Material:
         return determine_material_from_f3d(bpy_mat)
     elif not material_name.startswith('materials/'):
         # embedded material
-        material_object = material.Material()
+        material_object = material.Material(bpy_mat.name)
 
         if bpy_mat.use_nodes:
             determine_material_from_nodes(bpy_mat, material_object)
+
+        material_object.determine_flags()
 
         return material_object
     else:
