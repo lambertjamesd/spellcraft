@@ -456,8 +456,6 @@ def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_setting
 def _transition_material(current_material: material.Material, target_material: material.Material, commands: list, material_transitions: list):
     delta = material_delta.determine_material_delta(current_material, target_material)
 
-    print('delta', delta)
-
     if not delta.is_empty():
         commands.append(_build_material_command(len(material_transitions)))
         material_delta.apply_material_delta(delta, current_material)

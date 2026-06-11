@@ -120,7 +120,6 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
         tmesh->transition_materials = malloc(sizeof(struct material) * transition_count);
 
         for (int i = 0; i < transition_count; i += 1) {
-            debugf("transition\n");
             material_load(&tmesh->transition_materials[i], file);
 #if DEBUG_MATERIALS
             material_debug(&tmesh->transition_materials[i], "transition");
