@@ -15,5 +15,8 @@
         "alpha": ["TEX0", "_0", "PRIM", "_0"]
     }],
     "primColor": [255, 255, 255, 255],
-    "blendMode": "TRANSPARENT"
+    "blendMode": {
+        "cyc1": "TRANSPARENT",
+        "texPersp": false
+    }
 }

@@ -114,9 +114,9 @@ class mesh_data():
         bb = self.bounding_box()
         return (bb[0] + bb[1]) * 0.5
 
-    def bounding_box(self) -> tuple[mathutils.Vector, mathutils.Vector]:
+    def bounding_box(self) -> list[mathutils.Vector]:
         if len(self.vertices) == 0:
-            return (mathutils.Vector((0, 0, 0)), mathutils.Vector((0, 0, 0)))
+            return [mathutils.Vector((0, 0, 0)), mathutils.Vector((0, 0, 0))]
         
         min_result = mathutils.Vector(self.vertices[0])
         max_result = mathutils.Vector(self.vertices[0])

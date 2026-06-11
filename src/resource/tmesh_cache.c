@@ -9,6 +9,8 @@ struct tmesh* tmesh_cache_load(const char* filename) {
 
     if (!entry->resource) {
         struct tmesh* result = malloc(sizeof(struct tmesh));
+
+        debugf("tmesh_cache_load %s\n", filename);
         
         FILE* meshFile = asset_fopen(filename, NULL);
         tmesh_load(result, meshFile);

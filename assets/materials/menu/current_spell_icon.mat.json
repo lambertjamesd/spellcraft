@@ -14,7 +14,10 @@
         "color": ["_0", "_0", "_0", "PRIM"],
         "alpha": ["PRIM", "_0", "TEX0", "_0"]
     }],
-    "blendMode": "TRANSPARENT",
+    "blendMode": {
+        "cyc1": "TRANSPARENT",
+        "texPersp": false
+    },
     "primColor": [49, 46, 200, 255],
     "zBuffer": false
 }

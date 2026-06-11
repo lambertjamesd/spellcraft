@@ -14,6 +14,11 @@
         "color": ["_0", "_0", "_0", "TEX0"],
         "alpha": ["_0", "_0", "_0", "TEX0"]
     }],
-    "blendMode": "ALPHA_CLIP",
+    "blendMode": {
+        "cyc1": "OPAQUE",
+        "texPersp": false,
+        "alphaCompare": "THRESHOLD"
+    },
+    "blendColor": [0, 0, 0, 128],
     "zBuffer": false
 }

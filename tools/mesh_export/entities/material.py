@@ -468,6 +468,9 @@ class OtherModes():
         if self.image_read:
             rest = f"{rest} im_read"
 
+        if self.en_tlut:
+            rest = f"{rest} en_tlut"
+
         if self.cyc2:
             return f"2 cycle {self.cyc1} {self.cyc2} {rest}"
         
@@ -976,6 +979,11 @@ def _parse_combine_mode(result: Material, json_data):
         )
 
 def _parse_blend_mode_cycle(json_data, key_path):
+    if json_data == 'OPAQUE':
+        return BlendModeCycle(BlendColor.IN, BlendAlpha._0, BlendColor.IN, BlendMix._1)
+    if json_data == 'TRANSPARENT':
+        return BlendModeCycle(BlendColor.IN, BlendAlpha.IN_A, BlendColor.MEMORY, BlendMix.INV_MUX_A)
+
     if not isinstance(json_data, list) or len(json_data) != 4:
         raise Exception(f"{key_path} must be an array of length 4")
 
@@ -1041,6 +1049,18 @@ def _parse_blend_mode(result: Material, json_data):
 
     if 'alphaCompare' in blend_mode:
         _check_is_enum(blend_mode['alphaCompare'], 'blendMode.alphaCompare', ['NONE', 'THRESHOLD', 'NOISE'])
+        result.other_modes.alpha_compare = AlphaCompare[blend_mode['alphaCompare']]
+
+    if 'texPersp' in blend_mode:
+        _check_is_boolean(blend_mode['texPersp'], 'blendMode.texPersp')
+        result.other_modes.persp_tex_en = blend_mode['texPersp']
+    else:
+        result.other_modes.persp_tex_en = True
+
+    if blend_mode['cyc1'] == 'TRANSPARENT':
+        result.other_modes.z_write = False
+        result.other_modes.z_mode = ZMode.TRANSPARENT
+        result.other_modes.image_read = True
 
 
 def _parse_color(json_data, key_path):
@@ -1165,12 +1185,16 @@ def parse_material(filename: str):
     if not _optional_boolean(json_data, 'zBuffer', 'zBuffer', True) and result.other_modes:
         result.other_modes.z_compare = False
         result.other_modes.z_write = False
+        
+    use_tex = result.tex0 or result.tex1
+
+    if use_tex:
+        if (use_tex.fmt == 'FMT_CI8' or use_tex.fmt == 'FMT_CI4') and result.other_modes:
+            result.other_modes.en_tlut = True
 
     vtx_effect = _optional_string(json_data, 'uvGen', 'uvGen', 'none')
 
     if vtx_effect == 'spherical':
-        use_tex = result.tex0 or result.tex1
-
         if not use_tex:
             raise Exception('need a texture to do spherical uv')
 

@@ -8,4 +8,5 @@ def generate_deps(output_filename, script_path):
         input_contents = input.read()
 
     with open(f'{os.path.splitext(dep_output)[0]}.d', "w") as output:
-        output.write(input_contents.replace('FILENAME', rule_output))
+        # output.write(input_contents.replace('FILENAME', rule_output))
+        output.write(f"{rule_output}:")

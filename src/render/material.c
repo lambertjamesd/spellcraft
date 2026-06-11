@@ -219,8 +219,9 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint64_t other_modes;
                     fread(&other_modes, 8, 1, material_file);
-
                     rdpq_set_other_modes_unsafe(other_modes);
+                    
+                    debugf("other_modes = 0x%08x%08x\n", (int)(other_modes >> 32), (int)other_modes);
 
                     if (other_modes & SOM_Z_COMPARE) {
                         into->flags |= MATERIAL_FLAGS_Z_READ;

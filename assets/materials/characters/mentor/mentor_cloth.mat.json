@@ -4,7 +4,10 @@
         "color": ["TEX0", "_0", "SHADE", "_0"],
         "alpha": ["_0", "_0", "_0", "_1"]
     }],
-    "blendMode": "OPAQUE",
+    "blendMode": {
+        "cyc1": "OPAQUE",
+        "texPersp": true
+    },
     "lighting": false,
     "zBuffer": true
 }

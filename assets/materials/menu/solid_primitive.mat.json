@@ -3,7 +3,10 @@
         "color": ["_0", "_0", "_0", "PRIM"],
         "alpha": ["_0", "_0", "_0", "PRIM"]
     }],
-    "blendMode": "TRANSPARENT",
+    "blendMode": {
+        "cyc1": "TRANSPARENT",
+        "texPersp": false
+    },
     "primColor": [255, 255, 255, 255],
     "culling": false,
     "zBuffer": false
