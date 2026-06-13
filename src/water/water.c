@@ -27,6 +27,7 @@ void water_simulation_init(water_simulation_t* simulation, int width, int height
     simulation->position_buffers[1] = simulation->position_buffers[0] + pixel_count;
 
     simulation->read_buffer = 0;
+    simulation->y_stride = 1;
 
     memset(simulation->velocity_buffer, 0, total_size);
 }
@@ -42,8 +43,8 @@ void water_simulation_destroy(water_simulation_t* simulation) {
     simulation->velocity_buffer = NULL;
 }
 
-#define X_STRIDE    12
-#define Y_STRIDE    6
+// 12 is chosen to simplify calculating dma transfer sizes
+#define Y_STRIDE_OFFSET 12
 
 void water_simulation_update(water_simulation_t* simulation) {
     int write_index = 1 - simulation->read_buffer;
@@ -52,21 +53,11 @@ void water_simulation_update(water_simulation_t* simulation) {
     int16_t* in = simulation->position_buffers[simulation->read_buffer];
     int16_t* out = simulation->position_buffers[write_index];
 
-    int block_y_stride = simulation->width * Y_STRIDE;
+    int block_y_stride = simulation->width * simulation->y_stride;
     int simluation_stride = simulation->width * sizeof(int16_t);
     
-    for (int y = 0; y + Y_STRIDE+1 < simulation->height; y += Y_STRIDE) {
-        int16_t* vel_x = vel;
-        int16_t* in_x = in;
-        int16_t* out_x = out;
-
-        for (int x = 0; x + X_STRIDE+1 < simulation->width; x += X_STRIDE) {    
-            rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK, simluation_stride, PhysicalAddr(vel_x), PhysicalAddr(in_x), PhysicalAddr(out_x));
-
-            vel_x += X_STRIDE;
-            in_x += X_STRIDE;
-            out_x += X_STRIDE;
-        }
+    for (int y = 0; y + simulation->y_stride+1 < simulation->height; y += simulation->y_stride) {
+        rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK,  ((int)simulation->y_stride << Y_STRIDE_OFFSET) | simluation_stride, PhysicalAddr(vel), PhysicalAddr(in), PhysicalAddr(out));
 
         vel += block_y_stride;
         in += block_y_stride;

@@ -9,6 +9,7 @@ struct water_simulation {
     int16_t* velocity_buffer;
     int16_t* position_buffers[2];
     uint8_t read_buffer;
+    uint8_t y_stride;
 };
 
 typedef struct water_simulation water_simulation_t;
