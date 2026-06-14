@@ -1,6 +1,8 @@
 
 #include <rsp_queue.inc>
 
+#define SIM_BUFFER_SIZE 1024
+
 .data
     RSPQ_BeginOverlayHeader
         RSPQ_DefineCommand WaterCmd_ProcessBlock, 16
@@ -21,9 +23,9 @@
     RSPQ_EndSavedState
 .bss
     .align 4
-    VEL:     .space 1024
-    IN_POS:  .space 1024
-    OUT_POS: .space 1024
+    VEL:     .space SIM_BUFFER_SIZE
+    IN_POS:  .space SIM_BUFFER_SIZE
+    OUT_POS: .space SIM_BUFFER_SIZE
 
 #define VECTOR_SIZE     16
 

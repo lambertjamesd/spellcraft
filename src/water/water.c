@@ -7,6 +7,8 @@ static uint8_t simulation_count = 0;
 
 #define PROCESS_BLOCK   0
 
+#define SIM_BUFFER_SIZE 1024
+
 DEFINE_RSP_UCODE(rsp_water);
 
 void water_simulation_init(water_simulation_t* simulation, int width, int height) {
@@ -27,7 +29,7 @@ void water_simulation_init(water_simulation_t* simulation, int width, int height
     simulation->position_buffers[1] = simulation->position_buffers[0] + pixel_count;
 
     simulation->read_buffer = 0;
-    simulation->y_stride = 1;
+    simulation->y_stride = SIM_BUFFER_SIZE / (width * sizeof(int16_t));
 
     memset(simulation->velocity_buffer, 0, total_size);
 }
@@ -56,8 +58,15 @@ void water_simulation_update(water_simulation_t* simulation) {
     int block_y_stride = simulation->width * simulation->y_stride;
     int simluation_stride = simulation->width * sizeof(int16_t);
     
-    for (int y = 0; y + simulation->y_stride+1 < simulation->height; y += simulation->y_stride) {
-        rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK,  ((int)simulation->y_stride << Y_STRIDE_OFFSET) | simluation_stride, PhysicalAddr(vel), PhysicalAddr(in), PhysicalAddr(out));
+    for (int y = 1; y + 1 < simulation->height; y += simulation->y_stride) {
+        int y_count = simulation->y_stride;
+        int rows_remaining = simulation->height - y - 1;
+
+        if (y_count > rows_remaining) {
+            y_count = rows_remaining;
+        }
+
+        rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK,  ((int)y_count << Y_STRIDE_OFFSET) | simluation_stride, PhysicalAddr(vel), PhysicalAddr(in), PhysicalAddr(out));
 
         vel += block_y_stride;
         in += block_y_stride;
