@@ -9,6 +9,9 @@
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
+        DEBUG:
+            .half 0x0000, 0x0000, 0x0000, 0x0000
+        .align 4
         SPRING_K: 
             .half 0x0000, 0x1999, 0x1999, 0x1999
             .half 0x1999, 0x1999, 0x1999, 0x0000
@@ -49,6 +52,7 @@
 #define row_vel_ptr t3
 #define row_out_ptr t4
 #define col_count   t5
+#define ptr         t6
 
 #define spring_k $v01
 #define vel_damping $v02
@@ -84,11 +88,13 @@ WaterCmd_ProcessBlock:
     srl row_count, a0, Y_STRIDE_OFFSET
     andi row_count, row_count, 0xFF
 
-    andi row_stride, a0, 0xFFFF
+    andi row_stride, a0, 0xFFF
     # same as
     # (((row_count + 2) - 1) << 12) | (row_stride -  1)
     # the +2 is to add padding, the -1 is to properly fill the dma register
-    addi dma_size, a0, (1 << 12) - 1
+    li dma_size, 0xFFFFFF
+    and dma_size, dma_size, a0
+    addi dma_size, dma_size, (1 << 12) - 1
 
     # load the velocity block
     move dram_address, vel_dmem
@@ -100,10 +106,10 @@ WaterCmd_ProcessBlock:
     jal DMAIn
     li dmem_address, %lo(IN_POS)
 
-    li t0, %lo(SPRING_K)
-    lqv spring_k, 0x00, t0
-    lqv vel_damping, 0x10, t0
-    lqv dt, 0x20, t0
+    li ptr, %lo(SPRING_K)
+    lqv spring_k, 0x00, ptr
+    lqv vel_damping, 0x10, ptr
+    lqv dt, 0x20, ptr
 
     li row_pos_ptr, %lo(IN_POS)
     li row_vel_ptr, %lo(VEL)
@@ -112,7 +118,6 @@ WaterCmd_ProcessBlock:
     add row_pos_ptr, row_pos_ptr, row_stride
     add row_vel_ptr, row_vel_ptr, row_stride
     add row_out_ptr, row_out_ptr, row_stride
-
 WaterCmd_ProcessBlock_NextRow:
     add pos_ptr, row_pos_ptr, zero
     sub up_ptr, row_pos_ptr, row_stride
@@ -173,6 +178,7 @@ WaterCmd_ProcessBlock_NextFrame:
     
     # check if row has ended
     bltz col_count, WaterCmd_ProcessBlock_IncRow
+    nop
 
     ####################
     # load next
@@ -193,6 +199,7 @@ WaterCmd_ProcessBlock_NextFrame:
     lrv vel, VECTOR_SIZE, vel_ptr
 
     j WaterCmd_ProcessBlock_NextFrame
+    nop
 
 WaterCmd_ProcessBlock_IncRow:
 
@@ -210,7 +217,7 @@ WaterCmd_ProcessBlock_IncRow:
 WaterCmd_ProcessBlock_Exit:
     # dont output the top and bottom padding rows
     addi dma_size, dma_size, -(2 << 12)
-
+    
     # Save the velocity block
     add dram_address, vel_dmem, row_stride
     jal DMAOut
