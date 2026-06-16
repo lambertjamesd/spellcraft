@@ -1,1 +1,2 @@
-FILENAME:  tools/mesh_export/material.py
+FILENAME:  tools/mesh_export/material.py \
+    tools/mesh_export/entities/material.py
