@@ -29,8 +29,7 @@ void water_simulation_init(water_simulation_t* simulation, int width, int height
     simulation->position_buffers[1] = simulation->position_buffers[0] + pixel_count;
 
     simulation->read_buffer = 0;
-    // simulation->y_stride = SIM_BUFFER_SIZE / (width * sizeof(int16_t));
-    simulation->y_stride = 1;
+    simulation->y_stride = SIM_BUFFER_SIZE / (width * sizeof(int16_t));
 
     memset(simulation->velocity_buffer, 0, total_size);
 }
