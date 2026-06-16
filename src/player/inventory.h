@@ -7,11 +7,6 @@
 #include "staff.h"
 #include "../spell/spell.h"
 
-struct global_location { 
-    uint16_t data_type;
-    uint16_t word_offset;
-};
-
 #define MAX_SPELL_SLOTS 4
 
 #define MAX_CUSTOM_SPELLS   6
@@ -58,5 +53,7 @@ void inventory_set_has_item(enum inventory_item_type item, bool value);
 int inventory_get_count(enum inventory_item_type item);
 
 boolean_variable inventory_get_item_ref(enum inventory_item_type item);
+
+inventory_item_type_t inventory_item_from_var(any_variable var);
 
 #endif

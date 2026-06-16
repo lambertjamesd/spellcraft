@@ -7,6 +7,7 @@ from . import static_evaluator
 from . import tokenizer
 from . import local_layout
 from . import built_in_functions
+from enum import Enum
 
 _type_bit_sizes = {
     'char': 8,
@@ -18,6 +19,18 @@ _type_bit_sizes = {
     "entity_spawner": 32,
     'float': 32,
 }
+
+class DataType(Enum):
+    DATA_TYPE_NULL = 0
+    DATA_TYPE_S8 = 1
+    DATA_TYPE_S16 = 2
+    DATA_TYPE_S32 = 3
+
+    DATA_TYPE_BOOL = 4
+
+    DATA_TYPE_F32 = 5
+
+    DATA_TYPE_ADDRESS = 6
 
 def _determine_type_bit_size(type: parser.DataType):
     if not type.name.value in _type_bit_sizes:
@@ -328,9 +341,9 @@ class VariableContext():
     def with_functions(self, fn_list: FunctionList):
         return VariableContext(self.globals, self.scene_vars, self.fn_locals, fn_list)
     
-int_types = {'i8': 1, 'i16': 2, 'i32': 3}
+int_types = {'i8': 1, 'i16': 2, 'i32': 3, 'bool': 4}
     
-TYPE_OFFSET = 13
+TYPE_OFFSET = 12
 SCENE_FLAG = 0x8000
 
 def int_type_flag(name: str) -> int:

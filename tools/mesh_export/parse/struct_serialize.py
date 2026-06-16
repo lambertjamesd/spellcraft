@@ -95,6 +95,7 @@ fixed_sizes = {
     'bool': 1,
     'boolean_variable': 2,
     'integer_variable': 2,
+    'any_variable': 2,
     'line_mesh_data_ref': 4,
     'entity_spawner': 4,
 }
@@ -118,6 +119,7 @@ fixed_alignments = {
     'bool': 1,
     'boolean_variable': 2,
     'integer_variable': 2,
+    'any_variable': 2,
     'line_mesh_data_ref': 4,
     'entity_spawner': 4,
 }
@@ -138,11 +140,13 @@ struct_formats = {
     'bool': 'B',
     'boolean_variable': 'H',
     'integer_variable': 'H',
+    'any_variable': 'H',
 }
 
 struct_format_defaults = {
     'boolean_variable': 0xFFFF,
     'integer_variable': 0xFFFF,
+    'any_variable': 0xFFFF,
 }
 
 _string_aliases = {

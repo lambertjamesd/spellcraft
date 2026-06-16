@@ -13,5 +13,6 @@ void show_item_render();
 void show_item_cleanup();
 
 void show_item_in_cutscene(struct cutscene_builder* cutscene_builder, enum inventory_item_type item);
+void show_item_with_var_in_cutscene(struct cutscene_builder* cutscene_builder, any_variable item);
 
 #endif

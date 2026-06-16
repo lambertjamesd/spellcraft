@@ -8,6 +8,7 @@
 #include "../render/render_scene.h"
 #include "../resource/animation_cache.h"
 #include "../time/time.h"
+#include "../cutscene/expression_evaluate.h"
 
 static struct dynamic_object_type treasure_chest_collision = {
     BOX_COLLIDER(0.4f, 0.35f, 0.35f),
@@ -27,7 +28,7 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
     cutscene_builder_pause(&builder, true, false);
     cutscene_builder_delay(&builder, 1.0f);
 
-    show_item_in_cutscene(&builder, treasure_chest->item_type);
+    show_item_with_var_in_cutscene(&builder, treasure_chest->item_ref);
 
     cutscene_runner_run(
         cutscene_builder_finish(&builder),
@@ -37,8 +38,9 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
         treasure_chest->dynamic_object.entity_id
     );
 
-    inventory_unlock_item(treasure_chest->item_type);
-    treasure_chest->item_type = ITEM_TYPE_NONE;
+    expression_set_integer(treasure_chest->item_ref, expression_get_integer(treasure_chest->item_ref) + 1);
+    expression_set_bool(treasure_chest->has_item, true);
+    treasure_chest->item_ref = VARIABLE_DISCONNECTED;
     interactable_set_type(interactable, INTERACT_TYPE_NONE);
 }
 
@@ -48,7 +50,8 @@ void treasure_chest_update(void* data) {
 }
 
 void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_chest_definition* definition, entity_id id) {
-    treasure_chest->item_type = definition->item;
+    treasure_chest->item_ref = definition->item;
+    treasure_chest->has_item = definition->has_item;
     transformSaInit(&treasure_chest->transform, &definition->position, &definition->rotation, 1.0f);
 
     renderable_single_axis_init(&treasure_chest->renderable, &treasure_chest->transform, "rom:/meshes/objects/treasurechest.tmesh");
@@ -76,9 +79,19 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
     animator_init(&treasure_chest->animator, treasure_chest->renderable.mesh_render.armature.bone_count);
     update_add(treasure_chest, treasure_chest_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
-    if (inventory_has_item(definition->item) && !inventory_is_upgrade_item(definition->item)) {
+    bool has_item;
+
+    if (definition->has_item != VARIABLE_DISCONNECTED) {
+        has_item = expression_get_bool(definition->has_item);
+    } else if (definition->item != VARIABLE_DISCONNECTED) {
+        has_item = expression_get_integer(definition->item) != 0;
+    } else {
+        has_item = false;
+    }
+
+    if (has_item) {
         animator_run_clip(&treasure_chest->animator, treasure_chest->animations.open, animation_clip_get_duration(treasure_chest->animations.open), false);
-        treasure_chest->item_type = ITEM_TYPE_NONE;
+        treasure_chest->item_ref = VARIABLE_DISCONNECTED;
         interactable_init(&treasure_chest->interactable, id, INTERACT_TYPE_NONE, treasure_chest_interact, treasure_chest);
     } else {
         animator_run_clip(&treasure_chest->animator, treasure_chest->animations.idle, 0.0f, false);

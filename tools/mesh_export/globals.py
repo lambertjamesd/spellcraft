@@ -38,6 +38,7 @@ if __name__ == "__main__":
 
     parser.add_argument('output')
     parser.add_argument('inventory_mapping')
+    parser.add_argument('globals_header')
     parser.add_argument('input', nargs='*')
 
     args = parser.parse_args()
@@ -75,3 +76,27 @@ if __name__ == "__main__":
             file.write('    [' + mapping[entry.name] + '] = { .data_type = ' + data_type_mapping[entry.type_name] + ', .word_offset = ' + str(entry.offset // entry.bit_size) + ' },\n')
 
         file.write('};')
+
+    with open(args.globals_header, 'w') as file:
+        file.write('#ifndef __CUTSCENE_GLOBAL_LIST_H__\n')
+        file.write('#define __CUTSCENE_GLOBAL_LIST_H__\n')
+        file.write('\n')
+        file.write('#include "evaluation_context.h"\n')
+        file.write('\n')
+        
+        for entry in entries.get_all_entries():
+            word_offset = str(entry.offset // entry.bit_size)
+            file.write(f"#define VAR_POS_{entry.name} {word_offset}\n")
+
+            if entry.type_name.startswith('char['):
+                file.write(f"#define VAR_TYP_{entry.name} DATA_TYPE_ADDRESS\n")
+                file.write(f"#define VAR_LOC_{entry.name} (global_location_t){{.data_type = DATA_TYPE_ADDRESS, .word_offset = {word_offset}}}\n")
+            else:
+                file.write(f"#define VAR_TYP_{entry.name} {data_type_mapping[entry.type_name]}\n")
+                file.write(f"#define VAR_LOC_{entry.name} (global_location_t){{.data_type = {data_type_mapping[entry.type_name]}, .word_offset = {word_offset}}}\n")
+
+            file.write('\n')
+
+        file.write('\n')
+        file.write('#endif\n')
+

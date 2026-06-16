@@ -19,7 +19,8 @@ struct treasure_chest {
     struct renderable renderable;
     struct dynamic_object dynamic_object;
     struct interactable interactable;
-    enum inventory_item_type item_type;
+    any_variable item_ref;
+    boolean_variable has_item;
     struct animation_set* animation_set;
     struct treasure_animations animations;
     struct animator animator;

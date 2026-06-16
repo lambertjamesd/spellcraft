@@ -387,20 +387,21 @@ def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
 
     return scene_vars_builder.build(), function_names, cutscene_filename
 
-int_types = {'i8': 1, 'i16': 2, 'i32': 3}
-
-TYPE_OFFSET = 13
-SCENE_FLAG = 0x8000
-
-def int_type_flag(name: str) -> int:
-    return int_types[name] << TYPE_OFFSET
-
 def build_variable_enum(enums: dict, globals: variable_layout.VariableLayout, scene: variable_layout.VariableLayout):
     boolean_enum, integer_enum, entity_id_enum = variable_layout.build_variables(globals, scene)
 
     enums['boolean_variable'] = struct_parse.UnorderedEnum('boolean_variable', boolean_enum)
     enums['integer_variable'] = struct_parse.UnorderedEnum('integer_variable', integer_enum)
     enums['entity_id_variable'] = struct_parse.UnorderedEnum('entity_id_variable', entity_id_enum)
+
+    any_variable: dict[str, int] = {}
+
+    for key, value in boolean_enum.items():
+        any_variable[key] = value | (variable_layout.int_type_flag('bool'))
+    for key, value in integer_enum.items():
+        any_variable[key] = value
+        
+    enums['any_variable'] = struct_parse.UnorderedEnum('any_variable', any_variable)
         
 
 def build_room_entity_block(objects: list[ObjectEntry], variable_context, context, enums: dict[str, struct_parse.UnorderedEnum]) -> bytes:

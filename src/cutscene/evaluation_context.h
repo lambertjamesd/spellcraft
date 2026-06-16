@@ -20,6 +20,13 @@ enum data_type {
 
 typedef enum data_type data_type_t;
 
+struct global_location { 
+    uint16_t data_type;
+    uint16_t word_offset;
+};
+
+typedef struct global_location global_location_t;
+
 struct evaluation_context {
     int stack[MAX_STACK_SIZE];
     uint16_t current_stack;

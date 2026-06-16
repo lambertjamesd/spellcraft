@@ -21,3 +21,8 @@ global fire_trials_bossdoor_kiln_0: bool;
 global fire_trials_bossdoor_kiln_1: bool;
 global fire_trials_bossdoor_open: bool;
 global fire_trials_boss_dead: bool;
+
+global fire_trials_key_count: i8;
+global fire_trials_key_0: bool;
+global fire_trials_key_1: bool;
+global fire_trials_key_2: bool;

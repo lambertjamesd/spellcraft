@@ -282,6 +282,10 @@ class Definitions:
     def get_integer_variables(self):
         self.load()
         return self.integer_variables
+    
+    def get_any_variables(self):
+        self.load()
+        return self.boolean_variables + self.integer_variables
 
     def get_object_for_library_path(self, path):
         self.load()

@@ -27,6 +27,9 @@ def _get_booleans(self, context):
 def _get_integers(self, context):
     return list(map(lambda x: (x, x, ''), object_definitions.get_integer_variables()))
 
+def _get_any(self, context):
+    return list(map(lambda x: (x, x, ''), object_definitions.get_any_variables()))
+
 def _get_entry_points(self, context):
     return list(map(lambda x: (x, x[len('rom:/scenes/'):], ''), object_definitions.get_entry_points()))
 
@@ -174,6 +177,29 @@ class NODE_OT_game_object_integer_variable(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
+        
+class NODE_OT_game_object_any_variable(bpy.types.Operator):
+    """Set any variable"""
+    bl_idname = "node.game_object_any_variable"
+    bl_label = "Set any variable property"
+    bl_description = "Sets a integer variable property on a game object"
+    bl_property = "selected_item"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    selected_item: bpy.props.EnumProperty(items=_get_any)
+    name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        context.object[self.name] = self.selected_item
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
 
 class NODE_OT_game_objects_clear_script(bpy.types.Operator):
     """Set custom property"""
@@ -269,6 +295,7 @@ _enum_mapping = {
     'room_id': NODE_OT_game_object_room_id.bl_idname,
     'boolean_variable': NODE_OT_game_object_boolean_variable.bl_idname,
     'integer_variable': NODE_OT_game_object_integer_variable.bl_idname,
+    'any_variable': NODE_OT_game_object_any_variable.bl_idname,
     'struct Vector3': NODE_OT_game_object_positions.bl_idname,
     'entity_spawner': NODE_OT_game_object_spawners.bl_idname,
 }
@@ -636,6 +663,7 @@ _classes = [
     NODE_OT_game_object_room_id,
     NODE_OT_game_object_boolean_variable,
     NODE_OT_game_object_integer_variable,
+    NODE_OT_game_object_any_variable,
     NODE_OT_game_objects_clear_script,
     NODE_OT_game_object_entry_points,
     NODE_OT_game_object_add,

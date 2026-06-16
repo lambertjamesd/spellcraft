@@ -94,17 +94,20 @@ enum inventory_item_type {
     ITEM_TYPE_COUNT,
 };
 
+typedef enum inventory_item_type inventory_item_type_t;
+
 #define SPELL_SYBMOL_COUNT ITEM_TYPE_STAFF_DEFAULT
 
 #define VARIABLE_DISCONNECTED   0xFFFF
 #define SCENE_VARIABLE_FLAG 0x8000
-#define INT_SIZE_MASK       0x6000
-#define INT_OFFSET_MASK     0x1FFF
+#define INT_SIZE_MASK       0x7000
+#define INT_OFFSET_MASK     0x0FFF
 
-#define GET_INT_VAR_SIZE(var)   (data_type_t)(((var) & INT_SIZE_MASK) >> 13)
+#define GET_INT_VAR_SIZE(var)   (data_type_t)(((var) & INT_SIZE_MASK) >> 12)
 
 typedef uint16_t boolean_variable;
 typedef uint16_t integer_variable;
+typedef uint16_t any_variable;
 
 typedef char* script_location;
 typedef char* scene_entry_point;
@@ -132,7 +135,8 @@ struct training_dummy_definition {
 struct treasure_chest_definition {
     struct Vector3 position;
     struct Vector2 rotation;
-    enum inventory_item_type item;
+    any_variable item;
+    boolean_variable has_item;
 };
 
 struct biter_definition {

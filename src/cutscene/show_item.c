@@ -295,3 +295,13 @@ void show_item_in_cutscene(struct cutscene_builder* cutscene_builder, enum inven
     cutscene_builder_show_item(cutscene_builder, 1, false);
     cutscene_builder_pause(cutscene_builder, false, true);
 }
+
+void show_item_with_var_in_cutscene(struct cutscene_builder* cutscene_builder, any_variable item) {
+    inventory_item_type_t type = inventory_item_from_var(item);
+
+    if (type == ITEM_TYPE_NONE) {
+        return;
+    }
+
+    show_item_in_cutscene(cutscene_builder, type);
+}

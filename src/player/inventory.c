@@ -193,3 +193,16 @@ boolean_variable inventory_get_item_ref(enum inventory_item_type item) {
 
     return global->word_offset;
 }
+
+inventory_item_type_t inventory_item_from_var(any_variable var) {
+    int data_type = GET_INT_VAR_SIZE(var);
+    int word_offset = var & INT_OFFSET_MASK;
+
+    for (int i = 0; i < ITEM_TYPE_COUNT; i += 1) {
+        if (inventory_item_locations[i].data_type == data_type && inventory_item_locations[i].word_offset == word_offset) {
+            return i;
+        }
+    }
+
+    return ITEM_TYPE_NONE;
+}
