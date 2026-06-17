@@ -38,6 +38,7 @@ static const char* item_icon_materials[] = {
     // SPELL_SYMBOL_PASS_DOWN,
 
     [ITEM_TYPE_STAFF_DEFAULT] = "rom:/materials/objects/icons/default_staff_icon.mat",
+    [ITEM_TYPE_KEY_GEM] = "rom:/materials/objects/icons/key_gem.mat",
 };
 
 struct spell_level_messages {
@@ -80,6 +81,7 @@ static char* item_get_message[] = {
     [SPELL_SYMBOL_FIRE] = "You found the fire rune!\n\nWith it you can summon fire or imbue fire into chained runes",
     [SPELL_SYMBOL_EARTH] = "You found the projectile rune!\n\nUse it to damage enemies from afar or even chain into other runes on impact",
     [ITEM_TYPE_STAFF_DEFAULT] = "You got your fathers old staff",
+    [ITEM_TYPE_KEY_GEM] = "You found a key gem. Use one or more of them to open doors. They are only useful in these trials",
 };
 
 static const char image_offset_x[] = {
@@ -106,6 +108,8 @@ static const char image_width_x[] = {
     // SPELL_SYMBOL_PASS_DOWN,
 
     [ITEM_TYPE_STAFF_DEFAULT] = 64,
+    
+    [ITEM_TYPE_KEY_GEM] = 32,
 };
 
 struct offset_rect {
@@ -300,6 +304,7 @@ void show_item_with_var_in_cutscene(struct cutscene_builder* cutscene_builder, a
     inventory_item_type_t type = inventory_item_from_var(item);
 
     if (type == ITEM_TYPE_NONE) {
+        cutscene_builder_pause(cutscene_builder, false, true);
         return;
     }
 

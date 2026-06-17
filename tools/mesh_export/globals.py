@@ -17,6 +17,7 @@ mapping = {
     "life_rune_level": 'SPELL_SYMBOL_LIFE',
     "recast_rune_level": 'SPELL_SYMBOL_RECAST',
     "has_staff_default": 'ITEM_TYPE_STAFF_DEFAULT',
+    "fire_trials_key_count": 'ITEM_TYPE_KEY_GEM',
 }
 
 data_type_mapping = {

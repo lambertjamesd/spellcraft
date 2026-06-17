@@ -91,6 +91,8 @@ enum inventory_item_type {
 
     ITEM_TYPE_STAFF_DEFAULT,
 
+    ITEM_TYPE_KEY_GEM,
+
     ITEM_TYPE_COUNT,
 };
 

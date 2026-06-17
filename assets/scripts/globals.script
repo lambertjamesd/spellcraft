@@ -3,6 +3,11 @@ global has_staff_default: bool = true;
 global has_talked_outside: bool;
 
 global fire_rune_level: i8 = 3;
+global fire_rune_has_level_0: bool;
+global fire_rune_has_level_1: bool;
+global fire_rune_has_level_2: bool;
+global fire_rune_has_level_3: bool;
+
 global ice_rune_level: i8 = 0;
 global earth_rune_level: i8 = 2;
 global air_rune_level: i8 = 3;

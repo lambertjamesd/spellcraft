@@ -365,7 +365,7 @@ def _init_default_properties(target):
             target[attr.name] = ''
         elif attr.data_type == 'room_id':
             target[attr.name] = 'room_default'
-        elif attr.data_type == 'boolean_variable' or attr.data_type == 'integer_variable':
+        elif attr.data_type == 'boolean_variable' or attr.data_type == 'integer_variable' or attr.data_type == 'any_variable':
             target[attr.name] = 'disconnected'
         elif attr.data_type == 'struct Vector3':
             target[attr.name] = ''
