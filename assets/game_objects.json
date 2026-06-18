@@ -43,6 +43,12 @@
             "type": "door"
         },
         {
+            "name": "objects_doors_gem_door",
+            "description": "",
+            "mesh": "meshes/objects/doors/gem_door.blend#door",
+            "type": "gem_key_door"
+        },
+        {
             "name": "objects_empty",
             "description": "",
             "mesh": "meshes/objects/empty.blend#empty",

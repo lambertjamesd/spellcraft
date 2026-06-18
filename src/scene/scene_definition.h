@@ -362,6 +362,7 @@ struct gem_key_door_definition {
     room_id room_b;
     boolean_variable unlocked;
     integer_variable key_gems;
+    uint8_t gem_count;
 };
 
 // definition insert point

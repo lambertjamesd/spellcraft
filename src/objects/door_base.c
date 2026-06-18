@@ -29,7 +29,7 @@ void door_base_render(void* data, struct render_batch* batch) {
     
     render_scene_render_renderable_single_axis(&door->renderable, batch);
 
-    if (interactable_get_type(&door->interactable) == INTERACT_TYPE_OPEN) {
+    if (interactable_get_type(&door->interactable) != INTERACT_TYPE_NONE) {
         return;
     }
 
@@ -200,9 +200,9 @@ void door_base_destroy(door_base_t* door) {
 
 void door_base_set_locked(door_base_t* door, bool value, door_interact_blocker interact_blocker) {
     if (value) {
+        interactable_set_type(&door->interactable, INTERACT_TYPE_NONE);
+    } else {
         interactable_set_type(&door->interactable, interact_blocker ? INTERACT_TYPE_CHECK : INTERACT_TYPE_OPEN);
         door->interact_blocker = interact_blocker;
-    } else {
-        interactable_set_type(&door->interactable, INTERACT_TYPE_NONE);
     }
 }

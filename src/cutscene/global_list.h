@@ -47,21 +47,25 @@
 #define VAR_TYP_fire_trials_key_2 DATA_TYPE_BOOL
 #define VAR_LOC_fire_trials_key_2 (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 10}
 
-#define VAR_POS_has_entered_fire_trials 11
+#define VAR_POS_fire_trials_key_door_unlocked 11
+#define VAR_TYP_fire_trials_key_door_unlocked DATA_TYPE_BOOL
+#define VAR_LOC_fire_trials_key_door_unlocked (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 11}
+
+#define VAR_POS_has_entered_fire_trials 12
 #define VAR_TYP_has_entered_fire_trials DATA_TYPE_BOOL
-#define VAR_LOC_has_entered_fire_trials (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 11}
+#define VAR_LOC_has_entered_fire_trials (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 12}
 
-#define VAR_POS_has_staff_default 12
+#define VAR_POS_has_staff_default 13
 #define VAR_TYP_has_staff_default DATA_TYPE_BOOL
-#define VAR_LOC_has_staff_default (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 12}
+#define VAR_LOC_has_staff_default (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 13}
 
-#define VAR_POS_has_talked_outside 13
+#define VAR_POS_has_talked_outside 14
 #define VAR_TYP_has_talked_outside DATA_TYPE_BOOL
-#define VAR_LOC_has_talked_outside (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 13}
+#define VAR_LOC_has_talked_outside (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 14}
 
-#define VAR_POS_intro_played 14
+#define VAR_POS_intro_played 15
 #define VAR_TYP_intro_played DATA_TYPE_BOOL
-#define VAR_LOC_intro_played (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 14}
+#define VAR_LOC_intro_played (global_location_t){.data_type = DATA_TYPE_BOOL, .word_offset = 15}
 
 #define VAR_POS_air_rune_level 2
 #define VAR_TYP_air_rune_level DATA_TYPE_S8
