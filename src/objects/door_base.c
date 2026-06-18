@@ -162,7 +162,7 @@ void door_base_init(door_base_t* door, door_base_definition_t* definition, entit
 
     renderable_single_axis_init(&door->renderable, &door->transform, mesh_filename);
     renderable_set_animator(&door->renderable, &door->animator);
-    render_scene_add(&door->transform.position, 1.4f, door_base_render, door);
+    render_scene_add(&door->transform.position, 2.4f, door_base_render, door);
 
     dynamic_object_init(
         id, 

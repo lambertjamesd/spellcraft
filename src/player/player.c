@@ -534,10 +534,6 @@ bool player_check_for_casting(struct player* player) {
 
     bool has_spell = live_cast_has_pending_spell(&player->live_cast);
 
-    if (has_spell) {
-        player->last_interaction_type = INTERACT_TYPE_CAST;
-    }
-
     if (has_spell && pressed.a) {
         spell_exec_start(&player->spell_exec, 4, live_cast_use_spell(&player->live_cast), source);
         player_check_for_animation_request(player, source);
@@ -753,8 +749,6 @@ void player_carry(player_t* player, contact_t* ground_contact) {
 
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
-    player->last_interaction_type = INTERACT_TYPE_DROP;
-
     if (pressed.a) {
         player_run_clip(player, PLAYER_ANIMATION_CARRY_DROP);
         return;
@@ -822,18 +816,23 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     entity_id interact_entity_id = 0;
     interactable_t* interactable = player_find_interactable(player, &interact_entity_id);
 
+    enum interact_type last_interaction_type = INTERACT_TYPE_NONE;
+
     if (interactable) {
-        player->last_interaction_type = interactable_get_type(interactable);
+        last_interaction_type = interactable_get_type(interactable);
+        player->hover_interaction = interact_entity_id;
         if (pressed.a) {
             player_handle_a_action(player, interactable, interact_entity_id);
         }
+    } else {
+        player->hover_interaction = 0;
     }
 
     if (player->state != PLAYER_GROUNDED) {
         return;
     }
 
-    if (player->last_interaction_type == INTERACT_TYPE_NONE) {
+    if (last_interaction_type == INTERACT_TYPE_NONE) {
         player_check_for_casting(player);
     }
 
@@ -1108,7 +1107,7 @@ void player_update(struct player* player) {
     joypad_inputs_t input = joypad_get_inputs(0);
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
-    player->last_interaction_type = INTERACT_TYPE_NONE;
+    player->hover_interaction = 0;
 
     if (pressed.d_up) {
         debug_collider_enable();
@@ -1305,7 +1304,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     render_scene_add_renderable(&player->z_target_visual, 1.0f);
     player->z_target = 0;
     player->z_target_visual.hide = 1;
-    player->last_interaction_type = INTERACT_TYPE_NONE;
+    player->hover_interaction = 0;
 }
 
 void player_destroy(struct player* player) {

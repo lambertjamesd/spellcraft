@@ -140,7 +140,8 @@ struct player {
     struct renderable z_target_visual;
 
     entity_id z_target;
-    interact_type_t last_interaction_type;
+    entity_id hover_interaction;
+
 };
 
 typedef struct player player_t;
