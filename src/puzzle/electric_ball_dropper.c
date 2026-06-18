@@ -24,9 +24,9 @@ void electric_ball_dropper_check_for_drop(electric_ball_dropper_t* dropper) {
         return;
     }
 
-    struct electric_ball_dropper_definition ball_definition = {
+    struct electric_ball_definition ball_definition = {
         .position = dropper->transform.position,
-        .is_active = false,
+        .is_energized = dropper->is_energized,
     };
 
     dropper->current_ball = entity_spawn(ENTITY_TYPE_electric_ball, &ball_definition);
@@ -45,6 +45,7 @@ void electric_ball_dropper_init(electric_ball_dropper_t* dropper, struct electri
     dropper->current_ball = 0;
     dropper->is_active = definition->is_active;
     dropper->last_is_active = false;
+    dropper->is_energized = definition->is_energized;
     electric_ball_dropper_check_for_drop(dropper);
 }
 

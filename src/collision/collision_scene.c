@@ -458,6 +458,8 @@ void collision_scene_collide() {
 
     collision_scene_collide_dynamic(prev_pos);
 
+    entity_id to_kill = 0;
+
     for (int i = 0; i < g_scene.count; ++i) {
         struct collision_scene_element* element = &g_scene.elements[i];
 
@@ -502,6 +504,10 @@ void collision_scene_collide() {
             object->position->y = g_scene.kill_plane;
             object->velocity.y = 0.0f;
             object->hit_kill_plane = 1;
+
+            if (!object->kill_plane_immune) {
+                to_kill = object->entity_id;
+            }
         }
     }
 
@@ -521,6 +527,10 @@ void collision_scene_collide() {
             curr->normal = gZeroVec;
             curr->surface_type = SURFACE_TYPE_NONE;
         }
+    }
+
+    if (to_kill) {
+        entity_despawn(to_kill);
     }
 }
 

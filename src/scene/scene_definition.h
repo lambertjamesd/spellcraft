@@ -280,6 +280,7 @@ struct electric_ball_grabber_definition {
 struct electric_ball_dropper_definition {
     struct Vector3 position;
     boolean_variable is_active;
+    bool is_energized;
 };
 
 struct step_switch_definition {

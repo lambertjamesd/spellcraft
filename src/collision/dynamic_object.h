@@ -103,6 +103,7 @@ struct dynamic_object {
     uint16_t has_ice_dash: 2;
     uint16_t density_class: 2;
     uint16_t weight_class: 3;
+    uint16_t kill_plane_immune: 1;
     uint16_t hit_kill_plane: 1;
     uint16_t should_sweep_collide: 1;
     uint16_t collision_layers;

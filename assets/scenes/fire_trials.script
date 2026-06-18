@@ -15,6 +15,9 @@ scene crossing_door_open: bool;
 scene elevator_active: bool;
 scene elevator_solved: bool;
 
+scene interlude_solved: bool;
+scene interlude_door_unlocked: bool;
+
 scene basement_entrance_solved: bool;
 scene basement_entrance_door_open: bool;
 scene basement_entrance_drop_ball: bool;
