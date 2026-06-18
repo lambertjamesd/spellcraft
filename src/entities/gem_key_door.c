@@ -69,7 +69,7 @@ bool gem_key_door_interact(struct interactable* interactable, entity_id from) {
 }
     
 void gem_key_door_init(gem_key_door_t* gem_key_door, struct gem_key_door_definition* definition, entity_id entity_id) {
-    door_base_init(&gem_key_door->door_base, (door_base_definition_t*)definition, entity_id);
+    door_base_init(&gem_key_door->door_base, (door_base_definition_t*)definition, entity_id, "rom:/meshes/objects/doors/gem_door.tmesh");
 
     gem_key_door->unlocked = definition->unlocked;
     gem_key_door->key_gems = definition->key_gems;

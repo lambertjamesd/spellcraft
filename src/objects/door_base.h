@@ -47,7 +47,7 @@ struct door_base_definition {
 
 typedef struct door_base_definition door_base_definition_t;
 
-void door_base_init(door_base_t* door, door_base_definition_t* definition, entity_id id);
+void door_base_init(door_base_t* door, door_base_definition_t* definition, entity_id id, const char* mesh_filename);
 void door_base_destroy(door_base_t* door);
 
 void door_base_update(door_base_t* door);

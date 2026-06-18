@@ -11,7 +11,7 @@ void door_update(void* data) {
 }
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id) {
-    door_base_init(&door->door_base, (door_base_definition_t*)definition, id);
+    door_base_init(&door->door_base, (door_base_definition_t*)definition, id, "rom:/meshes/objects/doors/door.tmesh");
     door->unlocked = definition->unlocked;
     update_add(door, door_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 }

@@ -153,14 +153,14 @@ void door_base_update(door_base_t* door) {
     }
 }
 
-void door_base_init(door_base_t* door, door_base_definition_t* definition, entity_id id) {
+void door_base_init(door_base_t* door, door_base_definition_t* definition, entity_id id, const char* mesh_filename) {
     transformSaInit(&door->transform, &definition->position, &definition->rotation, 1.0f);
     door->room_a = definition->room_a;
     door->room_b = definition->room_b;
     door->next_room = ROOM_NONE;
     door->preview_room = ROOM_NONE;
 
-    renderable_single_axis_init(&door->renderable, &door->transform, "rom:/meshes/objects/doors/door.tmesh");
+    renderable_single_axis_init(&door->renderable, &door->transform, mesh_filename);
     renderable_set_animator(&door->renderable, &door->animator);
     render_scene_add(&door->transform.position, 1.4f, door_base_render, door);
 
