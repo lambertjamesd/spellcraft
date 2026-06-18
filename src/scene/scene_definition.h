@@ -39,6 +39,7 @@ enum entity_type_id {
     ENTITY_TYPE_line_mesh,
     ENTITY_TYPE_script_runner,
     ENTITY_TYPE_water_waves,
+    ENTITY_TYPE_gem_key_door,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -352,6 +353,15 @@ struct water_waves_definition {
     struct Vector3 position;    
     uint16_t width;
     uint16_t height;
+};
+
+struct gem_key_door_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    room_id room_a;
+    room_id room_b;
+    boolean_variable unlocked;
+    integer_variable key_gems;
 };
 
 // definition insert point
