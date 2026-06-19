@@ -40,6 +40,7 @@ enum entity_type_id {
     ENTITY_TYPE_script_runner,
     ENTITY_TYPE_water_waves,
     ENTITY_TYPE_gem_key_door,
+    ENTITY_TYPE_golem_enemy,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -364,6 +365,12 @@ struct gem_key_door_definition {
     boolean_variable unlocked;
     integer_variable key_gems;
     uint8_t gem_count;
+};
+
+struct golem_enemy_definition {
+    struct Vector3 position;    
+    struct Vector2 rotation;
+    boolean_variable activated;
 };
 
 // definition insert point

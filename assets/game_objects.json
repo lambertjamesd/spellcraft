@@ -19,6 +19,12 @@
             "type": "npc"
         },
         {
+            "name": "enemies_golem_pot",
+            "description": "",
+            "mesh": "meshes/enemies/golem_pot.blend#golem.001",
+            "type": "golem_enemy"
+        },
+        {
             "name": "enemies_jelly_king",
             "description": "",
             "mesh": "meshes/enemies/jelly_king.blend#jellyking",

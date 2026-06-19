@@ -3,6 +3,7 @@
 #include "../enemies/biter.h"
 #include "../enemies/jelly.h"
 #include "../enemies/jelly_king.h"
+#include "../enemies/golem_enemy.h"
 #include "../util/hash_map.h"
 
 #include "../npc/npc.h"
@@ -101,6 +102,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(script_runner, fields_script_runner),
     ENTITY_DEFINITION(water_waves, fields_empty),
     ENTITY_DEFINITION(gem_key_door, fields_empty),
+    ENTITY_DEFINITION(golem_enemy, fields_empty),
     // scene_entity_definitions insert point
 };
 
