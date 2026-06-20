@@ -76,7 +76,7 @@ def process_scene():
         bm.free()
 
     mesh_list = mesh_export.entities.mesh.mesh_list(base_transform)
-    attatchments: list[mesh_export.entities.armature.BoneLinkage] = []
+    attachments: list[mesh_export.entities.armature.BoneLinkage] = []
 
     use_scene = None
 
@@ -86,7 +86,7 @@ def process_scene():
 
         if obj.data.library:
             if obj.parent and obj.parent_bone and arm:
-                attatchments.append(arm.find_bone_linkage(obj))
+                attachments.append(arm.find_bone_linkage(obj))
             
             continue
 
@@ -115,7 +115,7 @@ def process_scene():
         settings.light_source = use_scene['light_source']
 
     with open(output_filename, 'wb') as file:
-        mesh_export.entities.tiny3d_mesh_writer.write_mesh(meshes, arm, attatchments, settings, file)
+        mesh_export.entities.tiny3d_mesh_writer.write_mesh(meshes, arm, attachments, settings, file)
 
     mesh_export.entities.animation.export_animations(replace_extension(output_filename, '.anim'), arm, settings)
     

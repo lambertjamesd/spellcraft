@@ -14,11 +14,14 @@ enum light_source {
     LIGHT_SOURCE_RIM,
 };
 
-struct armature_attatchment {
+struct armature_attachment {
     char* name;
     uint16_t bone_index;
+    vector3_t local_pos;
     T3DMat4FP local_transform;
 };
+
+typedef struct armature_attachment armature_attachment_t;
 
 struct tmesh {
     material_pair_t* material;
@@ -29,8 +32,8 @@ struct tmesh {
     uint16_t material_transition_count;
     struct armature_definition armature;
 
-    struct armature_attatchment* attatchments;
-    uint16_t attatchment_count;
+    struct armature_attachment* attachments;
+    uint16_t attachment_count;
     uint8_t light_source;
 };
 
@@ -39,5 +42,7 @@ typedef struct tmesh tmesh_t;
 void tmesh_load(struct tmesh* tmesh, FILE* file);
 void tmesh_load_filename(struct tmesh* tmesh, const char* filename);
 void tmesh_release(struct tmesh* tmesh);
+
+armature_attachment_t* tmesh_find_attachment(tmesh_t* mesh, const char* name);
 
 #endif

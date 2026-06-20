@@ -2,6 +2,7 @@
 
 #include "../math/constants.h"
 #include "../collision/shapes/capsule.h"
+#include "../collision/shapes/sphere.h"
 #include "../math/mathf.h"
 
 #define VISION_DISTANCE 8.0f
@@ -14,6 +15,7 @@
 
 static tmesh_t* golem_pot;
 static tmesh_t* golem_full;
+static armature_attachment_t* golem_r_attachment;
 
 enum golem_animations {
     GOLEM_ANIM_WAKE_UP,
@@ -37,6 +39,10 @@ static dynamic_object_type_t golem_collider = {
     .center = {0.0f, 1.5f, 0.0f},
 };
 
+static dynamic_object_type_t golem_first_r_collider = {
+    SPHERE_COLLIDER(1.0f),
+};
+
 static spatial_trigger_type_t golem_vision = {
     .type = SPATIAL_TRIGGER_WEDGE,
     .data = {
@@ -46,6 +52,12 @@ static spatial_trigger_type_t golem_vision = {
             .angle = {SQRT_1_2, SQRT_1_2},
         },
     },
+};
+
+static struct damage_source punch_attack = {
+    .amount = 10.0f,
+    .type = DAMAGE_TYPE_KNOCKBACK,
+    .knockback_strength = damage_knockback_with_time(1.0f),
 };
 
 static vector2_t golem_rotation;
@@ -87,6 +99,7 @@ void golem_enemy_punch(golem_enemy_t* golem) {
     golem->animator_speed = 1.0f;
     golem->target_speed = 0.0f;
     golem->collider.velocity = gZeroVec;
+    collision_scene_add(&golem->fist_r_collider);
 }
 
 void golem_enemy_deactivate(golem_enemy_t* golem) {
@@ -120,6 +133,7 @@ void golem_update_speed(golem_enemy_t* golem, float speed) {
 
     vector3_t target_vel;
     vector2ToLookDir(&golem->transform.rotation, &target_vel);
+    vector3Scale(&target_vel, &target_vel, golem->target_speed);
     target_vel.y = golem->collider.velocity.y;
     golem->collider.velocity = target_vel;
 }
@@ -148,8 +162,23 @@ void golem_enemy_update_follow(golem_enemy_t* golem) {
 void golem_enemy_update_punch(golem_enemy_t* golem) {
     golem_update_speed(golem, 0.0f);
 
+    animator_apply(&golem->animator, &golem->renderable.mesh_render.armature);
+
+    transform_t fist_transform;
+    armature_bone_transform(&golem->renderable.mesh_render.armature, golem_r_attachment->bone_index, &fist_transform);
+
+    transformPoint(&fist_transform, &golem_r_attachment->local_pos, &golem->fist_r_position);
+    vector3Scale(&golem->fist_r_position, &golem->fist_r_position, 1.0f / MODEL_SCALE);
+    transformSaTransformPoint(&golem->transform, &golem->fist_r_position, &golem->fist_r_position);
+
     if (!animator_is_running_clip(&golem->animator, golem_animations[GOLEM_ANIM_PUNCH])) {
+        collision_scene_remove(&golem->fist_r_collider);
         golem_enemy_follow(golem);
+        return;
+    }
+
+    if (golem->animator.events.attack) {
+        health_apply_contact_damage(golem->fist_r_collider.active_contacts, &punch_attack, NULL);
     }
 }
 
@@ -182,7 +211,7 @@ void golem_enemy_update(void* data) {
         case GOLEM_STATE_DEACTIVATE:
             golem_enemy_update_deactivate(golem_enemy);
             break;
-    }   
+    }
 }
 
 void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition* definition, entity_id entity_id) {
@@ -199,7 +228,7 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
         entity_id, 
         &golem_enemy->collider, 
         &golem_collider, 
-        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_PLAYER, 
+        COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY, 
         &golem_enemy->transform.position, 
         &golem_enemy->transform.rotation
     );
@@ -212,7 +241,19 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
     golem_enemy->animator_speed = 1.0f;
     golem_enemy->target_speed = 0.0f;
 
+    golem_enemy->fist_r_position = gZeroVec;
+
     update_add(golem_enemy, golem_enemy_update, UPDATE_PRIORITY_ENEMY, UPDATE_LAYER_WORLD);
+
+    dynamic_object_init(
+        entity_id,
+        &golem_enemy->fist_r_collider,
+        &golem_first_r_collider,
+        COLLISION_LAYER_DAMAGE_PLAYER,
+        &golem_enemy->fist_r_position,
+        NULL
+    );
+    golem_enemy->fist_r_collider.trigger_type = TRIGGER_TYPE_OVERLAP;
 }
 
 void golem_enemy_destroy(golem_enemy_t* golem_enemy, struct golem_enemy_definition* definition) {
@@ -221,6 +262,10 @@ void golem_enemy_destroy(golem_enemy_t* golem_enemy, struct golem_enemy_definiti
     update_remove(golem_enemy);
     collision_scene_remove_trigger(&golem_enemy->vision);
     collision_scene_remove(&golem_enemy->collider);
+
+    if (golem_enemy->state == GOLEM_STATE_PUNCH) {
+        collision_scene_remove(&golem_enemy->fist_r_collider);
+    }
 }
 
 void golem_enemy_common_init() {
@@ -234,6 +279,8 @@ void golem_enemy_common_init() {
     }
 
     vector2ComplexFromAngle(GOLEM_TURN_RATE * fixed_time_step, &golem_rotation);
+
+    golem_r_attachment = tmesh_find_attachment(golem_full, "fist_r");
 }
 
 void golem_enemy_common_destroy() {

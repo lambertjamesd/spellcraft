@@ -19,6 +19,8 @@ void matrixFromBasis(float matrix[4][4], struct Vector3* origin, struct Vector3*
 
 void matrixFromPosition(float matrix[4][4], struct Vector3* position);
 
+void matrixGetPosition(float matrix[4][4], vector3_t* output);
+
 void matrixFromScale(float matrix[4][4], float scale);
 
 void matrixApplyScaledPos(float matrix[4][4], struct Vector3* position, float scale);

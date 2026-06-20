@@ -11,9 +11,9 @@ void _renderable_init(struct renderable* renderable) {
     renderable->attrs = NULL;
     armature_init(&renderable->mesh_render.armature, &renderable->mesh_render.mesh->armature);
 
-    if (renderable->mesh_render.mesh->attatchment_count) {
-        renderable->mesh_render.attachments = malloc(sizeof(struct tmesh*) * renderable->mesh_render.mesh->attatchment_count);
-        memset(renderable->mesh_render.attachments, 0, sizeof(struct tmesh*) * renderable->mesh_render.mesh->attatchment_count);
+    if (renderable->mesh_render.mesh->attachment_count) {
+        renderable->mesh_render.attachments = malloc(sizeof(struct tmesh*) * renderable->mesh_render.mesh->attachment_count);
+        memset(renderable->mesh_render.attachments, 0, sizeof(struct tmesh*) * renderable->mesh_render.mesh->attachment_count);
     } else {
         renderable->mesh_render.attachments = NULL;
     }

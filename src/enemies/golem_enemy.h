@@ -18,6 +18,8 @@ struct golem_enemy {
     renderable_t renderable;
     animator_t animator;
     dynamic_object_t collider;
+    dynamic_object_t fist_r_collider;
+    vector3_t fist_r_position;
     golem_enemy_state_t state;
     boolean_variable activated;
     spatial_trigger_t vision;

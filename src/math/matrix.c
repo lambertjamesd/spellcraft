@@ -85,6 +85,13 @@ void matrixFromPosition(float matrix[4][4], struct Vector3* position) {
     matrix[3][3] = 1.0f;
 }
 
+
+void matrixGetPosition(float matrix[4][4], vector3_t* output) {
+    output->x = matrix[3][0];
+    output->y = matrix[3][1];
+    output->z = matrix[3][2];
+}
+
 void matrixFromScale(float matrix[4][4], float scale) {
     matrix[0][0] = scale;
     matrix[0][1] = 0.0f;

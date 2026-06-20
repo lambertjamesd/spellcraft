@@ -471,7 +471,7 @@ def _sort_chunks(chunks: list[mesh_optimizer.mesh_chunk], sort_direction: mathut
     sort_result = sorted(zipped, key=lambda x: x[1])
     return list(map(lambda x: x[0], sort_result))
 
-def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | None, attatchments: list[armature.BoneLinkage], settings: export_settings.ExportSettings, file):
+def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | None, attachments: list[armature.BoneLinkage], settings: export_settings.ExportSettings, file):
     file.write('T3MS'.encode())
 
     chunks: list[mesh_optimizer.mesh_chunk] = []
@@ -543,8 +543,8 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
 
     armature.write_armature(file, arm, settings)
 
-    file.write(len(attatchments).to_bytes(2, 'big'))
-    for linkage in attatchments:
+    file.write(len(attachments).to_bytes(2, 'big'))
+    for linkage in attachments:
         name = linkage.name.encode()
         file.write(len(name).to_bytes(1, 'big'))
         file.write(name)

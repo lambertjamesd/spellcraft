@@ -34,15 +34,15 @@ void tmesh_unpack_rot(struct Quaternion* rot, FILE* file) {
     rot->w = sqrtf(1.0f - rot->x * rot->x - rot->y * rot->y - rot->z * rot->z);
 }
 
-void tmesh_load_attachment(struct armature_attatchment* attatchment, FILE* file) {
+void tmesh_load_attachment(struct armature_attachment* attachment, FILE* file) {
     uint8_t str_len;
     fread(&str_len, 1, 1, file);
 
-    attatchment->name = malloc(str_len + 1);
-    fread(attatchment->name, 1, str_len, file);
-    attatchment->name[str_len] = '\0';
+    attachment->name = malloc(str_len + 1);
+    fread(attachment->name, 1, str_len, file);
+    attachment->name[str_len] = '\0';
 
-    fread(&attatchment->bone_index, 2, 1, file);
+    fread(&attachment->bone_index, 2, 1, file);
 
     struct Transform transform;
     tmesh_unpack_pos(&transform.position, file);
@@ -55,8 +55,9 @@ void tmesh_load_attachment(struct armature_attatchment* attatchment, FILE* file)
 
     T3DMat4 mtx;
     transformToMatrix(&transform, mtx.m);
-    t3d_mat4_to_fixed(UncachedAddr(&attatchment->local_transform), &mtx);
-    data_cache_hit_writeback_invalidate(&attatchment->local_transform, sizeof(T3DMat4FP));
+    matrixGetPosition(mtx.m, &attachment->local_pos);
+    t3d_mat4_to_fixed(UncachedAddr(&attachment->local_transform), &mtx);
+    data_cache_hit_writeback_invalidate(&attachment->local_transform, sizeof(T3DMat4FP));
 }
 
 void tmesh_load_armature(struct tmesh* tmesh, FILE* file) {
@@ -131,18 +132,18 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
 
     tmesh_load_armature(tmesh, file);
 
-    // load attatchments
-    fread(&tmesh->attatchment_count, 2, 1, file);
+    // load attachments
+    fread(&tmesh->attachment_count, 2, 1, file);
 
-    if (tmesh->attatchment_count) {
-        tmesh->attatchments = malloc(sizeof(struct armature_attatchment) * tmesh->attatchment_count);
+    if (tmesh->attachment_count) {
+        tmesh->attachments = malloc(sizeof(struct armature_attachment) * tmesh->attachment_count);
 
-        for (int i = 0; i < tmesh->attatchment_count; i += 1) {
-            struct armature_attatchment* attatchment = &tmesh->attatchments[i];
-            tmesh_load_attachment(attatchment, file);
+        for (int i = 0; i < tmesh->attachment_count; i += 1) {
+            struct armature_attachment* attachment = &tmesh->attachments[i];
+            tmesh_load_attachment(attachment, file);
         }
     } else {
-        tmesh->attatchments = NULL;
+        tmesh->attachments = NULL;
     }
 
     fread(&tmesh->light_source, 1, 1, file);
@@ -248,11 +249,11 @@ void tmesh_release(struct tmesh* tmesh) {
         free(tmesh->transition_materials);
     }
 
-    if (tmesh->attatchments) {
-        for (int i = 0; i < tmesh->attatchment_count; i += 1) {
-            free(tmesh->attatchments[i].name);
+    if (tmesh->attachments) {
+        for (int i = 0; i < tmesh->attachment_count; i += 1) {
+            free(tmesh->attachments[i].name);
         }
-        free(tmesh->attatchments);
+        free(tmesh->attachments);
     }
 
     int total_frames = tmesh->armature.image_frames_0 + tmesh->armature.image_frames_1;
@@ -264,4 +265,14 @@ void tmesh_release(struct tmesh* tmesh) {
     free(tmesh->armature.frames);
 
     armature_definition_destroy(&tmesh->armature);
+}
+
+armature_attachment_t* tmesh_find_attachment(tmesh_t* mesh, const char* name) {
+    for (int i = 0; i < mesh->attachment_count; i += 1) {
+        if (strcmp(mesh->attachments[i].name, name) == 0) {
+            return &mesh->attachments[i];
+        }
+    }
+
+    return NULL;
 }

@@ -705,7 +705,7 @@ void player_carry(player_t* player, contact_t* ground_contact) {
         transform_sa_t* player_transform = &player->cutscene_actor.transform;
 
         struct Transform cast_transform;
-        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attatchments[0].bone_index, &cast_transform);
+        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attachments[0].bone_index, &cast_transform);
 
         struct Vector3 position;
         vector3Scale(&cast_transform.position, &cast_transform.position, 1.0f / MODEL_SCALE);
@@ -991,7 +991,7 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
 
     if (source->flags.is_animating) {
         struct Transform cast_transform;
-        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attatchments[0].bone_index, &cast_transform);
+        armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attachments[0].bone_index, &cast_transform);
 
         struct Vector3 direction;
         quatMultVector(&cast_transform.rotation, &gUp, &direction);

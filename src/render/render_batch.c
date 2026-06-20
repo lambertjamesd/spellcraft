@@ -150,8 +150,8 @@ struct render_batch_element* render_batch_add_tmesh(
             attr->offset = 0;
             attr->pose.pose = pose_fp;
     
-            if (attachments && mesh->attatchments) {
-                for (int i = 0; i < mesh->attatchment_count; i += 1) {
+            if (attachments && mesh->attachments) {
+                for (int i = 0; i < mesh->attachment_count; i += 1) {
                     if (!attachments[i]) {
                         continue;
                     }
@@ -166,7 +166,7 @@ struct render_batch_element* render_batch_add_tmesh(
     
                     int matrix_index = 0;                
                     
-                    struct armature_attatchment* linkage = &mesh->attatchments[i];
+                    struct armature_attachment* linkage = &mesh->attachments[i];
                     
                     matrices[matrix_index++] = transform;
                     matrices[matrix_index++] = &pose_fp[linkage->bone_index];
