@@ -3,15 +3,27 @@
 
 #include "../entities/entity_deps.h"
 
+enum golem_enemy_state {
+    GOLEM_STATE_IDLE,
+    GOLEM_STATE_ACTIVATING,
+    GOLEM_STATE_FOLLOW,
+    GOLEM_STATE_PUNCH,
+    GOLEM_STATE_DEACTIVATE,
+};
+
+typedef enum golem_enemy_state golem_enemy_state_t;
+
 struct golem_enemy {
     transform_sa_t transform;
     renderable_t renderable;
     animator_t animator;
     dynamic_object_t collider;
+    golem_enemy_state_t state;
     boolean_variable activated;
     spatial_trigger_t vision;
     entity_id target;
-    bool is_active;
+    float animator_speed;
+    float target_speed;
 };
 
 typedef struct golem_enemy golem_enemy_t;

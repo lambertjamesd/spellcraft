@@ -87,6 +87,10 @@ void hud_render_interaction_preview(struct hud* hud) {
     pos.y = (obj->bounding_box.max.y + obj->bounding_box.min.y) * 0.5f;
     camera_screen_from_position(hud->camera, &pos, &screen_pos);
 
+    int box_width = measure_text(FONT_DIALOG, interaction_name);
+
+    screen_pos.x -= box_width >> 1;
+
     if (screen_pos.x < -SCREEN_EDGE_MARGIN || screen_pos.y < -SCREEN_EDGE_MARGIN ||
         screen_pos.x > SCREEN_WD + SCREEN_EDGE_MARGIN || screen_pos.y > SCREEN_HT + SCREEN_EDGE_MARGIN) {
         return;
@@ -94,8 +98,6 @@ void hud_render_interaction_preview(struct hud* hud) {
 
     screen_pos.x = floorf(screen_pos.x);
     screen_pos.y = floorf(screen_pos.y);
-
-    int box_width = measure_text(FONT_DIALOG, interaction_name);
 
     rdpq_sync_pipe();
     material_pair_apply(hud->assets.overlay_material, NULL);
