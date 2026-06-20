@@ -172,6 +172,8 @@ WaterCmd_ProcessBlock_NextFrame:
     addi pos_ptr, pos_ptr, FRAME_STEP
     addi left_ptr, left_ptr, FRAME_STEP
     addi right_ptr, right_ptr, FRAME_STEP
+    addi up_ptr, up_ptr, FRAME_STEP
+    addi down_ptr, down_ptr, FRAME_STEP
     addi vel_ptr, vel_ptr, FRAME_STEP
     addi out_ptr, out_ptr, FRAME_STEP
     addi col_count, col_count, -FRAME_STEP
