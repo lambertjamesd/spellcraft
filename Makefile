@@ -146,7 +146,7 @@ build/cutscene/function_defs.json: src/cutscene/cutscene_step_fn.c src/cutscene/
 	@mkdir -p build/cutscene/
 	python3 tools/mesh_export/generate_function_defs.py
 
-build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/inventory_mapping.c src/cutscene/global_list.h: tools/mesh_export/globals.py assets/scripts/globals.script
+build/assets/scripts/globals.json build/assets/scripts/globals.dat src/player/inventory_mapping.c src/cutscene/global_list.h: tools/mesh_export/globals.py assets/scripts/globals.script build/cutscene/function_defs.json
 	@mkdir -p build/assets/scripts/
 	python3 tools/mesh_export/globals.py build/assets/scripts/globals src/player/inventory_mapping.c src/cutscene/global_list.h assets/scripts/globals.script
 
