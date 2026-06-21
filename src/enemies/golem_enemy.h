@@ -24,6 +24,7 @@ struct golem_enemy {
     boolean_variable activated;
     spatial_trigger_t vision;
     entity_id target;
+    vector2_t head_rotation;
     float animator_speed;
     float target_speed;
 };
