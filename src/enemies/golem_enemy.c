@@ -12,19 +12,22 @@
 #define GOLEM_HEAD_ROTATION_OFFSET  -0.78f
 #define GOLEM_WALK_SPEED            0.8f
 #define GOLEM_ACCEL                 0.5f
+#define GOLEM_ATTACK_GAP            3.0f
 
-#define PUNCH_RANGE         2.0f
+#define PUNCH_RANGE         2.5f
 
 #define HEAD_BONE           1
 
 static tmesh_t* golem_pot;
 static tmesh_t* golem_full;
 static armature_attachment_t* golem_r_attachment;
+static armature_attachment_t* golem_l_attachment;
 
 enum golem_animations {
     GOLEM_ANIM_WAKE_UP,
     GOLEM_ANIM_WALK,
     GOLEM_ANIM_PUNCH,
+    GOLEM_ANIM_SPIN,
 
     GOLEM_ANIM_COUNT,
 };
@@ -36,6 +39,7 @@ static const char* golem_animation_names[GOLEM_ANIM_COUNT] = {
     [GOLEM_ANIM_WAKE_UP] = "wake_up",
     [GOLEM_ANIM_WALK] = "walk",
     [GOLEM_ANIM_PUNCH] = "punch",
+    [GOLEM_ANIM_SPIN] = "spin_attack",
 };
 
 static dynamic_object_type_t golem_collider = {
@@ -43,7 +47,7 @@ static dynamic_object_type_t golem_collider = {
     .center = {0.0f, 1.5f, 0.0f},
 };
 
-static dynamic_object_type_t golem_first_r_collider = {
+static dynamic_object_type_t golem_fist_collider = {
     SPHERE_COLLIDER(1.0f),
 };
 
@@ -66,6 +70,33 @@ static struct damage_source punch_attack = {
 
 static vector2_t golem_rotation_speed;
 static vector2_t golem_head_rotation_speed;
+
+
+void golem_fist_activate(golem_fist_t* fist) {
+    if (fist->is_active) {
+        return;
+    }
+    
+    collision_scene_add(&fist->collider);
+}
+
+void golem_fist_deactivate(golem_fist_t* fist) {
+    if (!fist->is_active) {
+        return;
+    }
+
+    collision_scene_remove(&fist->collider);
+}
+
+void golem_fist_update(golem_enemy_t* golem, golem_fist_t* fist) {
+    transform_t fist_transform;
+    armature_bone_transform(&golem->renderable.mesh_render.armature, fist->attachment->bone_index, &fist_transform);
+
+    transformPoint(&fist_transform, &golem_r_attachment->local_pos, &fist->position);
+    vector3Scale(&fist->position, &fist->position, 1.0f / MODEL_SCALE);
+    transformSaTransformPoint(&golem->transform, &fist->position, &fist->position);
+
+}
 
 void golem_enemy_look_forward(golem_enemy_t* golem) {
     vector2RotateTowards(&golem->head_rotation, &gRight2, &golem_head_rotation_speed, &golem->head_rotation);
@@ -133,7 +164,21 @@ void golem_enemy_punch(golem_enemy_t* golem) {
     golem->animator_speed = 1.0f;
     golem->target_speed = 0.0f;
     golem->collider.velocity = gZeroVec;
-    collision_scene_add(&golem->fist_r_collider);
+    golem->attack_timer = GOLEM_ATTACK_GAP;
+    
+    golem_fist_activate(&golem->fist_r);
+}
+
+void golem_enemy_spin(golem_enemy_t* golem) {
+    animator_run_clip(&golem->animator, golem_animations[GOLEM_ANIM_SPIN], 0.0f, false);
+    golem->state = GOLEM_STATE_SPIN_ATTACK;
+    golem->animator_speed = 1.0f;
+    golem->target_speed = 0.0f;
+    golem->collider.velocity = gZeroVec;
+    golem->attack_timer = GOLEM_ATTACK_GAP;
+    
+    golem_fist_activate(&golem->fist_r);
+    golem_fist_activate(&golem->fist_l);
 }
 
 void golem_enemy_deactivate(golem_enemy_t* golem) {
@@ -145,6 +190,7 @@ void golem_enemy_deactivate(golem_enemy_t* golem) {
     );
     golem->state = GOLEM_STATE_DEACTIVATE;
     golem->collider.collision_layers &= ~COLLISION_LAYER_Z_TARGET;
+    golem->animator_speed = -1.0f;
 }
 
 void golem_enemy_update_idle(golem_enemy_t* golem) {
@@ -190,13 +236,23 @@ void golem_enemy_update_follow(golem_enemy_t* golem) {
     vector2RotateTowards(&golem->transform.rotation, &target_rotate, &golem_rotation_speed, &golem->transform.rotation);
 
     golem->animator_speed = sqrtf(vector3MagSqrd2D(&golem->collider.velocity)) * (1.0f / GOLEM_WALK_SPEED);
-    golem_update_speed(golem, GOLEM_WALK_SPEED);
-
-    if (vector3MagSqrd2D(&offset) < PUNCH_RANGE * PUNCH_RANGE) {
-        golem_enemy_punch(golem);
-    }
+    golem->attack_timer -= fixed_time_step;
 
     golem_look_at_target(golem);
+
+    if (vector3MagSqrd2D(&offset) < PUNCH_RANGE * PUNCH_RANGE) {
+        if (golem->attack_timer > 0.0f) {
+            golem_update_speed(golem, 0.0f);
+        } else if (vector2Dot(&golem->head_rotation, &gRight2) > 0.8f) {
+            golem_enemy_punch(golem);
+        } else {
+            golem_enemy_spin(golem);
+        }
+
+        return;
+    }
+
+    golem_update_speed(golem, GOLEM_WALK_SPEED);
 }
 
 void golem_enemy_update_punch(golem_enemy_t* golem) {
@@ -204,24 +260,44 @@ void golem_enemy_update_punch(golem_enemy_t* golem) {
 
     animator_apply(&golem->animator, &golem->renderable.mesh_render.armature);
 
-    transform_t fist_transform;
-    armature_bone_transform(&golem->renderable.mesh_render.armature, golem_r_attachment->bone_index, &fist_transform);
-
-    transformPoint(&fist_transform, &golem_r_attachment->local_pos, &golem->fist_r_position);
-    vector3Scale(&golem->fist_r_position, &golem->fist_r_position, 1.0f / MODEL_SCALE);
-    transformSaTransformPoint(&golem->transform, &golem->fist_r_position, &golem->fist_r_position);
+    golem_fist_update(golem, &golem->fist_r);
 
     if (!animator_is_running_clip(&golem->animator, golem_animations[GOLEM_ANIM_PUNCH])) {
-        collision_scene_remove(&golem->fist_r_collider);
+        golem_fist_deactivate(&golem->fist_r);
         golem_enemy_follow(golem);
         return;
     }
 
     if (golem->animator.events.attack) {
-        health_apply_contact_damage(golem->fist_r_collider.active_contacts, &punch_attack, NULL);
+        vector3_t direction;
+        vector2ToLookDir(&golem->transform.rotation, &direction);
+        vector3Negate(&direction, &direction);
+        health_apply_contact_damage_with_direction(golem->fist_r.collider.active_contacts, &punch_attack, NULL, &direction);
     }
     
     golem_enemy_look_forward(golem);
+}
+
+void golem_enemy_update_spin_attack(golem_enemy_t* golem) {
+    golem_update_speed(golem, 0.0f);
+    golem_enemy_look_forward(golem);
+    
+    animator_apply(&golem->animator, &golem->renderable.mesh_render.armature);
+    golem_fist_update(golem, &golem->fist_r);
+    golem_fist_update(golem, &golem->fist_l);
+
+    if (!animator_is_running_clip(&golem->animator, golem_animations[GOLEM_ANIM_SPIN])) {
+        golem_fist_deactivate(&golem->fist_r);
+        golem_fist_deactivate(&golem->fist_l);
+        golem_enemy_follow(golem);
+        return;
+    }
+
+    
+    if (golem->animator.events.attack) {
+        health_apply_contact_damage(golem->fist_r.collider.active_contacts, &punch_attack, NULL);
+        health_apply_contact_damage(golem->fist_l.collider.active_contacts, &punch_attack, NULL);
+    }
 }
 
 void golem_enemy_update_deactivate(golem_enemy_t* golem) {
@@ -252,10 +328,29 @@ void golem_enemy_update(void* data) {
         case GOLEM_STATE_PUNCH:
             golem_enemy_update_punch(golem_enemy);
             break;
+        case GOLEM_STATE_SPIN_ATTACK:
+            golem_enemy_update_spin_attack(golem_enemy);
+            break;
         case GOLEM_STATE_DEACTIVATE:
             golem_enemy_update_deactivate(golem_enemy);
             break;
     }
+}
+
+void golem_fist_init(golem_fist_t* fist, entity_id entity_id, armature_attachment_t* attachment) {
+    dynamic_object_init(
+        entity_id,
+        &fist->collider,
+        &golem_fist_collider,
+        COLLISION_LAYER_DAMAGE_PLAYER,
+        &fist->position,
+        NULL
+    );
+    fist->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
+    fist->position = gZeroVec;
+    fist->trail = NULL;
+    fist->is_active = false;
+    fist->attachment = attachment;
 }
 
 void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition* definition, entity_id entity_id) {
@@ -285,21 +380,20 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
     golem_enemy->animator_speed = 1.0f;
     golem_enemy->target_speed = 0.0f;
 
-    golem_enemy->fist_r_position = gZeroVec;
     golem_enemy->head_rotation = gRight2;
+    golem_enemy->attack_timer = 0.0f;
 
     update_add(golem_enemy, golem_enemy_update, UPDATE_PRIORITY_ENEMY, UPDATE_LAYER_WORLD);
 
-    dynamic_object_init(
-        entity_id,
-        &golem_enemy->fist_r_collider,
-        &golem_first_r_collider,
-        COLLISION_LAYER_DAMAGE_PLAYER,
-        &golem_enemy->fist_r_position,
-        NULL
-    );
-    golem_enemy->fist_r_collider.trigger_type = TRIGGER_TYPE_OVERLAP;
+    golem_fist_init(&golem_enemy->fist_r, entity_id, golem_r_attachment);
+    golem_fist_init(&golem_enemy->fist_l, entity_id, golem_l_attachment);
 }
+
+void golem_fist_destroy(golem_fist_t* fist) {
+    if (fist->is_active) {
+        collision_scene_remove(&fist->collider);
+    }
+} 
 
 void golem_enemy_destroy(golem_enemy_t* golem_enemy, struct golem_enemy_definition* definition) {
     renderable_destroy_direct(&golem_enemy->renderable);
@@ -308,9 +402,8 @@ void golem_enemy_destroy(golem_enemy_t* golem_enemy, struct golem_enemy_definiti
     collision_scene_remove_trigger(&golem_enemy->vision);
     collision_scene_remove(&golem_enemy->collider);
 
-    if (golem_enemy->state == GOLEM_STATE_PUNCH) {
-        collision_scene_remove(&golem_enemy->fist_r_collider);
-    }
+    golem_fist_destroy(&golem_enemy->fist_r);
+    golem_fist_destroy(&golem_enemy->fist_l);
 }
 
 void golem_enemy_common_init() {
@@ -327,6 +420,7 @@ void golem_enemy_common_init() {
     vector2ComplexFromAngle(GOLEM_HEAD_TURN_RATE * fixed_time_step, &golem_head_rotation_speed);
 
     golem_r_attachment = tmesh_find_attachment(golem_full, "fist_r");
+    golem_l_attachment = tmesh_find_attachment(golem_full, "fist_l");
 }
 
 void golem_enemy_common_destroy() {

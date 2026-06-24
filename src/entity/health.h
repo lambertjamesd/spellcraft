@@ -4,6 +4,7 @@
 #include "entity_id.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include "../spell/elements.h"
 #include "../math/vector3.h"
 #include "damage.h"
@@ -39,7 +40,11 @@ float health_damage_id(entity_id target, struct damage_info* damage, struct dama
 
 void health_heal(struct health* health, float amount);
 
-bool health_apply_contact_damage(contact_t* first_contact, struct damage_source* damage, struct damaged_set* set);
+bool health_apply_contact_damage_with_direction(contact_t* first_contact, struct damage_source* damage, struct damaged_set* set, vector3_t* direction);
+
+static inline bool health_apply_contact_damage(contact_t* first_contact, struct damage_source* damage, struct damaged_set* set) {
+    return health_apply_contact_damage_with_direction(first_contact, damage, set, NULL);
+}
 
 struct health* health_get(entity_id id);
 

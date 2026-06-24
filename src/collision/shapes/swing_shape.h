@@ -18,5 +18,13 @@ void swing_shape_bounding_box(void* data, struct Vector2* rotation, struct Box3D
 void swing_shape_init(struct swing_shape* shape);
 void swing_shape_add(struct swing_shape* shape, struct Vector3* a, struct Vector3* b);
 
+#define SWING_COLLIDER(radius) \
+    .minkowsi_sum = swing_shape_minkowski_sum, \
+    .bounding_box = swing_shape_bounding_box,  \
+    .data = {                               \
+        .sphere = {                       \
+            (radius),                       \
+        },                                  \
+    }
 
 #endif

@@ -134,7 +134,7 @@ void health_heal(struct health* health, float amount) {
     health->current_health = minf(health->max_health, health->current_health + amount);
 }
 
-bool health_apply_contact_damage(contact_t* first_contact, struct damage_source* source, struct damaged_set* set) {
+bool health_apply_contact_damage_with_direction(contact_t* first_contact, struct damage_source* source, struct damaged_set* set, vector3_t* direction) {
     struct contact* curr = first_contact;
 
     struct damage_info damage;
@@ -153,7 +153,11 @@ bool health_apply_contact_damage(contact_t* first_contact, struct damage_source*
         }
 
         damage.source = curr->other_object;
-        damage.direction = curr->normal;
+        if (direction) {
+            damage.direction = *direction;
+        } else {
+            damage.direction = curr->normal;
+        }
 
         if (!vector3IsZero(&damage.direction)) {
             hit_effect_start(&curr->point, &curr->normal);

@@ -16,6 +16,8 @@ struct sword_trail {
     uint32_t color;
 };
 
+typedef struct sword_trail sword_trail_t;
+
 struct sword_trail* sword_trail_new(color_t color);
 // NULL indicates the trial is done
 void sword_trail_move(struct sword_trail* trail, struct Vector3* a, struct Vector3* b);
