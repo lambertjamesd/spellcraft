@@ -33,6 +33,7 @@ void health_init(struct health* health, entity_id id, float max_health) {
     health->current_health = max_health;
     health->current_status = 0;
     health->status_timer = 0.0f;
+    health->unmovable = false;
 
     hash_map_set(&health_entity_mapping, id, health);
 
@@ -94,7 +95,7 @@ float health_damage(struct health* health, struct damage_info* damage) {
         health->current_status = DAMAGE_TYPE_WATER;
     }
 
-    if (damage->type & DAMAGE_TYPE_KNOCKBACK) {
+    if ((damage->type & DAMAGE_TYPE_KNOCKBACK) && !health->unmovable) {
         struct dynamic_object* object = collision_scene_find_object(health->entity_id);
 
         if (object) {

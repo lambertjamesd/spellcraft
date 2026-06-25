@@ -32,6 +32,8 @@ struct golem_enemy {
     animator_t animator;
     dynamic_object_t collider;
 
+    health_t health;
+
     golem_fist_t fist_r;
     golem_fist_t fist_l;
 

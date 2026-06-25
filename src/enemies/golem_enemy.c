@@ -13,6 +13,7 @@
 #define GOLEM_WALK_SPEED            0.8f
 #define GOLEM_ACCEL                 0.5f
 #define GOLEM_ATTACK_GAP            3.0f
+#define FIRE_RESISTANCE             0.25f
 
 #define PUNCH_RANGE         2.5f
 
@@ -338,6 +339,11 @@ void golem_enemy_update(void* data) {
 }
 
 void golem_fist_init(golem_fist_t* fist, entity_id entity_id, armature_attachment_t* attachment) {
+    fist->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
+    fist->position = gZeroVec;
+    fist->trail = NULL;
+    fist->is_active = false;
+    fist->attachment = attachment;
     dynamic_object_init(
         entity_id,
         &fist->collider,
@@ -346,11 +352,16 @@ void golem_fist_init(golem_fist_t* fist, entity_id entity_id, armature_attachmen
         &fist->position,
         NULL
     );
-    fist->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
-    fist->position = gZeroVec;
-    fist->trail = NULL;
-    fist->is_active = false;
-    fist->attachment = attachment;
+}
+
+float golem_enemy_on_hit(void* data, struct damage_info* damage) {
+    golem_enemy_t* golem = (golem_enemy_t*)data;
+
+    if (damage->type & DAMAGE_TYPE_FIRE) {
+        return damage->amount * FIRE_RESISTANCE;
+    }
+
+    return damage->amount;
 }
 
 void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition* definition, entity_id entity_id) {
@@ -387,6 +398,10 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
 
     golem_fist_init(&golem_enemy->fist_r, entity_id, golem_r_attachment);
     golem_fist_init(&golem_enemy->fist_l, entity_id, golem_l_attachment);
+
+    health_init(&golem_enemy->health, entity_id, 200.0f);
+    health_set_callback(&golem_enemy->health, golem_enemy_on_hit, golem_enemy);
+    golem_enemy->health.unmovable = true;
 }
 
 void golem_fist_destroy(golem_fist_t* fist) {
@@ -404,6 +419,7 @@ void golem_enemy_destroy(golem_enemy_t* golem_enemy, struct golem_enemy_definiti
 
     golem_fist_destroy(&golem_enemy->fist_r);
     golem_fist_destroy(&golem_enemy->fist_l);
+    health_destroy(&golem_enemy->health);
 }
 
 void golem_enemy_common_init() {

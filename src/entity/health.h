@@ -19,6 +19,7 @@ struct health {
     float current_health;
     float status_timer;
     enum damage_type current_status;
+    bool unmovable;
 
     health_damage_callback callback;
     void* callback_data;
