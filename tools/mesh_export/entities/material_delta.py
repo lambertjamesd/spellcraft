@@ -10,12 +10,9 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None, st
     if start.filename == None and end.filename == None:
         accept_last_image_data = st0_filename == et0_filename
     
-    if start == end and accept_last_image_data:
-        return None
-    
     result = end.copy()
 
-    if start.filename == end.filename:
+    if start.filename == end.filename and start.tmem_addr == end.tmem_addr:
         result.filename = None
 
     if start.palette_data == end.palette_data and accept_last_image_data:

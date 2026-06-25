@@ -668,11 +668,20 @@ class Tex():
             self.height == value.height and \
             self.s == value.s and \
             self.t == value.t and \
-            self.frames == value.frames
+            self.frames == value.frames and \
+            self.tmem_addr == value.tmem_addr
                 
 
     def __str__(self):
-        return f"{self.filename} palette({len(self.palette_data) if self.palette_data else 0}) fmt={self.fmt}"
+        result = f"{self.filename} palette({len(self.palette_data) if self.palette_data else 0}) fmt={self.fmt}"
+
+        if self.tmem_addr != 0:
+            result = f"{result} tmem={self.tmem_addr}"
+
+        if self.palette != 0:
+            result = f"{result} palette={self.palette}"
+
+        return result
     
 class Fog():
     def __init__(self):
