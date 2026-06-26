@@ -20,7 +20,7 @@ void camera_wall_checker_init(camera_wall_checker_t* checker) {
     checker->collider.has_gravity = false;
     checker->position = gZeroVec;
     checker->cast_from = gZeroVec;
-    checker->actual_distance = 0.0f;
+    checker->actual_distance = MAX_CAST_DISTANCE;
     dynamic_object_init(
         entity_id_new(),
         &checker->collider,

@@ -338,9 +338,11 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     controller->state = CAMERA_STATE_FOLLOW;
 
     update_add(controller, (update_callback)camera_controller_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
+    camera_wall_checker_init(&controller->wall_checker);
 
     controller->speed = 0.0f;
     controller->looking_at = player->cutscene_actor.transform.position;
+    controller->looking_at.y += CAMERA_FOLLOW_HEIGHT;
     controller->looking_at_speed = 0.0f;
     controller->look_target = gZeroVec;
     camera_controller_determine_player_move_target(controller, &controller->target, true);
@@ -359,7 +361,6 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     controller->state_data.animate.animation = NULL;
     controller->state_data.animate.current_frame = 0;
 
-    camera_wall_checker_init(&controller->wall_checker);
 }
 
 void camera_controller_destroy(struct camera_controller* controller) {

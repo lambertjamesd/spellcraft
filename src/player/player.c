@@ -406,6 +406,7 @@ void player_die(struct player* player) {
 
     cutscene_builder_load_scene(&cutscene, scene_last_loaded());
     cutscene_builder_callback(&cutscene, player_hide_fog, NULL);
+    cutscene_builder_pause(&cutscene, false, false);
     
     cutscene_builder_fade(&cutscene, FADE_COLOR_NONE, 2.0f);
     
