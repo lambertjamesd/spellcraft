@@ -53,7 +53,9 @@ bool health_is_burning(struct health* health);
 bool health_is_frozen(struct health* health);
 bool health_is_shocked(struct health* health);
 bool health_has_status(struct health* health, enum damage_type damage_type);
-bool health_is_alive(struct health* health);
+static inline bool health_is_alive(struct health* health) {
+    return health->current_health > 0.0f;
+}
 
 void health_clear_status(struct health* health);
 

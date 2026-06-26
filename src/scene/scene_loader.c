@@ -7,6 +7,7 @@
 #include "../resource/tmesh_cache.h"
 #include "../resource/material_cache.h"
 #include "../render/render_scene.h"
+#include "../render/fog.h"
 #include "../time/time.h"
 #include "../cutscene/cutscene_runner.h"
 #include "../cutscene/evaluation_context.h"
@@ -359,6 +360,7 @@ struct scene* scene_load(const char* filename) {
     scene_mini_location(scene, file);
 
     scene_load_fog(&scene->fog, file);
+    fog_set(FOG_PRIORITY_SCENE, (fog_state_t){.color = scene->fog.color, .min = scene->fog.min, .max = scene->fog.max}, 0.0f);
 
     scene_load_camera_animations(&scene->camera_animations, filename, file);
 

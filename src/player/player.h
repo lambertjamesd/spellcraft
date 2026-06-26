@@ -35,6 +35,7 @@ enum player_state {
     PLAYER_GETTING_UP,
     PLAYER_CLIMBING_UP,
     PLAYER_CARRY,
+    PLAYER_DIE,
 };
 
 enum player_animation {
@@ -75,6 +76,8 @@ enum player_animation {
     PLAYER_ANIMATION_CARRY_DROP,
 
     PLAYER_ANIMATION_SLIDE_FORWARD,
+
+    PLAYER_ANIMATION_DIE,
 
     PLAYER_ANIMATION_COUNT,
 };
@@ -151,6 +154,10 @@ void player_init(struct player* player, struct player_definition* definition, st
 void player_render(struct player* player, struct render_batch* batch);
 
 void player_destroy(struct player* player);
+
+static inline bool player_is_dead(struct player* player) {
+    return player->state == PLAYER_DIE;
+}
 
 struct Vector3* player_get_position(struct player* player);
 

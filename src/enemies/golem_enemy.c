@@ -5,7 +5,7 @@
 #include "../collision/shapes/sphere.h"
 #include "../math/mathf.h"
 
-#define VISION_DISTANCE 8.0f
+#define VISION_DISTANCE 10.0f
 
 #define GOLEM_TURN_RATE             0.7f
 #define GOLEM_HEAD_TURN_RATE        2.0f
@@ -64,7 +64,7 @@ static spatial_trigger_type_t golem_vision = {
 };
 
 static struct damage_source punch_attack = {
-    .amount = 10.0f,
+    .amount = 200.0f,
     .type = DAMAGE_TYPE_KNOCKBACK,
     .knockback_strength = damage_knockback_with_time(1.0f),
 };
@@ -79,6 +79,7 @@ void golem_fist_activate(golem_fist_t* fist) {
     }
     
     collision_scene_add(&fist->collider);
+    fist->is_active = true;
 }
 
 void golem_fist_deactivate(golem_fist_t* fist) {
@@ -87,6 +88,7 @@ void golem_fist_deactivate(golem_fist_t* fist) {
     }
 
     collision_scene_remove(&fist->collider);
+    fist->is_active = false;
 }
 
 void golem_fist_update(golem_enemy_t* golem, golem_fist_t* fist) {
@@ -339,7 +341,6 @@ void golem_enemy_update(void* data) {
 }
 
 void golem_fist_init(golem_fist_t* fist, entity_id entity_id, armature_attachment_t* attachment) {
-    fist->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
     fist->position = gZeroVec;
     fist->trail = NULL;
     fist->is_active = false;
@@ -352,6 +353,7 @@ void golem_fist_init(golem_fist_t* fist, entity_id entity_id, armature_attachmen
         &fist->position,
         NULL
     );
+    fist->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
 }
 
 float golem_enemy_on_hit(void* data, struct damage_info* damage) {

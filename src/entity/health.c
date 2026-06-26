@@ -192,10 +192,6 @@ bool health_has_status(struct health* health, enum damage_type damage_type) {
     return health->status_timer > 0.0f && (health->current_status & damage_type) != 0;
 }
 
-bool health_is_alive(struct health* health) {
-    return health->current_health > 0.0f;
-}
-
 void health_clear_status(struct health* health) {
     health->current_health = 0.0f;
     health->current_status = 0;

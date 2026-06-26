@@ -9,12 +9,15 @@
 #include "../math/vector2.h"
 #include "../objects/collectable.h"
 #include "../render/render_scene.h"
+#include "../render/fog.h"
 #include "../resource/animation_cache.h"
 #include "../resource/tmesh_cache.h"
 #include "../time/time.h"
 #include "../debug/debug_colliders.h"
 #include "../render/defs.h"
 #include "../audio/audio.h"
+#include "../cutscene/cutscene.h"
+#include "../cutscene/cutscene_runner.h"
 
 #include "../effects/fade_effect.h"
 
@@ -349,6 +352,47 @@ void player_enter_grounded_state(struct player* player, struct contact* ground_c
 void player_enter_falling_state(struct player* player) {
     player->state = PLAYER_FALLING;
     player_run_clip(player, PLAYER_ANIMATION_JUMP_PEAK);
+}
+
+static vector3_t local_camera_death_pos = {
+    .x = 2.0f,
+    .y = 3.0f,
+    .z = 2.0f,
+};
+
+static vector3_t local_camera_death_look = {
+    .x = 0.0f,
+    .y = 1.0f,
+    .z = 0.5f,
+};
+
+void player_die(struct player* player) {
+    player->state = PLAYER_DIE;
+    player_run_clip(player, PLAYER_ANIMATION_DIE);
+    fog_set(FOG_PRIORITY_EFFECT, (fog_state_t){.color = {0, 0, 0, 255}, .min = 6.0f, .max = -2.0f}, 2.0f);
+
+    cutscene_builder_t cutscene;
+    cutscene_builder_init(&cutscene);
+
+    cutscene_builder_pause(&cutscene, true, false);
+
+    vector3_t relative_pos;
+    vector3RotateWith2(&local_camera_death_pos, &player->cutscene_actor.transform.rotation, &relative_pos);
+    vector3Add(&relative_pos, player_get_position(player), &relative_pos);
+
+    cutscene_builder_camera_move_to(&cutscene, &relative_pos, false);
+    
+    vector3RotateWith2(&local_camera_death_look, &player->cutscene_actor.transform.rotation, &relative_pos);
+    vector3Add(&relative_pos, player_get_position(player), &relative_pos);
+    cutscene_builder_camera_look_at_pos(&cutscene, &relative_pos, false);
+    
+    cutscene_runner_run(
+        cutscene_builder_finish(&cutscene),
+        0,
+        cutscene_runner_free_on_finish(),
+        NULL,
+        0
+    );
 }
 
 enum player_ground_movement_result {
@@ -787,6 +831,10 @@ void player_carry(player_t* player, contact_t* ground_contact) {
     player_loop_animation(player, PLAYER_ANIMATION_CARRY_RUN, speed * (1.0f / PLAYER_MAX_SPEED));
 }
 
+void player_update_die(struct player* player, struct contact* ground_contact) {
+
+}
+
 void player_update_knockback(struct player* player, struct contact* ground_contact) {
     if (ground_contact && player->cutscene_actor.collider.velocity.y < 0.1f) {
         player_run_clip(player, PLAYER_ANIMATION_KNOCKBACK_LAND);
@@ -942,6 +990,9 @@ void player_update_state(struct player* player, struct contact* ground_contact) 
             break;
         case PLAYER_CARRY:
             player_carry(player, ground_contact);
+            break;
+        case PLAYER_DIE:
+            player_update_die(player, ground_contact);
             break;
         default:
             player_update_grounded(player, ground_contact);
@@ -1141,6 +1192,10 @@ void player_update(struct player* player) {
     if (dynamic_object_is_crushed(&player->cutscene_actor.collider)) {
         debugf("crushed!\n");
     }
+
+    if ((!health_is_alive(&player->health) && !player_is_dead(player) && ground)) {
+        player_die(player);
+    }
 }
 
 void player_knockback(struct player* player) {
@@ -1204,6 +1259,8 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_CARRY_DROP] = "carry_drop",
 
     [PLAYER_ANIMATION_SLIDE_FORWARD] = "slide_forward",
+
+    [PLAYER_ANIMATION_DIE] = "die",
 };
 
 static const char* sound_names[PLAYER_SOUND_COUNT] = {};
