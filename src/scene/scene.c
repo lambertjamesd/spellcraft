@@ -16,6 +16,7 @@ struct scene* current_scene;
 #define MAX_SCENE_NAME_LENGTH       64
 #define MAX_ENTRANCE_NAME_LENGTH    32
 
+static char prev_loaded_scene[MAX_SCENE_NAME_LENGTH];
 static char next_scene_name[MAX_SCENE_NAME_LENGTH];
 static char next_entrance_name[MAX_ENTRANCE_NAME_LENGTH];
 
@@ -237,6 +238,8 @@ void scene_update(void* data) {
 }
 
 void scene_queue_next(const char* scene_name) {
+    strcpy(prev_loaded_scene, scene_name);
+
     const char* curr = scene_name;
     char* out = next_scene_name;
     while (*curr && *curr != '#') {
@@ -262,6 +265,10 @@ void scene_queue_next(const char* scene_name) {
 
 void scene_clear_next() {
     next_scene_name[0] = '\0';
+}
+
+const char* scene_last_loaded() {
+    return prev_loaded_scene;
 }
 
 loaded_entity_t scene_load_entity(struct scene* scene, memory_stream_t* stream, evaluation_context_t* eval_context) {

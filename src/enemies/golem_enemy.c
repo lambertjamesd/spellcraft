@@ -414,7 +414,7 @@ void golem_fist_destroy(golem_fist_t* fist) {
 
 void golem_enemy_destroy(golem_enemy_t* golem_enemy, struct golem_enemy_definition* definition) {
     renderable_destroy_direct(&golem_enemy->renderable);
-    render_scene_remove(&golem_enemy->renderable);
+    render_scene_remove(golem_enemy);
     update_remove(golem_enemy);
     collision_scene_remove_trigger(&golem_enemy->vision);
     collision_scene_remove(&golem_enemy->collider);

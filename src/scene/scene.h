@@ -154,6 +154,7 @@ void scene_update(void* data);
 
 void scene_queue_next(const char* scene_name);
 void scene_clear_next();
+const char* scene_last_loaded();
 
 bool scene_show_room(struct scene* scene, int room_index);
 void scene_hide_room(struct scene* scene, int room_index);

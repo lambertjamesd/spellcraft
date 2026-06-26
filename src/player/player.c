@@ -18,6 +18,8 @@
 #include "../audio/audio.h"
 #include "../cutscene/cutscene.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../effects/area_title.h"
+#include "../scene/scene.h"
 
 #include "../effects/fade_effect.h"
 
@@ -366,6 +368,14 @@ static vector3_t local_camera_death_look = {
     .z = 0.5f,
 };
 
+void player_show_game_over(void* data) {
+    area_title_show("GAME OVER");
+}
+
+void player_hide_fog(void* data) {
+    fog_clear(FOG_PRIORITY_EFFECT, 0.0f);   
+}
+
 void player_die(struct player* player) {
     player->state = PLAYER_DIE;
     player_run_clip(player, PLAYER_ANIMATION_DIE);
@@ -385,6 +395,19 @@ void player_die(struct player* player) {
     vector3RotateWith2(&local_camera_death_look, &player->cutscene_actor.transform.rotation, &relative_pos);
     vector3Add(&relative_pos, player_get_position(player), &relative_pos);
     cutscene_builder_camera_look_at_pos(&cutscene, &relative_pos, false);
+
+    cutscene_builder_delay(&cutscene, 5.0f);
+    
+    cutscene_builder_callback(&cutscene, player_show_game_over, NULL);
+
+    cutscene_builder_delay(&cutscene, 5.0f);
+    cutscene_builder_fade(&cutscene, FADE_COLOR_BLACK, 2.0f);
+    cutscene_builder_delay(&cutscene, 2.0f);
+
+    cutscene_builder_load_scene(&cutscene, scene_last_loaded());
+    cutscene_builder_callback(&cutscene, player_hide_fog, NULL);
+    
+    cutscene_builder_fade(&cutscene, FADE_COLOR_NONE, 2.0f);
     
     cutscene_runner_run(
         cutscene_builder_finish(&cutscene),
@@ -1193,7 +1216,7 @@ void player_update(struct player* player) {
         debugf("crushed!\n");
     }
 
-    if ((!health_is_alive(&player->health) && !player_is_dead(player) && ground)) {
+    if ((!health_is_alive(&player->health) && !player_is_dead(player) && ground) || pressed.l) {
         player_die(player);
     }
 }

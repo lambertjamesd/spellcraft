@@ -34,7 +34,7 @@ void fog_set(fog_priority_t priority, fog_state_t state, float duration) {
     fog_target = fog_calculate_target();
 }
 
-void fog_disable_priority(fog_priority_t priority, float duration) {
+void fog_clear(fog_priority_t priority, float duration) {
     fog_start = fog_get();
     fog_start_time = total_time;
     
