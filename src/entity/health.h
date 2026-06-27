@@ -42,6 +42,7 @@ float health_damage_id(entity_id target, struct damage_info* damage, struct dama
 void health_heal(struct health* health, float amount);
 
 bool health_apply_contact_damage_with_direction(contact_t* first_contact, struct damage_source* damage, struct damaged_set* set, vector3_t* direction);
+bool health_apply_contact_damage_from_origin(contact_t* first_contact, struct damage_source* damage, struct damaged_set* set, vector3_t* origin);
 
 static inline bool health_apply_contact_damage(contact_t* first_contact, struct damage_source* damage, struct damaged_set* set) {
     return health_apply_contact_damage_with_direction(first_contact, damage, set, NULL);

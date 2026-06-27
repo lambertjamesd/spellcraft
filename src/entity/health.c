@@ -172,6 +172,37 @@ bool health_apply_contact_damage_with_direction(contact_t* first_contact, struct
     return did_hit;
 }
 
+bool health_apply_contact_damage_from_origin(contact_t* first_contact, struct damage_source* source, struct damaged_set* set, vector3_t* origin) {
+    struct contact* curr = first_contact;
+
+    struct damage_info damage;
+    damage.amount = source->amount;
+    damage.type = source->type;
+    damage.knockback_strength = source->knockback_strength;
+
+    bool did_hit = false;
+
+    while (curr) {
+        struct health* target_health = health_get(curr->other_object);
+
+        if (!target_health || !damaged_set_check(set, curr->other_object)) {
+            curr = curr->next;
+            continue;
+        }
+
+        damage.source = curr->other_object;
+        vector3Sub(origin, &curr->point, &damage.direction);
+        vector3Normalize(&damage.direction, &damage.direction);
+        hit_effect_start(&curr->point, &curr->normal);
+
+        health_damage(target_health, &damage);
+        did_hit = true;
+        curr = curr->next;
+    }
+
+    return did_hit;
+}
+
 struct health* health_get(entity_id id) {
     return hash_map_get(&health_entity_mapping, id);
 }

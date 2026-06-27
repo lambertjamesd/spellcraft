@@ -329,8 +329,8 @@ void golem_enemy_update_spin_attack(golem_enemy_t* golem) {
     }
 
     if (golem->animator.events.attack) {
-        health_apply_contact_damage(golem->fist_r.collider.active_contacts, &punch_attack, NULL);
-        health_apply_contact_damage(golem->fist_l.collider.active_contacts, &punch_attack, NULL);
+        health_apply_contact_damage_from_origin(golem->fist_r.collider.active_contacts, &punch_attack, NULL, &golem->transform.position);
+        health_apply_contact_damage_from_origin(golem->fist_l.collider.active_contacts, &punch_attack, NULL, &golem->transform.position);
     }
 }
 
