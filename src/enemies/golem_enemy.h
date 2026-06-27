@@ -11,6 +11,7 @@ enum golem_enemy_state {
     GOLEM_STATE_FOLLOW,
     GOLEM_STATE_PUNCH,
     GOLEM_STATE_SPIN_ATTACK,
+    GOLEM_STATE_SEARCH,
     GOLEM_STATE_DEACTIVATE,
     GOLEM_STATE_DIE,
 };
@@ -40,9 +41,11 @@ struct golem_enemy {
 
     golem_enemy_state_t state;
     boolean_variable activated;
-    spatial_trigger_t vision;
     entity_id target;
+    bool was_activated;
+    spatial_trigger_t vision;
     vector2_t head_rotation;
+    transform_sa_t head_transform;
     float animator_speed;
     float target_speed;
     float attack_timer;

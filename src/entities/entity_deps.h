@@ -4,6 +4,7 @@
 #include "../collision/collision_scene.h"
 #include "../collision/dynamic_object.h"
 #include "../collision/spatial_trigger.h"
+#include "../cutscene/expression_evaluate.h"
 #include "../enemies/vision.h"
 #include "../entity/entity_id.h"
 #include "../entity/health.h"

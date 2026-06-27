@@ -15,6 +15,8 @@
 #define GOLEM_ACCEL                 0.5f
 #define GOLEM_ATTACK_GAP            3.0f
 #define FIRE_RESISTANCE             0.5f
+#define SEARCH_TIME                 8.0f
+#define LOOK_SIDE_TIME              4.0f
 
 #define PUNCH_RANGE         2.5f
 
@@ -31,6 +33,7 @@ enum golem_animations {
     GOLEM_ANIM_PUNCH,
     GOLEM_ANIM_SPIN,
     GOLEM_ANIM_DIE,
+    GOLEM_ANIM_IDLE,
 
     GOLEM_ANIM_COUNT,
 };
@@ -44,6 +47,7 @@ static const char* golem_animation_names[GOLEM_ANIM_COUNT] = {
     [GOLEM_ANIM_PUNCH] = "punch",
     [GOLEM_ANIM_SPIN] = "spin_attack",
     [GOLEM_ANIM_DIE] = "die",
+    [GOLEM_ANIM_IDLE] = "idle",
 };
 
 static dynamic_object_type_t golem_collider = {
@@ -187,6 +191,12 @@ void golem_enemy_spin(golem_enemy_t* golem) {
     golem_fist_activate(&golem->fist_l);
 }
 
+void golem_enemy_search(golem_enemy_t* golem) {
+    animator_run_clip(&golem->animator, golem_animations[GOLEM_ANIM_IDLE], 0.0f, false);
+    golem->state = GOLEM_STATE_SEARCH;
+    golem->attack_timer = SEARCH_TIME;
+}
+
 void golem_enemy_deactivate(golem_enemy_t* golem) {
     animator_run_clip(
         &golem->animator, 
@@ -195,7 +205,6 @@ void golem_enemy_deactivate(golem_enemy_t* golem) {
         false
     );
     golem->state = GOLEM_STATE_DEACTIVATE;
-    golem->collider.collision_layers &= ~COLLISION_LAYER_Z_TARGET;
     golem->animator_speed = -1.0f;
 }
 
@@ -212,9 +221,18 @@ void golem_enemy_die(golem_enemy_t* golem) {
 
 void golem_enemy_update_idle(golem_enemy_t* golem) {
     vector3_t offset;
-    dynamic_object_t* target = vision_update_current_target(&golem->target, &golem->vision, VISION_DISTANCE, &offset);
+    bool should_activate = vision_update_current_target(&golem->target, &golem->vision, VISION_DISTANCE, &offset) != NULL;
 
-    if (target) {
+    if (golem->activated != VARIABLE_DISCONNECTED && !golem->was_activated) {
+        if (expression_get_bool(golem->activated)) {
+            should_activate = true;
+            golem->was_activated = true;
+        } else {
+            should_activate = false;
+        }
+    }
+
+    if (should_activate) {
         golem_enemy_activate(golem);
     }
     
@@ -244,7 +262,7 @@ void golem_enemy_update_follow(golem_enemy_t* golem) {
     dynamic_object_t* target = vision_update_current_target(&golem->target, &golem->vision, VISION_DISTANCE, &offset);
 
     if (!target) {
-        golem_enemy_deactivate(golem);
+        golem_enemy_search(golem);
         return;
     }
 
@@ -310,24 +328,64 @@ void golem_enemy_update_spin_attack(golem_enemy_t* golem) {
         return;
     }
 
-    
     if (golem->animator.events.attack) {
         health_apply_contact_damage(golem->fist_r.collider.active_contacts, &punch_attack, NULL);
         health_apply_contact_damage(golem->fist_l.collider.active_contacts, &punch_attack, NULL);
     }
 }
 
+void golem_enemy_update_search(golem_enemy_t* golem) {
+    golem_update_speed(golem, 0.0f);
+
+    vector3_t offset;
+    dynamic_object_t* target = vision_update_current_target(&golem->target, &golem->vision, VISION_DISTANCE, &offset);
+
+    if (target) {
+        golem_enemy_follow(golem);
+    }
+
+    golem->attack_timer -= fixed_time_step;
+
+    if (golem->attack_timer < 0.0f) {
+        golem_enemy_deactivate(golem);
+        return;
+    }
+
+    bool look_side = fmodf(golem->attack_timer, LOOK_SIDE_TIME) > LOOK_SIDE_TIME * 0.5;
+    
+    vector2RotateTowards(
+        &golem->head_rotation, 
+        &(vector2_t){
+            .x = SQRT_1_2,
+            .y = look_side ? -SQRT_1_2 : SQRT_1_2,
+        }, 
+        &golem_head_rotation_speed, 
+        &golem->head_rotation
+    );
+}
+
 void golem_enemy_update_deactivate(golem_enemy_t* golem) {
     golem_update_speed(golem, 0.0f);
+    golem_enemy_look_forward(golem);
+    
+    vector3_t offset;
+    dynamic_object_t* target = vision_update_current_target(&golem->target, &golem->vision, VISION_DISTANCE, &offset);
+
+    if (target) {
+        golem->state = GOLEM_STATE_ACTIVATING;
+        golem->animator_speed = 1.0f;
+        return;
+    }
 
     if (!animator_is_running_clip(&golem->animator, golem_animations[GOLEM_ANIM_WAKE_UP])) {
         golem->state = GOLEM_STATE_IDLE;
-    }
-    
-    golem_enemy_look_forward(golem);
+        golem->collider.collision_layers &= ~COLLISION_LAYER_Z_TARGET;
+    }   
 }
 
 void golem_enemy_update_die(golem_enemy_t* golem) {
+    golem_update_speed(golem, 0.0f);
+    
     if (!animator_is_running(&golem->animator)) {
         entity_despawn(golem->collider.entity_id);
     }
@@ -354,6 +412,9 @@ void golem_enemy_update(void* data) {
         case GOLEM_STATE_SPIN_ATTACK:
             golem_enemy_update_spin_attack(golem_enemy);
             break;
+        case GOLEM_STATE_SEARCH:
+            golem_enemy_update_search(golem_enemy);
+            break;
         case GOLEM_STATE_DEACTIVATE:
             golem_enemy_update_deactivate(golem_enemy);
             break;
@@ -361,6 +422,9 @@ void golem_enemy_update(void* data) {
             golem_enemy_update_die(golem_enemy);
             break;
     }
+
+    golem_enemy->head_transform.position = golem_enemy->transform.position;
+    vector2ComplexMul(&golem_enemy->head_rotation, &golem_enemy->transform.rotation, &golem_enemy->head_transform.rotation);
 
     if (!health_is_alive(&golem_enemy->health) && golem_enemy->state != GOLEM_STATE_DIE) {
         golem_enemy_die(golem_enemy);
@@ -395,12 +459,13 @@ float golem_enemy_on_hit(void* data, struct damage_info* damage) {
 
 void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition* definition, entity_id entity_id) {
     transformSaInit(&golem_enemy->transform, &definition->position, &definition->rotation, 1.0f);
+    golem_enemy->head_transform = golem_enemy->transform;
 
     renderable_single_axis_init_direct(&golem_enemy->renderable, &golem_enemy->transform, golem_full);
     render_scene_add(&golem_enemy->transform.position, 1.5f, golem_enemy_render, golem_enemy);
     animator_init(&golem_enemy->animator, golem_full->armature.bone_count);
 
-    spatial_trigger_init(&golem_enemy->vision, &golem_enemy->transform, &golem_vision, COLLISION_LAYER_DAMAGE_PLAYER, entity_id);
+    spatial_trigger_init(&golem_enemy->vision, &golem_enemy->head_transform, &golem_vision, COLLISION_LAYER_DAMAGE_PLAYER, entity_id);
     collision_scene_add_trigger(&golem_enemy->vision);
 
     dynamic_object_init(
@@ -422,6 +487,7 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
 
     golem_enemy->head_rotation = gRight2;
     golem_enemy->attack_timer = 0.0f;
+    golem_enemy->was_activated = false;
 
     update_add(golem_enemy, golem_enemy_update, UPDATE_PRIORITY_ENEMY, UPDATE_LAYER_WORLD);
 
