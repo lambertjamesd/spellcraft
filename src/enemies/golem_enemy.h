@@ -12,6 +12,7 @@ enum golem_enemy_state {
     GOLEM_STATE_PUNCH,
     GOLEM_STATE_SPIN_ATTACK,
     GOLEM_STATE_DEACTIVATE,
+    GOLEM_STATE_DIE,
 };
 
 typedef enum golem_enemy_state golem_enemy_state_t;

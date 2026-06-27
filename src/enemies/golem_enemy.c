@@ -4,6 +4,7 @@
 #include "../collision/shapes/capsule.h"
 #include "../collision/shapes/sphere.h"
 #include "../math/mathf.h"
+#include "../entity/entity_spawner.h"
 
 #define VISION_DISTANCE 10.0f
 
@@ -13,7 +14,7 @@
 #define GOLEM_WALK_SPEED            0.8f
 #define GOLEM_ACCEL                 0.5f
 #define GOLEM_ATTACK_GAP            3.0f
-#define FIRE_RESISTANCE             0.25f
+#define FIRE_RESISTANCE             0.5f
 
 #define PUNCH_RANGE         2.5f
 
@@ -29,6 +30,7 @@ enum golem_animations {
     GOLEM_ANIM_WALK,
     GOLEM_ANIM_PUNCH,
     GOLEM_ANIM_SPIN,
+    GOLEM_ANIM_DIE,
 
     GOLEM_ANIM_COUNT,
 };
@@ -41,6 +43,7 @@ static const char* golem_animation_names[GOLEM_ANIM_COUNT] = {
     [GOLEM_ANIM_WALK] = "walk",
     [GOLEM_ANIM_PUNCH] = "punch",
     [GOLEM_ANIM_SPIN] = "spin_attack",
+    [GOLEM_ANIM_DIE] = "die",
 };
 
 static dynamic_object_type_t golem_collider = {
@@ -64,7 +67,7 @@ static spatial_trigger_type_t golem_vision = {
 };
 
 static struct damage_source punch_attack = {
-    .amount = 200.0f,
+    .amount = 20.0f,
     .type = DAMAGE_TYPE_KNOCKBACK,
     .knockback_strength = damage_knockback_with_time(1.0f),
 };
@@ -196,6 +199,17 @@ void golem_enemy_deactivate(golem_enemy_t* golem) {
     golem->animator_speed = -1.0f;
 }
 
+void golem_enemy_die(golem_enemy_t* golem) {
+    animator_run_clip(
+        &golem->animator, 
+        golem_animations[GOLEM_ANIM_DIE], 
+        0.0f, 
+        false
+    );
+    golem->state = GOLEM_STATE_DIE;
+    golem->animator_speed = 1.0f;
+}
+
 void golem_enemy_update_idle(golem_enemy_t* golem) {
     vector3_t offset;
     dynamic_object_t* target = vision_update_current_target(&golem->target, &golem->vision, VISION_DISTANCE, &offset);
@@ -313,6 +327,12 @@ void golem_enemy_update_deactivate(golem_enemy_t* golem) {
     golem_enemy_look_forward(golem);
 }
 
+void golem_enemy_update_die(golem_enemy_t* golem) {
+    if (!animator_is_running(&golem->animator)) {
+        entity_despawn(golem->collider.entity_id);
+    }
+}
+
 void golem_enemy_update(void* data) {
     golem_enemy_t* golem_enemy = (golem_enemy_t*)data;
 
@@ -337,6 +357,13 @@ void golem_enemy_update(void* data) {
         case GOLEM_STATE_DEACTIVATE:
             golem_enemy_update_deactivate(golem_enemy);
             break;
+        case GOLEM_STATE_DIE:
+            golem_enemy_update_die(golem_enemy);
+            break;
+    }
+
+    if (!health_is_alive(&golem_enemy->health) && golem_enemy->state != GOLEM_STATE_DIE) {
+        golem_enemy_die(golem_enemy);
     }
 }
 
@@ -401,7 +428,7 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
     golem_fist_init(&golem_enemy->fist_r, entity_id, golem_r_attachment);
     golem_fist_init(&golem_enemy->fist_l, entity_id, golem_l_attachment);
 
-    health_init(&golem_enemy->health, entity_id, 200.0f);
+    health_init(&golem_enemy->health, entity_id, 100.0f);
     health_set_callback(&golem_enemy->health, golem_enemy_on_hit, golem_enemy);
     golem_enemy->health.unmovable = true;
 }
