@@ -7,6 +7,7 @@
 #include "../collision/shapes/cylinder.h"
 #include "../entity/interactable.h"
 #include "../math/vector2.h"
+#include "../math/constants.h"
 #include "../objects/collectable.h"
 #include "../render/render_scene.h"
 #include "../render/fog.h"
@@ -25,13 +26,15 @@
 
 #define PLAYER_MAX_SPEED    4.2f
 
-#define PLAYER_DASH_THRESHOLD 4.7f
-#define PLAYER_RUN_THRESHOLD 1.4f
+#define PLAYER_DASH_THRESHOLD   4.7f
+#define PLAYER_RUN_THRESHOLD    1.4f
 #define PLAYER_RUN_ANIM_SPEED   4.2f
-#define PLAYER_WALK_ANIM_SPEED   0.64f
+#define PLAYER_WALK_ANIM_SPEED  0.64f
 
 #define PLAYER_SLIDE_SPEED          2.0f
 #define PLAYER_SLIDE_ACCEL_SPEED    7.0f
+
+#define PLAYER_STRAFE_BLEND_FRAMES  8
 
 #define SLIDE_DELAY 0.25f
 #define COYOTE_TIME 0.1f
@@ -159,13 +162,32 @@ void player_run_clip_keep_translation(struct player* player, enum player_animati
     );
 }
 
+float player_animation_time(struct player* player) {
+    return player->cutscene_actor.animator.current_time;
+}
+
 bool player_is_running(struct player* player, enum player_animation clip) {
     return animator_is_running_clip(&player->cutscene_actor.animator, player->animations[clip]);
 }
 
+struct player_animation_args {
+    float start_time;
+    int blend_frames;
+};
+
+typedef struct player_animation_args player_animation_args_t;
+
 void player_loop_animation(struct player* player, enum player_animation clip, float speed) {
     if (!animator_is_running_clip(&player->cutscene_actor.animator, player->animations[clip])) {
         animator_run_clip(&player->cutscene_actor.animator, player->animations[clip], 0.0f, true);
+    }
+    player->cutscene_actor.animate_speed = speed;
+}
+
+void player_loop_animation_with_args(struct player* player, enum player_animation clip, float speed, player_animation_args_t* args) {
+    if (!animator_is_running_clip(&player->cutscene_actor.animator, player->animations[clip])) {
+        animator_run_clip(&player->cutscene_actor.animator, player->animations[clip], args->start_time, true);
+        player->cutscene_actor.animator.blend_frames = args->blend_frames;
     }
     player->cutscene_actor.animate_speed = speed;
 }
@@ -879,6 +901,91 @@ void player_update_knockback(struct player* player, struct contact* ground_conta
     }
 }
 
+void player_strafe_animation(struct player* player, float speed, dynamic_object_t* target_collider) {
+    if (speed < 0.2f) {
+        player_loop_animation_with_args(
+            player, 
+            PLAYER_ANIMATION_STRAFE_IDLE, 
+            1.0f,
+            &(player_animation_args_t){
+                .start_time = 0.0f,
+                .blend_frames = PLAYER_STRAFE_BLEND_FRAMES,
+            }
+        );
+        return;
+    }
+
+    vector3_t offset;
+    vector3Sub(target_collider->position, player_get_position(player), &offset);
+    
+    vector2_t rotation;
+    vector2LookDir(&rotation, &offset);
+
+    vector2_t velocity_rotation;
+    vector2LookDir(&velocity_rotation, player_get_velocity(player));
+
+    rotation.y = -rotation.y;
+    vector2ComplexMul(&rotation, &velocity_rotation, &rotation);
+
+    float start_time = 0.0f;
+
+    if (player_is_running(player, PLAYER_ANIMATION_STRAFE_FORWARD) || 
+        player_is_running(player, PLAYER_ANIMATION_STRAFE_BACKWARD) ||
+        player_is_running(player, PLAYER_ANIMATION_STRAFE_RIGHT) ||
+        player_is_running(player, PLAYER_ANIMATION_STRAFE_LEFT)) {
+        start_time = player_animation_time(player);
+    }
+
+    if (rotation.x > SQRT_1_2) {
+        player_loop_animation_with_args(
+            player, 
+            PLAYER_ANIMATION_STRAFE_FORWARD, 
+            speed * (1.0f / PLAYER_MAX_SPEED), 
+            &(player_animation_args_t){
+                .start_time = start_time,
+                .blend_frames = PLAYER_STRAFE_BLEND_FRAMES,
+            }
+        );
+        return;
+    }
+    
+    if (rotation.x < -SQRT_1_2) {
+        player_loop_animation_with_args(
+            player, 
+            PLAYER_ANIMATION_STRAFE_BACKWARD, 
+            speed * (1.0f / PLAYER_MAX_SPEED), 
+            &(player_animation_args_t){
+                .start_time = start_time,
+                .blend_frames = PLAYER_STRAFE_BLEND_FRAMES,
+            }
+        );
+        return;
+    }
+    
+    if (rotation.y > SQRT_1_2) {
+        player_loop_animation_with_args(
+            player, 
+            PLAYER_ANIMATION_STRAFE_RIGHT, 
+            speed * (1.0f / PLAYER_MAX_SPEED), 
+            &(player_animation_args_t){
+                .start_time = start_time,
+                .blend_frames = PLAYER_STRAFE_BLEND_FRAMES,
+            }
+        );
+        return;
+    }
+
+    player_loop_animation_with_args(
+        player, 
+        PLAYER_ANIMATION_STRAFE_LEFT, 
+        speed * (1.0f / PLAYER_MAX_SPEED), 
+        &(player_animation_args_t){
+            .start_time = start_time,
+            .blend_frames = PLAYER_STRAFE_BLEND_FRAMES,
+        }
+    );
+}
+
 void player_update_grounded(struct player* player, struct contact* ground_contact) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
     vector3_t* vel = &player->cutscene_actor.collider.velocity;
@@ -968,6 +1075,13 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
             player_loop_animation(player, PLAYER_ANIMATION_AIR_DASH, 1.0f);
             return;
         }
+    }
+
+    dynamic_object_t* target_collider = collision_scene_find_object(player->z_target);
+
+    if (target_collider) {
+        player_strafe_animation(player, speed, target_collider);
+        return;
     }
 
     if (speed < 0.2f) {
@@ -1285,6 +1399,12 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_SLIDE_FORWARD] = "slide_forward",
 
     [PLAYER_ANIMATION_DIE] = "die",
+    
+    [PLAYER_ANIMATION_STRAFE_IDLE] = "strafe_idle",
+    [PLAYER_ANIMATION_STRAFE_FORWARD] = "strafe_forward",
+    [PLAYER_ANIMATION_STRAFE_RIGHT] = "strafe_right",
+    [PLAYER_ANIMATION_STRAFE_BACKWARD] = "strafe_backward",
+    [PLAYER_ANIMATION_STRAFE_LEFT] = "strafe_left",
 };
 
 static const char* sound_names[PLAYER_SOUND_COUNT] = {};
@@ -1408,8 +1528,4 @@ void player_destroy(struct player* player) {
     render_scene_remove(&player->z_target_visual);
     renderable_destroy(&player->z_target_visual);
     player_unload_sound(player);
-}
-
-struct Vector3* player_get_position(struct player* player) {
-    return &player->cutscene_actor.transform.position;
 }

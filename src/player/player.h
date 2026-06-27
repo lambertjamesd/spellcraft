@@ -79,6 +79,12 @@ enum player_animation {
 
     PLAYER_ANIMATION_DIE,
 
+    PLAYER_ANIMATION_STRAFE_IDLE,
+    PLAYER_ANIMATION_STRAFE_FORWARD,
+    PLAYER_ANIMATION_STRAFE_RIGHT,
+    PLAYER_ANIMATION_STRAFE_BACKWARD,
+    PLAYER_ANIMATION_STRAFE_LEFT,
+
     PLAYER_ANIMATION_COUNT,
 };
 
@@ -159,6 +165,12 @@ static inline bool player_is_dead(struct player* player) {
     return player->state == PLAYER_DIE;
 }
 
-struct Vector3* player_get_position(struct player* player);
+static inline vector3_t* player_get_position(struct player* player) {
+    return &player->cutscene_actor.transform.position;
+}
+
+static inline vector3_t* player_get_velocity(struct player* player) {
+    return &player->cutscene_actor.collider.velocity;
+}
 
 #endif
