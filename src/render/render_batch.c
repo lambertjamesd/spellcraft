@@ -465,7 +465,11 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         rdpq_set_env_color(attr->color);
                         break;
                     case ELEMENT_ATTR_TRANSFORM:
-                        t3d_matrix_push(attr->transform);
+                        if (is_sprite_mode) {
+                            tpx_matrix_push(attr->transform);
+                        } else {
+                            t3d_matrix_push(attr->transform);
+                        }
                         transform_count = 1;
                         break;
                     case ELEMENT_ATTR_SCROLL:
@@ -489,14 +493,22 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             }
 
             if (transform_count == 0 && default_mtx) {
-                t3d_matrix_push(default_mtx);
+                if (is_sprite_mode) {
+                    tpx_matrix_push(default_mtx);
+                } else {
+                    t3d_matrix_push(default_mtx);
+                }
                 transform_count = 1;
             }
 
             rspq_block_run(element->mesh.block);
 
             if (transform_count) {
-                t3d_matrix_pop(transform_count);
+                if (is_sprite_mode) {
+                    tpx_matrix_pop(transform_count);
+                } else {
+                    t3d_matrix_pop(transform_count);
+                }
             }
         } else if (element->type == RENDER_BATCH_PARTICLES) {
             static_particles_render(element->particles.particles, element->particles.transform, current_mat != NULL && current_mat->apply.tex0.sprite != NULL);

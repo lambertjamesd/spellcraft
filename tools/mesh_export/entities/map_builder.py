@@ -65,20 +65,24 @@ def other_vertex(edge: bpy.types.MeshEdge, index: int) -> int:
 class Pen():
     def __init__(self, vertices: list[mathutils.Vector]):
         self.vertex_index: int = -1
+        self.first_vertex: int = -1
         self.vertices: list[mathutils.Vector] = vertices
 
     def move_to(self, next_index: int):
         self.vertex_index = next_index
 
+        if self.first_vertex == -1:
+            self.first_vertex = next_index
+
     def location(self) -> mathutils.Vector:
         return self.vertices[self.vertex_index] if self.vertex_index != -1 else mathutils.Vector()
 
-def create_vertex(pos: mathutils.Vector, alpha):
+def create_vertex(pos: mathutils.Vector, alpha, x_uv):
     return [
         pos,
         mathutils.Vector(),
         [1, 1, 1, alpha],
-        [0, 0],
+        [x_uv, 0],
         0,
     ]
 
@@ -212,6 +216,17 @@ def write_outline(into: mesh.mesh_data, obj: bpy.types.Object, global_transform:
 
         return joints_for_edge[-1]
         
+    current_distance = 0
+    total_distance = 0
+
+    for edge in edge_order:
+        a = edge.vertices[0]
+        b = edge.vertices[1]
+
+        total_distance += (vertices[a] - vertices[b]).magnitude
+
+    current_vertex = pen.first_vertex
+    uv_scale = 1 / total_distance
 
     for edge in edge_order:
         index_start = len(into.vertices)
@@ -219,17 +234,30 @@ def write_outline(into: mesh.mesh_data, obj: bpy.types.Object, global_transform:
         a = edge.vertices[0]
         b = edge.vertices[1]
 
-        into.append_vertex(create_vertex(vertices[a], 0))
-        into.append_vertex(create_vertex(vertices[b], 0))
-        into.append_vertex(create_vertex(get_joint_point(edge, a, False), 0.5))
-        into.append_vertex(create_vertex(get_joint_point(edge, b, True), 0.5))
-        into.append_vertex(create_vertex(get_joint_point(edge, b, False), 0.5))
-        into.append_vertex(create_vertex(get_joint_point(edge, a, True), 0.5))
+        next_distance = current_distance + (vertices[a] - vertices[b]).magnitude
+
+        if a == current_vertex:
+            a_uv = current_distance * uv_scale
+            b_uv = next_distance * uv_scale
+            current_vertex = b
+        else:
+            a_uv = next_distance * uv_scale
+            b_uv = current_distance * uv_scale
+            current_vertex = a
+
+        into.append_vertex(create_vertex(vertices[a], 0, a_uv))
+        into.append_vertex(create_vertex(vertices[b], 0, b_uv))
+        into.append_vertex(create_vertex(get_joint_point(edge, a, False), 0.5, a_uv))
+        into.append_vertex(create_vertex(get_joint_point(edge, b, True), 0.5, b_uv))
+        into.append_vertex(create_vertex(get_joint_point(edge, b, False), 0.5, b_uv))
+        into.append_vertex(create_vertex(get_joint_point(edge, a, True), 0.5, a_uv))
 
         into.append_triangle(index_start+0, index_start+2, index_start+1)
         into.append_triangle(index_start+2, index_start+3, index_start+1)
         into.append_triangle(index_start+1, index_start+4, index_start+5)
         into.append_triangle(index_start+1, index_start+5, index_start+0)
+
+        current_distance = next_distance
 
 class MapRoom():
     def __init__(self, room_index: int):
