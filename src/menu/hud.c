@@ -11,6 +11,7 @@
 #include "../time/time.h"
 #include "../font/fonts.h"
 #include "../render/defs.h"
+#include "../scene/scene.h"
 
 #define SCREEN_EDGE_MARGIN      20.0f
 #define TEXT_PADDING            2
@@ -211,6 +212,8 @@ void hud_render(void *data) {
     rdpq_sync_pipe();
     
     hud_render_interaction_preview(hud);
+
+    menu_map_render(&current_scene->map, NULL, NULL);
 }
 
 void hud_init(struct hud* hud, struct player* player, camera_t* camera) {

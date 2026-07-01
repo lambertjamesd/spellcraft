@@ -18,9 +18,12 @@ struct frame_memory_pool {
 
 typedef struct frame_memory_pool frame_memory_pool_t;
 
-void frame_pool_reset(struct frame_memory_pool* pool);
 void* frame_malloc(struct frame_memory_pool* pool, int bytes);
 
 T3DMat4FP* frame_pool_get_transformfp(struct frame_memory_pool* pool);
+
+frame_memory_pool_t* frame_pool_curr();
+void frame_pool_reset();
+void frame_pool_next();
 
 #endif
