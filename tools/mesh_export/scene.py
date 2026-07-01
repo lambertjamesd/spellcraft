@@ -28,6 +28,7 @@ from mesh_export.cutscene import parser
 from mesh_export.cutscene import variable_layout
 from mesh_export.entities import camera_animation
 from mesh_export.entities import room
+from mesh_export.entities import map_builder
 
 from mesh_export.deps import generate_deps
 
@@ -85,6 +86,7 @@ class Scene():
         self.locations: list[LocationEntry] = []
         self.loading_zones: list[LoadingZone] = []
         self.scene_mesh_collider = mesh_collider.MeshCollider()
+        self.map_entries: list[map_builder.MapEntry] = []
 
 def write_string(value: str, file):
     byte_encoded = value.encode()
@@ -432,7 +434,7 @@ def build_room_entity_block(objects: list[ObjectEntry], variable_context, contex
 
     return block.getvalue()
 
-def find_scene_objects(scene, definitions, room_collection, base_transform):
+def find_scene_objects(scene: Scene, definitions, room_collection: room.room_collection, base_transform):
     object_blacklist = find_static_blacklist()
 
     for obj in bpy.data.objects:
@@ -467,6 +469,9 @@ def find_scene_objects(scene, definitions, room_collection, base_transform):
         final_transform = base_transform @ obj.matrix_world
 
         mesh: bpy.types.Mesh = obj.data
+
+        if obj.name.lower().startswith('map outline'):
+            scene.map_entries.append(map_builder.MapEntry(obj, room_collection.get_obj_room_index(obj)))
 
         if len(mesh.materials) > 0 and not obj.name.startswith('collision'):
             scene.static.append(StaticEntry(obj, mesh, final_transform))
@@ -730,6 +735,8 @@ def process_scene():
         write_minimap_range(base_transform, file)
 
         write_minimap_location(base_transform, file)
+
+        map_builder.build_map_outline(scene.map_entries, file)
 
         write_fog(file)
 

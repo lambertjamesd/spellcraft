@@ -193,27 +193,6 @@ sort_directions = [
 
 SKYBOX_RENDER_OFFSET = 10
 
-def obj_bounding_box(obj: bpy.types.Object) -> tuple[mathutils.Vector, mathutils.Vector]:
-    final_transform = obj.matrix_world
-    transformed = [final_transform @ mathutils.Vector(vtx) for vtx in obj.bound_box]
-
-    bb_min = transformed[0]
-    bb_max = transformed[0]
-
-    for vtx in transformed:
-        bb_min = mathutils.Vector((
-            min(bb_min.x, vtx.x),
-            min(bb_min.y, vtx.y),
-            min(bb_min.z, vtx.z)
-        ))
-        bb_max = mathutils.Vector((
-            max(bb_max.x, vtx.x),
-            max(bb_max.y, vtx.y),
-            max(bb_max.z, vtx.z)
-        ))
-
-    return bb_min, bb_max
-
 def bounding_box_intersection(a: tuple[mathutils.Vector, mathutils.Vector], b: tuple[mathutils.Vector, mathutils.Vector]) -> tuple[mathutils.Vector, mathutils.Vector]:
     bb_min = mathutils.Vector((
         max(a[0].x, b[0].x),
@@ -241,7 +220,7 @@ class LodTile():
         self.level: int = level
         self.children: list = []
 
-        bb_min, bb_max = obj_bounding_box(self.obj)
+        bb_min, bb_max = bounding_box.from_obj(self.obj)
 
         if bb_min.z + 1 > bb_max.z:
             bb_max.z = bb_min.z + 1

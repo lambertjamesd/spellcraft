@@ -26,8 +26,8 @@ def interpolate_vertex(a, b, lerp):
     )
 
 class mesh_data():
-    def __init__(self, mat: bpy.types.Material) -> None:
-        self.mat: bpy.types.Material = mat
+    def __init__(self, mat: bpy.types.Material | None) -> None:
+        self.mat: bpy.types.Material | None = mat
         self.vertices: list[mathutils.Vector] = []
         self.normals: list = []
         self.color: list = []
@@ -80,7 +80,7 @@ class mesh_data():
         self.uv.append(vertex_data[3])
         self.bone_indices.append(vertex_data[4])
 
-    def append_triangle(self, a, b, c):
+    def append_triangle(self, a: int, b: int, c: int):
         self.indices.append(a)
         self.indices.append(b)
         self.indices.append(c)

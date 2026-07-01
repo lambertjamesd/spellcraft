@@ -493,7 +493,7 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
                     z_write=False
                 )
 
-        chunks += mesh_optimizer.chunkify_mesh(mesh, mat, settings.default_material)
+        chunks += mesh_optimizer.chunkify_mesh(mesh, mat or settings.default_material, settings.default_material)
 
     if settings.sort_direction:
         chunks = _sort_chunks(chunks, settings.sort_direction)

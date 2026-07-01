@@ -15,6 +15,7 @@
 #include "../cutscene/cutscene.h"
 #include "../menu/hud.h"
 #include "../menu/pause_menu.h"
+#include "../menu/map.h"
 #include "../audio/audio.h"
 
 struct static_entity {
@@ -120,6 +121,9 @@ struct scene {
     vector2_t minimap_max;
     vector2_t minimap_location;
     float minimap_rotation;
+
+    menu_map_t map;
+
     scene_fog_t fog;
 
     room_entity_block_t* room_entities;

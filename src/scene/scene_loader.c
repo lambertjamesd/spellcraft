@@ -359,6 +359,8 @@ struct scene* scene_load(const char* filename) {
     scene_load_minimap(scene, file);
     scene_mini_location(scene, file);
 
+    menu_map_load(&scene->map, file);
+
     scene_load_fog(&scene->fog, file);
     fog_set(FOG_PRIORITY_SCENE, (fog_state_t){.color = scene->fog.color, .min = scene->fog.min, .max = scene->fog.max}, 0.0f);
 
@@ -455,6 +457,8 @@ void scene_release(struct scene* scene) {
         free(scene->named_locations[i].name);
     }
     free(scene->named_locations);
+
+    menu_map_destroy(&scene->map);
 
     camera_animation_list_destroy(&scene->camera_animations);
 
