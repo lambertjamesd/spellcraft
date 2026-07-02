@@ -69,10 +69,7 @@ void reset() {
     area_title_hide();
 }
 
-static struct frame_memory_pool frame_memory_pools[2];
-static uint8_t next_frame_memory_pool;
-
-void render_3d(surface_t* col, surface_t* z_buffer) {
+void render_3d(surface_t* col, surface_t* z_buffer, struct frame_memory_pool* pool) {
     uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
     if (current_scene && current_scene->overworld) {
@@ -90,9 +87,6 @@ void render_3d(surface_t* col, surface_t* z_buffer) {
 
     t3d_light_set_ambient(colorAmbient); // one global ambient light, always active
     t3d_light_set_count(0);
-    
-    struct frame_memory_pool* pool = &frame_memory_pools[next_frame_memory_pool];
-    frame_pool_reset(pool);
 
     T3DViewport* viewport = frame_malloc(pool, sizeof(T3DViewport));
     *viewport = t3d_viewport_create();
@@ -101,22 +95,35 @@ void render_3d(surface_t* col, surface_t* z_buffer) {
         fog_state_t fog_state = fog_get();
         rdpq_set_fog_color(fog_state.color);
         t3d_fog_set_range(fog_state.min * WORLD_SCALE, fog_state.max * WORLD_SCALE);
-        render_scene_render(&current_scene->camera, viewport, &frame_memory_pools[next_frame_memory_pool]);
+        render_scene_render(&current_scene->camera, viewport, frame_pool_curr());
     }
-    
-    next_frame_memory_pool ^= 1;
 }
 
-void render_menu() {
+static T3DViewport menu_viewpoint;
+
+void render_menu(struct frame_memory_pool* pool) {
 #if ENABLE_BIG_SCREEN_SHOT
     if (camera_is_showing_fov()) {
         return;
     }
 #endif
-
     rdpq_sync_pipe();
     rdpq_mode_persp(false);
     rdpq_set_mode_standard();
+
+    T3DViewport* viewport = &menu_viewpoint;
+    *viewport = t3d_viewport_create();
+    t3d_viewport_set_ortho(viewport, 0.0f, SCREEN_WD, SCREEN_HT, 0.0f, 1.0f, 100.0f);
+    t3d_viewport_set_w_normalize(viewport, 1.0f, 1000.0f);
+    
+    T3DMat4 view;
+    t3d_mat4_identity(&view);
+    t3d_mat4_translate(&view, 0.0f, 0.0f, -50.0f);
+    t3d_viewport_set_view_matrix(viewport, &view);
+    t3d_viewport_attach(viewport);
+
+    t3d_segment_set(T3D_SEGMENT_SKELETON, NULL);
+
     menu_render();
     screen_debug_render();
 }
@@ -130,7 +137,7 @@ void render_finish_callback(void* data) {
 
 #endif
 
-void render(surface_t* col, surface_t* zbuffer) {
+void render(surface_t* col, surface_t* zbuffer, struct frame_memory_pool* pool) {
 #if ENABLE_PROFILE_rsp
     render_start_time = get_ticks_us();
 #endif
@@ -138,7 +145,7 @@ void render(surface_t* col, surface_t* zbuffer) {
     update_render_time();
 
     if (current_game_mode == GAME_MODE_3D || current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
-        render_3d(col, zbuffer);
+        render_3d(col, zbuffer, pool);
     } else if (current_game_mode == GAME_MODE_MENU) {
         static surface_t background;
         background = surface_make_linear(zbuffer->buffer, FMT_RGBA16, zbuffer->width, zbuffer->height);
@@ -147,7 +154,7 @@ void render(surface_t* col, surface_t* zbuffer) {
         rdpq_mode_combiner(RDPQ_COMBINER_TEX);
         rdpq_tex_blit(&background, 0, 0, NULL);
     }
-    render_menu();
+    render_menu(pool);
 #if ENABLE_PROFILE_rsp
     rdpq_call_deferred(render_finish_callback, NULL);
 #endif
@@ -253,10 +260,13 @@ int main(void)
 
         if (current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
             surface_t* fb = display_get();
+            
+            frame_memory_pool_t* pool = frame_pool_curr();
+            frame_pool_reset(pool);
 
             rdpq_attach(fb, &zbuffer);
 
-            render_3d(fb, &zbuffer);
+            render_3d(fb, &zbuffer, pool);
             rdpq_sync_pipe();
 
             // copy the frame buffer into the z buffer
@@ -278,20 +288,27 @@ int main(void)
             rdpq_sync_pipe();
             rdpq_set_color_image(fb);
 
-            render_menu();
+            render_menu(pool);
 
             rdpq_detach_show();
 
             current_game_mode = GAME_MODE_MENU;
+            
+            frame_pool_next();
         } else {
             surface_t* fb = display_try_get();
 
-            if (fb) {
+            if (fb) {            
+                frame_memory_pool_t* pool = frame_pool_curr();
+                frame_pool_reset(pool);
+
                 rdpq_attach(fb, &zbuffer);
 
-                render(fb, &zbuffer);
+                render(fb, &zbuffer, pool);
 
                 rdpq_detach_show();
+
+                frame_pool_next();
             } 
         }
         
