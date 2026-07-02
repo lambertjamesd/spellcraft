@@ -37,8 +37,6 @@ void menu_map_destroy(menu_map_t* map) {
 
 void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     material_apply(&map->outline_material->apply);
-
-    rdpq_fill_rectangle(10, 10, 20, 20);
     
     T3DMat4FP* mtx = frame_pool_get_transformfp(frame_pool_curr());
 

@@ -4,6 +4,7 @@
 #include "../time/time.h"
 #include "../math/mathf.h"
 #include "../particles/static_particles.h"
+#include "../profile/profile.h"
 #include "defs.h"
 
 void render_batch_init(struct render_batch* batch, struct Transform* camera_transform, struct frame_memory_pool* pool) {
@@ -29,6 +30,9 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     result->type = RENDER_BATCH_MESH;
     result->mesh.block = 0;
     result->mesh.attrs = NULL;
+#if ENABLE_PROFILE_render_batch
+    result->mesh.vertex_count = 0;
+#endif
     result->light_source = 0;
 
     return result;
@@ -79,6 +83,9 @@ struct render_batch_element* render_batch_add_tmesh(
     }
 
     element->mesh.block = mesh->block;
+#if ENABLE_PROFILE_render_batch
+    element->mesh.vertex_count = mesh->vertex_count;
+#endif
     element->material = mesh->material;
     element->light_source = mesh->light_source;
     int attr_count = 0;
@@ -412,12 +419,21 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         }
     }
 
+#if ENABLE_PROFILE_render_batch
+    int material_render_count = 0;
+    int vertex_render_count = 0;
+    int mesh_render_count = 0;
+#endif
+
     for (int i = 0; i < batch->element_count; ++i) {
         int index = order[i];
         struct render_batch_element* element = &batch->elements[index];
 
         if (current_mat != element->material) {
             if (element->material) {
+#if ENABLE_PROFILE_render_batch
+                material_render_count += 1;
+#endif
                 material_pair_apply(element->material, current_mat);
             } else {
                 rdpq_sync_pipe();
@@ -501,7 +517,11 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                 transform_count = 1;
             }
 
-            rspq_block_run(element->mesh.block);
+            rspq_block_run(element->mesh.block);      
+#if ENABLE_PROFILE_render_batch
+            vertex_render_count += element->mesh.vertex_count;
+            mesh_render_count += 1;
+#endif
 
             if (transform_count) {
                 if (is_sprite_mode) {
@@ -516,6 +536,10 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             element->callback.callback(element->callback.data, batch);
         }
     }
+
+#if ENABLE_PROFILE_render_batch
+    debugf("mat %d mesh %d vtx %d\n", material_render_count, mesh_render_count, vertex_render_count);
+#endif
 
     if (is_sprite_mode) {
         static_particles_end();

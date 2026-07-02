@@ -13,6 +13,7 @@
 #include "../math/matrix.h"
 #include "../math/transform.h"
 #include "../math/transform_single_axis.h"
+#include "../profile/profile.h"
 
 #define RENDER_BATCH_MAX_SIZE   256
 #define RENDER_BATCH_TRANSFORM_COUNT    64
@@ -99,6 +100,9 @@ struct render_batch_element {
         struct {
             rspq_block_t* block;
             struct element_attr* attrs;
+#if ENABLE_PROFILE_render_batch
+            uint16_t vertex_count;
+#endif
         } mesh;
         struct {
             render_batch_particles_t* particles;

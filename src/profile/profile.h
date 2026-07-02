@@ -7,6 +7,7 @@
 #define ENABLE_PROFILE_render               0
 #define ENABLE_PROFILE_render_particles     0
 #define ENABLE_PROFILE_overworld_update     0
+#define ENABLE_PROFILE_render_batch         0
 
 #define ENABLE_PROFILE_rsp                  0
 
