@@ -473,10 +473,10 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
         if obj.name.lower().startswith('map outline'):
             scene.map_entries.append(map_builder.MapEntry(obj, room_collection.get_obj_room_index(obj)))
 
-        if len(mesh.materials) > 0 and not obj.name.startswith('collision'):
+        if len(mesh.materials) > 0 and not 'collision' in obj.name:
             scene.static.append(StaticEntry(obj, mesh, final_transform))
 
-        if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH' or obj.name.startswith('collision'):
+        if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH' or 'collision' in obj.name:
             scene.scene_mesh_collider.append(mesh, final_transform)
 
 def write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file):
