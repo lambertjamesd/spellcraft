@@ -1,3 +1,4 @@
 #!/bin/bash
 
+make tools/mesh_export.zip
 docker build -t dockerhub.lambertjamesd.com/spellcraft .

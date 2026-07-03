@@ -251,7 +251,8 @@ check-pairings:
 	node tools/pairing_checker.js $(SOURCES) src/main.c
 .PHONY: check-pairings
 
-tools/mesh_export.zip: tools/mesh_export/__init__.py
+ALL_PYTHON := $(shell find tools -type f -name '*.py' | sort)
+tools/mesh_export.zip: tools/mesh_export/__init__.py $(ALL_PYTHON)
 	cd tools; zip -r mesh_export.zip mesh_export/
 
 build/strings.txt: tools/mesh_export/export_text.py $(SCRIPTS)

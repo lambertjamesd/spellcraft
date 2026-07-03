@@ -70,7 +70,8 @@ RUN apt-get install -y \
 RUN wget https://github.com/Fast-64/fast64/archive/refs/heads/main.zip
 USER ubuntu
 RUN /opt/blender/blender --command extension install-file -r user_default --enable main.zip
-RUN make tools/mesh_export.zip
-RUN /opt/blender/blender --command extension install-file -r user_default --enable tools/mesh_export.zip
+
+COPY tools/mesh_export.zip mesh_export.zip
+RUN /opt/blender/blender --command extension install-file -r user_default --enable mesh_export.zip
 
 WORKDIR /spellcraft
