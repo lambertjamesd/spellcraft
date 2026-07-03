@@ -5,6 +5,9 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None, st
     if not start or not end:
         return end
     
+    if start == end:
+        return None
+    
     accept_last_image_data = True
     
     if start.filename == None and end.filename == None:
@@ -45,8 +48,8 @@ def determine_material_delta(start: material.Material, end: material.Material) -
     if end.other_modes and (not start.other_modes or start.other_modes != end.other_modes):
         result.other_modes = end.other_modes
 
-    if end.other_modes:
-        result.other_modes = end.other_modes
+    # if end.other_modes:
+    #     result.other_modes = end.other_modes
 
     if end.env_color and (not start.env_color or start.env_color != end.env_color):
         result.env_color = end.env_color

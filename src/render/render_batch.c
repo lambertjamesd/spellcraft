@@ -440,6 +440,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             }
 
             current_mat = element->material;
+        } else if (current_mat) {
+            material_apply_scroll(&current_mat->apply);
         }
 
         if (light_source != element->light_source) {

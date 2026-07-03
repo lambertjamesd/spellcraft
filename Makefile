@@ -71,12 +71,12 @@ TMESHES := $(MESH_SOURCES:assets/meshes/%.blend=filesystem/meshes/%.tmesh)
 filesystem/meshes/%.tmesh filesystem/meshes/%.anim: assets/meshes/%.blend tools/mesh_export/t3d_mesh.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh))
-	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main --python-exit-code 1 --python tools/mesh_export/t3d_mesh.py -- $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)
+	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/t3d_mesh.py -- $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)
 	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)
 	-cp $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.anim) $(@:%.tmesh=%.anim)
 
 assets/game_objects.json: tools/mesh_export/rebuild_prefabs.py $(EXPORT_SOURCE)
-	$(BLENDER_5) --background --log-level fatal --addons fast64-main --python-exit-code 1 --python tools/mesh_export/rebuild_prefabs.py -- assets/game_objects.json
+	$(BLENDER_5) --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/rebuild_prefabs.py -- assets/game_objects.json
 
 ###
 # materials
@@ -96,7 +96,7 @@ filesystem/%.mat: assets/%.mat.json tools/mesh_export/material.d.template
 filesystem/%.mat: assets/%.mat.blend tools/mesh_export/material_fast64.d.template
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/%.mat=build/assets/%.mat))
-	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main --python-exit-code 1 --python tools/mesh_export/material_fast64.py -- $@
+	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/material_fast64.py -- $@
 
 list_materials: $(MATERIALS)
 	echo $(MATERIALS)
@@ -132,7 +132,7 @@ filesystem/%.wav64: assets/%.mp3 $$(wildcard assets/%.txt)
 ###
 
 assets/materials/materials.blend: tools/mesh_export/material_generator.py $(MATERIAL_SOURCES)
-	$(BLENDER_5) --background --log-level fatal --addons fast64-main --python-exit-code 1 --python tools/mesh_export/material_generator.py -- $@ $(MATERIAL_SOURCES)
+	$(BLENDER_5) --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/material_generator.py -- $@ $(MATERIAL_SOURCES)
 
 ###
 # cutscenes
@@ -178,7 +178,7 @@ filesystem/scenes/%.scene: assets/scenes/%.blend $$(wildcard assets/scenes/%.scr
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene))
 	echo $@ $<
-	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene) $(@:%.scene=%.overworld)
+	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/scene.py -- $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene) $(@:%.scene=%.overworld)
 	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/scenes/%.scene=build/assets/scenes/%.scene)
 	-cp $(@:filesystem/scenes/%.scene=build/assets/scenes/%.sanim) $(@:%.scene=%.sanim)
 
@@ -186,7 +186,7 @@ filesystem/scenes/%.overworld build/assets/scenes/%.json: filesystem/scenes/%.sc
 
 build/assets/scenes/%_exits.txt: assets/scenes/%.blend tools/mesh_export/find_exits.py
 	@mkdir -p $(dir $@)
-	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main --python-exit-code 1 --python tools/mesh_export/find_exits.py -- $@
+	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/find_exits.py -- $@
 
 all_exits: $(SCENE_SOURCES:assets/scenes/%.blend=build/assets/scenes/%_exits.txt)
 .PHONY: all_exits
@@ -203,7 +203,7 @@ build/test_result.txt: $(EXPORT_SOURCE)
 
 build/blender_results.txt: $(EXPORT_SOURCE)
 	@mkdir -p $(dir $@)
-	$(BLENDER_5) --background --log-level fatal --addons fast64-main --python-exit-code 1 --python tools/mesh_export/tests.py
+	$(BLENDER_5) --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/tests.py
 	echo "success" > $@
 
 ###
@@ -255,7 +255,7 @@ tools/mesh_export.zip: tools/mesh_export/__init__.py
 	cd tools; zip -r mesh_export.zip mesh_export/
 
 build/strings.txt: tools/mesh_export/export_text.py $(SCRIPTS)
-	$(BLENDER_5) --background --log-level fatal --addons fast64-main --python-exit-code 1 --python tools/mesh_export/export_text.py -- $@ $(SCRIPTS)
+	$(BLENDER_5) --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/export_text.py -- $@ $(SCRIPTS)
 
 DEPENDENCY_FILES := $(shell find build/ -name '*.d' 2>/dev/null)
 

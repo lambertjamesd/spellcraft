@@ -407,6 +407,11 @@ void material_apply(struct material* material) {
     material_check_texture_scroll(TILE1, &material->tex1);
 }
 
+void material_apply_scroll(struct material* material) {
+    material_check_texture_scroll(TILE0, &material->tex0);
+    material_check_texture_scroll(TILE1, &material->tex1);
+}
+
 void material_debug(struct material* material, const char* name) {
 #if DEBUG_MATERIALS
     uint32_t overlay;

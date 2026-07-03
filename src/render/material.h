@@ -32,8 +32,8 @@ struct material_palette {
     uint16_t size;
 };
 
-#define MATERIAL_FLAGS_Z_WRITE  (1 << 0)
-#define MATERIAL_FLAGS_Z_READ   (1 << 1)
+#define MATERIAL_FLAGS_Z_WRITE      (1 << 0)
+#define MATERIAL_FLAGS_Z_READ       (1 << 1)
 
 struct material {
     rspq_block_t* block;
@@ -64,6 +64,7 @@ void material_load_file(struct material* into, const char* filename);
 void material_release(struct material* material);
 
 void material_apply(struct material* material);
+void material_apply_scroll(struct material* material);
 
 void material_debug(struct material* material, const char* name);
 

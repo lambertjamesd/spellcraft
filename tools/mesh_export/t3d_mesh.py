@@ -103,13 +103,17 @@ def process_scene():
     if not use_scene:
         raise Exception('could not find a scene')
 
-    if 'default_material' in use_scene and use_scene['default_material']:
-        default_material = use_scene['default_material']
+    if hasattr(use_scene, 'default_material') and use_scene.default_material:
+        default_material = use_scene.default_material
         settings.default_material_name = mesh_export.entities.material_extract.material_romname(default_material)
         settings.default_material = mesh_export.entities.material_extract.load_material_with_name(default_material)
+        print('using default material', default_material.name)
     elif len(meshes) == 1 and mesh_export.entities.material_extract.material_can_extract(meshes[0].mat):
         settings.default_material_name = mesh_export.entities.material_extract.material_romname(meshes[0].mat)
         settings.default_material = mesh_export.entities.material_extract.load_material_with_name(meshes[0].mat)
+        print('single material, using as default')
+    else:
+        print('no default material')
 
     if 'light_source' in use_scene:
         settings.light_source = use_scene['light_source']
