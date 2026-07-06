@@ -4,6 +4,7 @@
 #include "util/init.h"
 #include "test/framework_test.h"
 
+void test_menu_microcode(struct test_context* t);
 void test_collide_object_swept_to_triangle(struct test_context* t);
 void test_collide_object_to_mesh_swept(struct test_context* t);
 void test_collision_scene_collide_single(struct test_context* t);
@@ -44,6 +45,8 @@ int main() {
 
     console_init();
     console_set_render_mode(RENDER_MANUAL);
+
+    test_run(test_menu_microcode);
 
     test_run(test_cutscene_runner);
 

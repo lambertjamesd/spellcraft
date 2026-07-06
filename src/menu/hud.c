@@ -213,7 +213,7 @@ void hud_render(void *data) {
     
     hud_render_interaction_preview(hud);
 
-    // menu_map_render(&current_scene->map, NULL, NULL);
+    menu_map_render(&current_scene->map, NULL, NULL);
 }
 
 void hud_init(struct hud* hud, struct player* player, camera_t* camera) {

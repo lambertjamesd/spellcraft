@@ -218,7 +218,7 @@ OBJS := $(BUILD_DIR)/main.o $(SOURCE_OBJS) $(UCODE_OBJS)
 
 TEST_SOURCES := $(shell find src/ -type f -name '*_test.c' | sort)
 TEST_SOURCE_OBJS := $(TEST_SOURCES:src/%.c=$(BUILD_DIR)/%.o)
-TEST_OBJS := $(SOURCE_OBJS) $(TEST_SOURCE_OBJS)
+TEST_OBJS := $(SOURCE_OBJS) $(TEST_SOURCE_OBJS) $(UCODE_OBJS)
 
 filesystem/: $(SPRITES) $(TMESHES) $(MATERIALS) $(SCENES) $(REPAIRS) $(FONTS) $(SCRIPTS_COMPILED) $(SOUND_EFFECTS) $(MUSIC) filesystem/scripts/globals.dat
 
