@@ -191,6 +191,14 @@ build/assets/scenes/%_exits.txt: assets/scenes/%.blend tools/mesh_export/find_ex
 all_exits: $(SCENE_SOURCES:assets/scenes/%.blend=build/assets/scenes/%_exits.txt)
 .PHONY: all_exits
 
+###
+# microcode
+###
+
+%_defs.h: %.S tools/generate_rsp_defs.js
+	mips-n64-objdump -s -j .data $(<:src/%.S=build/%.elf) > $(<:src/%.S=build/%.objdump)
+	mips-n64-nm $(<:src/%.S=build/%.elf) > $(<:src/%.S=build/%.nm)
+	node tools/generate_rsp_defs.js $(<:src/%.S=build/%.objdump) $(<:src/%.S=build/%.nm) $@
 
 ###
 # tests
