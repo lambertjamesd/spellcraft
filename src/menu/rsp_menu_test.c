@@ -3,14 +3,8 @@
 #include "rsp_menu.h"
 #include "rsp/rsp_menu_defs.h"
 
-static uint32_t MENU_OVERLAY_ID = 0;
-
-DEFINE_RSP_UCODE(rsp_menu);
-
-static transform_2d_fp_t matrix_stack[10];
-
 void test_menu_microcode(struct test_context* t) {
-    MENU_OVERLAY_ID = rspq_overlay_register(&rsp_menu);
+    menu_init();
 
     transform_2d_t transform = {2.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f};
     transform_2d_fp_t test_mtx;
@@ -18,15 +12,34 @@ void test_menu_microcode(struct test_context* t) {
     menu_transform_to_fixed(&test_mtx, transform);
     data_cache_hit_writeback(&test_mtx, sizeof(transform_2d_fp_t));
 
-    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_SetStack, 10, PhysicalAddr(matrix_stack));
-    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_Mtx, MENU_MTX_MUL | MENU_MTX_PUSH, PhysicalAddr(&test_mtx));
-
-    rspq_wait();
-
-    uint8_t* data = rspq_overlay_get_state(&rsp_menu);
-    debugf("%d\n", (int)data[0]);
-    uint16_t* mtx = (uint16_t*)(data + 32);
-    debugf("%04x %04x %04x\n%04x %04x %04x\n", (int)mtx[0], (int)mtx[1], (int)mtx[2], (int)mtx[3], (int)mtx[4], (int)mtx[5]);
+    menu_mtx((transform_2d_fp_t*)PhysicalAddr(&test_mtx), true, true);
     
-    rspq_overlay_unregister(MENU_OVERLAY_ID);
+    uint8_t* data = menu_get_state();
+    uint16_t mtx[8];
+
+    memcpy(mtx, data + RSP_MENU_MTX_TOP, 16);
+
+    test_eqi(t, 2, mtx[0]);
+    test_eqi(t, 0, mtx[1]);
+    test_eqi(t, 0, mtx[2]);
+    test_eqi(t, 0, mtx[4]);
+    test_eqi(t, 2, mtx[5]);
+    test_eqi(t, 0, mtx[6]);
+    
+    menu_move_to(&(vector2s16_t){{{2, 5}}}, 0, 0, (color_t){});
+
+    menu_mtx_pop(1);
+
+    data = menu_get_state();
+    data_cache_hit_invalidate(data + RSP_MENU_MTX_TOP, 16);
+    memcpy(mtx, data + RSP_MENU_MTX_TOP, 16);
+
+    test_eqi(t, 1, mtx[0]);
+    test_eqi(t, 0, mtx[1]);
+    test_eqi(t, 0, mtx[2]);
+    test_eqi(t, 0, mtx[4]);
+    test_eqi(t, 1, mtx[5]);
+    test_eqi(t, 0, mtx[6]);
+    
+    menu_teardown();
 }

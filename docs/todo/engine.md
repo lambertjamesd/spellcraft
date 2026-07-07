@@ -1,7 +1,5 @@
 
-* Material rendering
 * Particle group improvements
-* Move action indicator float over target instead of in the UI (A to open doors, pickup, ect)
 * Texture convert in other modes
 * animation scrolling
 

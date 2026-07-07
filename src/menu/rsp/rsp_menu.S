@@ -7,15 +7,13 @@
 # fmt xxyy uuww rgba 0000
 
 #define VERTEX_SIZE     16
-#define VERTEX_COUNT    32
 
     RSPQ_BeginOverlayHeader
-        RSPQ_DefineCommand MenuCmd_Vtx, 8
-        RSPQ_DefineCommand MenuCmd_Line, 8
+        RSPQ_DefineCommand MenuCmd_MoveTo, 16
+        RSPQ_DefineCommand MenuCmd_LineTo, 16
         RSPQ_DefineCommand MenuCmd_Mtx, 8
         RSPQ_DefineCommand MenuCmd_MtxPop, 4
         RSPQ_DefineCommand MenuCmd_SetStack, 8
-        RSPQ_DefineCommand MenuCmd_Test, 24
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
@@ -34,15 +32,14 @@
         MTX_STACK_MAX: .byte 10
 
         .align 2
-        SCREEN_WD: .half 320
-        SCREEN_HT: .half 240
+        VIEWPORT: .half 0, 320, 0, 240
         .align 4
-        VTX: .space VERTEX_SIZE*VERTEX_COUNT
+        VERTEX_POINTS: .space VERTEX_SIZE*2
     RSPQ_EndSavedState
 
 .bss
     .align 4
-    VERTEX_INPUT: .space VERTEX_SIZE*VERTEX_COUNT
+    VERTEX_INPUT: .space VERTEX_SIZE
     .align 4
     MTX_INPUT: .space 32
 
@@ -58,6 +55,11 @@
     vmadh \oi, \ai, \bi
 .endm
 
+.macro vmifxi oi, of, ai, af, bi
+    vmudn \of, \af, \bi
+    vmadh \oi, \ai, \bi
+.endm
+
 .macro vaddif oi, of, ai, af, bi, bf
     vaddc \of, \af, \bf
     vadd \oi, \ai, \bi
@@ -67,34 +69,35 @@
     .set noat
 
     ##########################################
-    # MenuCmd_Vtx
+    # MenuCmd_MoveTo
     # 
-    # a0: size | offset
-    # a1: ram_addr
-MenuCmd_Vtx:
-    andi dmem_address, a0, 0xFFF
-    srl dma_size, 12
-    addi dram_address, a1, 0
-    addi dmem_address, dmem_address, %lo(VERTEX_INPUT)
-    andi dma_size, dma_size, 0xFFF
-    addi dma_size, dma_size, -1
-    jal DMAIn
-    li row_stride, 0
+    # a0: unused
+    # a1: xxyy
+    # a2: uuww
+    # a3: rgba
+MenuCmd_MoveTo:
+    jal MulPoint
+    sw a1, %lo(VERTEX_INPUT)
+
+    lw t2, %lo(VERTEX_INPUT)
+    sw t2, %lo(TEST)
 
     j RSPQ_Loop
     nop
 
     ##########################################
-    # MenuCmd_Line
+    # MenuCmd_LineTo
     # 
-    # a0: a0 | b0
-    # a1: a1 | b2 | a2 | b2
-MenuCmd_Line:
+    # a0: unused
+    # a1: xxyy
+    # a2: uuww
+    # a3: rgba
+MenuCmd_LineTo:
     j RSPQ_Loop
     nop
 
     ##########################################
-    # MenuCmd_Line
+    # MenuCmd_Mtx
     # a0 MENU_MTX_MUL | MENU_MTX_PUSH
     # a1 mtx_addr
 MenuCmd_Mtx:
@@ -154,7 +157,7 @@ MenuCmd_MtxPopDoPop:
 
     sb t3, %lo(MTX_STACK_SIZE)
     lw dram_address, %lo(MTX_STACK_PTR)
-    add dram_address, t2, a0
+    sub dram_address, dram_address, a0
     sw dram_address, %lo(MTX_STACK_PTR)
 
     # load prev matrix
@@ -176,24 +179,6 @@ MenuCmd_SetStack:
     sw a1, %lo(MTX_STACK_PTR)
     j RSPQ_Loop
     sb zero, %lo(MTX_STACK_SIZE)
-
-MenuCmd_Test:
-    sw a1, %lo(VERTEX_INPUT)
-    sw a2, %lo(VERTEX_INPUT)+4
-
-    li $at, %lo(VERTEX_INPUT)
-    lsv $v01, 0, 0, $at
-    lsv $v02, 0, 2, $at
-    lsv $v03, 0, 4, $at
-    lsv $v04, 0, 6, $at
-    vmifxif $v05, $v06, $v01, $v02, $v03, $v04
-
-    li $at, %lo(TEST)
-    ssv $v05, 0, 0, $at
-    ssv $v06, 0, 2, $at
-
-    j RSPQ_Loop
-    nop
     
     ##########################################
     # MenuCmd_Line
@@ -206,8 +191,8 @@ DrawLine:
     # convert vertex index to vertex pointers
     sll	t0, t0, 4
     sll t1, t1, 4
-    addi t0, t0, %lo(VTX)
-    addi t1, t1, %lo(VTX)
+    addi t0, t0, %lo(VERTEX_POINTS)
+    addi t1, t1, %lo(VERTEX_POINTS)
 
     # load a and b
     llv $v01, 0, 0, t0
@@ -236,6 +221,9 @@ DrawLine:
 
     #define mtx_topi         $v01
     #define mtx_topf         $v02
+
+    #define input_vtxi       $v03
+
     #define input_topi       $v03
     #define input_topf       $v04
     #define input_bottomi    $v05
@@ -278,7 +266,30 @@ MulMtx:
 
     # store translate
     ssv $v07, 4, 0x14, t2
+    jr ra
     ssv $v07, 12, 0x1C, t2
 
-    j RSPQ_Loop
-    nop
+    ##########################################
+    # Does the matrix operation VERTEX_INPUT = MTX_TOP * VERTEX_INPUT
+MulPoint:
+    li t2, %lo(MTX_TOP)
+    li t3, %lo(VERTEX_INPUT)
+    lqv mtx_topi, 0x00, t2
+    lqv mtx_topf, 0x10, t2
+
+    llv input_vtxi, 0, 0, t3
+    llv input_vtxi, 8, 0, t3
+
+    vmifxi $v08, $v07, mtx_topi, mtx_topf, input_vtxi
+
+    vaddc $v07, $v07, $v07.h1
+    vadd $v08, $v08, $v08.h1
+
+    li t3, %lo(VERTEX_POINTS)
+
+    vaddc $v07, $v07, mtx_topf.h2
+    vadd $v08, $v08, mtx_topi.h2
+
+    ssv $v08, 0, 0, t3
+    jr ra
+    ssv $v08, 8, 2, t3
