@@ -169,6 +169,9 @@ MenuCmd_MtxPopDoPop:
     # a0 max size
     # a1 mtx_addr
 MenuCmd_SetStack:
+    li $at, 57
+    sb $at, %lo(TEST)
+
     sb a0, %lo(MTX_STACK_MAX)
     sw a1, %lo(MTX_STACK_PTR)
     j RSPQ_Loop
