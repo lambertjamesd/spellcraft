@@ -16,6 +16,7 @@
 #include "../spell/assets.h"
 #include "../effects/assets.h"
 #include "../player/inventory.h"
+#include "../menu/rsp_menu.h"
 
 void init_engine() {
     spell_assets_init();
@@ -34,4 +35,5 @@ void init_engine() {
     cutscene_actor_reset();
     audio_player_init();
     inventory_init();
+    menu_init();
 }

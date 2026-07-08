@@ -4,8 +4,10 @@
 #include "../resource/tmesh_cache.h"
 #include "../render/frame_alloc.h"
 #include "../time/time.h"
+#include "../menu/rsp_menu.h"
 
 static tmesh_t* mesh_test;
+static rspq_block_t* block_test;
 
 #define MIN_SCALE   (1.0f / 16.0f)
 
@@ -24,6 +26,10 @@ void menu_map_load(menu_map_t* map, FILE* file) {
     map->outline_material = material_cache_load("rom:/materials/menu/map_mesh.mat");
 
     mesh_test = tmesh_cache_load("rom:/meshes/test/sphere_test.tmesh");
+
+    rspq_block_begin();
+    rdpq_fill_rectangle(10, 10, 20, 20);
+    block_test = rspq_block_end();
 }
 
 void menu_map_destroy(menu_map_t* map) {
@@ -67,4 +73,17 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     }
 
     t3d_matrix_pop(1);
+
+    // rspq_block_run(block_test);
+
+    rdpq_fill_rectangle(110, 10, 120, 20);
+
+    menu_line_to(&(vector2s16_t){}, 0, 0, (color_t){});
+    
+    rdpq_fill_rectangle(210, 10, 220, 20);
+
+    rspq_wait();
+
+    int* test = menu_get_state();
+    debugf("%04x\n", (int)*test);
 }

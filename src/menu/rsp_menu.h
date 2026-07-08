@@ -24,6 +24,7 @@ void menu_mtx(transform_2d_fp_t* mtx, bool mul, bool push);
 void menu_mtx_pop(int count);
 
 void menu_move_to(vector2s16_t* pos, uint16_t u, uint16_t w, color_t color);
+void menu_line_to(vector2s16_t* pos, uint16_t u, uint16_t w, color_t color);
 
 void* menu_get_state();
 

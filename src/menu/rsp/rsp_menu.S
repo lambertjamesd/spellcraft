@@ -35,6 +35,13 @@
         VIEWPORT: .half 0, 320, 0, 240
         .align 4
         VERTEX_POINTS: .space VERTEX_SIZE*2
+        NEXT_VERTEX: .byte 0
+    .align 4
+RDPQ_TRI_DATA0:          .dcb.l 7
+    .align 4
+RDPQ_TRI_DATA1:          .dcb.l 7
+    .align 4
+RDPQ_TRI_DATA2:          .dcb.l 7
     RSPQ_EndSavedState
 
 .bss
@@ -67,7 +74,6 @@
 
 .text
     .set noat
-
     ##########################################
     # MenuCmd_MoveTo
     # 
@@ -76,8 +82,9 @@
     # a2: uuww
     # a3: rgba
 MenuCmd_MoveTo:
-    jal MulPoint
     sw a1, %lo(VERTEX_INPUT)
+    jal MulPoint
+    lb t4, %lo(NEXT_VERTEX)
 
     lw t2, %lo(VERTEX_INPUT)
     sw t2, %lo(TEST)
@@ -93,8 +100,49 @@ MenuCmd_MoveTo:
     # a2: uuww
     # a3: rgba
 MenuCmd_LineTo:
-    j RSPQ_Loop
-    nop
+    li a0, 0x00280028
+    sw a0, %lo(RDPQ_TRI_DATA0) + 0
+    li a0, 0x00500028
+    sw a0, %lo(RDPQ_TRI_DATA1) + 0
+    li a0, 0x00280050
+    sw a0, %lo(RDPQ_TRI_DATA2) + 0
+    li a0, 0xFF
+    sw a0, %lo(RDPQ_TRI_DATA0) + 4
+    sw a0, %lo(RDPQ_TRI_DATA1) + 4
+    sw a0, %lo(RDPQ_TRI_DATA2) + 4
+
+    li a0, 0xFFFFFFFF
+    sw a0, %lo(RDPQ_TRI_DATA0) + 8
+    sw a0, %lo(RDPQ_TRI_DATA1) + 8
+    sw a0, %lo(RDPQ_TRI_DATA2) + 8
+    
+    li a0, 0x00
+    sw a0, %lo(RDPQ_TRI_DATA0) + 12
+    sw a0, %lo(RDPQ_TRI_DATA1) + 12
+    sw a0, %lo(RDPQ_TRI_DATA2) + 12
+    
+    li a0, 0x10000
+    sw a0, %lo(RDPQ_TRI_DATA0) + 16
+    sw a0, %lo(RDPQ_TRI_DATA0) + 20
+    sw a0, %lo(RDPQ_TRI_DATA1) + 16
+    sw a0, %lo(RDPQ_TRI_DATA1) + 20
+    sw a0, %lo(RDPQ_TRI_DATA2) + 16
+    sw a0, %lo(RDPQ_TRI_DATA2) + 20
+    
+    li s4, %lo(RDPQ_CMD_STAGING)
+    move s3, s4
+    li v0, 2   # disable culling
+    li a1, %lo(RDPQ_TRI_DATA0)
+    li a2, %lo(RDPQ_TRI_DATA1)
+    jal RDPQ_Triangle_Send_Async
+    li a3, %lo(RDPQ_TRI_DATA2)
+    jal_and_j RDPQ_Triangle_Send_End, RSPQ_Loop
+
+RDPQ_Triangle_Clip:
+RDPQ_Triangle_Cull:
+    li a0, 0xf0fa
+    sw a0, %lo(TEST)
+    jal_and_j RDPQ_Triangle_Send_End, RSPQ_Loop
 
     ##########################################
     # MenuCmd_Mtx
@@ -172,9 +220,6 @@ MenuCmd_MtxPopDoPop:
     # a0 max size
     # a1 mtx_addr
 MenuCmd_SetStack:
-    li $at, 57
-    sb $at, %lo(TEST)
-
     sb a0, %lo(MTX_STACK_MAX)
     sw a1, %lo(MTX_STACK_PTR)
     j RSPQ_Loop
@@ -271,6 +316,7 @@ MulMtx:
 
     ##########################################
     # Does the matrix operation VERTEX_INPUT = MTX_TOP * VERTEX_INPUT
+    # t4 indicates vertex offset
 MulPoint:
     li t2, %lo(MTX_TOP)
     li t3, %lo(VERTEX_INPUT)
@@ -286,6 +332,8 @@ MulPoint:
     vadd $v08, $v08, $v08.h1
 
     li t3, %lo(VERTEX_POINTS)
+    sll t4, t4, 4
+    add t3, t3, t4
 
     vaddc $v07, $v07, mtx_topf.h2
     vadd $v08, $v08, mtx_topi.h2
@@ -293,3 +341,7 @@ MulPoint:
     ssv $v08, 0, 0, t3
     jr ra
     ssv $v08, 8, 2, t3
+
+    .set at
+
+#include <rsp_rdpq.inc>
