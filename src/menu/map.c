@@ -94,17 +94,21 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     menu_move_to(&(vector2s16_t){
         .x = 50 << 2,
         .y = 10 << 2,
-    }, 0, 0, (color_t){});
+    }, 0, 2 << 2, (color_t){});
 
     menu_line_to(&(vector2s16_t){
         .x = (10 << 2) + offset,
         .y = 50 << 2,
-    }, 0, 0, (color_t){});
+    }, 0, 2 << 2, (color_t){});
 
     rspq_wait();
 
     short* test = menu_get_state();
-    debugf("%d, %d\n\n", (int)test[0], (int)test[1]);
+
+    for (int i = 0; i < 16; i += 1) {
+        debugf("%d ", (int)test[i]);
+    }
+    debugf("\n");
     
     menu_mtx_pop(1);
 }

@@ -7,6 +7,7 @@
 # fmt xxyy uuww rgba 0000
 
 #define VERTEX_SIZE     16
+#define TRI_VERTEX_SIZE 32
 
     RSPQ_BeginOverlayHeader
         RSPQ_DefineCommand MenuCmd_MoveTo, 16
@@ -26,6 +27,11 @@
             .half 0x0000, 0x0001, 0x0000, 0x0000
             .half 0x0000, 0x0000, 0x0000, 0x0000
             .half 0x0000, 0x0000, 0x0000, 0x0000
+        .align 4
+        CAP_VECTORS:
+            # pattern x -y y x
+            # 2 patterns per vector
+            .half 0x7fff, 0x8001, 0x7fff, 0x7fff, 0x8001, 0x8001, 0x7fff, 0x8001
         .align 3
         MTX_STACK_PTR:  .word 0
         MTX_STACK_SIZE: .byte 0
@@ -36,19 +42,27 @@
         .align 4
         VERTEX_POINTS: .space VERTEX_SIZE*2
         NEXT_VERTEX: .byte 0
+        
     RSPQ_EndSavedState
 
 .bss
     .align 4
+    TMP_MEM:
     VERTEX_INPUT: .space VERTEX_SIZE
     .align 4
     MTX_INPUT: .space 32
     .align 4
-RDPQ_TRI_DATA0:          .dcb.l 7
+RDPQ_TRI_DATA0:          .space TRI_VERTEX_SIZE
+    .align 4             
+RDPQ_TRI_DATA1:          .space TRI_VERTEX_SIZE
     .align 4
-RDPQ_TRI_DATA1:          .dcb.l 7
+RDPQ_TRI_DATA2:          .space TRI_VERTEX_SIZE
     .align 4
-RDPQ_TRI_DATA2:          .dcb.l 7
+RDPQ_TRI_DATA3:          .space TRI_VERTEX_SIZE
+    .align 4
+RDPQ_TRI_DATA4:          .space TRI_VERTEX_SIZE
+    .align 4
+RDPQ_TRI_DATA5:          .space TRI_VERTEX_SIZE
 
 #define dma_size     t0
 #define row_stride   t1
@@ -68,8 +82,18 @@ RDPQ_TRI_DATA2:          .dcb.l 7
 .endm
 
 .macro vmixif oi, of, ai, bi, bf
-    vmadm \of, \ai, \bf
+    vmudm \of, \ai, \bf
     vmadh \oi, \ai, \bi
+.endm
+
+.macro vmixf oi, of, ai, bf
+    vmudm \oi, \ai, \bf
+    vmadn \of, vzero, vzero
+.endm
+
+.macro vmfxi oi, of, af, bi
+    vmudn \of, \af, \bi
+    vmadm \oi, vzero, vzero
 .endm
 
 .macro vaddif oi, of, ai, af, bi, bf
@@ -100,15 +124,16 @@ MenuCmd_LineTo:
     jal WriteNextPoint
     nop
 
-    #define pointA  $v01
-    #define pointB  $v02
-    #define offset  $v03
-    #define magSqri $v04
-    #define magSqrf $v05
+    #define magSqri $v01
+    #define magSqrf $v02
+    #define pointA  $v03
+    #define pointB  $v04
+    #define offset  $v05
     #define invMagi $v06
     #define invMagf $v07
     #define vtmp    $v08
     #define offsetNorm $v09
+    #define lineWidth  $v10
 
     li t6, %lo(VERTEX_POINTS)
 
@@ -137,11 +162,34 @@ MenuCmd_LineTo:
 
     vmixif offsetNorm, vtmp, offset, invMagi.e0, invMagf.e0
 
-    li t6, %lo(TEST)
-    sqv offsetNorm, 0, t6
-    sqv invMagf, 16, t6
+    # pad out xy, to xyxyxyxy
+    li t3, %lo(TMP_MEM)
+    slv offsetNorm, 0, 0, t3
+    llv offsetNorm, 4, 0, t3
+    llv offsetNorm, 8, 0, t3
+    llv offsetNorm, 12, 0, t3
 
+    sw a2, %lo(TMP_MEM)
+    lsv lineWidth, 0, 2, t3
 
+    vmfxi $v17, $v18, offsetNorm, lineWidth.e0
+    
+    vmov $v16.e0, pointA.e0
+    vmov $v16.e2, pointA.e1
+    vmov $v16.e4, pointA.e0
+    vmov $v16.e6, pointA.e1
+    jal DrawCap
+    li a0, %lo(RDPQ_TRI_DATA0)
+
+    vsub $v17, vzero, $v17
+    vsub $v18, vzero, $v18
+
+    vmov $v16.e0, pointB.e0
+    vmov $v16.e2, pointB.e1
+    vmov $v16.e4, pointB.e0
+    vmov $v16.e6, pointB.e1
+    jal DrawCap
+    li a0, %lo(RDPQ_TRI_DATA3)
 
     lw t6, %lo(VERTEX_POINTS)
     lw t7, %lo(VERTEX_POINTS) + VERTEX_SIZE
@@ -404,6 +452,41 @@ MulPoint:
     ssv $v08, 0, 0, a0
     jr ra
     ssv $v08, 8, 2, a0
+
+    ##########################################
+    # Draws a line end cap
+    # $v16 point in the pattern      x0y0x0y0
+    # $v17 directioni in the pattern xyxyxyxy
+    # $v18 directionf in the pattern xyxyxyxy
+    # a0 output vtx pointer
+    # stomps t3
+DrawCap:
+    #define origin     $v16
+    #define directioni $v17
+    #define directionf $v18
+    #define capVector  $v19
+    #define resi       $v20
+
+    li t3, %lo(CAP_VECTORS)
+    lqv capVector, 0, 0, t3
+
+    vmudm resi, capVector, directionf
+    vmadh resi, capVector, directioni
+    vsar resi, COP2_ACC_HI
+
+    vadd resi, resi, resi.q1
+    vadd resi, resi, origin
+
+    ssv resi, 0, 0, a0
+    ssv resi, 4, 2, a0
+    
+    ssv resi, 8, TRI_VERTEX_SIZE + 0, a0
+    ssv resi, 12, TRI_VERTEX_SIZE + 2, a0
+    
+    jr ra
+    nop
+
+
 
     .set at
 
