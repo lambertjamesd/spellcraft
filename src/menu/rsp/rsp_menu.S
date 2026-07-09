@@ -36,12 +36,6 @@
         .align 4
         VERTEX_POINTS: .space VERTEX_SIZE*2
         NEXT_VERTEX: .byte 0
-    .align 4
-RDPQ_TRI_DATA0:          .dcb.l 7
-    .align 4
-RDPQ_TRI_DATA1:          .dcb.l 7
-    .align 4
-RDPQ_TRI_DATA2:          .dcb.l 7
     RSPQ_EndSavedState
 
 .bss
@@ -49,6 +43,12 @@ RDPQ_TRI_DATA2:          .dcb.l 7
     VERTEX_INPUT: .space VERTEX_SIZE
     .align 4
     MTX_INPUT: .space 32
+    .align 4
+RDPQ_TRI_DATA0:          .dcb.l 7
+    .align 4
+RDPQ_TRI_DATA1:          .dcb.l 7
+    .align 4
+RDPQ_TRI_DATA2:          .dcb.l 7
 
 #define dma_size     t0
 #define row_stride   t1
@@ -67,6 +67,11 @@ RDPQ_TRI_DATA2:          .dcb.l 7
     vmadh \oi, \ai, \bi
 .endm
 
+.macro vmixif oi, of, ai, bi, bf
+    vmadm \of, \ai, \bf
+    vmadh \oi, \ai, \bi
+.endm
+
 .macro vaddif oi, of, ai, af, bi, bf
     vaddc \of, \af, \bf
     vadd \oi, \ai, \bi
@@ -82,15 +87,7 @@ RDPQ_TRI_DATA2:          .dcb.l 7
     # a2: uuww
     # a3: rgba
 MenuCmd_MoveTo:
-    sw a1, %lo(VERTEX_INPUT)
-    jal MulPoint
-    lb t4, %lo(NEXT_VERTEX)
-
-    lw t2, %lo(VERTEX_INPUT)
-    sw t2, %lo(TEST)
-
-    j RSPQ_Loop
-    nop
+    jal_and_j WriteNextPoint, RSPQ_Loop
 
     ##########################################
     # MenuCmd_LineTo
@@ -100,16 +97,63 @@ MenuCmd_MoveTo:
     # a2: uuww
     # a3: rgba
 MenuCmd_LineTo:
-    li a0, 0x00280028
-    sw a0, %lo(RDPQ_TRI_DATA0) + 0
-    li a0, 0x00500028
-    sw a0, %lo(RDPQ_TRI_DATA1) + 0
-    li a0, 0x00280050
-    sw a0, %lo(RDPQ_TRI_DATA2) + 0
-    li a0, 0xFF
-    sw a0, %lo(RDPQ_TRI_DATA0) + 4
-    sw a0, %lo(RDPQ_TRI_DATA1) + 4
-    sw a0, %lo(RDPQ_TRI_DATA2) + 4
+    jal WriteNextPoint
+    nop
+
+    #define pointA  $v01
+    #define pointB  $v02
+    #define offset  $v03
+    #define magSqri $v04
+    #define magSqrf $v05
+    #define invMagi $v06
+    #define invMagf $v07
+    #define vtmp    $v08
+    #define offsetNorm $v09
+
+    li t6, %lo(VERTEX_POINTS)
+
+    llv pointA, 0, t6
+    llv pointB, VERTEX_SIZE, t6
+
+    vsub offset, pointA, pointB
+    vabs magSqrf, offset, offset
+
+    vmudn magSqrf, magSqrf, magSqrf
+    vmadh magSqri, vzero, vzero
+
+    vaddc magSqrf, magSqrf, magSqrf.q1
+    vadd magSqri, magSqri, magSqri.q1
+
+    # check if magnitude is zero
+    li t7, %lo(VERTEX_INPUT)
+    ssv magSqri, 0, 0, t7
+    ssv magSqrf, 0, 2, t7
+    lw t7, %lo(VERTEX_INPUT)
+    beq t7, zero, RSPQ_Loop
+
+    vrsqh vtmp.e0, magSqri.e0
+    vrsql invMagf.e0, magSqrf.e0
+    vrsqh invMagi.e0, vzero.e0
+
+    vmixif offsetNorm, vtmp, offset, invMagi.e0, invMagf.e0
+
+    li t6, %lo(TEST)
+    sqv offsetNorm, 0, t6
+    sqv invMagf, 16, t6
+
+
+
+    lw t6, %lo(VERTEX_POINTS)
+    lw t7, %lo(VERTEX_POINTS) + VERTEX_SIZE
+
+    sw t6, %lo(RDPQ_TRI_DATA0) + 0
+    sw t7, %lo(RDPQ_TRI_DATA1) + 0
+    li t7, 0x00280028
+    sw t7, %lo(RDPQ_TRI_DATA2) + 0
+    li t7, 0xFF
+    sw t7, %lo(RDPQ_TRI_DATA0) + 4
+    sw t7, %lo(RDPQ_TRI_DATA1) + 4
+    sw t7, %lo(RDPQ_TRI_DATA2) + 4
 
     li a0, 0xFFFFFFFF
     sw a0, %lo(RDPQ_TRI_DATA0) + 8
@@ -132,6 +176,7 @@ MenuCmd_LineTo:
     li s4, %lo(RDPQ_CMD_STAGING)
     move s3, s4
     li v0, 2   # disable culling
+    li a0, 0xC800
     li a1, %lo(RDPQ_TRI_DATA0)
     li a2, %lo(RDPQ_TRI_DATA1)
     jal RDPQ_Triangle_Send_Async
@@ -314,9 +359,31 @@ MulMtx:
     jr ra
     ssv $v07, 12, 0x1C, t2
 
+WriteNextPoint:
     ##########################################
-    # Does the matrix operation VERTEX_INPUT = MTX_TOP * VERTEX_INPUT
-    # t4 indicates vertex offset
+    # WriteNextPoint
+    #
+    # a0: unused
+    # a1: xxyy
+    # a2: uuww
+    # a3: rgba
+
+    lb a0, %lo(NEXT_VERTEX)
+    xori $at, a0, VERTEX_SIZE
+    sb $at, %lo(NEXT_VERTEX)
+    addi a0, a0, %lo(VERTEX_POINTS)
+
+    sw a2, 4(a0)
+    sw a3, 8(a0)
+
+    sw a1, %lo(VERTEX_INPUT)
+
+    # intentially fall into MulPoint
+
+    ##########################################
+    # Does the matrix operation *a0 = MTX_TOP * VERTEX_INPUT
+    # a0 indicates write location
+    # stomps t2, t3
 MulPoint:
     li t2, %lo(MTX_TOP)
     li t3, %lo(VERTEX_INPUT)
@@ -331,16 +398,12 @@ MulPoint:
     vaddc $v07, $v07, $v07.h1
     vadd $v08, $v08, $v08.h1
 
-    li t3, %lo(VERTEX_POINTS)
-    sll t4, t4, 4
-    add t3, t3, t4
-
     vaddc $v07, $v07, mtx_topf.h2
     vadd $v08, $v08, mtx_topi.h2
 
-    ssv $v08, 0, 0, t3
+    ssv $v08, 0, 0, a0
     jr ra
-    ssv $v08, 8, 2, t3
+    ssv $v08, 8, 2, a0
 
     .set at
 

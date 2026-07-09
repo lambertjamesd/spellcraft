@@ -41,6 +41,17 @@ void menu_map_destroy(menu_map_t* map) {
     material_cache_release(map->outline_material);
 }
 
+static transform_2d_fp_t transform_test = {
+    .int_part = {
+        2, 0, 0, 0,
+        0, 2, 0, 0
+    },
+    .frac_part = {
+        0, 0, 0, 0,
+        0, 0, 0, 0
+    },
+};
+
 void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     material_apply(&map->outline_material->apply);
     
@@ -76,14 +87,24 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
 
     // rspq_block_run(block_test);
 
-    rdpq_fill_rectangle(110, 10, 120, 20);
+    menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
 
-    menu_line_to(&(vector2s16_t){}, 0, 0, (color_t){});
-    
-    rdpq_fill_rectangle(210, 10, 220, 20);
+    int offset = (int)(game_time * 16.0f) % 160 + 1;
+
+    menu_move_to(&(vector2s16_t){
+        .x = 50 << 2,
+        .y = 10 << 2,
+    }, 0, 0, (color_t){});
+
+    menu_line_to(&(vector2s16_t){
+        .x = (10 << 2) + offset,
+        .y = 50 << 2,
+    }, 0, 0, (color_t){});
 
     rspq_wait();
 
-    int* test = menu_get_state();
-    debugf("%04x\n", (int)*test);
+    short* test = menu_get_state();
+    debugf("%d, %d\n\n", (int)test[0], (int)test[1]);
+    
+    menu_mtx_pop(1);
 }

@@ -73,14 +73,18 @@ const findCommands = () => {
     const result = [];
 
     while (true) {
-        const cmdCount = objDumpContents[curr];
-        const address = objDumpContents[curr + 1] << 2;
+        const cmdAndUpperAddr = objDumpContents[curr];
+        const address = (objDumpContents[curr + 1] << 2) | ((cmdAndUpperAddr & 0x3) << 10);
+
+        const cmdCount = cmdAndUpperAddr & 0xFC;
 
         if (!cmdCount) {
             break;
         }
 
         const commandLabel = lookupLabel(mnContents, address);
+
+        console.log(`Found command ${commandLabel.label} at 0x${address.toString(16)} mem addr 0x${curr.toString(16)} with count ${cmdCount}`);
 
         result.push(commandLabel.label);
 
