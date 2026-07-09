@@ -7,6 +7,9 @@
 # fmt xxyy uuww rgba 0000
 
 #define VERTEX_SIZE     16
+
+#define VERTEX_RGBA(index)     (%lo(VERTEX_POINTS) + 8 + index * VERTEX_SIZE)
+
 #define TRI_VERTEX_SIZE 32
 
     RSPQ_BeginOverlayHeader
@@ -191,28 +194,32 @@ MenuCmd_LineTo:
     jal DrawCap
     li a0, %lo(RDPQ_TRI_DATA3)
 
-    lw t6, %lo(VERTEX_POINTS)
-    lw t7, %lo(VERTEX_POINTS) + VERTEX_SIZE
-
-    sw t6, %lo(RDPQ_TRI_DATA0) + 0
-    sw t7, %lo(RDPQ_TRI_DATA1) + 0
-    li t7, 0x00280028
-    sw t7, %lo(RDPQ_TRI_DATA2) + 0
     li t7, 0xFF
     sw t7, %lo(RDPQ_TRI_DATA0) + 4
     sw t7, %lo(RDPQ_TRI_DATA1) + 4
     sw t7, %lo(RDPQ_TRI_DATA2) + 4
-
-    li a0, 0xFFFFFFFF
-    sw a0, %lo(RDPQ_TRI_DATA0) + 8
-    sw a0, %lo(RDPQ_TRI_DATA1) + 8
-    sw a0, %lo(RDPQ_TRI_DATA2) + 8
+    sw t7, %lo(RDPQ_TRI_DATA3) + 4
+    sw t7, %lo(RDPQ_TRI_DATA4) + 4
+    sw t7, %lo(RDPQ_TRI_DATA5) + 4
     
+    # copy color
+    lw t6, VERTEX_RGBA(0)
+    sw t6, %lo(RDPQ_TRI_DATA0) + 8
+    sw t6, %lo(RDPQ_TRI_DATA1) + 8
+    sw t6, %lo(RDPQ_TRI_DATA2) + 8
+    
+    lw t6, VERTEX_RGBA(1)
+    sw a0, %lo(RDPQ_TRI_DATA3) + 8
+    sw a0, %lo(RDPQ_TRI_DATA4) + 8
+    sw a0, %lo(RDPQ_TRI_DATA5) + 8
+
+    # populate uv
     li a0, 0x00
     sw a0, %lo(RDPQ_TRI_DATA0) + 12
     sw a0, %lo(RDPQ_TRI_DATA1) + 12
     sw a0, %lo(RDPQ_TRI_DATA2) + 12
     
+    # populate w/winv
     li a0, 0x10000
     sw a0, %lo(RDPQ_TRI_DATA0) + 16
     sw a0, %lo(RDPQ_TRI_DATA0) + 20
@@ -220,6 +227,12 @@ MenuCmd_LineTo:
     sw a0, %lo(RDPQ_TRI_DATA1) + 20
     sw a0, %lo(RDPQ_TRI_DATA2) + 16
     sw a0, %lo(RDPQ_TRI_DATA2) + 20
+    sw a0, %lo(RDPQ_TRI_DATA3) + 16
+    sw a0, %lo(RDPQ_TRI_DATA3) + 20
+    sw a0, %lo(RDPQ_TRI_DATA4) + 16
+    sw a0, %lo(RDPQ_TRI_DATA4) + 20
+    sw a0, %lo(RDPQ_TRI_DATA5) + 16
+    sw a0, %lo(RDPQ_TRI_DATA5) + 20
     
     li s4, %lo(RDPQ_CMD_STAGING)
     move s3, s4
@@ -228,7 +241,17 @@ MenuCmd_LineTo:
     li a1, %lo(RDPQ_TRI_DATA0)
     li a2, %lo(RDPQ_TRI_DATA1)
     jal RDPQ_Triangle_Send_Async
-    li a3, %lo(RDPQ_TRI_DATA2)
+    li a3, %lo(RDPQ_TRI_DATA3)
+
+    li s4, %lo(RDPQ_CMD_STAGING)
+    move s3, s4
+    li v0, 2   # disable culling
+    li a0, 0xC800
+    li a1, %lo(RDPQ_TRI_DATA0)
+    li a2, %lo(RDPQ_TRI_DATA4)
+    jal RDPQ_Triangle_Send_Async
+    li a3, %lo(RDPQ_TRI_DATA3)
+
     jal_and_j RDPQ_Triangle_Send_End, RSPQ_Loop
 
 RDPQ_Triangle_Clip:
