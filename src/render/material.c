@@ -1,6 +1,7 @@
 #include "material.h"
 
 #include <t3d/t3d.h>
+#include "../menu/rsp_menu.h"
 #include "../resource/sprite_cache.h"
 #include "../render/defs.h"
 #include "../time/time.h"
@@ -191,6 +192,8 @@ void material_load(struct material* into, FILE* material_file) {
     material_init(into);
     fread(&into->sort_priority, sizeof(int16_t), 1, material_file);
 
+    fread(&into->microcode, 1, 1, material_file);
+
     material_load_tex(&into->tex0, material_file);
     material_load_tex(&into->tex1, material_file);
 
@@ -269,7 +272,14 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint16_t flags;
                     fread(&flags, 2, 1, material_file);
-                    t3d_state_set_drawflags(flags);
+                    switch (into->microcode) {
+                        case MATERIAL_MICROCODE_T3D:
+                            t3d_state_set_drawflags(flags);
+                            break;
+                        case MATERIAL_MICROCODE_MENU:
+                            menu_set_attr_flags(flags & (MENU_FLAGS_SHADE | MENU_FLAGS_TEX));
+                            break;
+                    }
                 }
                 break;
             case COMMAND_PALETTE:
@@ -287,6 +297,10 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint8_t fn;
                     fread(&fn, 1, 1, material_file);
+
+                    if (into->microcode != MATERIAL_MICROCODE_T3D) {
+                        break;
+                    }
 
                     switch (fn) {
                         case T3D_VERTEX_FX_NONE:
@@ -306,6 +320,11 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint8_t enabled;
                     fread(&enabled, 1, 1, material_file);
+
+                    if (into->microcode != MATERIAL_MICROCODE_T3D) {
+                        break;
+                    }
+
                     t3d_fog_set_enabled(enabled);
                 }
                 break;
@@ -313,6 +332,11 @@ void material_load(struct material* into, FILE* material_file) {
                 {   
                     color_t color;
                     fread(&color, sizeof(color_t), 1, material_file);
+                    
+                    if (into->microcode != MATERIAL_MICROCODE_T3D) {
+                        break;
+                    }
+
                     rdpq_set_fog_color(color);
                 }
                 break;
@@ -328,6 +352,10 @@ void material_load(struct material* into, FILE* material_file) {
                         min = BIGGEST_MIN_VALUE;
                     }
 
+                    if (into->microcode != MATERIAL_MICROCODE_T3D) {
+                        break;
+                    }
+
                     t3d_fog_set_range(min * WORLD_SCALE, max * WORLD_SCALE);
                 }
                 break;
@@ -335,6 +363,11 @@ void material_load(struct material* into, FILE* material_file) {
                 {
                     uint8_t light_count;
                     fread(&light_count, 1, 1, material_file);
+                    
+                    if (into->microcode != MATERIAL_MICROCODE_T3D) {
+                        break;
+                    }
+                    
                     t3d_light_set_count(light_count);
                 }
                 break;

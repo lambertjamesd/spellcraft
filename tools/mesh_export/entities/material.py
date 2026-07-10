@@ -733,9 +733,14 @@ class Flags(Enum):
     T3D_FLAG_SHADED     = 2
     T3D_FLAG_CULL_FRONT = 3
     T3D_FLAG_CULL_BACK  = 4
+    
+class Microcode(Enum):
+    T3D = 0
+    MENU = 1
 
 class Material():
     def __init__(self, name: str = "Unknown"):
+        self.microcode: Microcode = Microcode.T3D
         self.name: str = name
         self.combine_mode: CombineMode | None = None
         self.other_modes: OtherModes | None = None
@@ -881,6 +886,7 @@ class Material():
 
     def __str__(self):
         return f"""Material {self.name}: 
+    microcode = {self.microcode.name}
     combine_mode = {self.combine_mode}
     other_modes = {self.other_modes}
     env_color = {self.env_color}

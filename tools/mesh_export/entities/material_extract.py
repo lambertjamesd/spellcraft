@@ -663,6 +663,11 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
     else:
         result.priority = int(_get_safe(_get_safe(f3d_mat, 'draw_layer'), 'sm64'))
 
+    microcode = _get_safe(mat, 'microcode')
+
+    if microcode == 'menu':
+        result.microcode = material.Microcode.MENU
+
     result.determine_flags()
 
     return result

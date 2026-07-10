@@ -35,6 +35,13 @@ struct material_palette {
 #define MATERIAL_FLAGS_Z_WRITE      (1 << 0)
 #define MATERIAL_FLAGS_Z_READ       (1 << 1)
 
+enum material_microcode {
+    MATERIAL_MICROCODE_T3D,
+    MATERIAL_MICROCODE_MENU,
+};
+
+typedef enum material_microcode material_microcode_t;
+
 struct material {
     rspq_block_t* block;
     struct material_tex tex0;
@@ -42,6 +49,7 @@ struct material {
     struct material_palette palette;
     int16_t sort_priority;
     uint16_t flags;
+    uint8_t microcode;
 };
 
 typedef struct material material_t;
