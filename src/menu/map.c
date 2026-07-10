@@ -1,12 +1,10 @@
 #include "map.h"
 
 #include "../resource/material_cache.h"
-#include "../resource/tmesh_cache.h"
 #include "../render/frame_alloc.h"
 #include "../time/time.h"
 #include "../menu/rsp_menu.h"
 
-static tmesh_t* mesh_test;
 static rspq_block_t* block_test;
 
 #define MIN_SCALE   (1.0f / 16.0f)
@@ -20,12 +18,10 @@ void menu_map_load(menu_map_t* map, FILE* file) {
 
     for (int i = 0; i < map->room_count; i += 1) {
         fread(&map->rooms[i].icon_count, 1, 1, file);
-        tmesh_load(&map->rooms[i].outline, file);
+        mesh2d_load(&map->rooms[i].outline, file);
     }
 
     map->outline_material = material_cache_load("rom:/materials/menu/map_mesh.mat");
-
-    mesh_test = tmesh_cache_load("rom:/meshes/test/sphere_test.tmesh");
 
     rspq_block_begin();
     rdpq_fill_rectangle(10, 10, 20, 20);
@@ -34,7 +30,7 @@ void menu_map_load(menu_map_t* map, FILE* file) {
 
 void menu_map_destroy(menu_map_t* map) {
     for (int i = 0; i < map->room_count; i += 1) {
-        tmesh_release(&map->rooms[i].outline);
+        mesh2d_release(&map->rooms[i].outline);
     }
     free(map->rooms);
 
@@ -58,15 +54,6 @@ static int offset_y = 40 << 2;
 void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     material_apply(&map->outline_material->apply);
     
-    T3DMat4FP* mtx = frame_pool_get_transformfp(frame_pool_curr());
-
-    T3DMat4 mat;
-    t3d_mat4_identity(&mat);
-    t3d_mat4_scale(&mat, MIN_SCALE, MIN_SCALE, MIN_SCALE);
-    t3d_mat4_translate(&mat, 40, 40, 0);
-    t3d_mat4_to_fixed_3x4(mtx, &mat);
-    t3d_matrix_push(mtx);
-
     int scroll = ((int)(game_time * 100.0f)) % 256;
 
     rdpq_set_tile_size_fx(
@@ -85,10 +72,6 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     for (int i = 0; i < map->room_count; i += 1) {
         rspq_block_run(map->rooms[i].outline.block);
     }
-
-    t3d_matrix_pop(1);
-
-    // rspq_block_run(block_test);
 
     menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
 

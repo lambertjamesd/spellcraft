@@ -60,7 +60,9 @@ class Mesh2d:
 
     def write(self, file):
         file.write('MSH2'.encode())
-        # transition count
+        # TODO material name
+        file.write(struct.pack('>B', 0))
+        # transition count, command count
         file.write(struct.pack('>HH', 0, len(self.commands)))
 
         for command in self.commands:

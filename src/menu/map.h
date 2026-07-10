@@ -5,6 +5,7 @@
 #include "../scene/scene_definition.h"
 #include "../math/vector2s16.h"
 #include "../math/vector2.h"
+#include "../render/mesh2d.h"
 #include "../resource/material_cache.h"
 #include <stdint.h>
 
@@ -17,7 +18,7 @@ struct menu_map_icon {
 typedef struct menu_map_icon menu_map_icon_t;
 
 struct menu_map_room {
-    tmesh_t outline;
+    mesh2d_t outline;
     menu_map_icon_t *icons;
     uint16_t icon_count;
 };

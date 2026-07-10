@@ -8,12 +8,12 @@ from . import bounding_box
 from . import mesh
 from . import tiny3d_mesh_writer
 from . import export_settings
+from . import mesh2d_writer
 
 TARGET_MAP_SIZE = 200
 FIXED_POINT_SCALE = 4
-MAX_ZOOM = 4
 
-TOTAL_SCALE = TARGET_MAP_SIZE * FIXED_POINT_SCALE * MAX_ZOOM
+TOTAL_SCALE = TARGET_MAP_SIZE * FIXED_POINT_SCALE
 
 LINE_WIDTH = 2
 
@@ -24,41 +24,7 @@ class MapEntry():
 
     def bounding_box(self) -> tuple[mathutils.Vector, mathutils.Vector]:
         return bounding_box.from_obj(self.obj)
-
-def rotate_complex(a: mathutils.Vector, rotation: mathutils.Vector) -> mathutils.Vector:
-    return mathutils.Vector((a.x * rotation.x - a.y * rotation.y, a.x * rotation.y + a.y * rotation.x, a.z))
-
-def calculate_joint(a: mathutils.Vector, b: mathutils.Vector, c: mathutils.Vector, scale: float) -> list[mathutils.Vector]:
-    relative_to = b - a
-    relative_to.z = 0
-    relative_to.normalize()
-
-    relative_to_inv = mathutils.Vector((relative_to.x, -relative_to.y, relative_to.z))
-
-    dir = (c - b).normalized()
-
-    dir = rotate_complex(dir, relative_to_inv)
-
-    offset = 1 - dir.x
-
-    local_position: list[mathutils.Vector] = []
-
-    if abs(dir.y) < 0.001:
-        local_position.append(mathutils.Vector((0, -1, 0)))
-        if dir.x < 0:
-            local_position.append(mathutils.Vector((0, 1, 0)))
-    else:
-        time = offset / -dir.y
-        x = dir.x * time + dir.y
-        local_position.append(mathutils.Vector((x, -1, 0)))
-
-    result: list[mathutils.Vector] = []
-
-    for entry in local_position:
-        result.append(rotate_complex(entry, relative_to) * scale + b)
-
-    return result
-
+    
 def other_vertex(edge: bpy.types.MeshEdge, index: int) -> int:
     return edge.vertices[1] if edge.vertices[0] == index else edge.vertices[0]
 
@@ -77,16 +43,8 @@ class Pen():
     def location(self) -> mathutils.Vector:
         return self.vertices[self.vertex_index] if self.vertex_index != -1 else mathutils.Vector()
 
-def create_vertex(pos: mathutils.Vector, alpha, x_uv):
-    return [
-        pos,
-        mathutils.Vector(),
-        [1, 1, 1, alpha],
-        [x_uv, 0],
-        0,
-    ]
 
-def write_outline(into: mesh.mesh_data, obj: bpy.types.Object, global_transform: mathutils.Matrix):
+def write_outline(into: mesh2d_writer.Mesh2d, obj: bpy.types.Object, global_transform: mathutils.Matrix):
     mesh_transform = global_transform @ obj.matrix_world
 
     if not isinstance(obj.data, bpy.types.Mesh):
@@ -123,7 +81,6 @@ def write_outline(into: mesh.mesh_data, obj: bpy.types.Object, global_transform:
         vertex_to_edge[v2].append(edge)
 
     vertices = [mesh_transform @ vtx.co for vtx in mesh.vertices]
-    joints: dict[int, list[list[mathutils.Vector]]] = {}
 
     for vertex_index, edges in vertex_to_edge.items():
         pivot = vertices[vertex_index]
@@ -137,20 +94,14 @@ def write_outline(into: mesh.mesh_data, obj: bpy.types.Object, global_transform:
 
         edges.sort(key=edge_angle)
 
-        joints_for_edges: list[list[mathutils.Vector]] = []
-
-        for edge_index, edge in enumerate(edges):
-            next_edge = edges[(edge_index + 1) % len(edges)]
-            joints_for_edges.append(calculate_joint(other_point(edge), pivot, other_point(next_edge), LINE_WIDTH * FIXED_POINT_SCALE * MAX_ZOOM))
-
-        joints[vertex_index] = joints_for_edges
-
     consumed_edges = set()
 
     pen = Pen(vertices)
+    actions: list[tuple[int, bool]] = []
 
-    def move_pen(edge: bpy.types.MeshEdge, next_index: int):
+    def move_pen(edge: bpy.types.MeshEdge, next_index: int, is_up: bool):
         pen.move_to(next_index)
+        actions.append((next_index, is_up))
         remaining_edges.remove(edge)
         consumed_edges.add(edge.key)
 
@@ -162,7 +113,7 @@ def write_outline(into: mesh.mesh_data, obj: bpy.types.Object, global_transform:
                 if edge.key in consumed_edges:
                     continue
 
-                move_pen(edge, edge.vertices[1] if edge.vertices[0] == pen.vertex_index else edge.vertices[0])
+                move_pen(edge, edge.vertices[1] if edge.vertices[0] == pen.vertex_index else edge.vertices[0], False)
                 return edge
 
         next_index = -1
@@ -186,83 +137,50 @@ def write_outline(into: mesh.mesh_data, obj: bpy.types.Object, global_transform:
         if next_edge == None:
             raise Exception('could not find an edge')
         
-        move_pen(next_edge, other_vertex(next_edge, next_index))
+        move_pen(next_edge, other_vertex(next_edge, next_index), True)
 
         return next_edge
 
-    edge_order: list[bpy.types.MeshEdge] = []
-
     while len(remaining_edges) > 0:
-        next_edge = find_next_edge()
-        edge_order.append(next_edge)
-
-    def get_joint_point(edge, vertex_index, is_forward):
-        edges = vertex_to_edge.get(vertex_index)
-
-        if not edges:
-            raise Exception('could nto find vertex')
-
-        index = edges.index(edge)
-
-        vertex_joints = joints.get(vertex_index)
-
-        if not vertex_joints:
-            raise Exception('could not find vertex_joints')
-            
-        if is_forward:
-            return vertex_joints[index][0]
-        
-        joints_for_edge = vertex_joints[(index - 1 + len(vertex_joints)) % len(vertex_joints)]
-
-        return joints_for_edge[-1]
+        find_next_edge()
         
     current_distance = 0
     total_distance = 0
 
-    for edge in edge_order:
-        a = edge.vertices[0]
-        b = edge.vertices[1]
+    pos: mathutils.Vector = mathutils.Vector()
 
-        total_distance += (vertices[a] - vertices[b]).magnitude
+    for action in actions:
+        vertex_index, is_up = action
 
-    current_vertex = pen.first_vertex
+        if not is_up:
+            total_distance += (vertices[vertex_index] - pos).magnitude
+        
+        pos = vertices[vertex_index]
+
     uv_scale = 1 / total_distance
+    
+    pos: mathutils.Vector = mathutils.Vector()
 
-    for edge in edge_order:
-        index_start = len(into.vertices)
+    for action in actions:
+        vertex_index, is_up = action
 
-        a = edge.vertices[0]
-        b = edge.vertices[1]
+        current_pos = vertices[vertex_index]
+        uv = current_distance * uv_scale
 
-        next_distance = current_distance + (vertices[a] - vertices[b]).magnitude
-
-        if a == current_vertex:
-            a_uv = current_distance * uv_scale
-            b_uv = next_distance * uv_scale
-            current_vertex = b
+        if is_up:
+            into.commands.append(mesh2d_writer.Mesh2DMoveTo(current_pos, uv, 2, [1, 1, 1, 1]))
         else:
-            a_uv = next_distance * uv_scale
-            b_uv = current_distance * uv_scale
-            current_vertex = a
+            into.commands.append(mesh2d_writer.Mesh2DLineTo(current_pos, uv, 2, [1, 1, 1, 1]))
 
-        into.append_vertex(create_vertex(vertices[a], 0, a_uv))
-        into.append_vertex(create_vertex(vertices[b], 0, b_uv))
-        into.append_vertex(create_vertex(get_joint_point(edge, a, False), 0.5, a_uv))
-        into.append_vertex(create_vertex(get_joint_point(edge, b, True), 0.5, b_uv))
-        into.append_vertex(create_vertex(get_joint_point(edge, b, False), 0.5, b_uv))
-        into.append_vertex(create_vertex(get_joint_point(edge, a, True), 0.5, a_uv))
+        if not is_up:
+            current_distance += (vertices[vertex_index] - pos).magnitude
 
-        into.append_triangle(index_start+0, index_start+2, index_start+1)
-        into.append_triangle(index_start+2, index_start+3, index_start+1)
-        into.append_triangle(index_start+1, index_start+4, index_start+5)
-        into.append_triangle(index_start+1, index_start+5, index_start+0)
-
-        current_distance = next_distance
+        pos = current_pos
 
 class MapRoom():
     def __init__(self, room_index: int):
         self.room_index: int = room_index
-        self.mesh: mesh.mesh_data = mesh.mesh_data(None)
+        self.mesh: mesh2d_writer.Mesh2d = mesh2d_writer.Mesh2d()
 
 def build_map_outline(outlines: list[MapEntry], file):
     if len(outlines) == 0:
@@ -299,7 +217,7 @@ def build_map_outline(outlines: list[MapEntry], file):
 
     for room in result:
         file.write(struct.pack('>B', 0))
-        tiny3d_mesh_writer.write_mesh([room.mesh], None, [], settings, file)
+        room.mesh.write(file)
 
 
     
