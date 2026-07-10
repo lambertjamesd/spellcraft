@@ -251,7 +251,7 @@ class mesh_data():
             self.indices.append(index_mapping[idx])
 
     
-def convert_vertex_channel(input, gamma):
+def convert_vertex_channel(input: float, gamma: float) -> int:
     result = math.floor(255 * math.pow(input, gamma) + 0.5)
 
     if result > 255:

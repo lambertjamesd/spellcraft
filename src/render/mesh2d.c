@@ -6,9 +6,8 @@
 #define EXPECTED_HEADER 0x4D534832
 
 #define MESH2D_CMD_MATERIAL 0
-#define MESH2D_CMD_ATTR     1
-#define MESH2D_CMD_MOVE_TO  2
-#define MESH2D_CMD_LINE_TO  3
+#define MESH2D_CMD_MOVE_TO  1
+#define MESH2D_CMD_LINE_TO  2
 
 void mesh2d_load(mesh2d_t* mesh, FILE* file) {
     int header;
@@ -53,13 +52,6 @@ void mesh2d_load(mesh2d_t* mesh, FILE* file) {
                 fread(&material_index, sizeof(uint16_t), 1, file);
                 assert(material_index < mesh->material_transition_count);
                 material_apply(&mesh->transition_materials[material_index]);
-                break;
-            }
-            case MESH2D_CMD_ATTR:
-            {
-                uint8_t attrs;
-                fread(&attrs, sizeof(uint8_t), 1, file);
-                menu_set_attr_flags(attrs);
                 break;
             }
             case MESH2D_CMD_MOVE_TO:

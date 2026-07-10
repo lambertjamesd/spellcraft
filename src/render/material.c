@@ -11,6 +11,7 @@
 
 void material_init(struct material* material) {
     material->block = 0;
+    material->microcode = MATERIAL_MICROCODE_T3D;
 
     material->tex0.sprite = NULL;
     material->tex0.texture_enabled = false;
@@ -367,7 +368,7 @@ void material_load(struct material* into, FILE* material_file) {
                     if (into->microcode != MATERIAL_MICROCODE_T3D) {
                         break;
                     }
-                    
+
                     t3d_light_set_count(light_count);
                 }
                 break;
