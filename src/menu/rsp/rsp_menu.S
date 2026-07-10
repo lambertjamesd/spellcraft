@@ -9,6 +9,7 @@
 #define VERTEX_SIZE     16
 
 #define VERTEX_RGBA(index)     (%lo(VERTEX_POINTS) + 8 + index * VERTEX_SIZE)
+#define VERTEX_U(index)     (%lo(VERTEX_POINTS) + 4 + index * VERTEX_SIZE)
 
 #define TRI_VERTEX_SIZE 32
 
@@ -77,16 +78,19 @@ RDPQ_TRI_DATA5:          .space TRI_VERTEX_SIZE
     vmadm \of, \ai, \bf
     vmadn \of, \af, \bi
     vmadh \oi, \ai, \bi
+    vmadn \of, vzero, vzero
 .endm
 
 .macro vmifxi oi, of, ai, af, bi
     vmudn \of, \af, \bi
     vmadh \oi, \ai, \bi
+    vmudn \of, vzero, vzero
 .endm
 
 .macro vmixif oi, of, ai, bi, bf
     vmudm \of, \ai, \bf
     vmadh \oi, \ai, \bi
+    vmudn \of, vzero, vzero
 .endm
 
 .macro vmixf oi, of, ai, bf
@@ -175,7 +179,7 @@ MenuCmd_LineTo:
     sw a2, %lo(TMP_MEM)
     lsv lineWidth, 0, 2, t3
 
-    vmfxi $v17, $v18, offsetNorm, lineWidth.e0
+    vmixf $v17, $v18, offsetNorm, lineWidth.e0
     
     vmov $v16.e0, pointA.e0
     vmov $v16.e2, pointA.e1
@@ -210,35 +214,40 @@ MenuCmd_LineTo:
     sw t6, %lo(RDPQ_TRI_DATA2) + 8
     
     lw t6, VERTEX_RGBA(1)
-    sw a0, %lo(RDPQ_TRI_DATA3) + 8
-    sw a0, %lo(RDPQ_TRI_DATA4) + 8
-    sw a0, %lo(RDPQ_TRI_DATA5) + 8
+    sw t6, %lo(RDPQ_TRI_DATA3) + 8
+    sw t6, %lo(RDPQ_TRI_DATA4) + 8
+    sw t6, %lo(RDPQ_TRI_DATA5) + 8
 
     # populate uv
-    li a0, 0x00
-    sw a0, %lo(RDPQ_TRI_DATA0) + 12
-    sw a0, %lo(RDPQ_TRI_DATA1) + 12
-    sw a0, %lo(RDPQ_TRI_DATA2) + 12
+    lh t6, VERTEX_U(0)
+    sh t6, %lo(RDPQ_TRI_DATA0) + 12
+    sh t6, %lo(RDPQ_TRI_DATA1) + 12
+    sh t6, %lo(RDPQ_TRI_DATA2) + 12
+    
+    lh t6, VERTEX_U(1)
+    sh t6, %lo(RDPQ_TRI_DATA3) + 12
+    sh t6, %lo(RDPQ_TRI_DATA4) + 12
+    sh t6, %lo(RDPQ_TRI_DATA5) + 12
     
     # populate w/winv
-    li a0, 0x10000
-    sw a0, %lo(RDPQ_TRI_DATA0) + 16
-    sw a0, %lo(RDPQ_TRI_DATA0) + 20
-    sw a0, %lo(RDPQ_TRI_DATA1) + 16
-    sw a0, %lo(RDPQ_TRI_DATA1) + 20
-    sw a0, %lo(RDPQ_TRI_DATA2) + 16
-    sw a0, %lo(RDPQ_TRI_DATA2) + 20
-    sw a0, %lo(RDPQ_TRI_DATA3) + 16
-    sw a0, %lo(RDPQ_TRI_DATA3) + 20
-    sw a0, %lo(RDPQ_TRI_DATA4) + 16
-    sw a0, %lo(RDPQ_TRI_DATA4) + 20
-    sw a0, %lo(RDPQ_TRI_DATA5) + 16
-    sw a0, %lo(RDPQ_TRI_DATA5) + 20
+    li t6, 0x10000
+    sw t6, %lo(RDPQ_TRI_DATA0) + 16
+    sw t6, %lo(RDPQ_TRI_DATA0) + 20
+    sw t6, %lo(RDPQ_TRI_DATA1) + 16
+    sw t6, %lo(RDPQ_TRI_DATA1) + 20
+    sw t6, %lo(RDPQ_TRI_DATA2) + 16
+    sw t6, %lo(RDPQ_TRI_DATA2) + 20
+    sw t6, %lo(RDPQ_TRI_DATA3) + 16
+    sw t6, %lo(RDPQ_TRI_DATA3) + 20
+    sw t6, %lo(RDPQ_TRI_DATA4) + 16
+    sw t6, %lo(RDPQ_TRI_DATA4) + 20
+    sw t6, %lo(RDPQ_TRI_DATA5) + 16
+    sw t6, %lo(RDPQ_TRI_DATA5) + 20
     
     li s4, %lo(RDPQ_CMD_STAGING)
     move s3, s4
     li v0, 2   # disable culling
-    li a0, 0xC800
+    li a0, 0xCC00
     li a1, %lo(RDPQ_TRI_DATA0)
     li a2, %lo(RDPQ_TRI_DATA1)
     jal RDPQ_Triangle_Send_Async
@@ -247,7 +256,7 @@ MenuCmd_LineTo:
     li s4, %lo(RDPQ_CMD_STAGING)
     move s3, s4
     li v0, 2   # disable culling
-    li a0, 0xC800
+    li a0, 0xCC00
     li a1, %lo(RDPQ_TRI_DATA0)
     li a2, %lo(RDPQ_TRI_DATA4)
     jal RDPQ_Triangle_Send_Async
@@ -339,42 +348,6 @@ MenuCmd_SetStack:
     sw a1, %lo(MTX_STACK_PTR)
     j RSPQ_Loop
     sb zero, %lo(MTX_STACK_SIZE)
-    
-    ##########################################
-    # MenuCmd_Line
-    # a0 a
-    # a1 b
-DrawLine:
-    # - if a == b
-    #     return
-
-    # convert vertex index to vertex pointers
-    sll	t0, t0, 4
-    sll t1, t1, 4
-    addi t0, t0, %lo(VERTEX_POINTS)
-    addi t1, t1, %lo(VERTEX_POINTS)
-
-    # load a and b
-    llv $v01, 0, 0, t0
-    llv $v02, 0, 0, t1
-
-    vsub $v03, $v01, $v02
-
-    vmudm $v04, $v03, $v03 # multiply I*F
-    vmadn $v05, $v00, $v00 # store fractional result
-
-    vaddc $v05, $v05, $v05.h1
-    vadd $v04, $v04, $v04.h1
-
-    vrcph $v06.e0, $v04.e0
-    vrcpl $v07.e0, $v05.e0
-    vrcph $v06.e0, $v00.e0
-    # a - b
-
-    
-
-    jr ra
-    nop
 
     ##########################################
     # Does the matrix operation MTX_TOP = MTX_TOP * MTX_INPUT

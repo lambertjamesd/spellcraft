@@ -52,6 +52,9 @@ static transform_2d_fp_t transform_test = {
     },
 };
 
+static int offset_x = 5 << 2;
+static int offset_y = 40 << 2;
+
 void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     material_apply(&map->outline_material->apply);
     
@@ -94,12 +97,16 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     menu_move_to(&(vector2s16_t){
         .x = 50 << 2,
         .y = 10 << 2,
-    }, 0, 2 << 2, (color_t){});
+    }, 0, 10 << 2, (color_t){
+        255, 0, 0, 255
+    });
 
     menu_line_to(&(vector2s16_t){
-        .x = (10 << 2) + offset,
-        .y = 50 << 2,
-    }, 0, 2 << 2, (color_t){});
+        .x = (50 << 2) + offset,
+        .y = (10 << 2) + offset_y,
+    }, 0, 10 << 2, (color_t){
+        0, 255, 0, 255
+    });
 
     rspq_wait();
 
@@ -107,8 +114,12 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
 
     for (int i = 0; i < 16; i += 1) {
         debugf("%d ", (int)test[i]);
+
+        if (i == 7) {
+            debugf("\n");
+        }
     }
-    debugf("\n");
+    debugf("\n\n");
     
     menu_mtx_pop(1);
 }
