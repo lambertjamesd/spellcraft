@@ -34,7 +34,7 @@
         CAP_VECTORS:
             # pattern x -y y x
             # 2 patterns per vector
-            .half 0x7fff, 0x8001, 0x7fff, 0x7fff, 0x8001, 0x8001, 0x7fff, 0x8001
+            .half 0x7fff, 0x7fff, 0x8001, 0x7fff, 0x7fff, 0x8001, 0x7fff, 0x7fff
         .align 3
         MTX_STACK_PTR:  .word 0
         MTX_STACK_SIZE: .byte 0
@@ -181,6 +181,7 @@ MenuCmd_LineTo:
     vmov $v16.e2, pointA.e1
     vmov $v16.e4, pointA.e0
     vmov $v16.e6, pointA.e1
+
     jal DrawCap
     li a0, %lo(RDPQ_TRI_DATA0)
 
@@ -256,8 +257,6 @@ MenuCmd_LineTo:
 
 RDPQ_Triangle_Clip:
 RDPQ_Triangle_Cull:
-    li a0, 0xf0fa
-    sw a0, %lo(TEST)
     jal_and_j RDPQ_Triangle_Send_End, RSPQ_Loop
 
     ##########################################
