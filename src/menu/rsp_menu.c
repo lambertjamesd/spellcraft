@@ -68,23 +68,23 @@ void menu_mtx_pop(int count) {
     rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_MtxPop, count);
 }
 
-void menu_point_action(int command, vector2s16_t* pos, uint16_t u, uint16_t w, color_t color) {
+void menu_point_action(int command, menu2d_vtx_t* vtx) {
     rspq_write(
         MENU_OVERLAY_ID,
         command,
         0,
-        ((uint32_t)pos->x << 16) | (uint32_t)pos->y,
-        ((uint32_t)u << 16) | (uint32_t)w,
-        ((uint32_t)color.r << 24) | ((uint32_t)color.g << 16) | ((uint32_t)color.b << 8) | (uint32_t)color.a
+        ((uint32_t)vtx->pos.x << 16) | (uint32_t)vtx->pos.y,
+        ((uint32_t)vtx->u << 16) | (uint32_t)vtx->width,
+        ((uint32_t)vtx->color.r << 24) | ((uint32_t)vtx->color.g << 16) | ((uint32_t)vtx->color.b << 8) | (uint32_t)vtx->color.a
     );
 }
 
-void menu_move_to(vector2s16_t* pos, uint16_t u, uint16_t w, color_t color) {
-    menu_point_action(RSP_MENU_MenuCmd_MoveTo, pos, u, w, color);
+void menu_move_to(menu2d_vtx_t* vtx) {
+    menu_point_action(RSP_MENU_MenuCmd_MoveTo, vtx);
 }
 
-void menu_line_to(vector2s16_t* pos, uint16_t u, uint16_t w, color_t color) {
-    menu_point_action(RSP_MENU_MenuCmd_LineTo, pos, u, w, color);
+void menu_line_to(menu2d_vtx_t* vtx) {
+    menu_point_action(RSP_MENU_MenuCmd_LineTo, vtx);
 }
 
 void menu_set_attr_flags(int flags) {
