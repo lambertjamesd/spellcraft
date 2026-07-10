@@ -74,46 +74,6 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     for (int i = 0; i < map->room_count; i += 1) {
         rspq_block_run(map->rooms[i].outline.block);
     }
-
-    int offset = (int)(game_time * 16.0f) % 160 + 1;
-
-    menu_set_attr_flags(MENU_FLAGS_SHADE);
-    menu_move_to(&(menu2d_vtx_t){
-        .pos = {
-            .x = 50 << 2,
-            .y = 10 << 2,
-        },
-        .u = 0,
-        .width = 1 << 2,
-        .color = {
-            255, 0, 0, 255
-        }
-    });
-
-    menu_line_to(&(menu2d_vtx_t){
-        .pos = {
-            .x = (50 << 2) + offset,
-            .y = (10 << 2) + offset_y,
-        },
-        .u = 0,
-        .width = 1 << 2,
-        .color = {
-            255, 0, 0, 255
-        }
-    });
-
-    rspq_wait();
-
-    short* test = menu_get_state();
-
-    for (int i = 0; i < 16; i += 1) {
-        debugf("%d ", (int)test[i]);
-
-        if (i == 7) {
-            debugf("\n");
-        }
-    }
-    debugf("\n\n");
     
     menu_mtx_pop(1);
 }
