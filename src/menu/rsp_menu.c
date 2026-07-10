@@ -87,6 +87,10 @@ void menu_line_to(vector2s16_t* pos, uint16_t u, uint16_t w, color_t color) {
     menu_point_action(RSP_MENU_MenuCmd_LineTo, pos, u, w, color);
 }
 
+void menu_set_attr_flags(int flags) {
+    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_SetAttrFlags, flags);
+}
+
 void* menu_get_state() {
     rspq_wait();
     return rspq_overlay_get_state(&rsp_menu);

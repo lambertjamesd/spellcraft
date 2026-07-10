@@ -94,6 +94,7 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
 
     int offset = (int)(game_time * 16.0f) % 160 + 1;
 
+    menu_set_attr_flags(MENU_FLAGS_SHADE);
     menu_move_to(&(vector2s16_t){
         .x = 50 << 2,
         .y = 10 << 2,

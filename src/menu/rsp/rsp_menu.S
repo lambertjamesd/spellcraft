@@ -19,6 +19,7 @@
         RSPQ_DefineCommand MenuCmd_Mtx, 8
         RSPQ_DefineCommand MenuCmd_MtxPop, 4
         RSPQ_DefineCommand MenuCmd_SetStack, 8
+        RSPQ_DefineCommand MenuCmd_SetAttrFlags, 4
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
@@ -40,6 +41,7 @@
         MTX_STACK_PTR:  .word 0
         MTX_STACK_SIZE: .byte 0
         MTX_STACK_MAX: .byte 10
+        ATTR_FLAGS: .byte 0
 
         .align 2
         VIEWPORT: .half 0, 320, 0, 240
@@ -243,11 +245,14 @@ MenuCmd_LineTo:
     sw t6, %lo(RDPQ_TRI_DATA4) + 20
     sw t6, %lo(RDPQ_TRI_DATA5) + 16
     sw t6, %lo(RDPQ_TRI_DATA5) + 20
+
+    lb t7, %lo(ATTR_FLAGS)
+    sll t7, t7, 8
     
     li s4, %lo(RDPQ_CMD_STAGING)
     move s3, s4
     li v0, 2   # disable culling
-    li a0, 0xCC00
+    ori a0, t7, 0xC800
     li a1, %lo(RDPQ_TRI_DATA0)
     li a2, %lo(RDPQ_TRI_DATA1)
     jal RDPQ_Triangle_Send_Async
@@ -256,7 +261,7 @@ MenuCmd_LineTo:
     li s4, %lo(RDPQ_CMD_STAGING)
     move s3, s4
     li v0, 2   # disable culling
-    li a0, 0xCC00
+    ori a0, t7, 0xC800
     li a1, %lo(RDPQ_TRI_DATA0)
     li a2, %lo(RDPQ_TRI_DATA4)
     jal RDPQ_Triangle_Send_Async
@@ -340,7 +345,7 @@ MenuCmd_MtxPopDoPop:
 
     
     ##########################################
-    # MenuCmd_Line
+    # MenuCmd_SetStack
     # a0 max size
     # a1 mtx_addr
 MenuCmd_SetStack:
@@ -361,6 +366,14 @@ MenuCmd_SetStack:
     #define input_topf       $v04
     #define input_bottomi    $v05
     #define input_bottomf    $v06
+
+    ##########################################
+    # MenuCmd_SetAttrFlags
+    # a0 flags
+MenuCmd_SetAttrFlags:
+    j RSPQ_Loop
+    sb a0, %lo(ATTR_FLAGS)
+
 MulMtx:
     li t2, %lo(MTX_TOP)
     li t3, %lo(MTX_INPUT)
