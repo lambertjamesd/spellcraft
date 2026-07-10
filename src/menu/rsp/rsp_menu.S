@@ -92,7 +92,7 @@ RDPQ_TRI_DATA5:          .space TRI_VERTEX_SIZE
 .macro vmixif oi, of, ai, bi, bf
     vmudm \of, \ai, \bf
     vmadh \oi, \ai, \bi
-    vmudn \of, vzero, vzero
+    vmadn \of, vzero, vzero
 .endm
 
 .macro vmixf oi, of, ai, bf

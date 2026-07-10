@@ -39,8 +39,8 @@ void menu_map_destroy(menu_map_t* map) {
 
 static transform_2d_fp_t transform_test = {
     .int_part = {
-        2, 0, 0, 0,
-        0, 2, 0, 0
+        1, 0, 40, 0,
+        0, 1, 40, 0
     },
     .frac_part = {
         0, 0, 0, 0,
@@ -68,12 +68,12 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
         .b = 255,
         .a = 64,
     }, 0, 0);
+    
+    menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
 
     for (int i = 0; i < map->room_count; i += 1) {
         rspq_block_run(map->rooms[i].outline.block);
     }
-
-    menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
 
     int offset = (int)(game_time * 16.0f) % 160 + 1;
 

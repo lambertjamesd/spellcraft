@@ -11,9 +11,8 @@ from . import export_settings
 from . import mesh2d_writer
 
 TARGET_MAP_SIZE = 200
-FIXED_POINT_SCALE = 4
 
-TOTAL_SCALE = TARGET_MAP_SIZE * FIXED_POINT_SCALE
+TOTAL_SCALE = TARGET_MAP_SIZE
 
 LINE_WIDTH = 2
 
@@ -137,7 +136,8 @@ def write_outline(into: mesh2d_writer.Mesh2d, obj: bpy.types.Object, global_tran
         if next_edge == None:
             raise Exception('could not find an edge')
         
-        move_pen(next_edge, other_vertex(next_edge, next_index), True)
+        actions.append((next_index, True))
+        move_pen(next_edge, other_vertex(next_edge, next_index), False)
 
         return next_edge
 
