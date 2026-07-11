@@ -4,6 +4,7 @@
 #include "../render/frame_alloc.h"
 #include "../time/time.h"
 #include "../menu/rsp_menu.h"
+#include "./menu_common.h"
 
 static rspq_block_t* block_test;
 
@@ -39,12 +40,12 @@ void menu_map_destroy(menu_map_t* map) {
 
 static transform_2d_fp_t transform_test = {
     .int_part = {
-        1, 0, 40, 0,
-        0, 1, 40, 0
+        0, 0, 100, 0,
+        0, 0, 100, 0
     },
     .frac_part = {
-        0, 0, 0, 0,
-        0, 0, 0, 0
+        0xf700, 0, 0, 0,
+        0, 0xf700, 0, 0
     },
 };
 
@@ -52,22 +53,17 @@ static int offset_x = 5 << 2;
 static int offset_y = 40 << 2;
 
 void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
+    menu_common_render_background(20, 20, 200, 200);
+
     material_apply(&map->outline_material->apply);
     
-    int scroll = ((int)(game_time * 100.0f)) % 256;
+    int scroll = ((int)(total_time * 100.0f)) % 256;
 
     rdpq_set_tile_size_fx(
         TILE0, 
         scroll, 0, 
         scroll + map->outline_material->apply.tex0.s1, map->outline_material->apply.tex0.t1
     );
-
-    rdpq_set_prim_register_raw((color_t){
-        .r = 255,
-        .g = 255,
-        .b = 255,
-        .a = 64,
-    }, 0, 0);
     
     menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
 

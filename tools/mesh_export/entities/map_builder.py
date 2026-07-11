@@ -204,8 +204,8 @@ def build_map_outline(outlines: list[MapEntry], file):
     max_pos = max_pos - center_offset
 
     global_transform = mathutils.Matrix((
-        (1, 0, 0, 0),
-        (0, -1, 0, TOTAL_SCALE),
+        (-1, 0, 0, TOTAL_SCALE),
+        (0, 1, 0, 0),
         (0, 0, 1, 0),
         (0, 0, 0, 1)
     )) @ mathutils.Matrix.Scale(TOTAL_SCALE / max_size, 4) @ mathutils.Matrix.Translation(-min_pos)    

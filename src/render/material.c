@@ -416,8 +416,8 @@ void material_check_texture_scroll(int tile, struct material_tex* tex) {
     int w = tex->width << 2;
     int h = tex->height << 2;
 
-    int x_offset = (int)(game_time * tex->scroll_x * w) % w;
-    int y_offset = (int)(game_time * tex->scroll_y * h) % h;
+    int x_offset = (int)(total_time * tex->scroll_x * w) % w;
+    int y_offset = (int)(total_time * tex->scroll_y * h) % h;
 
     if (x_offset < 0) {
         x_offset += w;

@@ -11,6 +11,7 @@ enum active_menu {
     ACTIVE_MENU_SPELLS,
     ACTIVE_MENU_SPELL_BUILDING,
     ACTIVE_MENU_INVENTORY,
+    ACTIVE_MENU_MAP,
 };
 
 struct pause_menu {

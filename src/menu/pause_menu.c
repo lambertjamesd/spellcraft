@@ -4,6 +4,7 @@
 #include "../time/time.h"
 #include "../time/game_mode.h"
 #include "menu_rendering.h"
+#include "../scene/scene.h"
 
 void pause_menu_render(void *data) {
     struct pause_menu* pause_menu = (struct pause_menu*)data;
@@ -17,6 +18,9 @@ void pause_menu_render(void *data) {
             break;
         case ACTIVE_MENU_INVENTORY:
             inventory_menu_render(&pause_menu->inventory_menu);
+            break;
+        case ACTIVE_MENU_MAP:
+            menu_map_render(&current_scene->map, NULL, NULL);
             break;
         default:
             break;
@@ -42,6 +46,8 @@ void pause_menu_transition(struct pause_menu* pause_menu, enum active_menu targe
         case ACTIVE_MENU_INVENTORY:
             inventory_menu_hide(&pause_menu->inventory_menu);
             break;
+        case ACTIVE_MENU_MAP:
+            break;
     }
 
     pause_menu->active_menu = target;
@@ -60,6 +66,8 @@ void pause_menu_transition(struct pause_menu* pause_menu, enum active_menu targe
         case ACTIVE_MENU_INVENTORY:
             inventory_menu_show(&pause_menu->inventory_menu);
             break;
+        case ACTIVE_MENU_MAP:
+            break;
     }
 }
 
@@ -67,14 +75,16 @@ static enum active_menu next_menu[] = {
     [ACTIVE_MENU_NONE] = ACTIVE_MENU_NONE,
     [ACTIVE_MENU_SPELLS] = ACTIVE_MENU_INVENTORY,
     [ACTIVE_MENU_SPELL_BUILDING] = ACTIVE_MENU_SPELLS,
-    [ACTIVE_MENU_INVENTORY] = ACTIVE_MENU_SPELLS,
+    [ACTIVE_MENU_INVENTORY] = ACTIVE_MENU_MAP,
+    [ACTIVE_MENU_MAP] = ACTIVE_MENU_SPELLS,
 };
 
 static enum active_menu prev_menu[] = {
     [ACTIVE_MENU_NONE] = ACTIVE_MENU_NONE,
-    [ACTIVE_MENU_SPELLS] = ACTIVE_MENU_INVENTORY,
+    [ACTIVE_MENU_SPELLS] = ACTIVE_MENU_MAP,
     [ACTIVE_MENU_SPELL_BUILDING] = ACTIVE_MENU_SPELLS,
     [ACTIVE_MENU_INVENTORY] = ACTIVE_MENU_SPELLS,
+    [ACTIVE_MENU_MAP] = ACTIVE_MENU_INVENTORY,
 };
 
 void pause_menu_update(struct pause_menu* pause_menu) {
