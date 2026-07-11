@@ -120,6 +120,7 @@ RDPQ_TRI_DATA5:          .space TRI_VERTEX_SIZE
     # a2: uuww
     # a3: rgba
 MenuCmd_MoveTo:
+    sb zero, %lo(NEXT_VERTEX)
     jal_and_j WriteNextPoint, RSPQ_Loop
 
     ##########################################
@@ -198,6 +199,7 @@ MenuCmd_LineTo:
     vmov $v16.e2, pointB.e1
     vmov $v16.e4, pointB.e0
     vmov $v16.e6, pointB.e1
+
     jal DrawCap
     li a0, %lo(RDPQ_TRI_DATA3)
 
@@ -474,13 +476,19 @@ DrawCap:
     #define directionf $v18
     #define capVector  $v19
     #define resi       $v20
+    #define resf       $v21
 
     li t3, %lo(CAP_VECTORS)
     lqv capVector, 0, 0, t3
 
     vmudm resi, capVector, directionf
-    vmadh resi, capVector, directioni
+    vmadh resf, capVector, directioni
+
     vsar resi, COP2_ACC_HI
+
+    # round resi
+    vaddc resf, resf, K32768
+    vadd resi, vzero, vzero
 
     vadd resi, resi, resi.q1
     vadd resi, resi, origin
