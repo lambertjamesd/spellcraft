@@ -488,7 +488,7 @@ DrawCap:
 
     # round resi
     vaddc resf, resf, K32768
-    vadd resi, vzero, vzero
+    vadd resi, resi, vzero
 
     vadd resi, resi, resi.q1
     vadd resi, resi, origin
