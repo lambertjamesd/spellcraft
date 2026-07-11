@@ -198,7 +198,17 @@ def build_map_outline(outlines: list[MapEntry], file):
 
     max_size = max(size.x, size.y)
 
-    global_transform = mathutils.Matrix.Scale(TOTAL_SCALE / max_size, 4) @ mathutils.Matrix.Translation(-min_pos)    
+    center_offset = mathutils.Vector((max_size - size.x, max_size - size.y, 0)) * 0.5
+
+    min_pos = min_pos - center_offset
+    max_pos = max_pos - center_offset
+
+    global_transform = mathutils.Matrix((
+        (1, 0, 0, 0),
+        (0, -1, 0, TOTAL_SCALE),
+        (0, 0, 1, 0),
+        (0, 0, 0, 1)
+    )) @ mathutils.Matrix.Scale(TOTAL_SCALE / max_size, 4) @ mathutils.Matrix.Translation(-min_pos)    
 
     current_mesh = MapRoom(outlines[0].room_index)
     result = [current_mesh]
@@ -209,7 +219,7 @@ def build_map_outline(outlines: list[MapEntry], file):
 
         write_outline(current_mesh.mesh, outline.obj, global_transform)
 
-    file.write(struct.pack('>Hffff', len(result), min_pos.x, min_pos.y, max_pos.x, max_pos.y))
+    file.write(struct.pack('>Hffff', len(result), min_pos.x, -max_pos.y, max_pos.x, -min_pos.y))
 
     settings = export_settings.ExportSettings()
     settings.fixed_point_scale = 1
