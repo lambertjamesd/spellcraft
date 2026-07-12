@@ -321,6 +321,9 @@ MenuCmd_Mtx_SkipPush:
     jal DMAIn
     li row_stride, 0
 
+    li a0, %lo(MTX_TOP)
+    li a1, %lo(MTX_INPUT)
+    li a2, %lo(MTX_TOP)
     jal_and_j MulMtx, RSPQ_Loop
 
 MenuCmd_Mtx_SkipMul:
@@ -400,20 +403,23 @@ MenuCmd_SetViewport:
     j RSPQ_Loop
     sw a2, %lo(VIEWPORT + 4)
 
+    ##########################################
+    # MulMtx
+    #
+    # a0: ptr to left matrix 
+    # a1: ptr to right matrix
+    # a2: output, can equal left or right
 MulMtx:
-    li t2, %lo(MTX_TOP)
-    li t3, %lo(MTX_INPUT)
-    
-    lqv mtx_topi, 0x00, t2
-    lqv mtx_topf, 0x10, t2
-    ldv input_topi, 0, 0x00, t3
-    ldv input_topi, 8, 0x00, t3
-    ldv input_topf, 0, 0x010, t3
-    ldv input_topf, 8, 0x010, t3
-    ldv input_bottomi, 0, 0x08, t3
-    ldv input_bottomi, 8, 0x08, t3
-    ldv input_bottomf, 0, 0x018, t3
-    ldv input_bottomf, 8, 0x018, t3
+    lqv mtx_topi, 0x00, a0
+    lqv mtx_topf, 0x10, a0
+    ldv input_topi, 0, 0x00, a1
+    ldv input_topi, 8, 0x00, a1
+    ldv input_topf, 0, 0x010, a1
+    ldv input_topf, 8, 0x010, a1
+    ldv input_bottomi, 0, 0x08, a1
+    ldv input_bottomi, 8, 0x08, a1
+    ldv input_bottomf, 0, 0x018, a1
+    ldv input_bottomf, 8, 0x018, a1
 
     # matrix multiply
     vmifxif $v08, $v07, input_topi, input_topf, mtx_topi.h0, mtx_topf.h0
@@ -422,24 +428,24 @@ MulMtx:
     
     # store rotate/scale
     # integer half
-    slv $v08, 0, 0x00, t2
-    slv $v08, 8, 0x08, t2
+    slv $v08, 0, 0x00, a2
+    slv $v08, 8, 0x08, a2
     # add translate
     vadd $v08, $v08, mtx_topi.h2
     # fixed point half
-    slv $v07, 0, 0x10, t2
-    slv $v07, 8, 0x18, t2
+    slv $v07, 0, 0x10, a2
+    slv $v07, 8, 0x18, a2
     # add translate
     vadd $v07, $v07, mtx_topf.h2
 
     # store translate
-    ssv $v08, 4, 0x04, t2
-    ssv $v08, 12, 0x0C, t2
+    ssv $v08, 4, 0x04, a2
+    ssv $v08, 12, 0x0C, a2
 
     # store translate
-    ssv $v07, 4, 0x14, t2
+    ssv $v07, 4, 0x14, a2
     jr ra
-    ssv $v07, 12, 0x1C, t2
+    ssv $v07, 12, 0x1C, a2
 
 WriteNextPoint:
     ##########################################
