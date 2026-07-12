@@ -4,12 +4,18 @@
 
 .data
 
-# fmt xxyy uuww rgba 0000
+# fmt xxyy uuww rgba c000
+# xxyy - position                   (0, 2)
+# uu - u of uv texture coordinate   (4)
+# ww - width of the line            (6)
+# rgba - color                      (8)
+# c - clipping mask                 (12)
 
 #define VERTEX_SIZE     16
 
 #define VERTEX_RGBA(index)     (%lo(VERTEX_POINTS) + 8 + index * VERTEX_SIZE)
 #define VERTEX_U(index)     (%lo(VERTEX_POINTS) + 4 + index * VERTEX_SIZE)
+#define VERTEX_CLIP_MASK(index)     (%lo(VERTEX_POINTS) + 12 + index * VERTEX_SIZE)
 
 #define TRI_VERTEX_SIZE 32
 
@@ -20,6 +26,7 @@
         RSPQ_DefineCommand MenuCmd_MtxPop, 4
         RSPQ_DefineCommand MenuCmd_SetStack, 8
         RSPQ_DefineCommand MenuCmd_SetAttrFlags, 4
+        RSPQ_DefineCommand MenuCmd_SetViewport, 12
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
@@ -44,7 +51,7 @@
         ATTR_FLAGS: .byte 0
 
         .align 2
-        VIEWPORT: .half 0, 320, 0, 240
+        VIEWPORT: .half 0, -320*4, 0, -240*4
         .align 4
         VERTEX_POINTS: .space VERTEX_SIZE*2
         NEXT_VERTEX: .byte 0
@@ -144,6 +151,13 @@ MenuCmd_LineTo:
     #define vtmp    $v08
     #define offsetNorm $v09
     #define lineWidth  $v10
+
+    lb t6, VERTEX_CLIP_MASK(0)
+    lb t7, VERTEX_CLIP_MASK(1)
+
+    and t6, t7, t6
+
+    bne t6, zero, RSPQ_Loop
 
     li t6, %lo(VERTEX_POINTS)
 
@@ -376,6 +390,16 @@ MenuCmd_SetAttrFlags:
     j RSPQ_Loop
     sb a0, %lo(ATTR_FLAGS)
 
+    ##########################################
+    # MenuCmd_SetViewport
+    # a0 unused
+    # a1 xmin, xmax
+    # a2 ymin, ymax
+MenuCmd_SetViewport:
+    sw a1, %lo(VIEWPORT + 0)
+    j RSPQ_Loop
+    sw a2, %lo(VIEWPORT + 4)
+
 MulMtx:
     li t2, %lo(MTX_TOP)
     li t3, %lo(MTX_INPUT)
@@ -446,7 +470,7 @@ MulPoint:
     li t2, %lo(MTX_TOP)
     li t3, %lo(VERTEX_INPUT)
     lqv mtx_topi, 0x00, t2
-    lqv mtx_topf, 0x10, t2
+    lqv mtx_topf, 0x10, t2 
 
     llv input_vtxi, 0, 0, t3
     llv input_vtxi, 8, 0, t3
@@ -460,8 +484,29 @@ MulPoint:
     vadd $v08, $v08, mtx_topi.h2
 
     ssv $v08, 0, 0, a0
-    jr ra
     ssv $v08, 8, 2, a0
+
+    # clipping flags
+    # load the pattern x, -x, y, -y
+    vand $v07, vzero, vzero
+    lsv $v07, 0, 0, a0
+    lsv $v07, 4, 2, a0
+    vadd $v08, $v07, $v07
+    vsub $v07, $v08, $v07.q0
+
+    # pad the culling margin by the line width
+    lsv $v08, 0, 6, a0
+    vadd $v07, $v07, $v08.e0
+    
+    li t2, %lo(VIEWPORT)
+    ldv $v08, 0, 0, t2
+
+    vlt $v08, $v07, $v08
+    cfc2 t2, COP2_CTRL_VCC 
+    andi t2, t2, 0xF
+
+    jr ra
+    sb t2, 12(a0)
 
     ##########################################
     # Draws a line end cap

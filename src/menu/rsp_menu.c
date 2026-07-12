@@ -73,7 +73,7 @@ void menu_point_action(int command, menu2d_vtx_t* vtx) {
         MENU_OVERLAY_ID,
         command,
         0,
-        ((uint32_t)vtx->pos.x << 16) | (uint32_t)vtx->pos.y,
+        ((uint32_t)(uint16_t)vtx->pos.x << 16) | (uint32_t)(uint16_t)vtx->pos.y,
         ((uint32_t)vtx->u << 16) | (uint32_t)vtx->width,
         ((uint32_t)vtx->color.r << 24) | ((uint32_t)vtx->color.g << 16) | ((uint32_t)vtx->color.b << 8) | (uint32_t)vtx->color.a
     );
@@ -89,6 +89,16 @@ void menu_line_to(menu2d_vtx_t* vtx) {
 
 void menu_set_attr_flags(int flags) {
     rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_SetAttrFlags, flags);
+}
+
+void menu_set_viewport(int left, int right, int top, int bottom) {
+    rspq_write(
+        MENU_OVERLAY_ID, 
+        RSP_MENU_MenuCmd_SetViewport,
+        0,
+        ((uint32_t)left << 18) | (((uint32_t)-right << 2) & 0xFFFF),
+        ((uint32_t)top << 18) | (((uint32_t)-bottom << 2) & 0xFFFF)
+    );
 }
 
 void* menu_get_state() {

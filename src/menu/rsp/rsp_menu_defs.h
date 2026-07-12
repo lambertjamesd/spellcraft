@@ -7,6 +7,7 @@
 #define RSP_MENU_MenuCmd_MtxPop 3
 #define RSP_MENU_MenuCmd_SetStack 4
 #define RSP_MENU_MenuCmd_SetAttrFlags 5
+#define RSP_MENU_MenuCmd_SetViewport 6
 
 #define RSP_MENU_TEST 0x0
 #define RSP_MENU_MTX_TOP 0x20

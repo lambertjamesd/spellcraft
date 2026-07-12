@@ -65,6 +65,7 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
         scroll + map->outline_material->apply.tex0.s1, map->outline_material->apply.tex0.t1
     );
     
+    menu_set_viewport(20, 220, 20, 220);
     menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
 
     for (int i = 0; i < map->room_count; i += 1) {
