@@ -5,6 +5,7 @@
 #include "../time/time.h"
 #include "../menu/rsp_menu.h"
 #include "./menu_common.h"
+#include "../render/defs.h"
 
 static rspq_block_t* block_test;
 
@@ -65,7 +66,8 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
         scroll + map->outline_material->apply.tex0.s1, map->outline_material->apply.tex0.t1
     );
     
-    menu_set_viewport(20, 220, 20, 220);
+    menu_set_viewport(20, 20, 220, 220);
+    rdpq_set_scissor(20, 20, 220, 220);
     menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
 
     for (int i = 0; i < map->room_count; i += 1) {
@@ -73,4 +75,26 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     }
     
     menu_mtx_pop(1);
+
+    float scale = powf(2.0f, fmodf(total_time / 8.0f, 2.0f));
+    transform_2d_t transform = {
+        scale, 0, 30,
+        0, scale, 30
+    };
+    menu_transform_to_fixed(UncachedAddr(&transform_test), transform);
+    
+    rdpq_set_scissor(0, 0, SCREEN_WD, SCREEN_HT);
+
+    // int16_t* tmp = menu_get_state();
+
+    // for (int i = 0; i < 8; i += 1) {
+    //     debugf("%04x ", tmp[i]);
+    // }
+
+    // debugf("\n");
+    // for (int i = 8; i < 16; i += 1) {
+    //     debugf("%04x ", tmp[i]);
+    // }
+
+    // debugf("\n\n");
 }

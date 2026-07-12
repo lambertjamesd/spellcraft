@@ -91,7 +91,7 @@ void menu_set_attr_flags(int flags) {
     rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_SetAttrFlags, flags);
 }
 
-void menu_set_viewport(int left, int right, int top, int bottom) {
+void menu_set_viewport(int left, int top, int right, int bottom) {
     rspq_write(
         MENU_OVERLAY_ID, 
         RSP_MENU_MenuCmd_SetViewport,

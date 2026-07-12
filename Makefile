@@ -195,10 +195,10 @@ all_exits: $(SCENE_SOURCES:assets/scenes/%.blend=build/assets/scenes/%_exits.txt
 # microcode
 ###
 
-%_defs.h: %.S tools/generate_rsp_defs.js
-	mips-n64-objdump -s -j .data $(<:src/%.S=build/%.elf) > $(<:src/%.S=build/%.objdump)
-	mips-n64-nm $(<:src/%.S=build/%.elf) > $(<:src/%.S=build/%.nm)
-	node tools/generate_rsp_defs.js $(<:src/%.S=build/%.objdump) $(<:src/%.S=build/%.nm) $@
+# %_defs.h: %.S tools/generate_rsp_defs.js
+# 	mips-n64-objdump -s -j .data $(<:src/%.S=build/%.elf) > $(<:src/%.S=build/%.objdump)
+# 	mips-n64-nm $(<:src/%.S=build/%.elf) > $(<:src/%.S=build/%.nm)
+# 	node tools/generate_rsp_defs.js $(<:src/%.S=build/%.objdump) $(<:src/%.S=build/%.nm) $@
 
 ###
 # tests
