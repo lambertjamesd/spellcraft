@@ -15,6 +15,7 @@
 
 #define VERTEX_RGBA(index)     (%lo(VERTEX_POINTS) + 8 + index * VERTEX_SIZE)
 #define VERTEX_U(index)     (%lo(VERTEX_POINTS) + 4 + index * VERTEX_SIZE)
+#define VERTEX_WIDTH(index)     (%lo(VERTEX_POINTS) + 6 + index * VERTEX_SIZE)
 #define VERTEX_CLIP_MASK(index)     (%lo(VERTEX_POINTS) + 12 + index * VERTEX_SIZE)
 
 #define TRI_VERTEX_SIZE 32
@@ -193,26 +194,27 @@ MenuCmd_LineTo:
     llv offsetNorm, 8, 0, t3
     llv offsetNorm, 12, 0, t3
 
-    sw a2, %lo(TMP_MEM)
-    lsv lineWidth, 0, 2, t3
-
-    vmixf $v17, $v18, offsetNorm, lineWidth.e0
+    lsv lineWidth, 0, 6, t6
     
     vmov $v16.e0, pointA.e0
     vmov $v16.e2, pointA.e1
     vmov $v16.e4, pointA.e0
     vmov $v16.e6, pointA.e1
 
+    vmixf $v17, $v18, offsetNorm, lineWidth.e0
+
     jal DrawCap
     li a0, %lo(RDPQ_TRI_DATA0)
-
-    vsub $v17, vzero, $v17
-    vsub $v18, vzero, $v18
+    
+    vsub offsetNorm, vzero, offsetNorm
+    lsv lineWidth, 0, VERTEX_SIZE + 6, t6
 
     vmov $v16.e0, pointB.e0
     vmov $v16.e2, pointB.e1
     vmov $v16.e4, pointB.e0
     vmov $v16.e6, pointB.e1
+    
+    vmixf $v17, $v18, offsetNorm, lineWidth.e0
 
     jal DrawCap
     li a0, %lo(RDPQ_TRI_DATA3)
@@ -465,21 +467,22 @@ WriteNextPoint:
     sw a3, 8(a0)
 
     sw a1, %lo(VERTEX_INPUT)
+    li a1, %lo(MTX_TOP)
+    li a2, %lo(VERTEX_INPUT)
 
     # intentially fall into MulPoint
 
     ##########################################
     # Does the matrix operation *a0 = MTX_TOP * VERTEX_INPUT
-    # a0 indicates write location
-    # stomps t2, t3
+    # a0 output_ptr
+    # a1 mtx_ptr
+    # a2 input_ptr
 MulPoint:
-    li t2, %lo(MTX_TOP)
-    li t3, %lo(VERTEX_INPUT)
-    lqv mtx_topi, 0x00, t2
-    lqv mtx_topf, 0x10, t2 
+    lqv mtx_topi, 0x00, a1
+    lqv mtx_topf, 0x10, a1 
 
-    llv input_vtxi, 0, 0, t3
-    llv input_vtxi, 8, 0, t3
+    llv input_vtxi, 0, 0, a2
+    llv input_vtxi, 8, 0, a2
 
     vmifxi $v08, $v07, mtx_topi, mtx_topf, input_vtxi
 
@@ -504,15 +507,15 @@ MulPoint:
     lsv $v08, 0, 6, a0
     vadd $v07, $v07, $v08.e0
     
-    li t2, %lo(VIEWPORT)
-    ldv $v08, 0, 0, t2
+    li a1, %lo(VIEWPORT)
+    ldv $v08, 0, 0, a1
 
     vlt $v08, $v07, $v08
-    cfc2 t2, COP2_CTRL_VCC 
-    andi t2, t2, 0xF
+    cfc2 a1, COP2_CTRL_VCC 
+    andi a1, a1, 0xF
 
     jr ra
-    sb t2, 12(a0)
+    sb a1, 12(a0)
 
     ##########################################
     # Draws a line end cap
