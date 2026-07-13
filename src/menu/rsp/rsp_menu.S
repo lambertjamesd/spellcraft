@@ -19,6 +19,9 @@
 #define VERTEX_CLIP_MASK(index)     (%lo(VERTEX_POINTS) + 12 + index * VERTEX_SIZE)
 
 #define TRI_VERTEX_SIZE 32
+#define TRI_VTX_COUNT   64
+
+#define TRI_VTX(index, offset)     (%lo(RDPQ_TRI_DATA) + offset + index * TRI_VERTEX_SIZE)
 
     RSPQ_BeginOverlayHeader
         RSPQ_DefineCommand MenuCmd_MoveTo, 16
@@ -41,6 +44,12 @@
             .half 0x0000, 0x0000, 0x0000, 0x0000
             .half 0x0000, 0x0000, 0x0000, 0x0000
         .align 4
+        MTX_TOP_UV: 
+            .half 0x0001, 0x0000, 0x0000, 0x0000
+            .half 0x0000, 0x0001, 0x0000, 0x0000
+            .half 0x0000, 0x0000, 0x0000, 0x0000
+            .half 0x0000, 0x0000, 0x0000, 0x0000
+        .align 4
         CAP_VECTORS:
             # pattern x -y y x
             # 2 patterns per vector
@@ -49,7 +58,11 @@
         MTX_STACK_PTR:  .word 0
         MTX_STACK_SIZE: .byte 0
         MTX_STACK_MAX: .byte 10
+        MTX_STACK_PTR_UV:  .word 0
+        MTX_STACK_SIZE_UV: .byte 0
+        MTX_STACK_MAX_UV: .byte 10
         ATTR_FLAGS: .byte 0
+        VTX_FX_FLAGS: .byte 0
 
         .align 2
         VIEWPORT: .half 0, -320*4, 0, -240*4
@@ -66,17 +79,7 @@
     .align 4
     MTX_INPUT: .space 32
     .align 4
-RDPQ_TRI_DATA0:          .space TRI_VERTEX_SIZE
-    .align 4             
-RDPQ_TRI_DATA1:          .space TRI_VERTEX_SIZE
-    .align 4
-RDPQ_TRI_DATA2:          .space TRI_VERTEX_SIZE
-    .align 4
-RDPQ_TRI_DATA3:          .space TRI_VERTEX_SIZE
-    .align 4
-RDPQ_TRI_DATA4:          .space TRI_VERTEX_SIZE
-    .align 4
-RDPQ_TRI_DATA5:          .space TRI_VERTEX_SIZE
+RDPQ_TRI_DATA:          .space TRI_VERTEX_SIZE * TRI_VTX_COUNT
 
 #define dma_size     t0
 #define row_stride   t1
@@ -204,7 +207,7 @@ MenuCmd_LineTo:
     vmixf $v17, $v18, offsetNorm, lineWidth.e0
 
     jal DrawCap
-    li a0, %lo(RDPQ_TRI_DATA0)
+    li a0, TRI_VTX(0, 0)
     
     vsub offsetNorm, vzero, offsetNorm
     lsv lineWidth, 0, VERTEX_SIZE + 6, t6
@@ -217,52 +220,52 @@ MenuCmd_LineTo:
     vmixf $v17, $v18, offsetNorm, lineWidth.e0
 
     jal DrawCap
-    li a0, %lo(RDPQ_TRI_DATA3)
+    li a0, TRI_VTX(3, 0)
 
     li t7, 0xFF
-    sw t7, %lo(RDPQ_TRI_DATA0) + 4
-    sw t7, %lo(RDPQ_TRI_DATA1) + 4
-    sw t7, %lo(RDPQ_TRI_DATA2) + 4
-    sw t7, %lo(RDPQ_TRI_DATA3) + 4
-    sw t7, %lo(RDPQ_TRI_DATA4) + 4
-    sw t7, %lo(RDPQ_TRI_DATA5) + 4
+    sw t7, TRI_VTX(0, 4)
+    sw t7, TRI_VTX(1, 4)
+    sw t7, TRI_VTX(2, 4)
+    sw t7, TRI_VTX(3, 4)
+    sw t7, TRI_VTX(4, 4)
+    sw t7, TRI_VTX(5, 4)
     
     # copy color
     lw t6, VERTEX_RGBA(0)
-    sw t6, %lo(RDPQ_TRI_DATA0) + 8
-    sw t6, %lo(RDPQ_TRI_DATA1) + 8
-    sw t6, %lo(RDPQ_TRI_DATA2) + 8
+    sw t6, TRI_VTX(0, 8)
+    sw t6, TRI_VTX(1, 8)
+    sw t6, TRI_VTX(2, 8)
     
     lw t6, VERTEX_RGBA(1)
-    sw t6, %lo(RDPQ_TRI_DATA3) + 8
-    sw t6, %lo(RDPQ_TRI_DATA4) + 8
-    sw t6, %lo(RDPQ_TRI_DATA5) + 8
+    sw t6, TRI_VTX(3, 8)
+    sw t6, TRI_VTX(4, 8)
+    sw t6, TRI_VTX(5, 8)
 
     # populate uv
     lh t6, VERTEX_U(0)
-    sh t6, %lo(RDPQ_TRI_DATA0) + 12
-    sh t6, %lo(RDPQ_TRI_DATA1) + 12
-    sh t6, %lo(RDPQ_TRI_DATA2) + 12
+    sh t6, TRI_VTX(0, 12)
+    sh t6, TRI_VTX(1, 12)
+    sh t6, TRI_VTX(2, 12)
     
     lh t6, VERTEX_U(1)
-    sh t6, %lo(RDPQ_TRI_DATA3) + 12
-    sh t6, %lo(RDPQ_TRI_DATA4) + 12
-    sh t6, %lo(RDPQ_TRI_DATA5) + 12
+    sh t6, TRI_VTX(3, 12)
+    sh t6, TRI_VTX(4, 12)
+    sh t6, TRI_VTX(5, 12)
     
     # populate w/winv
     li t6, 0x10000
-    sw t6, %lo(RDPQ_TRI_DATA0) + 16
-    sw t6, %lo(RDPQ_TRI_DATA0) + 20
-    sw t6, %lo(RDPQ_TRI_DATA1) + 16
-    sw t6, %lo(RDPQ_TRI_DATA1) + 20
-    sw t6, %lo(RDPQ_TRI_DATA2) + 16
-    sw t6, %lo(RDPQ_TRI_DATA2) + 20
-    sw t6, %lo(RDPQ_TRI_DATA3) + 16
-    sw t6, %lo(RDPQ_TRI_DATA3) + 20
-    sw t6, %lo(RDPQ_TRI_DATA4) + 16
-    sw t6, %lo(RDPQ_TRI_DATA4) + 20
-    sw t6, %lo(RDPQ_TRI_DATA5) + 16
-    sw t6, %lo(RDPQ_TRI_DATA5) + 20
+    sw t6, TRI_VTX(0, 16)
+    sw t6, TRI_VTX(0, 20)
+    sw t6, TRI_VTX(1, 16)
+    sw t6, TRI_VTX(1, 20)
+    sw t6, TRI_VTX(2, 16)
+    sw t6, TRI_VTX(2, 20)
+    sw t6, TRI_VTX(3, 16)
+    sw t6, TRI_VTX(3, 20)
+    sw t6, TRI_VTX(4, 16)
+    sw t6, TRI_VTX(4, 20)
+    sw t6, TRI_VTX(5, 16)
+    sw t6, TRI_VTX(5, 20)
 
     lb t7, %lo(ATTR_FLAGS)
     sll t7, t7, 8
@@ -271,19 +274,19 @@ MenuCmd_LineTo:
     move s3, s4
     li v0, 2   # disable culling
     ori a0, t7, 0xC800
-    li a1, %lo(RDPQ_TRI_DATA0)
-    li a2, %lo(RDPQ_TRI_DATA1)
+    li a1, TRI_VTX(0, 0)
+    li a2, TRI_VTX(1, 0)
     jal RDPQ_Triangle_Send_Async
-    li a3, %lo(RDPQ_TRI_DATA3)
+    li a3, TRI_VTX(3, 0)
 
     li s4, %lo(RDPQ_CMD_STAGING)
     move s3, s4
     li v0, 2   # disable culling
     ori a0, t7, 0xC800
-    li a1, %lo(RDPQ_TRI_DATA0)
-    li a2, %lo(RDPQ_TRI_DATA4)
+    li a1, TRI_VTX(0, 0)
+    li a2, TRI_VTX(4, 0)
     jal RDPQ_Triangle_Send_Async
-    li a3, %lo(RDPQ_TRI_DATA3)
+    li a3, TRI_VTX(3, 0)
 
     jal_and_j RDPQ_Triangle_Send_End, RSPQ_Loop
 

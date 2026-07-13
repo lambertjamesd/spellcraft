@@ -4,3 +4,6 @@
 
 #define MENU_FLAGS_SHADE    0x4
 #define MENU_FLAGS_TEX      0x2
+
+#define MENU_FX_UV_GEN      0x1
+#define MENU_FX_UV_MTX      0x2
