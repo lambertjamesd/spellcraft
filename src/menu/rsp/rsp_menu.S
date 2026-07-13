@@ -21,7 +21,20 @@
 #define TRI_VERTEX_SIZE 32
 #define TRI_VTX_COUNT   64
 
+# fmt
+# xxyy - position (0)
+# ???? - (4)
+# rgba - (8)
+# uuvv - (12)
+# wwww - (16)
+# winv - (20)
+# c - clipping mask (24)
+
 #define TRI_VTX(index, offset)     (%lo(RDPQ_TRI_DATA) + offset + index * TRI_VERTEX_SIZE)
+
+#define TRI_POS         0
+#define TRI_RGBA        8
+#define TRI_UV          12
 
     RSPQ_BeginOverlayHeader
         RSPQ_DefineCommand MenuCmd_MoveTo, 16
@@ -31,6 +44,7 @@
         RSPQ_DefineCommand MenuCmd_SetStack, 8
         RSPQ_DefineCommand MenuCmd_SetAttrFlags, 4
         RSPQ_DefineCommand MenuCmd_SetViewport, 12
+        RSPQ_DefineCommand MenuCmd_SetUVFx, 4
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
@@ -251,6 +265,24 @@ MenuCmd_LineTo:
     sh t6, TRI_VTX(3, 12)
     sh t6, TRI_VTX(4, 12)
     sh t6, TRI_VTX(5, 12)
+
+    li $at, %lo(VTX_FX_FLAGS)
+    beq $at, zero, MenuCmd_LineTo_SkipFX
+    nop
+
+    jal ApplyUVEffects
+    li a0, TRI_VTX(0, 0)
+    
+    jal ApplyUVEffects
+    li a0, TRI_VTX(1, 0)
+    
+    jal ApplyUVEffects
+    li a0, TRI_VTX(3, 0)
+    
+    jal ApplyUVEffects
+    li a0, TRI_VTX(4, 0)
+
+MenuCmd_LineTo_SkipFX:
     
     # populate w/winv
     li t6, 0x10000
@@ -278,6 +310,9 @@ MenuCmd_LineTo:
     li a2, TRI_VTX(1, 0)
     jal RDPQ_Triangle_Send_Async
     li a3, TRI_VTX(3, 0)
+
+    jal RDPQ_Triangle_Send_End
+    nop
 
     li s4, %lo(RDPQ_CMD_STAGING)
     move s3, s4
@@ -407,6 +442,13 @@ MenuCmd_SetViewport:
     sw a1, %lo(VIEWPORT + 0)
     j RSPQ_Loop
     sw a2, %lo(VIEWPORT + 4)
+
+    ##########################################
+    # MenuCmd_SetUVFx
+    # a0 flags
+MenuCmd_SetUVFx:
+    j RSPQ_Loop
+    sb a0, %lo(VTX_FX_FLAGS)
 
     ##########################################
     # MulMtx
@@ -559,7 +601,33 @@ DrawCap:
     jr ra
     nop
 
+    ##########################################
+    # Applies UV effects
+    # a0 ptr to tri vertex
+    # stomps $at, $v01 a0, a1, a2
+ApplyUVEffects:
+    lb t0, %lo(VTX_FX_FLAGS)                       ; llv $v01, 0, TRI_POS, a0
+    andi $at, t0, MENU_FX_UV_GEN
 
+    beq t0, zero, ApplyUVCheckTransform            ; vmudh $v01, $v01, K8
+    
+    slv $v01, 0, TRI_UV, a0
+
+ApplyUVCheckTransform:
+    andi $at, t0, MENU_FX_UV_MTX
+    beq t0, zero, ApplyUVEffects_End
+
+    # a0 output_ptr
+    # a1 mtx_ptr
+    # a2 input_ptr
+    addi a0, a0, TRI_UV
+    addi a2, a0, 0
+    j MulPoint
+    li a1, %lo(MTX_TOP_UV)    
+
+ApplyUVEffects_End:
+    jr ra
+    nop
 
     .set at
 

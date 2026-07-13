@@ -101,6 +101,10 @@ void menu_set_viewport(int left, int top, int right, int bottom) {
     );
 }
 
+void menu_set_vtx_fx(int fx) {
+    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_SetUVFx, fx);
+}
+
 void* menu_get_state() {
     rspq_wait();
     return rspq_overlay_get_state(&rsp_menu);

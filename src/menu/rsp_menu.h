@@ -36,6 +36,7 @@ void menu_move_to(menu2d_vtx_t* vtx);
 void menu_line_to(menu2d_vtx_t* vtx);
 void menu_set_attr_flags(int flags);
 void menu_set_viewport(int left, int top, int right, int bottom);
+void menu_set_vtx_fx(int fx);
 
 void* menu_get_state();
 
