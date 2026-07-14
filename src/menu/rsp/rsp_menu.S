@@ -18,8 +18,9 @@
 #define VERTEX_WIDTH(index)     (%lo(VERTEX_POINTS) + 6 + index * VERTEX_SIZE)
 #define VERTEX_CLIP_MASK(index)     (%lo(VERTEX_POINTS) + 12 + index * VERTEX_SIZE)
 
-#define TRI_VERTEX_SIZE 32
-#define TRI_VTX_COUNT   64
+#define TRI_VTX_SIZE_LOG2   5
+#define TRI_VERTEX_SIZE     32
+#define TRI_VTX_COUNT       64
 
 # fmt
 # xxyy - position (0)
@@ -45,6 +46,10 @@
         RSPQ_DefineCommand MenuCmd_SetAttrFlags, 4
         RSPQ_DefineCommand MenuCmd_SetViewport, 12
         RSPQ_DefineCommand MenuCmd_SetUVFx, 4
+        # vtx
+        # tri
+        # set color table
+        # color
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
@@ -84,17 +89,17 @@
         .align 4
         VERTEX_POINTS: .space VERTEX_SIZE*2
         NEXT_VERTEX: .byte 0
+    .align 4
+RDPQ_TRI_DATA:          .space TRI_VERTEX_SIZE * TRI_VTX_COUNT
         
     RSPQ_EndSavedState
 
 .bss
     .align 4
     TMP_MEM:
-    VERTEX_INPUT: .space VERTEX_SIZE
+    VERTEX_INPUT: .space VERTEX_SIZE * TRI_VTX_COUNT
     .align 4
     MTX_INPUT: .space 32
-    .align 4
-RDPQ_TRI_DATA:          .space TRI_VERTEX_SIZE * TRI_VTX_COUNT
 
 #define dma_size     t0
 #define row_stride   t1
@@ -282,6 +287,8 @@ MenuCmd_LineTo:
     
     jal ApplyUVEffects
     li a0, TRI_VTX(4, 0)
+
+    #undef offset
 
 MenuCmd_LineTo_SkipFX:
     
@@ -474,6 +481,41 @@ MenuCmd_SetViewport:
 MenuCmd_SetUVFx:
     j RSPQ_Loop
     sb a0, %lo(VTX_FX_FLAGS)
+
+
+    ##########################################
+    # MenuCmd_VTX
+    # a0 offset | count
+    # a1 vtx ptr
+MenuCmd_VTX:
+    #define input_ptr   s5
+    #define vtx_ptr     s6
+    #define count       t2
+    #define offset      t3
+
+    andi count, a0, 0xFF
+    srl offset, a0, 8
+    andi offset, offset, 0xFF
+
+    sll dma_size, count, 12
+    addi dma_size, dma_size, (-1 << 12) | 12
+    addi dram_address, a1, 0
+    addi row_stride, zero, 0
+    jal DMAIn
+    li dmem_address, %lo(VERTEX_INPUT)
+
+    li input_ptr, %lo(VERTEX_INPUT)
+    li vtx_ptr, TRI_VTX(0, 0)
+    sll $at, offset, TRI_VTX_SIZE_LOG2
+    add vtx_ptr, vtx_ptr, $at
+
+MenuCmd_VTX_NextVtx:
+    beq count, zero, RSPQ_Loop
+
+
+
+    j MenuCmd_VTX_NextVtx
+    addi count, count, -1
 
     ##########################################
     # MulMtx
