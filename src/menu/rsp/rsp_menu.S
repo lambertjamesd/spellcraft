@@ -11,7 +11,8 @@
 # rgba - color                      (8)
 # c - clipping mask                 (12)
 
-#define VERTEX_SIZE     16
+#define VERTEX_INPUT_SIZE   12
+#define VERTEX_SIZE         16
 
 #define VERTEX_RGBA(index)     (%lo(VERTEX_POINTS) + 8 + index * VERTEX_SIZE)
 #define VERTEX_U(index)     (%lo(VERTEX_POINTS) + 4 + index * VERTEX_SIZE)
@@ -36,6 +37,13 @@
 #define TRI_POS         0
 #define TRI_RGBA        8
 #define TRI_UV          12
+#define TRI_CLIP        24
+
+#define INPUT_POS         0
+#define INPUT_UV          4
+#define INPUT_RGBA        8
+
+#define TRI_VTX_EMPTY   .half 0, 0; .word 0xFF; .byte 255, 255, 255, 255; .half 0, 0; .word 0x00010000, 0x00010000; .word 0, 0;
 
     RSPQ_BeginOverlayHeader
         RSPQ_DefineCommand MenuCmd_MoveTo, 16
@@ -90,13 +98,17 @@
         VERTEX_POINTS: .space VERTEX_SIZE*2
         NEXT_VERTEX: .byte 0
     .align 4
-RDPQ_TRI_DATA:          .space TRI_VERTEX_SIZE * TRI_VTX_COUNT
+RDPQ_TRI_DATA:
+    .rept TRI_VTX_COUNT
+        TRI_VTX_EMPTY
+    .endr
         
     RSPQ_EndSavedState
 
 .bss
     .align 4
     TMP_MEM:
+    # fmt xxyy uuvv rgba
     VERTEX_INPUT: .space VERTEX_SIZE * TRI_VTX_COUNT
     .align 4
     MTX_INPUT: .space 32
@@ -241,14 +253,6 @@ MenuCmd_LineTo:
 
     jal DrawCap
     li a0, TRI_VTX(3, 0)
-
-    li t7, 0xFF
-    sw t7, TRI_VTX(0, 4)
-    sw t7, TRI_VTX(1, 4)
-    sw t7, TRI_VTX(2, 4)
-    sw t7, TRI_VTX(3, 4)
-    sw t7, TRI_VTX(4, 4)
-    sw t7, TRI_VTX(5, 4)
     
     # copy color
     lw t6, VERTEX_RGBA(0)
@@ -512,7 +516,21 @@ MenuCmd_VTX:
 MenuCmd_VTX_NextVtx:
     beq count, zero, RSPQ_Loop
 
+    # transform point
+    addi a0, vtx_ptr, TRI_POS
+    li a1, %lo(MTX_TOP)
+    jal MulPoint
+    addi a2, input_ptr, INPUT_POS
 
+    # copy uv
+    # copy rgba
+    lw t4, INPUT_UV(input_ptr)
+    lw t5, INPUT_RGBA(input_ptr)
+
+    sw t4, TRI_UV(vtx_ptr)
+    sw t5, TRI_RGBA(vtx_ptr)
+
+    # check clipping
 
     j MenuCmd_VTX_NextVtx
     addi count, count, -1
@@ -606,6 +624,19 @@ MulPoint:
 
     ssv $v08, 0, 0, a0
     ssv $v08, 8, 2, a0
+    
+    # load line width as the margin
+    lsv $v20, 0, 6, a0
+    addi a1, a0, 12
+
+    # intentionally fall into ClipPoint
+
+    ##########################################
+    # clips the
+    # a0 vtx_ptr
+    # a1 output_ptr (byte)
+    # $v20 margin
+ClipPoint:
 
     # clipping flags
     # load the pattern x, -x, y, -y
@@ -615,19 +646,18 @@ MulPoint:
     vadd $v08, $v07, $v07
     vsub $v07, $v08, $v07.q0
 
-    # pad the culling margin by the line width
-    lsv $v08, 0, 6, a0
-    vadd $v07, $v07, $v08.e0
+    # pad the culling margin by the margin
+    vadd $v07, $v07, $v20.e0
     
-    li a1, %lo(VIEWPORT)
-    ldv $v08, 0, 0, a1
+    li a0, %lo(VIEWPORT)
+    ldv $v08, 0, 0, a0
 
     vlt $v08, $v07, $v08
-    cfc2 a1, COP2_CTRL_VCC 
-    andi a1, a1, 0xF
+    cfc2 a0, COP2_CTRL_VCC 
+    andi a0, a0, 0xF
 
     jr ra
-    sb a1, 12(a0)
+    sb a0, 0(a1)
 
     ##########################################
     # Draws a line end cap
