@@ -32,6 +32,9 @@ void menu_teardown();
 void menu_mtx(transform_2d_fp_t* mtx, bool mul, bool push);
 void menu_mtx_pop(int count);
 
+void menu_mtx_uv(transform_2d_fp_t* mtx, bool mul, bool push);
+void menu_mtx_pop_uv(int count);
+
 void menu_move_to(menu2d_vtx_t* vtx);
 void menu_line_to(menu2d_vtx_t* vtx);
 void menu_set_attr_flags(int flags);

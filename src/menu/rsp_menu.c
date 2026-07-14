@@ -68,6 +68,24 @@ void menu_mtx_pop(int count) {
     rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_MtxPop, count);
 }
 
+void menu_mtx_uv(transform_2d_fp_t* mtx, bool mul, bool push) {
+    int flags = MENU_MTX_UV;
+
+    if (mul) {
+        flags |= MENU_MTX_MUL;
+    }
+
+    if (push) {
+        flags |= MENU_MTX_PUSH;
+    }
+
+    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_Mtx, flags, (int)mtx);
+}
+
+void menu_mtx_pop_uv(int count) {
+    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_MtxPop, 0x0100 | count);
+}
+
 void menu_point_action(int command, menu2d_vtx_t* vtx) {
     rspq_write(
         MENU_OVERLAY_ID,

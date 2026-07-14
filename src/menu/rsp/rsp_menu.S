@@ -57,24 +57,25 @@
             .half 0x0000, 0x0001, 0x0000, 0x0000
             .half 0x0000, 0x0000, 0x0000, 0x0000
             .half 0x0000, 0x0000, 0x0000, 0x0000
+        .align 3
+        MTX_STACK_PTR:  .word 0
+        MTX_STACK_SIZE: .byte 0
+        MTX_STACK_MAX: .byte 10
         .align 4
         MTX_TOP_UV: 
             .half 0x0001, 0x0000, 0x0000, 0x0000
             .half 0x0000, 0x0001, 0x0000, 0x0000
             .half 0x0000, 0x0000, 0x0000, 0x0000
             .half 0x0000, 0x0000, 0x0000, 0x0000
+        .align 3
+        MTX_STACK_PTR_UV:  .word 0
+        MTX_STACK_SIZE_UV: .byte 0
+        MTX_STACK_MAX_UV: .byte 10
         .align 4
         CAP_VECTORS:
             # pattern x -y y x
             # 2 patterns per vector
             .half 0x7fff, 0x7fff, 0x8001, 0x7fff, 0x7fff, 0x8001, 0x7fff, 0x7fff
-        .align 3
-        MTX_STACK_PTR:  .word 0
-        MTX_STACK_SIZE: .byte 0
-        MTX_STACK_MAX: .byte 10
-        MTX_STACK_PTR_UV:  .word 0
-        MTX_STACK_SIZE_UV: .byte 0
-        MTX_STACK_MAX_UV: .byte 10
         ATTR_FLAGS: .byte 0
         VTX_FX_FLAGS: .byte 0
 
@@ -334,23 +335,32 @@ RDPQ_Triangle_Cull:
     # a0 MENU_MTX_MUL | MENU_MTX_PUSH
     # a1 mtx_addr
 MenuCmd_Mtx:
+    #define stack_ptr   s1
+
+    andi $at, a0, MENU_MTX_UV
+    beq $at, zero, MenuCmd_Mtx_Start
+    addi stack_ptr, zero, 0
+
+    addi stack_ptr, zero, %lo(MTX_TOP_UV - MTX_TOP)
+
+MenuCmd_Mtx_Start:
     andi $at, a0, MENU_MTX_PUSH
     beq $at, zero, MenuCmd_Mtx_SkipPush
 
-    lb t2, %lo(MTX_STACK_SIZE)
-    lb t3, %lo(MTX_STACK_MAX)
+    lb t2, %lo(MTX_STACK_SIZE)(stack_ptr)
+    lb t3, %lo(MTX_STACK_MAX)(stack_ptr)
     beq t2, t3, RSPQ_Loop
     addi t2, t2, 1
-    sb t2, %lo(MTX_STACK_SIZE)
+    sb t2, %lo(MTX_STACK_SIZE)(stack_ptr)
 
-    li dmem_address, %lo(MTX_TOP)
-    lw dram_address, %lo(MTX_STACK_PTR)
+    addi dmem_address, stack_ptr, %lo(MTX_TOP)
+    lw dram_address, %lo(MTX_STACK_PTR)(stack_ptr)
     li dma_size, DMA_SIZE(32, 1)
     jal DMAOut
     li row_stride, 0
 
     addi dram_address, dram_address, 4
-    sw dram_address, %lo(MTX_STACK_PTR)
+    sw dram_address, %lo(MTX_STACK_PTR)(stack_ptr)
 MenuCmd_Mtx_SkipPush:
     andi $at, a0, MENU_MTX_MUL
     beq $at, zero, MenuCmd_Mtx_SkipMul
@@ -361,13 +371,13 @@ MenuCmd_Mtx_SkipPush:
     jal DMAIn
     li row_stride, 0
 
-    li a0, %lo(MTX_TOP)
+    addi a0, stack_ptr, %lo(MTX_TOP)
     li a1, %lo(MTX_INPUT)
-    li a2, %lo(MTX_TOP)
+    addi a2, stack_ptr, %lo(MTX_TOP)
     jal_and_j MulMtx, RSPQ_Loop
 
 MenuCmd_Mtx_SkipMul:
-    li dmem_address, %lo(MTX_TOP)
+    addi dmem_address, stack_ptr, %lo(MTX_TOP)
     addi dram_address, a1, 0
     li dma_size, DMA_SIZE(32, 1)
     li row_stride, 0
@@ -377,8 +387,17 @@ MenuCmd_Mtx_SkipMul:
     # MenuCmd_Pop
     # a0 count
 MenuCmd_MtxPop:
+    srl $at, a0, 8
+    andi $at, $at, 0x1
+    beq $at, zero, MenuCmd_MtxPop_Start
+    addi stack_ptr, zero, 0
+
+    addi stack_ptr, zero, %lo(MTX_TOP_UV - MTX_TOP)
+
+MenuCmd_MtxPop_Start:
+    
     andi a0, a0, 0xFF
-    lb t2, %lo(MTX_STACK_SIZE)
+    lb t2, %lo(MTX_STACK_SIZE)(stack_ptr)
     sub t3, t2, a0
 
     # prevent underflow
@@ -391,13 +410,13 @@ MenuCmd_MtxPopDoPop:
     beq a0, zero, RSPQ_Loop
     sll a0, a0, 2
 
-    sb t3, %lo(MTX_STACK_SIZE)
-    lw dram_address, %lo(MTX_STACK_PTR)
+    sb t3, %lo(MTX_STACK_SIZE)(stack_ptr)
+    lw dram_address, %lo(MTX_STACK_PTR)(stack_ptr)
     sub dram_address, dram_address, a0
-    sw dram_address, %lo(MTX_STACK_PTR)
+    sw dram_address, %lo(MTX_STACK_PTR)(stack_ptr)
 
     # load prev matrix
-    li dmem_address, %lo(MTX_TOP)
+    addi dmem_address, stack_ptr, %lo(MTX_TOP)
     li dma_size, DMA_SIZE(32, 1)
     li row_stride, 0
     jal_and_j DMAIn, RSPQ_Loop
