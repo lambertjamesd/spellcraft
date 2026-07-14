@@ -41,7 +41,7 @@
         RSPQ_DefineCommand MenuCmd_LineTo, 16
         RSPQ_DefineCommand MenuCmd_Mtx, 8
         RSPQ_DefineCommand MenuCmd_MtxPop, 4
-        RSPQ_DefineCommand MenuCmd_SetStack, 8
+        RSPQ_DefineCommand MenuCmd_SetStack, 12
         RSPQ_DefineCommand MenuCmd_SetAttrFlags, 4
         RSPQ_DefineCommand MenuCmd_SetViewport, 12
         RSPQ_DefineCommand MenuCmd_SetUVFx, 4
@@ -426,11 +426,17 @@ MenuCmd_MtxPopDoPop:
     # MenuCmd_SetStack
     # a0 max size
     # a1 mtx_addr
+    # a2 mtx_uv_addr
 MenuCmd_SetStack:
     sb a0, %lo(MTX_STACK_MAX)
     sw a1, %lo(MTX_STACK_PTR)
-    j RSPQ_Loop
     sb zero, %lo(MTX_STACK_SIZE)
+
+    srl a0, a0, 8
+    sb a0, %lo(MTX_STACK_MAX_UV)
+    sw a1, %lo(MTX_STACK_PTR_UV)
+    j RSPQ_Loop
+    sb zero, %lo(MTX_STACK_SIZE_UV)
 
     ##########################################
     # Does the matrix operation MTX_TOP = MTX_TOP * MTX_INPUT
