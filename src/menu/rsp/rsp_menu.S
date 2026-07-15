@@ -165,8 +165,14 @@ RDPQ_TRI_DATA:
     # a2: uuww
     # a3: rgba
 MenuCmd_MoveTo:
+    jal WriteNextPoint
     sb zero, %lo(NEXT_VERTEX)
-    jal_and_j WriteNextPoint, RSPQ_Loop
+
+    # load line width as the margin
+    lsv $v20, 0, 6, a0
+    addi a1, a0, 12
+
+    jal_and_j ClipPoint, RSPQ_Loop
 
     ##########################################
     # MenuCmd_LineTo
@@ -178,6 +184,12 @@ MenuCmd_MoveTo:
 MenuCmd_LineTo:
     jal WriteNextPoint
     nop
+    
+    # load line width as the margin
+    lsv $v20, 0, 6, a0
+    jal ClipPoint
+    addi a1, a0, 12
+
 
     #define magSqri $v01
     #define magSqrf $v02
@@ -496,15 +508,18 @@ MenuCmd_SetUVFx:
 MenuCmd_VTX:
     #define input_ptr   s5
     #define vtx_ptr     s6
-    #define count       t2
-    #define offset      t3
-
+    #define count       t3
+    #define offset      t7
+    
     andi count, a0, 0xFF
     srl offset, a0, 8
     andi offset, offset, 0xFF
 
-    sll dma_size, count, 12
-    addi dma_size, dma_size, (-1 << 12) | 12
+    sll t5, count, 3
+    sll t6, count, 2
+    add dma_size, t5, t6
+    addi dma_size, dma_size, -1
+
     addi dram_address, a1, 0
     addi row_stride, zero, 0
     jal DMAIn
@@ -516,7 +531,7 @@ MenuCmd_VTX:
     add vtx_ptr, vtx_ptr, offset
 
 MenuCmd_VTX_NextVtx:
-    beq count, zero, RSPQ_Loop
+    beq count, zero, MenuCmd_VTX_CheckEffects
 
     # transform point
     addi a0, vtx_ptr, TRI_POS
@@ -536,7 +551,9 @@ MenuCmd_VTX_NextVtx:
     vadd $v20, vzero, vzero
     addi a0, vtx_ptr, 0
     jal ClipPoint
-    addi a2, vtx_ptr, TRI_CLIP
+    addi a1, vtx_ptr, TRI_CLIP
+
+    sb zero, TRI_CLIP(vtx_ptr)
 
     addi vtx_ptr, vtx_ptr, TRI_VERTEX_SIZE
     addi input_ptr, input_ptr, VERTEX_INPUT_SIZE
@@ -550,9 +567,9 @@ MenuCmd_VTX_CheckEffects:
 
     li input_ptr, TRI_VTX(0, 0)
     add input_ptr, input_ptr, offset
-    
 MenuCmd_VTX_NextEffectVtx:
     beq input_ptr, vtx_ptr, RSPQ_Loop
+    nop
 
     jal ApplyUVEffects
     addi a0, input_ptr, 0
@@ -597,6 +614,9 @@ MenuCmd_Tri:
     li v0, 2   # disable culling
     jal RDPQ_Triangle_Send_Async
     ori a0, t7, 0xC800
+
+    j RSPQ_Loop
+    nop
 
     jal_and_j RDPQ_Triangle_Send_End, RSPQ_Loop
 
@@ -668,7 +688,7 @@ WriteNextPoint:
     # intentially fall into MulPoint
 
     ##########################################
-    # Does the matrix operation *a0 = MTX_TOP * VERTEX_INPUT
+    # Does the matrix operation *a0 = MTX_TOP * *input_ptr
     # a0 output_ptr
     # a1 mtx_ptr
     # a2 input_ptr
@@ -688,13 +708,8 @@ MulPoint:
     vadd $v08, $v08, mtx_topi.h2
 
     ssv $v08, 0, 0, a0
+    jr ra
     ssv $v08, 8, 2, a0
-    
-    # load line width as the margin
-    lsv $v20, 0, 6, a0
-    addi a1, a0, 12
-
-    # intentionally fall into ClipPoint
 
     ##########################################
     # clips the
