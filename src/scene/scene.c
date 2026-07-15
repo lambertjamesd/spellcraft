@@ -153,7 +153,7 @@ void scene_check_cutscenes(scene_t* scene) {
             continue;
         }
 
-        uint16_t scene_fn = scene->room_cutscene_functions[room->room_index];
+        uint16_t scene_fn = scene->room_metadata[room->room_index].cutscene_fn;
 
         if (scene_fn == FUNCTION_INDEX_NONE) {
             continue;
@@ -400,6 +400,8 @@ bool scene_show_room(struct scene* scene, int room_index) {
             return true;
         }
     }
+
+    expression_set_bool(scene->room_metadata[room_index].has_visited, true);
 
     return false;
 }

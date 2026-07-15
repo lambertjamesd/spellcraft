@@ -97,6 +97,13 @@ struct scene_fog {
     color_t color;
 };
 
+struct room_metadata {
+    uint16_t cutscene_fn;
+    boolean_variable has_visited;
+};
+
+typedef struct room_metadata room_metadata_t;
+
 typedef struct scene_fog scene_fog_t;
 
 struct scene {
@@ -141,8 +148,9 @@ struct scene {
 
     loaded_room_t loaded_rooms[MAX_LOADED_ROOM];
 
+    room_metadata_t* room_metadata;
+    
     cutscene_t* cutscene;
-    uint16_t* room_cutscene_functions;
     char* string_table;
     char* scene_vars;
 

@@ -479,7 +479,15 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
         if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH' or 'collision' in obj.name:
             scene.scene_mesh_collider.append(mesh, final_transform)
 
-def write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file):
+def write_room_entiites(
+        room_collection: entities_room.room_collection, 
+        grouped: dict[int, list[ObjectEntry]], 
+        shared_entity_index: dict[int, list[int]], 
+        variable_context: variable_layout.VariableContext, 
+        context: struct_serialize.SerializeContext, 
+        enums: dict[str, struct_parse.EnumInfo], 
+        file: io.BufferedIOBase
+    ):
     for room_index in range(len(room_collection.rooms)):
         if room_index in grouped:
             objects = grouped[room_index]
@@ -609,10 +617,39 @@ def include_all(collection):
     for child in collection.children:
         include_all(child)
 
+def write_room_metadata(
+        room_collection: entities_room.room_collection, 
+        function_names: list[str], 
+        enums: dict[str, struct_parse.EnumInfo],
+        scene_name: str,
+        file: io.BufferedIOBase
+    ):
+
+    bool_enum = enums['boolean_variable']
+
+    for room in room_collection.rooms:
+        fn_index = function_names.index(room.name) if room.name in function_names else 0xFFFF
+        visited_room_name = f"global {scene_name}_{room.name}_visited: bool"
+        visited_room = 0xFFFF
+
+        if bool_enum.is_defined(visited_room_name):
+            visited_room = bool_enum.str_to_int(visited_room_name)
+        else:
+            print(f"warning: {visited_room_name} not defined")
+
+        file.write(struct.pack(
+            '>HH',
+            fn_index,
+            visited_room
+        ))
+
 def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-2]
     overworld_filename = sys.argv[-1]
+
+    _path, filename_end = os.path.split(input_filename)
+    scene_name = os.path.splitext(filename_end)[0]
 
     generate_deps.generate_deps(output_filename, os.path.relpath(__file__))
 
@@ -742,13 +779,14 @@ def process_scene():
 
         camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
 
+        write_room_metadata(room_collection, function_names, enums, scene_name, file)
+
         if cutscene_filename:
             write_string(cutscene_filename, file)
         else:
             file.write(b'\0')
-        for room in room_collection.rooms:
-            fn_index = function_names.index(room) if room in function_names else 0xFFFF
-            file.write(fn_index.to_bytes(2, 'big'))
+
+        
         scene_vars.write_default_values(file)
             
 

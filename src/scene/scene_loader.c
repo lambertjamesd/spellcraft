@@ -182,6 +182,15 @@ void scene_load_loading_zones(struct scene* scene, FILE* file) {
     }
 }
 
+void scene_load_room_metadata(scene_t* scene, FILE* file) {
+    if (scene->room_count) {
+        scene->room_metadata = malloc(sizeof(room_metadata_t) * scene->room_count);
+        fread(scene->room_metadata, sizeof(room_metadata_t), scene->room_count, file);
+    } else {
+        scene->room_metadata = NULL;
+    }
+}
+
 void scene_load_cutscene(struct scene* scene, FILE* file) {
     uint8_t cutscene_name_length;
     fread(&cutscene_name_length, 1, 1, file);
@@ -195,13 +204,6 @@ void scene_load_cutscene(struct scene* scene, FILE* file) {
         scene->cutscene = NULL;
     }
 
-    if (scene->room_count) {
-        scene->room_cutscene_functions = malloc(sizeof(uint16_t) * scene->room_count);
-        fread(scene->room_cutscene_functions, sizeof(uint16_t), scene->room_count, file);
-    } else {
-        scene->room_cutscene_functions = NULL;
-    }
-
     uint16_t scene_var_length;
     fread(&scene_var_length, 2, 1, file);
     void* scene_vars = malloc(scene_var_length);
@@ -210,13 +212,16 @@ void scene_load_cutscene(struct scene* scene, FILE* file) {
     expression_set_scene_variables(scene->scene_vars);
 }
 
+void scene_destroy_room_metadata(scene_t* scene) {
+    free(scene->room_metadata);
+}
+
 void scene_destroy_cutscene(scene_t* scene) {
     if (scene->cutscene) {
         cutscene_runner_cancel(scene->cutscene);
         cutscene_free(scene->cutscene);
     }
     free(scene->scene_vars);
-    free(scene->room_cutscene_functions);
     expression_set_scene_variables(NULL);
 }
 
@@ -366,6 +371,8 @@ struct scene* scene_load(const char* filename) {
 
     scene_load_camera_animations(&scene->camera_animations, filename, file);
 
+    scene_load_room_metadata(scene, file);
+
     scene_load_cutscene(scene, file);
 
     fclose(file);
@@ -461,6 +468,8 @@ void scene_release(struct scene* scene) {
     menu_map_destroy(&scene->map);
 
     camera_animation_list_destroy(&scene->camera_animations);
+
+    scene_destroy_room_metadata(scene);
 
     scene_destroy_cutscene(scene);
 

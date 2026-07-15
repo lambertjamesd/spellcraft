@@ -8,9 +8,13 @@ def determine_room_for_obj(obj: bpy.types.Object) -> str:
 
     return "room_default"
 
+class room_metadata():
+    def __init__(self, name: str):
+        self.name: str = name
+
 class room_collection():
     def __init__(self):
-        self.rooms: list[str] = []
+        self.rooms: list[room_metadata] = []
         self.room_to_index: dict[str, int] = {}
 
     def get_room_index(self, name: str) -> int:
@@ -19,7 +23,7 @@ class room_collection():
         
         result = len(self.rooms)
         self.room_to_index[name] = result
-        self.rooms.append(name)
+        self.rooms.append(room_metadata(name))
         return result
 
     def get_obj_room_index(self, obj: bpy.types.Object) -> int:
