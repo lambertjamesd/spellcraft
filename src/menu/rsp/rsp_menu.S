@@ -21,7 +21,6 @@
 
 #define TRI_VTX_SIZE_LOG2   5
 #define TRI_VERTEX_SIZE     32
-#define TRI_VTX_COUNT       64
 
 # fmt
 # xxyy - position (0)
@@ -54,6 +53,7 @@
         RSPQ_DefineCommand MenuCmd_SetAttrFlags, 4
         RSPQ_DefineCommand MenuCmd_SetViewport, 12
         RSPQ_DefineCommand MenuCmd_SetUVFx, 4
+        RSPQ_DefineCommand MenuCmd_VTX, 8
         # vtx
         # tri
         # set color table
@@ -99,7 +99,7 @@
         NEXT_VERTEX: .byte 0
     .align 4
 RDPQ_TRI_DATA:
-    .rept TRI_VTX_COUNT
+    .rept MENU_TRI_VTX_COUNT
         TRI_VTX_EMPTY
     .endr
         
@@ -109,7 +109,7 @@ RDPQ_TRI_DATA:
     .align 4
     TMP_MEM:
     # fmt xxyy uuvv rgba
-    VERTEX_INPUT: .space VERTEX_SIZE * TRI_VTX_COUNT
+    VERTEX_INPUT: .space VERTEX_SIZE * MENU_TRI_VTX_COUNT
     .align 4
     MTX_INPUT: .space 32
 
@@ -510,8 +510,8 @@ MenuCmd_VTX:
 
     li input_ptr, %lo(VERTEX_INPUT)
     li vtx_ptr, TRI_VTX(0, 0)
-    sll $at, offset, TRI_VTX_SIZE_LOG2
-    add vtx_ptr, vtx_ptr, $at
+    sll offset, offset, TRI_VTX_SIZE_LOG2
+    add vtx_ptr, vtx_ptr, offset
 
 MenuCmd_VTX_NextVtx:
     beq count, zero, RSPQ_Loop
@@ -531,9 +531,32 @@ MenuCmd_VTX_NextVtx:
     sw t5, TRI_RGBA(vtx_ptr)
 
     # check clipping
+    vadd $v20, vzero, vzero
+    addi a0, vtx_ptr, 0
+    jal ClipPoint
+    addi a2, vtx_ptr, TRI_CLIP
+
+    addi vtx_ptr, vtx_ptr, TRI_VERTEX_SIZE
+    addi input_ptr, input_ptr, VERTEX_INPUT_SIZE
 
     j MenuCmd_VTX_NextVtx
     addi count, count, -1
+
+MenuCmd_VTX_CheckEffects:
+    li $at, %lo(VTX_FX_FLAGS)
+    beq $at, zero, RSPQ_Loop
+
+    li input_ptr, TRI_VTX(0, 0)
+    add input_ptr, input_ptr, offset
+    
+MenuCmd_VTX_NextEffectVtx:
+    beq input_ptr, vtx_ptr, RSPQ_Loop
+
+    jal ApplyUVEffects
+    addi a0, input_ptr, 0
+
+    j MenuCmd_VTX_NextEffectVtx
+    addi input_ptr, input_ptr, TRI_VERTEX_SIZE
 
     ##########################################
     # MulMtx

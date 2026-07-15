@@ -8,3 +8,5 @@
 
 #define MENU_FX_UV_GEN      0x1
 #define MENU_FX_UV_MTX      0x2
+
+#define MENU_TRI_VTX_COUNT       64

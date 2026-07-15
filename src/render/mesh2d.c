@@ -56,15 +56,15 @@ void mesh2d_load(mesh2d_t* mesh, FILE* file) {
             }
             case MESH2D_CMD_MOVE_TO:
             {
-                menu2d_vtx_t vtx;
-                fread(&vtx, sizeof(menu2d_vtx_t), 1, file);
+                menu2d_line_vtx_t vtx;
+                fread(&vtx, sizeof(menu2d_line_vtx_t), 1, file);
                 menu_move_to(&vtx);
                 break;
             }
             case MESH2D_CMD_LINE_TO:
             {
-                menu2d_vtx_t vtx;
-                fread(&vtx, sizeof(menu2d_vtx_t), 1, file);
+                menu2d_line_vtx_t vtx;
+                fread(&vtx, sizeof(menu2d_line_vtx_t), 1, file);
                 menu_line_to(&vtx);
                 break;
             }

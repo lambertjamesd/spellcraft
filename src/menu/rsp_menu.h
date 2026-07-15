@@ -15,10 +15,18 @@ struct transform_2d_fp {
 typedef struct transform_2d_fp transform_2d_fp_t;
 typedef float transform_2d_t[6];
 
-struct menu2d_vtx {
+struct menu2d_line_vtx {
     vector2s16_t pos;
     int16_t u;
     uint16_t width;
+    color_t color;
+};
+
+typedef struct menu2d_line_vtx menu2d_line_vtx_t;
+
+struct menu2d_vtx {
+    vector2s16_t pos;
+    vector2s16_t uv;
     color_t color;
 };
 
@@ -35,11 +43,13 @@ void menu_mtx_pop(int count);
 void menu_mtx_uv(transform_2d_fp_t* mtx, bool mul, bool push);
 void menu_mtx_pop_uv(int count);
 
-void menu_move_to(menu2d_vtx_t* vtx);
-void menu_line_to(menu2d_vtx_t* vtx);
+void menu_move_to(menu2d_line_vtx_t* vtx);
+void menu_line_to(menu2d_line_vtx_t* vtx);
 void menu_set_attr_flags(int flags);
 void menu_set_viewport(int left, int top, int right, int bottom);
 void menu_set_vtx_fx(int fx);
+
+void menu_vtx(const menu2d_vtx_t* vtx, uint32_t offset, uint32_t count);
 
 void* menu_get_state();
 

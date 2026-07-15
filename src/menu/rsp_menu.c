@@ -90,7 +90,7 @@ void menu_mtx_pop_uv(int count) {
     rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_MtxPop, 0x0100 | count);
 }
 
-void menu_point_action(int command, menu2d_vtx_t* vtx) {
+void menu_point_action(int command, menu2d_line_vtx_t* vtx) {
     rspq_write(
         MENU_OVERLAY_ID,
         command,
@@ -101,11 +101,11 @@ void menu_point_action(int command, menu2d_vtx_t* vtx) {
     );
 }
 
-void menu_move_to(menu2d_vtx_t* vtx) {
+void menu_move_to(menu2d_line_vtx_t* vtx) {
     menu_point_action(RSP_MENU_MenuCmd_MoveTo, vtx);
 }
 
-void menu_line_to(menu2d_vtx_t* vtx) {
+void menu_line_to(menu2d_line_vtx_t* vtx) {
     menu_point_action(RSP_MENU_MenuCmd_LineTo, vtx);
 }
 
@@ -125,6 +125,13 @@ void menu_set_viewport(int left, int top, int right, int bottom) {
 
 void menu_set_vtx_fx(int fx) {
     rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_SetUVFx, fx);
+}
+
+void menu_vtx(const menu2d_vtx_t* vtx, uint32_t offset, uint32_t count) {
+    assert(offset < MENU_TRI_VTX_COUNT);
+    assert(offset + count < MENU_TRI_VTX_COUNT);
+    
+    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_VTX, (offset << 8) | count, (int)vtx);
 }
 
 void* menu_get_state() {
