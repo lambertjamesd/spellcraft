@@ -157,7 +157,7 @@ def write_outline(into: mesh2d_writer.Mesh2d, obj: bpy.types.Object, global_tran
         
         pos = vertices[vertex_index]
 
-    uv_scale = 1 / total_distance
+    uv_scale = 32 / total_distance
     
     pos: mathutils.Vector = mathutils.Vector()
 

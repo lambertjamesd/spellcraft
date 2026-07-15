@@ -14,7 +14,7 @@ def pack_vertex(file, pos: mathutils.Vector, u: float, w: float, color):
         '>hhhHBBBB',
         math.floor(pos.x * 4 + 0.5),
         math.floor(pos.y * 4 + 0.5),
-        math.floor(u * 256),
+        math.floor(u * 32),
         math.floor(w * 4 + 0.5),
         mesh.convert_vertex_channel(color[0], 0.454545),
         mesh.convert_vertex_channel(color[1], 0.454545),
