@@ -10,6 +10,7 @@
 #define RSP_MENU_MenuCmd_SetViewport 6
 #define RSP_MENU_MenuCmd_SetUVFx 7
 #define RSP_MENU_MenuCmd_VTX 8
+#define RSP_MENU_MenuCmd_Tri 9
 
 #define RSP_MENU_TEST 0x0
 #define RSP_MENU_MTX_TOP 0x20

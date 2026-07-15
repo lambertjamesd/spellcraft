@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "rsp/rsp_menu.inc"
 #include "../math/vector2s16.h"
+#include "rsp/rsp_menu_defs.h"
 
 struct transform_2d_fp {
     int16_t int_part[8];
@@ -50,6 +51,13 @@ void menu_set_viewport(int left, int top, int right, int bottom);
 void menu_set_vtx_fx(int fx);
 
 void menu_vtx(const menu2d_vtx_t* vtx, uint32_t offset, uint32_t count);
+
+extern uint32_t MENU_OVERLAY_ID;
+
+static inline void menu_tri(uint32_t a, uint32_t b, uint32_t c) {
+    assert(a < MENU_TRI_VTX_COUNT && b < MENU_TRI_VTX_COUNT && c < MENU_TRI_VTX_COUNT);
+    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_Tri, (a << 16) | (b << 8) | c);
+}
 
 void* menu_get_state();
 

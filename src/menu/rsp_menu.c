@@ -1,12 +1,11 @@
 #include "rsp_menu.h"
 
 #include <libdragon.h>
-#include "rsp/rsp_menu_defs.h"
 
 #define MATRIX_STACK_SIZE       8
 #define MAXTRIX_UV_STACK_SIZE   4
 
-static uint32_t MENU_OVERLAY_ID = 0;
+uint32_t MENU_OVERLAY_ID = 0;
 static transform_2d_fp_t matrix_stack[MATRIX_STACK_SIZE];
 static transform_2d_fp_t matrix_stack_uv[MAXTRIX_UV_STACK_SIZE];
 

@@ -54,10 +54,12 @@
         RSPQ_DefineCommand MenuCmd_SetViewport, 12
         RSPQ_DefineCommand MenuCmd_SetUVFx, 4
         RSPQ_DefineCommand MenuCmd_VTX, 8
-        # vtx
-        # tri
+        RSPQ_DefineCommand MenuCmd_Tri, 4
         # set color table
         # color
+        # fill rect
+        # fixed rect
+        # fixed rect array
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
@@ -557,6 +559,46 @@ MenuCmd_VTX_NextEffectVtx:
 
     j MenuCmd_VTX_NextEffectVtx
     addi input_ptr, input_ptr, TRI_VERTEX_SIZE
+
+    ##########################################
+    # MenuCmd_Tri
+    # a0 a | b | c
+MenuCmd_Tri:
+
+    # load pointers to triangles
+    andi a1, a0, 0xFF
+    sll a1, a1, TRI_VTX_SIZE_LOG2
+    addi a1, a1, %lo(RDPQ_TRI_DATA)
+
+    srl a2, a0, 8 - TRI_VTX_SIZE_LOG2
+    andi a2, a2, 0xFF << TRI_VTX_SIZE_LOG2
+    addi a2, a2, %lo(RDPQ_TRI_DATA)
+    
+    srl a3, a0, 16 - TRI_VTX_SIZE_LOG2
+    andi a3, a3, 0xFF << TRI_VTX_SIZE_LOG2
+    addi a3, a3, %lo(RDPQ_TRI_DATA)
+    
+    # check clippping
+    lb t1, TRI_CLIP(a1)
+    lb t2, TRI_CLIP(a2)
+    lb t3, TRI_CLIP(a3)
+
+    and t1, t1, t2
+    and t1, t1, t3
+
+    bne t1, zero, RSPQ_Loop
+
+    # prepare triangle command
+    lb t7, %lo(ATTR_FLAGS)
+    sll t7, t7, 8
+
+    li s4, %lo(RDPQ_CMD_STAGING)
+    move s3, s4
+    li v0, 2   # disable culling
+    jal RDPQ_Triangle_Send_Async
+    ori a0, t7, 0xC800
+
+    jal_and_j RDPQ_Triangle_Send_End, RSPQ_Loop
 
     ##########################################
     # MulMtx
