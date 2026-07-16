@@ -402,6 +402,7 @@ bool scene_show_room(struct scene* scene, int room_index) {
     }
 
     expression_set_bool(scene->room_metadata[room_index].has_visited, true);
+    scene->last_room = room_index;
 
     return false;
 }
@@ -424,6 +425,19 @@ void scene_hide_room(struct scene* scene, int room_index) {
                 scene_remove_shared_reference(scene, room_source->shared_entity_index[i]);
             }
             break;
+        }
+    }
+
+    if (room_index == scene->last_room) {
+        scene->last_room = ROOM_INDEX_NONE;
+            
+        for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
+            loaded_room_t* room = &scene->loaded_rooms[i];
+
+            if (room->room_index != ROOM_INDEX_NONE) {
+                scene->last_room = room->room_index;
+                break;
+            }
         }
     }
 }

@@ -147,9 +147,10 @@ struct scene {
     entity_id last_despawn_check;
 
     loaded_room_t loaded_rooms[MAX_LOADED_ROOM];
+    uint16_t last_room;
 
     room_metadata_t* room_metadata;
-    
+
     cutscene_t* cutscene;
     char* string_table;
     char* scene_vars;

@@ -245,6 +245,7 @@ struct scene* scene_load(const char* filename) {
 
     scene->next_loaded_room_cutscene = 0;
     scene->is_running_step = false;
+    scene->last_room = ROOM_INDEX_NONE;
 
     struct player_definition player_def;
     player_def.location = gZeroVec;

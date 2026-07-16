@@ -3,6 +3,7 @@ import mathutils
 import collections
 import math
 import struct
+import io
 
 from . import bounding_box
 from . import mesh
@@ -20,6 +21,10 @@ class MapEntry():
     def __init__(self, obj: bpy.types.Object, room_index: int):
         self.obj: bpy.types.Object = obj
         self.room_index: int = room_index
+        self.layer: int = 0
+
+        if hasattr(obj, 'map_layer'):
+            self.layer = obj.map_layer
 
     def bounding_box(self) -> tuple[mathutils.Vector, mathutils.Vector]:
         return bounding_box.from_obj(self.obj)
@@ -177,14 +182,120 @@ def write_outline(into: mesh2d_writer.Mesh2d, obj: bpy.types.Object, global_tran
 
         pos = current_pos
 
-class MapRoom():
-    def __init__(self, room_index: int):
+class MapLayerRoom():
+    def __init__(self, room_index: int, layer_index: int):
         self.room_index: int = room_index
+        self.layer_index: int = layer_index
         self.mesh: mesh2d_writer.Mesh2d = mesh2d_writer.Mesh2d()
+        self.max_y: float | None = None
+
+    def append(self, obj: bpy.types.Object, global_transform: mathutils.Matrix):
+        write_outline(self.mesh, obj, global_transform)
+
+        if self.max_y == None or obj.location.z > self.max_y:
+            self.max_y = obj.location.z
+
+    def write(self, file: io.BufferedIOBase):
+        file.write(struct.pack('>HH', self.room_index, 0))
+        self.mesh.write(file)
+
+
+class MapLayer():
+    def __init__(self, index: int):
+        self.rooms: list[MapLayerRoom] = []
+        self.index: int = index
+
+    def get_room(self, room_index: int) -> MapLayerRoom:
+        for room in self.rooms:
+            if room.room_index == room_index:
+                return room
+
+        result = MapLayerRoom(room_index, self.index)
+        self.rooms.append(result)
+        return result
+    
+    def write(self, file: io.BufferedIOBase):
+        file.write(struct.pack('>H', len(self.rooms)))
+
+        for room in self.rooms:
+            room.write(file)
+
+def _layer_range(rooms: list[MapLayerRoom]) -> tuple[int, int]:
+    if len(rooms) == 0:
+        return 0, 0
+
+    min_layer = rooms[0].layer_index
+    layer_count = rooms[-1].layer_index - min_layer + 1
+    return min_layer, layer_count
+
+    
+class Map():
+    def __init__(self):
+        self.layers: list[MapLayer] = []
+
+    def get_room(self, room_index: int, layer_index: int):
+        while len(self.layers) <= layer_index:
+            self.layers.append(MapLayer(len(self.layers)))
+
+        return self.layers[layer_index].get_room(room_index)
+    
+    def write(self, min_pos: mathutils.Vector, max_pos: mathutils.Vector, file: io.BufferedIOBase):
+        room_lookup: list[list[MapLayerRoom]] = []
+
+        for layer in self.layers:
+            for room in layer.rooms:
+                while len(room_lookup) <= room.room_index:
+                    room_lookup.append([])
+
+                room_lookup[room.room_index].append(room)
+
+        layer_room_count = sum(map(lambda x: len(x.rooms), self.layers))
+        room_layer_y_count = sum(map(lambda x: _layer_range(x)[1], room_lookup))
+
+        file.write(struct.pack(
+            '>HHHHffff', 
+            len(self.layers), 
+            len(room_lookup),
+            layer_room_count,
+            room_layer_y_count,
+            min_pos.x, 
+            -max_pos.y, 
+            max_pos.x, 
+            -min_pos.y
+        ))
+
+        for layer in self.layers:
+            layer.write(file)
+
+        for room in room_lookup:
+            sorted_by_layer = sorted(room, key = lambda x: x.layer_index)
+
+            if len(sorted_by_layer) == 0:
+                file.write(struct.pack('>HH', 0, 0))
+                continue
+
+            min_layer, layer_count = _layer_range(sorted_by_layer)
+
+            file.write(struct.pack('>HH', min_layer, layer_count))
+
+            curr_index = 0
+            curr_y = sorted_by_layer[0].max_y
+
+            for layer_index in range(min_layer, min_layer+layer_count):
+                if curr_index < len(sorted_by_layer) and sorted_by_layer[curr_index].layer_index == layer_index:
+                    curr_y = sorted_by_layer[curr_index].max_y
+                    curr_index += 1
+
+                file.write(struct.pack('>f', curr_y))
+
+HEADER_FOOTER = 'MAP '.encode()
 
 def build_map_outline(outlines: list[MapEntry], file):
+    file.write(HEADER_FOOTER)
+
     if len(outlines) == 0:
-        file.write(struct.pack('>Hffff', 0, 0, 0, 0, 0)) 
+        file.write(struct.pack('>HHHHffff', 0, 0, 0, 0, 0, 0, 0, 0)) 
+        file.write(HEADER_FOOTER)
         return
     
     outlines = sorted(outlines, key=lambda x: x.room_index)
@@ -209,25 +320,15 @@ def build_map_outline(outlines: list[MapEntry], file):
         (0, 0, 1, 0),
         (0, 0, 0, 1)
     )) @ mathutils.Matrix.Scale(TOTAL_SCALE / max_size, 4) @ mathutils.Matrix.Translation(-min_pos)    
-
-    current_mesh = MapRoom(outlines[0].room_index)
-    result = [current_mesh]
+    
+    map = Map()
 
     for outline in outlines:
-        if current_mesh.room_index != outline.room_index:
-            result.append(MapRoom(outline.room_index))
+        current_mesh = map.get_room(outline.room_index, outline.layer)
+        current_mesh.append(outline.obj, global_transform)
 
-        write_outline(current_mesh.mesh, outline.obj, global_transform)
-
-    file.write(struct.pack('>Hffff', len(result), min_pos.x, -max_pos.y, max_pos.x, -min_pos.y))
-
-    settings = export_settings.ExportSettings()
-    settings.fixed_point_scale = 1
-    settings.world_scale = 1   
-
-    for room in result:
-        file.write(struct.pack('>B', 0))
-        room.mesh.write(file)
+    map.write(min_pos, max_pos, file)
+    file.write(HEADER_FOOTER)
 
 
     

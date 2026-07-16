@@ -409,6 +409,24 @@ class LoadingZonePanel(bpy.types.Panel):
         self.layout.label(text='Loading zone')
         operator = self.layout.operator(NODE_OT_game_object_entry_points.bl_idname, text=target['loading_zone'])
         operator.name = 'loading_zone'
+        
+class MapOutlinePanel(bpy.types.Panel):
+    bl_idname='GO_PT_map_outline'
+    bl_label='Map outline'
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+    bl_options = {"HIDE_HEADER"}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.object and context.object.name.lower().startswith('map outline')
+    
+    def draw(self, context):
+        target = context.object
+
+        self.layout.label(text='Map outline')
+        self.layout.prop(target, 'map_layer')
 
 
 class EntryPointPanel(bpy.types.Panel):
@@ -673,6 +691,7 @@ _classes = [
     NODE_OT_game_object_positions,
     NODE_OT_game_object_spawners,
     LoadingZonePanel,
+    MapOutlinePanel,
     GameObjectPanel,
     EntryPointPanel,
     StaticParticlesPanel,
@@ -685,10 +704,15 @@ def register():
         type=bpy.types.Object,
         description="Select a mesh"
     )
+    bpy.types.Object.map_layer = bpy.props.IntProperty(
+        name="Map layer",
+        description="Choose which layer a map outline sits in"
+    )
     for cls in _classes:
         bpy.utils.register_class(cls)
 
 def unregister():
     del bpy.types.Object.particle_instance_obj
+    del bpy.types.Object.map_layer
     for cls in _classes:
         bpy.utils.unregister_class(cls)
