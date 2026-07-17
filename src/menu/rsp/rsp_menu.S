@@ -19,6 +19,9 @@
 #define VERTEX_WIDTH(index)     (%lo(VERTEX_POINTS) + 6 + index * VERTEX_SIZE)
 #define VERTEX_CLIP_MASK(index)     (%lo(VERTEX_POINTS) + 12 + index * VERTEX_SIZE)
 
+#define TRANSFORM_SIZE      32
+#define TRANSFORM_SIZE_LOG2 5
+
 #define TRI_VTX_SIZE_LOG2   5
 #define TRI_VERTEX_SIZE     32
 
@@ -384,7 +387,7 @@ MenuCmd_Mtx_Start:
     jal DMAOut
     li row_stride, 0
 
-    addi dram_address, dram_address, 4
+    addi dram_address, dram_address, TRANSFORM_SIZE
     sw dram_address, %lo(MTX_STACK_PTR)(stack_ptr)
 MenuCmd_Mtx_SkipPush:
     andi $at, a0, MENU_MTX_MUL
@@ -433,7 +436,7 @@ MenuCmd_MtxPop_Start:
 MenuCmd_MtxPopDoPop:
     # check if count is zero, do nothing
     beq a0, zero, RSPQ_Loop
-    sll a0, a0, 2
+    sll a0, a0, TRANSFORM_SIZE_LOG2
 
     sb t3, %lo(MTX_STACK_SIZE)(stack_ptr)
     lw dram_address, %lo(MTX_STACK_PTR)(stack_ptr)
