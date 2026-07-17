@@ -8,6 +8,8 @@
 #include "../math/vector2s16.h"
 #include "rsp/rsp_menu_defs.h"
 
+#define MENU_TO_FIXED(value)    (int16_t)(value * 4.0f)
+
 struct transform_2d_fp {
     int16_t int_part[8];
     uint16_t frac_part[8];

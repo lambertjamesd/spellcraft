@@ -56,6 +56,7 @@ struct menu_map {
     uint16_t layer_room_count;
     uint16_t room_layer_y_count;
     vector2_t min, max;
+    float size_inv;
 
     menu_map_data_t data;
     

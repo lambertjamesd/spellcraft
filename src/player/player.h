@@ -169,6 +169,10 @@ static inline vector3_t* player_get_position(struct player* player) {
     return &player->cutscene_actor.transform.position;
 }
 
+static inline vector2_t* player_get_rotation(struct player* player) {
+    return &player->cutscene_actor.transform.rotation;
+}
+
 static inline vector3_t* player_get_velocity(struct player* player) {
     return &player->cutscene_actor.collider.velocity;
 }

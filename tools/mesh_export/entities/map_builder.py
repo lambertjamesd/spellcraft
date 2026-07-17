@@ -67,6 +67,9 @@ def write_outline(into: mesh2d_writer.Mesh2d, obj: bpy.types.Object, global_tran
     
     remaining_edges: list[bpy.types.MeshEdge] = []
     for edge in mesh.edges:
+        if edge.use_seam:
+            continue
+
         if edge.key in edge_use_count:
             adj_edges = edge_use_count[edge.key]
         else:
@@ -312,7 +315,7 @@ def build_map_outline(outlines: list[MapEntry], file):
     center_offset = mathutils.Vector((max_size - size.x, max_size - size.y, 0)) * 0.5
 
     min_pos = min_pos - center_offset
-    max_pos = max_pos - center_offset
+    max_pos = min_pos + mathutils.Vector((max_size, max_size, 0))
 
     global_transform = mathutils.Matrix((
         (-1, 0, 0, TOTAL_SCALE),
@@ -324,8 +327,7 @@ def build_map_outline(outlines: list[MapEntry], file):
     map = Map()
 
     for outline in outlines:
-        current_mesh = map.get_room(outline.room_index, outline.layer)
-        current_mesh.append(outline.obj, global_transform)
+        map.get_room(outline.room_index, outline.layer).append(outline.obj, global_transform)
 
     map.write(min_pos, max_pos, file)
     file.write(HEADER_FOOTER)
