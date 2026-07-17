@@ -70,6 +70,7 @@ void menu_map_load(menu_map_t* map, FILE* file) {
     }
 
     map->outline_material = material_cache_load("rom:/materials/menu/map_mesh.mat");
+    map->solid_color = material_cache_load("rom:/materials/menu/solid_primitive.mat");
     
     fread(&header_footer, sizeof(int), 1, file);
     assert(header_footer == HEADER_FOOTER);
@@ -85,6 +86,7 @@ void menu_map_destroy(menu_map_t* map) {
     free(map->data.room_layer_y);
 
     material_cache_release(map->outline_material);
+    material_cache_release(map->solid_color);
 }
 
 static transform_2d_fp_t transform_test = {
@@ -118,6 +120,29 @@ static menu2d_vtx_t player_arrow[] = {
     {.pos = {{{-10.0f, 20.0f}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
 };
 
+void menu_map_render_player(menu_map_t* map) {
+    vector3_t* player_pos = player_get_position(&current_scene->player);
+    vector2_t* player_rot = player_get_rotation(&current_scene->player);
+
+    transform_2d_fp_t* mtx = frame_malloc(frame_pool_curr(), sizeof(transform_2d_fp_t));
+    transform_2d_t player_transform = {
+        player_rot->x, -player_rot->y, (map->min.x - player_pos->x) * map->size_inv + MAP_SCALE,
+        player_rot->y, player_rot->x, (map->min.y - player_pos->z) * map->size_inv + MAP_SCALE,
+    };
+
+    menu_transform_to_fixed(mtx, player_transform);
+    data_cache_hit_writeback(mtx, sizeof(transform_2d_fp_t));
+
+    menu_mtx(mtx, true, true);
+
+    material_apply(&map->solid_color->apply);
+    rdpq_set_prim_register_raw((color_t){10, 200, 255, 255}, 0 , 0);
+    menu_vtx(player_arrow, 0, 3);
+    menu_tri(0, 1, 2);
+    
+    menu_mtx_pop(1);
+}
+
 void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     menu_common_render_background(20, 20, 200, 200);
 
@@ -139,26 +164,10 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     for (int i = 0; i < map->layer_room_count; i += 1) {
         rspq_block_run(map->data.layer_rooms[i].outline.block);
     }
-
-    vector3_t* player_pos = player_get_position(&current_scene->player);
-    vector2_t* player_rot = player_get_rotation(&current_scene->player);
-
-    transform_2d_fp_t* mtx = frame_malloc(frame_pool_curr(), sizeof(transform_2d_fp_t));
-    transform_2d_t player_transform = {
-        player_rot->x, -player_rot->y, (map->min.x - player_pos->x) * map->size_inv + MAP_SCALE,
-        player_rot->y, player_rot->x, (map->min.y - player_pos->z) * map->size_inv + MAP_SCALE,
-    };
-
-    debugf("%f %f %f\n", player_pos->z, map->min.y, player_transform[5]);
-    menu_transform_to_fixed(mtx, player_transform);
-    data_cache_hit_writeback(mtx, sizeof(transform_2d_fp_t));
-
-    menu_mtx(mtx, true, true);
-
-    menu_vtx(player_arrow, 0, 3);
-    menu_tri(0, 1, 2);
     
-    menu_mtx_pop(2);
+    menu_map_render_player(map);
+    
+    menu_mtx_pop(1);
     menu_mtx_pop_uv(1);
     
     rdpq_set_scissor(0, 0, SCREEN_WD, SCREEN_HT);

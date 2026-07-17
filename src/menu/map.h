@@ -61,6 +61,7 @@ struct menu_map {
     menu_map_data_t data;
     
     material_pair_t* outline_material;
+    material_pair_t* solid_color;
 };
 
 typedef struct menu_map menu_map_t;
