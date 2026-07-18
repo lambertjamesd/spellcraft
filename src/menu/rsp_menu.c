@@ -117,8 +117,8 @@ void menu_set_viewport(int left, int top, int right, int bottom) {
         MENU_OVERLAY_ID, 
         RSP_MENU_MenuCmd_SetViewport,
         0,
-        ((uint32_t)left << 18) | (((uint32_t)-right << 2) & 0xFFFF),
-        ((uint32_t)top << 18) | (((uint32_t)-bottom << 2) & 0xFFFF)
+        ((uint32_t)left << 18) | (((uint32_t)right << 2) & 0xFFFF),
+        ((uint32_t)top << 18) | (((uint32_t)bottom << 2) & 0xFFFF)
     );
 }
 
@@ -145,8 +145,25 @@ void menu_relative_fill_rect(int8_t vtx_index, int16_t x1, int16_t y1, int16_t x
     rspq_write(
         MENU_OVERLAY_ID,
         RSP_MENU_MenuCmd_RelativeFillRect,
-        PACK_POS(x1, y1),
-        PACK_POS(x2, y2) | ((uint32_t)vtx_index << 27)
+        PACK_POS(x2, y2),
+        PACK_POS(x1, y1) | ((uint32_t)vtx_index << 27)
+    );
+}
+
+void menu_relative_tex_rect(uint8_t vtx_index, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t s, int16_t t, int16_t dsdx, int16_t dtdy) {
+    assert(x1 >= -2048 && x1 <= 2047);
+    assert(y1 >= -2048 && y1 <= 2047);
+    assert(x2 >= -2048 && x2 <= 2047);
+    assert(y2 >= -2048 && y2 <= 2047);
+    assert(vtx_index < 32);
+
+    rspq_write(
+        MENU_OVERLAY_ID,
+        RSP_MENU_MenuCmd_RelativeTexRect,
+        PACK_POS(x2, y2),
+        PACK_POS(x1, y1) | ((uint32_t)vtx_index << 27),
+        ((uint32_t)(uint16_t)s << 16) | (uint16_t)t,
+        ((uint32_t)(uint16_t)dsdx << 16) | (uint16_t)dtdy
     );
 }
 

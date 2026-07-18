@@ -498,9 +498,19 @@ MenuCmd_SetAttrFlags:
     # a1 xmin, xmax
     # a2 ymin, ymax
 MenuCmd_SetViewport:
+    sw a1, %lo(VIEWPORT)
+    sw a2, %lo(VIEWPORT + 4)
+
+    xori a1, a1, 0xFFFF
+    xori a2, a2, 0xFFFF
+    addi a1, a1, 1
+    addi a2, a2, 1
+    
     sw a1, %lo(VIEWPORT_CLIP + 0)
-    j RSPQ_Loop
     sw a2, %lo(VIEWPORT_CLIP + 4)
+
+    j RSPQ_Loop
+    nop
 
     ##########################################
     # MenuCmd_SetUVFx
@@ -561,8 +571,6 @@ MenuCmd_VTX_NextVtx:
     addi a0, vtx_ptr, 0
     jal ClipPoint
     addi a1, vtx_ptr, TRI_CLIP
-
-    sb zero, TRI_CLIP(vtx_ptr)
 
     addi vtx_ptr, vtx_ptr, TRI_VERTEX_SIZE
     addi input_ptr, input_ptr, VERTEX_INPUT_SIZE
@@ -633,8 +641,8 @@ MenuCmd_Tri:
 
     ##########################################
     # MenuCmd_RelativeFillRect
-    # a0 x:12 y:12
-    # a1 vtx:5 pad:3 w:12 h:12 
+    # a0 x2:12 y2:12
+    # a1 vtx:5 pad:3 x1:12 y1:12 
 MenuCmd_RelativeFillRect:
     jal ClipRect
     nop
@@ -645,28 +653,45 @@ MenuCmd_RelativeFillRect:
     li s4, %lo(RDPQ_CMD_STAGING)
     li s3, %lo(RDPQ_CMD_STAGING+8)
 
-    lw $at, %lo(RDPQ_CMD_STAGING)
-    sw $at, %lo(TEST)
-    
-    lw $at, %lo(RDPQ_CMD_STAGING+4)
-    sw $at, %lo(TEST+4)
-
     jal_and_j RDPQ_Send, RSPQ_Loop
     
     ##########################################
     # MenuCmd_RelativeTexRect
-    # a0 x1:12 y1:12
-    # a1 vtx:5 pad:3 x2:12 y2:12 
+    # a0 x2:12 y2:12
+    # a1 vtx:5 pad:3 x1:12 y1:12 
     # a2 s,t
     # a3 dsdx, dtdy
 MenuCmd_RelativeTexRect:
     jal ClipRect
     nop
-
-    li $at, 0xF6
+    
+    li $at, 0x24
+    beq v0, zero, MenuCmd_RelativeTexRectSkipUV
     sb $at, %lo(RDPQ_CMD_STAGING)
 
-    # todo clip texture
+    # load dsdx and dtdy into vector registers
+    mtc2 a3, $v01.e2
+    srl s7, a3, 16
+    mtc2 s7, $v01.e0
+    # scale dsdx by clip amount         ; # load st into registers
+    vmudm $v02, $v01, $v20              ; mtc2 a2, $v05.e2
+    vmadl $v03, vzero, vzero            ; srl s7, a2, 16
+    # bit shift to the right by 7
+    vmudl $v04, $v03, K512              ; mtc2 s7, $v05.e0
+    vmadm $v04, $v02, K512              ;
+    vmadl $v04, vzero, vzero            ;
+    
+    # adjust st
+    vadd $v05, $v05, $v04
+
+    mfc2 a2, $v05.e0
+    mfc2 s6, $v05.e2
+    sll a2, a2, 16
+    andi s6, s6, 0xFFFF
+    or a2, a2, s6
+
+MenuCmd_RelativeTexRectSkipUV:
+
     sw a2, %lo(RDPQ_CMD_STAGING+8)
     sw a3, %lo(RDPQ_CMD_STAGING+12)
 
@@ -677,9 +702,9 @@ MenuCmd_RelativeTexRect:
 
     ##########################################
     # ClipRect
-    # a0 x1:12 y2:12
-    # a1 vtx:5 pad:3 x2:12 y2:12 
-
+    # a0 x2:12 y2:12
+    # a1 vtx:5 pad:3 x1:12 y1:12 
+    # result $v20 amount s and t need to be modified by
 ClipRect:
     li s1, %lo(VIEWPORT)
     srl s0, a1, 27 - TRI_VTX_SIZE_LOG2
@@ -699,31 +724,32 @@ ClipRect:
     ldv viewport, 0, 0, s1
 
     # load 
-    # x1
-    sll s1, a0, 8
-    sra s1, s1, 20
-    mtc2 s1, constrained.e0
-
-    # y2
-    sll s1, a0, 20
-    sra s1, s1, 20
-    mtc2 s1, constrained.e2
-    
     # x2
-    sll s1, a1, 8
+    sll s1, a0, 8
     sra s1, s1, 20
     mtc2 s1, constrained.e1
 
     # y2
-    sll s1, a1, 20
+    sll s1, a0, 20
     sra s1, s1, 20
     mtc2 s1, constrained.e3
+    
+    # x1
+    sll s1, a1, 8
+    sra s1, s1, 20
+    mtc2 s1, constrained.e0
+
+    # y1
+    sll s1, a1, 20
+    sra s1, s1, 20
+    mtc2 s1, constrained.e2
 
     # offset points
     vadd constrained, constrained, rel_point.q0
     
     # calculate clip offset for uv
-    vsub res_neg_clip, constrained, viewport
+    vsub res_neg_clip, viewport, constrained
+
     # constrain lower bound
     vge constrained, constrained, viewport.q0
     vge res_neg_clip, res_neg_clip, vzero
@@ -751,14 +777,14 @@ ClipRect:
     andi s3, s3, 0xFFF
     
     sll s0, s0, 12
-    sll s2, s2, 12
+    sll s1, s1, 12
     
-    or s0, s0, s1
-    or s2, s2, s3
-    sw s0, %lo(RDPQ_CMD_STAGING)
+    or s0, s0, s2
+    or s1, s1, s3
+    sw s0, %lo(RDPQ_CMD_STAGING + 4)
 
     jr ra
-    sw s2, %lo(RDPQ_CMD_STAGING + 4)
+    sw s1, %lo(RDPQ_CMD_STAGING)
 
     ##########################################
     # MulMtx
