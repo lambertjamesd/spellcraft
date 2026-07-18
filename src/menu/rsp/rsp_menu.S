@@ -37,6 +37,8 @@
 #define TRI_VTX(index, offset)     (%lo(RDPQ_TRI_DATA) + offset + index * TRI_VERTEX_SIZE)
 
 #define TRI_POS         0
+#define TRI_POS_X       0
+#define TRI_POS_Y       2
 #define TRI_RGBA        8
 #define TRI_UV          12
 #define TRI_CLIP        24
@@ -58,6 +60,8 @@
         RSPQ_DefineCommand MenuCmd_SetUVFx, 4
         RSPQ_DefineCommand MenuCmd_VTX, 8
         RSPQ_DefineCommand MenuCmd_Tri, 4
+        RSPQ_DefineCommand MenuCmd_RelativeFillRect, 8
+        RSPQ_DefineCommand MenuCmd_RelativeTexRect, 16
         # set color table
         # color
         # fill rect
@@ -98,16 +102,17 @@
         VTX_FX_FLAGS: .byte 0
 
         .align 2
-        VIEWPORT: .half 0, -320*4, 0, -240*4
+        VIEWPORT_CLIP: .half 0, -320*4, 0, -240*4
+        VIEWPORT: .half 0, 320*4, 0, 240*4
         .align 4
         VERTEX_POINTS: .space VERTEX_SIZE*2
         NEXT_VERTEX: .byte 0
     .align 4
-RDPQ_TRI_DATA:
-    .rept MENU_TRI_VTX_COUNT
-        TRI_VTX_EMPTY
-    .endr
-        
+        RDPQ_TRI_DATA:
+            .rept MENU_TRI_VTX_COUNT
+                TRI_VTX_EMPTY
+            .endr
+                
     RSPQ_EndSavedState
 
 .bss
@@ -116,6 +121,7 @@ RDPQ_TRI_DATA:
     # fmt xxyy uuvv rgba
     VERTEX_INPUT: .space VERTEX_SIZE * MENU_TRI_VTX_COUNT
     .align 4
+    RELATIVE_POINT:
     MTX_INPUT: .space 32
 
 #define dma_size     t0
@@ -492,9 +498,9 @@ MenuCmd_SetAttrFlags:
     # a1 xmin, xmax
     # a2 ymin, ymax
 MenuCmd_SetViewport:
-    sw a1, %lo(VIEWPORT + 0)
+    sw a1, %lo(VIEWPORT_CLIP + 0)
     j RSPQ_Loop
-    sw a2, %lo(VIEWPORT + 4)
+    sw a2, %lo(VIEWPORT_CLIP + 4)
 
     ##########################################
     # MenuCmd_SetUVFx
@@ -506,7 +512,7 @@ MenuCmd_SetUVFx:
 
     ##########################################
     # MenuCmd_VTX
-    # a0 offset | count
+    # a0 offset:8 | count:8
     # a1 vtx ptr
 MenuCmd_VTX:
     #define input_ptr   s5
@@ -580,9 +586,11 @@ MenuCmd_VTX_NextEffectVtx:
     j MenuCmd_VTX_NextEffectVtx
     addi input_ptr, input_ptr, TRI_VERTEX_SIZE
 
+    #undef count
+
     ##########################################
     # MenuCmd_Tri
-    # a0 a | b | c
+    # a0 a:8 | b:8 | c:8
 MenuCmd_Tri:
 
     # load pointers to triangles
@@ -622,6 +630,135 @@ MenuCmd_Tri:
     nop
 
     jal_and_j RDPQ_Triangle_Send_End, RSPQ_Loop
+
+    ##########################################
+    # MenuCmd_RelativeFillRect
+    # a0 x:12 y:12
+    # a1 vtx:5 pad:3 w:12 h:12 
+MenuCmd_RelativeFillRect:
+    jal ClipRect
+    nop
+
+    li $at, 0x36
+    sb $at, %lo(RDPQ_CMD_STAGING)
+
+    li s4, %lo(RDPQ_CMD_STAGING)
+    li s3, %lo(RDPQ_CMD_STAGING+8)
+
+    lw $at, %lo(RDPQ_CMD_STAGING)
+    sw $at, %lo(TEST)
+    
+    lw $at, %lo(RDPQ_CMD_STAGING+4)
+    sw $at, %lo(TEST+4)
+
+    jal_and_j RDPQ_Send, RSPQ_Loop
+    
+    ##########################################
+    # MenuCmd_RelativeTexRect
+    # a0 x1:12 y1:12
+    # a1 vtx:5 pad:3 x2:12 y2:12 
+    # a2 s,t
+    # a3 dsdx, dtdy
+MenuCmd_RelativeTexRect:
+    jal ClipRect
+    nop
+
+    li $at, 0xF6
+    sb $at, %lo(RDPQ_CMD_STAGING)
+
+    # todo clip texture
+    sw a2, %lo(RDPQ_CMD_STAGING+8)
+    sw a3, %lo(RDPQ_CMD_STAGING+12)
+
+    li s4, %lo(RDPQ_CMD_STAGING)
+    li s3, %lo(RDPQ_CMD_STAGING+16)
+
+    jal_and_j RDPQ_Send, RSPQ_Loop
+
+    ##########################################
+    # ClipRect
+    # a0 x1:12 y2:12
+    # a1 vtx:5 pad:3 x2:12 y2:12 
+
+ClipRect:
+    li s1, %lo(VIEWPORT)
+    srl s0, a1, 27 - TRI_VTX_SIZE_LOG2
+    andi s0, s0, %lo(~(TRI_VERTEX_SIZE - 1))
+    addi s0, s0, %lo(RDPQ_TRI_DATA)
+
+    #define rel_point       $v10
+    #define constrained     $v11
+    #define viewport        $v12
+    #define res_neg_clip    $v20
+
+    # relative to
+    lsv rel_point, 0, 0, s0
+    lsv rel_point, 4, 2, s0
+
+    # viewport
+    ldv viewport, 0, 0, s1
+
+    # load 
+    # x1
+    sll s1, a0, 8
+    sra s1, s1, 20
+    mtc2 s1, constrained.e0
+
+    # y2
+    sll s1, a0, 20
+    sra s1, s1, 20
+    mtc2 s1, constrained.e2
+    
+    # x2
+    sll s1, a1, 8
+    sra s1, s1, 20
+    mtc2 s1, constrained.e1
+
+    # y2
+    sll s1, a1, 20
+    sra s1, s1, 20
+    mtc2 s1, constrained.e3
+
+    # offset points
+    vadd constrained, constrained, rel_point.q0
+    
+    # calculate clip offset for uv
+    vsub res_neg_clip, constrained, viewport
+    # constrain lower bound
+    vge constrained, constrained, viewport.q0
+    vge res_neg_clip, res_neg_clip, vzero
+    cfc2 v0, COP2_CTRL_VCC
+
+    # constrain upper bound
+    vlt constrained, constrained, viewport.q1
+    andi v0, v0, 0x5
+
+    # check if rectangle is fully clipped
+    vge $v13, constrained, constrained.q1
+    cfc2 s0, COP2_CTRL_VCC
+    andi s0, s0, 0x5
+    bne s0, zero, RSPQ_Loop
+
+    # store result
+    mfc2 s0, constrained.e0
+    mfc2 s1, constrained.e1
+    mfc2 s2, constrained.e2
+    mfc2 s3, constrained.e3
+
+    andi s0, s0, 0xFFF
+    andi s1, s1, 0xFFF
+    andi s2, s2, 0xFFF
+    andi s3, s3, 0xFFF
+    
+    sll s0, s0, 12
+    sll s2, s2, 12
+    
+    or s0, s0, s1
+    or s2, s2, s3
+    sw s0, %lo(RDPQ_CMD_STAGING)
+
+    jr ra
+    sw s2, %lo(RDPQ_CMD_STAGING + 4)
 
     ##########################################
     # MulMtx
@@ -695,6 +832,8 @@ WriteNextPoint:
     # a0 output_ptr
     # a1 mtx_ptr
     # a2 input_ptr
+    #
+    # stomps $v01 $v02 $v03 $v08 $v07
 MulPoint:
     lqv mtx_topi, 0x00, a1
     lqv mtx_topf, 0x10, a1 
@@ -732,7 +871,7 @@ ClipPoint:
     # pad the culling margin by the margin
     vadd $v07, $v07, $v20.e0
     
-    li a0, %lo(VIEWPORT)
+    li a0, %lo(VIEWPORT_CLIP)
     ldv $v08, 0, 0, a0
 
     vlt $v08, $v07, $v08

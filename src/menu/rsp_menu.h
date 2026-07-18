@@ -54,6 +54,10 @@ void menu_set_vtx_fx(int fx);
 
 void menu_vtx(const menu2d_vtx_t* vtx, uint32_t offset, uint32_t count);
 
+void menu_relative_fill_rect(int8_t vtx_index, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+
+void menu_relative_tex_rect(uint8_t vtx_index, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t s, int16_t t, int16_t dsdx, int16_t dtdy);
+
 extern uint32_t MENU_OVERLAY_ID;
 
 static inline void menu_tri(uint32_t a, uint32_t b, uint32_t c) {

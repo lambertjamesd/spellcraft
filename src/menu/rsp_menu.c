@@ -133,6 +133,23 @@ void menu_vtx(const menu2d_vtx_t* vtx, uint32_t offset, uint32_t count) {
     rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmd_VTX, (offset << 8) | count, (int)vtx);
 }
 
+#define PACK_POS(x, y)  ((((uint32_t)x & 0xFFF) << 12) | ((uint32_t)y & 0xFFF))
+
+void menu_relative_fill_rect(int8_t vtx_index, int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
+    assert(x1 >= -2048 && x1 <= 2047);
+    assert(y1 >= -2048 && y1 <= 2047);
+    assert(x2 >= -2048 && x2 <= 2047);
+    assert(y2 >= -2048 && y2 <= 2047);
+    assert(vtx_index < 32);
+
+    rspq_write(
+        MENU_OVERLAY_ID,
+        RSP_MENU_MenuCmd_RelativeFillRect,
+        PACK_POS(x1, y1),
+        PACK_POS(x2, y2) | ((uint32_t)vtx_index << 27)
+    );
+}
+
 void* menu_get_state() {
     rspq_wait();
     return rspq_overlay_get_state(&rsp_menu);

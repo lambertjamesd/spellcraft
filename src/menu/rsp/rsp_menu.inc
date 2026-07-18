@@ -10,3 +10,7 @@
 #define MENU_FX_UV_MTX      0x2
 
 #define MENU_TRI_VTX_COUNT       64
+
+#define MENU_RELATIVE_RECT_FILL         0x36
+#define MENU_RELATIVE_RECT_TEX          0x24
+#define MENU_RELATIVE_RECT_TEX_FLIP     0x25

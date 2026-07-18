@@ -11,6 +11,8 @@
 #define RSP_MENU_MenuCmd_SetUVFx 7
 #define RSP_MENU_MenuCmd_VTX 8
 #define RSP_MENU_MenuCmd_Tri 9
+#define RSP_MENU_MenuCmd_RelativeFillRect 10
+#define RSP_MENU_MenuCmd_RelativeTexRect 11
 
 #define RSP_MENU_TEST 0x0
 #define RSP_MENU_MTX_TOP 0x20
@@ -24,9 +26,10 @@
 #define RSP_MENU_CAP_VECTORS 0x80
 #define RSP_MENU_ATTR_FLAGS 0x90
 #define RSP_MENU_VTX_FX_FLAGS 0x91
-#define RSP_MENU_VIEWPORT 0x94
-#define RSP_MENU_VERTEX_POINTS 0xa0
-#define RSP_MENU_NEXT_VERTEX 0xc0
-#define RSP_MENU_RDPQ_TRI_DATA 0xd0
+#define RSP_MENU_VIEWPORT_CLIP 0x94
+#define RSP_MENU_VIEWPORT 0x9c
+#define RSP_MENU_VERTEX_POINTS 0xb0
+#define RSP_MENU_NEXT_VERTEX 0xd0
+#define RSP_MENU_RDPQ_TRI_DATA 0xe0
 
 #endif
