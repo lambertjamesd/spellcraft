@@ -4,6 +4,7 @@ import collections
 import math
 import struct
 import io
+from enum import Enum
 
 from . import bounding_box
 from . import mesh
@@ -16,6 +17,24 @@ TARGET_MAP_SIZE = 200
 TOTAL_SCALE = TARGET_MAP_SIZE
 
 LINE_WIDTH = 2
+
+def _encode_pos(pos: mathutils.Vector):
+    return struct.pack('>hh', int(pos.x * 4 + 0.5), int(pos.y * 4 + 0.5))
+
+class MapIconType(Enum):
+    MAP_ICON_TREASURE = 0
+    
+class MapIcon():
+    def __init__(self, pos: mathutils.Vector, type: MapIconType, room: int, hidden: int):
+        self.pos: mathutils.Vector = pos
+        self.type: MapIconType = type
+        self.room: int = room
+        self.hidden: int = hidden
+
+    def write(self, global_transform: mathutils.Matrix, file: io.BufferedIOBase):
+        file.write(_encode_pos(global_transform @ self.pos))
+        file.write(struct.pack('>HB', self.hidden, self.type.value))
+
 
 class MapEntry():
     def __init__(self, obj: bpy.types.Object, room_index: int):
@@ -187,10 +206,12 @@ def write_outline(into: mesh2d_writer.Mesh2d, obj: bpy.types.Object, global_tran
 
 class MapLayerRoom():
     def __init__(self, room_index: int, layer_index: int):
+        self.center: mathutils.Vector | None = None
         self.room_index: int = room_index
         self.layer_index: int = layer_index
         self.mesh: mesh2d_writer.Mesh2d = mesh2d_writer.Mesh2d()
         self.max_y: float | None = None
+        self.icons: list[MapIcon] = []
 
     def append(self, obj: bpy.types.Object, global_transform: mathutils.Matrix):
         write_outline(self.mesh, obj, global_transform)
@@ -198,10 +219,32 @@ class MapLayerRoom():
         if self.max_y == None or obj.location.z > self.max_y:
             self.max_y = obj.location.z
 
-    def write(self, file: io.BufferedIOBase):
-        file.write(struct.pack('>HH', self.room_index, 0))
+        if self.center == None:
+            self.center = obj.location @ global_transform
+
+    def write(self, global_transform: mathutils.Matrix, file: io.BufferedIOBase):
+        if not self.center:
+            raise Exception('no center point sepcified for MapLayerRoom')
+
+        file.write(_encode_pos(self.center))
+        file.write(struct.pack('>HH', self.room_index, len(self.icons)))
+
+        for icon in self.icons:
+            icon.write(global_transform, file)
+
         self.mesh.write(file)
 
+
+def _add_icon(rooms: list[MapLayerRoom], icon: MapIcon):
+    if len(rooms) == 0:
+        return
+
+    for room in rooms:
+        if room.max_y != None and icon.pos.z < room.max_y:
+            room.icons.append(icon)
+            return
+        
+    rooms[-1].icons.append(icon)
 
 class MapLayer():
     def __init__(self, index: int):
@@ -217,11 +260,14 @@ class MapLayer():
         self.rooms.append(result)
         return result
     
-    def write(self, file: io.BufferedIOBase):
+    def write(self, global_transform: mathutils.Matrix, file: io.BufferedIOBase):
         file.write(struct.pack('>H', len(self.rooms)))
 
         for room in self.rooms:
-            room.write(file)
+            room.write(global_transform, file)
+
+    def icon_count(self) -> int:
+        return sum(map(lambda x: len(x.icons), self.rooms))
 
 def _layer_range(rooms: list[MapLayerRoom]) -> tuple[int, int]:
     if len(rooms) == 0:
@@ -233,8 +279,9 @@ def _layer_range(rooms: list[MapLayerRoom]) -> tuple[int, int]:
 
     
 class Map():
-    def __init__(self):
+    def __init__(self, icons: list[MapIcon]):
         self.layers: list[MapLayer] = []
+        self.icons: list[MapIcon] = icons
 
     def get_room(self, room_index: int, layer_index: int):
         while len(self.layers) <= layer_index:
@@ -242,7 +289,7 @@ class Map():
 
         return self.layers[layer_index].get_room(room_index)
     
-    def write(self, min_pos: mathutils.Vector, max_pos: mathutils.Vector, file: io.BufferedIOBase):
+    def write(self, min_pos: mathutils.Vector, max_pos: mathutils.Vector, global_transform: mathutils.Matrix, file: io.BufferedIOBase):
         room_lookup: list[list[MapLayerRoom]] = []
 
         for layer in self.layers:
@@ -252,15 +299,24 @@ class Map():
 
                 room_lookup[room.room_index].append(room)
 
+        room_lookup = list(map(lambda room: sorted(room, key = lambda x: x.layer_index), room_lookup))
+
+        for icon in self.icons:
+            if icon.room >= len(room_lookup):
+                continue
+            _add_icon(room_lookup[icon.room], icon)
+
         layer_room_count = sum(map(lambda x: len(x.rooms), self.layers))
         room_layer_y_count = sum(map(lambda x: _layer_range(x)[1], room_lookup))
+        icon_count = sum(map(lambda x: x.icon_count(), self.layers))
 
         file.write(struct.pack(
-            '>HHHHffff', 
+            '>HHHHHffff', 
             len(self.layers), 
             len(room_lookup),
             layer_room_count,
             room_layer_y_count,
+            icon_count,
             min_pos.x, 
             -max_pos.y, 
             max_pos.x, 
@@ -268,32 +324,30 @@ class Map():
         ))
 
         for layer in self.layers:
-            layer.write(file)
+            layer.write(global_transform, file)
 
         for room in room_lookup:
-            sorted_by_layer = sorted(room, key = lambda x: x.layer_index)
-
-            if len(sorted_by_layer) == 0:
+            if len(room) == 0:
                 file.write(struct.pack('>HH', 0, 0))
                 continue
 
-            min_layer, layer_count = _layer_range(sorted_by_layer)
+            min_layer, layer_count = _layer_range(room)
 
             file.write(struct.pack('>HH', min_layer, layer_count))
 
             curr_index = 0
-            curr_y = sorted_by_layer[0].max_y
+            curr_y = room[0].max_y
 
             for layer_index in range(min_layer, min_layer+layer_count):
-                if curr_index < len(sorted_by_layer) and sorted_by_layer[curr_index].layer_index == layer_index:
-                    curr_y = sorted_by_layer[curr_index].max_y
+                if curr_index < len(room) and room[curr_index].layer_index == layer_index:
+                    curr_y = room[curr_index].max_y
                     curr_index += 1
 
                 file.write(struct.pack('>f', curr_y))
 
 HEADER_FOOTER = 'MAP '.encode()
 
-def build_map_outline(outlines: list[MapEntry], file):
+def build_map_outline(outlines: list[MapEntry], icons: list[MapIcon], file):
     file.write(HEADER_FOOTER)
 
     if len(outlines) == 0:
@@ -324,12 +378,12 @@ def build_map_outline(outlines: list[MapEntry], file):
         (0, 0, 0, 1)
     )) @ mathutils.Matrix.Scale(TOTAL_SCALE / max_size, 4) @ mathutils.Matrix.Translation(-min_pos)    
     
-    map = Map()
+    map = Map(icons)
 
     for outline in outlines:
         map.get_room(outline.room_index, outline.layer).append(outline.obj, global_transform)
 
-    map.write(min_pos, max_pos, file)
+    map.write(min_pos, max_pos, global_transform, file)
     file.write(HEADER_FOOTER)
 
 

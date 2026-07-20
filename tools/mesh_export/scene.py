@@ -77,6 +77,15 @@ class LoadingZone():
             ))
 
         return bb_min, bb_max, rotation
+        
+class MapIconType():
+    def __init__(self, icon_type: map_builder.MapIconType, boolean_variable: str):
+        self.icon_type: map_builder.MapIconType = icon_type
+        self.boolean_variable: str = boolean_variable
+    
+objects_on_map: dict[str, MapIconType] = {
+    "treasure_chest": MapIconType(map_builder.MapIconType.MAP_ICON_TREASURE, 'has_item'),
+}
 
 class Scene():
     def __init__(self):
@@ -643,6 +652,29 @@ def write_room_metadata(
             visited_room
         ))
 
+def get_map_icons(scene: Scene, enums: dict[str, struct_parse.EnumInfo]) -> list[map_builder.MapIcon]:
+    result: list[map_builder.MapIcon] = []
+
+    boolean_variables = enums['boolean_variable']
+
+    for obj in scene.objects:
+        if not (obj.name in objects_on_map):
+            continue
+
+        icon_type = objects_on_map[obj.name]
+
+        if not (icon_type.boolean_variable in obj.obj):
+            continue
+
+        hidden = boolean_variables.str_to_int(obj.obj[icon_type.boolean_variable])
+
+        if hidden == None:
+            continue
+
+        result.append(map_builder.MapIcon(obj.obj.location, icon_type.icon_type, obj.room_index, hidden))
+
+    return result
+
 def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-2]
@@ -773,7 +805,7 @@ def process_scene():
 
         write_minimap_location(base_transform, file)
 
-        map_builder.build_map_outline(scene.map_entries, file)
+        map_builder.build_map_outline(scene.map_entries, get_map_icons(scene, enums), file)
 
         write_fog(file)
 

@@ -25,10 +25,22 @@ void menu_map_load_layer(menu_map_layer_t* layer, menu_map_data_t* data, FILE* f
 
     for (int i = 0; i < layer->room_count; i += 1) {
         menu_map_layer_room_t* room = &layer->rooms[i];
+        fread(&room->center, sizeof(vector2s16_t), 1, file);
         fread(&room->room_index, sizeof(uint16_t), 1, file);
         fread(&room->icon_count, sizeof(uint16_t), 1, file);
 
-        room->icons = NULL;
+        room->icons = data->icons;
+        data->icons += room->icon_count;
+
+        menu_map_icon_t* icon = room->icons;
+
+        for (int icon_index = 0; icon_index < room->icon_count; icon_index += 1) {
+            fread(&icon->pos, sizeof(vector2s16_t), 1, file);
+            fread(&icon->hidden, sizeof(uint16_t), 1, file);
+            fread(&icon->icon_type, sizeof(uint8_t), 1, file);
+            icon += 1;
+        }
+
         mesh2d_load(&room->outline, file);
     }
 }
@@ -52,6 +64,7 @@ void menu_map_load(menu_map_t* map, FILE* file) {
 
     fread(&map->layer_room_count, sizeof(uint16_t), 1, file);
     fread(&map->room_layer_y_count, sizeof(uint16_t), 1, file);
+    fread(&map->icon_count, sizeof(uint16_t), 1, file);
 
     fread(&map->min, sizeof(vector2_t), 1, file);
     fread(&map->max, sizeof(vector2_t), 1, file);
@@ -60,9 +73,10 @@ void menu_map_load(menu_map_t* map, FILE* file) {
 
     map->layers = map->layer_count ? malloc(sizeof(menu_map_layer_t) * map->layer_count) : NULL;
     map->rooms = map->room_count ? malloc(sizeof(menu_map_room_t) * map->room_count) : NULL;
-
+    
     map->data.layer_rooms = map->layer_room_count ? malloc(sizeof(menu_map_layer_room_t) * map->layer_room_count) : NULL;
     map->data.room_layer_y = map->room_layer_y_count ? malloc(sizeof(float) * map->room_layer_y_count) : NULL;
+    map->data.icons = map->icon_count ? malloc(sizeof(menu_map_icon_t) * map->icon_count) : NULL;
 
     menu_map_data_t data = map->data;
 
@@ -92,6 +106,7 @@ void menu_map_destroy(menu_map_t* map) {
     free(map->rooms);
     free(map->data.layer_rooms);
     free(map->data.room_layer_y);
+    free(map->data.icons);
 
     material_cache_release(map->outline_material);
     material_cache_release(map->solid_color);

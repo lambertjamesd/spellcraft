@@ -18,7 +18,7 @@ static void apply_style(int font_type, style_t *s, tex_format_t fmt)
     case FONT_TYPE_ALIASED:
     case FONT_TYPE_MONO:
     case FONT_TYPE_BITMAP:
-        rdpq_set_prim_color(s->color);
+        rdpq_set_prim_register_raw(s->color, 0, 0);
         break;
     default:
         assert(0);
