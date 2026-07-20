@@ -20,7 +20,7 @@ void pause_menu_render(void *data) {
             inventory_menu_render(&pause_menu->inventory_menu);
             break;
         case ACTIVE_MENU_MAP:
-            menu_map_render(&current_scene->map, NULL, NULL);
+            menu_map_render(&current_scene->map, &pause_menu->map_menu);
             break;
         default:
             break;
@@ -47,6 +47,7 @@ void pause_menu_transition(struct pause_menu* pause_menu, enum active_menu targe
             inventory_menu_hide(&pause_menu->inventory_menu);
             break;
         case ACTIVE_MENU_MAP:
+            menu_map_hide(&current_scene->map, &pause_menu->map_menu);
             break;
     }
 
@@ -67,6 +68,7 @@ void pause_menu_transition(struct pause_menu* pause_menu, enum active_menu targe
             inventory_menu_show(&pause_menu->inventory_menu);
             break;
         case ACTIVE_MENU_MAP:
+            menu_map_show(&current_scene->map, &pause_menu->map_menu, current_scene->last_room);
             break;
     }
 }

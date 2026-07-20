@@ -8,6 +8,7 @@
 #include "../render/mesh2d.h"
 #include "../resource/material_cache.h"
 #include <stdint.h>
+#include "rsp_menu.h"
 
 enum map_icon_type {
     MAP_ICON_TREASURE,
@@ -71,17 +72,26 @@ struct menu_map {
     
     material_pair_t* outline_material;
     material_pair_t* solid_color;
+    material_pair_t* map_icon_material;
 };
 
 typedef struct menu_map menu_map_t;
 
 struct menu_map_show_state {
     rspq_block_t* block;
-}
+    vector2_t offset;
+    float scale;
+    menu2d_vtx_t* icon_vertices;
+};
+
+typedef struct menu_map_show_state menu_map_show_state_t;
 
 void menu_map_load(menu_map_t* map, FILE* file);
 void menu_map_destroy(menu_map_t* map);
 
-void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max);
+void menu_map_show(menu_map_t* map, menu_map_show_state_t* show_state, uint16_t room_index);
+void menu_map_hide(menu_map_t* map, menu_map_show_state_t* show_state);
+
+void menu_map_render(menu_map_t* map, menu_map_show_state_t* show_state);
 
 #endif

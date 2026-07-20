@@ -397,12 +397,12 @@ bool scene_show_room(struct scene* scene, int room_index) {
         if (room->room_index == ROOM_INDEX_NONE) {
             room->room_index = room_index;
             scene_load_room(scene, room, room_index);
+
+            expression_set_bool(scene->room_metadata[room_index].has_visited, true);
+            scene->last_room = room_index;
             return true;
         }
     }
-
-    expression_set_bool(scene->room_metadata[room_index].has_visited, true);
-    scene->last_room = room_index;
 
     return false;
 }

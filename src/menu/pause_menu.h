@@ -5,6 +5,7 @@
 #include "spell_building_menu.h"
 #include "spell_menu.h"
 #include "inventory_menu.h"
+#include "map.h"
 
 enum active_menu {
     ACTIVE_MENU_NONE,
@@ -18,6 +19,7 @@ struct pause_menu {
     struct spell_building_menu spell_building_menu;
     struct spell_menu spell_menu;
     struct inventory_menu inventory_menu;
+    menu_map_show_state_t map_menu;
     enum active_menu active_menu;
 };
 
