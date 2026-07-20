@@ -98,6 +98,9 @@
             # pattern x -y y x
             # 2 patterns per vector
             .half 0x7fff, 0x7fff, 0x8001, 0x7fff, 0x7fff, 0x8001, 0x7fff, 0x7fff
+        .align 4
+        ROUND_4_OFFSET: .half 2, 2, 2, 2, 2, 2, 2, 2
+        ROUND_4_MASK:   .half 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC
         ATTR_FLAGS: .byte 0
         VTX_FX_FLAGS: .byte 0
 
@@ -710,6 +713,10 @@ ClipRect:
     srl s0, a1, 27 - TRI_VTX_SIZE_LOG2
     andi s0, s0, %lo(~(TRI_VERTEX_SIZE - 1))
     addi s0, s0, %lo(RDPQ_TRI_DATA)
+    
+    li s6, %lo(ROUND_4_OFFSET)
+    lqv $v14, 0, 0, s6
+    lqv $v15, 0, 16, s6
 
     #define rel_point       $v10
     #define constrained     $v11
@@ -727,20 +734,20 @@ ClipRect:
     # x2
     sll s1, a0, 8
     sra s1, s1, 20
-    mtc2 s1, constrained.e1
+    mtc2 s1, constrained.e1          ; vadd rel_point, rel_point, $v14
 
     # y2
     sll s1, a0, 20
     sra s1, s1, 20
-    mtc2 s1, constrained.e3
+    mtc2 s1, constrained.e3             
     
     # x1
     sll s1, a1, 8
     sra s1, s1, 20
-    mtc2 s1, constrained.e0
+    mtc2 s1, constrained.e0          ; vand rel_point, rel_point, $v15
 
     # y1
-    sll s1, a1, 20
+    sll s1, a1, 20                      
     sra s1, s1, 20
     mtc2 s1, constrained.e2
 

@@ -122,7 +122,8 @@ int rsp_menu_font_render_paragraph(const rdpq_font_t *fnt, const rdpq_paragraph_
         menu_relative_tex_rect(
             relative_vtx,
             ntile,
-            (int16_t)(x*4.0f), (int16_t)(y*4.0), (int16_t)((x+width) * 4.0f), (int16_t)((y+height) * 4.0f),
+            (int16_t)(x*4.0f), (int16_t)(y*4.0f), 
+            (int16_t)((x+width) * 4.0f), (int16_t)((y+height) * 4.0f),
             (uint16_t)g->s << 5, (uint16_t)g->t<< 5,
             1 << 10, 1 << 10
         );
