@@ -150,7 +150,7 @@ void menu_relative_fill_rect(int8_t vtx_index, int16_t x1, int16_t y1, int16_t x
     );
 }
 
-void menu_relative_tex_rect(uint8_t vtx_index, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t s, int16_t t, int16_t dsdx, int16_t dtdy) {
+void menu_relative_tex_rect(uint8_t vtx_index, uint8_t tile, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t s, int16_t t, int16_t dsdx, int16_t dtdy) {
     assert(x1 >= -2048 && x1 <= 2047);
     assert(y1 >= -2048 && y1 <= 2047);
     assert(x2 >= -2048 && x2 <= 2047);

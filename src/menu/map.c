@@ -8,10 +8,15 @@
 #include "../render/defs.h"
 #include "../render/frame_alloc.h"
 #include "../scene/scene.h"
+#include "../font/fonts.h"
+
+#include "relative_text.h"
 
 #define MAP_SCALE       4 * 200.0f
 #define MIN_SCALE       (1.0f / 16.0f)
 #define HEADER_FOOTER   0x4D415020
+
+static rdpq_paragraph_t* paragraph_test;
 
 void menu_map_load_layer(menu_map_layer_t* layer, menu_map_data_t* data, FILE* file) {
     fread(&layer->room_count, sizeof(uint16_t), 1, file);
@@ -74,6 +79,9 @@ void menu_map_load(menu_map_t* map, FILE* file) {
     
     fread(&header_footer, sizeof(int), 1, file);
     assert(header_footer == HEADER_FOOTER);
+
+    int nbytes = 3;
+    paragraph_test = rdpq_paragraph_build(&(rdpq_textparms_t){}, FONT_DIALOG, "0/1", &nbytes);
 }
 
 void menu_map_destroy(menu_map_t* map) {
@@ -87,6 +95,8 @@ void menu_map_destroy(menu_map_t* map) {
 
     material_cache_release(map->outline_material);
     material_cache_release(map->solid_color);
+
+    rdpq_paragraph_free(paragraph_test);
 }
 
 static transform_2d_fp_t transform_test = {
@@ -156,8 +166,8 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
         scroll + map->outline_material->apply.tex0.s1, map->outline_material->apply.tex0.t1
     );
     
-    // menu_set_viewport(20, 20, 220, 220);
-    // rdpq_set_scissor(20, 20, 220, 220);
+    menu_set_viewport(20, 20, 220, 220);
+    rdpq_set_scissor(20, 20, 220, 220);
     menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
     menu_mtx_uv((transform_2d_fp_t*)PhysicalAddr(&uv_transform_test), true, true);
 
@@ -167,12 +177,14 @@ void menu_map_render(menu_map_t* map, vector2s16_t* min, vector2s16_t* max) {
     
     menu_map_render_player(map);
     
+    rsp_menu_render_paragraph(paragraph_test, 0, 0, 0);
+    
     menu_mtx_pop(1);
     menu_mtx_pop_uv(1);
     
     rdpq_set_scissor(0, 0, SCREEN_WD, SCREEN_HT);
 
-    // uint8_t* tmp = menu_get_state();
+    // uint16_t* tmp = menu_get_state();
 
     // int16_t* tri_data = (int16_t*)(tmp + RSP_MENU_RDPQ_TRI_DATA);
 
