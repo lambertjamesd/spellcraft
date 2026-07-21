@@ -12,6 +12,8 @@
 
 enum map_icon_type {
     MAP_ICON_TREASURE,
+
+    MAP_ICON_TYPE_COUNT,
 };
 
 typedef enum map_icon_type map_icon_type_t;

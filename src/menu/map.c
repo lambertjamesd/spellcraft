@@ -181,6 +181,59 @@ static color_t menu_color_table[] = {
     {200, 200, 180, 255},
 };
 
+#define ICON_SIZE 8
+
+struct menu_icon_counts {
+    uint8_t counts[MAP_ICON_TYPE_COUNT];
+    uint8_t kinds_present;
+};
+
+typedef struct menu_icon_counts menu_icon_counts_t;
+
+void menu_count_icons(menu_map_layer_room_t* room, menu_icon_counts_t* counts) {
+    *counts = (menu_icon_counts_t){};
+    
+    for (int i = 0; i < room->icon_count; i += 1) {
+        menu_map_icon_t* icon = &room->icons[i];
+
+        if (expression_get_bool(icon->hidden)) {
+            continue;
+        }
+
+        ++counts->counts[icon->icon_type];
+    }
+
+    for (int i = 0; i < MAP_ICON_TYPE_COUNT; i += 1) {
+        if (counts->counts[i]) {
+            ++counts->kinds_present;
+        }
+    }
+}
+
+void menu_render_room_icons(menu_icon_counts_t* counts, int layer_room_index) {
+    if (!counts->kinds_present) {
+        return;
+    }
+
+    int y = -counts->kinds_present * (ICON_SIZE / 2);
+
+    for (int i = 0; i < MAP_ICON_TYPE_COUNT; i += 1) {
+        if (!counts->counts[i]) {
+            continue;
+        }
+        
+        menu_relative_tex_rect(
+            layer_room_index, TILE0, 
+            -ICON_SIZE << 1, y << 2, 
+            ICON_SIZE << 1, (y + ICON_SIZE) << 2,
+            i * ICON_SIZE, 0,
+            1 << 10, 1 << 10
+        );
+
+        y += ICON_SIZE;
+    }
+}
+
 void menu_setup_layer(menu_map_t* map, menu_map_show_state_t* show_state) {
     menu_map_layer_t* layer = &map->layers[show_state->layer];
 
@@ -222,28 +275,27 @@ void menu_setup_layer(menu_map_t* map, menu_map_show_state_t* show_state) {
         rspq_block_run(layer->rooms[layer_room_index].outline.block);
     }
 
-    material_apply(&map->map_icon_material->apply);
-
     if (show_state->icon_vertices) {
         menu_vtx((void*)PhysicalAddr(show_state->icon_vertices), 0, icon_count);
     }
+
+    menu_icon_counts_t counts[layer->room_count];
     
     for (int layer_room_index = 0; layer_room_index < layer->room_count; layer_room_index += 1) {
         menu_map_layer_room_t* room = &layer->rooms[layer_room_index];
 
         if (!expression_get_bool(current_scene->room_metadata[room->room_index].has_visited)) {
+            counts[layer_room_index] = (menu_icon_counts_t){};
             continue;
         }
 
-        for (int icon_index = 0; icon_index < room->icon_count; icon_index += 1) {
-            menu_relative_tex_rect(
-                layer_room_index, TILE0, 
-                -4 << 2, -4 << 2, 
-                4 << 2, 4 << 2,
-                0, 0,
-                1 << 10, 1 << 10
-            );
-        }
+        menu_count_icons(room, &counts[layer_room_index]);
+    }
+
+    material_apply(&map->map_icon_material->apply);
+
+    for (int layer_room_index = 0; layer_room_index < layer->room_count; layer_room_index += 1) {
+        menu_render_room_icons(&counts[layer_room_index], layer_room_index);
     }
 
     if (show_state->icon_vertices) {
