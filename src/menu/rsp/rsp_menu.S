@@ -47,6 +47,9 @@
 #define INPUT_UV          4
 #define INPUT_RGBA        8
 
+#define ROUND_4_OFFSET    2
+#define ROUND_4_MASK      0xFFFC
+
 #define TRI_VTX_EMPTY   .half 0, 0; .word 0xFF; .byte 255, 255, 255, 255; .half 0, 0; .word 0x00010000, 0x00010000; .word 0, 0;
 
     RSPQ_BeginOverlayHeader
@@ -62,6 +65,8 @@
         RSPQ_DefineCommand MenuCmd_Tri, 4
         RSPQ_DefineCommand MenuCmd_RelativeFillRect, 8
         RSPQ_DefineCommand MenuCmd_RelativeTexRect, 16
+        RSPQ_DefineCommand MenuCmdWrite4, 8
+        RSPQ_DefineCommand MenuColorTable, 4
         # set color table
         # color
         # fill rect
@@ -99,8 +104,6 @@
             # 2 patterns per vector
             .half 0x7fff, 0x7fff, 0x8001, 0x7fff, 0x7fff, 0x8001, 0x7fff, 0x7fff
         .align 4
-        ROUND_4_OFFSET: .half 2, 2, 2, 2, 2, 2, 2, 2
-        ROUND_4_MASK:   .half 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC, 0xFFFC
         ATTR_FLAGS: .byte 0
         VTX_FX_FLAGS: .byte 0
 
@@ -110,11 +113,15 @@
         .align 4
         VERTEX_POINTS: .space VERTEX_SIZE*2
         NEXT_VERTEX: .byte 0
-    .align 4
+
+        .align 4
         RDPQ_TRI_DATA:
             .rept MENU_TRI_VTX_COUNT
                 TRI_VTX_EMPTY
             .endr
+
+        .align 4
+        SEGMENT_TABLE: .space 4 * 16
                 
     RSPQ_EndSavedState
 
@@ -122,10 +129,7 @@
     .align 4
     TMP_MEM:
     # fmt xxyy uuvv rgba
-    VERTEX_INPUT: .space VERTEX_SIZE * MENU_TRI_VTX_COUNT
-    .align 4
-    RELATIVE_POINT:
-    MTX_INPUT: .space 32
+    MTX_INPUT:  .space TRANSFORM_SIZE
 
 #define dma_size     t0
 #define row_stride   t1
@@ -236,10 +240,10 @@ MenuCmd_LineTo:
     vadd magSqri, magSqri, magSqri.q1
 
     # check if magnitude is zero
-    li t7, %lo(VERTEX_INPUT)
+    li t7, %lo(TMP_MEM)
     ssv magSqri, 0, 0, t7
     ssv magSqrf, 0, 2, t7
-    lw t7, %lo(VERTEX_INPUT)
+    lw t7, %lo(TMP_MEM)
     beq t7, zero, RSPQ_Loop
 
     vrsqh vtmp.e0, magSqri.e0
@@ -531,29 +535,43 @@ MenuCmd_VTX:
     #define input_ptr   s5
     #define vtx_ptr     s6
     #define count       t3
+    #define counter     t6
     #define offset      t7
     
     andi count, a0, 0xFF
+    beq count, zero, RSPQ_Loop
     srl offset, a0, 8
     andi offset, offset, 0xFF
 
+    # dma_size = count * 12 - 1
     sll t5, count, 3
     sll t6, count, 2
     add dma_size, t5, t6
     addi dma_size, dma_size, -1
 
-    addi dram_address, a1, 0
-    addi row_stride, zero, 0
-    jal DMAIn
-    li dmem_address, %lo(VERTEX_INPUT)
-
-    li input_ptr, %lo(VERTEX_INPUT)
     li vtx_ptr, TRI_VTX(0, 0)
     sll offset, offset, TRI_VTX_SIZE_LOG2
     add vtx_ptr, vtx_ptr, offset
 
+    addi dram_address, a1, 0
+    addi row_stride, zero, 0
+    jal DMAIn
+    addi dmem_address, vtx_ptr, 0
+
+    addi input_ptr, vtx_ptr, 0
+
+    # Move pointer to the end of lists
+    # and work backwards
+    addi counter, count, -1
+MenuCmd_VTX_IncLoop:
+    addi counter, counter, -1
+    addi vtx_ptr, vtx_ptr, TRI_VERTEX_SIZE
+    bne counter, zero, MenuCmd_VTX_IncLoop
+    addi input_ptr, input_ptr, VERTEX_INPUT_SIZE
+
+    addi counter, count, 0
 MenuCmd_VTX_NextVtx:
-    beq count, zero, MenuCmd_VTX_CheckEffects
+    beq counter, zero, MenuCmd_VTX_CheckEffects
 
     # transform point
     addi a0, vtx_ptr, TRI_POS
@@ -575,11 +593,11 @@ MenuCmd_VTX_NextVtx:
     jal ClipPoint
     addi a1, vtx_ptr, TRI_CLIP
 
-    addi vtx_ptr, vtx_ptr, TRI_VERTEX_SIZE
-    addi input_ptr, input_ptr, VERTEX_INPUT_SIZE
+    addi vtx_ptr, vtx_ptr, -TRI_VERTEX_SIZE
+    addi input_ptr, input_ptr, -VERTEX_INPUT_SIZE
 
     j MenuCmd_VTX_NextVtx
-    addi count, count, -1
+    addi counter, counter, -1
 
 MenuCmd_VTX_CheckEffects:
     li $at, %lo(VTX_FX_FLAGS)
@@ -588,8 +606,8 @@ MenuCmd_VTX_CheckEffects:
     li input_ptr, TRI_VTX(0, 0)
     add input_ptr, input_ptr, offset
 MenuCmd_VTX_NextEffectVtx:
-    beq input_ptr, vtx_ptr, RSPQ_Loop
-    nop
+    beq count, zero, RSPQ_Loop
+    addi count, count, -1
 
     jal ApplyUVEffects
     addi a0, input_ptr, 0
@@ -704,6 +722,37 @@ MenuCmd_RelativeTexRectSkipUV:
     jal_and_j RDPQ_Send, RSPQ_Loop
 
     ##########################################
+    # MenuCmdWrite4
+    # a0 relative_addr:1 dmem_addr:12
+    # a1 payload
+MenuCmdWrite4:
+    andi $at, a0, 0x1000
+
+    beq $at, zero, MenuCmdDoWrite
+    andi s7, a0, 0xFFF
+
+    sll s6, a1, 22
+    andi s6, s6, 0x3C
+
+    lw s5, %lo(SEGMENT_TABLE)(s6)
+
+    li s4, 0xFFFFFF
+    and s4, s4, a1
+    add a1, s4, s5
+    
+MenuCmdDoWrite:
+    j RSPQ_Loop
+    sw a1, 0(s7)
+
+    ##########################################
+    # MenuColorTable
+    # a0 color_type:8 color_index:16
+MenuColorTable:
+    j RSPQ_Loop
+    nop
+
+
+    ##########################################
     # ClipRect
     # a0 x2:12 y2:12
     # a1 vtx:5 pad:3 x1:12 y1:12 
@@ -714,9 +763,10 @@ ClipRect:
     andi s0, s0, %lo(~(TRI_VERTEX_SIZE - 1))
     addi s0, s0, %lo(RDPQ_TRI_DATA)
     
-    li s6, %lo(ROUND_4_OFFSET)
-    lqv $v14, 0, 0, s6
-    lqv $v15, 0, 16, s6
+    li s6, ROUND_4_OFFSET
+    li s7, ROUND_4_MASK
+    mtc2 s6, $v14.e0
+    mtc2 s7, $v15.e0
 
     #define rel_point       $v10
     #define constrained     $v11
@@ -734,7 +784,7 @@ ClipRect:
     # x2
     sll s1, a0, 8
     sra s1, s1, 20
-    mtc2 s1, constrained.e1          ; vadd rel_point, rel_point, $v14
+    mtc2 s1, constrained.e1          ; vadd rel_point, rel_point, $v14.e0
 
     # y2
     sll s1, a0, 20
@@ -744,7 +794,7 @@ ClipRect:
     # x1
     sll s1, a1, 8
     sra s1, s1, 20
-    mtc2 s1, constrained.e0          ; vand rel_point, rel_point, $v15
+    mtc2 s1, constrained.e0          ; vand rel_point, rel_point, $v15.e0
 
     # y1
     sll s1, a1, 20                      
@@ -854,9 +904,9 @@ WriteNextPoint:
     sw a2, 4(a0)
     sw a3, 8(a0)
 
-    sw a1, %lo(VERTEX_INPUT)
+    sw a1, %lo(TMP_MEM)
     li a1, %lo(MTX_TOP)
-    li a2, %lo(VERTEX_INPUT)
+    li a2, %lo(TMP_MEM)
 
     # intentially fall into MulPoint
 
