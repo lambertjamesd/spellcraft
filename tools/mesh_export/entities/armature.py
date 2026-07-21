@@ -177,7 +177,7 @@ class PackedColorData():
         self.r = int((color[0] ** 0.454545) * 255)
         self.g = int((color[1] ** 0.454545) * 255)
         self.b = int((color[2] ** 0.454545) * 255)
-        self.a = int(color[3] * 255)
+        self.a = int((color[3] ** 0.454545) * 255)
 
     def write_to_file(self, file):
         file.write(struct.pack('>BBBB', self.r, self.g, self.b, self.a))

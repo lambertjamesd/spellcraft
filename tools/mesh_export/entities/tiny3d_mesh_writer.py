@@ -347,7 +347,7 @@ def _pack_color(color):
         min(int(pow(max(0, color[0]), 1 / 2.2) * 255), 255),
         min(int(pow(max(0, color[1]), 1 / 2.2) * 255), 255),
         min(int(pow(max(0, color[2]), 1 / 2.2) * 255), 255),
-        min(int(color[3] * 255), 255)
+        min(int(pow(max(0, color[3]), 2.2) * 255), 255)
     )
 
 def _pack_uv(uv, material: material.Material):
@@ -355,8 +355,8 @@ def _pack_uv(uv, material: material.Material):
 
     return struct.pack(
         '>HH',
-        math.floor(uv[0] * w * 32 + 0.5) & 65535,
-        math.floor((1 - uv[1]) * h * 32 + 0.5) & 65535
+        math.floor((uv[0] - 0.000) * w * 32 + 0.5) & 65535,
+        math.floor((1 - (uv[1] + 0.000)) * h * 32 + 0.5) & 65535
     )
 
 TMESH_COMMAND_VERTICES = 0

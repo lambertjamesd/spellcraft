@@ -50,6 +50,9 @@ void setup() {
     fade_effect_set((color_t){0, 0, 0, 0}, 3.0f);
 
     // scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    // scene_queue_next("rom:/scenes/fire_trials.scene#test2");
+    // scene_queue_next("rom:/scenes/fire_trials.scene#test_firespinroom");
+	
     scene_queue_next("rom:/scenes/fire_trials.scene");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
     // scene_queue_next("rom:/scenes/ability_testing.scene");
@@ -79,9 +82,9 @@ void render_3d(surface_t* col, surface_t* z_buffer, struct frame_memory_pool* po
     }
     rdpq_set_color_image(col);
     rdpq_set_z_image(z_buffer);
-    if ((current_scene && !current_scene->overworld) || ENABLE_LOD_RENDER_DEBUG) {
-        t3d_screen_clear_color(RGBA32(0, 0, 0, 0));
-    }
+    // if ((current_scene && !current_scene->overworld) || ENABLE_LOD_RENDER_DEBUG) {
+        // t3d_screen_clear_color(RGBA32(0, 0, 0, 0));
+    // }
     
     t3d_frame_start();
 
