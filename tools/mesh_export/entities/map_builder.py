@@ -220,7 +220,7 @@ class MapLayerRoom():
             self.max_y = obj.location.z
 
         if self.center == None:
-            self.center = obj.location @ global_transform
+            self.center = global_transform @ obj.location
 
     def write(self, global_transform: mathutils.Matrix, file: io.BufferedIOBase):
         if not self.center:

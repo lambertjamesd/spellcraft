@@ -58,6 +58,8 @@ const mnContents = readMn();
 const savedStart = lookupSymbol(mnContents, '_RSPQ_SAVED_STATE_START');
 const savedEnd = lookupSymbol(mnContents, '_RSPQ_SAVED_STATE_END');
 
+console.log(savedEnd, mnContents.find((el) => el.label === 'COLOR_TABLE'));
+
 const savedSymbols = mnContents.filter((el) => el.type === 'd' && 
     el.offset >= savedStart.offset && 
     el.offset < savedEnd.offset && 
@@ -106,6 +108,8 @@ fs.writeFileSync(outputFilename, `#ifndef __${rspNameUpper}_H__
 #define __${rspNameUpper}_H__
 
 ${commands.map(formatCommand).join('\n')}
+
+#define ${rspNameUpper}_SAVED_START 0x${savedStart.offset.toString(16)}
 
 ${savedSymbols.map(formatSymbol).join('\n')}
 

@@ -82,6 +82,8 @@ struct menu_map_show_state {
     vector2_t offset;
     float scale;
     menu2d_vtx_t* icon_vertices;
+    uint16_t layer;
+    uint16_t room_index;
 };
 
 typedef struct menu_map_show_state menu_map_show_state_t;

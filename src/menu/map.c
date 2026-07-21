@@ -9,6 +9,7 @@
 #include "../render/frame_alloc.h"
 #include "../scene/scene.h"
 #include "../font/fonts.h"
+#include "../cutscene/expression_evaluate.h"
 
 #include "relative_text.h"
 
@@ -170,12 +171,108 @@ void menu_map_render_player(menu_map_t* map) {
     menu_mtx_pop(1);
 }
 
+enum map_color_index {
+    MAP_COLOR_HIGHLIGHT,
+    MAP_COLOR_VISIBLE,
+};
+
+static color_t menu_color_table[] = {
+    {10, 200, 240, 255},
+    {200, 200, 180, 255},
+};
+
+void menu_setup_layer(menu_map_t* map, menu_map_show_state_t* show_state) {
+    menu_map_layer_t* layer = &map->layers[show_state->layer];
+
+    int icon_count = 0;
+    
+    for (int room_index = 0; room_index < layer->room_count; room_index += 1) {
+        icon_count += layer->rooms[room_index].icon_count;
+    }
+
+    show_state->icon_vertices = layer->room_count ? malloc(sizeof(menu2d_vtx_t) * layer->room_count) : NULL;
+    menu2d_vtx_t* vtx = show_state->icon_vertices;
+
+    rspq_block_begin();
+
+    material_apply(&map->outline_material->apply);
+    menu_set_color_table((void*)PhysicalAddr(menu_color_table));
+
+    for (int layer_room_index = 0; layer_room_index < layer->room_count; layer_room_index += 1) {
+        menu_map_layer_room_t* room = &layer->rooms[layer_room_index];
+
+        *vtx = (menu2d_vtx_t){
+            .pos = room->center,
+            .color = {255, 255, 255, 255},
+        };
+        vtx++;
+
+        int room_index = room->room_index;
+
+        if (!expression_get_bool(current_scene->room_metadata[room_index].has_visited)) {
+            continue;
+        }
+
+        if (show_state->room_index == room_index) {
+            menu_set_color(MENU_COLOR_TARGET_PRIM, MAP_COLOR_HIGHLIGHT);
+        } else {
+            menu_set_color(MENU_COLOR_TARGET_PRIM, MAP_COLOR_VISIBLE);
+        }
+
+        rspq_block_run(layer->rooms[layer_room_index].outline.block);
+    }
+
+    material_apply(&map->map_icon_material->apply);
+
+    if (show_state->icon_vertices) {
+        menu_vtx((void*)PhysicalAddr(show_state->icon_vertices), 0, icon_count);
+    }
+    
+    for (int layer_room_index = 0; layer_room_index < layer->room_count; layer_room_index += 1) {
+        menu_map_layer_room_t* room = &layer->rooms[layer_room_index];
+
+        if (!expression_get_bool(current_scene->room_metadata[room->room_index].has_visited)) {
+            continue;
+        }
+
+        for (int icon_index = 0; icon_index < room->icon_count; icon_index += 1) {
+            menu_relative_tex_rect(
+                layer_room_index, TILE0, 
+                -4 << 2, -4 << 2, 
+                4 << 2, 4 << 2,
+                0, 0,
+                1 << 10, 1 << 10
+            );
+        }
+    }
+
+    if (show_state->icon_vertices) {
+        data_cache_hit_writeback_invalidate(show_state->icon_vertices, sizeof(menu2d_vtx_t) * icon_count);
+    }
+
+    show_state->block = rspq_block_end();
+}
+
+void menu_teardown_show_state(void* data) {
+    menu_map_show_state_t* show_state = (menu_map_show_state_t*)data;
+
+    if (show_state->block) {
+        rspq_block_free(show_state->block);
+    }
+
+    free(show_state->icon_vertices);
+}
+
 void menu_map_show(menu_map_t* map, menu_map_show_state_t* show_state, uint16_t room_index) {
     vector3_t* player_pos = player_get_position(&current_scene->player);
     vector2_t* player_rot = player_get_rotation(&current_scene->player);
 
     show_state->block = NULL;
     show_state->icon_vertices = NULL;
+    show_state->offset = (vector2_t){};
+    show_state->scale = 1.0f;
+    show_state->layer = 0;
+    show_state->room_index = 0;
 
     if (room_index >= map->room_count) {
         return;
@@ -197,63 +294,14 @@ void menu_map_show(menu_map_t* map, menu_map_show_state_t* show_state, uint16_t 
         return;
     }
 
-    menu_map_layer_t* layer = &map->layers[layer_index];
+    show_state->room_index = room_index;
+    show_state->layer = layer_index;
 
-    int icon_count = 0;
-    
-    for (int room_index = 0; room_index < layer->room_count; room_index += 1) {
-        icon_count += layer->rooms[room_index].icon_count;
-    }
-
-    show_state->icon_vertices = icon_count ? malloc(sizeof(menu2d_vtx_t) * icon_count) : NULL;
-    menu2d_vtx_t* vtx = show_state->icon_vertices;
-
-    rspq_block_begin();
-
-    material_apply(&map->outline_material->apply);
-
-    for (int room_index = 0; room_index < layer->room_count; room_index += 1) {
-        rspq_block_run(layer->rooms[room_index].outline.block);
-    }
-
-    material_apply(&map->map_icon_material->apply);
-
-    if (show_state->icon_vertices) {
-        menu_vtx((void*)PhysicalAddr(show_state->icon_vertices), 0, icon_count);
-    }
-    
-    for (int room_index = 0; room_index < layer->room_count; room_index += 1) {
-        menu_map_layer_room_t* room = &layer->rooms[room_index];
-
-        for (int icon_index = 0; icon_index < room->icon_count; icon_index += 1) {
-            *vtx = (menu2d_vtx_t){
-                .pos = room->icons[icon_index].pos,
-                .color = {255, 255, 255, 255},
-            };
-            menu_relative_tex_rect(
-                vtx - show_state->icon_vertices, TILE0, 
-                -4 << 2, -4 << 2, 
-                4 << 2, 4 << 2,
-                0, 0,
-                1 << 10, 1 << 10
-            );
-            vtx++;
-        }
-    }
-
-    if (show_state->icon_vertices) {
-        data_cache_hit_writeback_invalidate(show_state->icon_vertices, sizeof(menu2d_vtx_t) * icon_count);
-    }
-
-    show_state->block = rspq_block_end();
+    menu_setup_layer(map, show_state);
 }
 
 void menu_map_hide(menu_map_t* map, menu_map_show_state_t* show_state) {
-    if (show_state->block) {
-        rspq_block_free(show_state->block);
-    }
-
-    free(show_state->icon_vertices);
+    rdpq_call_deferred(menu_teardown_show_state, show_state);
 }
 
 void menu_map_render(menu_map_t* map, menu_map_show_state_t* show_state) {
