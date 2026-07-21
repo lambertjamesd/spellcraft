@@ -92,6 +92,7 @@ void menu_map_load(menu_map_t* map, FILE* file) {
     map->outline_material = material_cache_load("rom:/materials/menu/map_mesh.mat");
     map->solid_color = material_cache_load("rom:/materials/menu/solid_primitive.mat");
     map->map_icon_material = material_cache_load("rom:/materials/menu/map_icons.mat");
+    map->number_font_material = material_cache_load("rom:/materials/menu/number_font.mat");
     
     fread(&header_footer, sizeof(int), 1, file);
     assert(header_footer == HEADER_FOOTER);
@@ -113,6 +114,7 @@ void menu_map_destroy(menu_map_t* map) {
     material_cache_release(map->outline_material);
     material_cache_release(map->solid_color);
     material_cache_release(map->map_icon_material);
+    material_cache_release(map->number_font_material);
 
     rdpq_paragraph_free(paragraph_test);
 }
@@ -181,7 +183,8 @@ static color_t menu_color_table[] = {
     {200, 200, 180, 255},
 };
 
-#define ICON_SIZE 8
+#define ICON_SIZE       8
+#define FONT_CHAR_WIDTH 6
 
 struct menu_icon_counts {
     uint8_t counts[MAP_ICON_TYPE_COUNT];
@@ -226,9 +229,52 @@ void menu_render_room_icons(menu_icon_counts_t* counts, int layer_room_index) {
             layer_room_index, TILE0, 
             -ICON_SIZE << 1, y << 2, 
             ICON_SIZE << 1, (y + ICON_SIZE) << 2,
-            i * ICON_SIZE, 0,
+            (i * ICON_SIZE) << 5, 0,
             1 << 10, 1 << 10
         );
+
+        y += ICON_SIZE;
+    }
+}
+
+void menu_render_room_icon_counts(menu_icon_counts_t* counts, int layer_room_index) {
+    if (!counts->kinds_present) {
+        return;
+    }
+
+    int y = -counts->kinds_present * (ICON_SIZE / 2);
+
+    for (int i = 0; i < MAP_ICON_TYPE_COUNT; i += 1) {
+        if (!counts->counts[i]) {
+            continue;
+        }
+
+        char count_text[5];
+        sprintf(count_text, "%d", (int)counts->counts[i]);
+
+        int x = ICON_SIZE / 2;
+
+        char* curr_digit = count_text;
+
+        while (*curr_digit) {
+            int index = *curr_digit - '0';
+
+            if (index < 0 || index > 9) {
+                continue;
+            }
+
+            menu_relative_tex_rect(
+                layer_room_index, TILE0, 
+                x << 2, y << 2, 
+                (x + FONT_CHAR_WIDTH) << 2, (y + ICON_SIZE) << 2,
+                (index * FONT_CHAR_WIDTH) << 5, 0,
+                1 << 10, 1 << 10
+            );
+
+            x += FONT_CHAR_WIDTH;
+            curr_digit += 1;
+        }
+        
 
         y += ICON_SIZE;
     }
@@ -276,6 +322,7 @@ void menu_setup_layer(menu_map_t* map, menu_map_show_state_t* show_state) {
     }
 
     if (show_state->icon_vertices) {
+        data_cache_hit_writeback_invalidate(show_state->icon_vertices, sizeof(menu2d_vtx_t) * icon_count);
         menu_vtx((void*)PhysicalAddr(show_state->icon_vertices), 0, icon_count);
     }
 
@@ -298,8 +345,10 @@ void menu_setup_layer(menu_map_t* map, menu_map_show_state_t* show_state) {
         menu_render_room_icons(&counts[layer_room_index], layer_room_index);
     }
 
-    if (show_state->icon_vertices) {
-        data_cache_hit_writeback_invalidate(show_state->icon_vertices, sizeof(menu2d_vtx_t) * icon_count);
+    material_apply(&map->number_font_material->apply);
+    
+    for (int layer_room_index = 0; layer_room_index < layer->room_count; layer_room_index += 1) {
+        menu_render_room_icon_counts(&counts[layer_room_index], layer_room_index);
     }
 
     show_state->block = rspq_block_end();

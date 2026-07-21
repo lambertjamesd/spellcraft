@@ -75,6 +75,7 @@ struct menu_map {
     material_pair_t* outline_material;
     material_pair_t* solid_color;
     material_pair_t* map_icon_material;
+    material_pair_t* number_font_material;
 };
 
 typedef struct menu_map menu_map_t;

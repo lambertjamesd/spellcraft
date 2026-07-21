@@ -1,0 +1,23 @@
+{
+    "tex0": {
+        "filename": "../../images/menu/number_font.png",
+        "s": {
+            "repeats": 0,
+            "mirror": false
+        },
+        "t": {
+            "repeats": 0,
+            "mirror": false
+        }
+    },
+    "combineMode": [{
+        "color": ["_0", "_0", "_0", "TEX0"],
+        "alpha": ["PRIM", "_0", "TEX0", "_0"]
+    }],
+    "blendMode": {
+        "cyc1": "TRANSPARENT",
+        "texPersp": false
+    },
+    "primColor": [255, 255, 225, 255],
+    "zBuffer": false
+}
