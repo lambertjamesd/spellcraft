@@ -13,6 +13,10 @@
 #define RSP_MENU_MenuCmd_Tri 9
 #define RSP_MENU_MenuCmd_RelativeFillRect 10
 #define RSP_MENU_MenuCmd_RelativeTexRect 11
+#define RSP_MENU_MenuCmdWrite4 12
+#define RSP_MENU_MenuColorTable 13
+
+#define RSP_MENU_SAVED_START 0x240
 
 #define RSP_MENU_TEST 0x0
 #define RSP_MENU_MTX_TOP 0x20
@@ -31,5 +35,7 @@
 #define RSP_MENU_VERTEX_POINTS 0xb0
 #define RSP_MENU_NEXT_VERTEX 0xd0
 #define RSP_MENU_RDPQ_TRI_DATA 0xe0
+#define RSP_MENU_SEGMENT_TABLE 0x8e0
+#define RSP_MENU_COLOR_TABLE 0x920
 
 #endif

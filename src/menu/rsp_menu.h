@@ -10,6 +10,16 @@
 
 #define MENU_TO_FIXED(value)    (int16_t)(value * 4.0f)
 
+enum menu_color_target {
+    MENU_COLOR_TARGET_FILL = 0x37,
+    MENU_COLOR_TARGET_FOG = 0x38,
+    MENU_COLOR_TARGET_BLEND = 0x39,
+    MENU_COLOR_TARGET_PRIM = 0x3A,
+    MENU_COLOR_TARGET_ENV = 0x3B,
+};
+
+typedef enum menu_color_target menu_color_target_t;
+
 struct transform_2d_fp {
     int16_t int_part[8];
     uint16_t frac_part[8];
@@ -57,6 +67,9 @@ void menu_vtx(const menu2d_vtx_t* vtx, uint32_t offset, uint32_t count);
 void menu_relative_fill_rect(int8_t vtx_index, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 
 void menu_relative_tex_rect(uint8_t vtx_index, uint8_t tile, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t s, int16_t t, int16_t dsdx, int16_t dtdy);
+
+void menu_set_color_table(const color_t* table);
+void menu_set_color(menu_color_target_t target, uint16_t index);
 
 extern uint32_t MENU_OVERLAY_ID;
 

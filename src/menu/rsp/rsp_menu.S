@@ -122,6 +122,7 @@
 
         .align 4
         SEGMENT_TABLE: .space 4 * 16
+        COLOR_TABLE: .word 0
                 
     RSPQ_EndSavedState
 
@@ -726,7 +727,7 @@ MenuCmd_RelativeTexRectSkipUV:
     # a0 relative_addr:1 dmem_addr:12
     # a1 payload
 MenuCmdWrite4:
-    andi $at, a0, 0x1000
+    andi $at, a0, MENU_WRITE4_TRANSLATE_SEGMENT
 
     beq $at, zero, MenuCmdDoWrite
     andi s7, a0, 0xFFF
@@ -746,10 +747,33 @@ MenuCmdDoWrite:
 
     ##########################################
     # MenuColorTable
-    # a0 color_type:8 color_index:16
+    # a0 color_target:8 color_index:16
 MenuColorTable:
-    j RSPQ_Loop
-    nop
+    # load color
+    andi t7, a0, 0xFFFC
+    lw t6, %lo(COLOR_TABLE)
+    add dram_address, t6, t7
+
+    li dmem_address, %lo(TMP_MEM)
+    li row_stride, 0
+    jal DMAIn
+    li dma_size, DMA_SIZE(1, 8)
+    
+    # load color
+    lw t6, 0(s4)
+
+    li $at, 0x27
+    sb $at, %lo(RDPQ_CMD_STAGING)
+    # load the command type
+    srl $at, a0, 16
+    sb $at, %lo(RDPQ_CMD_STAGING+8)
+
+    sw t6, %lo(RDPQ_CMD_STAGING+12)
+
+    li s4, %lo(RDPQ_CMD_STAGING)
+    li s3, %lo(RDPQ_CMD_STAGING+16)
+
+    jal_and_j RDPQ_Send, RSPQ_Loop
 
 
     ##########################################

@@ -167,6 +167,15 @@ void menu_relative_tex_rect(uint8_t vtx_index, uint8_t tile, int16_t x1, int16_t
     );
 }
 
+void menu_set_color_table(const color_t* table) {
+    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuCmdWrite4, MENU_WRITE4_TRANSLATE_SEGMENT | (RSP_MENU_SAVED_START + RSP_MENU_COLOR_TABLE), (int)table);
+}
+
+void menu_set_color(menu_color_target_t target, uint16_t index) {
+    assert(index <= 0x3FFF);
+    rspq_write(MENU_OVERLAY_ID, RSP_MENU_MenuColorTable, (target << 16) | (index << 2));
+}
+
 void* menu_get_state() {
     rspq_wait();
     return rspq_overlay_get_state(&rsp_menu);
