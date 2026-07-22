@@ -12,9 +12,7 @@ from . import tiny3d_mesh_writer
 from . import export_settings
 from . import mesh2d_writer
 
-TARGET_MAP_SIZE = 200
-
-TOTAL_SCALE = TARGET_MAP_SIZE
+SCALE_FACTOR = 4
 
 LINE_WIDTH = 2
 
@@ -362,21 +360,12 @@ def build_map_outline(outlines: list[MapEntry], icons: list[MapIcon], file):
     for entry in outlines:
         min_pos, max_pos = bounding_box.union((min_pos, max_pos), entry.bounding_box())
 
-    size = max_pos - min_pos
-
-    max_size = max(size.x, size.y)
-
-    center_offset = mathutils.Vector((max_size - size.x, max_size - size.y, 0)) * 0.5
-
-    min_pos = min_pos - center_offset
-    max_pos = min_pos + mathutils.Vector((max_size, max_size, 0))
-
     global_transform = mathutils.Matrix((
-        (-1, 0, 0, TOTAL_SCALE),
-        (0, 1, 0, 0),
-        (0, 0, 1, 0),
+        (-SCALE_FACTOR, 0, 0, 0),
+        (0, SCALE_FACTOR, 0, 0),
+        (0, 0, SCALE_FACTOR, 0),
         (0, 0, 0, 1)
-    )) @ mathutils.Matrix.Scale(TOTAL_SCALE / max_size, 4) @ mathutils.Matrix.Translation(-min_pos)    
+    ))
     
     map = Map(icons)
 

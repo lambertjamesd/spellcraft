@@ -13,8 +13,10 @@
 
 #include "relative_text.h"
 
-#define MAP_SCALE       4 * 200.0f
-#define MIN_SCALE       (1.0f / 16.0f)
+#define SCALE_FACTOR    4.0f
+
+#define MAP_SIZE        200
+
 #define HEADER_FOOTER   0x4D415020
 
 static rdpq_paragraph_t* paragraph_test;
@@ -70,8 +72,6 @@ void menu_map_load(menu_map_t* map, FILE* file) {
     fread(&map->min, sizeof(vector2_t), 1, file);
     fread(&map->max, sizeof(vector2_t), 1, file);
 
-    map->size_inv = MAP_SCALE / (map->max.x - map->min.x);
-
     map->layers = map->layer_count ? malloc(sizeof(menu_map_layer_t) * map->layer_count) : NULL;
     map->rooms = map->room_count ? malloc(sizeof(menu_map_room_t) * map->room_count) : NULL;
     
@@ -121,19 +121,8 @@ void menu_map_destroy(menu_map_t* map) {
 
 static transform_2d_fp_t transform_test = {
     .int_part = {
-        0, 0, 100, 0,
-        0, 0, 100, 0
-    },
-    .frac_part = {
-        0xf700, 0, 0, 0,
-        0, 0xf700, 0, 0
-    },
-};
-
-static transform_2d_fp_t uv_transform_test = {
-    .int_part = {
-        0, 1, 0, 0,
-        -1, 0, 0, 0
+        1, 0, MAP_SIZE << 1, 0,
+        0, 1, MAP_SIZE << 1, 0
     },
     .frac_part = {
         0, 0, 0, 0,
@@ -156,8 +145,8 @@ void menu_map_render_player(menu_map_t* map) {
 
     transform_2d_fp_t* mtx = frame_malloc(frame_pool_curr(), sizeof(transform_2d_fp_t));
     transform_2d_t player_transform = {
-        player_rot->x, -player_rot->y, (map->min.x - player_pos->x) * map->size_inv + MAP_SCALE,
-        player_rot->y, player_rot->x, (map->min.y - player_pos->z) * map->size_inv + MAP_SCALE,
+        player_rot->x, -player_rot->y, -player_pos->x * (1.0f / SCALE_FACTOR),
+        player_rot->y, player_rot->x, player_pos->z * (1.0f / SCALE_FACTOR),
     };
 
     menu_transform_to_fixed(mtx, player_transform);
@@ -370,8 +359,8 @@ void menu_map_show(menu_map_t* map, menu_map_show_state_t* show_state, uint16_t 
 
     show_state->block = NULL;
     show_state->icon_vertices = NULL;
-    show_state->offset = (vector2_t){};
-    show_state->scale = 1.0f;
+    show_state->center = (vector2_t){.x = player_pos->x, .y = player_pos->z};
+    show_state->scale = SCALE_FACTOR;
     show_state->layer = 0;
     show_state->room_index = 0;
 
@@ -412,8 +401,8 @@ void menu_map_render(menu_map_t* map, menu_map_show_state_t* show_state) {
         return;
     }
     
-    menu_set_viewport(20, 20, 220, 220);
-    rdpq_set_scissor(20, 20, 220, 220);
+    menu_set_viewport(0, 0, 320, 240);
+    rdpq_set_scissor(0, 0, 320, 240);
     menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
 
     rspq_block_run(show_state->block);

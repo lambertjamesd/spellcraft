@@ -68,7 +68,6 @@ struct menu_map {
     uint16_t room_layer_y_count;
     uint16_t icon_count;
     vector2_t min, max;
-    float size_inv;
 
     menu_map_data_t data;
     
@@ -82,7 +81,7 @@ typedef struct menu_map menu_map_t;
 
 struct menu_map_show_state {
     rspq_block_t* block;
-    vector2_t offset;
+    vector2_t center;
     float scale;
     menu2d_vtx_t* icon_vertices;
     uint16_t layer;
