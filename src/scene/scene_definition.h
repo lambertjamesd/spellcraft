@@ -192,7 +192,7 @@ struct door_definition {
 
 struct room_portal_definition {
     struct Vector3 position;
-    struct Vector2 rotation;
+    struct Quaternion rotation;
     float scale;
     room_id room_a;
     room_id room_b;
@@ -221,6 +221,9 @@ struct elevator_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     struct Vector3 target;
+    
+    room_id room_a;
+    room_id room_b;
 
     boolean_variable enabled;
     bool inv_enabled;

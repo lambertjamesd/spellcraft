@@ -16,6 +16,8 @@ MULTIROOM_ATTRIBUTE = {
     "door": ["room_a", "room_b"],
     "room_portal": ["room_a", "room_b"],
     "gem_key_door": ["room_a", "room_b"],
+
+    "elevator": ["room_a", "room_b"],
 }
 
 SHOULD_AUTO_GEN_CONDITION = {"biter", "jelly", "burning_thorns"}

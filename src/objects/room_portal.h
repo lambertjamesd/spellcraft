@@ -2,12 +2,13 @@
 #define __OBJECTS_ROOM_PORTAL_H__
 
 #include "../math/transform_single_axis.h"
+#include "../math/transform.h"
 #include "../scene/scene_definition.h"
 #include "../render/renderable.h"
 #include <stdbool.h>
 
 struct room_portal {
-    struct TransformSingleAxis transform;
+    transform_t transform;
     struct renderable renderable;
     room_id room_a;
     room_id room_b;

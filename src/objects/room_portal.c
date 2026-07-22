@@ -21,7 +21,9 @@ struct Vector3 room_portal_distance(struct room_portal* portal, struct Vector3* 
     );
 
     struct Vector3 local_offset;
-    vector3RotateWith2Inv(&offset, &portal->transform.rotation, &local_offset);
+    quaternion_t inv_rot;
+    quatConjugate(&portal->transform.rotation, &inv_rot);
+    quatMultVector(&inv_rot, &offset, &local_offset);
 
     return local_offset;
 }
@@ -68,8 +70,8 @@ void room_portal_update(void* data) {
     
     if (portal->last_player_distance) {
         if (side_a != last_side_a &&
-            fabsf(local_offset.x) < portal->transform.scale &&
-            fabsf(local_offset.y) < portal->transform.scale) {
+            fabsf(local_offset.x) < portal->transform.scale.x &&
+            fabsf(local_offset.y) < portal->transform.scale.x) {
             portal->current_room = room_portal_other_room(portal, portal->current_room);
         }
     }
@@ -82,9 +84,11 @@ void room_portal_update(void* data) {
 }
 
 void room_portal_init(struct room_portal* portal, struct room_portal_definition* definition) {
-    transformSaInit(&portal->transform, &definition->position, &definition->rotation, definition->scale);
+    vector3_t scale;
+    vector3Scale(&gOneVec, &scale, definition->scale);
+    transformInit(&portal->transform, &definition->position, &definition->rotation, &scale);
 
-    renderable_single_axis_init(&portal->renderable, &portal->transform, "rom:/meshes/objects/room_portal.tmesh");
+    renderable_init(&portal->renderable, &portal->transform, "rom:/meshes/objects/room_portal.tmesh");
     render_scene_add_renderable(&portal->renderable, definition->scale * 1.4f);
     update_add(portal, room_portal_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
     
