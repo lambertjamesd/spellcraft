@@ -9,13 +9,25 @@
 #include "../render/frame_alloc.h"
 #include "../scene/scene.h"
 #include "../font/fonts.h"
+#include "../util/input.h"
 #include "../cutscene/expression_evaluate.h"
+#include <math.h>
 
 #include "relative_text.h"
 
-#define SCALE_FACTOR    4.0f
+#define SCALE_FACTOR        4.0f
+#define FIXED_POINT_SCALE   4.0f
 
+#define SCROLL_SCALE        (4.0f * SCALE_FACTOR * FIXED_POINT_SCALE / 80.0f)
+
+#define ZOOM_SPEED      2.5f
+#define MAX_ZOOM        2.0f
+#define MIN_ZOOM        0.25f
+
+#define MAP_X           20
+#define MAP_Y           20
 #define MAP_SIZE        200
+
 
 #define HEADER_FOOTER   0x4D415020
 
@@ -119,34 +131,22 @@ void menu_map_destroy(menu_map_t* map) {
     rdpq_paragraph_free(paragraph_test);
 }
 
-static transform_2d_fp_t transform_test = {
-    .int_part = {
-        1, 0, MAP_SIZE << 1, 0,
-        0, 1, MAP_SIZE << 1, 0
-    },
-    .frac_part = {
-        0, 0, 0, 0,
-        0, 0, 0, 0
-    },
-};
-
-static int offset_x = 5 << 2;
-static int offset_y = 40 << 2;
-
 static menu2d_vtx_t player_arrow[] = {
     {.pos = {{{0.0f, -20.0f}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
     {.pos = {{{10.0f, 20.0f}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
     {.pos = {{{-10.0f, 20.0f}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
 };
 
-void menu_map_render_player(menu_map_t* map) {
+void menu_map_render_player(menu_map_t* map, menu_map_show_state_t* show_state) {
     vector3_t* player_pos = player_get_position(&current_scene->player);
     vector2_t* player_rot = player_get_rotation(&current_scene->player);
 
     transform_2d_fp_t* mtx = frame_malloc(frame_pool_curr(), sizeof(transform_2d_fp_t));
+    float scale = 1.0f / show_state->scale;
+
     transform_2d_t player_transform = {
-        player_rot->x, -player_rot->y, -player_pos->x * (1.0f / SCALE_FACTOR),
-        player_rot->y, player_rot->x, player_pos->z * (1.0f / SCALE_FACTOR),
+        player_rot->x * scale, -player_rot->y * scale, -player_pos->x * SCALE_FACTOR * FIXED_POINT_SCALE,
+        player_rot->y * scale, player_rot->x * scale, -player_pos->z * SCALE_FACTOR * FIXED_POINT_SCALE,
     };
 
     menu_transform_to_fixed(mtx, player_transform);
@@ -360,7 +360,7 @@ void menu_map_show(menu_map_t* map, menu_map_show_state_t* show_state, uint16_t 
     show_state->block = NULL;
     show_state->icon_vertices = NULL;
     show_state->center = (vector2_t){.x = player_pos->x, .y = player_pos->z};
-    show_state->scale = SCALE_FACTOR;
+    show_state->scale = 1.0f;
     show_state->layer = 0;
     show_state->room_index = 0;
 
@@ -395,19 +395,27 @@ void menu_map_hide(menu_map_t* map, menu_map_show_state_t* show_state) {
 }
 
 void menu_map_render(menu_map_t* map, menu_map_show_state_t* show_state) {
-    menu_common_render_background(20, 20, 200, 200);
+    menu_common_render_background(MAP_X, MAP_Y, MAP_SIZE, MAP_SIZE);
 
     if (!show_state->block) {
         return;
     }
     
-    menu_set_viewport(0, 0, 320, 240);
-    rdpq_set_scissor(0, 0, 320, 240);
-    menu_mtx((transform_2d_fp_t*)PhysicalAddr(&transform_test), true, true);
+    menu_set_viewport(MAP_X, MAP_Y, MAP_X + MAP_SIZE, MAP_Y + MAP_SIZE);
+    rdpq_set_scissor(MAP_X, MAP_Y, MAP_X + MAP_SIZE, MAP_Y + MAP_SIZE);
+
+    transform_2d_fp_t* mtx = frame_malloc(frame_pool_curr(), sizeof(transform_2d_fp_t));
+
+    menu_transform_to_fixed(UncachedAddr(mtx), (transform_2d_t){
+        show_state->scale, 0.0f, (MAP_X + MAP_SIZE * 0.5f + SCALE_FACTOR * show_state->center.x * show_state->scale) * FIXED_POINT_SCALE,
+        0.0f, show_state->scale, (MAP_Y + MAP_SIZE * 0.5f + SCALE_FACTOR * show_state->center.y * show_state->scale) * FIXED_POINT_SCALE
+    });
+
+    menu_mtx((transform_2d_fp_t*)PhysicalAddr(mtx), true, true);
 
     rspq_block_run(show_state->block);
     
-    menu_map_render_player(map);
+    menu_map_render_player(map, show_state);
     
     menu_mtx_pop(1);
     
@@ -429,4 +437,28 @@ void menu_map_render(menu_map_t* map, menu_map_show_state_t* show_state) {
     // }
 
     // debugf("\n\n");
+}
+
+void menu_map_update(menu_map_t* map, menu_map_show_state_t* show_state) {
+    joypad_inputs_t input = joypad_get_inputs(0);
+
+    float scroll_speed = fixed_time_step * SCROLL_SCALE / show_state->scale;
+
+    show_state->center.x -= input_handle_deadzone(input.stick_x) * scroll_speed;
+    show_state->center.y += input_handle_deadzone(input.stick_y) * scroll_speed;
+
+    vector2Min(&show_state->center, &map->max, &show_state->center);
+    vector2Max(&show_state->center, &map->min, &show_state->center);
+
+    if (input.btn.c_right) {
+        show_state->scale *= powf(ZOOM_SPEED, fixed_time_step);
+        if (show_state->scale > MAX_ZOOM) {
+            show_state->scale = MAX_ZOOM;
+        }
+    } else if (input.btn.c_left) {
+        show_state->scale *= powf(ZOOM_SPEED, -fixed_time_step);
+        if (show_state->scale < MIN_ZOOM) {
+            show_state->scale = MIN_ZOOM;
+        }
+    }
 }

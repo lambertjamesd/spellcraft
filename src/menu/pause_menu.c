@@ -119,6 +119,9 @@ void pause_menu_update(struct pause_menu* pause_menu) {
             case ACTIVE_MENU_INVENTORY:
                 inventory_menu_update(&pause_menu->inventory_menu);
                 break;
+            case ACTIVE_MENU_MAP:
+                menu_map_update(&current_scene->map, &pause_menu->map_menu);
+                break;
             default:
                 break;
         }

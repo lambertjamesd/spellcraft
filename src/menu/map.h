@@ -97,5 +97,6 @@ void menu_map_show(menu_map_t* map, menu_map_show_state_t* show_state, uint16_t 
 void menu_map_hide(menu_map_t* map, menu_map_show_state_t* show_state);
 
 void menu_map_render(menu_map_t* map, menu_map_show_state_t* show_state);
+void menu_map_update(menu_map_t* map, menu_map_show_state_t* show_state);
 
 #endif
