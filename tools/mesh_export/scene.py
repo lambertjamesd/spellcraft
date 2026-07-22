@@ -461,6 +461,12 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
         if obj in object_blacklist:
             continue
 
+        final_transform = base_transform @ obj.matrix_world
+
+        if obj.data and 'static_collision' in obj.data:
+            print('appending static', obj.name)
+            scene.scene_mesh_collider.append(obj.data['static_collision'], final_transform)
+
         obj_type = get_object_type(obj)
 
         if obj_type != None:
@@ -474,8 +480,6 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
 
         if obj.type != "MESH" or not isinstance(obj.data, bpy.types.Mesh):
             continue
-
-        final_transform = base_transform @ obj.matrix_world
 
         mesh: bpy.types.Mesh = obj.data
 
