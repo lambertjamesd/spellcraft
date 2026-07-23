@@ -72,7 +72,13 @@ void reset() {
     area_title_hide();
 }
 
+surface_t* pause_background = NULL;
+
 void render_3d(surface_t* col, surface_t* z_buffer, struct frame_memory_pool* pool) {
+    if (col > pause_background) {
+        pause_background = col;
+    }
+
     uint8_t colorAmbient[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
     if (current_scene && current_scene->overworld) {
@@ -151,7 +157,7 @@ void render(surface_t* col, surface_t* zbuffer, struct frame_memory_pool* pool) 
         render_3d(col, zbuffer, pool);
     } else if (current_game_mode == GAME_MODE_MENU) {
         static surface_t background;
-        background = surface_make_linear(zbuffer->buffer, FMT_RGBA16, zbuffer->width, zbuffer->height);
+        background = surface_make_linear(pause_background->buffer, FMT_RGBA16, pause_background->width, pause_background->height);
         rdpq_sync_pipe();
         rdpq_set_mode_standard();
         rdpq_mode_combiner(RDPQ_COMBINER_TEX);
@@ -213,6 +219,7 @@ int main(void)
 		custom_res.height = 288;
 	}
 
+    int buffer_count = 3;
     display_init(custom_res, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
     // display_set_fps_limit(30.0f);
 	// *(volatile uint32_t*)0xA4400000 |= 0x300; //disables resampling on the VI
@@ -262,6 +269,9 @@ int main(void)
         SC_PROFILE_START(main);
 
         if (current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
+            buffer_count = 2;
+            display_change(custom_res, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
+
             surface_t* fb = display_get();
             
             frame_memory_pool_t* pool = frame_pool_curr();
@@ -269,7 +279,7 @@ int main(void)
 
             rdpq_attach(fb, &zbuffer);
 
-            render_3d(fb, &zbuffer, pool);
+            render_3d(pause_background, &zbuffer, pool);
             rdpq_sync_pipe();
 
             // copy the frame buffer into the z buffer
@@ -277,11 +287,11 @@ int main(void)
             // is paused
             rdpq_set_color_image_raw(
                 0, 
-                PhysicalAddr(zbuffer.buffer), 
+                PhysicalAddr(pause_background->buffer), 
                 FMT_RGBA16, 
-                zbuffer.width, 
-                zbuffer.height, 
-                zbuffer.stride
+                pause_background->width, 
+                pause_background->height, 
+                pause_background->stride
             );
             
             rdpq_set_mode_standard();
@@ -299,6 +309,10 @@ int main(void)
             
             frame_pool_next();
         } else {
+            if (buffer_count == 2 && current_game_mode == GAME_MODE_3D) {
+                display_change(custom_res, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
+            }
+
             surface_t* fb = display_try_get();
 
             if (fb) {            
