@@ -222,6 +222,48 @@ void expression_evaluate(struct evaluation_context* context, struct expression* 
                     evaluation_context_pop_float(context) > evaluation_context_pop_float(context)
                 );
                 break;
+            case EXPRESSION_TYPE_ADDF:
+                evaluation_context_push_float(
+                    context,
+                    evaluation_context_pop_float(context) + evaluation_context_pop_float(context)
+                );
+                break;
+            case EXPRESSION_TYPE_SUBF:
+                evaluation_context_push_float(
+                    context,
+                    evaluation_context_pop_float(context) - evaluation_context_pop_float(context)
+                );
+                break;
+            case EXPRESSION_TYPE_MULF:
+                evaluation_context_push_float(
+                    context,
+                    evaluation_context_pop_float(context) * evaluation_context_pop_float(context)
+                );
+                break;
+            case EXPRESSION_TYPE_DIVF:
+                evaluation_context_push_float(
+                    context,
+                    evaluation_context_pop_float(context) / evaluation_context_pop_float(context)
+                );
+                break;
+            case EXPRESSION_TYPE_NEGATEF:
+                evaluation_context_push_float(
+                    context,
+                    -evaluation_context_pop_float(context)
+                );
+                break;
+            case EXPRESSION_TYPE_ITOF:
+                evaluation_context_push_float(
+                    context,
+                    (float)evaluation_context_pop(context)
+                );
+                break;
+            case EXPRESSION_TYPE_FTOI:
+                evaluation_context_push(
+                    context,
+                    (int)evaluation_context_pop_float(context)
+                );
+                break;
             case EXPRESSION_TYPE_BUILT_IN_FN:
                 // this avoids alignment issues
                 memcpy(&data, current, sizeof(union expression_data));
