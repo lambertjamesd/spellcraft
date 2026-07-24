@@ -67,6 +67,12 @@
             "type": "burning_thorns"
         },
         {
+            "name": "objects_env_interactive_pinwheel",
+            "description": "",
+            "mesh": "meshes/objects/env_interactive/pinwheel.blend#pinwheel_mesh",
+            "type": "pinwheel"
+        },
+        {
             "name": "objects_fireforest_burning_tree_1",
             "description": "",
             "mesh": "meshes/objects/fireforest/burning_tree_1.blend#burningtree1_mesh",

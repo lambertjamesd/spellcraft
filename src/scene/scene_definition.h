@@ -41,6 +41,7 @@ enum entity_type_id {
     ENTITY_TYPE_water_waves,
     ENTITY_TYPE_gem_key_door,
     ENTITY_TYPE_golem_enemy,
+    ENTITY_TYPE_pinwheel,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -374,6 +375,11 @@ struct golem_enemy_definition {
     struct Vector3 position;    
     struct Vector2 rotation;
     boolean_variable activated;
+};
+
+struct pinwheel_definition {
+    struct Vector3 position;
+    struct Quaternion rotation;
 };
 
 // definition insert point
