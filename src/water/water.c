@@ -5,7 +5,8 @@
 static uint32_t WATER_OVERLAY_ID = 0;
 static uint8_t simulation_count = 0;
 
-#define PROCESS_BLOCK   0
+#define PROCESS_BLOCK       0
+#define PROCESS_PROFILE     1
 
 #define SIM_BUFFER_SIZE 1024
 
@@ -57,6 +58,8 @@ void water_simulation_update(water_simulation_t* simulation) {
 
     int block_y_stride = simulation->width * simulation->y_stride;
     int simluation_stride = simulation->width * sizeof(int16_t);
+
+    rspq_write(WATER_OVERLAY_ID, PROCESS_PROFILE, 1);
     
     for (int y = 1; y + 1 < simulation->height; y += simulation->y_stride) {
         int y_count = simulation->y_stride;
@@ -72,6 +75,12 @@ void water_simulation_update(water_simulation_t* simulation) {
         in += block_y_stride;
         out += block_y_stride;
     }
+    
+    rspq_write(WATER_OVERLAY_ID, PROCESS_PROFILE, 0);
+
+    int* data = rspq_overlay_get_state(&rsp_water);
+
+    debugf("%d\n", data[2]);
 
     simulation->read_buffer = write_index;
 }

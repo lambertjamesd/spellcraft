@@ -6,11 +6,14 @@
 .data
     RSPQ_BeginOverlayHeader
         RSPQ_DefineCommand WaterCmd_ProcessBlock, 16
+        RSPQ_DefineCommand WaterCmd_Profile, 4
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
         DEBUG:
             .half 0x0000, 0x0000, 0x0000, 0x0000
+        TIMER:
+            .word 0
         .align 4
         SPRING_K: 
             .half 0x0000, 0x1999, 0x1999, 0x1999
@@ -230,3 +233,17 @@ WaterCmd_ProcessBlock_Exit:
     addi dmem_address, row_stride, %lo(OUT_POS)
     jal_and_j DMAOut, RSPQ_Loop
 
+    ##########################################
+    # WaterCmd_Profile
+    # 
+    # a0: is start
+WaterCmd_Profile:
+    andi a0, a0, 0x1
+    bne a0, zero, WaterCmd_Profile_SkipDelta
+    mfc0 t0, COP0_DP_CLOCK
+
+    lw t1, %lo(TIMER)
+    sub t0, t0, t1
+WaterCmd_Profile_SkipDelta:
+    j RSPQ_Loop
+    sw t0, %lo(TIMER)
