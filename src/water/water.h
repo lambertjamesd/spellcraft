@@ -7,7 +7,7 @@ struct water_simulation {
     uint16_t width;
     uint16_t height;
     int16_t* velocity_buffer;
-    int16_t* position_buffers[2];
+    int8_t* position_buffers[2];
     uint8_t read_buffer;
     uint8_t y_stride;
 };

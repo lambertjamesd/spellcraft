@@ -35,7 +35,8 @@
 
 #define VECTOR_SIZE     16
 
-#define FRAME_STEP      12
+#define FRAME_STEP      6
+#define VEL_FRAME_STEP  12
 
 #define dma_size     t0
 #define row_stride   t1
@@ -56,6 +57,7 @@
 #define row_out_ptr t4
 #define col_count   t5
 #define ptr         t6
+#define vel_stride  t7
 
 #define spring_k $v01
 #define vel_damping $v02
@@ -96,13 +98,22 @@ WaterCmd_ProcessBlock:
     # (((row_count + 2) - 1) << 12) | (row_stride -  1)
     # the +2 is to add padding, the -1 is to properly fill the dma register
     li dma_size, 0xFFFFFF
-    and dma_size, dma_size, a0
-    addi dma_size, dma_size, (1 << 12) - 1
+    and t6, dma_size, a0
+    addi dma_size, t6, (1 << 12) - 1
+
+    # double dma size for velocity
+    and dma_size, dma_size, row_stride
+    sll vel_stride, row_stride, 1
+    sll row_stride, row_stride, 1
 
     # load the velocity block
     move dram_address, vel_dmem
     jal DMAIn
     li dmem_address, %lo(VEL)
+
+    # put back sizes for position copy
+    srl row_stride, row_stride, 1
+    addi dma_size, t6, (1 << 12) - 1
     
     # Load the position block
     move dram_address, pos_dmem
@@ -119,7 +130,7 @@ WaterCmd_ProcessBlock:
     li row_out_ptr, %lo(OUT_POS)
 
     add row_pos_ptr, row_pos_ptr, row_stride
-    add row_vel_ptr, row_vel_ptr, row_stride
+    add row_vel_ptr, row_vel_ptr, vel_stride
     add row_out_ptr, row_out_ptr, row_stride
 WaterCmd_ProcessBlock_NextRow:
     add pos_ptr, row_pos_ptr, zero
@@ -131,21 +142,16 @@ WaterCmd_ProcessBlock_NextRow:
     add out_ptr, row_out_ptr, zero
 
     # load the first row without prev out position
-    lqv pos_center, 0, pos_ptr
-    lrv pos_center, VECTOR_SIZE, pos_ptr
-    lqv pos_up, 0, up_ptr
-    lrv pos_up, VECTOR_SIZE, up_ptr
-    lqv pos_down, 0, down_ptr
-    lrv pos_down, VECTOR_SIZE, down_ptr
-    lqv pos_left, 0, left_ptr
-    lrv pos_left, VECTOR_SIZE, left_ptr
-    lqv pos_right, 0, right_ptr
-    lrv pos_right, VECTOR_SIZE, right_ptr
+    lpv pos_center, 0, pos_ptr
+    lpv pos_up, 0, up_ptr
+    lpv pos_down, 0, down_ptr
+    lpv pos_left, 0, left_ptr
+    lpv pos_right, 0, right_ptr
     lqv vel, 0, vel_ptr
     lrv vel, VECTOR_SIZE, vel_ptr
 
-    # -4 for 1 pixel of padding on each side
-    addi col_count, row_stride, -FRAME_STEP - 4
+    # -2 for 1 pixel of padding on each side
+    addi col_count, row_stride, -FRAME_STEP - 2
 
 WaterCmd_ProcessBlock_NextFrame:
     # accumlate offset * mask factor
@@ -177,7 +183,7 @@ WaterCmd_ProcessBlock_NextFrame:
     addi right_ptr, right_ptr, FRAME_STEP
     addi up_ptr, up_ptr, FRAME_STEP
     addi down_ptr, down_ptr, FRAME_STEP
-    addi vel_ptr, vel_ptr, FRAME_STEP
+    addi vel_ptr, vel_ptr, VEL_FRAME_STEP
     addi out_ptr, out_ptr, FRAME_STEP
     addi col_count, col_count, -FRAME_STEP
     
@@ -187,19 +193,14 @@ WaterCmd_ProcessBlock_NextFrame:
 
     ####################
     # load next
-    lqv pos_center, 0, pos_ptr
-    lrv pos_center, VECTOR_SIZE, pos_ptr
+    lpv pos_center, 0, pos_ptr
     # preserve pixel on edge, this is why the load next
     # block must be different than the one above
-    lsv pos_center.e0, 0, out_ptr
-    lqv pos_up, 0, up_ptr
-    lrv pos_up, VECTOR_SIZE, up_ptr
-    lqv pos_down, 0, down_ptr
-    lrv pos_down, VECTOR_SIZE, down_ptr
-    lqv pos_left, 0, left_ptr
-    lrv pos_left, VECTOR_SIZE, left_ptr
-    lqv pos_right, 0, right_ptr
-    lrv pos_right, VECTOR_SIZE, right_ptr
+    lbv pos_center.e0, 0, out_ptr
+    lpv pos_up, 0, up_ptr
+    lpv pos_down, 0, down_ptr
+    lpv pos_left, 0, left_ptr
+    lpv pos_right, 0, right_ptr
     lqv vel, 0, vel_ptr
     lrv vel, VECTOR_SIZE, vel_ptr
 
@@ -214,7 +215,7 @@ WaterCmd_ProcessBlock_IncRow:
 
     # increment pointers
     add row_pos_ptr, row_pos_ptr, row_stride
-    add row_vel_ptr, row_vel_ptr, row_stride
+    add row_vel_ptr, row_vel_ptr, vel_stride
     j WaterCmd_ProcessBlock_NextRow
     add row_out_ptr, row_out_ptr, row_stride
 
@@ -223,14 +224,18 @@ WaterCmd_ProcessBlock_Exit:
     # dont output the top and bottom padding rows
     addi dma_size, dma_size, -(2 << 12)
     
-    # Save the velocity block
-    add dram_address, vel_dmem, row_stride
-    jal DMAOut
-    addi dmem_address, row_stride, %lo(VEL)
-
     # Save the position block
     add dram_address, out_dmem, row_stride
+    jal DMAOut
     addi dmem_address, row_stride, %lo(OUT_POS)
+
+    # double size for velocity block transfer
+    add dma_size, dma_size, row_stride
+    sll row_stride, row_stride, 1
+
+    # Save the velocity block
+    add dram_address, vel_dmem, row_stride
+    addi dmem_address, row_stride, %lo(VEL)
     jal_and_j DMAOut, RSPQ_Loop
 
     ##########################################

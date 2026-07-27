@@ -23,10 +23,10 @@ void water_simulation_init(water_simulation_t* simulation, int width, int height
     simulation->height = height;
 
     int pixel_count = width * height;
-    int total_size = sizeof(int16_t) * pixel_count * 3;
+    int total_size = (sizeof(int16_t) + sizeof(int16_t) * 2) * pixel_count;
 
     simulation->velocity_buffer = malloc(total_size);
-    simulation->position_buffers[0] = simulation->velocity_buffer + pixel_count;
+    simulation->position_buffers[0] = (int8_t*)(simulation->velocity_buffer + pixel_count);
     simulation->position_buffers[1] = simulation->position_buffers[0] + pixel_count;
 
     simulation->read_buffer = 0;
@@ -53,11 +53,11 @@ void water_simulation_update(water_simulation_t* simulation) {
     int write_index = 1 - simulation->read_buffer;
 
     int16_t* vel = simulation->velocity_buffer;
-    int16_t* in = simulation->position_buffers[simulation->read_buffer];
-    int16_t* out = simulation->position_buffers[write_index];
+    int8_t* in = simulation->position_buffers[simulation->read_buffer];
+    int8_t* out = simulation->position_buffers[write_index];
 
     int block_y_stride = simulation->width * simulation->y_stride;
-    int simluation_stride = simulation->width * sizeof(int16_t);
+    int simluation_stride = simulation->width * sizeof(int8_t);
 
     rspq_write(WATER_OVERLAY_ID, PROCESS_PROFILE, 1);
     
