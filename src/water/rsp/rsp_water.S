@@ -102,7 +102,7 @@ WaterCmd_ProcessBlock:
     addi dma_size, t6, (1 << 12) - 1
 
     # double dma size for velocity
-    and dma_size, dma_size, row_stride
+    add dma_size, dma_size, row_stride
     sll vel_stride, row_stride, 1
     sll row_stride, row_stride, 1
 
@@ -136,8 +136,8 @@ WaterCmd_ProcessBlock_NextRow:
     add pos_ptr, row_pos_ptr, zero
     sub up_ptr, row_pos_ptr, row_stride
     add down_ptr, row_pos_ptr, row_stride
-    addi left_ptr, row_pos_ptr, -2
-    addi right_ptr, row_pos_ptr, 2
+    addi left_ptr, row_pos_ptr, -1
+    addi right_ptr, row_pos_ptr, 1
     add vel_ptr, row_vel_ptr, zero
     add out_ptr, row_out_ptr, zero
 
@@ -160,7 +160,6 @@ WaterCmd_ProcessBlock_NextFrame:
     vmadm pos_offset, pos_left, K16384
     vmadm pos_offset, pos_right, K16384
     vsub pos_offset, pos_offset, pos_center
-    
     vmudm vel, vel, vel_damping
     # apply acceleration to velocity
     vmadm vel, pos_offset, spring_k
@@ -174,8 +173,7 @@ WaterCmd_ProcessBlock_NextFrame:
     vadd pos_center, pos_center, vel
 
     # save position
-    sqv pos_center, 0, out_ptr
-    srv pos_center, VECTOR_SIZE, out_ptr
+    spv pos_center, 0, out_ptr
 
     # increment pointers
     addi pos_ptr, pos_ptr, FRAME_STEP
