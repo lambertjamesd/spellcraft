@@ -19,7 +19,7 @@ void water_waves_debug_render(void* data) {
     surface.flags = FMT_I8;
     surface.width = 32;
     surface.height = 32;
-    surface.stride = 64;
+    surface.stride = 32;
 
     rdpq_texparms_t texparms = (rdpq_texparms_t){};
     texparms.s.repeats = REPEAT_INFINITE;
@@ -28,9 +28,9 @@ void water_waves_debug_render(void* data) {
     rdpq_tileparms_t tileparms = (rdpq_tileparms_t){};
     rdpq_set_tile(
         TILE0, 
-        FMT_IA16, 
+        FMT_I8, 
         0, 
-        (TEX_FORMAT_PIX2BYTES(FMT_IA16, 32) + 0x7) & ~0x7, 
+        (TEX_FORMAT_PIX2BYTES(FMT_I8, 32) + 0x7) & ~0x7, 
         &tileparms
     );
 
