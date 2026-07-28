@@ -7,6 +7,18 @@ static sprite_t* sprite_test;
 void water_waves_debug_render(void* data) {
     water_waves_t* water_waves = (water_waves_t*)data;
 
+    if (joypad_get_buttons_pressed(0).z) {
+        int8_t* pix = water_waves->simulation.position_buffers[water_waves->simulation.read_buffer];
+
+        for (int y = 4; y < 8; y += 1) {
+            for (int x = 4; x < 8; x += 1) {
+                pix[y * 32 + x] = 0x7F;
+            }
+        }
+
+        data_cache_hit_writeback_invalidate(pix, sizeof(int8_t) * 32 * 32);
+    }
+
     water_simulation_update(&water_waves->simulation);
 
     rdpq_set_combiner_raw(RDPQ_COMBINER1((0, 0, 0, TEX0), (0, 0, 0, 1)));
@@ -37,6 +49,25 @@ void water_waves_debug_render(void* data) {
     rdpq_set_tile_size_fx(TILE0, 0, 0, 128, 128);
 
     rdpq_texture_rectangle(TILE0, 20, 20, 52, 52, 0, 0);
+    
+    surface.buffer = water_waves->simulation.velocity_buffer;
+    surface.flags = FMT_IA16;
+    surface.width = 32;
+    surface.height = 32;
+    surface.stride = 64;
+
+    rdpq_tex_upload(TILE0, &surface, &texparms);
+    rdpq_set_tile(
+        TILE0, 
+        FMT_IA16, 
+        0, 
+        (TEX_FORMAT_PIX2BYTES(FMT_IA16, 32) + 0x7) & ~0x7, 
+        &tileparms
+    );
+
+    rdpq_set_tile_size_fx(TILE0, 0, 0, 128, 128);
+
+    rdpq_texture_rectangle(TILE0, 64, 20, 96, 52, 0, 0);
 }
     
 void water_waves_init(water_waves_t* water_waves, struct water_waves_definition* definition, entity_id entity_id) {
@@ -48,12 +79,12 @@ void water_waves_init(water_waves_t* water_waves, struct water_waves_definition*
     int8_t* pix = water_waves->simulation.position_buffers[0];
 
     for (int y = 4; y < 8; y += 1) {
-        for (int x = 4; x < 8; x += 1) {
-            pix[y * 32 + x] = 0x7f;
+        for (int x = 14; x < 18; x += 1) {
+            pix[y * 32 + x] = 0x7F;
         }
     }
 
-    data_cache_hit_writeback_invalidate(pix, sizeof(int16_t) * 32 * 32);
+    data_cache_hit_writeback_invalidate(pix, sizeof(int8_t) * 32 * 32);
 }
 
 void water_waves_destroy(water_waves_t* water_waves, struct water_waves_definition* definition) {

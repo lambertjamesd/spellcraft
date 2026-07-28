@@ -3,6 +3,9 @@
 
 #define SIM_BUFFER_SIZE 1024
 
+#define SPRING_CONSTANT     0x4999
+#define DAMPING_CONSTANT    0xFFF0
+
 .data
     RSPQ_BeginOverlayHeader
         RSPQ_DefineCommand WaterCmd_ProcessBlock, 16
@@ -16,12 +19,12 @@
             .word 0
         .align 4
         SPRING_K: 
-            .half 0x0000, 0x1999, 0x1999, 0x1999
-            .half 0x1999, 0x1999, 0x1999, 0x0000
+            .half 0x0000, SPRING_CONSTANT, SPRING_CONSTANT, SPRING_CONSTANT
+            .half SPRING_CONSTANT, SPRING_CONSTANT, SPRING_CONSTANT, 0x0000
         .align 4
         VEL_DAMPING:
-            .half 0xFFFF, 0xFEB8, 0xFEB8, 0xFEB8
-            .half 0xFEB8, 0xFEB8, 0xFEB8, 0xFFFF
+            .half 0xFFFF, DAMPING_CONSTANT, DAMPING_CONSTANT, DAMPING_CONSTANT
+            .half DAMPING_CONSTANT, DAMPING_CONSTANT, DAMPING_CONSTANT, 0xFFFF
         .align 4
         DELTA_TIME: 
             .half 0x0000, 0x0888, 0x0888, 0x0888
@@ -168,6 +171,9 @@ WaterCmd_ProcessBlock_NextFrame:
     sqv vel, 0, vel_ptr
     srv vel, VECTOR_SIZE, vel_ptr
 
+    # round position
+    vadd pos_center, pos_center, K128
+
     # apply pos by delta time (masked)
     vmudm vel, vel, dt
     vadd pos_center, pos_center, vel
@@ -250,3 +256,13 @@ WaterCmd_Profile:
 WaterCmd_Profile_SkipDelta:
     j RSPQ_Loop
     sw t0, %lo(TIMER)
+
+    ##########################################
+    # WaterCmd_Apply
+    # a0: index_range_count
+    # a1: pos_buffer
+    # a2: vtx_buffer
+    # a3: index_range_buffer
+WaterCmd_Apply:
+    j RSPQ_Loop
+    nop
