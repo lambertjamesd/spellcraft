@@ -280,7 +280,7 @@ WaterCmd_Profile_SkipDelta:
     # a2: vtx_buffer
     # a3: index_range_buffer
     # CMD_ADDR(32, ...) min.xy
-    # CMD_ADDR(36, ...) size_inv
+    # CMD_ADDR(36, ...) size_inv.xz
 WaterCmd_Apply:
     .set noat
     #define vtx_pos         $v01
@@ -299,13 +299,14 @@ WaterCmd_Apply:
     #define idx_range_end   t8
 
     #define index_range_size   a0
+    #define pos_buffer         a1
     #define vtx_buffer         a2
     #define index_range_buffer a3
     
 
     li dma_size, 32*32-1
     move row_stride, zero
-    move dram_address, a1
+    move dram_address, pos_buffer
     jal DMAIn
     li dmem_address, %lo(IN_POS)
 
@@ -313,7 +314,7 @@ WaterCmd_Apply:
     llv min_pos 0, 0, t4
     llv min_pos 8, 0, t4
     
-    lsv size_inv 0, 4, t4
+    llv size_inv 0, 4, t4
 
     li t4, 32
     mtc2 t4, sim_size.e0
@@ -335,9 +336,10 @@ WaterCmd_LoadIndexBatch:
     add idx_range_end, idx_range_ptr, dma_size
 
     sub index_range_size, index_range_size, dma_size
+    move dram_address, index_range_buffer
+    add index_range_buffer, index_range_buffer, dma_size
     addi dma_size, dma_size, -1
     move row_stride, zero
-    move dram_address, index_range_buffer
     jal DMAIn
     li dmem_address, %lo(INDEX_BUFFERS)
 WaterCmd_NextIndexRange:
@@ -363,7 +365,7 @@ WaterCmd_LoadVtxRange:
     addi dma_size, dma_size, -1
     move row_stride, zero
     jal DMAIn
-    li dmem_address, %lo(INDEX_BUFFERS)
+    li dmem_address, %lo(VTX_BUFFER)
 
 WaterCmd_NextVtx:
     beq vtx_ptr, max_vtx_ptr, WaterCmd_NextIndexRange
@@ -384,8 +386,6 @@ WaterCmd_NextVtx:
     #undef clip_mask_read
     #define pos_read    t4
     #define pixel_index t5
-
-    vadd voffset, vzero, vzero
 
     andi $at, clip_mask, 0x03
     bne $at, zero, WaterCmd_SkipA
