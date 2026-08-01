@@ -1,10 +1,12 @@
 
 #include <rsp_queue.inc>
 
-#define SIM_BUFFER_SIZE 1024
+#define SIM_BUFFER_SIZE 576
 
 #define SPRING_CONSTANT     0x4999
 #define DAMPING_CONSTANT    0xFFF0
+
+#define CMD_OFFSET(offset, cmdsize) (%lo(RSPQ_DMEM_BUFFER) + (offset) - (cmdsize))
 
 .data
     RSPQ_BeginOverlayHeader
@@ -32,7 +34,7 @@
     RSPQ_EndSavedState
 .bss
     .align 4
-    VEL:     .space SIM_BUFFER_SIZE
+    VEL:     .space SIM_BUFFER_SIZE*2
     IN_POS:  .space SIM_BUFFER_SIZE
     OUT_POS: .space SIM_BUFFER_SIZE
 
@@ -40,6 +42,20 @@
 
 #define FRAME_STEP      6
 #define VEL_FRAME_STEP  12
+
+#define VECTOR_SIZE_LOG2        4
+#define VECTOR_SIZE             16
+
+#define MAX_INDEX_BATCH_COUNT   32
+#define INDEX_RANGE_SIZE_LOG2   2
+#define INDEX_RANGE_SIZE        (1 << INDEX_RANGE_SIZE_LOG2)
+#define MAX_INDEX_BATCH_SIZE    (MAX_INDEX_BATCH_COUNT*INDEX_RANGE_SIZE)
+
+#define MAX_VTX_SIZE            ((SIM_BUFFER_SIZE*2)-MAX_INDEX_BATCH_SIZE)
+#define MAX_VTX_COUNT           (MAX_VTX_SIZE / VECTOR_SIZE)
+
+#define INDEX_BUFFERS   VEL
+#define VTX_BUFFER      (VEL+MAX_INDEX_BATCH_SIZE)
 
 #define dma_size     t0
 #define row_stride   t1
@@ -101,7 +117,7 @@ WaterCmd_ProcessBlock:
     # (((row_count + 2) - 1) << 12) | (row_stride -  1)
     # the +2 is to add padding, the -1 is to properly fill the dma register
     li dma_size, 0xFFFFFF
-    and t6, dma_size, a0
+    and t6, dma_size, a0    
     addi dma_size, t6, (1 << 12) - 1
 
     # double dma size for velocity
@@ -259,10 +275,153 @@ WaterCmd_Profile_SkipDelta:
 
     ##########################################
     # WaterCmd_Apply
-    # a0: index_range_count
+    # a0: index_range_size
     # a1: pos_buffer
     # a2: vtx_buffer
     # a3: index_range_buffer
+    # CMD_ADDR(32, ...) min.xy
+    # CMD_ADDR(36, ...) size_inv
 WaterCmd_Apply:
-    j RSPQ_Loop
-    nop
+    .set noat
+    #define vtx_pos         $v01
+    #define min_pos         $v02
+    #define size_inv        $v03
+    #define sim_size        $v04
+    #define vtmp            $v05
+    #define voffset         $v06
+
+    #define vtx_ptr         t2
+    #define max_vtx_ptr     t3
+    #define clip_mask       t4
+    #define index_ptr       t5
+    #define max_index_ptr   t6
+    #define idx_range_ptr   t7
+    #define idx_range_end   t8
+
+    #define index_range_size   a0
+    #define vtx_buffer         a2
+    #define index_range_buffer a3
+    
+
+    li dma_size, 32*32-1
+    move row_stride, zero
+    move dram_address, a1
+    jal DMAIn
+    li dmem_address, %lo(IN_POS)
+
+    addi t4, rspq_dmem_buf_ptr, CMD_OFFSET(32, 40)
+    llv min_pos 0, 0, t4
+    llv min_pos 8, 0, t4
+    
+    lsv size_inv 0, 4, t4
+
+    li t4, 32
+    mtc2 t4, sim_size.e0
+
+    andi index_range_size, a0, 0xFFFF
+    sll index_range_size, index_range_size, INDEX_RANGE_SIZE_LOG2
+
+WaterCmd_NextIndexBatch:
+    beq zero, index_range_size, RSPQ_Loop
+
+    addi $at, index_range_size, -MAX_INDEX_BATCH_SIZE
+    bgtz $at, WaterCmd_LoadIndexBatch
+    li dma_size, MAX_INDEX_BATCH_SIZE
+
+    # load index buffers
+    move dma_size, index_range_size
+WaterCmd_LoadIndexBatch:
+    li idx_range_ptr, %lo(INDEX_BUFFERS)
+    add idx_range_end, idx_range_ptr, dma_size
+
+    sub index_range_size, index_range_size, dma_size
+    addi dma_size, dma_size, -1
+    move row_stride, zero
+    move dram_address, index_range_buffer
+    jal DMAIn
+    li dmem_address, %lo(INDEX_BUFFERS)
+WaterCmd_NextIndexRange:
+    beq idx_range_ptr, idx_range_end, WaterCmd_NextIndexBatch
+    lhu vtx_ptr, 0(idx_range_ptr)
+    lhu max_vtx_ptr, 2(idx_range_ptr)
+
+    sub dma_size, max_vtx_ptr, vtx_ptr
+    addi $at, dma_size, -MAX_VTX_SIZE
+    blez $at, WaterCmd_IncRangePtr
+    add dram_address, vtx_ptr, vtx_buffer
+
+    li dma_size, MAX_VTX_SIZE
+    add vtx_ptr, vtx_ptr, dma_size
+    j WaterCmd_LoadVtxRange
+    sh vtx_ptr, 0(idx_range_ptr)
+WaterCmd_IncRangePtr:
+    addi idx_range_ptr, idx_range_ptr, INDEX_RANGE_SIZE
+WaterCmd_LoadVtxRange:
+    li vtx_ptr, %lo(VTX_BUFFER)
+    add max_vtx_ptr, vtx_ptr, dma_size
+
+    addi dma_size, dma_size, -1
+    move row_stride, zero
+    jal DMAIn
+    li dmem_address, %lo(INDEX_BUFFERS)
+
+WaterCmd_NextVtx:
+    beq vtx_ptr, max_vtx_ptr, WaterCmd_NextIndexRange
+
+    lqv vtx_pos, 0, 0, vtx_ptr
+    vsub vtx_pos, vtx_pos, min_pos
+
+    vmudm vtx_pos, vtx_pos, size_inv.e0
+
+    #define clip_mask_read  t4
+    vlt vtmp, vtx_pos, vzero
+    cfc2 clip_mask_read, COP2_CTRL_VCC
+
+    vge vtmp, vtx_pos, sim_size.e0
+    cfc2 clip_mask, COP2_CTRL_VCC
+
+    or clip_mask, clip_mask, clip_mask_read
+    #undef clip_mask_read
+    #define pos_read    t4
+    #define pixel_index t5
+
+    vadd voffset, vzero, vzero
+
+    andi $at, clip_mask, 0x03
+    bne $at, zero, WaterCmd_SkipA
+
+    mfc2 pos_read, vtx_pos.e1
+    sll pixel_index, pos_read, 5
+    mfc2 pos_read, vtx_pos.e0
+    add pixel_index, pixel_index, pos_read
+
+    lh pos_read, %lo(IN_POS)(pixel_index)
+
+    mtc2 pos_read, voffset.e2
+
+WaterCmd_SkipA:
+    andi $at, clip_mask, 0x30
+    bne $at, zero, WaterCmd_SkipB
+
+    mfc2 pos_read, vtx_pos.e5
+    sll pixel_index, pos_read, 5
+    mfc2 pos_read, vtx_pos.e4
+    add pixel_index, pixel_index, pos_read
+
+    lh pos_read, %lo(IN_POS)(pixel_index)
+
+    mtc2 pos_read, voffset.e6
+WaterCmd_SkipB:
+    #undef pos_read
+
+    # scale the offset
+    vmudm voffset, voffset, size_inv.e1
+    # add original pos to offset
+    vadd voffset, voffset, vtx_pos.h3
+
+    # store new vertical position
+    ssv voffset, 4, 4, vtx_ptr
+    ssv voffset, 12, 12, vtx_ptr
+
+    j WaterCmd_NextVtx
+    addi vtx_ptr, vtx_ptr, 16
