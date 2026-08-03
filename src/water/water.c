@@ -7,6 +7,7 @@ static uint8_t simulation_count = 0;
 
 #define PROCESS_BLOCK       0
 #define PROCESS_PROFILE     1
+#define PROCESS_APPLY       2
 
 #define SIM_BUFFER_SIZE 1024
 
@@ -83,4 +84,17 @@ void water_simulation_update(water_simulation_t* simulation) {
     debugf("%d\n", data[2]);
 
     simulation->read_buffer = write_index;
+}
+
+void water_simulation_apply(water_simulation_t* simulation, water_apply_args_t* args) {
+    rspq_write_t write = rspq_write_begin(WATER_OVERLAY_ID, PROCESS_APPLY, 6);
+
+    rspq_write_arg(&write, args->index_range_count);
+    rspq_write_arg(&write, (int)PhysicalAddr(simulation->position_buffers[simulation->read_buffer]));
+    rspq_write_arg(&write, PhysicalAddr(args->vtx));
+    rspq_write_arg(&write, PhysicalAddr(args->index_ranges));
+    rspq_write_arg(&write, args->min.equalTest);
+    rspq_write_arg(&write, args->scale.equalTest);
+
+    rspq_write_end(&write);
 }

@@ -3,6 +3,14 @@
 #include "../menu/menu_rendering.h"
 
 static sprite_t* sprite_test;
+static tmesh_t* mesh_test;
+static water_index_range_t ranges[1];
+static water_apply_args_t args = {
+    .index_ranges = ranges,
+    .index_range_count = 1,
+    .min = {{{0, 0}}},
+    .scale = {{{0xFFFF, 0xFFFF}}},
+};
 
 void water_waves_debug_render(void* data) {
     water_waves_t* water_waves = (water_waves_t*)data;
@@ -20,6 +28,7 @@ void water_waves_debug_render(void* data) {
     }
 
     water_simulation_update(&water_waves->simulation);
+    water_simulation_apply(&water_waves->simulation, &args);
 
     rdpq_set_combiner_raw(RDPQ_COMBINER1((0, 0, 0, TEX0), (0, 0, 0, 1)));
     
@@ -71,7 +80,7 @@ void water_waves_debug_render(void* data) {
 }
     
 void water_waves_init(water_waves_t* water_waves, struct water_waves_definition* definition, entity_id entity_id) {
-    water_waves->position = definition->position;
+    transformSaInit(&water_waves->transform, &definition->position, &gRight2, 1.0f);
     water_simulation_init(&water_waves->simulation, definition->width, definition->height);
 
     menu_add_callback(water_waves_debug_render, water_waves, MENU_PRIORITY_OVERLAY);
@@ -85,6 +94,8 @@ void water_waves_init(water_waves_t* water_waves, struct water_waves_definition*
     }
 
     data_cache_hit_writeback_invalidate(pix, sizeof(int8_t) * 32 * 32);
+
+    render_scene_init_add_renderable(&water_waves->renderable, &water_waves->transform, mesh_test, 1.0f);
 }
 
 void water_waves_destroy(water_waves_t* water_waves, struct water_waves_definition* definition) {
@@ -97,8 +108,20 @@ void water_waves_common_init() {
     surface_t surf = sprite_get_pixels(sprite_test);
 
     debugf("water_waves_common_init %d %d %d %d\n", surf.flags, surf.width, surf.height, surf.stride);
+
+    mesh_test = tmesh_cache_load("rom:/meshes/test/water_sim.tmesh");
+
+    for (int i = 0; i < mesh_test->vertex_count; i += 1) {
+        mesh_test->vertices[i].normA = 0;
+        mesh_test->vertices[i].normB = 0;
+    }
+
+    args.vtx = mesh_test->vertices;
+    ranges[0].min = 0;
+    ranges[1].max = 16 * mesh_test->vertex_count;
 }
 
 void water_waves_common_destroy() {
     sprite_free(sprite_test);
+    tmesh_cache_release(mesh_test);
 }

@@ -5,10 +5,12 @@
 #include "../entity/entity_id.h"
 #include "../scene/scene_definition.h"
 #include "../water/water.h"
+#include "entity_deps.h"
 
 struct water_waves {
-    vector3_t position;
+    transform_sa_t transform;
     water_simulation_t simulation;
+    renderable_t renderable;
 };
 
 typedef struct water_waves water_waves_t;

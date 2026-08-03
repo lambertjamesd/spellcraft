@@ -12,6 +12,7 @@
     RSPQ_BeginOverlayHeader
         RSPQ_DefineCommand WaterCmd_ProcessBlock, 16
         RSPQ_DefineCommand WaterCmd_Profile, 4
+        RSPQ_DefineCommand WaterCmd_Apply, 40
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
@@ -279,8 +280,8 @@ WaterCmd_Profile_SkipDelta:
     # a1: pos_buffer
     # a2: vtx_buffer
     # a3: index_range_buffer
-    # CMD_ADDR(32, ...) min.xy
-    # CMD_ADDR(36, ...) size_inv.xz
+    # CMD_ADDR(16, ...) min.xy
+    # CMD_ADDR(20, ...) size_inv.xz
 WaterCmd_Apply:
     .set noat
     #define vtx_pos         $v01
@@ -310,7 +311,7 @@ WaterCmd_Apply:
     jal DMAIn
     li dmem_address, %lo(IN_POS)
 
-    addi t4, rspq_dmem_buf_ptr, CMD_OFFSET(32, 40)
+    addi t4, rspq_dmem_buf_ptr, CMD_OFFSET(16, 24)
     llv min_pos 0, 0, t4
     llv min_pos 8, 0, t4
     
@@ -362,13 +363,14 @@ WaterCmd_LoadVtxRange:
     li vtx_ptr, %lo(VTX_BUFFER)
     add max_vtx_ptr, vtx_ptr, dma_size
 
-    addi dma_size, dma_size, -1
-    move row_stride, zero
+    sll dma_size, dma_size, 12 - INDEX_RANGE_SIZE_LOG2
+    addi dma_size, dma_size, -(1 << 12) + (INDEX_RANGE_SIZE - 1)
+    li row_stride, 16
     jal DMAIn
     li dmem_address, %lo(VTX_BUFFER)
 
 WaterCmd_NextVtx:
-    beq vtx_ptr, max_vtx_ptr, WaterCmd_NextIndexRange
+    beq vtx_ptr, max_vtx_ptr, WaterCmd_WriteBackVtx
 
     lqv vtx_pos, 0, 0, vtx_ptr
     vsub vtx_pos, vtx_pos, min_pos
@@ -425,3 +427,6 @@ WaterCmd_SkipB:
 
     j WaterCmd_NextVtx
     addi vtx_ptr, vtx_ptr, 16
+
+WaterCmd_WriteBackVtx:
+    jal_and_j DMAOut, WaterCmd_NextIndexRange
