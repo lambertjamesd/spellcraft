@@ -6,6 +6,8 @@ from ..parse import struct_parse
 import bmesh
 import mathutils
 
+from . import map_generator
+
 def _get_item_types(self, context):
     return list(map(lambda x: (x.name, x.name, ''), object_definitions.get_enum('enum inventory_item_type').all_values()))
 
@@ -390,6 +392,21 @@ class NODE_OT_game_object_init(bpy.types.Operator):
         _init_default_properties(context.object)
 
         return {'FINISHED'}
+
+class NODE_OT_build_map_outline(bpy.types.Operator):
+    """Build a map mesh"""
+    bl_idname = "node.build_map_outline"
+    bl_label = "Automatically create a map mesh"
+    bl_description = "Automatically create a map mesh"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        map_generator.filter_mesh_by_normal(context.object)
+
+        return {'FINISHED'}
     
 class LoadingZonePanel(bpy.types.Panel):
     bl_idname='GO_PT_loading_zone'
@@ -420,13 +437,17 @@ class MapOutlinePanel(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.name.lower().startswith('map outline')
+        return context.object and (context.object.name.lower().startswith('map outline') or 'collision' in context.object.name.lower())
     
     def draw(self, context):
         target = context.object
 
-        self.layout.label(text='Map outline')
-        self.layout.prop(target, 'map_layer')
+        if context.object.name.lower().startswith('map outline'):
+            self.layout.label(text='Map outline')
+            self.layout.prop(target, 'map_layer')
+
+        if 'collision' in context.object.name.lower():
+            self.layout.operator(NODE_OT_build_map_outline.bl_idname, text='Create outline mesh')
 
 
 class EntryPointPanel(bpy.types.Panel):
@@ -688,6 +709,7 @@ _classes = [
     NODE_OT_game_object_add_entry_point,
     NODE_OT_game_object_add_loading_zone,
     NODE_OT_game_object_init,
+    NODE_OT_build_map_outline,
     NODE_OT_game_object_positions,
     NODE_OT_game_object_spawners,
     LoadingZonePanel,

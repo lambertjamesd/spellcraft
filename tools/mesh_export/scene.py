@@ -483,10 +483,12 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
 
         mesh: bpy.types.Mesh = obj.data
 
-        if obj.name.lower().startswith('map outline'):
+        is_map_outline = obj.name.lower().startswith('map outline')
+
+        if is_map_outline:
             scene.map_entries.append(map_builder.MapEntry(obj, room_collection.get_obj_room_index(obj)))
 
-        if len(mesh.materials) > 0 and not 'collision' in obj.name:
+        elif len(mesh.materials) > 0 and not 'collision' in obj.name:
             scene.static.append(StaticEntry(obj, mesh, final_transform))
 
         if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH' or 'collision' in obj.name:
