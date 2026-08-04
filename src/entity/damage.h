@@ -17,6 +17,7 @@ enum damage_type {
     DAMAGE_TYPE_BASH = (1 << 5),
     DAMAGE_TYPE_STEAL = (1 << 6),
     DAMAGE_TYPE_KNOCKBACK = (1 << 7),
+    DAMAGE_TYPE_HURT_VINE = (1 << 8),
 };
 
 struct damage_source {

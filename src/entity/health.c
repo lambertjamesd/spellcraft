@@ -8,6 +8,9 @@
 #include "../effects/hit_effect.h"
 #include <stddef.h>
 
+#define I_TIME              0.5f
+#define HURT_VINE_DAMAGE    10.0f
+
 static struct hash_map health_entity_mapping;
 
 void health_reset() {
@@ -25,6 +28,14 @@ void health_update(void *data) {
             health->status_timer = 0.0f;
         }
     }
+
+    if (health->i_time > 0.0f) {
+        health->i_time -= fixed_time_step;
+
+        if (health->i_time < 0.0f) {
+            health->i_time = 0.0f;
+        }
+    }
 }
 
 void health_init(struct health* health, entity_id id, float max_health) {
@@ -34,6 +45,8 @@ void health_init(struct health* health, entity_id id, float max_health) {
     health->current_status = 0;
     health->status_timer = 0.0f;
     health->unmovable = false;
+    health->has_i_frames = false;
+    health->i_time = 0.0f;
 
     hash_map_set(&health_entity_mapping, id, health);
 
@@ -55,7 +68,10 @@ void health_destroy(struct health* health) {
 }
 
 float health_damage(struct health* health, struct damage_info* damage) {
-    if (health->health_shield && health_shield_does_block(health->health_shield, damage)) {
+    if (
+        (health->health_shield && health_shield_does_block(health->health_shield, damage)) ||
+        health->i_time > 0.0f
+    ) {
         return 0.0f;
     }
 
@@ -67,6 +83,10 @@ float health_damage(struct health* health, struct damage_info* damage) {
         if (amount <= 0.0f) {
             return 0.0f;
         }
+    }
+
+    if (health->has_i_frames) {
+        health->i_time = I_TIME;
     }
 
     float result = 0.0f;
@@ -197,6 +217,28 @@ bool health_apply_contact_damage_from_origin(contact_t* first_contact, struct da
 
         health_damage(target_health, &damage);
         did_hit = true;
+        curr = curr->next;
+    }
+
+    return did_hit;
+}
+
+bool health_recieve_contact_damage(struct health* health, contact_t* first_contact) {
+    struct contact* curr = first_contact;
+
+    
+    bool did_hit = false;
+
+    while (curr) {
+        if (curr->surface_type == SURFACE_TYPE_HURT_VINE) {
+            health_damage(health, &(damage_info_t){
+                .amount = HURT_VINE_DAMAGE,
+                .type = DAMAGE_TYPE_HURT_VINE,
+                .source = curr->other_object,
+                .direction = curr->normal,
+            });
+        }
+
         curr = curr->next;
     }
 

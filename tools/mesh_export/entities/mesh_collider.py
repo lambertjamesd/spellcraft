@@ -11,6 +11,14 @@ INDEX_BLOCK_SIZE_Z = 8
 
 ERROR_MARGIN = 0.001
 
+surfaceNames = [
+    'default',
+    'holey',
+    'water',
+    'sticky',
+    'hurt_vine',
+]
+
 class MeshColliderTriangle():
     def __init__(self, indices: list[int], surface_type: int = 0):
         self.indices: list[int] = indices
@@ -377,6 +385,9 @@ class MeshCollider():
 
             if mat and 'surface_type' in mat:
                 surface_type = mat['surface_type']
+
+            if hasattr(mat, 'surface_type'):
+                surface_type = surfaceNames.index(mat.surface_type)
             
             self.triangles.append(MeshColliderTriangle([
                 face.verts[0].index + start_index,

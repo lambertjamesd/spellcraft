@@ -1,11 +1,11 @@
 import bpy
 
-
 enumSurfaceType = [
     ("default", "Default", ""),
     ("holey", "Holey", ""),
     ("water", "Water", ""),
     ("sticky", "Sticky", ""),
+    ("hurt_vine", "Hurt vine", ""),
 ]
 
 enumMicrocode = [

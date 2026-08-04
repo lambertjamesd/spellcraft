@@ -18,8 +18,10 @@ struct health {
     float max_health;
     float current_health;
     float status_timer;
+    float i_time;
     enum damage_type current_status;
     bool unmovable;
+    bool has_i_frames;
 
     health_damage_callback callback;
     void* callback_data;
@@ -47,6 +49,8 @@ bool health_apply_contact_damage_from_origin(contact_t* first_contact, struct da
 static inline bool health_apply_contact_damage(contact_t* first_contact, struct damage_source* damage, struct damaged_set* set) {
     return health_apply_contact_damage_with_direction(first_contact, damage, set, NULL);
 }
+
+bool health_recieve_contact_damage(struct health* health, contact_t* first_contact);
 
 struct health* health_get(entity_id id);
 

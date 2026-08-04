@@ -1309,6 +1309,7 @@ void player_update(struct player* player) {
     player_update_spells(player, input, pressed);
     player_check_collectables(player);
     player_check_inventory(player);
+    health_recieve_contact_damage(&player->health, player->cutscene_actor.collider.active_contacts);
 
     if (cutscene_actor_update(&player->cutscene_actor) || !update_has_layer(UPDATE_LAYER_WORLD)) {
         return;
@@ -1472,6 +1473,7 @@ void player_init(struct player* player, struct player_definition* definition, st
     mana_pool_set_entity_id(&player->spell_exec.spell_sources.mana_pool, ENTITY_ID_PLAYER);
     live_cast_init(&player->live_cast);
     health_init(&player->health, ENTITY_ID_PLAYER, 100.0f);
+    player->health.has_i_frames = true;
     health_set_callback(&player->health, player_on_damage, player);
     grab_checker_init(&player->grab_checker, &player_actor_def.collider);
 
