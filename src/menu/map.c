@@ -132,9 +132,9 @@ void menu_map_destroy(menu_map_t* map) {
 }
 
 static menu2d_vtx_t player_arrow[] = {
-    {.pos = {{{0.0f, -20.0f}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
-    {.pos = {{{10.0f, 20.0f}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
-    {.pos = {{{-10.0f, 20.0f}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
+    {.pos = {{{0, -20}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
+    {.pos = {{{10, 20}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
+    {.pos = {{{-10, 20}}}, .color = {0xFF, 0xFF, 0xFF, 0xFF}},
 };
 
 void menu_map_render_player(menu_map_t* map, menu_map_show_state_t* show_state) {
@@ -425,7 +425,7 @@ void menu_map_render(menu_map_t* map, menu_map_show_state_t* show_state) {
 
     // int16_t* tri_data = (int16_t*)(tmp + RSP_MENU_RDPQ_TRI_DATA);
 
-    // debugf("%d %d\n", ((int*)tmp)[0], *tri_data);
+    // debugf("%d %d\n", (int)tri_data[0], (int)tri_data[1]);
 
     // for (int i = 0; i < 8; i += 1) {
     //     debugf("%04x ", tmp[i]);

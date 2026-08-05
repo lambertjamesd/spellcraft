@@ -559,11 +559,12 @@ MenuCmd_VTX:
     jal DMAIn
     addi dmem_address, vtx_ptr, 0
 
-    addi input_ptr, vtx_ptr, 0
+    addi input_ptr, vtx_ptr, -VERTEX_INPUT_SIZE
+    addi vtx_ptr, vtx_ptr, -TRI_VERTEX_SIZE
 
     # Move pointer to the end of lists
     # and work backwards
-    addi counter, count, -1
+    addi counter, count, 0
 MenuCmd_VTX_IncLoop:
     addi counter, counter, -1
     addi vtx_ptr, vtx_ptr, TRI_VERTEX_SIZE
@@ -622,7 +623,6 @@ MenuCmd_VTX_NextEffectVtx:
     # MenuCmd_Tri
     # a0 a:8 | b:8 | c:8
 MenuCmd_Tri:
-
     # load pointers to triangles
     andi a1, a0, 0xFF
     sll a1, a1, TRI_VTX_SIZE_LOG2
@@ -655,9 +655,6 @@ MenuCmd_Tri:
     li v0, 2   # disable culling
     jal RDPQ_Triangle_Send_Async
     ori a0, t7, 0xC800
-
-    j RSPQ_Loop
-    nop
 
     jal_and_j RDPQ_Triangle_Send_End, RSPQ_Loop
 
