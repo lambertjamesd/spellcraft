@@ -155,8 +155,9 @@ void menu_map_render_player(menu_map_t* map, menu_map_show_state_t* show_state) 
     menu_mtx(mtx, true, true);
 
     material_apply(&map->solid_color->apply);
-    rdpq_set_prim_register_raw((color_t){10, 200, 255, 255}, 0 , 0);
+    rdpq_set_prim_register_raw((color_t){10, 255, 100, 255}, 0 , 0);
     menu_vtx(player_arrow, 0, 3);
+    
     menu_tri(0, 1, 2);
     
     menu_mtx_pop(1);

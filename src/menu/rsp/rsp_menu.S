@@ -39,9 +39,9 @@
 #define TRI_POS         0
 #define TRI_POS_X       0
 #define TRI_POS_Y       2
+#define TRI_CLIP        6
 #define TRI_RGBA        8
 #define TRI_UV          12
-#define TRI_CLIP        24
 
 #define INPUT_POS         0
 #define INPUT_UV          4
@@ -222,9 +222,10 @@ MenuCmd_LineTo:
     lb t6, VERTEX_CLIP_MASK(0)
     lb t7, VERTEX_CLIP_MASK(1)
 
-    and t6, t7, t6
+    or t6, t7, t6
 
-    bne t6, zero, RSPQ_Loop
+    li $at, 0x3F
+    bne t6, $at, RSPQ_Loop
 
     li t6, %lo(VERTEX_POINTS)
 
@@ -635,16 +636,6 @@ MenuCmd_Tri:
     srl a3, a0, 16 - TRI_VTX_SIZE_LOG2
     andi a3, a3, 0xFF << TRI_VTX_SIZE_LOG2
     addi a3, a3, %lo(RDPQ_TRI_DATA)
-    
-    # check clippping
-    lb t1, TRI_CLIP(a1)
-    lb t2, TRI_CLIP(a2)
-    lb t3, TRI_CLIP(a3)
-
-    and t1, t1, t2
-    and t1, t1, t3
-
-    bne t1, zero, RSPQ_Loop
 
     # prepare triangle command
     lb t7, %lo(ATTR_FLAGS)
@@ -981,6 +972,7 @@ ClipPoint:
     vlt $v08, $v07, $v08
     cfc2 a0, COP2_CTRL_VCC 
     andi a0, a0, 0xF
+    xori a0, a0, 0x3F
 
     jr ra
     sb a0, 0(a1)
