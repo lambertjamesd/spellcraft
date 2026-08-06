@@ -207,7 +207,6 @@ MenuCmd_LineTo:
     jal ClipPoint
     addi a1, a0, 12
 
-
     #define magSqri $v01
     #define magSqrf $v02
     #define pointA  $v03
@@ -219,12 +218,13 @@ MenuCmd_LineTo:
     #define offsetNorm $v09
     #define lineWidth  $v10
 
-    lb t6, VERTEX_CLIP_MASK(0)
-    lb t7, VERTEX_CLIP_MASK(1)
+    lh t6, VERTEX_CLIP_MASK(0)
+    lh t7, VERTEX_CLIP_MASK(1)
 
     or t6, t7, t6
+    andi t6, 0x3f
 
-    li $at, 0x3F
+    li $at, 0x3f
     bne t6, $at, RSPQ_Loop
 
     li t6, %lo(VERTEX_POINTS)
@@ -307,6 +307,14 @@ MenuCmd_LineTo:
     sh t6, TRI_VTX(3, 12)
     sh t6, TRI_VTX(4, 12)
     sh t6, TRI_VTX(5, 12)
+
+    li t6, 0x3F
+    sh t6, TRI_VTX(0, TRI_CLIP)
+    sh t6, TRI_VTX(1, TRI_CLIP)
+    sh t6, TRI_VTX(2, TRI_CLIP)
+    sh t6, TRI_VTX(3, TRI_CLIP)
+    sh t6, TRI_VTX(4, TRI_CLIP)
+    sh t6, TRI_VTX(5, TRI_CLIP)
 
     li $at, %lo(VTX_FX_FLAGS)
     beq $at, zero, MenuCmd_LineTo_SkipFX
@@ -951,7 +959,7 @@ MulPoint:
     ##########################################
     # clips the
     # a0 vtx_ptr
-    # a1 output_ptr (byte)
+    # a1 output_ptr (half)
     # $v20 margin
 ClipPoint:
 
@@ -972,10 +980,10 @@ ClipPoint:
     vlt $v08, $v07, $v08
     cfc2 a0, COP2_CTRL_VCC 
     andi a0, a0, 0xF
-    xori a0, a0, 0x3F
+    xori a0, a0, 0x3f
 
     jr ra
-    sb a0, 0(a1)
+    sh a0, 0(a1)
 
     ##########################################
     # Draws a line end cap
