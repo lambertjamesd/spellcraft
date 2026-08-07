@@ -28,7 +28,7 @@ void water_waves_debug_render(void* data) {
     }
 
     water_simulation_update(&water_waves->simulation);
-    water_simulation_apply(&water_waves->simulation, &args);
+    // water_simulation_apply(&water_waves->simulation, &args);
 
     rdpq_set_combiner_raw(RDPQ_COMBINER1((0, 0, 0, TEX0), (0, 0, 0, 1)));
     

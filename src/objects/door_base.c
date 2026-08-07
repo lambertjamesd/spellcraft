@@ -145,6 +145,7 @@ void door_base_interact(struct interactable* interactable, entity_id from) {
 
 void door_base_update(door_base_t* door) {
     animator_update(&door->animator, fixed_time_step);
+    animator_update(&door->lock_animator, fixed_time_step);
 
     if (door->next_room != ROOM_NONE && !animator_is_running(&door->animator)) {
         scene_hide_room(current_scene, door->next_room == door->room_a ? door->room_b : door->room_a);
@@ -175,7 +176,10 @@ void door_base_init(door_base_t* door, door_base_definition_t* definition, entit
 
     door->collider.is_fixed = true;
     door->collider.weight_class = WEIGHT_CLASS_HEAVY;
-    door->lock_model = tmesh_cache_load("rom:/meshes/objects/doors/lock.tmesh");
+    door->lock_model = NULL;
+    door->lock_animation_set = NULL;
+    animator_init(&door->lock_animator, 0);
+    armature_init(&door->lock_armatrue, NULL);
 
     collision_scene_add(&door->collider);
 
@@ -195,14 +199,61 @@ void door_base_destroy(door_base_t* door) {
     collision_scene_remove(&door->collider);
     animator_destroy(&door->animator);
     animation_cache_release(door->animation_set);
-    tmesh_cache_release(door->lock_model);
+
+    if (door->lock_model) {
+        tmesh_cache_release(door->lock_model);
+        door->lock_model = NULL;
+    }
+    if (door->lock_animation_set) {
+        animation_cache_release(door->animation_set);
+        door->animation_set = NULL;
+    }
+    
+    animator_destroy(&door->lock_animator);
+    armature_destroy(&door->lock_armatrue);
 }
 
 void door_base_set_locked(door_base_t* door, bool value, door_interact_blocker interact_blocker) {
-    if (value) {
-        interactable_set_type(&door->interactable, INTERACT_TYPE_NONE);
+}
+
+void door_base_lock(door_base_t* door, door_lock_definition_t* lock_definition) {
+    assert(door_base_is_unlocked(door));
+    
+    if (lock_definition->interact_blocker) {
+        interactable_set_type(&door->interactable, INTERACT_TYPE_CHECK);
     } else {
-        interactable_set_type(&door->interactable, interact_blocker ? INTERACT_TYPE_CHECK : INTERACT_TYPE_OPEN);
-        door->interact_blocker = interact_blocker;
+        interactable_set_type(&door->interactable, INTERACT_TYPE_NONE);
     }
+    
+    door->interact_blocker = lock_definition->interact_blocker;
+
+    door->lock_model = tmesh_cache_load(lock_definition->mesh_filename);
+    door->animation_set = lock_definition->animations_filename ? animation_cache_load(lock_definition->animations_filename) : NULL;
+
+    animator_init(&door->lock_animator, door->lock_model->armature.bone_count);
+    armature_init(&door->lock_armatrue, &door->lock_model->armature);
+
+    animator_run_clip(&door->lock_animator, animation_set_find_clip(door->animation_set, "lock"), 0.0f, false);
+}
+
+void door_base_unlock(door_base_t* door) {
+    assert(!door_base_is_unlocked(door));
+    interactable_set_type(&door->interactable, INTERACT_TYPE_OPEN);
+    door->interact_blocker = NULL;
+    
+    if (door->lock_model) {
+        tmesh_cache_release(door->lock_model);
+        door->lock_model = NULL;
+    }
+    if (door->lock_animation_set) {
+        animation_cache_release(door->animation_set);
+        door->animation_set = NULL;
+    }
+    
+    animator_destroy(&door->lock_animator);
+    armature_destroy(&door->lock_armatrue);
+}
+
+bool door_base_is_unlocked(door_base_t* door) {
+    return door->lock_model == NULL;
 }

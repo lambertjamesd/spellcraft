@@ -55,13 +55,20 @@ void armature_definition_destroy(struct armature_definition* definition) {
 }
 
 void armature_init(struct armature* armature, struct armature_definition* definition) {
-    armature->bone_count = definition ? definition->bone_count : 0;
+    if (definition) {
+        armature->bone_count = definition->bone_count;
+        armature->has_prim_color = HAS_FLAG(definition->flags, ARMATURE_DEF_FLAGS_HAS_PRIM);
+        armature->has_env_color = HAS_FLAG(definition->flags, ARMATURE_DEF_FLAGS_HAS_ENV);
+    } else {
+        armature->bone_count = 0;
+        armature->has_prim_color = false;
+        armature->has_env_color = false;
+    }
+
     armature->definition = definition;
     armature->image_frame_0 = NO_IMAGE_FRAME;
     armature->image_frame_1 = NO_IMAGE_FRAME;
 
-    armature->has_prim_color = HAS_FLAG(definition->flags, ARMATURE_DEF_FLAGS_HAS_PRIM);
-    armature->has_env_color = HAS_FLAG(definition->flags, ARMATURE_DEF_FLAGS_HAS_ENV);
 
     if (armature->bone_count) {
         armature->pose = malloc(sizeof(struct Transform) * definition->bone_count);

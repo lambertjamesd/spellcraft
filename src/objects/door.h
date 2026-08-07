@@ -6,7 +6,10 @@
 struct door {
     door_base_t door_base;
     boolean_variable unlocked;
+    integer_variable key_lock_3;
 };
+
+typedef struct door door_t;
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id);
 void door_destroy(struct door* door);
