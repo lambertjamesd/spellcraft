@@ -27,6 +27,9 @@
 
 #define ATTACK_DELAY_FRAMES     (3 * 30)
 
+#define SHOOT_ATTACK_OFFSET     2.0f
+#define SHOOT_ATTACK_OFFSET_COUNT   5
+#define MIN_SHOOT_ATTACK        10.0f
 #define BITE_ATTACK_RANGE       3.0f
 #define BITE_ATTACK_ACCEL       2.0f
 #define DASH_ACCEL              8.0f
@@ -83,6 +86,14 @@ static struct damage_source aoe_attack = {
     .amount = 10.0f,
     .type = DAMAGE_TYPE_KNOCKBACK,
     .knockback_strength = damage_knockback_with_time(1.0f),
+};
+
+static vector2_t shoot_offsets[SHOOT_ATTACK_OFFSET_COUNT] = {
+    {0.0f, 1.0f},
+    {0.7f, 0.7f},
+    {1.0f, 0.0f},
+    {0.7f, -0.7f},
+    {0.0f, -1.0f},
 };
 
 contact_t* jelly_king_find_target(struct jelly_king* jelly_king) {
@@ -233,7 +244,7 @@ void jelly_king_idle(struct jelly_king* jelly_king) {
             } else {
                 jelly_king_start_dash(jelly_king);
             }
-        } else if (jelly_king_can_fire_minion(jelly_king)) {
+        } else if (distanceSq > MIN_SHOOT_ATTACK * MIN_SHOOT_ATTACK && jelly_king_can_fire_minion(jelly_king)) {
             jelly_king_fire_minions(jelly_king, 3);
         }
     }
@@ -298,6 +309,26 @@ void jelly_king_bite_attack(struct jelly_king* jelly_king) {
     }
 }
 
+void jelly_king_apply_target_offset(struct jelly_king* jelly_king, vector3_t* offset) {
+    vector2_t offset_2d;
+
+    offset_2d.x = offset->x;
+    offset_2d.y = offset->z;
+
+    vector2Normalize(&offset_2d, &offset_2d);
+
+    vector2ComplexMul(&offset_2d, &shoot_offsets[jelly_king->next_lauch_offset], &offset_2d);
+
+    offset->x += offset_2d.x * SHOOT_ATTACK_OFFSET;
+    offset->z += offset_2d.y * SHOOT_ATTACK_OFFSET;
+
+    jelly_king->next_lauch_offset += 1;
+
+    if (jelly_king->next_lauch_offset == SHOOT_ATTACK_OFFSET_COUNT) {
+        jelly_king->next_lauch_offset = 0;
+    }
+}
+
 void jelly_king_fire_jelly(struct jelly_king* jelly_king) {
     int jelly_index = -1;
 
@@ -351,6 +382,8 @@ void jelly_king_fire_jelly(struct jelly_king* jelly_king) {
         
         struct Vector3 offset;
         vector3Sub(&nearest_target->point, cutscene_actor_get_pos(&jelly_king->cutscene_actor), &offset);
+        jelly_king_apply_target_offset(jelly_king, &offset);
+
         float distance = sqrtf(vector3MagSqrd2D(&offset));
 
         if (distance < 0.01f) {
@@ -486,6 +519,10 @@ float jelly_king_on_damage(void* data, struct damage_info* damage) {
 
     damage->knockback_strength *= 0.5f;
 
+    if (damage->type & DAMAGE_TYPE_FIRE) {
+        jelly_king_fire_jelly(jelly_king);
+    }
+
     if (jelly_king->state == JELLY_KING_IDLE) {
         jelly_king->state_data.idle.attack_timer = 0.0f;
     }
@@ -600,6 +637,7 @@ void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition
 
     jelly_king->next_minion = 0;
     jelly_king->last_minion = 0;
+    jelly_king->next_lauch_offset = 0;
 
     health_init(&jelly_king->health, id, MAX_HEALTH);
     health_set_callback(&jelly_king->health, jelly_king_on_damage, jelly_king);

@@ -34,7 +34,7 @@ enum jelly_king_state {
     JELLY_KING_DIE,
 };
 
-#define MAX_JELLY_MINIONS   5
+#define MAX_JELLY_MINIONS   12
 
 struct jelly_king {
     cutscene_actor_t cutscene_actor;
@@ -72,6 +72,7 @@ struct jelly_king {
 
     uint8_t next_minion;
     uint8_t last_minion;
+    uint8_t next_lauch_offset;
 };
 
 void jelly_king_init(struct jelly_king* jelly_king, struct jelly_king_definition* definition, entity_id id);
