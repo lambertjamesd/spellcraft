@@ -15,7 +15,6 @@ from mesh_export.cutscene.variable_layout import VariableContext
 MULTIROOM_ATTRIBUTE = {
     "door": ["room_a", "room_b"],
     "room_portal": ["room_a", "room_b"],
-    "gem_key_door": ["room_a", "room_b"],
 
     "elevator": ["room_a", "room_b"],
 }

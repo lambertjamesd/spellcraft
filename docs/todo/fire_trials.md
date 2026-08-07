@@ -1,5 +1,10 @@
 # Fire Trials TODO
 
+* Create pot
+* Add slippery surface
+* Boss key parts in the kiln
+* Health/mana upgrades hidden as collectables
+* Rework bottom floor
 * Hide some item in the side room
 * Repair mechanic in basement
 * swimming animation
@@ -8,9 +13,8 @@
 * Procedrual damage animation for player
 * Rune upgrade tablet design
 * Health and mana UI
-* Imrove walk animations
+* Improve walk animations
 * Climb animations
-* Carry animations
 * Build fire kiln
 * Better visuals for current rooms
 * Figure out fast64 asset linking bug

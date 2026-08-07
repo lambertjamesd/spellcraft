@@ -39,7 +39,6 @@ enum entity_type_id {
     ENTITY_TYPE_line_mesh,
     ENTITY_TYPE_script_runner,
     ENTITY_TYPE_water_waves,
-    ENTITY_TYPE_gem_key_door,
     ENTITY_TYPE_golem_enemy,
     ENTITY_TYPE_pinwheel,
     // type enum insert point
@@ -189,6 +188,7 @@ struct door_definition {
     room_id room_a;
     room_id room_b;
     boolean_variable unlocked;
+    integer_variable key_lock_3;
 };
 
 struct room_portal_definition {
@@ -359,16 +359,6 @@ struct water_waves_definition {
     struct Vector3 position;    
     uint16_t width;
     uint16_t height;
-};
-
-struct gem_key_door_definition {
-    struct Vector3 position;
-    struct Vector2 rotation;
-    room_id room_a;
-    room_id room_b;
-    boolean_variable unlocked;
-    integer_variable key_gems;
-    uint8_t gem_count;
 };
 
 struct golem_enemy_definition {

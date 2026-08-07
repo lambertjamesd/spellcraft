@@ -265,6 +265,16 @@ event_names = [
     "event_can_recast"
 ]
 
+def is_connected_to_arm(obj: bpy.types.Object, armature: bpy.types.Armature) -> bool:
+    if obj.parent and obj.parent.data == armature:
+        return True
+
+    for modifier in obj.modifiers:
+        if isinstance(modifier, bpy.types.ArmatureModifier) and modifier.object and modifier.object.data == armature:
+            return True
+
+    return False
+
 class ArmatureData:
     def __init__(self, obj: bpy.types.Object, base_transform: mathutils.Matrix):
         self.relative_vertex_transform: mathutils.Matrix = base_transform @ obj.matrix_world
@@ -283,7 +293,7 @@ class ArmatureData:
         if obj.type != "MESH" or not obj.data or not isinstance(obj.data, bpy.types.Mesh):
             return
 
-        if obj.parent is None or obj.parent.data != self.armature:
+        if not is_connected_to_arm(obj, self.armature):
             return
 
         self.mark_bone_used(obj.parent_bone)
@@ -330,6 +340,7 @@ class ArmatureData:
     def build_bone_data(self):
         for idx, bone in enumerate(self.armature.bones):
             if bone.name not in self.used_bones:
+                print('skipping bone', bone.name)
                 continue
 
             self._filtered_bones[bone.name] = ArmatureBone(

@@ -23,7 +23,6 @@
 #include "../objects/line_mesh.h"
 #include "../entities/script_runner.h"
 #include "../entities/water_waves.h"
-#include "../entities/gem_key_door.h"
 #include "../entities/pinwheel.h"
 // include_list insert point
 
@@ -102,7 +101,6 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(line_mesh, fields_line_mesh),
     ENTITY_DEFINITION(script_runner, fields_script_runner),
     ENTITY_DEFINITION(water_waves, fields_empty),
-    ENTITY_DEFINITION(gem_key_door, fields_empty),
     ENTITY_DEFINITION(golem_enemy, fields_empty),
     ENTITY_DEFINITION(pinwheel, fields_empty),
     // scene_entity_definitions insert point

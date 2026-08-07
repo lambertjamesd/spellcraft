@@ -7,6 +7,16 @@
 
 #include "../objects/door_base.h"
 
+struct gem_key_door_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    room_id room_a;
+    room_id room_b;
+    boolean_variable unlocked;
+    integer_variable key_gems;
+    uint8_t gem_count;
+};
+
 struct gem_key_door {
     door_base_t door_base;
     boolean_variable unlocked;
