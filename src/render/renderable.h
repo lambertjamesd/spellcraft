@@ -40,6 +40,8 @@ void renderable_single_axis_init(struct renderable* renderable, struct Transform
 
 void renderable_single_axis_init_direct(struct renderable* renderable, struct TransformSingleAxis* transform, struct tmesh* mesh);
 
+void renderable_set_mesh_direct(renderable_t* renderable, tmesh_t* mesh);
+
 void renderable_init_point(struct renderable* renderable, vector3_t* position, float radius, const char* material_filename);
 void renderable_destroy(struct renderable* renderable);
 void renderable_destroy_direct(struct renderable* renderable);

@@ -85,6 +85,15 @@ void renderable_single_axis_init_direct(struct renderable* renderable, struct Tr
     renderable->type = TRANSFORM_TYPE_SINGLE_AXIS;
 }
 
+void renderable_set_mesh_direct(renderable_t* renderable, tmesh_t* mesh) {
+    if (mesh == renderable->mesh_render.mesh) {
+        return;
+    }
+
+    renderable_destroy_direct(renderable);
+    renderable_single_axis_init_direct(renderable, renderable->transform.transform, mesh);
+}
+
 void renderable_destroy_point(struct renderable* renderable) {
     material_cache_release(renderable->point_render.material);
 }

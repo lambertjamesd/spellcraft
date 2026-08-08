@@ -13,6 +13,12 @@
             "type": "jelly"
         },
         {
+            "name": "breakables_fire_pot_med",
+            "description": "",
+            "mesh": "meshes/breakables/fire_pot_med.blend#fire_pot",
+            "type": "breakable"
+        },
+        {
             "name": "characters_mentor",
             "description": "",
             "mesh": "meshes/characters/mentor.blend#mentor",
@@ -46,6 +52,12 @@
             "name": "objects_doors_door",
             "description": "",
             "mesh": "meshes/objects/doors/door.blend#door",
+            "type": "door"
+        },
+        {
+            "name": "objects_doors_door",
+            "description": "",
+            "mesh": "meshes/objects/doors/door.blend#static_collision",
             "type": "door"
         },
         {
