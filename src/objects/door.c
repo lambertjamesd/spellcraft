@@ -72,6 +72,12 @@ void door_update(void* data) {
             }
         }
     }
+
+    if (door->key_lock_3 != VARIABLE_DISCONNECTED && !expression_get_bool(door->unlocked)) {
+        if (expression_get_integer(door->key_lock_3) >= GEM_3_COUNT) {
+            interactable_set_type(&door->door_base.interactable, INTERACT_TYPE_UNLOCK);
+        }
+    }
 }
 
 void door_init(struct door* door, struct door_definition* definition, entity_id id) {

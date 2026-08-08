@@ -14,6 +14,7 @@ static float interaction_range[] = {
     [INTERACT_TYPE_OPEN] = 0.85f,
     [INTERACT_TYPE_CAST] = 0.0f,
     [INTERACT_TYPE_CHECK] = 2.0f,
+    [INTERACT_TYPE_UNLOCK] = 2.0f,
 };
 
 static const char* interaction_names[] = {
@@ -25,6 +26,7 @@ static const char* interaction_names[] = {
     [INTERACT_TYPE_OPEN] = "Open",
     [INTERACT_TYPE_CAST] = "Cast",
     [INTERACT_TYPE_CHECK] = "Check",
+    [INTERACT_TYPE_UNLOCK] = "Unlock",
 };
 
 void interactable_reset() {
