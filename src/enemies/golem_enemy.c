@@ -487,7 +487,7 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
 
     golem_enemy->head_rotation = gRight2;
     golem_enemy->attack_timer = 0.0f;
-    golem_enemy->was_activated = false;
+    golem_enemy->was_activated = expression_get_bool(golem_enemy->activated);
 
     update_add(golem_enemy, golem_enemy_update, UPDATE_PRIORITY_ENEMY, UPDATE_LAYER_WORLD);
 
