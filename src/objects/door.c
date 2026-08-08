@@ -52,8 +52,8 @@ bool door_gem_3_lock_interact(struct interactable* interactable, entity_id from)
 }
 
 static door_lock_definition_t gem_3_lock = {
-    .mesh_filename = "rom:/meshes/objects/doors/gem_door.tmesh",
-    .animations_filename = "rom:/meshes/objects/doors/gem_door.anim",
+    .mesh_filename = "rom:/meshes/objects/doors/gem_lock_ftrials_3p.tmesh",
+    .animations_filename = "rom:/meshes/objects/doors/gem_lock_ftrials_3p.anim",
     .interact_blocker = door_gem_3_lock_interact,
 };
 
