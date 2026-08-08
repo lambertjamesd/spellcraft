@@ -81,7 +81,7 @@ static char* item_get_message[] = {
     [SPELL_SYMBOL_FIRE] = "You found the fire rune!\n\nWith it you can summon fire or imbue fire into chained runes",
     [SPELL_SYMBOL_EARTH] = "You found the projectile rune!\n\nUse it to damage enemies from afar or even chain into other runes on impact",
     [ITEM_TYPE_STAFF_DEFAULT] = "You got your fathers old staff",
-    [ITEM_TYPE_KEY_GEM] = "You found a key gem. Use one or more of them to open doors. They are only useful in these trials",
+    [ITEM_TYPE_KEY_GEM] = "You found a key gem. Use one or more of them to open doors. They are only usable in these trials",
 };
 
 static const char image_offset_x[] = {

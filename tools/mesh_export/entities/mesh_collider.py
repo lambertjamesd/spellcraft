@@ -16,6 +16,7 @@ surfaceNames = [
     'holey',
     'water',
     'sticky',
+    'slippery',
     'hurt_vine',
 ]
 

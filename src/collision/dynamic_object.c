@@ -166,7 +166,7 @@ void dynamic_object_recalc_bb(struct dynamic_object* object) {
 }
 
 bool dynamic_object_should_slide(float max_stable_slope, float normal_y, enum surface_type surface_type) {
-    return (surface_type != SURFACE_TYPE_STICKY && normal_y <= 1.0f - max_stable_slope) || fabsf(normal_y) < 0.001f;
+    return surface_type == SURFACE_TYPE_SLIPPERY || (surface_type != SURFACE_TYPE_STICKY && normal_y <= 1.0f - max_stable_slope) || fabsf(normal_y) < 0.001f;
 }
 
 bool dynamic_object_is_grounded(struct dynamic_object* object) {

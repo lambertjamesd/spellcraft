@@ -5,6 +5,7 @@ enumSurfaceType = [
     ("holey", "Holey", ""),
     ("water", "Water", ""),
     ("sticky", "Sticky", ""),
+    ("slippery", "Slippery", ""),
     ("hurt_vine", "Hurt vine", ""),
 ]
 
