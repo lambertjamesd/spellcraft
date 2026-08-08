@@ -215,6 +215,7 @@ void door_base_init(door_base_t* door, door_base_definition_t* definition, entit
     door->lock_model = NULL;
     door->lock_animation_set = NULL;
     door->is_unlocking = false;
+    door->interact_blocker = NULL;
     animator_init(&door->lock_animator, 0);
     armature_init(&door->lock_armatrue, NULL);
 
