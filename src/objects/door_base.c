@@ -24,12 +24,28 @@ static struct dynamic_object_type door_collision = {
     .center = { 0.0f, 2.0f, 0.0f },
 };
 
+void door_base_destroy_lock(door_base_t* door) {
+    door->interact_blocker = NULL;
+    
+    if (door->lock_model) {
+        tmesh_cache_release(door->lock_model);
+        door->lock_model = NULL;
+    }
+    if (door->lock_animation_set) {
+        animation_cache_release(door->lock_animation_set);
+        door->lock_animation_set = NULL;
+    }
+    
+    animator_destroy(&door->lock_animator);
+    armature_destroy(&door->lock_armatrue);
+}
+
 void door_base_render(void* data, struct render_batch* batch) {
     door_base_t* door = (door_base_t*)data;
     
     render_scene_render_renderable_single_axis(&door->renderable, batch);
 
-    if (interactable_get_type(&door->interactable) != INTERACT_TYPE_NONE) {
+    if (!door->lock_model) {
         return;
     }
 
@@ -44,7 +60,14 @@ void door_base_render(void* data, struct render_batch* batch) {
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
 
-    render_batch_add_tmesh(batch, door->lock_model, mtxfp, NULL, NULL, NULL);
+    animator_apply(&door->lock_animator, &door->lock_armatrue);
+    render_batch_add_tmesh(batch, door->lock_model, mtxfp, &door->lock_armatrue, NULL, NULL);
+}
+
+void door_cutscene_open(void* data) {
+    door_base_t* door = (door_base_t*)data;
+    animator_run_clip(&door->animator, door->animations.open, 0.0f, false);
+    door->collider.collision_layers = 0;
 }
 
 void door_cutscene_close(void* data) {
@@ -62,6 +85,10 @@ void door_base_interact(struct interactable* interactable, entity_id from) {
     }
 
     door_base_t* door = (door_base_t*)interactable->data;
+
+    if (door->is_unlocking) {
+        return;
+    }
     
     if (door->interact_blocker && !door->interact_blocker(interactable, from)) {
         return;
@@ -70,9 +97,6 @@ void door_base_interact(struct interactable* interactable, entity_id from) {
     room_id other_room = scene_is_showing_room(current_scene, door->room_a) ? door->room_b : door->room_a;
     scene_show_room(current_scene, other_room);
     door->preview_room = other_room;
-
-    struct cutscene_builder builder;
-    cutscene_builder_init(&builder);
 
     struct Vector3 offset;
     vector3Sub(&door->transform.position, obj->position, &offset);
@@ -96,11 +120,17 @@ void door_base_interact(struct interactable* interactable, entity_id from) {
     vector3Rotate90(&offset, &door_right);
     vector3AddScaled(&camera_target, &door_right, CAMERA_PLACEMENT_TANGENTS, &camera_target);
 
-    animator_run_clip(&door->animator, door->animations.open, 0.0f, false);
-
-    door->collider.collision_layers = 0;
+    struct cutscene_builder builder;
+    cutscene_builder_init(&builder);
 
     cutscene_builder_pause(&builder, true, false);
+
+    if (door->is_unlocking && animator_is_running(&door->lock_animator)) {
+        cutscene_builder_delay(&builder, animation_clip_get_duration(door->lock_animator.current_clip));
+    }
+
+    cutscene_builder_callback(&builder, door_cutscene_open, door);
+
     cutscene_builder_delay(&builder, 0.75f);
     cutscene_builder_interact_position(
         &builder, 
@@ -152,6 +182,12 @@ void door_base_update(door_base_t* door) {
         door->next_room = ROOM_NONE;
         door->preview_room = ROOM_NONE;
     }
+
+    if (door->is_unlocking && !animator_is_running(&door->lock_animator)) {
+        interactable_set_type(&door->interactable, INTERACT_TYPE_OPEN);
+        door_base_destroy_lock(door);
+        door->is_unlocking = false;
+    }
 }
 
 void door_base_init(door_base_t* door, door_base_definition_t* definition, entity_id id, const char* mesh_filename) {
@@ -178,6 +214,7 @@ void door_base_init(door_base_t* door, door_base_definition_t* definition, entit
     door->collider.weight_class = WEIGHT_CLASS_HEAVY;
     door->lock_model = NULL;
     door->lock_animation_set = NULL;
+    door->is_unlocking = false;
     animator_init(&door->lock_animator, 0);
     armature_init(&door->lock_armatrue, NULL);
 
@@ -198,22 +235,11 @@ void door_base_destroy(door_base_t* door) {
     render_scene_remove(door);
     collision_scene_remove(&door->collider);
     animator_destroy(&door->animator);
-    animation_cache_release(door->animation_set);
-
-    if (door->lock_model) {
-        tmesh_cache_release(door->lock_model);
-        door->lock_model = NULL;
-    }
-    if (door->lock_animation_set) {
+    if (door->animation_set) {
         animation_cache_release(door->animation_set);
-        door->animation_set = NULL;
     }
-    
-    animator_destroy(&door->lock_animator);
-    armature_destroy(&door->lock_armatrue);
-}
 
-void door_base_set_locked(door_base_t* door, bool value, door_interact_blocker interact_blocker) {
+    door_base_destroy_lock(door);
 }
 
 void door_base_lock(door_base_t* door, door_lock_definition_t* lock_definition) {
@@ -234,24 +260,18 @@ void door_base_lock(door_base_t* door, door_lock_definition_t* lock_definition) 
     armature_init(&door->lock_armatrue, &door->lock_model->armature);
 
     animator_run_clip(&door->lock_animator, animation_set_find_clip(door->animation_set, "lock"), 0.0f, false);
+    door->is_unlocking = false;
 }
 
 void door_base_unlock(door_base_t* door) {
     assert(!door_base_is_unlocked(door));
-    interactable_set_type(&door->interactable, INTERACT_TYPE_OPEN);
-    door->interact_blocker = NULL;
-    
-    if (door->lock_model) {
-        tmesh_cache_release(door->lock_model);
-        door->lock_model = NULL;
+
+    if (door->is_unlocking) {
+        return;
     }
-    if (door->lock_animation_set) {
-        animation_cache_release(door->animation_set);
-        door->animation_set = NULL;
-    }
-    
-    animator_destroy(&door->lock_animator);
-    armature_destroy(&door->lock_armatrue);
+
+    door->is_unlocking = true;
+    animator_run_clip(&door->lock_animator, animation_set_find_clip(door->animation_set, "unlock"), 0.0f, false);
 }
 
 bool door_base_is_unlocked(door_base_t* door) {

@@ -45,6 +45,7 @@ struct door_base {
     armature_t lock_armatrue;
     animator_t lock_animator;
     animation_set_t* lock_animation_set;
+    bool is_unlocking;
 };
 
 typedef struct door_base door_base_t;

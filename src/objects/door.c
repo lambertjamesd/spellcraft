@@ -46,25 +46,6 @@ bool door_gem_3_lock_interact(struct interactable* interactable, entity_id from)
     expression_set_integer(door->key_lock_3, gem_count - GEM_3_COUNT);
     expression_set_bool(door->unlocked, true);
 
-    struct cutscene_builder builder;
-    cutscene_builder_init(&builder);
-
-    cutscene_builder_pause(&builder, true, false);
-
-    char message[48];
-    sprintf(message, "%d gems were spent to unlock the door", GEM_3_COUNT);
-    cutscene_builder_dialog(&builder, message);
-
-    cutscene_builder_pause(&builder, false, false);
-
-    cutscene_runner_run(
-        cutscene_builder_finish(&builder),
-        0,
-        cutscene_runner_free_on_finish(),
-        door,
-        0
-    );
-
     door_base_unlock(&door->door_base);
 
     return true;
@@ -72,6 +53,7 @@ bool door_gem_3_lock_interact(struct interactable* interactable, entity_id from)
 
 static door_lock_definition_t gem_3_lock = {
     .mesh_filename = "rom:/meshes/objects/doors/gem_door.tmesh",
+    .animations_filename = "rom:/meshes/objects/doors/gem_door.anim",
     .interact_blocker = door_gem_3_lock_interact,
 };
 

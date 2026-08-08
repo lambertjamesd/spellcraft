@@ -103,3 +103,7 @@ func room_bossfight()
         bossfight_cutscene_started = true;
     end
 end
+
+func test_gem_door()
+    fire_trials_key_count = 3;
+end
