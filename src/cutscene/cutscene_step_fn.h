@@ -27,6 +27,8 @@ enum cutscene_step_fn_index {
     CUTSCENE_FN_CAMERA_LOOK_AT_POS,
     CUTSCENE_FN_LOAD_SCENE,
     CUTSCENE_FN_LOAD_FADE,
+    CUTSCENE_FN_COMM_STONE_START,
+    CUTSCENE_FN_COMM_STONE_END,
 };
 
 typedef void (*cutscene_step_fn_init)(cutscene_runner_context_t* context, int arg_count);

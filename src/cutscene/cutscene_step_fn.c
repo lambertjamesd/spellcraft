@@ -8,6 +8,7 @@
 #include "../effects/image_overlay.h"
 #include "../effects/area_title.h"
 #include "../effects/fade_effect.h"
+#include "../entities/comm_stone.h"
 #include "cutscene_stopwatch.h"
 #include "cutscene_timer.h"
 #include "show_item.h"
@@ -297,6 +298,75 @@ void cutscene_interact_with_position_init(cutscene_runner_context_t* context, in
     );
 }
 
+// comm_stone
+
+static entity_id active_comm_stone = 0;
+
+#define COMM_START_HEIGHT   1.0f
+#define COMM_END_HEIGHT     1.5f
+#define COMM_POS_OFFSET     0.75f
+
+void cutscene_comm_stone_start_init(cutscene_runner_context_t* context, int arg_count) {
+    assert(arg_count == 0);
+    assert(active_comm_stone == 0);
+
+    struct comm_stone_definition stone_def;
+    stone_def.position = *player_get_position(&current_scene->player);
+    
+    vector2_t* rot = player_get_rotation(&current_scene->player);
+
+    vector3_t target;
+    vector2ToLookDir(rot, &target);
+    vector3Scale(&target, &target, COMM_POS_OFFSET);
+    vector3Add(&stone_def.position, &target, &target);
+
+    stone_def.position.y += COMM_START_HEIGHT;
+    target.y += COMM_END_HEIGHT;
+
+    active_comm_stone = entity_spawn(ENTITY_TYPE_comm_stone, &stone_def);
+    comm_stone_t* stone = entity_get(active_comm_stone);
+
+    if (stone) {
+        comm_stone_activate(stone, &stone_def.position, &target);
+    }
+}
+
+bool cutscene_comm_stone_start_step(cutscene_runner_context_t* context) { 
+    comm_stone_t* stone = entity_get(active_comm_stone);
+
+    if (!stone) {
+        return true;
+    }
+
+    return !comm_stone_is_animating(stone);
+}
+
+void cutscene_comm_stone_end_init(cutscene_runner_context_t* context, int arg_count) {
+    assert(arg_count == 0);
+    
+    comm_stone_t* stone = entity_get(active_comm_stone);
+
+    if (stone) {
+        comm_stone_deactivate(stone);
+    }
+}
+
+bool cutscene_comm_stone_end_step(cutscene_runner_context_t* context) { 
+    comm_stone_t* stone = entity_get(active_comm_stone);
+
+    if (!stone) {
+        return true;
+    }
+
+    if (comm_stone_is_animating(stone)) {
+        return false;
+    }
+
+    entity_despawn(active_comm_stone);
+    active_comm_stone = 0;
+    return true;
+}
+
 // npc_wait
 void cutscene_npc_wait_init(cutscene_runner_context_t* context, int arg_count) {
     assert(arg_count == 1);
@@ -451,6 +521,8 @@ static cutscene_step_fn_t function_steps[] = {
     [CUTSCENE_FN_CAMERA_LOOK_AT_POS] = {.init = cutscene_cam_look_at_init }, // func cam_look_at_pos(x: float, y: float, z: float, instant: bool)
     [CUTSCENE_FN_LOAD_SCENE] = {.init = cutscene_load_scene_init }, // func load_scene(scene_name: str)
     [CUTSCENE_FN_LOAD_FADE] = {.init = cutscene_fade_init }, // func fade(fade_to: i32, duration: float)
+    [CUTSCENE_FN_COMM_STONE_START] = {.init = cutscene_comm_stone_start_init, .step = cutscene_comm_stone_start_step}, // func comm_stone_start()
+    [CUTSCENE_FN_COMM_STONE_END] = {.init = cutscene_comm_stone_end_init, .step = cutscene_comm_stone_end_step}, // func comm_stone_end()
     {.init = cutscene_idle_npc_init }, // func idle_npc(npc: entity_id)
     {.init = cutscene_cam_anim_init }, // func cam_animate(animation: str)
     {.init = cutscene_interact_with_location_init }, // func interact_with_location(interaction: i32, npc: entity_id, name: str)

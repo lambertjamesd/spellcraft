@@ -22,6 +22,13 @@ func main()
     interact_with_location INTERACTION_LOOK, NPC_TYPE_PLAYER, "temple";
     cam_wait;
     cam_return;
+    cam_wait;
+    
+    comm_stone_start;
+
+    say "You have entered";
+
+    comm_stone_end;
 
     unpause;
 

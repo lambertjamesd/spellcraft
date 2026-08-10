@@ -13,6 +13,7 @@ struct Quaternion {
 typedef struct Quaternion quaternion_t;
 
 extern struct Quaternion gQuaternionZero;
+extern struct Quaternion gQuaternionIdent;
 
 void quatIdent(struct Quaternion* q);
 void quatAxisAngle(struct Vector3* axis, float angle, struct Quaternion* out);

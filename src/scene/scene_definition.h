@@ -43,6 +43,7 @@ enum entity_type_id {
     ENTITY_TYPE_pinwheel,
     ENTITY_TYPE_breakable,
     ENTITY_TYPE_jelly_pot,
+    ENTITY_TYPE_comm_stone,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -388,6 +389,10 @@ struct breakable_definition {
 struct jelly_pot_definition {
     struct Vector3 position;    
     struct Vector2 rotation; 
+};
+
+struct comm_stone_definition {
+    struct Vector3 position;    
 };
 
 // definition insert point

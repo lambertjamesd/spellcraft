@@ -5,6 +5,7 @@
 #include <math.h>
 
 struct Quaternion gQuaternionZero = {0.0f, 0.0f, 0.0f, 0.0f};
+struct Quaternion gQuaternionIdent = {0.0f, 0.0f, 0.0f, 0.0f};
 
 void quatIdent(struct Quaternion* q) {
     q->x = 0.0f;
