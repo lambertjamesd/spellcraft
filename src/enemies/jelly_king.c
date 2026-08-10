@@ -23,8 +23,6 @@
 
 #define MINION_DELAY_TIMER      10
 
-#define DEFAULT_LAUNCH_SPEED    6.0f
-
 #define ATTACK_DELAY_FRAMES     (3 * 30)
 
 #define SHOOT_ATTACK_OFFSET     2.0f
@@ -34,6 +32,8 @@
 #define BITE_ATTACK_ACCEL       2.0f
 #define DASH_ACCEL              8.0f
 #define MAX_DASH_SPEED          20.0f
+
+#define DEFAULT_LAUNCH_SPEED    6.0f
 
 #define MAX_CHANGE_TIME         4.0f
 
@@ -348,65 +348,22 @@ void jelly_king_fire_jelly(struct jelly_king* jelly_king) {
     if (jelly_index == -1) {
         return;
     }
-
-    struct jelly_definition definition;
-    definition.position = *cutscene_actor_get_pos(&jelly_king->cutscene_actor);
-    definition.rotation = *cutscene_actor_get_rot(&jelly_king->cutscene_actor);
-
-    jelly_king->minion[jelly_index] = entity_spawn(ENTITY_TYPE_jelly, &definition);
-
-    if (!jelly_king->minion[jelly_index]) {
-        return;
-    }
-
+    
     struct contact* nearest_target = jelly_king_find_target(jelly_king);
 
-    struct Vector3 attack_velocity;
+    struct Vector3 offset;
 
     if (nearest_target) {
-        // 0 = s * t + 1/2 * g * t * t
-        // d = s * t
-
-        // t = (d / s)
-
-        // 0 = s * (d / s) + 0.5 * g * d*d/(s*s)
-        // 0 = d + 0.5 * g * d*d/(s*s)
-        // -d = 0.5 * g * d*d/(s*s)
-        // s*s = -0.5 * g * d
-        // s = sqrt(-0.5 * g * d)
-
-
-        // s = sqrt(-g * 0.5 * distance)
-        // vh = offset * s / distance
-        // vv = s
-        
-        struct Vector3 offset;
         vector3Sub(&nearest_target->point, cutscene_actor_get_pos(&jelly_king->cutscene_actor), &offset);
         jelly_king_apply_target_offset(jelly_king, &offset);
-
-        float distance = sqrtf(vector3MagSqrd2D(&offset));
-
-        if (distance < 0.01f) {
-            attack_velocity = gZeroVec;
-        } else {
-            float speed = sqrtf((-GRAVITY_CONSTANT * 0.5f) * distance);
-            float distance_inv = speed / distance;
-            
-            attack_velocity.x = offset.x * distance_inv;
-            attack_velocity.y = speed;
-            attack_velocity.z = offset.z * distance_inv;
-        }
-
     } else {
-        vector2ToLookDir(cutscene_actor_get_rot(&jelly_king->cutscene_actor), &attack_velocity);
-        vector3Scale(&attack_velocity, &attack_velocity, DEFAULT_LAUNCH_SPEED);
-        attack_velocity.y = DEFAULT_LAUNCH_SPEED;
+        vector2ToLookDir(cutscene_actor_get_rot(&jelly_king->cutscene_actor), &offset);
+        vector3Scale(&offset, &offset, DEFAULT_LAUNCH_SPEED);
     }
-    
-    jelly_launch_attack(
-        entity_get(jelly_king->minion[jelly_index]), 
-        &attack_velocity, 
-        jelly_king->cutscene_actor.collider.collision_group, 
+
+    jelly_king->minion[jelly_index] = jelly_launch_at(
+        cutscene_actor_get_pos(&jelly_king->cutscene_actor),
+        &offset,
         nearest_target ? nearest_target->other_object : 0
     );
 }

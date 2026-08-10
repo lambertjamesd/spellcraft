@@ -34,6 +34,8 @@
 
 #define SCALE_CHANGE_RATE   0.05f
 
+#define DEFAULT_LAUNCH_SPEED    6.0f
+
 static wav64_t* jump_sound;
 static tmesh_t* mesh;
 static tmesh_t* ice_mesh;
@@ -394,15 +396,66 @@ void jelly_common_destroy() {
     tmesh_cache_release(ice_mesh);
 }
 
-void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, int collision_group, entity_id target) {
+void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, entity_id target) {
     jelly->collider.velocity = *velocity;
     jelly->jump_timer = 0.0f;
     jelly->is_jumping = 1;
     jelly->is_attacking = 1;
-    jelly->collider.collision_group = collision_group;
     jelly->current_target = target;
 }
 
 void jelly_reset_collision_group(struct jelly* jelly) {
     jelly->collider.collision_group = 0;
+}
+
+entity_id jelly_launch_at(vector3_t* from, vector3_t* offset, entity_id to_target) {
+    struct jelly_definition definition;
+    definition.position = *from;
+
+    vector2_t rotation;
+    vector2LookDir(&definition.rotation, offset);
+
+    entity_id result = entity_spawn(ENTITY_TYPE_jelly, &definition);
+
+    if (!result) {
+        return result;
+    }
+
+    struct Vector3 attack_velocity;
+    // 0 = s * t + 1/2 * g * t * t
+    // d = s * t
+
+    // t = (d / s)
+
+    // 0 = s * (d / s) + 0.5 * g * d*d/(s*s)
+    // 0 = d + 0.5 * g * d*d/(s*s)
+    // -d = 0.5 * g * d*d/(s*s)
+    // s*s = -0.5 * g * d
+    // s = sqrt(-0.5 * g * d)
+
+
+    // s = sqrt(-g * 0.5 * distance)
+    // vh = offset * s / distance
+    // vv = s
+
+    float distance = sqrtf(vector3MagSqrd2D(offset));
+
+    if (distance < 0.01f) {
+        attack_velocity = gZeroVec;
+    } else {
+        float speed = sqrtf((-GRAVITY_CONSTANT * 0.5f) * distance);
+        float distance_inv = speed / distance;
+        
+        attack_velocity.x = offset->x * distance_inv;
+        attack_velocity.y = speed;
+        attack_velocity.z = offset->z * distance_inv;
+    }
+    
+    jelly_launch_attack(
+        entity_get(result), 
+        &attack_velocity, 
+        to_target
+    );
+
+    return result;
 }

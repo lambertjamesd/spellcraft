@@ -25,6 +25,7 @@
 #include "../entities/water_waves.h"
 #include "../entities/pinwheel.h"
 #include "../entities/breakable.h"
+#include "../entities/jelly_pot.h"
 // include_list insert point
 
 #include "../puzzle/bool_and_logic.h"
@@ -105,6 +106,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(golem_enemy, fields_empty),
     ENTITY_DEFINITION(pinwheel, fields_empty),
     ENTITY_DEFINITION(breakable, fields_empty),
+    ENTITY_DEFINITION(jelly_pot, fields_empty),
     // scene_entity_definitions insert point
 };
 

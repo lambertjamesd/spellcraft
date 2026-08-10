@@ -42,7 +42,8 @@ void jelly_destroy(struct jelly* jelly);
 void jelly_common_init();
 void jelly_common_destroy();
 
-void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, int collision_group, entity_id target);
+void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, entity_id target);
+entity_id jelly_launch_at(vector3_t* from, vector3_t* offset, entity_id to_target);
 
 void jelly_reset_collision_group(struct jelly* jelly);
 

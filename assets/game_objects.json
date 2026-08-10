@@ -37,6 +37,12 @@
             "type": "jelly_king"
         },
         {
+            "name": "enemies_jelly_pot",
+            "description": "",
+            "mesh": "meshes/enemies/jelly_pot.blend#fire_pot",
+            "type": "jelly_pot"
+        },
+        {
             "name": "objects_burning_thorns",
             "description": "",
             "mesh": "meshes/objects/burning_thorns.blend#Plane",
