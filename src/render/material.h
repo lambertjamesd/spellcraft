@@ -57,6 +57,7 @@ typedef struct material material_t;
 struct material_pair {
     material_t apply;
     material_t revert;
+    bool is_embedded;
 };
 
 typedef struct material_pair material_pair_t;
@@ -87,7 +88,7 @@ static inline void material_pair_release(material_pair_t* material) {
 }
 
 static inline void material_pair_apply(material_pair_t* material, material_pair_t* prev) {
-    if (prev) {
+    if (prev && prev->revert.block) {
         rspq_block_run(prev->revert.block);
     }
     material_apply(&material->apply);

@@ -480,6 +480,8 @@ def write_armature(file, arm: ArmatureData | None, settings: export_settings.Exp
     file.write(len(bones).to_bytes(2, 'big'))
 
     for bone in bones:
+        print(f'bone {bone.name}')
+
         parent = arm.find_parent_bone(bone.name)
 
         if parent:

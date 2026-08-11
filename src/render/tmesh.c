@@ -102,7 +102,7 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     assert(header == EXPECTED_HEADER);
 
     // load material
-    tmesh->material = material_cache_load_from_file(file);
+    tmesh->material = material_cache_load_linked_or_embedded(file);
 
     // load vertices
 
@@ -238,7 +238,7 @@ void tmesh_release(struct tmesh* tmesh) {
     free(tmesh->vertices);
 
     if (tmesh->material) {
-        material_cache_release(tmesh->material);
+        material_cache_release_linked_or_embedded(tmesh->material);
     }
 
     if (tmesh->transition_materials) {

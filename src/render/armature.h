@@ -42,4 +42,6 @@ void armature_bone_transform(struct armature* armature, int bone_index, struct T
 
 void armature_unpack_transform(struct armature_packed_transform* packed, struct Transform* result);
 
+void armature_transform_position(armature_t* armature, int bone_index, vector3_t* local_pos, vector3_t* result);
+
 #endif

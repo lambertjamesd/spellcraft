@@ -13,6 +13,7 @@ struct comm_stone {
     vector3_t from;
 
     float activation_lerp;
+    float timer;
     bool is_active;
     bool is_visible;
 };

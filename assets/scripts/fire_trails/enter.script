@@ -8,25 +8,33 @@ func main()
 
     pause;
 
+    say "ready";
+    
+    delay 5.0;
+
     fade FADE_COLOR_NONE, 1;
 
-    cam_animate "enter";
-
     interact_with_location INTERACTION_MOVE, NPC_TYPE_PLAYER, "enter_run_target";
-    npc_set_speed NPC_TYPE_PLAYER, 0.65;
+    npc_set_speed NPC_TYPE_PLAYER, 3.65;
 
-    delay 15;
     show_title "FIRE TRIALS";
 
     npc_wait NPC_TYPE_PLAYER;
     interact_with_location INTERACTION_LOOK, NPC_TYPE_PLAYER, "temple";
     cam_wait;
     cam_return;
-    cam_wait;
+
+    delay 1.0;
     
     comm_stone_start;
 
-    say "You have entered";
+    say "
+        Good, you made it
+
+        Not many people have entered the trials since the genesis
+
+        You may need to clear some overgrowth with your flame sword
+    ";
 
     comm_stone_end;
 

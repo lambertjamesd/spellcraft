@@ -12,6 +12,9 @@ void material_cache_release(material_pair_t* material);
 
 material_pair_t* material_cache_load_from_file(FILE* file);
 
+material_pair_t* material_cache_load_linked_or_embedded(FILE* file);
+void material_cache_release_linked_or_embedded(material_pair_t*);
+
 void material_cache_destroy();
 
 #endif

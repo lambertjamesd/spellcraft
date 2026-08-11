@@ -143,3 +143,11 @@ void armature_bone_transform(struct armature* armature, int bone_index, struct T
         bone_index = parent_linkage[bone_index];
     }
 }
+
+void armature_transform_position(armature_t* armature, int bone_index, vector3_t* local_pos, vector3_t* result) {
+    transform_t bone_transform;
+    armature_bone_transform(armature, bone_index, &bone_transform);
+
+    transformPoint(&bone_transform, local_pos, result);
+    vector3Scale(result, result, 1.0f / MODEL_SCALE);
+}

@@ -9,6 +9,7 @@
 #include "../effects/area_title.h"
 #include "../effects/fade_effect.h"
 #include "../entities/comm_stone.h"
+#include "../render/fog.h"
 #include "cutscene_stopwatch.h"
 #include "cutscene_timer.h"
 #include "show_item.h"
@@ -301,37 +302,98 @@ void cutscene_interact_with_position_init(cutscene_runner_context_t* context, in
 // comm_stone
 
 static entity_id active_comm_stone = 0;
+static vector2_t rotate_amount = {
+    0.5f, 0.86f,
+};
+static fog_state_t comm_stone_fog = {
+    .color = {30, 10, 70, 255}, 
+    .min = 5.0f, 
+    .max = -2.0f,
+};
 
-#define COMM_START_HEIGHT   1.0f
-#define COMM_END_HEIGHT     1.5f
-#define COMM_POS_OFFSET     0.75f
+#define COMM_END_HEIGHT         1.2f
+#define COMM_POS_OFFSET         1.5f
+#define CAMERA_DISTANCE         2.0f
+#define CAMERA_HEIGHT_OFFSET    -0.1f
 
-void cutscene_comm_stone_start_init(cutscene_runner_context_t* context, int arg_count) {
-    assert(arg_count == 0);
-    assert(active_comm_stone == 0);
-
+void cutscene_comm_stone_end_pos(vector3_t* result) {
     struct comm_stone_definition stone_def;
-    stone_def.position = *player_get_position(&current_scene->player);
     
     vector2_t* rot = player_get_rotation(&current_scene->player);
 
+    vector2ToLookDir(rot, result);
+    vector3Scale(result, result, COMM_POS_OFFSET);
+    vector3Add(player_get_position(&current_scene->player), result, result);
+
+    result->y += COMM_END_HEIGHT;
+}
+
+void cutscene_comm_stone_spawn() {
     vector3_t target;
-    vector2ToLookDir(rot, &target);
-    vector3Scale(&target, &target, COMM_POS_OFFSET);
-    vector3Add(&stone_def.position, &target, &target);
+    cutscene_comm_stone_end_pos(&target);
 
-    stone_def.position.y += COMM_START_HEIGHT;
-    target.y += COMM_END_HEIGHT;
+    player_t* player = &current_scene->player;
 
+    vector3_t hand_position;
+    armature_transform_position(player->cutscene_actor.armature, 15, &gZeroVec, &hand_position);
+    transformSaTransformPoint(&player->cutscene_actor.transform, &hand_position, &hand_position);
+
+    struct comm_stone_definition stone_def;
+    stone_def.position = hand_position;
     active_comm_stone = entity_spawn(ENTITY_TYPE_comm_stone, &stone_def);
     comm_stone_t* stone = entity_get(active_comm_stone);
 
-    if (stone) {
-        comm_stone_activate(stone, &stone_def.position, &target);
+    if (!stone) {
+        return;
     }
+
+    comm_stone_activate(stone, &hand_position, &target);
+}
+
+
+void cutscene_comm_stone_start_init(cutscene_runner_context_t* context, int arg_count) {
+    assert(arg_count == 0);
+    
+    // just in case
+    if (active_comm_stone) {
+        entity_despawn(active_comm_stone);
+        active_comm_stone = 0;
+    }
+    
+    vector3_t target;
+    cutscene_comm_stone_end_pos(&target);
+
+    vector3_t* player_pos = player_get_position(&current_scene->player);
+
+    vector3_t camera_look;
+    camera_look.x = (target.x + player_pos->x) * 0.5f;
+    camera_look.y = target.y;
+    camera_look.z = (target.z + player_pos->z) * 0.5f;
+    camera_move_to(&current_scene->camera_controller, &camera_look, false, true);
+
+    vector2_t* rot = player_get_rotation(&current_scene->player);
+    vector3_t offset;
+    vector2ToLookDir(rot, &offset);
+
+    vector3_t camera_pos;
+    vector3RotateWith2(&offset, &rotate_amount, &camera_pos);
+    vector3AddScaled(&camera_look, &camera_pos, CAMERA_DISTANCE, &camera_pos);
+    camera_move_to(&current_scene->camera_controller, &camera_pos, false, false);
+
+    cutscene_actor_run_animation(&current_scene->player.cutscene_actor, "comm_stone_start", false);
 }
 
 bool cutscene_comm_stone_start_step(cutscene_runner_context_t* context) { 
+    if (active_comm_stone == 0) {
+        if (cutscene_actor_is_animating(&current_scene->player.cutscene_actor)) {
+            return false;
+        }
+
+        cutscene_comm_stone_spawn();
+        fog_set(FOG_PRIORITY_EFFECT, comm_stone_fog, 1.0f);
+        cutscene_actor_run_animation(&current_scene->player.cutscene_actor, "comm_stone_idle", true);
+    }
+    
     comm_stone_t* stone = entity_get(active_comm_stone);
 
     if (!stone) {
@@ -343,12 +405,19 @@ bool cutscene_comm_stone_start_step(cutscene_runner_context_t* context) {
 
 void cutscene_comm_stone_end_init(cutscene_runner_context_t* context, int arg_count) {
     assert(arg_count == 0);
-    
+
     comm_stone_t* stone = entity_get(active_comm_stone);
 
     if (stone) {
         comm_stone_deactivate(stone);
+        player_t* player = &current_scene->player;
+        armature_transform_position(player->cutscene_actor.armature, 4, &gZeroVec, &stone->from);
+        transformSaTransformPoint(&player->cutscene_actor.transform, &stone->from, &stone->from);
     }
+
+    cutscene_actor_run_animation(&current_scene->player.cutscene_actor, "comm_stone_end", false);
+    camera_return(&current_scene->camera_controller);
+    fog_clear(FOG_PRIORITY_EFFECT, 1.0f);
 }
 
 bool cutscene_comm_stone_end_step(cutscene_runner_context_t* context) { 
@@ -365,6 +434,11 @@ bool cutscene_comm_stone_end_step(cutscene_runner_context_t* context) {
     entity_despawn(active_comm_stone);
     active_comm_stone = 0;
     return true;
+}
+
+void cutscene_comm_cancel(cutscene_runner_context_t* context) {
+    entity_despawn(active_comm_stone);
+    active_comm_stone = 0;
 }
 
 // npc_wait
@@ -522,7 +596,7 @@ static cutscene_step_fn_t function_steps[] = {
     [CUTSCENE_FN_LOAD_SCENE] = {.init = cutscene_load_scene_init }, // func load_scene(scene_name: str)
     [CUTSCENE_FN_LOAD_FADE] = {.init = cutscene_fade_init }, // func fade(fade_to: i32, duration: float)
     [CUTSCENE_FN_COMM_STONE_START] = {.init = cutscene_comm_stone_start_init, .step = cutscene_comm_stone_start_step}, // func comm_stone_start()
-    [CUTSCENE_FN_COMM_STONE_END] = {.init = cutscene_comm_stone_end_init, .step = cutscene_comm_stone_end_step}, // func comm_stone_end()
+    [CUTSCENE_FN_COMM_STONE_END] = {.init = cutscene_comm_stone_end_init, .step = cutscene_comm_stone_end_step, .cancel = cutscene_comm_cancel}, // func comm_stone_end()
     {.init = cutscene_idle_npc_init }, // func idle_npc(npc: entity_id)
     {.init = cutscene_cam_anim_init }, // func cam_animate(animation: str)
     {.init = cutscene_interact_with_location_init }, // func interact_with_location(interaction: i32, npc: entity_id, name: str)

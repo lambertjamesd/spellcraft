@@ -2,7 +2,10 @@
 
 #include "../math/mathf.h"
 
-#define LERP_TIME   1.0f
+#define LERP_TIME   0.5f
+
+#define BOB_HEIGHT  0.05f
+#define BOB_TIME    1.5f
 
 void comm_stone_hide(comm_stone_t* stone) {
     if (stone->is_visible) {
@@ -26,10 +29,15 @@ void comm_stone_update(void* data) {
     if (stone->is_visible) {
         comm_stone_update_pos(stone);
 
-        if (stone->activation_lerp == 0.0f) {
+        if (stone->activation_lerp == 0.0f && !stone->is_active) {
             comm_stone_hide(stone);
         }
     }
+
+    stone->transform.position.y += stone->activation_lerp * sinf(stone->timer * (3.14 / BOB_TIME)) * BOB_HEIGHT;
+    quatAxisAngle(&gUp, stone->timer, &stone->transform.rotation);
+
+    stone->timer += fixed_time_step;
 }
 
 void comm_stone_deactivate(comm_stone_t* stone) {
@@ -37,7 +45,8 @@ void comm_stone_deactivate(comm_stone_t* stone) {
 }
 
 bool comm_stone_is_animating(comm_stone_t* stone) {
-    return stone->is_visible;
+    float target_lerp = stone->is_active ? 1.0f : 0.0f;
+    return stone->activation_lerp != target_lerp;
 }
 
 void comm_stone_activate(comm_stone_t* stone, vector3_t* from, vector3_t* target) {
@@ -53,6 +62,7 @@ void comm_stone_activate(comm_stone_t* stone, vector3_t* from, vector3_t* target
 
     stone->from = *from;
     stone->target = *target;
+    stone->is_active = true;
 
     comm_stone_update_pos(stone);
 }
@@ -61,6 +71,9 @@ void comm_stone_init(comm_stone_t* comm_stone, struct comm_stone_definition* def
     transformInit(&comm_stone->transform, &definition->position, &gQuaternionIdent, &gOneVec);
     renderable_init(&comm_stone->renderable, &comm_stone->transform, "rom:/meshes/player/comm_stone.tmesh");
     comm_stone->activation_lerp = 0.0f;
+    comm_stone->is_active = false;
+    comm_stone->is_visible = false;
+    comm_stone->timer = 0.0f;
 }
 
 void comm_stone_destroy(comm_stone_t* comm_stone, struct comm_stone_definition* definition) {

@@ -99,13 +99,13 @@ void golem_fist_deactivate(golem_fist_t* fist) {
 }
 
 void golem_fist_update(golem_enemy_t* golem, golem_fist_t* fist) {
-    transform_t fist_transform;
-    armature_bone_transform(&golem->renderable.mesh_render.armature, fist->attachment->bone_index, &fist_transform);
-
-    transformPoint(&fist_transform, &golem_r_attachment->local_pos, &fist->position);
-    vector3Scale(&fist->position, &fist->position, 1.0f / MODEL_SCALE);
+    armature_transform_position(
+        &golem->renderable.mesh_render.armature, 
+        fist->attachment->bone_index,
+        &golem_r_attachment->local_pos, 
+        &fist->position
+    );
     transformSaTransformPoint(&golem->transform, &fist->position, &fist->position);
-
 }
 
 void golem_enemy_look_forward(golem_enemy_t* golem) {
