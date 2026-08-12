@@ -286,7 +286,7 @@ void collision_scene_collide_dynamic(struct Vector3* prev_positions) {
                 if (a->type == COLLISION_ELEMENT_TYPE_DYNAMIC && b->type == COLLISION_ELEMENT_TYPE_DYNAMIC) {
                     struct dynamic_object* a_obj = a->object;
                     struct dynamic_object* b_obj = b->object;
-                    if (box3DHasOverlap(&a_obj->bounding_box, &b_obj->bounding_box)) {
+                    if ((!a_obj->is_sleeping || !b_obj->is_sleeping) && box3DHasOverlap(&a_obj->bounding_box, &b_obj->bounding_box)) {
                         if (a_obj->should_sweep_collide || b_obj->should_sweep_collide) {
                             collide_object_to_object_swept(
                                 a_obj, 
@@ -428,10 +428,6 @@ void collision_scene_collide() {
         prev_pos[i] = *object->position;
         prev_was_grounded[i] = dynamic_object_get_ground(object) != NULL;
 
-        if (object->is_sleeping) {
-            continue;
-        }
-
         collision_scene_return_contacts(object->active_contacts);
         collision_scene_return_contacts(object->shadow_contact);
         object->active_contacts = NULL;
@@ -457,7 +453,9 @@ void collision_scene_collide() {
             --object->has_ice_dash;
         }
 
-        dynamic_object_update(object);
+        if (!object->is_sleeping) {
+            dynamic_object_update(object);
+        }
 
         collision_scene_recalc_bb(object, &prev_pos[i]);
     }

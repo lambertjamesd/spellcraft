@@ -136,6 +136,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
     );
 
     elemental_sword->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
+    dynamic_object_wake(&elemental_sword->collider);
 
     collision_scene_add(&elemental_sword->collider);
 
@@ -159,6 +160,8 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
         elemental_sword->power_ratio = mana_pool_request_ratio(&spell_sources->mana_pool, elemental_sword->definition->mana_cost);
         elemental_sword->needs_mana_check = 0;
     }
+    
+    dynamic_object_wake(&elemental_sword->collider);
 
     bool is_active = false;
     bool is_attacking = false;
