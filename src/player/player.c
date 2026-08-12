@@ -1207,18 +1207,20 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
     }
     source->flags.cast_held = input.btn.a;
 
-    if (pressed.b) {
-        live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_LIFE);
-    } else if (pressed.c_up) {
-        live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_AIR);
-    } else if (pressed.c_down) {
-        live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_EARTH);
-    } else if (pressed.c_right) {
-        live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_FIRE);
-    } else if (pressed.c_left) {
-        live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_WATER);
-    } else if (live_cast_has_pending_spell(&player->live_cast) && pressed.r) {
-        live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_BREAK);
+    if (input.btn.z) {
+        if (pressed.b) {
+            live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_LIFE);
+        } else if (pressed.c_up) {
+            live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_AIR);
+        } else if (pressed.c_down) {
+            live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_EARTH);
+        } else if (pressed.c_right) {
+            live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_FIRE);
+        } else if (pressed.c_left) {
+            live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_WATER);
+        } else if (live_cast_has_pending_spell(&player->live_cast) && pressed.r) {
+            live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_BREAK);
+        }
     }
 }
 

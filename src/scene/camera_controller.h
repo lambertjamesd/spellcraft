@@ -34,6 +34,11 @@ union camera_controller_state_data {
         bool moving_position;
         bool moving_look_at;
     } move_to;
+    struct {
+        float horizontal_velocity;
+        float vertical_angle_vel;
+        float vertical_angle;
+    } follow;
 };
 
 struct camera_controller {

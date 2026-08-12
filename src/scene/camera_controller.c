@@ -18,6 +18,16 @@ static struct move_towards_parameters camera_move_parameters = {
 #define OVER_SHOULDER_DISTANCE  1.1f
 #define EXTEND_SPEED            2.0f
 
+#define CAMERA_CUTSCENE_DISTANCE    1.8f
+#define CAMERA_LOWER_FOLLOW_DISTANCE    0.5f
+#define CAMERA_UPPER_FOLLOW_DISTANCE    8.0f
+
+#define MIN_ANGLE                       -1.5f
+#define MAX_ANGLE                       1.5f
+
+#define TURN_SPEED              13.0f
+#define TURN_ACCEL              32.0f
+
 #define MIN_TWO_TARGET_DISTANCE 
 
 void camera_cached_calcuations_check(struct camera_cached_calcuations* cache, struct Camera* camera) {
@@ -148,37 +158,147 @@ void camera_controller_watch_target(struct camera_controller* controller, struct
     move_towards(&controller->looking_at, &controller->looking_at_speed, &looking_at, &camera_move_parameters);
 }
 
-void camera_controller_determine_player_move_target(struct camera_controller* controller, struct Vector3* result, bool behind_player) {
-    struct Vector3 offset;
-    struct Vector3* player_pos = player_get_position(controller->player);
+static inline float camera_get_distance(struct camera_controller* controller) {
+    float result = controller->state == CAMERA_STATE_LOOK_AT_WITH_PLAYER ? CAMERA_CUTSCENE_DISTANCE : CAMERA_FOLLOW_DISTANCE;
 
-    if (behind_player) {
-        struct Quaternion quat;
-        quatAxisComplex(&gUp, &controller->player->cutscene_actor.transform.rotation, &quat);
-        quatMultVector(&quat, &gForward, &offset);
+#if ENABLE_WORLD_SCALE
+    if (near_scalar < 1.0f) {
+        result *= near_scalar;
+    }   
+#endif
+
+    return result;
+}
+
+void camera_controller_determine_horz_movement(struct camera_controller* controller, joypad_buttons_t buttons, vector3_t* offset) {
+    float angle_delta = 0.0f;
+
+    if (buttons.c_right && !buttons.z) {
+        angle_delta += TURN_SPEED;
+    }
+
+    if (buttons.c_left && !buttons.z) {
+        angle_delta -= TURN_SPEED;
+    }
+
+    float curr_vel = controller->state_data.follow.horizontal_velocity;
+    curr_vel = mathfMoveTowards(
+        curr_vel,
+        angle_delta,
+        fixed_time_step * TURN_ACCEL
+    );
+
+    if (curr_vel != 0.0f) {
+        vector2_t rotation;
+        vector2ComplexFromAngle(
+            curr_vel * fixed_time_step, 
+            &rotation
+        );
+        vector3RotateWith2(offset, &rotation, offset);
+    }
+
+    controller->state_data.follow.horizontal_velocity = curr_vel;
+}
+
+float camera_controller_determine_vert_movement(struct camera_controller* controller, joypad_buttons_t buttons, vector3_t* offset) {
+    float angle_delta = 0.0f;
+
+    if (buttons.c_down && !buttons.z) {
+        angle_delta -= TURN_SPEED;
+    }
+
+    if (buttons.c_up && !buttons.z) {
+        angle_delta += TURN_SPEED;
+    }
+
+    float curr_vel = controller->state_data.follow.vertical_angle_vel;
+    curr_vel = mathfMoveTowards(
+        curr_vel,
+        angle_delta,
+        fixed_time_step * TURN_ACCEL
+    );
+    controller->state_data.follow.vertical_angle = clampf(
+        controller->state_data.follow.vertical_angle + curr_vel * fixed_time_step,
+        MIN_ANGLE,
+        MAX_ANGLE
+    );
+
+    float cos_angle = cosf(controller->state_data.follow.vertical_angle);
+    float sin_angle = sinf(controller->state_data.follow.vertical_angle);
+
+    offset->x *= cos_angle;
+    offset->y = sin_angle;
+    offset->z *= cos_angle;
+
+    float scalar = 1.0f;
+
+#if ENABLE_WORLD_SCALE
+    scalar = near_scalar;
+#endif
+
+    if (sin_angle < 0.0f) {
+        return mathfLerp(camera_get_distance(controller), CAMERA_UPPER_FOLLOW_DISTANCE * scalar, -sin_angle);
     } else {
-        vector3Sub(player_pos, &controller->stable_position, &offset);
+        return mathfLerp(camera_get_distance(controller), CAMERA_LOWER_FOLLOW_DISTANCE * scalar, sin_angle);
+    }
+}
 
-        offset.y = 0.0f;
-        vector3Normalize(&offset, &offset);
+float camera_controller_determine_player_move_target(struct camera_controller* controller, struct Vector3* result) {
 
-        if (vector3MagSqrd(&offset) < 0.1f) {
-            offset = gForward;
+    struct Vector3* player_pos = player_get_position(controller->player);
+    
+    // deterine direction from camera's current position to the player
+    struct Vector3 offset;
+    vector3Sub(player_pos, &controller->stable_position, &offset);
+
+    // convert that direction to a unit vector in the x/z plane
+    offset.y = 0.0f;
+    vector3Normalize(&offset, &offset);
+
+    // if the normalize step failed (becuase the player and camera are the same point)
+    // just pick any direction to use
+    if (vector3MagSqrd(&offset) < 0.1f) {
+        offset = gForward;
+    }
+    
+    joypad_buttons_t buttons = joypad_get_buttons(0);
+
+    camera_controller_determine_horz_movement(controller, buttons, &offset);
+    float target_distance = camera_controller_determine_vert_movement(controller, buttons, &offset);
+    float follow_distance = target_distance;
+
+#if !ENABLE_WORLD_SCALE
+    // determine how far the camera should be the wall checker will determine if the camera 
+    // should move closer to avoid obstacles
+    if (controller->wall_checker.collider.active_contacts) {
+        float clamped_distance = controller->wall_checker.actual_distance;
+    
+        if (clamped_distance < follow_distance) {
+            follow_distance = clamped_distance;
         }
     }
+#endif
 
-    float clamped_distance = controller->wall_checker.actual_distance + EXTEND_SPEED * fixed_time_step;
+    vector3AddScaled(player_pos, &offset, -follow_distance, result);
 
-    if (clamped_distance < CAMERA_FOLLOW_DISTANCE) {
-        vector3AddScaled(player_pos, &offset, -clamped_distance, result);
-    } else {
-        vector3AddScaled(player_pos, &offset, -CAMERA_FOLLOW_DISTANCE, result);
-    }
+    float height = CAMERA_FOLLOW_HEIGHT;
+    
+#if ENABLE_WORLD_SCALE
+    if (near_scalar < 1.0f) {
+        height *= near_scalar;
+    }   
+#endif
 
-    result->y += CAMERA_FOLLOW_HEIGHT;
+    // move the player up to compensate for the player's height
+    result->y += height;
+    // look at the player
     struct Vector3 looking_at = *player_pos;
-    looking_at.y += CAMERA_FOLLOW_HEIGHT;
+    looking_at.y += height;
+
+    // slowly move the looking_at towards the look target to prevent a jarring motion
     move_towards(&controller->looking_at, &controller->looking_at_speed, &looking_at, &camera_move_parameters);
+
+    return target_distance;
 }
 
 void camera_controller_update_position(struct camera_controller* controller, struct TransformSingleAxis* target) {
@@ -206,8 +326,7 @@ void camera_controller_return_target(struct camera_controller* controller, struc
     controller->camera->fov = mathfMoveTowards(controller->camera->fov, 70.0f, 20.0f * fixed_time_step);
 
     if (vector3DistSqrd(target, &controller->stable_position) < 0.0001f) {
-        controller->state = CAMERA_STATE_FOLLOW;
-        controller->camera->fov = 70.0f;
+        camera_follow_player(controller);
     }
 }
 
@@ -282,6 +401,8 @@ void camera_controller_determine_near_plane(struct camera_controller* controller
 }
 
 void camera_controller_update(struct camera_controller* controller) {
+    float follow_distance = camera_get_distance(controller);
+
     switch (controller->state) {
         case CAMERA_STATE_FOLLOW: {
             entity_id secondary = camera_determine_secondary_target(controller);
@@ -298,8 +419,7 @@ void camera_controller_update(struct camera_controller* controller) {
                     camera_controller_watch_target(controller, &target);
                 }
             } else {
-                // camera_controller_determine_player_move_target(controller, &controller->target, false);
-                camera_controller_determine_player_move_target(controller, &controller->target, joypad_get_buttons_held(0).z);
+                follow_distance = camera_controller_determine_player_move_target(controller, &controller->target);
             }
             camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
             break;
@@ -322,7 +442,7 @@ void camera_controller_update(struct camera_controller* controller) {
             break;
     }
 
-    camera_wall_checker_update(&controller->wall_checker, &controller->looking_at, &controller->target, CAMERA_FOLLOW_DISTANCE);
+    camera_wall_checker_update(&controller->wall_checker, &controller->looking_at, &controller->target, follow_distance);
 
     vector3AddScaled(&controller->shake_velocity, &controller->shake_offset, -50.0f, &controller->shake_velocity);
     vector3AddScaled(&controller->shake_offset, &controller->shake_velocity, fixed_time_step, &controller->shake_offset);
@@ -335,7 +455,7 @@ void camera_controller_update(struct camera_controller* controller) {
 void camera_controller_init(struct camera_controller* controller, struct Camera* camera, struct player* player) {
     controller->camera = camera;
     controller->player = player;
-    controller->state = CAMERA_STATE_FOLLOW;
+    camera_follow_player(controller);
 
     update_add(controller, (update_callback)camera_controller_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
     camera_wall_checker_init(&controller->wall_checker);
@@ -345,7 +465,7 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     controller->looking_at.y += CAMERA_FOLLOW_HEIGHT;
     controller->looking_at_speed = 0.0f;
     controller->look_target = gZeroVec;
-    camera_controller_determine_player_move_target(controller, &controller->target, true);
+    camera_controller_determine_player_move_target(controller, &controller->target);
     controller->follow_distace = 3.0f;
     controller->shake_offset = gZeroVec;
     controller->shake_velocity = gZeroVec;
@@ -377,6 +497,13 @@ void camera_look_at(struct camera_controller* controller, struct Vector3* target
 void camera_follow_player(struct camera_controller* controller) {
     controller->state = CAMERA_STATE_FOLLOW;
     controller->camera->fov = 70.0f;
+    controller->state_data = (union camera_controller_state_data){
+        .follow = {
+            .horizontal_velocity = 0.0f,
+            .vertical_angle = 0.0f,
+            .vertical_angle_vel = 0.0f,
+        },
+    };
 }
 
 void camera_return(struct camera_controller* controller) {
