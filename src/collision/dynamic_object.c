@@ -25,6 +25,7 @@ void dynamic_object_init(
     object->skip_mesh_collision = 0;
     object->trigger_type = TRIGGER_TYPE_NONE;
     object->is_fixed = 0;
+    object->is_sleeping = 1;
     object->is_pushed = 0;
     object->is_jumping = 0;
     object->under_water = 0;

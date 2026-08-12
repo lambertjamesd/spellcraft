@@ -132,6 +132,8 @@ bool cutscene_actor_update(struct cutscene_actor* actor) {
     if (!cutscene_actor_is_moving(actor)) {
         return false;
     }
+    
+    dynamic_object_wake(&actor->collider);
 
     if (HAS_FLAG(actor->state, ACTOR_STATE_MOVING)) {
         struct Vector3 offset;

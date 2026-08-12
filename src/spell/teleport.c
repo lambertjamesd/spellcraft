@@ -23,6 +23,8 @@ bool teleport_update(struct teleport* teleport, struct spell_event_listener* eve
         return false;
     }
 
+    dynamic_object_wake(target);
+
     if (teleport->teleport_time) {
         teleport->teleport_time -= fixed_time_step;
         if (teleport->teleport_time <= 0.0f) {

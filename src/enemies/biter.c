@@ -170,6 +170,7 @@ void biter_update_chase(struct biter* biter) {
         struct Vector3 targetVelocity;
         vector3RotatedSpeed(&biter->transform.rotation, &targetVelocity, MOVE_SPEED);
         vector3MoveTowards(&biter->dynamic_object.velocity, &targetVelocity, MOVE_ACCELERATION * fixed_time_step, &biter->dynamic_object.velocity);
+        dynamic_object_wake(&biter->dynamic_object);
     }
 }
 

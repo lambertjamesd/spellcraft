@@ -10,6 +10,7 @@ void single_push_apply_burst_velocity_with_dir(float top_speed, struct dynamic_o
     vector3ProjectPlane(&obj->velocity, wind_direction, &tangent);
     vector3AddScaled(&tangent, wind_direction, top_speed, &obj->velocity);
     DYNAMIC_OBJECT_MARK_PUSHED(obj);
+    dynamic_object_wake(obj);
 }
 
 void single_push_apply_velocity_with_dir(struct push_single_definition* definition, struct dynamic_object* obj, struct Vector3* wind_direction)  {
@@ -24,6 +25,7 @@ void single_push_apply_velocity_with_dir(struct push_single_definition* definiti
 
     DYNAMIC_OBJECT_MARK_PUSHED(obj);
     obj->velocity.y -= (GRAVITY_CONSTANT - 0.1f) * fixed_time_step;
+    dynamic_object_wake(obj);
 }
 
 void single_push_restore_target(struct push_single_target* push, struct dynamic_object* obj) {

@@ -24,6 +24,7 @@ void stasis_destroy(struct stasis* stasis) {
 
     if (target) {
         target->velocity = stasis->original_velocity;
+        dynamic_object_wake(target);
     }
 }
 

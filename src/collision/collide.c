@@ -171,6 +171,8 @@ void collide_object_to_mesh(struct dynamic_object* object, struct mesh_collider*
 void collide_adjust_collision(struct dynamic_object* object, struct EpaResult* result, struct Vector3* momentum_center, struct Vector3* relative_velocity, float factor) {
     if (!object->is_fixed) {
         vector3AddScaled(object->position, &result->normal, result->penetration * factor, object->position);
+        object->is_sleeping = 0;
+        object->sleep_counter = 0;
 
         if (relative_velocity) {
             vector3AddScaled(momentum_center, relative_velocity, factor, &object->velocity);

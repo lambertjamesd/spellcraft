@@ -104,6 +104,7 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
     projectile->dynamic_object.density_class = DYNAMIC_DENSITY_HEAVY;
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
+    dynamic_object_wake(&projectile->dynamic_object);
 
     if (rune.flaming) {
         projectile->dynamic_object.has_gravity = 0;

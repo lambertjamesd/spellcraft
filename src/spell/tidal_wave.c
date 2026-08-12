@@ -69,6 +69,7 @@ void tidal_wave_damage_and_push(tidal_wave_t* tidal_wave) {
         dynamic_object_t* obj = collision_scene_find_object(contact->other_object);
 
         if (obj) {
+            dynamic_object_wake(obj);
             vector3MoveTowards(&obj->velocity, &target_velocity, MOVE_ACCEL, &obj->velocity);
         }
 

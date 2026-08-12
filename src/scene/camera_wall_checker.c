@@ -46,6 +46,7 @@ void camera_wall_checker_update(camera_wall_checker_t* checker, vector3_t* look_
     checker->cast_from = checker->position;
     
     vector3Scale(&direction, &checker->collider.velocity, follow_distance / fixed_time_step);
+    dynamic_object_wake(&checker->collider);
 }
 
 void camera_wall_checker_destroy(camera_wall_checker_t* checker) {

@@ -152,6 +152,7 @@ bool push_update(struct push* push, struct spell_event_listener* event_listener,
         targetVelocity.y = target->velocity.y;
     }
     vector3MoveTowards(&target->velocity, &targetVelocity, scaled_time_step * push->definition->push_acceleration * power_ratio, &target->velocity);
+    dynamic_object_wake(target);
 
     if (push->dash_trail_right) {
         dash_trail_move(push->dash_trail_right, target->position);

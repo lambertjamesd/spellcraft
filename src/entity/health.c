@@ -127,6 +127,7 @@ float health_damage(struct health* health, struct damage_info* damage) {
             DYNAMIC_OBJECT_MARK_JUMPING(object);
 
             vector3Add(&object->velocity, &direction, &object->velocity);
+            dynamic_object_wake(object);
         }
     }
 

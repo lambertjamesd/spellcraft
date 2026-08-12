@@ -255,6 +255,7 @@ void golem_update_speed(golem_enemy_t* golem, float speed) {
     vector3Scale(&target_vel, &target_vel, golem->target_speed);
     target_vel.y = golem->collider.velocity.y;
     golem->collider.velocity = target_vel;
+    dynamic_object_wake(&golem->collider);
 }
 
 void golem_enemy_update_follow(golem_enemy_t* golem) {

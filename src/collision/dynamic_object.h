@@ -95,7 +95,8 @@ struct dynamic_object {
     uint16_t has_gravity: 1;
     uint16_t trigger_type: 2;
     uint16_t is_fixed: 1;
-    uint16_t skip_mesh_collision;
+    uint16_t is_sleeping: 1;
+    uint16_t skip_mesh_collision: 1;
     uint16_t is_pushed: 2;
     uint16_t is_jumping: 2;
     uint16_t disable_friction: 2;
@@ -108,6 +109,7 @@ struct dynamic_object {
     uint16_t should_sweep_collide: 1;
     uint16_t collision_layers;
     uint16_t collision_group;
+    uint8_t sleep_counter;
     struct contact* active_contacts;
     struct contact* shadow_contact;
 };
@@ -144,5 +146,9 @@ void dynamic_object_set_scale(struct dynamic_object* object, float scale);
 
 #define DYNAMIC_OBJECT_NEEDS_OVERLAP(obj)   ((obj)->trigger_type != TRIGGER_TYPE_BASIC)
 #define DYNAMIC_OBJECT_SHOULD_PUSH(obj)     ((obj)->trigger_type == TRIGGER_TYPE_NONE)
+
+static inline void dynamic_object_wake(struct dynamic_object* object) {
+    object->is_sleeping = false;
+}
 
 #endif

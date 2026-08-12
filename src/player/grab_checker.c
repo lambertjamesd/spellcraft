@@ -165,6 +165,7 @@ bool grab_checker_update(grab_checker_t* checker, dynamic_object_t* player_colli
         checker->collider.velocity = (struct Vector3){0.0f, -MAX_GRAB_HEIGHT / fixed_time_step, 0.0f};
         checker->grab_timer = 0;
     }
+    dynamic_object_wake(&checker->collider);
 
     return checker->grab_timer > GRAB_TIMER_THRESHOLD;
 }

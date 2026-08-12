@@ -398,6 +398,7 @@ void jelly_common_destroy() {
 
 void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, entity_id target) {
     jelly->collider.velocity = *velocity;
+    dynamic_object_wake(&jelly->collider);
     jelly->jump_timer = 0.0f;
     jelly->is_jumping = 1;
     jelly->is_attacking = 1;

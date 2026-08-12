@@ -18,6 +18,8 @@
 
 #define MAX_SNAP_TO_GROUND_ANGLE    35.0f
 #define KILL_PLANE                  -10.0f
+#define SLEEP_MOVE_THRESHOLD        0.001f
+#define SLEEP_FRAME_THRESHOLD       10
 
 struct collision_scene g_scene;
 static struct Vector2 max_ground_snap_angle;
@@ -426,6 +428,10 @@ void collision_scene_collide() {
         prev_pos[i] = *object->position;
         prev_was_grounded[i] = dynamic_object_get_ground(object) != NULL;
 
+        if (object->is_sleeping) {
+            continue;
+        }
+
         collision_scene_return_contacts(object->active_contacts);
         collision_scene_return_contacts(object->shadow_contact);
         object->active_contacts = NULL;
@@ -469,13 +475,22 @@ void collision_scene_collide() {
 
         struct dynamic_object* object = (struct dynamic_object*)element->object;
 
-        if (object->is_fixed) {
+        if (object->is_fixed || object->is_sleeping) {
             continue;
         }
 
         collision_scene_collide_single(element->object, &prev_pos[i]);
 
         bool is_grounded = dynamic_object_get_ground(object) != NULL;
+
+        if (is_grounded && vector3DistSqrd(object->position, &prev_pos[i]) < SLEEP_MOVE_THRESHOLD * SLEEP_MOVE_THRESHOLD) {
+            object->sleep_counter += 1;
+
+            if (object->sleep_counter >= SLEEP_FRAME_THRESHOLD) {
+                object->is_sleeping = 0;
+                object->sleep_counter = 0;
+            }
+        }
 
         struct mesh_shadow_cast_result shadow;
         if (collision_scene_shadow_cast(object->position, &shadow)) {

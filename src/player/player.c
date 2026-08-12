@@ -1311,6 +1311,8 @@ void player_update(struct player* player) {
     player_check_inventory(player);
     health_recieve_contact_damage(&player->health, player->cutscene_actor.collider.active_contacts);
 
+    dynamic_object_wake(&player->cutscene_actor.collider);
+
     if (cutscene_actor_update(&player->cutscene_actor) || !update_has_layer(UPDATE_LAYER_WORLD)) {
         return;
     }

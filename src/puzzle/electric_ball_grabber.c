@@ -33,6 +33,7 @@ void electric_ball_grabber_update(void* data) {
             offset.y += CENTER_OFFSET;
             vector3AddScaled(&obj->velocity, &offset, 1.0f, &obj->velocity);
             vector3Scale(&obj->velocity, &obj->velocity, 0.9f);
+            dynamic_object_wake(obj);
             is_grabbing = true;
         }
     }
