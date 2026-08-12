@@ -390,7 +390,7 @@ bool cutscene_comm_stone_start_step(cutscene_runner_context_t* context) {
         }
 
         cutscene_comm_stone_spawn();
-        fog_set(FOG_PRIORITY_EFFECT, comm_stone_fog, 1.0f);
+        fog_set(FOG_PRIORITY_EFFECT, comm_stone_fog, 2.0f);
         cutscene_actor_run_animation(&current_scene->player.cutscene_actor, "comm_stone_idle", true);
     }
     
@@ -417,7 +417,7 @@ void cutscene_comm_stone_end_init(cutscene_runner_context_t* context, int arg_co
 
     cutscene_actor_run_animation(&current_scene->player.cutscene_actor, "comm_stone_end", false);
     camera_return(&current_scene->camera_controller);
-    fog_clear(FOG_PRIORITY_EFFECT, 1.0f);
+    fog_clear(FOG_PRIORITY_EFFECT, 2.0f);
 }
 
 bool cutscene_comm_stone_end_step(cutscene_runner_context_t* context) { 
