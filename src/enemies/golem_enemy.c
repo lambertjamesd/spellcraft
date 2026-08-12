@@ -450,6 +450,10 @@ void golem_fist_init(golem_fist_t* fist, entity_id entity_id, armature_attachmen
 float golem_enemy_on_hit(void* data, struct damage_info* damage) {
     golem_enemy_t* golem = (golem_enemy_t*)data;
 
+    if (golem->state == GOLEM_STATE_IDLE) {
+        return 0.0f;
+    }
+
     if (damage->type & DAMAGE_TYPE_FIRE) {
         return damage->amount * FIRE_RESISTANCE;
     }
