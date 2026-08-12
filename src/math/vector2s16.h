@@ -2,6 +2,7 @@
 #define __MATH_VECTOR2S16_H__
 
 #include "vector3.h"
+#include <stdint.h>
 
 struct Vector2s16 {
     union {
@@ -20,10 +21,14 @@ typedef struct Vector2s16 vector2s16_t;
 void vector2s16Add(struct Vector2s16* a, struct Vector2s16* b, struct Vector2s16* output);
 void vector2s16Sub(struct Vector2s16* a, struct Vector2s16* b, struct Vector2s16* output);
 
+void vector2s16Lerp(struct Vector2s16* a, struct Vector2s16* b, uint16_t lerp, struct Vector2s16* output);
+
 int vector2s16Dot(struct Vector2s16* a, struct Vector2s16* b);
 int vector2s16Cross(struct Vector2s16* a, struct Vector2s16* b);
 int vector2s16MagSqr(struct Vector2s16* a);
-int vector2s16DistSqr(struct Vector2s16* a, struct Vector2s16* b);
+int vector2s16DistSqr(struct Vector2s16* input, struct Vector2s16* output);
+
+void vector2s16Rotate90(struct Vector2s16* a, struct Vector2s16* b);
 
 int vector2s16FallsBetween(struct Vector2s16* from, struct Vector2s16* towards, struct Vector2s16* check);
 

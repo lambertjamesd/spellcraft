@@ -10,6 +10,15 @@ void vector2s16Sub(struct Vector2s16* a, struct Vector2s16* b, struct Vector2s16
     output->y = a->y - b->y;
 }
 
+void vector2s16Lerp(struct Vector2s16* a, struct Vector2s16* b, uint16_t lerp, struct Vector2s16* output) {
+    vector2s16_t offset;
+    offset.x = b->x - a->x;
+    offset.y = b->y - a->y;
+
+    output->x = (int)a->x + (((int)offset.x * lerp) >> 16);
+    output->y = (int)a->y + (((int)offset.y * lerp) >> 16);
+}
+
 int vector2s16Dot(struct Vector2s16* a, struct Vector2s16* b) {
     return (int)a->x * b->x + (int)a->y * b->y;
 }
@@ -27,6 +36,12 @@ int vector2s16DistSqr(struct Vector2s16* a, struct Vector2s16* b) {
     int y = (int)a->y - (int)b->y;
 
     return x * x + y * y;
+}
+
+void vector2s16Rotate90(struct Vector2s16* input, struct Vector2s16* output) {
+    int tmp = input->x;
+    output->x = -input->y;
+    output->y = tmp;
 }
 
 int vector2s16FallsBetween(struct Vector2s16* from, struct Vector2s16* towards, struct Vector2s16* check) {

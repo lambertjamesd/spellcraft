@@ -3,10 +3,17 @@
 
 #include <stdint.h>
 #include "../player/inventory.h"
+#include "../render/material.h"
 
 struct spell_menu {
     uint16_t cursor_x;
     uint16_t cursor_y;
+    
+    material_pair_t* solid_color;
+
+    float appear_timer;
+
+    vector2_t offset;
 };
 
 void spell_menu_init(struct spell_menu* spell_menu);
@@ -15,7 +22,7 @@ void spell_menu_destroy(struct spell_menu* spell_menu);
 void spell_menu_show(struct spell_menu* spell_menu);
 void spell_menu_hide(struct spell_menu* spell_menu);
 
-struct spell* spell_menu_update(struct spell_menu* spell_menu);
+void spell_menu_update(struct spell_menu* spell_menu);
 void spell_menu_render(struct spell_menu* spell_menu);
 
 #endif
