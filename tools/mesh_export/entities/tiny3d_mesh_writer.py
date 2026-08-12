@@ -509,7 +509,7 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
         material_romname_encoded = settings.default_material_name.encode()
         file.write(len(material_romname_encoded).to_bytes(1, 'big'))
         file.write(material_romname_encoded)
-    elif settings.default_material:
+    elif not settings.default_material.is_empty():
         file.write(b'\0')
         serialize.serialize_material_file(file, settings.default_material, None)
     else:

@@ -17,7 +17,7 @@ material_pair_t* material_cache_load(const char* filename) {
         FILE* material_file = asset_fopen(filename, NULL);
         material_pair_load(result, material_file);
         material_debug(&result->apply, filename);
-        result->is_embedded = true;
+        result->is_embedded = false;
         fclose(material_file);
 
         resource_cache_set_resource(&material_resource_cache, entry, result);
