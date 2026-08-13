@@ -69,6 +69,11 @@ int evaluation_context_load(void* data, enum data_type data_type, int word_offse
     }
 }
 
+float evaluation_context_load_float(void* data, enum data_type data_type, int word_offset) {
+    assert(data_type == DATA_TYPE_F32);
+    return ((float*)data)[word_offset];
+}
+
 void evaluation_context_save(void* data, enum data_type data_type, int word_offset, int value) {
     switch (data_type) {
         case DATA_TYPE_NULL:
