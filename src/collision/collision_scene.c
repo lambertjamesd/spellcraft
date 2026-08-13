@@ -485,7 +485,7 @@ void collision_scene_collide() {
             object->sleep_counter += 1;
 
             if (object->sleep_counter >= SLEEP_FRAME_THRESHOLD) {
-                object->is_sleeping = 0;
+                object->is_sleeping = 1;
                 object->sleep_counter = 0;
             }
         }
