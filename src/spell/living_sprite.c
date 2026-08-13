@@ -113,6 +113,7 @@ void living_sprite_init(struct living_sprite* living_sprite, struct spell_data_s
     );
 
     living_sprite->vision.trigger_type = TRIGGER_TYPE_BASIC;
+    dynamic_object_wake(&living_sprite->vision);
 
     collision_scene_add(&living_sprite->collider);
     collision_scene_add(&living_sprite->vision);

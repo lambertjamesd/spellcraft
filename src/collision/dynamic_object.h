@@ -149,6 +149,11 @@ void dynamic_object_set_scale(struct dynamic_object* object, float scale);
 
 static inline void dynamic_object_wake(struct dynamic_object* object) {
     object->is_sleeping = false;
+    object->sleep_counter = 0;
+}
+
+static inline void dynamic_object_sleep(struct dynamic_object* object) {
+    object->is_sleeping = true;
 }
 
 #endif

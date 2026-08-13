@@ -32,6 +32,7 @@ void element_emitter_activate(struct element_emitter* element_emitter) {
     );
     element_emitter->dynamic_object.scale = element_emitter->effect_definition->scale;
     element_emitter->dynamic_object.trigger_type = TRIGGER_TYPE_BASIC;
+    dynamic_object_wake(&element_emitter->dynamic_object);
     collision_scene_add(&element_emitter->dynamic_object);
 }
 

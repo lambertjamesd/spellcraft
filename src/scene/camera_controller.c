@@ -452,6 +452,16 @@ void camera_controller_update(struct camera_controller* controller) {
     camera_controller_determine_near_plane(controller);
 }
 
+void camera_controller_move_behind_player(struct camera_controller* controller, vector3_t* target) {
+    vector3_t offset;
+    struct Quaternion quat;
+    quatAxisComplex(&gUp, &controller->player->cutscene_actor.transform.rotation, &quat);
+    quatMultVector(&quat, &gForward, &offset);
+
+    vector3AddScaled(player_get_position(controller->player), &offset, -CAMERA_FOLLOW_DISTANCE, target);
+    target->y += CAMERA_FOLLOW_HEIGHT;
+}
+
 void camera_controller_init(struct camera_controller* controller, struct Camera* camera, struct player* player) {
     controller->camera = camera;
     controller->player = player;
@@ -465,7 +475,7 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     controller->looking_at.y += CAMERA_FOLLOW_HEIGHT;
     controller->looking_at_speed = 0.0f;
     controller->look_target = gZeroVec;
-    camera_controller_determine_player_move_target(controller, &controller->target);
+    camera_controller_move_behind_player(controller, &controller->target);
     controller->follow_distace = 3.0f;
     controller->shake_offset = gZeroVec;
     controller->shake_velocity = gZeroVec;

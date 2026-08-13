@@ -446,6 +446,7 @@ void golem_fist_init(golem_fist_t* fist, entity_id entity_id, armature_attachmen
         NULL
     );
     fist->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
+    dynamic_object_wake(&fist->collider);
 }
 
 float golem_enemy_on_hit(void* data, struct damage_info* damage) {

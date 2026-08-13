@@ -145,6 +145,7 @@ void wind_activate(struct wind* wind) {
         &wind->transform.position, 
         &wind->transform.rotation
     );
+    dynamic_object_wake(&wind->dynamic_object);
 
     wind->dynamic_object.trigger_type = TRIGGER_TYPE_BASIC;
     wind->dynamic_object.collision_group = wind->data_source->target;
@@ -181,6 +182,7 @@ void wind_apply_push_velocity_with_dir(struct wind_definition* definition, struc
     }
 
     single_push_apply_velocity_with_dir(&definition->push, obj, wind_direction);
+    dynamic_object_wake(obj);
 
     // if (!definition->lightning && obj->has_gravity) {
     //     obj->velocity.y -= fixed_time_step * GRAVITY_CONSTANT;
@@ -296,6 +298,7 @@ bool wind_update(struct wind* wind, struct spell_event_listener* event_listener,
 
         return wind->data_source->flags.is_animating;
     }
+    dynamic_object_wake(&wind->dynamic_object);
 
     for (int i = 0; i < MAX_WIND_BONES && wind->renderable.mesh_render.armature.bone_count; i += 1) {
         struct Quaternion tmp;

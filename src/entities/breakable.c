@@ -23,8 +23,8 @@ static breakable_type_def_t breakable_definitions[BREAKABLE_TYPE_COUNT] = {
         .health = 10.0f,
 
         .collider = {
-            CYLINDER_COLLIDER(1.5f, 2.0f),
-            .center = {0.0f, 2.0f, 0.0f},
+            CYLINDER_COLLIDER(0.5f, 0.5f),
+            .center = {0.0f, 0.5f, 0.0f},
             .friction = 0.9f,
             .bounce = 0.1f,
         },
