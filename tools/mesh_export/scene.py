@@ -658,6 +658,20 @@ def write_room_metadata(
             visited_room
         ))
 
+def write_scene_music(
+        file: io.BufferedIOBase
+    ):
+
+    scene = bpy.data.scenes[0]
+
+    if not hasattr(scene, 'music'):
+        file.write((0).to_bytes(1, 'big'))
+        return
+
+    music = scene.music.encode()
+    file.write(len(music).to_bytes(1, 'big'))
+    file.write(music)
+
 def get_map_icons(scene: Scene, enums: dict[str, struct_parse.EnumInfo]) -> list[map_builder.MapIcon]:
     result: list[map_builder.MapIcon] = []
 
@@ -819,11 +833,12 @@ def process_scene():
 
         write_room_metadata(room_collection, function_names, enums, scene_name, file)
 
+        write_scene_music(file);
+
         if cutscene_filename:
             write_string(cutscene_filename, file)
         else:
             file.write(b'\0')
-
         
         scene_vars.write_default_values(file)
             

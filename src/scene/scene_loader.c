@@ -3,22 +3,23 @@
 #include <malloc.h>
 #include <string.h>
 #include <libdragon.h>
-#include "../resource/mesh_collider.h"
-#include "../resource/tmesh_cache.h"
-#include "../resource/material_cache.h"
-#include "../render/render_scene.h"
-#include "../render/fog.h"
-#include "../time/time.h"
+#include "../audio/audio.h"
+#include "../cutscene/cutscene_reference.h"
 #include "../cutscene/cutscene_runner.h"
 #include "../cutscene/evaluation_context.h"
 #include "../cutscene/expression_evaluate.h"
-#include "../cutscene/cutscene_reference.h"
-#include "../overworld/overworld_load.h"
-#include "../util/memory_stream.h"
 #include "../effects/area_title.h"
-#include "../render/defs.h"
-#include "../audio/audio.h"
 #include "../effects/fade_effect.h"
+#include "../overworld/overworld_load.h"
+#include "../render/defs.h"
+#include "../render/fog.h"
+#include "../render/render_scene.h"
+#include "../resource/material_cache.h"
+#include "../resource/mesh_collider.h"
+#include "../resource/tmesh_cache.h"
+#include "../resource/wav_cache.h"
+#include "../time/time.h"
+#include "../util/memory_stream.h"
 
 #include "../collision/collision_scene.h"
 
@@ -212,6 +213,22 @@ void scene_load_cutscene(struct scene* scene, FILE* file) {
     expression_set_scene_variables(scene->scene_vars);
 }
 
+void scene_load_music(scene_t* scene, FILE* file) {
+    uint8_t len;
+    fread(&len, 1, 1, file);
+
+    if (!len) {
+        scene->music = NULL;
+        return;
+    }
+
+    char filename[len + 1];
+    fread(filename, len, 1, file);
+    filename[len] = 0;
+
+    scene->music = wav_cache_load(filename);
+}
+
 void scene_destroy_room_metadata(scene_t* scene) {
     free(scene->room_metadata);
 }
@@ -223,6 +240,12 @@ void scene_destroy_cutscene(scene_t* scene) {
     }
     free(scene->scene_vars);
     expression_set_scene_variables(NULL);
+}
+
+void scene_destroy_music(scene_t* scene) {
+    if (scene->music) {
+        wav_cache_release(scene->music);
+    }
 }
 
 void scene_fade_in(struct cutscene* cutscene, void* data, cutscene_runner_context_t* context) {
@@ -374,6 +397,8 @@ struct scene* scene_load(const char* filename) {
 
     scene_load_room_metadata(scene, file);
 
+    scene_load_music(scene, file);
+
     scene_load_cutscene(scene, file);
 
     fclose(file);
@@ -381,6 +406,7 @@ struct scene* scene_load(const char* filename) {
     render_scene_add(NULL, 0.0f, scene_render, scene);
     update_add(scene, scene_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
     pause_menu_init(&scene->pause_menu);
+    audio_play_music(scene->music);
 
     scene_show_room(scene, current_room);
 
@@ -442,6 +468,7 @@ void scene_release(struct scene* scene) {
 
     render_scene_remove(scene);
     update_remove(scene);
+    audio_play_music(NULL);
 
     pause_menu_destroy(&scene->pause_menu);
     hud_destroy(&scene->hud);
@@ -473,6 +500,8 @@ void scene_release(struct scene* scene) {
     scene_destroy_room_metadata(scene);
 
     scene_destroy_cutscene(scene);
+
+    scene_destroy_music(scene);
 
     free(scene);
 

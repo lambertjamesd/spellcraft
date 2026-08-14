@@ -151,6 +151,8 @@ struct scene {
 
     room_metadata_t* room_metadata;
 
+    wav64_t* music;
+
     cutscene_t* cutscene;
     char* string_table;
     char* scene_vars;
