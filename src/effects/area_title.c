@@ -105,7 +105,7 @@ void area_title_hide() {
         return;
     }
 
-    rspq_call_deferred((void (*)(void*))font_type_release, (void*)FONT_TITLE);
+    font_type_release(FONT_TITLE);
     g_title.visible = false;
     menu_remove_callback(&g_title);
     update_remove(&g_title);

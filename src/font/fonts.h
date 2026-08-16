@@ -21,4 +21,6 @@ static inline rdpq_font_t* font_get(font_type_t type) {
     return font_types[type];
 }
 
+int measure_text(enum font_type font, const char* message, int char_count);
+
 #endif

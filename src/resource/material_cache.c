@@ -26,10 +26,14 @@ material_pair_t* material_cache_load(const char* filename) {
     return entry->resource;
 }
 
+void material_cache_free(void* data) {
+    material_pair_release(data);
+    free(data);
+}
+
 void material_cache_release(material_pair_t* material) {
     if (resource_cache_free(&material_resource_cache, material)) {
-        material_pair_release(material);
-        free(material);
+        rspq_call_deferred(material_cache_free, material);
     }
 }
 

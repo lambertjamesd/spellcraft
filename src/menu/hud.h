@@ -16,7 +16,7 @@ struct hud_boss {
 };
 
 struct hud_assets {
-    material_pair_t* overlay_material;    
+    material_pair_t* overlay_material;
 };
 
 typedef struct hud_assets hud_assets_t;

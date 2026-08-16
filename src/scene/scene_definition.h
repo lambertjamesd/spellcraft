@@ -49,6 +49,12 @@ enum entity_type_id {
     ENTITY_TYPE_count,
 };
 
+enum tutorial_menu_state {
+    TUTORAIL_MENU_STATE_NONE,
+    TUTORAIL_MENU_CREATE_FIRE,
+    TUTORAIL_MENU_CAST,
+};
+
 enum fixed_entity_ids {
     ENTITY_ID_PLAYER = 1,
     ENTITY_ID_SUBJECT = 2,

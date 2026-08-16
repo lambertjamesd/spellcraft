@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     git \
     xz-utils \
-    jq
+    jq \
+    ffmpeg
 
 # Install libdragon toolchain
 RUN wget $TOOLCHAIN_URL -O toolchain.deb &&\

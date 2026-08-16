@@ -66,7 +66,7 @@ void renderable_destroy_direct(struct renderable* renderable) {
 }
 
 void renderable_destroy(struct renderable* renderable) {
-    cleanup_safe((void (*)(void*))tmesh_cache_release, renderable->mesh_render.mesh);
+    tmesh_cache_release(renderable->mesh_render.mesh);
     renderable_destroy_direct(renderable);
 }
 

@@ -1,6 +1,7 @@
 #include "tmesh_cache.h"
 
 #include "resource_cache.h"
+#include "../util/cleanup.h"
 
 struct resource_cache tmesh_resource_cache;
 
@@ -20,10 +21,14 @@ struct tmesh* tmesh_cache_load(const char* filename) {
     return entry->resource;
 }
 
+void tmesh_cache_free(void* data) {
+    tmesh_release(data);
+    free(data);
+}
+
 void tmesh_cache_release(struct tmesh* mesh) {
     if (resource_cache_free(&tmesh_resource_cache, mesh)) {
-        tmesh_release(mesh);
-        free(mesh);
+        cleanup_safe(tmesh_cache_free, mesh);
     }
 }
 

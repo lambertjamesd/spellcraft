@@ -12,10 +12,12 @@
 #include "../font/fonts.h"
 #include "../render/defs.h"
 #include "../scene/scene.h"
+#include "button_icons.h"
 
 #define SCREEN_EDGE_MARGIN      20.0f
 #define TEXT_PADDING            2
-#define BOX_HEIGHT              10
+#define BOX_HEIGHT              16
+#define BUTTON_ICON_SPACE       18
 
 #define SPELL_SLOT_LOCATION_X   232
 #define SPELL_SLOT_LOCATION_Y   152
@@ -41,24 +43,6 @@
 
 static color_t mana_color = {80, 0, 240, 200};
 static color_t health_color = {240, 80, 0, 200};
-
-int measure_text(enum font_type font, const char* message) {
-    const char* curr = message;
-
-    int result = 0;
-
-    while (*curr) {
-        rdpq_font_gmetrics_t metrics;
-        bool was_found = rdpq_font_get_glyph_metrics(font_get(font), *curr, &metrics);
-        ++curr;
-
-        if (was_found) {
-            result += metrics.xadvance;
-        }
-    }
-    
-    return result;
-}
 
 void hud_render_interaction_preview(struct hud* hud) {
     if (!hud->player->hover_interaction || !update_has_layer(UPDATE_LAYER_WORLD)) {
@@ -88,7 +72,8 @@ void hud_render_interaction_preview(struct hud* hud) {
     pos.y = (obj->bounding_box.max.y + obj->bounding_box.min.y) * 0.5f;
     camera_screen_from_position(hud->camera, &pos, &screen_pos);
 
-    int box_width = measure_text(FONT_DIALOG, interaction_name);
+    int text_len = strlen(interaction_name);
+    int box_width = measure_text(FONT_DIALOG, interaction_name, text_len);
 
     screen_pos.x -= box_width >> 1;
 
@@ -106,7 +91,7 @@ void hud_render_interaction_preview(struct hud* hud) {
     rdpq_texture_rectangle(
         TILE0, 
         screen_pos.x - TEXT_PADDING, screen_pos.y - BOX_HEIGHT - TEXT_PADDING, 
-        screen_pos.x + box_width + TEXT_PADDING, screen_pos.y + TEXT_PADDING,
+        screen_pos.x + box_width + TEXT_PADDING + BUTTON_ICON_SPACE, screen_pos.y + TEXT_PADDING,
         0, 0
     );
     rdpq_sync_pipe();
@@ -120,10 +105,12 @@ void hud_render_interaction_preview(struct hud* hud) {
             .wrap = WRAP_NONE,
         }, 
         FONT_DIALOG, 
-        screen_pos.x, screen_pos.y, 
+        screen_pos.x + BUTTON_ICON_SPACE, screen_pos.y - 4, 
         interaction_name,
-        strlen(interaction_name)
+        text_len
     );
+
+    button_icon_draw(BUTTON_TYPE_A, screen_pos.x, screen_pos.y - BOX_HEIGHT);
 }
 
 void hud_draw_bar(int max_width, int current_width, int prev_width, int y, color_t color) {
@@ -223,6 +210,7 @@ void hud_init(struct hud* hud, struct player* player, camera_t* camera) {
     hud->boss = (struct hud_boss){};
     
     hud->assets.overlay_material = material_cache_load("rom:/materials/menu/solid_primitive.mat");
+    button_icon_load(BUTTON_TYPE_A);
 }
 
 void hud_destroy(struct hud* hud) {
@@ -231,6 +219,7 @@ void hud_destroy(struct hud* hud) {
     font_type_release(FONT_DIALOG);
     
     material_cache_release(hud->assets.overlay_material);
+    button_icon_unload(BUTTON_TYPE_A);
 }
 
 void hud_show_boss_health(struct hud* hud, const char* name, entity_id id) {
