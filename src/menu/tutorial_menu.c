@@ -14,12 +14,12 @@ static rspq_block_t* tut_render_block;
 
 static const char* tut_messages[] = {
     [TUTORAIL_MENU_STATE_NONE] = "",
-    [TUTORAIL_MENU_CREATE_FIRE] = "Hold $z + $cr",
-    [TUTORAIL_MENU_CAST] = "Cast $a",
+    [TUTORAIL_MENU_CREATE_FIRE] = "Hold @z + @cr",
+    [TUTORAIL_MENU_CAST] = "Cast @a",
 };
 
 #define ICON_SIZE      16
-#define ICON_PADDING    2
+#define ICON_PADDING    1
 #define BOX_PADDING     2
 
 #define BOX_Y           160
@@ -46,6 +46,7 @@ int tutorial_read_button_offset(const char** curr_ptr) {
         case 'r':
             return 3;
         default:
+            debugf("%c\n", *curr);
             assert(false);
     }
 }
@@ -53,7 +54,7 @@ int tutorial_read_button_offset(const char** curr_ptr) {
 enum button_type tutorial_read_button_type(const char** curr_ptr) {
     const char* curr = *curr_ptr;
 
-    if (*curr != '$') {
+    if (*curr != '@') {
         return BUTTON_TYPE_A;
     }
 
@@ -78,6 +79,7 @@ enum button_type tutorial_read_button_type(const char** curr_ptr) {
         case 'c':
             return BUTTON_TYPE_C_U + tutorial_read_button_offset(curr_ptr);
         default:
+            debugf("%c\n", *curr);
             assert(false);
     }
 }
@@ -90,7 +92,7 @@ void tutorial_destroy_step() {
     const char* message = tut_messages[tutorial_state];
 
     while (*message) {
-        if (*message == '$') {
+        if (*message == '@') {
             button_icon_unload(tutorial_read_button_type(&message));
         } else {
             message += 1;
@@ -106,7 +108,7 @@ void tutorial_init_step() {
     const char* last_start = message;
 
     while (*message) {
-        if (*message == '$') {
+        if (*message == '@') {
             if (width) {
                 width += ICON_PADDING;
             }
@@ -136,11 +138,12 @@ void tutorial_init_step() {
     rspq_block_begin();
 
     rspq_block_run(tut_overlay_material->apply.block);
+    rdpq_set_prim_color((color_t){0, 0, 0, 128});
 
     rdpq_fill_rectangle(x - BOX_PADDING, BOX_Y - BOX_PADDING, x + width + BOX_PADDING, BOX_Y + ICON_SIZE + BOX_PADDING);
 
     while (*message) {
-        if (*message == '$') {
+        if (*message == '@') {
             rdpq_textmetrics_t metrics = rdpq_text_printn(
                 &(rdpq_textparms_t){
                     // .line_spacing = -3,
@@ -151,17 +154,18 @@ void tutorial_init_step() {
                     .wrap = WRAP_NONE,
                 }, 
                 FONT_DIALOG, 
-                x, BOX_Y, 
+                x, BOX_Y + 12, 
                 last_start,
                 message - last_start
             );
 
-            last_start = message;
-
             x += metrics.advance_x;
             x += ICON_PADDING;
 
-            button_icon_draw(tutorial_read_button_offset(&message), x, BOX_Y);
+            button_icon_draw(tutorial_read_button_type(&message), x, BOX_Y);
+            
+
+            last_start = message;
 
             x += ICON_SIZE;
 
@@ -183,7 +187,7 @@ void tutorial_init_step() {
             .wrap = WRAP_NONE,
         }, 
         FONT_DIALOG, 
-        x, BOX_Y, 
+        x, BOX_Y + 12, 
         last_start,
         message - last_start
     );

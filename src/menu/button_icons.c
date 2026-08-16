@@ -11,12 +11,12 @@ static uint8_t button_material_ref_count;
 static const char sprite_names[] = {
     'a',
     'b',
-    'c',
+    'z',
+    's',
     'd',
     'l',
     'r',
-    's',
-    'z',
+    'c',
 };
 
 struct button_icon_data {
