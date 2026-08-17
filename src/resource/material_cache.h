@@ -9,6 +9,7 @@
 // when they are done with the material
 material_pair_t* material_cache_load(const char* filename);
 void material_cache_release(material_pair_t* material);
+void material_cache_release_direct(material_pair_t* material);
 
 material_pair_t* material_cache_load_from_file(FILE* file);
 

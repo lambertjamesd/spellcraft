@@ -259,7 +259,7 @@ void tmesh_release(struct tmesh* tmesh) {
     int total_frames = tmesh->armature.image_frames_0 + tmesh->armature.image_frames_1;
 
     for (int i = 0; i < total_frames; i += 1) {
-        sprite_cache_release(tmesh->armature.frames[i]);
+        sprite_cache_release_direct(tmesh->armature.frames[i]);
     }
 
     free(tmesh->armature.frames);

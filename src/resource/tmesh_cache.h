@@ -5,6 +5,7 @@
 
 struct tmesh* tmesh_cache_load(const char* filename);
 void tmesh_cache_release(struct tmesh* mesh);
+void tmesh_cache_release(struct tmesh* mesh);
 
 void tmesh_cache_destroy();
 

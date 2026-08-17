@@ -33,21 +33,21 @@ void material_init(struct material* material) {
 
 void material_destroy(struct material* material) {
     if (material->tex0.sprite) {
-        sprite_cache_release(material->tex0.sprite);
+        sprite_cache_release_direct(material->tex0.sprite);
     }
 
     for (int i = 0; i < material->tex0.num_frames; i += 1) {
-        sprite_cache_release(material->tex0.frames[i]);
+        sprite_cache_release_direct(material->tex0.frames[i]);
     }
 
     free(material->tex0.frames);
 
     if (material->tex1.sprite) {
-        sprite_cache_release(material->tex1.sprite);
+        sprite_cache_release_direct(material->tex1.sprite);
     }
 
     for (int i = 0; i < material->tex1.num_frames; i += 1) {
-        sprite_cache_release(material->tex1.frames[i]);
+        sprite_cache_release_direct(material->tex1.frames[i]);
     }
 
     free(material->tex1.frames);

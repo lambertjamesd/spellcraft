@@ -1,6 +1,7 @@
 #include "sprite_cache.h"
 
 #include "resource_cache.h"
+#include "../util/cleanup.h"
 
 struct resource_cache sprite_resource_cache;
 
@@ -14,14 +15,14 @@ sprite_t* sprite_cache_load(const char* filename) {
     return entry->resource;
 }
 
-void sprite_cache_free(void* data) {
-    sprite_free(data);
+void sprite_cache_release_direct(sprite_t* sprite) {
+    if (resource_cache_free(&sprite_resource_cache, sprite)) {
+        sprite_free(sprite);
+    }
 }
 
 void sprite_cache_release(sprite_t* sprite) {
-    if (resource_cache_free(&sprite_resource_cache, sprite)) {
-        rspq_call_deferred(sprite_cache_free, sprite);
-    }
+    cleanup_safe((cleanup_callback)sprite_cache_release_direct, sprite);
 }
 
 void sprite_cache_destroy() {

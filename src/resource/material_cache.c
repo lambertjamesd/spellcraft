@@ -5,6 +5,7 @@
 #include <malloc.h>
 #include "resource_cache.h"
 #include "sprite_cache.h"
+#include "../util/cleanup.h"
 
 struct resource_cache material_resource_cache;
 
@@ -26,15 +27,15 @@ material_pair_t* material_cache_load(const char* filename) {
     return entry->resource;
 }
 
-void material_cache_free(void* data) {
-    material_pair_release(data);
-    free(data);
+void material_cache_release_direct(material_pair_t* material) {
+    if (resource_cache_free(&material_resource_cache, material)) {
+        material_pair_release(material);
+        free(material);
+    }
 }
 
 void material_cache_release(material_pair_t* material) {
-    if (resource_cache_free(&material_resource_cache, material)) {
-        rspq_call_deferred(material_cache_free, material);
-    }
+    cleanup_safe((cleanup_callback)material_cache_release_direct, material);
 }
 
 material_pair_t* material_cache_load_from_file(FILE* file) {
@@ -72,7 +73,7 @@ void material_cache_release_linked_or_embedded(material_pair_t* material) {
         material_release(&material->apply);
         free(material);
     } else {
-        material_cache_release(material);
+        material_cache_release_direct(material);
     }
 }
 

@@ -29,4 +29,6 @@ rune_pattern_t live_cast_get_current_rune(struct live_cast* live_cast);
 int live_cast_prev_rune_count(struct live_cast* live_cast);
 rune_pattern_t live_cast_get_rune(struct live_cast* live_cast, int index);
 
+bool live_cast_has_spell(live_cast_t* live_cast, enum inventory_item_type primary, bool fire, bool water, bool earth, bool air);
+
 #endif

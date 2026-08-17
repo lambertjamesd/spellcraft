@@ -6,6 +6,7 @@
 #include "../font/fonts.h"
 #include "button_icons.h"
 #include "../render/defs.h"
+#include "../scene/scene.h"
 
 static tutorial_menu_state_t tutorial_state;
 
@@ -14,12 +15,11 @@ static rspq_block_t* tut_render_block;
 
 static const char* tut_messages[] = {
     [TUTORAIL_MENU_STATE_NONE] = "",
-    [TUTORAIL_MENU_CREATE_FIRE] = "Hold @z + @cr",
+    [TUTORAIL_MENU_CREATE_FIRE] = "Hold @z+@cr",
     [TUTORAIL_MENU_CAST] = "Cast @a",
 };
 
 #define ICON_SIZE      16
-#define ICON_PADDING    1
 #define BOX_PADDING     2
 
 #define BOX_Y           160
@@ -29,7 +29,26 @@ void tutorial_render(void* data) {
 }
 
 void tutorial_update(void* data) {
-    
+    switch (tutorial_state) {
+        case TUTORAIL_MENU_STATE_NONE:
+            break;
+        case TUTORAIL_MENU_CREATE_FIRE:
+            if (
+                live_cast_has_spell(&current_scene->player.live_cast, 
+                SPELL_SYMBOL_FIRE,
+                false, false, false, false)
+            ) {
+                tutorial_set_step(TUTORAIL_MENU_CAST);
+            }
+            break;
+        case TUTORAIL_MENU_CAST:
+            if (current_scene->player.live_cast.was_cast) {
+                tutorial_set_step(TUTORAIL_MENU_STATE_NONE);
+            }
+            break;
+        default:
+            assert(false);
+    }
 }
 
 int tutorial_read_button_offset(const char** curr_ptr) {
@@ -109,18 +128,10 @@ void tutorial_init_step() {
 
     while (*message) {
         if (*message == '@') {
-            if (width) {
-                width += ICON_PADDING;
-            }
-
             width += ICON_SIZE;
             width += measure_text(FONT_DIALOG, last_start, message - last_start);
 
             button_icon_load(tutorial_read_button_type(&message));
-
-            if (*message) {
-                width += ICON_PADDING;
-            }
 
             last_start = message;
         } else {
@@ -160,7 +171,6 @@ void tutorial_init_step() {
             );
 
             x += metrics.advance_x;
-            x += ICON_PADDING;
 
             button_icon_draw(tutorial_read_button_type(&message), x, BOX_Y);
             
@@ -168,10 +178,6 @@ void tutorial_init_step() {
             last_start = message;
 
             x += ICON_SIZE;
-
-            if (*message) {
-                x += ICON_PADDING;
-            }
         } else {
             message += 1;
         }

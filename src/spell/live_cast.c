@@ -120,3 +120,12 @@ bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_ty
 
     return true;
 }
+
+bool live_cast_has_spell(live_cast_t* live_cast, enum inventory_item_type primary, bool fire, bool water, bool earth, bool air) {
+    rune_pattern_t* symbol = &live_cast->pending_spell.symbols[live_cast->current_spell_output];
+    return symbol->primary_rune == primary &&
+        symbol->flaming == fire &&
+        symbol->watery == water &&
+        symbol->earthy == earth &&
+        symbol->windy == earth;
+}

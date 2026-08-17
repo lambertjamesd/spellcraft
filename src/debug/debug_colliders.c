@@ -58,7 +58,7 @@ void debug_collider_enable() {
 }
 
 void debug_collider_disable() {
-    if (bb_mesh) {
+    if (!bb_mesh) {
         return;
     }
 
