@@ -50,9 +50,10 @@ enum entity_type_id {
 };
 
 enum tutorial_menu_state {
-    TUTORAIL_MENU_STATE_NONE,
-    TUTORAIL_MENU_CREATE_FIRE,
-    TUTORAIL_MENU_CAST,
+    TUTORIAL_MENU_STATE_NONE,
+    TUTORIAL_MENU_CREATE_FIRE,
+    TUTORIAL_MENU_CAST,
+    TUTORIAL_STATE_COUNT,
 };
 
 enum fixed_entity_ids {

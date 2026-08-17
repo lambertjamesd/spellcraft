@@ -21,6 +21,7 @@
 #include "../cutscene/cutscene_runner.h"
 #include "../effects/area_title.h"
 #include "../scene/scene.h"
+#include "../menu/tutorial_menu.h"
 
 #include "../effects/fade_effect.h"
 
@@ -1304,6 +1305,8 @@ void player_update(struct player* player) {
         debug_collider_enable();
     } else if (pressed.d_down) {
         debug_collider_disable();
+    } else if (pressed.d_right) {
+        tutorial_set_step(TUTORIAL_MENU_CREATE_FIRE);
     }
 
     player_handle_z_target(player, pressed.z, input.btn.z);

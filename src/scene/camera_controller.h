@@ -39,6 +39,9 @@ union camera_controller_state_data {
         float vertical_angle_vel;
         float vertical_angle;
     } follow;
+    struct {
+        bool move_behind;
+    } return_to_player;
 };
 
 struct camera_controller {
@@ -66,6 +69,7 @@ void camera_controller_destroy(struct camera_controller* controller);
 void camera_look_at(struct camera_controller* controller, struct Vector3* target);
 void camera_follow_player(struct camera_controller* controller);
 void camera_return(struct camera_controller* controller);
+void camera_behind_player(struct camera_controller* controller);
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation);
 void camera_move_to(struct camera_controller* controller, struct Vector3* position, bool instant, bool move_target);
 void camera_set_fixed(struct camera_controller* controller, struct Vector3* position, struct Quaternion* rotation, float fov);

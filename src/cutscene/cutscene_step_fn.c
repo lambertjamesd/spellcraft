@@ -1,15 +1,16 @@
-#include "cutscene_step_fn.h"
-#include "../menu/hud.h"
-#include "../scene/scene.h"
-#include "../menu/dialog_box.h"
-#include "../time/time.h"
-#include "../time/game_mode.h"
-#include "../objects/empty.h"
-#include "../effects/image_overlay.h"
 #include "../effects/area_title.h"
 #include "../effects/fade_effect.h"
+#include "../effects/image_overlay.h"
 #include "../entities/comm_stone.h"
+#include "../menu/dialog_box.h"
+#include "../menu/hud.h"
+#include "../menu/tutorial_menu.h"
+#include "../objects/empty.h"
 #include "../render/fog.h"
+#include "../scene/scene.h"
+#include "../time/game_mode.h"
+#include "../time/time.h"
+#include "cutscene_step_fn.h"
 #include "cutscene_stopwatch.h"
 #include "cutscene_timer.h"
 #include "show_item.h"
@@ -215,6 +216,11 @@ void cutscene_cam_follow_player_init(cutscene_runner_context_t* context, int arg
 // cam_return
 void cutscene_cam_return_init(cutscene_runner_context_t* context, int arg_count) {
     camera_return(&current_scene->camera_controller);
+}
+
+// cam_behind_player
+void cutscene_cam_behind_player_init(cutscene_runner_context_t* context, int arg_count) {
+    camera_behind_player(&current_scene->camera_controller);
 }
 
 // cam_animate
@@ -441,6 +447,20 @@ void cutscene_comm_cancel(cutscene_runner_context_t* context) {
     active_comm_stone = 0;
 }
 
+// tutorial
+void cutscene_tutorial_init(cutscene_runner_context_t* context, int arg_count) {
+    READ_ARGS(context, 1, arg_count, args);
+    tutorial_set_step(args[0]);
+}
+
+bool cutscene_tutorial_step(cutscene_runner_context_t* context) {
+    return !tutorial_is_running();
+}
+
+void cutscene_tutorial_cancel(cutscene_runner_context_t* context) {
+    tutorial_set_step(TUTORIAL_MENU_STATE_NONE);   
+}
+
 // npc_wait
 void cutscene_npc_wait_init(cutscene_runner_context_t* context, int arg_count) {
     assert(arg_count == 1);
@@ -590,6 +610,7 @@ static cutscene_step_fn_t function_steps[] = {
     [CUTSCENE_FN_CAMERA_WAIT] = {.init = cutscene_camera_wait_init, .step = cutscene_camera_wait_step }, // func cam_wait()
     [CUTSCENE_FN_CAMERA_FOLLOW] = {.init = cutscene_cam_follow_player_init }, // func cam_follow()
     [CUTSCENE_FN_CAMERA_RETURN] = {.init = cutscene_cam_return_init }, // func cam_return()
+    [CUTSCENE_FN_CAMERA_BEHIND_PLAYER] = {.init = cutscene_cam_behind_player_init }, // func cam_behind_player()
     [CUTSCENE_FN_CAMERA_LOOK_AT_NPC] = {.init = cutscene_camera_look_at_npc_init }, // func cam_look_npc(target: entity_id)
     [CUTSCENE_FN_CAMERA_MOVE_TO] = {.init = cutscene_cam_move_to_init }, // func cam_move_to_pos(x: float, y: float, z: float, instant: bool)
     [CUTSCENE_FN_CAMERA_LOOK_AT_POS] = {.init = cutscene_cam_look_at_init }, // func cam_look_at_pos(x: float, y: float, z: float, instant: bool)
@@ -597,6 +618,7 @@ static cutscene_step_fn_t function_steps[] = {
     [CUTSCENE_FN_LOAD_FADE] = {.init = cutscene_fade_init }, // func fade(fade_to: i32, duration: float)
     [CUTSCENE_FN_COMM_STONE_START] = {.init = cutscene_comm_stone_start_init, .step = cutscene_comm_stone_start_step}, // func comm_stone_start()
     [CUTSCENE_FN_COMM_STONE_END] = {.init = cutscene_comm_stone_end_init, .step = cutscene_comm_stone_end_step, .cancel = cutscene_comm_cancel}, // func comm_stone_end()
+    [CUTSCENE_FN_TUTORIAL] = {.init = cutscene_tutorial_init, .step = cutscene_tutorial_step, .cancel = cutscene_tutorial_cancel}, // func tutorial(step: i32)
     {.init = cutscene_idle_npc_init }, // func idle_npc(npc: entity_id)
     {.init = cutscene_cam_anim_init }, // func cam_animate(animation: str)
     {.init = cutscene_interact_with_location_init }, // func interact_with_location(interaction: i32, npc: entity_id, name: str)

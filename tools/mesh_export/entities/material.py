@@ -885,7 +885,7 @@ class Material():
             self.vtx_effect == None and self.fog == None and self.flags == None
 
     def __str__(self):
-        return f"""Material {self.name}: 
+        return f"""Material {self.name}: ({self.priority}) 
     microcode = {self.microcode.name}
     combine_mode = {self.combine_mode}
     other_modes = {self.other_modes}

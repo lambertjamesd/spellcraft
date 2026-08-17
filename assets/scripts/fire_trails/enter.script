@@ -33,10 +33,43 @@ func main()
         Not many people have entered the trials since the genesis
 
         You may need to clear some overgrowth with your flame sword
+
+        To cast spells hold Z then use the C buttons to enter your spell
+
+        You only have a basic flame attack which is C right.
+
+        Try casting that now.
     ";
 
     comm_stone_end;
 
+    cam_behind_player;
+    cam_wait;
+
+    unpause;
+
+    tutorial TUTORIAL_MENU_CREATE_FIRE;
+
+    delay 4.0;
+
+    pause;
+
+    comm_stone_start;
+
+    say "
+        Good, now keep your wits about you.
+
+        This place has been overrun with monsters since the genesis.
+
+        Good luck.
+    ";
+    
+    
+    comm_stone_end;
+    
+    cam_behind_player;
+    cam_wait;
+    
     unpause;
 
     has_entered_fire_trials = true;

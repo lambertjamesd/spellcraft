@@ -244,7 +244,6 @@ float camera_controller_determine_vert_movement(struct camera_controller* contro
 }
 
 float camera_controller_determine_player_move_target(struct camera_controller* controller, struct Vector3* result) {
-
     struct Vector3* player_pos = player_get_position(controller->player);
     
     // deterine direction from camera's current position to the player
@@ -301,7 +300,7 @@ float camera_controller_determine_player_move_target(struct camera_controller* c
     return target_distance;
 }
 
-void camera_controller_update_position(struct camera_controller* controller, struct TransformSingleAxis* target) {
+void camera_controller_update_position(struct camera_controller* controller) {
     move_towards(&controller->stable_position, &controller->speed, &controller->target, &camera_move_parameters);
 
     struct Vector3 offset;
@@ -309,23 +308,42 @@ void camera_controller_update_position(struct camera_controller* controller, str
     quatLook(&offset, &gUp, &controller->camera->transform.rotation);
 }
 
-void camera_controller_return_target(struct camera_controller* controller, struct Vector3* target) {
-    struct Vector3 offset;
-    struct Transform* cam_transform = &controller->camera->transform;
+void camera_controller_move_behind_player(struct camera_controller* controller, vector3_t* target) {
+    vector3_t offset;
+    struct Quaternion quat;
+    quatAxisComplex(&gUp, &controller->player->cutscene_actor.transform.rotation, &quat);
+    quatMultVector(&quat, &gForward, &offset);
 
-    quatMultVector(&cam_transform->rotation, &gForward, &offset);
-    offset.y = 0.0f;
-    vector3Scale(&offset, &offset, -1.0f);
-    vector3Normalize(&offset, &offset);
     vector3AddScaled(player_get_position(controller->player), &offset, -CAMERA_FOLLOW_DISTANCE, target);
     target->y += CAMERA_FOLLOW_HEIGHT;
+}
 
-    move_towards(&controller->stable_position, &controller->speed, &controller->target, &camera_move_parameters);
-    camera_look_at_from_rotation(controller);
+void camera_controller_return_target(struct camera_controller* controller, struct Vector3* target) {
+    if (controller->state_data.return_to_player.move_behind) {
+        camera_controller_move_behind_player(controller, target);
+
+        struct Vector3 looking_at = *player_get_position(controller->player);
+        looking_at.y += CAMERA_FOLLOW_HEIGHT;
+        move_towards(&controller->looking_at, &controller->looking_at_speed, &looking_at, &camera_move_parameters);
+
+        camera_controller_update_position(controller);
+    } else {
+        struct Vector3 offset;
+        struct Transform* cam_transform = &controller->camera->transform;
+    
+        quatMultVector(&cam_transform->rotation, &gForward, &offset);
+        offset.y = 0.0f;
+        vector3Scale(&offset, &offset, -1.0f);
+        vector3Normalize(&offset, &offset);
+        vector3AddScaled(player_get_position(controller->player), &offset, -CAMERA_FOLLOW_DISTANCE, target);
+        target->y += CAMERA_FOLLOW_HEIGHT;
+        move_towards(&controller->stable_position, &controller->speed, &controller->target, &camera_move_parameters);
+        camera_look_at_from_rotation(controller);
+    }
 
     controller->camera->fov = mathfMoveTowards(controller->camera->fov, 70.0f, 20.0f * fixed_time_step);
 
-    if (vector3DistSqrd(target, &controller->stable_position) < 0.0001f) {
+    if (vector3DistSqrd(target, &controller->stable_position) < 0.1f) {
         camera_follow_player(controller);
     }
 }
@@ -421,12 +439,12 @@ void camera_controller_update(struct camera_controller* controller) {
             } else {
                 follow_distance = camera_controller_determine_player_move_target(controller, &controller->target);
             }
-            camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
+            camera_controller_update_position(controller);
             break;
         }
         case CAMERA_STATE_LOOK_AT_WITH_PLAYER:
             camera_controller_watch_target(controller, &controller->look_target);
-            camera_controller_update_position(controller, &controller->player->cutscene_actor.transform);
+            camera_controller_update_position(controller);
             break;
         case CAMERA_STATE_ANIMATE:
             camera_controller_update_animation(controller);
@@ -450,16 +468,6 @@ void camera_controller_update(struct camera_controller* controller) {
     vector3Add(&controller->stable_position, &controller->shake_offset, &controller->camera->transform.position);
 
     camera_controller_determine_near_plane(controller);
-}
-
-void camera_controller_move_behind_player(struct camera_controller* controller, vector3_t* target) {
-    vector3_t offset;
-    struct Quaternion quat;
-    quatAxisComplex(&gUp, &controller->player->cutscene_actor.transform.rotation, &quat);
-    quatMultVector(&quat, &gForward, &offset);
-
-    vector3AddScaled(player_get_position(controller->player), &offset, -CAMERA_FOLLOW_DISTANCE, target);
-    target->y += CAMERA_FOLLOW_HEIGHT;
 }
 
 void camera_controller_init(struct camera_controller* controller, struct Camera* camera, struct player* player) {
@@ -486,7 +494,7 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     controller->_cache_calcluations.fov = 0.0f;
     quatAxisAngle(&gRight, 0.0f, &controller->camera->transform.rotation);
 
-    camera_controller_update_position(controller, &player->cutscene_actor.transform);
+    camera_controller_update_position(controller);
 
     controller->state_data.animate.animation = NULL;
     controller->state_data.animate.current_frame = 0;
@@ -519,6 +527,13 @@ void camera_follow_player(struct camera_controller* controller) {
 void camera_return(struct camera_controller* controller) {
     controller->state = CAMERA_STATE_RETURN_TO_PLAYER;
     controller->speed = 0.0f;
+    controller->state_data.return_to_player.move_behind = false;
+}
+
+void camera_behind_player(struct camera_controller* controller) {
+    controller->state = CAMERA_STATE_RETURN_TO_PLAYER;
+    controller->speed = 0.0f;
+    controller->state_data.return_to_player.move_behind = true;
 }
 
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation) {

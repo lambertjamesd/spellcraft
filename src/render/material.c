@@ -203,7 +203,6 @@ void material_load(struct material* into, FILE* material_file) {
 
     bool has_palette = false;
 
-
     while (has_more) {
         uint8_t nextCommand;
         fread(&nextCommand, 1, 1, material_file);
@@ -232,19 +231,6 @@ void material_load(struct material* into, FILE* material_file) {
 
                     if (other_modes & SOM_Z_WRITE) {
                         into->flags |= MATERIAL_FLAGS_Z_WRITE;
-                    }
-
-                    // TODO check when the zmode is decal
-                    if ((other_modes & SOM_ZMODE_MASK) == SOM_ZMODE_DECAL) {
-                        into->sort_priority = SORT_PRIORITY_DECAL;
-                    }
-
-                    if ((other_modes & SOM_Z_WRITE) == 0) {
-                        into->sort_priority = SORT_PRIORITY_TRANSPARENT;
-                    }
-
-                    if (!(other_modes & SOM_Z_COMPARE)) {
-                        into->sort_priority = SORT_PRIORITY_NO_DEPTH_TEST;
                     }
                 }
                 break;
