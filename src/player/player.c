@@ -216,7 +216,13 @@ interactable_t* player_check_for_interactable(player_t* player, entity_id entity
 
     float curr_distance = vector3MagSqrd2D(&offset);
 
-    if (!interactable_is_in_range(interactable, curr_distance) || curr_distance > *distance || offset.y < INTERACT_Y_LOWER || offset.y > INTERACT_Y_UPEER) {
+    if (!(
+            interactable_is_in_range(interactable, curr_distance) || 
+            dynamic_object_find_contact(&player->cutscene_actor.collider, interactable->id)
+        ) || 
+        curr_distance > *distance || 
+        offset.y < INTERACT_Y_LOWER || 
+        offset.y > INTERACT_Y_UPEER) {
         return NULL;
     }
 
@@ -270,6 +276,25 @@ interactable_t* player_find_interactable(player_t* player, entity_id* entity) {
         curr;
         curr = curr->next
     ) {
+        interactable_t* interactable = player_check_for_interactable(player, curr->other_object, &curr->point, &distance);
+
+        if (!interactable) {
+            continue;
+        }
+
+        result = interactable;
+        *entity = curr->other_object;
+    }
+
+    for (
+        contact_t* curr = player->cutscene_actor.collider.active_contacts;
+        curr;
+        curr = curr->next
+    ) {
+        if (!curr->other_object) {
+            continue;
+        }
+
         interactable_t* interactable = player_check_for_interactable(player, curr->other_object, &curr->point, &distance);
 
         if (!interactable) {
