@@ -94,6 +94,7 @@ static inline element_attr_t element_attr_end() {
 
 struct render_batch_element {
     material_pair_t* material;
+    float distance;
     uint16_t type;
     uint8_t light_source;
     union {
@@ -123,6 +124,7 @@ struct render_batch {
     struct frame_memory_pool* pool;
     struct render_batch_element elements[RENDER_BATCH_MAX_SIZE];
     short element_count;
+    vector3_t* curr_pos;
 };
 
 typedef struct render_batch render_batch_t;

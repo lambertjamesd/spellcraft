@@ -31,6 +31,7 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
     struct static_entity* end = scene->static_entities + range.end;
 
     for (; curr < end; ++curr) {
+        batch->curr_pos = &curr->center;
         render_batch_add_tmesh(batch, &curr->tmesh, NULL, NULL, NULL, NULL);
     }
 
@@ -76,6 +77,7 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
                 break;
             }
     
+            batch->curr_pos = &instance->center;
             render_batch_add_particles(
                 batch,
                 curr_particle->material,

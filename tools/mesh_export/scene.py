@@ -127,40 +127,44 @@ def process_linked_object(obj: bpy.types.Object, definitions: dict[str, struct_p
     return ObjectEntry(obj, type, definitions[def_type_name], room_index)
 
 class meshes_with_material:
-    def __init__(self, meshes: list[entities_mesh.mesh_data], material, material_name: str):
-        self.meshes = meshes
-        self.material = material
-        self.material_name = material_name
+    def __init__(self, meshes: list[entities_mesh.mesh_data], mat: material.Material, material_name: str):
+        self.meshes: list[entities_mesh.mesh_data] = meshes
+        self.material: material.Material = mat
+        self.material_name: str = material_name
 
 class room_static_meshes:
     def __init__(self):
         self.mesh_with_material: list[entities_mesh.mesh_data] = []
-        self.none_meshes: list[entities_mesh.mesh_data] = []
 
     def add_mesh(self, mesh: entities_mesh.mesh_data):
-        name = material_extract.material_romname(mesh.mat)
-
-        if name == None:
-            self.none_meshes.append(mesh)
-        else:
-            self.mesh_with_material.append(mesh)
+        self.mesh_with_material.append(mesh)
 
     def generate_meshes(self) -> list[meshes_with_material]:
         result = []
+        none_meshes: list[entities_mesh.mesh_data] = []
 
         for mesh in self.mesh_with_material:
-            name = material_extract.material_romname(mesh.mat)
-            
-            if name:
-                result.append(meshes_with_material(
-                    [mesh], 
-                    material_extract.load_material_with_name(mesh.mat), 
-                    name
-                ))
+            if mesh.mat:
+                name = material_extract.material_romname(mesh.mat)
+                if name:
+                    result.append(meshes_with_material(
+                        [mesh], 
+                        material_extract.load_material_with_name(mesh.mat), 
+                        name
+                    ))
+                else:
+                    result.append(meshes_with_material(
+                        [mesh], 
+                        material_extract.determine_material_from_f3d(mesh.mat),
+                        ''
+                    ))
+            else:
+                none_meshes.append(mesh)
 
-        if len(self.none_meshes) > 0:
+
+        if len(none_meshes) > 0:
             result.append(meshes_with_material(
-                self.none_meshes, 
+                none_meshes, 
                 material.Material(), 
                 'rom:/materials/default.mat'
             ))
@@ -168,11 +172,17 @@ class room_static_meshes:
         return result
     
     def mesh_count(self) -> int:
-        if len(self.none_meshes) > 0:
-            return len(self.mesh_with_material) + 1
-        return len(self.mesh_with_material)
+        result = 0
+        has_none_mesh = False
 
+        for mesh in self.mesh_with_material:
+            if mesh.mat:
+                result += 1
+            elif not has_none_mesh:
+                result += 1
+                has_none_mesh = True
 
+        return result
 
 def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection: room.room_collection, file):
     settings = export_settings.ExportSettings()
@@ -214,6 +224,14 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
         settings.default_material = mesh.material
 
         tiny3d_mesh_writer.write_mesh(mesh.meshes, None, [], settings, file)
+
+        if len(mesh.meshes) == 0:
+            file.write(struct.pack('>fff', 0, 0, 0))
+        else:
+            min, max = mesh.meshes[0].bounding_box()
+            center = (min + max) * 0.5
+            file.write(struct.pack('>fff', center.x, center.y, center.z))
+
 
     room_count = len(meshes_for_rooms)
     file.write(room_count.to_bytes(2, 'big'))

@@ -16,6 +16,8 @@ void render_batch_init(struct render_batch* batch, struct Transform* camera_tran
     batch->rotation_2d.x = batch->camera_matrix[0][0];
     batch->rotation_2d.y = batch->camera_matrix[0][2];
     vector2Normalize(&batch->rotation_2d, &batch->rotation_2d);
+
+    batch->curr_pos = NULL;
 }
 
 struct render_batch_element* render_batch_add(struct render_batch* batch) {
@@ -25,6 +27,15 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
 
     struct render_batch_element* result = &batch->elements[batch->element_count];
     ++batch->element_count;
+
+    if (batch->curr_pos) {
+        result->distance = batch->camera_matrix[0][2] * batch->curr_pos->x + 
+            batch->camera_matrix[1][2] * batch->curr_pos->y + 
+            batch->camera_matrix[2][2] * batch->curr_pos->z + 
+            batch->camera_matrix[3][2];
+    } else {
+        result->distance = 0.0f;
+    }
 
     result->material = NULL;
     result->type = RENDER_BATCH_MESH;
@@ -317,6 +328,10 @@ T3DMat4FP* render_batch_transformfp_from_full(struct render_batch* batch, struct
     return mtxfp;
 }
 
+static inline bool render_batch_should_depth_sort(int sort_priority) {
+    return sort_priority == MAT_SORT_BACKGROUND || sort_priority == MAT_SORT_TRANSPARENT;
+} 
+
 int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, uint16_t b_index) {
     struct render_batch_element* a = &batch->elements[a_index];
     struct render_batch_element* b = &batch->elements[b_index];
@@ -325,15 +340,31 @@ int render_batch_compare_element(struct render_batch* batch, uint16_t a_index, u
         return 0;
     }
 
+    if (a->type != b->type) {
+        return a->type - b->type;
+    }
+
     if (a->material->apply.sort_priority != b->material->apply.sort_priority) {
         return a->material->apply.sort_priority - b->material->apply.sort_priority;
+    }
+
+    if (render_batch_should_depth_sort(a->material->apply.sort_priority)) {
+        if (a->distance < b->distance) {
+            return 1;
+        }
+
+        return -1;
     }
 
     if (a->material != b->material) {
         return (int)a->material - (int)b->material;
     }
 
-    return a->type - b->type;
+    if (a->distance < b->distance) {
+        return -1;
+    }
+
+    return 1;
 }
 
 static bool element_type_2d[] = {

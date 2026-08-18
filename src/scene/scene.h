@@ -20,6 +20,7 @@
 
 struct static_entity {
     struct tmesh tmesh;
+    vector3_t center;
 };
 
 struct loading_zone {

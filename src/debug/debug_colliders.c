@@ -45,6 +45,7 @@ void debug_render_colliders(void* data, struct render_batch* batch) {
         render_batch_relative_mtx(batch, mtx);
         t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
         
+        batch->curr_pos = &bb->min;
         render_batch_add_tmesh(batch, bb_mesh, mtxfp, NULL, NULL, NULL);
     }
 }

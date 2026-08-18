@@ -23,7 +23,7 @@ void material_init(struct material* material) {
     material->tex1.num_frames = 0;
     material->tex1.frames = NULL;
 
-    material->sort_priority = SORT_PRIORITY_OPAQUE;
+    material->sort_priority = MAT_SORT_OPAQUE;
 
     material->palette.tlut = 0;
     material->palette.idx = 0;

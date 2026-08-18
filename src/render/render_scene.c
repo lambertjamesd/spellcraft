@@ -183,8 +183,6 @@ void render_scene_remove_step(void* data) {
 #define FX_SCALE    32
 
 void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool) {
-    struct render_batch batch;
-
     struct ClippingPlanes clipping_planes;
     mat4x4 view_proj_matrix;
 
@@ -213,6 +211,7 @@ void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct fr
 
     SC_PROFILE_END(render, step_callbacks);
 
+    struct render_batch batch;
     render_batch_init(&batch, &camera->transform, pool);
 
     SC_PROFILE_START(render);
@@ -239,6 +238,7 @@ void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct fr
         }
 
         if (should_draw) {
+            batch.curr_pos = el->center;
             ((render_scene_callback)current->callback)(el->data, &batch);
         }
         

@@ -348,6 +348,7 @@ struct scene* scene_load(const char* filename) {
 
         struct static_entity* entity = &scene->static_entities[i];
         tmesh_load(&scene->static_entities[i].tmesh, file);
+        fread(&scene->static_entities[i].center, sizeof(vector3_t), 1, file);
     }
 
     uint16_t room_count;

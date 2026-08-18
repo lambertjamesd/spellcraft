@@ -4,10 +4,18 @@
 #include <GL/gl.h>
 #include <libdragon.h>
 
-#define SORT_PRIORITY_NO_DEPTH_TEST -100
-#define SORT_PRIORITY_OPAQUE        0
-#define SORT_PRIORITY_DECAL         100
-#define SORT_PRIORITY_TRANSPARENT   200
+enum material_sort_priority {
+    MAT_SORT_BACKGROUND,
+    MAT_SORT_OPAQUE,
+    MAT_SORT_OPAQUE_DECAL,
+    MAT_SORT_OPAQUE_INTER,
+    MAT_SORT_CUTOUT,
+    MAT_SORT_TRANSPARENT,
+    MAT_SORT_TRANSPARENT_DECAL,
+    MAT_SORT_TRANSPARENT_INTER,
+};
+
+typedef enum material_sort_priority material_sort_priority_t;
 
 #define DEBUG_MATERIALS 0
 
