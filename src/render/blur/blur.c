@@ -1,6 +1,7 @@
 #include "blur.h"
 
 #include <libdragon.h>
+#include "../../math/mathf.h"
 
 static uint32_t BLUR_OVERLAY_ID = 0;
 DEFINE_RSP_UCODE(rsp_blur);
@@ -21,7 +22,7 @@ void blur_destroy() {
 void blur_buffer(void* buffer, float strength) {
     assert(strength >= 0.0f && strength <= 1.0f);
 
-    int blur_strength = (2.0f - strength) * 0x8000;
+    int blur_strength = 0x10000 * mathfLerp(1.0f, 0.333333333f, strength);
 
     if (blur_strength >= 0x10000) {
         return;
