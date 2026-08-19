@@ -11,26 +11,6 @@
     SCREEN_BUFFER: .space 2 * 8 * 122
 
 .text
-
-#define dma_size     t0
-#define row_stride   t1
-#define dram_address s0
-#define dmem_address s4
-
-    ##########################################
-    # BlurCmd_Blur
-    # 
-    # a0: blur_strength
-    # a1: screen_buffer
-BlurCmd_Blur:
-    #define blur_strength   a0
-    #define screen_buffer   a1
-
-    #define buffer_ptr      t2
-    #define buffer_ptr_end  t3
-    #define tmp             t4
-    #define pos_y           t5
-    #define pos_x           t6
     
     #define var         $v01
     #define vag         $v02
@@ -55,6 +35,53 @@ BlurCmd_Blur:
     #define vr_round    $v13.e5
     #define vg_round    $v13.e6
     #define vb_round    $v13.e7
+
+#define CAT_RAW(a, b) a ## b
+#define CAT(a, b) CAT_RAW(a, b)
+
+#define VREG(c, channel) CAT(v, CAT(c, channel))
+
+#define blur_mul(x, y, z) \
+    vmudl voutr, VREG(x, r), vw_side; \
+    vmadl voutr, VREG(y, r), vw_center; \
+    vmadl voutr, VREG(z, r), vw_side; \
+    \
+    vmudl voutg, VREG(x, g), vw_side; \
+    vmadl voutg, VREG(y, g), vw_center; \
+    vmadl voutg, VREG(z, g), vw_side; \
+    \
+    vadd voutr, vr_round; \
+    \
+    vmudl voutb, VREG(x, b), vw_side; \
+    vmadl voutb, VREG(y, b), vw_center; \
+    vmadl voutb, VREG(z, b), vw_side; \
+    \
+    vadd voutg, vg_round; \
+    vadd voutb, vb_round; \
+    \
+    vand voutr, voutr, vr_mask; \
+    vand voutg, voutg, vg_mask; \
+    vand voutb, voutb, vb_mask
+
+#define dma_size     t0
+#define row_stride   t1
+#define dram_address s0
+#define dmem_address s4
+
+    ##########################################
+    # BlurCmd_Blur
+    # 
+    # a0: blur_strength
+    # a1: screen_buffer
+BlurCmd_Blur:
+    #define blur_strength   a0
+    #define screen_buffer   a1
+
+    #define buffer_ptr      t2
+    #define buffer_ptr_end  t3
+    #define tmp             t4
+    #define pos_y           t5
+    #define pos_x           t6
     
     li dma_size, DMA_SIZE(16, 122)
     li row_stride, 640
@@ -107,30 +134,7 @@ BlurCmd_Blur:
     vand vcg, vcr, vg_mask
     vand vcr, vcr, vr_mask
 BlurCmd_Blur_BatchLoopPoint:
-    # out = a * edge + b * center + c * edge
-    vmudl voutr, var, vw_side
-    vmadl voutr, vbr, vw_center
-    vmadl voutr, vcr, vw_side
-    
-    vmudl voutg, vag, vw_side
-    vmadl voutg, vbg, vw_center
-    vmadl voutg, vcg, vw_side
-
-    # round red
-    vadd voutr, vr_round
-    
-    vmudl voutb, vab, vw_side
-    vmadl voutb, vbb, vw_center
-    vmadl voutb, vcb, vw_side
-    
-    # round green blue
-    vadd voutg, vg_round
-    vadd voutb, vb_round
-
-    # mask result
-    vand voutr, voutr, vr_mask
-    vand voutg, voutg, vg_mask
-    vand voutb, voutb, vb_mask
+    blur_mul(a, b, c)
 
     # load next row
     lqv var, 0, 32, buffer_ptr
@@ -147,30 +151,7 @@ BlurCmd_Blur_BatchLoopPoint:
     # store recombined result
     sqv voutr, 0, 0, buffer_ptr
 
-    # out = b * edge + c * center + a * edge
-    vmudl voutr, vbr, vw_side
-    vmadl voutr, vcr, vw_center
-    vmadl voutr, var, vw_side
-    
-    vmudl voutg, vbg, vw_side
-    vmadl voutg, vcg, vw_center
-    vmadl voutg, vag, vw_side
-
-    # round red
-    vadd voutr, vr_round
-    
-    vmudl voutb, vbb, vw_side
-    vmadl voutb, vcb, vw_center
-    vmadl voutb, vab, vw_side
-    
-    # round green blue
-    vadd voutg, vg_round
-    vadd voutb, vb_round
-
-    # mask result
-    vand voutr, voutr, vr_mask
-    vand voutg, voutg, vg_mask
-    vand voutb, voutb, vb_mask
+    blur_mul(b, c, a)
 
     # load next row
     lqv vbr, 0, 48, buffer_ptr
@@ -187,30 +168,7 @@ BlurCmd_Blur_BatchLoopPoint:
     # store recombined result
     sqv voutr, 0, 16, buffer_ptr
     
-    # out = c * edge + a * center + b * edge
-    vmudl voutr, vcr, vw_side
-    vmadl voutr, vbr, vw_center
-    vmadl voutr, var, vw_side
-    
-    vmudl voutg, vcg, vw_side
-    vmadl voutg, vbg, vw_center
-    vmadl voutg, vag, vw_side
-    
-    # round red
-    vadd voutr, vr_round
-
-    vmudl voutb, vcb, vw_side
-    vmadl voutb, vbb, vw_center
-    vmadl voutb, vab, vw_side
-    
-    # round green blue
-    vadd voutg, vg_round
-    vadd voutb, vb_round
-    
-    # mask result
-    vand voutr, voutr, vr_mask
-    vand voutg, voutg, vg_mask
-    vand voutb, voutb, vb_mask
+    blur_mul(c, a, b)
     
     # load next row
     lqv vcr, 0, 64, buffer_ptr
