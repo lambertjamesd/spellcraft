@@ -296,7 +296,7 @@ int main(void)
             
             rdpq_set_mode_standard();
             rdpq_mode_combiner(RDPQ_COMBINER_TEX);
-            rdpq_tex_blit(fb, 0, 0, NULL);
+            rdpq_tex_blit(pause_background, 0, 0, NULL);
 
             rdpq_sync_pipe();
             rdpq_set_color_image(fb);

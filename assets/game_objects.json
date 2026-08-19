@@ -227,6 +227,18 @@
             "description": "",
             "mesh": "meshes/puzzle/timed_torch.blend#timed_torch",
             "type": "timed_torch_puzzle"
+        },
+        {
+            "name": "repair_part",
+            "description": "",
+            "mesh": "meshes/repair_part.blend#repair_part",
+            "type": "repair_part"
+        },
+        {
+            "name": "repair_scene",
+            "description": "",
+            "mesh": "meshes/repair_scene.blend#repair_scene",
+            "type": "repair_scene"
         }
     ]
 }

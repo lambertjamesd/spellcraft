@@ -402,6 +402,17 @@ struct comm_stone_definition {
     struct Vector3 position;    
 };
 
+struct repair_scene_definition {
+    boolean_variable puzzle_complete;
+    scene_entry_point exit_scene;
+};
+
+struct repair_part_definition {
+    boolean_variable has_part;
+    bool prevent_rotation;
+    int8_t depends_on;
+};
+
 // definition insert point
 
 #endif

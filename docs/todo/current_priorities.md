@@ -1,4 +1,5 @@
+* repair puzzle
+* bottom dungeon layer
 * work on spell menu
-* touching interactables allows interaction
 * knockback into water
-* material sort order
+* jumping off edges
