@@ -63,6 +63,18 @@
     vand voutg, voutg, vg_mask; \
     vand voutb, voutb, vb_mask
 
+.macro recombine_output
+    # recombine channels
+    vor voutr, voutr, voutg
+    vor voutr, voutr, voutb
+.endm
+
+#define mask_color(x) \
+    vand VREG(x, b), VREG(x, r), vb_mask; \
+    vand VREG(x, g), VREG(x, r), vg_mask; \
+    vand VREG(x, r), VREG(x, r), vr_mask;
+
+
 #define dma_size     t0
 #define row_stride   t1
 #define dram_address s0
@@ -139,9 +151,7 @@ BlurCmd_Blur_BatchLoopPoint:
     # load next row
     lqv var, 0, 32, buffer_ptr
     
-    # recombine channels
-    vor voutr, voutr, voutg
-    vor voutr, voutr, voutb
+    recombine_output
 
     # mask next
     vand vab, var, vb_mask
@@ -156,9 +166,7 @@ BlurCmd_Blur_BatchLoopPoint:
     # load next row
     lqv vbr, 0, 48, buffer_ptr
     
-    # recombine channels
-    vor voutr, voutr, voutg
-    vor voutr, voutr, voutb
+    recombine_output
     
     # mask next
     vand vbb, vbr, vb_mask
@@ -173,9 +181,7 @@ BlurCmd_Blur_BatchLoopPoint:
     # load next row
     lqv vcr, 0, 64, buffer_ptr
     
-    # recombine channels
-    vor voutr, voutr, voutg
-    vor voutr, voutr, voutb
+    recombine_output
 
     # mask next
     vand vcb, vcr, vb_mask
