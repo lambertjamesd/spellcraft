@@ -70,7 +70,7 @@ void water_simulation_update(water_simulation_t* simulation) {
             y_count = rows_remaining;
         }
 
-        rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK,  ((int)y_count << Y_STRIDE_OFFSET) | simluation_stride, PhysicalAddr(vel), PhysicalAddr(in), PhysicalAddr(out));
+        rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK, ((int)y_count << Y_STRIDE_OFFSET) | simluation_stride, PhysicalAddr(vel), PhysicalAddr(in), PhysicalAddr(out));
 
         vel += block_y_stride;
         in += block_y_stride;
