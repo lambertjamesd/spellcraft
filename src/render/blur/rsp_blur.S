@@ -95,12 +95,6 @@ BlurCmd_Blur:
     #define pos_y           t5
     #define pos_x           t6
     
-    li dma_size, DMA_SIZE(16, 122)
-    li row_stride, 640
-    move dram_address, screen_buffer
-    jal DMAIn
-    li dmem_address, %lo(SCREEN_BUFFER)
-    
     andi blur_strength, 0xFFFF
     mtc2 blur_strength, vw_center
 
@@ -123,10 +117,19 @@ BlurCmd_Blur:
     li tmp, 0x1
     mtc2 tmp, vb_round
 
+    li pos_x, (320 - 8) * 2
+    
+BlurCmd_Blur_ColLoopPoint:
+    li pos_y, 0
+
+    li dma_size, DMA_SIZE(16, 122)
+    li row_stride, 640
+    add dram_address, screen_buffer, pos_x
+    jal DMAIn
+    li dmem_address, %lo(SCREEN_BUFFER)
+
     li buffer_ptr, %lo(SCREEN_BUFFER)
     addi buffer_ptr_end, buffer_ptr, 2 * 8 * 120
-
-    li pos_y, 0
 
     # load first 3 rows
     lqv var, 0, 0, buffer_ptr
@@ -192,6 +195,7 @@ BlurCmd_Blur_BatchLoopEnd:
     li row_stride, 640
     li tmp, 320 * 120 * 2
     add dram_address, screen_buffer, tmp
+    add dram_address, pos_x
     jal DMAIn
     li dmem_address, %lo(SCREEN_BUFFER)
 
@@ -200,17 +204,11 @@ BlurCmd_Blur_BatchLoopEnd:
 
     j BlurCmd_Blur_BatchLoopPoint
     addi pos_y, 1
-BlurCmd_Blur_ColEnd:    
+BlurCmd_Blur_ColEnd:
+    bne pos_x, zero, BlurCmd_Blur_ColLoopPoint
+    addi pos_x, -8 * 2
 
-    # sqv $v00, 0, 0, buffer_ptr
-    # sqv $v00, 0, 16, buffer_ptr
-    # sqv $v00, 0, 32, buffer_ptr
-    
-    # li dma_size, DMA_SIZE(16, 120)
-    # li row_stride, 640
-    # move dram_address, a1
-    # li dmem_address, %lo(SCREEN_BUFFER)
-    nop
+    BlurCmd_Blur_ColLoopEnd:
 
     j RSPQ_Loop
     nop
