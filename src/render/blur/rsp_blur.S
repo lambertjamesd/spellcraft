@@ -35,6 +35,8 @@
     #define vr_round    $v13.e5
     #define vg_round    $v13.e6
     #define vb_round    $v13.e7
+    
+    #define vtmp        $v14
 
 #define CAT_RAW(a, b) a ## b
 #define CAT(a, b) CAT_RAW(a, b)
@@ -200,7 +202,11 @@ BlurCmd_Blur_BatchLoopEnd:
     li dmem_address, %lo(SCREEN_BUFFER)
 
     li buffer_ptr, %lo(SCREEN_BUFFER)
-    addi buffer_ptr_end, buffer_ptr, 2 * 8 * 117
+    addi buffer_ptr_end, buffer_ptr, 2 * 8 * 120
+
+    # duplicate last row
+    lqv vtmp, 0, -16, buffer_ptr_end
+    sqv vtmp, 0, 0, buffer_ptr_end
 
     j BlurCmd_Blur_BatchLoopPoint
     addi pos_y, 1
