@@ -104,7 +104,7 @@ void render_3d(surface_t* col, surface_t* z_buffer, struct frame_memory_pool* po
         fog_state_t fog_state = fog_get();
         rdpq_set_fog_color(fog_state.color);
         t3d_fog_set_range(fog_state.min * WORLD_SCALE, fog_state.max * WORLD_SCALE);
-        render_scene_render(&current_scene->camera, viewport, frame_pool_curr());
+        render_scene_render(viewport, frame_pool_curr());
     }
 }
 
@@ -335,9 +335,12 @@ int main(void)
             SC_PROFILE_START(main);
             joypad_poll();
             struct Vector3 right;
-            if (current_scene) {
-                quatMultVector(&current_scene->camera.transform.rotation, &gRight, &right);
-                audio_update_listener(&current_scene->camera.transform.position, &right);
+
+            camera_t* camera = render_scene_active_camera();
+
+            if (camera) {
+                quatMultVector(&camera->transform.rotation, &gRight, &right);
+                audio_update_listener(&camera->transform.position, &right);
             } else {
                 audio_update_listener(&gZeroVec, &gRight);
             }

@@ -264,3 +264,7 @@ void render_scene_remove_camera(camera_t* camera) {
         render_scene_camera = NULL;
     }
 }
+
+camera_t* render_scene_active_camera() {
+    return render_scene_camera;
+}

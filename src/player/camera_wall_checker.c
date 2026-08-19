@@ -6,6 +6,7 @@
 #include "../collision/shapes/sphere.h"
 #include "../collision/collision_scene.h"
 #include "../time/time.h"
+#include "../scene/scene_definition.h"
 
 #define MIN_CAST_DISTANCE   0.25f
 #define MAX_CAST_DISTANCE   6.0f

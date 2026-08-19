@@ -48,4 +48,6 @@ void render_scene_render(T3DViewport* viewport, struct frame_memory_pool* pool);
 void render_scene_use_camera(camera_t* camera);
 void render_scene_remove_camera(camera_t* camera);
 
+camera_t* render_scene_active_camera();
+
 #endif

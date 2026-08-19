@@ -314,7 +314,7 @@ void player_get_input_direction(struct player* player, struct Vector3* target_di
     struct Vector3 right;
     struct Vector3 forward;
 
-    player_get_move_basis(player->camera_transform, &forward, &right);
+    player_get_move_basis(&player->camera_controller.camera.transform, &forward, &right);
 
     struct Vector2 direction;
 
@@ -1460,12 +1460,10 @@ void player_unload_sound(struct player* player) {
     }
 }
 
-void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform) {
+void player_init(struct player* player, struct player_definition* definition) {
     transformSaInitIdentity(&player->cutscene_actor.transform);
     renderable_single_axis_init(&player->renderable, &player->cutscene_actor.transform, "rom:/meshes/characters/apprentice.tmesh");
     renderable_set_animator(&player->renderable, &player->cutscene_actor.animator);
-
-    player->camera_transform = camera_transform;
 
     player->cutscene_actor.transform.position = definition->location;
     player->cutscene_actor.transform.rotation = definition->rotation;
@@ -1541,6 +1539,8 @@ void player_init(struct player* player, struct player_definition* definition, st
     player->z_target = 0;
     player->z_target_visual.hide = 1;
     player->hover_interaction = 0;
+
+    camera_controller_init(&player->camera_controller, player);
 }
 
 void player_destroy(struct player* player) {
@@ -1562,4 +1562,6 @@ void player_destroy(struct player* player) {
     render_scene_remove(&player->z_target_visual);
     renderable_destroy(&player->z_target_visual);
     player_unload_sound(player);
+
+    camera_controller_destroy(&player->camera_controller);
 }

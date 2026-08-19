@@ -33,7 +33,7 @@ void room_portal_update(void* data) {
 
     struct Vector3 local_offset = room_portal_distance(portal, &current_scene->player.cutscene_actor.transform.position);
     float player_distance = local_offset.z;
-    float camera_distance = room_portal_distance(portal, &current_scene->camera.transform.position).z;
+    float camera_distance = room_portal_distance(portal, &render_scene_active_camera()->transform.position).z;
 
     
     int side_a = player_distance > 0.0f;

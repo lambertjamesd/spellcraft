@@ -8,8 +8,6 @@
 
 #include "../player/player.h"
 #include "../overworld/overworld.h"
-#include "camera_controller.h"
-#include "camera_animation.h"
 #include "../entity/entity_spawner.h"
 #include "../particles/static_particles.h"
 #include "../cutscene/cutscene.h"
@@ -116,8 +114,6 @@ struct scene {
     struct mesh_collider mesh_collider;
 
     struct player player;
-    struct Camera camera;
-    struct camera_controller camera_controller;
 
     struct pause_menu pause_menu;
     struct hud hud;

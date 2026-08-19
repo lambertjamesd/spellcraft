@@ -550,7 +550,7 @@ void scene_teleport_player_to(vector3_t* pos) {
     vector3_t offset;
     vector3Sub(pos, player_pos, &offset);
 
-    camera_shift_by(&current_scene->camera_controller, &offset);
+    camera_shift_by(&current_scene->player.camera_controller, &offset);
 
     *player_pos = *pos;
 }

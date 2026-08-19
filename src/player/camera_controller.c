@@ -7,6 +7,8 @@
 #include "../math/constants.h"
 #include "../render/defs.h"
 #include "../entity/interactable.h"
+#include "../render/render_scene.h"
+#include "player.h"
 #include <math.h>
 
 static struct move_towards_parameters camera_move_parameters = {
@@ -44,7 +46,7 @@ void camera_cached_calcuations_check(struct camera_cached_calcuations* cache, st
 }
 
 void camera_look_at_from_rotation(struct camera_controller* controller) {
-    quatMultVector(&controller->camera->transform.rotation, &gForward, &controller->looking_at);
+    quatMultVector(&controller->camera.transform.rotation, &gForward, &controller->looking_at);
     vector3AddScaled(&controller->stable_position, &controller->looking_at, -CAMERA_FOLLOW_DISTANCE, &controller->looking_at);
 }
 
@@ -305,7 +307,7 @@ void camera_controller_update_position(struct camera_controller* controller) {
 
     struct Vector3 offset;
     vector3Sub(&controller->looking_at, &controller->stable_position, &offset);
-    quatLook(&offset, &gUp, &controller->camera->transform.rotation);
+    quatLook(&offset, &gUp, &controller->camera.transform.rotation);
 }
 
 void camera_controller_move_behind_player(struct camera_controller* controller, vector3_t* target) {
@@ -329,7 +331,7 @@ void camera_controller_return_target(struct camera_controller* controller, struc
         camera_controller_update_position(controller);
     } else {
         struct Vector3 offset;
-        struct Transform* cam_transform = &controller->camera->transform;
+        struct Transform* cam_transform = &controller->camera.transform;
     
         quatMultVector(&cam_transform->rotation, &gForward, &offset);
         offset.y = 0.0f;
@@ -341,7 +343,7 @@ void camera_controller_return_target(struct camera_controller* controller, struc
         camera_look_at_from_rotation(controller);
     }
 
-    controller->camera->fov = mathfMoveTowards(controller->camera->fov, 70.0f, 20.0f * fixed_time_step);
+    controller->camera.fov = mathfMoveTowards(controller->camera.fov, 70.0f, 20.0f * fixed_time_step);
 
     if (vector3DistSqrd(target, &controller->stable_position) < 0.1f) {
         camera_follow_player(controller);
@@ -363,7 +365,7 @@ void camera_controller_move_to(struct camera_controller* controller) {
     
     struct Vector3 offset;
     vector3Sub(&controller->looking_at, &controller->stable_position, &offset);
-    quatLook(&offset, &gUp, &controller->camera->transform.rotation);
+    quatLook(&offset, &gUp, &controller->camera.transform.rotation);
 }
 
 static struct camera_animation_frame __attribute__((aligned(16))) anim_frame_buffer;
@@ -383,20 +385,20 @@ void camera_controller_update_animation(struct camera_controller* controller) {
     );
 
     controller->stable_position = anim_frame_buffer.position;
-    controller->camera->transform.rotation.x = anim_frame_buffer.rotation[0];
-    controller->camera->transform.rotation.y = anim_frame_buffer.rotation[1];
-    controller->camera->transform.rotation.z = anim_frame_buffer.rotation[2];
+    controller->camera.transform.rotation.x = anim_frame_buffer.rotation[0];
+    controller->camera.transform.rotation.y = anim_frame_buffer.rotation[1];
+    controller->camera.transform.rotation.z = anim_frame_buffer.rotation[2];
 
-    float neg_w = controller->camera->transform.rotation.x * controller->camera->transform.rotation.x 
-        + controller->camera->transform.rotation.y * controller->camera->transform.rotation.y 
-        + controller->camera->transform.rotation.z * controller->camera->transform.rotation.z;
+    float neg_w = controller->camera.transform.rotation.x * controller->camera.transform.rotation.x 
+        + controller->camera.transform.rotation.y * controller->camera.transform.rotation.y 
+        + controller->camera.transform.rotation.z * controller->camera.transform.rotation.z;
 
     if (neg_w > 1.0f) {
         neg_w = 1.0f;
     }
 
-    controller->camera->transform.rotation.w = sqrtf(1.0f - neg_w);
-    controller->camera->fov = (180.0f / M_PI) * anim_frame_buffer.fov;
+    controller->camera.transform.rotation.w = sqrtf(1.0f - neg_w);
+    controller->camera.fov = (180.0f / M_PI) * anim_frame_buffer.fov;
     controller->state_data.animate.current_frame += 1;
     camera_look_at_from_rotation(controller);
 }
@@ -411,11 +413,11 @@ entity_id camera_determine_secondary_target(struct camera_controller* controller
 
 void camera_controller_determine_near_plane(struct camera_controller* controller) {
     vector3_t offset;
-    vector3Sub(player_get_position(controller->player), &controller->camera->transform.position, &offset);
+    vector3Sub(player_get_position(controller->player), &controller->camera.transform.position, &offset);
 
     float target_near_plane = sqrtf(vector3MagSqrd2D(&offset)) - PLAYER_CLIP_RADIUS;
 
-    camera_set_near(controller->camera, clampf(target_near_plane, MIN_NEAR_PLANE, MAX_NEAR_PLANE));
+    camera_set_near(&controller->camera, clampf(target_near_plane, MIN_NEAR_PLANE, MAX_NEAR_PLANE));
 }
 
 void camera_controller_update(struct camera_controller* controller) {
@@ -465,13 +467,13 @@ void camera_controller_update(struct camera_controller* controller) {
     vector3AddScaled(&controller->shake_velocity, &controller->shake_offset, -50.0f, &controller->shake_velocity);
     vector3AddScaled(&controller->shake_offset, &controller->shake_velocity, fixed_time_step, &controller->shake_offset);
     vector3Scale(&controller->shake_velocity, &controller->shake_velocity, 0.5f);
-    vector3Add(&controller->stable_position, &controller->shake_offset, &controller->camera->transform.position);
+    vector3Add(&controller->stable_position, &controller->shake_offset, &controller->camera.transform.position);
 
     camera_controller_determine_near_plane(controller);
 }
 
-void camera_controller_init(struct camera_controller* controller, struct Camera* camera, struct player* player) {
-    controller->camera = camera;
+void camera_controller_init(struct camera_controller* controller, struct player* player) {
+    camera_init(&controller->camera, DEFAULT_CAMERA_FOV, WORLD_NEAR_PLANE, WORLD_FAR_PLANE);
     controller->player = player;
     camera_follow_player(controller);
 
@@ -488,33 +490,35 @@ void camera_controller_init(struct camera_controller* controller, struct Camera*
     controller->shake_offset = gZeroVec;
     controller->shake_velocity = gZeroVec;
 
-    controller->camera->transform.position = controller->target;
+    controller->camera.transform.position = controller->target;
     controller->stable_position = controller->target;
-    controller->camera->transform.scale = gOneVec;
+    controller->camera.transform.scale = gOneVec;
     controller->_cache_calcluations.fov = 0.0f;
-    quatAxisAngle(&gRight, 0.0f, &controller->camera->transform.rotation);
+    quatAxisAngle(&gRight, 0.0f, &controller->camera.transform.rotation);
 
     camera_controller_update_position(controller);
 
     controller->state_data.animate.animation = NULL;
     controller->state_data.animate.current_frame = 0;
 
+    render_scene_use_camera(&controller->camera);
 }
 
 void camera_controller_destroy(struct camera_controller* controller) {
     update_remove(controller);
     camera_wall_checker_destroy(&controller->wall_checker);
+    render_scene_remove_camera(&controller->camera);
 }
 
 void camera_look_at(struct camera_controller* controller, struct Vector3* target) {
     controller->look_target = *target;
     controller->state = CAMERA_STATE_LOOK_AT_WITH_PLAYER;
-    controller->camera->fov = 70.0f;
+    controller->camera.fov = 70.0f;
 }
 
 void camera_follow_player(struct camera_controller* controller) {
     controller->state = CAMERA_STATE_FOLLOW;
-    controller->camera->fov = 70.0f;
+    controller->camera.fov = 70.0f;
     controller->state_data = (union camera_controller_state_data){
         .follow = {
             .horizontal_velocity = 0.0f,
@@ -561,10 +565,10 @@ void camera_move_to(struct camera_controller* controller, struct Vector3* positi
 
 void camera_set_fixed(struct camera_controller* controller, struct Vector3* position, struct Quaternion* rotation, float fov) {
     controller->state = CAMERA_STATE_FIXED;
-    controller->camera->transform.position = *position;
+    controller->camera.transform.position = *position;
     controller->stable_position = *position;
-    controller->camera->transform.rotation = *rotation;
-    controller->camera->fov = fov;
+    controller->camera.transform.rotation = *rotation;
+    controller->camera.fov = fov;
 }
 
 bool camera_is_animating(struct camera_controller* controller) {

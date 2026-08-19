@@ -17,6 +17,7 @@
 #include "../effects/assets.h"
 #include "../player/inventory.h"
 #include "../menu/rsp_menu.h"
+#include "../render/blur/blur.h"
 
 void init_engine() {
     spell_assets_init();
@@ -36,4 +37,5 @@ void init_engine() {
     audio_player_init();
     inventory_init();
     menu_init();
+    blur_init();
 }

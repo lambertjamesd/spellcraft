@@ -26,7 +26,7 @@ void camera_focus_update(void* data) {
     }
 
     camera_set_fixed(
-        &current_scene->camera_controller, 
+        &current_scene->player.camera_controller, 
         &camera_focus->position, 
         &camera_focus->rotation,
         camera_focus->fov

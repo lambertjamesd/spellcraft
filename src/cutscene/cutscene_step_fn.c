@@ -26,6 +26,10 @@ static color_t fade_colors[] = {
     {255, 255, 255, 255},
 };
 
+static inline camera_controller_t* cutscene_get_camera_controller() {
+    return &current_scene->player.camera_controller;
+}
+
 cutscene_actor_t* cutscene_lookup_actor(cutscene_runner_context_t* context, entity_id input) {
     return cutscene_actor_find(cutscene_context_get_translate_entity(context, input));
 }
@@ -187,7 +191,7 @@ void cutscene_camera_look_at_npc_init(cutscene_runner_context_t* context, int ar
 
     struct cutscene_actor* target = cutscene_lookup_actor(context, entity_id);
     if (target) {
-        camera_look_at(&current_scene->camera_controller, &target->transform.position);
+        camera_look_at(cutscene_get_camera_controller(), &target->transform.position);
         return;
     }
 
@@ -196,38 +200,38 @@ void cutscene_camera_look_at_npc_init(cutscene_runner_context_t* context, int ar
     if (obj) {
         vector3_t center;
         vector3Lerp(&obj->bounding_box.min, &obj->bounding_box.max, 0.5f, &center);
-        camera_look_at(&current_scene->camera_controller, &center);
+        camera_look_at(cutscene_get_camera_controller(), &center);
         return;
     }
 
     empty_t* empty = empty_find(entity_id);
 
     if (empty) {
-        camera_look_at(&current_scene->camera_controller, &empty->position);
+        camera_look_at(cutscene_get_camera_controller(), &empty->position);
         return;
     }
 }
 
 // cam_follow_player
 void cutscene_cam_follow_player_init(cutscene_runner_context_t* context, int arg_count) {
-    camera_follow_player(&current_scene->camera_controller);
+    camera_follow_player(cutscene_get_camera_controller());
 }
 
 // cam_return
 void cutscene_cam_return_init(cutscene_runner_context_t* context, int arg_count) {
-    camera_return(&current_scene->camera_controller);
+    camera_return(cutscene_get_camera_controller());
 }
 
 // cam_behind_player
 void cutscene_cam_behind_player_init(cutscene_runner_context_t* context, int arg_count) {
-    camera_behind_player(&current_scene->camera_controller);
+    camera_behind_player(cutscene_get_camera_controller());
 }
 
 // cam_animate
 void cutscene_cam_anim_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 1, arg_count, args);
     camera_play_animation(
-        &current_scene->camera_controller, 
+        cutscene_get_camera_controller(), 
         camera_animation_lookup(&current_scene->camera_animations, (char*)args[0])
     );
 }
@@ -236,7 +240,7 @@ void cutscene_cam_anim_init(cutscene_runner_context_t* context, int arg_count) {
 void cutscene_cam_move_to_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 4, arg_count, args);
     camera_move_to(
-        &current_scene->camera_controller, 
+        cutscene_get_camera_controller(), 
         (vector3_t*)args, 
         args[3], 
         false
@@ -247,7 +251,7 @@ void cutscene_cam_move_to_init(cutscene_runner_context_t* context, int arg_count
 void cutscene_cam_look_at_init(cutscene_runner_context_t* context, int arg_count) {
     READ_ARGS(context, 4, arg_count, args);
     camera_move_to(
-        &current_scene->camera_controller, 
+        cutscene_get_camera_controller(), 
         (vector3_t*)args, 
         args[3], 
         true
@@ -260,7 +264,7 @@ void cutscene_camera_wait_init(cutscene_runner_context_t* context, int arg_count
 }
 
 bool cutscene_camera_wait_step(cutscene_runner_context_t* context) {
-    return !camera_is_animating(&current_scene->camera_controller);
+    return !camera_is_animating(cutscene_get_camera_controller());
 }
 
 // interact_with_location
@@ -375,7 +379,7 @@ void cutscene_comm_stone_start_init(cutscene_runner_context_t* context, int arg_
     camera_look.x = (target.x + player_pos->x) * 0.5f;
     camera_look.y = target.y;
     camera_look.z = (target.z + player_pos->z) * 0.5f;
-    camera_move_to(&current_scene->camera_controller, &camera_look, false, true);
+    camera_move_to(cutscene_get_camera_controller(), &camera_look, false, true);
 
     vector2_t* rot = player_get_rotation(&current_scene->player);
     vector3_t offset;
@@ -384,7 +388,7 @@ void cutscene_comm_stone_start_init(cutscene_runner_context_t* context, int arg_
     vector3_t camera_pos;
     vector3RotateWith2(&offset, &rotate_amount, &camera_pos);
     vector3AddScaled(&camera_look, &camera_pos, CAMERA_DISTANCE, &camera_pos);
-    camera_move_to(&current_scene->camera_controller, &camera_pos, false, false);
+    camera_move_to(cutscene_get_camera_controller(), &camera_pos, false, false);
 
     cutscene_actor_run_animation(&current_scene->player.cutscene_actor, "comm_stone_start", false);
 }
@@ -422,7 +426,7 @@ void cutscene_comm_stone_end_init(cutscene_runner_context_t* context, int arg_co
     }
 
     cutscene_actor_run_animation(&current_scene->player.cutscene_actor, "comm_stone_end", false);
-    camera_return(&current_scene->camera_controller);
+    camera_return(cutscene_get_camera_controller());
     fog_clear(FOG_PRIORITY_EFFECT, 2.0f);
 }
 

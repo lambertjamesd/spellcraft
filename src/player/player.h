@@ -11,6 +11,7 @@
 #include "../render/animator.h"
 #include "../cutscene/cutscene_actor.h"
 #include "../effects/drop_shadow.h"
+#include "camera_controller.h"
 
 #include "../spell/projectile.h"
 #include "../spell/spell_exec.h"
@@ -121,7 +122,6 @@ typedef union state_data state_data_t;
 struct player {
     struct cutscene_actor cutscene_actor;
     struct renderable renderable;
-    struct Transform* camera_transform;
     struct health health;
 
     struct spell_data_source player_spell_sources[PLAYER_CAST_SOURCE_COUNT];
@@ -151,11 +151,13 @@ struct player {
     entity_id z_target;
     entity_id hover_interaction;
 
+    camera_controller_t camera_controller;
+
 };
 
 typedef struct player player_t;
 
-void player_init(struct player* player, struct player_definition* definition, struct Transform* camera_transform);
+void player_init(struct player* player, struct player_definition* definition);
 
 void player_render(struct player* player, struct render_batch* batch);
 

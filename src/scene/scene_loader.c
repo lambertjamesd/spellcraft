@@ -331,11 +331,8 @@ struct scene* scene_load(const char* filename) {
     scene->last_despawn_check = 0;
 
     cutscene_actor_common_init();
-    camera_init(&scene->camera, DEFAULT_CAMERA_FOV, WORLD_NEAR_PLANE, WORLD_FAR_PLANE);
-    player_init(&scene->player, &player_def, &scene->camera.transform);
-    camera_controller_init(&scene->camera_controller, &scene->camera, &scene->player);
+    player_init(&scene->player, &player_def);
     hud_init(&scene->hud, &scene->player, &scene->camera);
-    render_scene_use_camera(&scene->camera);
 
     uint16_t static_count;
     fread(&static_count, 2, 1, file);
@@ -384,7 +381,7 @@ struct scene* scene_load(const char* filename) {
         scene->overworld = overworld_load(overworld_filename);
     } else {
         scene->overworld = NULL;
-        scene->camera.far = 100.0f;
+        scene->player.camera_controller.camera.far = 100.0f;
     }
 
     scene_load_minimap(scene, file);
@@ -475,8 +472,6 @@ void scene_release(struct scene* scene) {
     pause_menu_destroy(&scene->pause_menu);
     hud_destroy(&scene->hud);
     player_destroy(&scene->player);
-    camera_controller_destroy(&scene->camera_controller);
-    render_scene_remove_camera(&scene->camera);
 
     inventory_destroy();
     cutscene_actor_common_destroy();

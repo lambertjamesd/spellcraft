@@ -2,12 +2,13 @@
 #define __SCENE_CAMERA_CONTROLLER_H__
 
 #include "../render/camera.h"
-#include "../player/player.h"
 #include "camera_animation.h"
 #include "camera_wall_checker.h"
 
 #define CAMERA_FOLLOW_DISTANCE  3.4f
 #define CAMERA_FOLLOW_HEIGHT    1.6f
+
+struct player;
 
 enum camera_controller_state {
     CAMERA_STATE_FOLLOW,
@@ -45,7 +46,7 @@ union camera_controller_state_data {
 };
 
 struct camera_controller {
-    struct Camera* camera;
+    struct Camera camera;
     struct Vector3 stable_position;
     struct player* player;
     struct camera_cached_calcuations _cache_calcluations;
@@ -62,7 +63,9 @@ struct camera_controller {
     union camera_controller_state_data state_data;
 };
 
-void camera_controller_init(struct camera_controller* controller, struct Camera* camera, struct player* player);
+typedef struct camera_controller camera_controller_t;
+
+void camera_controller_init(struct camera_controller* controller, struct player* player);
 
 void camera_controller_destroy(struct camera_controller* controller);
 
