@@ -97,6 +97,9 @@ BlurCmd_Blur:
     #define pos_y           t5
     #define pos_x           t6
     
+    #define buffer_ptr_prev t7
+    #define buffer_ptr_next t8
+    
     andi blur_strength, 0xFFFF
     mtc2 blur_strength, vw_center
 
@@ -120,7 +123,6 @@ BlurCmd_Blur:
     mtc2 tmp, vb_round
 
     li pos_x, (320 - 8) * 2
-    
 BlurCmd_Blur_ColLoopPoint:
     li pos_y, 0
 
@@ -214,7 +216,73 @@ BlurCmd_Blur_ColEnd:
     bne pos_x, zero, BlurCmd_Blur_ColLoopPoint
     addi pos_x, -8 * 2
 
-    BlurCmd_Blur_ColLoopEnd:
+BlurCmd_Blur_ColLoopEnd:
+    li pos_y, (240 - 3) * 320 * 2
+
+BlurCmd_Blur_HorzStart:
+    li dma_size, DMA_SIZE(320 * 3 * 2, 1)
+    li row_stride, 0
+    add dram_address, screen_buffer, pos_y
+    jal DMAIn
+    li dmem_address, %lo(SCREEN_BUFFER)
+
+    li buffer_ptr, %lo(SCREEN_BUFFER)
+    addi buffer_ptr_prev, buffer_ptr, -2
+    addi buffer_ptr_next, buffer_ptr, 2
+BlurCmd_Blur_HorzBatchStart:
+    addi buffer_ptr_end, buffer_ptr, 320 * 2
+    lqv var, 0, 0, buffer_ptr_prev
+    lrv var, 0, 16, buffer_ptr_prev
+    # duplicate first pixel twice in first batch
+    lsv var, 0, 0, buffer_ptr
+
+    lqv vbr, 0, 0, buffer_ptr
+
+    lqv vcr, 0, 0, buffer_ptr_next
+    lrv vcr, 0, 16, buffer_ptr_next
+
+BlurCmd_Blur_HorzRowStart:
+    # separate channels
+    mask_color(a)
+    mask_color(b)
+    mask_color(c)
+
+    blur_mul(a, b, c)
+
+    addi buffer_ptr, 16
+    addi buffer_ptr_prev, 16
+    addi buffer_ptr_next, 16
+    
+    recombine_output
+
+    lqv var, 0, 0, buffer_ptr_prev
+    lrv var, 0, 16, buffer_ptr_prev
+
+    lqv vbr, 0, 0, buffer_ptr
+
+    lqv vcr, 0, 0, buffer_ptr_next
+    lrv vcr, 0, 16, buffer_ptr_next
+    
+    # store recombined result
+    sqv voutr, 0, -16, buffer_ptr
+    
+    blt buffer_ptr, buffer_ptr_end, BlurCmd_Blur_HorzRowStart
+    nop
+BlurCmd_Blur_HorzRowEnd:
+    addi buffer_ptr_end, buffer_ptr, 320 * 2
+    # duplicate first pixel twice in first batch
+    lsv var, 0, 0, buffer_ptr
+
+    li tmp, %lo(SCREEN_BUFFER) + 320 * 3 * 2
+    blt buffer_ptr, tmp, BlurCmd_Blur_HorzRowStart
+    nop
+    
+    # save last result
+    jal DMAOut
+    nop
+
+    bne pos_y, zero, BlurCmd_Blur_HorzStart
+    addi pos_y, pos_y, -320 * 3 * 2
 
     j RSPQ_Loop
     nop
