@@ -72,7 +72,7 @@
 #define mask_color(x) \
     vand VREG(x, b), VREG(x, r), vb_mask; \
     vand VREG(x, g), VREG(x, r), vg_mask; \
-    vand VREG(x, r), VREG(x, r), vr_mask;
+    vand VREG(x, r), VREG(x, r), vr_mask
 
 
 #define dma_size     t0
@@ -134,17 +134,9 @@ BlurCmd_Blur:
     lqv vcr, 0, 16, buffer_ptr
 
     # separate channels
-    vand vab, var, vb_mask
-    vand vag, var, vg_mask
-    vand var, var, vr_mask
-    
-    vand vbb, vbr, vb_mask
-    vand vbg, vbr, vg_mask
-    vand vbr, vbr, vr_mask
-    
-    vand vcb, vcr, vb_mask
-    vand vcg, vcr, vg_mask
-    vand vcr, vcr, vr_mask
+    mask_color(a)
+    mask_color(b)
+    mask_color(c)
 BlurCmd_Blur_BatchLoopPoint:
     blur_mul(a, b, c)
 
@@ -154,9 +146,7 @@ BlurCmd_Blur_BatchLoopPoint:
     recombine_output
 
     # mask next
-    vand vab, var, vb_mask
-    vand vag, var, vg_mask
-    vand var, var, vr_mask
+    mask_color(a)
 
     # store recombined result
     sqv voutr, 0, 0, buffer_ptr
@@ -169,9 +159,7 @@ BlurCmd_Blur_BatchLoopPoint:
     recombine_output
     
     # mask next
-    vand vbb, vbr, vb_mask
-    vand vbg, vbr, vg_mask
-    vand vbr, vbr, vr_mask
+    mask_color(b)
 
     # store recombined result
     sqv voutr, 0, 16, buffer_ptr
@@ -184,9 +172,7 @@ BlurCmd_Blur_BatchLoopPoint:
     recombine_output
 
     # mask next
-    vand vcb, vcr, vb_mask
-    vand vcg, vcr, vg_mask
-    vand vcr, vcr, vr_mask
+    mask_color(c)
     
     # store recombined result
     sqv voutr, 0, 32, buffer_ptr
