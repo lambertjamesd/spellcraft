@@ -43,6 +43,9 @@ void render_scene_remove_renderable(struct renderable* renderable);
 void render_scene_add_step(render_step_callback callback, void* data);
 void render_scene_remove_step(void* data);
 
-void render_scene_render(struct Camera* camera, T3DViewport* viewport, struct frame_memory_pool* pool);
+void render_scene_render(T3DViewport* viewport, struct frame_memory_pool* pool);
+
+void render_scene_use_camera(camera_t* camera);
+void render_scene_remove_camera(camera_t* camera);
 
 #endif
