@@ -8,7 +8,7 @@
     RSPQ_EmptySavedState
 .bss
     .align 4
-    SCREEN_BUFFER: .space 2 * 8 * 121
+    SCREEN_BUFFER: .space 2 * 8 * 122
 
 .text
 
@@ -29,6 +29,8 @@ BlurCmd_Blur:
     #define buffer_ptr      t2
     #define buffer_ptr_end  t3
     #define tmp             t4
+    #define pos_y           t5
+    #define pos_x           t6
     
     #define var         $v01
     #define vag         $v02
@@ -50,7 +52,11 @@ BlurCmd_Blur:
     #define vg_mask     $v13.e3
     #define vb_mask     $v13.e4
     
-    li dma_size, DMA_SIZE(16, 121)
+    #define vr_round    $v13.e5
+    #define vg_round    $v13.e6
+    #define vb_round    $v13.e7
+    
+    li dma_size, DMA_SIZE(16, 122)
     li row_stride, 640
     move dram_address, screen_buffer
     jal DMAIn
@@ -70,9 +76,18 @@ BlurCmd_Blur:
     mtc2 tmp, vg_mask
     li tmp, 0x3E
     mtc2 tmp, vb_mask
+    
+    li tmp, 0x0400
+    mtc2 tmp, vr_round
+    li tmp, 0x020
+    mtc2 tmp, vg_round
+    li tmp, 0x1
+    mtc2 tmp, vb_round
 
     li buffer_ptr, %lo(SCREEN_BUFFER)
-    addi buffer_ptr_end, buffer_ptr_end, 2 * 8 * 120
+    addi buffer_ptr_end, buffer_ptr, 2 * 8 * 120
+
+    li pos_y, 0
 
     # load first 3 rows
     lqv var, 0, 0, buffer_ptr
@@ -100,10 +115,17 @@ BlurCmd_Blur_BatchLoopPoint:
     vmudl voutg, vag, vw_side
     vmadl voutg, vbg, vw_center
     vmadl voutg, vcg, vw_side
+
+    # round red
+    vadd voutr, vr_round
     
     vmudl voutb, vab, vw_side
     vmadl voutb, vbb, vw_center
     vmadl voutb, vcb, vw_side
+    
+    # round green blue
+    vadd voutg, vg_round
+    vadd voutb, vb_round
 
     # mask result
     vand voutr, voutr, vr_mask
@@ -133,10 +155,17 @@ BlurCmd_Blur_BatchLoopPoint:
     vmudl voutg, vbg, vw_side
     vmadl voutg, vcg, vw_center
     vmadl voutg, vag, vw_side
+
+    # round red
+    vadd voutr, vr_round
     
     vmudl voutb, vbb, vw_side
     vmadl voutb, vcb, vw_center
     vmadl voutb, vab, vw_side
+    
+    # round green blue
+    vadd voutg, vg_round
+    vadd voutb, vb_round
 
     # mask result
     vand voutr, voutr, vr_mask
@@ -166,10 +195,17 @@ BlurCmd_Blur_BatchLoopPoint:
     vmudl voutg, vcg, vw_side
     vmadl voutg, vbg, vw_center
     vmadl voutg, vag, vw_side
+    
+    # round red
+    vadd voutr, vr_round
 
     vmudl voutb, vcb, vw_side
     vmadl voutb, vbb, vw_center
     vmadl voutb, vab, vw_side
+    
+    # round green blue
+    vadd voutg, vg_round
+    vadd voutb, vb_round
     
     # mask result
     vand voutr, voutr, vr_mask
@@ -194,17 +230,37 @@ BlurCmd_Blur_BatchLoopPoint:
     addi buffer_ptr, 48
     blt buffer_ptr, buffer_ptr_end, BlurCmd_Blur_BatchLoopPoint
     nop
+BlurCmd_Blur_BatchLoopEnd:
+    # save last result
+    jal DMAOut
+    nop
 
+    bne pos_y, zero, BlurCmd_Blur_ColEnd
+    nop
+    
+    li dma_size, DMA_SIZE(16, 120)
+    li row_stride, 640
+    li tmp, 320 * 120 * 2
+    add dram_address, screen_buffer, tmp
+    jal DMAIn
+    li dmem_address, %lo(SCREEN_BUFFER)
+
+    li buffer_ptr, %lo(SCREEN_BUFFER)
+    addi buffer_ptr_end, buffer_ptr, 2 * 8 * 117
+
+    j BlurCmd_Blur_BatchLoopPoint
+    addi pos_y, 1
+BlurCmd_Blur_ColEnd:    
 
     # sqv $v00, 0, 0, buffer_ptr
     # sqv $v00, 0, 16, buffer_ptr
     # sqv $v00, 0, 32, buffer_ptr
     
-    li dma_size, DMA_SIZE(16, 120)
-    li row_stride, 640
-    move dram_address, a1
-    jal DMAOut
-    li dmem_address, %lo(SCREEN_BUFFER)
+    # li dma_size, DMA_SIZE(16, 120)
+    # li row_stride, 640
+    # move dram_address, a1
+    # li dmem_address, %lo(SCREEN_BUFFER)
+    nop
 
     j RSPQ_Loop
     nop
