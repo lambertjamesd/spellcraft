@@ -6,7 +6,7 @@
 
 #define REALLY_FAR  10000000.0f
 
-void repair_part_load(repair_part_t* part, FILE* file) {
+void repair_old_part_load(repair_old_part_t* part, FILE* file) {
     vector3_t pos;
     quaternion_t rot;
 
@@ -42,7 +42,7 @@ void repair_part_load(repair_part_t* part, FILE* file) {
     part->prevent_rotation = part->prevent_rotation;
 }
 
-void repair_part_destroy(repair_part_t* part) {
+void repair_old_part_destroy(repair_old_part_t* part) {
     tmesh_release(&part->mesh);
     tmesh_release(&part->solid_mesh);
 
@@ -50,11 +50,11 @@ void repair_part_destroy(repair_part_t* part) {
     free(part->collider.indices);
 }
 
-void repair_part_render(repair_part_t* part, struct frame_memory_pool* pool) {
+void repair_old_part_render(repair_old_part_t* part, struct frame_memory_pool* pool) {
     if (part->is_present) {
         material_apply(&part->mesh.material->apply);
     } else {
-        material_apply(&current_repair_scene->assets.missing_part_material);
+        material_apply(&current_repair_old_scene->assets.missing_part_material);
     }
 
     T3DMat4FP* mtx_fp = frame_pool_get_transformfp(pool);
@@ -70,8 +70,8 @@ void repair_part_render(repair_part_t* part, struct frame_memory_pool* pool) {
     t3d_matrix_pop(1);
 }
 
-void repair_part_render_drop_location(repair_part_t* part, struct frame_memory_pool* pool) {
-    material_apply(&current_repair_scene->assets.correct_slot_material);
+void repair_old_part_render_drop_location(repair_old_part_t* part, struct frame_memory_pool* pool) {
+    material_apply(&current_repair_old_scene->assets.correct_slot_material);
     rdpq_mode_zbuf(false, false);
 
     T3DMat4FP* mtx_fp = frame_pool_get_transformfp(pool);
@@ -86,7 +86,7 @@ void repair_part_render_drop_location(repair_part_t* part, struct frame_memory_p
     t3d_matrix_pop(1);
 }
 
-bool repair_part_raycast(repair_part_t* part, ray_t* ray, float* distance) {
+bool repair_old_part_raycast(repair_old_part_t* part, ray_t* ray, float* distance) {
     if (!part->is_present) {
         return false;
     }
@@ -108,7 +108,7 @@ bool repair_part_raycast(repair_part_t* part, ray_t* ray, float* distance) {
     return *distance != start_distance;
 }
 
-void repair_part_update(repair_part_t* part) {
+void repair_old_part_update(repair_old_part_t* part) {
     if (!part->is_present) {
         return;
     }
@@ -116,7 +116,7 @@ void repair_part_update(repair_part_t* part) {
     quatLerp(&part->transform.rotation, &part->target_rotation, 0.3f, &part->transform.rotation);
 }
 
-void repair_part_set_complete(repair_part_t* part) {
+void repair_old_part_set_complete(repair_old_part_t* part) {
     part->is_present = true;
     part->is_connected = true;
     part->transform.position = part->end_position;

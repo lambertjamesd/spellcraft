@@ -2,9 +2,31 @@ import bpy
 import mathutils
 import math
 import struct
+import os.path
+import os
+from bpy.path import abspath
 
 from . import struct_parse
 from . import line_mesh_builder
+
+def get_scene_resource(name: str) -> str:
+    base = os.path.join(os.getcwd(), 'assets')
+    library_location = bpy.data.filepath
+
+    if not library_location.startswith(base):
+        raise Exception(f'could not get rom path to {library_location} with base path {base}')
+
+    return f'rom:{os.path.splitext(library_location[len(base):])[0]}_{name}'
+
+
+def get_rom_path(library_path: str, new_suffix: str) -> str:
+    base = os.path.join(os.getcwd(), 'assets')
+    library_location = os.path.normpath(abspath(library_path))
+
+    if not library_location.startswith(base):
+        raise Exception(f'could not get rom path to {library_location} with base path {base}')
+
+    return f'rom:{os.path.splitext(library_location[len(base):])[0]}{new_suffix}'
 
 class SerializeContext():
     def __init__(self, enums):
@@ -15,6 +37,7 @@ class SerializeContext():
         self._current_offset = 0
         self._did_write = False
         self._obj_spawner_mapping: dict[str, int] = {}
+        self._mesh_exports: set[bpy.types.Mesh] = set()
 
     def get_string_offset(self, value: str):
         if value in self._strings:
@@ -74,6 +97,12 @@ class SerializeContext():
             return self._obj_spawner_mapping[obj_name]
         
         return 0xFFFFFFFF
+
+    def add_mesh_export(self, mesh: bpy.types.Mesh):
+        self._mesh_exports.add(mesh)
+
+    def get_meshes_to_export(self) -> list[bpy.types.Mesh]:
+        return list(self._mesh_exports)
 
 
 fixed_sizes = {
@@ -152,12 +181,38 @@ struct_format_defaults = {
 _string_aliases = {
     'script_location',
     'scene_entry_point',
+    'mesh_location',
 }
 
 SENSOR_SIZE = 36
 
 def _is_string_type(definition):
     return isinstance(definition, struct_parse.PointerType) and definition.sub_type == 'char' or definition in _string_aliases
+
+def _get_string_value(obj: bpy.types.Object, definition, field_name: str | None, context: SerializeContext) -> str | None:
+    if not _is_string_type(definition):
+        return None
+
+    if definition == 'mesh_location':
+        obj_name = str(get_value(obj, field_name, ""))
+
+        to_extract = obj
+
+        if obj_name.startswith('obj '):
+            to_extract = bpy.data.objects[obj_name[len('obj '):]]
+
+        mesh_obj = to_extract.data
+
+        if not isinstance(mesh_obj, bpy.types.Mesh):
+            return ''
+
+        if mesh_obj.library:
+            return get_rom_path(mesh_obj.library.filepath, '.tmesh')
+        else:
+            context.add_mesh_export(mesh_obj)
+            return get_scene_resource(mesh_obj.name + '.tmesh')
+
+    return str(get_value(obj, field_name, ""))
 
 coordinate_convert = mathutils.Matrix.Rotation(math.pi * 0.5, 4, 'X')
 coordinate_convert_invert = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
@@ -188,8 +243,10 @@ def get_scale(obj: bpy.types.Object) -> mathutils.Vector:
     return scale
 
 def layout_strings(obj: bpy.types.Object, definition, context: SerializeContext, field_name = None):
-    if _is_string_type(definition):
-        context.get_string_offset(str(get_value(obj, field_name, "")))
+    str_value = _get_string_value(obj, definition, field_name, context)
+
+    if str_value != None:
+        context.get_string_offset(str_value)
 
     if definition == "line_mesh_data_ref":
         context.get_line_mesh_offset(obj)
@@ -262,8 +319,10 @@ def _write_padding(file, offset: int, definition, context: SerializeContext) -> 
 def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext, field_name: str | None = None, offset: int = 0) -> int:
     offset = _write_padding(file, offset, definition, context)
 
-    if _is_string_type(definition):
-        file.write(struct.pack(">I", context.get_string_offset(str(get_value(obj, field_name, "")))))
+    str_value = _get_string_value(obj, definition, field_name, context)
+
+    if str_value != None:
+        file.write(struct.pack(">I", context.get_string_offset(str_value)))
         return offset + 4
     
     if isinstance(definition, str):

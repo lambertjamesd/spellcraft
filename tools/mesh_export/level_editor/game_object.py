@@ -36,7 +36,7 @@ def _get_entry_points(self, context):
     return list(map(lambda x: (x, x[len('rom:/scenes/'):], ''), object_definitions.get_entry_points()))
 
 def _get_positions(self, context):
-    result = []
+    result = ['default']
 
     for obj in bpy.data.objects:
         result.append(f'obj {obj.name}')
@@ -265,29 +265,6 @@ class NODE_OT_game_object_positions(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
-
-class NODE_OT_game_object_rotations(bpy.types.Operator):
-    """Set custom property"""
-    bl_idname = "node.game_object_rotations"
-    bl_label = "Set rotation property"
-    bl_description = "Sets a rotation property on a game object"
-    bl_property = "selected_item"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    selected_item: bpy.props.EnumProperty(items=_get_positions)
-    name: bpy.props.StringProperty()
-
-    def execute(self, context):
-        if not context.object:
-            return
-        
-        context.object[self.name] = self.selected_item
-
-        return {'FINISHED'}
-    
-    def invoke(self, context, event):
-        context.window_manager.invoke_search_popup(self)
-        return {'RUNNING_MODAL'}
     
 class NODE_OT_game_object_spawners(bpy.types.Operator):
     """Set custom property"""
@@ -322,7 +299,8 @@ _enum_mapping = {
     'integer_variable': NODE_OT_game_object_integer_variable.bl_idname,
     'any_variable': NODE_OT_game_object_any_variable.bl_idname,
     'struct Vector3': NODE_OT_game_object_positions.bl_idname,
-    'struct Quaternion': NODE_OT_game_object_rotations.bl_idname,
+    'struct Quaternion': NODE_OT_game_object_positions.bl_idname,
+    'mesh_location': NODE_OT_game_object_positions.bl_idname,
     'entity_spawner': NODE_OT_game_object_spawners.bl_idname,
 }
 
@@ -387,7 +365,7 @@ def _init_default_properties(target):
             target[attr.name] = default_value
         elif attr.data_type == 'collectable_sub_type':
             target[attr.name] = 'ITEM_TYPE_NONE'
-        elif attr.data_type == 'script_location' or attr.data_type == 'scene_entry_point':
+        elif attr.data_type == 'script_location' or attr.data_type == 'scene_entry_point' or attr.data_type == 'mesh_location':
             target[attr.name] = ''
         elif attr.data_type == 'room_id':
             target[attr.name] = 'room_default'
@@ -737,7 +715,6 @@ _classes = [
     NODE_OT_game_object_init,
     NODE_OT_build_map_outline,
     NODE_OT_game_object_positions,
-    NODE_OT_game_object_rotations,
     NODE_OT_game_object_spawners,
     LoadingZonePanel,
     MapOutlinePanel,

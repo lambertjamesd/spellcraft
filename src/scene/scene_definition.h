@@ -44,6 +44,8 @@ enum entity_type_id {
     ENTITY_TYPE_breakable,
     ENTITY_TYPE_jelly_pot,
     ENTITY_TYPE_comm_stone,
+    ENTITY_TYPE_repair_scene,
+    ENTITY_TYPE_repair_part,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -125,6 +127,7 @@ typedef uint16_t any_variable;
 
 typedef char* script_location;
 typedef char* scene_entry_point;
+typedef char* mesh_location;
 
 struct line_mesh_data {
     uint8_t point_count;
@@ -412,11 +415,12 @@ struct repair_scene_definition {
 struct repair_part_definition {
     struct Vector3 position;    
     struct Quaternion rotation;
-    struct Vector3 end_position;
-    struct Quaternion end_rotation;
+    struct Vector3 start_position;
+    struct Quaternion start_rotation;
     boolean_variable has_part;
     bool prevent_rotation;
     entity_spawner depends_on;
+    mesh_location mesh;
 };
 
 // definition insert point

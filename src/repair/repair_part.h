@@ -9,19 +9,19 @@
 #include "../scene/scene_definition.h"
 #include <stdio.h>
 
-struct repair_collider {
+struct repair_old_collider {
     vector3_t* vertices;
     uint16_t* indices;
     uint16_t triangle_count;
 };
 
-typedef struct repair_collider repair_collider_t;
+typedef struct repair_old_collider repair_old_collider_t;
 
-struct repair_part {
+struct repair_old_part {
     transform_t transform;
     tmesh_t mesh;
     tmesh_t solid_mesh;
-    repair_collider_t collider;
+    repair_old_collider_t collider;
     quaternion_t target_rotation;
 
     vector3_t end_position;
@@ -36,16 +36,16 @@ struct repair_part {
     int8_t blocks;
 };
 
-typedef struct repair_part repair_part_t;
+typedef struct repair_old_part repair_old_part_t;
 
-void repair_part_load(repair_part_t* part, FILE* file);
-void repair_part_destroy(repair_part_t* part);
+void repair_old_part_load(repair_old_part_t* part, FILE* file);
+void repair_old_part_destroy(repair_old_part_t* part);
 
-void repair_part_render(repair_part_t* part, struct frame_memory_pool* pool);
-void repair_part_render_drop_location(repair_part_t* part, struct frame_memory_pool* pool);
+void repair_old_part_render(repair_old_part_t* part, struct frame_memory_pool* pool);
+void repair_old_part_render_drop_location(repair_old_part_t* part, struct frame_memory_pool* pool);
 
-bool repair_part_raycast(repair_part_t* part, ray_t* ray, float* distance);
-void repair_part_update(repair_part_t* part);
-void repair_part_set_complete(repair_part_t* part);
+bool repair_old_part_raycast(repair_old_part_t* part, ray_t* ray, float* distance);
+void repair_old_part_update(repair_old_part_t* part);
+void repair_old_part_set_complete(repair_old_part_t* part);
 
 #endif

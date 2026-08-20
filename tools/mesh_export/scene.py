@@ -713,6 +713,34 @@ def get_map_icons(scene: Scene, enums: dict[str, struct_parse.EnumInfo]) -> list
 
     return result
 
+def save_mesh_exports(meshes: list[bpy.types.Mesh], output_filename: str):
+    base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
+
+    for mesh in meshes:
+        output = f'filesystem/{os.path.splitext(output_filename)[0][len('build/assets/'):]}_{mesh.name}.tmesh'
+        print('meshes', mesh, output)
+        
+        mesh_list = entities_mesh.mesh_list(base_transform)
+        mesh_list.meshes.append(entities_mesh.mesh_list_entry(None, mesh, base_transform))
+
+        settings = export_settings.ExportSettings()
+        settings.fixed_point_scale = 128
+
+        procssed_meshes = mesh_list.determine_mesh_data(None)
+
+        if len(procssed_meshes) == 1 and material_extract.material_can_extract(procssed_meshes[0].mat):
+            settings.default_material_name = material_extract.material_romname(procssed_meshes[0].mat)
+            settings.default_material = material_extract.load_material_with_name(procssed_meshes[0].mat)
+            print('single material, using as default')
+        else:
+            print('no default material')
+
+        print(f'saving embedded mesh f{output}')
+        with open(output, 'wb') as file:
+            tiny3d_mesh_writer.write_mesh(procssed_meshes, None, [], settings, file)
+        
+
+
 def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-2]
@@ -826,6 +854,7 @@ def process_scene():
                     context.add_object_mapping(obj.obj.name, room_index, entity_index)
 
         context.write_strings(file)
+        save_mesh_exports(context.get_meshes_to_export(), output_filename)
 
         write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file)
 

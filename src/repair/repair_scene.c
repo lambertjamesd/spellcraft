@@ -18,7 +18,7 @@
 
 // WRLD
 #define EXPECTED_HEADER 0x57524C44
-repair_scene_t* current_repair_scene;
+repair_old_scene_t* current_repair_old_scene;
 
 static color_t basic_color = {255, 255, 255, 255};
 static color_t hover_color = {20, 200, 255, 255};
@@ -28,7 +28,7 @@ static color_t hover_color = {20, 200, 255, 255};
 #define NEAR_PLANE      0.5f
 #define REALLY_FAR  10000000.0f
 
-void repair_scene_render_cursor(repair_scene_t* scene) {
+void repair_old_scene_render_cursor(repair_old_scene_t* scene) {
     if (!scene->grabbed_part) {
         material_apply(&scene->assets.cursor_material);
     
@@ -40,7 +40,7 @@ void repair_scene_render_cursor(repair_scene_t* scene) {
     }
 }
 
-void repair_scene_render(repair_scene_t* scene, T3DViewport* viewport, struct frame_memory_pool* pool) {
+void repair_old_scene_render(repair_old_scene_t* scene, T3DViewport* viewport, struct frame_memory_pool* pool) {
     float tan_fov = tanf(scene->camera_fov * 0.5f);
     float aspect_ratio = (float)viewport->size[0] / (float)viewport->size[1];
 
@@ -82,33 +82,33 @@ void repair_scene_render(repair_scene_t* scene, T3DViewport* viewport, struct fr
     rspq_block_run(scene->static_meshes.block);
     t3d_matrix_pop(1);
 
-    for (int i = 0; i < scene->repair_part_count; i += 1) {
-        repair_part_t* part = &scene->repair_parts[i];
-        repair_part_render(part, pool);
+    for (int i = 0; i < scene->repair_old_part_count; i += 1) {
+        repair_old_part_t* part = &scene->repair_old_parts[i];
+        repair_old_part_render(part, pool);
     }
 
     if (scene->can_drop && scene->grabbed_part) {
-        repair_part_render_drop_location(scene->grabbed_part, pool);
+        repair_old_part_render_drop_location(scene->grabbed_part, pool);
     }
     
     rdpq_sync_pipe();
     rdpq_mode_persp(false);
     rdpq_set_mode_standard();
-    repair_scene_render_cursor(scene);
+    repair_old_scene_render_cursor(scene);
     
     rdpq_sync_pipe();
 }
 
-repair_part_t* repair_find_part(repair_scene_t* scene) {
+repair_old_part_t* repair_old_find_part(repair_old_scene_t* scene) {
     ray_t ray;
     screen_coords_to_ray(&scene->camera_transform, scene->camera_fov, &scene->screen_cursor, &ray);
 
-    repair_part_t* result = NULL;
+    repair_old_part_t* result = NULL;
     float min_distance = REALLY_FAR;
 
-    for (int i = 0; i < scene->repair_part_count; i += 1) {
-        if (!scene->repair_parts[i].is_connected && repair_part_raycast(&scene->repair_parts[i], &ray, &min_distance)) {
-            result = &scene->repair_parts[i];
+    for (int i = 0; i < scene->repair_old_part_count; i += 1) {
+        if (!scene->repair_old_parts[i].is_connected && repair_old_part_raycast(&scene->repair_old_parts[i], &ray, &min_distance)) {
+            result = &scene->repair_old_parts[i];
         }
     }
 
@@ -125,7 +125,7 @@ static quaternion_t relative_rotations[4] = {
     {0.0f, 0.0f, SQRT_1_2_F, SQRT_1_2_F},
 };
 
-void repair_scene_handle_grabbed_part(repair_scene_t* scene, joypad_inputs_t input, joypad_buttons_t pressed) {
+void repair_old_scene_handle_grabbed_part(repair_old_scene_t* scene, joypad_inputs_t input, joypad_buttons_t pressed) {
     int rotation_index = -1;
 
     if (pressed.c_up) {
@@ -165,10 +165,10 @@ void repair_scene_handle_grabbed_part(repair_scene_t* scene, joypad_inputs_t inp
 
 #define DROP_TOLERNACE  1.0f
 
-bool repair_scene_is_in_right_spot(repair_scene_t* scene, repair_part_t* grabbed_part) {
+bool repair_old_scene_is_in_right_spot(repair_old_scene_t* scene, repair_old_part_t* grabbed_part) {
     screen_coords_from_position(&scene->camera_transform, scene->camera_fov, &grabbed_part->transform.position, &scene->screen_cursor);
 
-    int grabbed_index = grabbed_part - scene->repair_parts;
+    int grabbed_index = grabbed_part - scene->repair_old_parts;
     int depends_on = grabbed_part->depends_on;
 
     if (fabsf(quatDot(&grabbed_part->transform.rotation, &grabbed_part->end_rotation)) < 0.9f) {
@@ -191,27 +191,27 @@ bool repair_scene_is_in_right_spot(repair_scene_t* scene, repair_part_t* grabbed
     }
     
 
-    for (int i = 0; i < scene->repair_part_count; i += 1) {
-        repair_part_t* other_part = &scene->repair_parts[i];
+    for (int i = 0; i < scene->repair_old_part_count; i += 1) {
+        repair_old_part_t* other_part = &scene->repair_old_parts[i];
 
         if (other_part->blocks == grabbed_index && !other_part->is_connected) {
             return false;
         }
     }
 
-    if (depends_on != -1 && !scene->repair_parts[depends_on].is_connected) {
+    if (depends_on != -1 && !scene->repair_old_parts[depends_on].is_connected) {
         return false;
     }
 
     return true;
 }
 
-bool repair_scene_check_drop(repair_scene_t* scene) {
-    repair_part_t* grabbed_part = scene->grabbed_part;
+bool repair_old_scene_check_drop(repair_old_scene_t* scene) {
+    repair_old_part_t* grabbed_part = scene->grabbed_part;
 
     scene->grabbed_part = NULL;
 
-    if (!repair_scene_is_in_right_spot(scene, grabbed_part)) {
+    if (!repair_old_scene_is_in_right_spot(scene, grabbed_part)) {
         return false;
     }
 
@@ -222,7 +222,7 @@ bool repair_scene_check_drop(repair_scene_t* scene) {
     return true;
 }
 
-void repair_scene_exit_with_message(repair_scene_t* scene, const char* message) {
+void repair_old_scene_exit_with_message(repair_old_scene_t* scene, const char* message) {
     if (!scene->is_active) {
         return;
     }
@@ -244,8 +244,8 @@ void repair_scene_exit_with_message(repair_scene_t* scene, const char* message) 
     cutscene_runner_run(cutscene_builder_finish(&builder), 0, cutscene_runner_free_on_finish(), NULL, 0);
 }
 
-void repair_scene_update(void* data) {
-    repair_scene_t* scene = (repair_scene_t*)data;
+void repair_old_scene_update(void* data) {
+    repair_old_scene_t* scene = (repair_old_scene_t*)data;
 
     joypad_inputs_t input = joypad_get_inputs(0);
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
@@ -256,11 +256,11 @@ void repair_scene_update(void* data) {
     scene->screen_cursor.x = clampf(scene->screen_cursor.x, 0.0f, 320.0f);
     scene->screen_cursor.y = clampf(scene->screen_cursor.y, 0.0f, 240.0f);
 
-    scene->hovered_part = repair_find_part(scene);
+    scene->hovered_part = repair_old_find_part(scene);
 
     if (pressed.a || (pressed.b && scene->grabbed_part)) {
         if (scene->grabbed_part) {
-            if (repair_scene_check_drop(scene)) {
+            if (repair_old_scene_check_drop(scene)) {
                 // audio_play_2d(scene->assets.sounds[REPAIR_SOUND_CLICK], 1.0f, 0.0f, 1.0f, 1);
             } else {
                 // audio_play_2d(scene->assets.sounds[REPAIR_SOUND_PICKUP], 1.0f, 0.0f, 1.0f, 1);
@@ -275,8 +275,8 @@ void repair_scene_update(void* data) {
     }
 
     if (scene->grabbed_part) {
-        repair_scene_handle_grabbed_part(scene, input, pressed);
-        bool new_can_drop = repair_scene_is_in_right_spot(scene, scene->grabbed_part);
+        repair_old_scene_handle_grabbed_part(scene, input, pressed);
+        bool new_can_drop = repair_old_scene_is_in_right_spot(scene, scene->grabbed_part);
 
         if (new_can_drop && !scene->can_drop) {
             // audio_play_2d(scene->assets.sounds[REPAIR_SOUND_HOVER], 1.0f, 0.0f, 1.0f, 1);
@@ -289,10 +289,10 @@ void repair_scene_update(void* data) {
 
     bool is_complete = true;
     
-    for (int i = 0; i < scene->repair_part_count; i += 1) {
-        repair_part_update(&scene->repair_parts[i]);
+    for (int i = 0; i < scene->repair_old_part_count; i += 1) {
+        repair_old_part_update(&scene->repair_old_parts[i]);
 
-        if (!scene->repair_parts[i].is_connected) {
+        if (!scene->repair_old_parts[i].is_connected) {
             is_complete = false;
         }
     }
@@ -307,13 +307,13 @@ void repair_scene_update(void* data) {
         scene->is_complete = is_complete;
         cutscene_timer_cancel();
         // audio_play_2d(scene->assets.sounds[REPAIR_SOUND_COMPLETE], 1.0f, 0.0f, 1.0f, 1);
-        repair_scene_exit_with_message(scene, "Repair complete");
+        repair_old_scene_exit_with_message(scene, "Repair complete");
         expression_set_bool(scene->puzzle_complete, true);
         return;
     }
 
     if (pressed.start) {
-        repair_scene_exit_with_message(scene, NULL);
+        repair_old_scene_exit_with_message(scene, NULL);
         return;
     }
 }
@@ -325,8 +325,8 @@ void repair_scene_update(void* data) {
 //     [REPAIR_SOUND_COMPLETE] = "rom:/sounds/repair/complete.wav64",
 // };
 
-repair_scene_t* repair_scene_load(const char* filename) {
-    repair_scene_t* result = malloc(sizeof(repair_scene_t));
+repair_old_scene_t* repair_old_scene_load(const char* filename) {
+    repair_old_scene_t* result = malloc(sizeof(repair_old_scene_t));
 
     result->screen_cursor = (vector2_t){160.0f, 120.0f};
 
@@ -344,14 +344,14 @@ repair_scene_t* repair_scene_load(const char* filename) {
     result->can_drop = false;
 
     tmesh_load(&result->static_meshes, file);
-    fread(&result->repair_part_count, sizeof(uint16_t), 1, file);
-    result->repair_parts = malloc(sizeof(repair_part_t) * result->repair_part_count);
-    assert(result->repair_parts);
+    fread(&result->repair_old_part_count, sizeof(uint16_t), 1, file);
+    result->repair_old_parts = malloc(sizeof(repair_old_part_t) * result->repair_old_part_count);
+    assert(result->repair_old_parts);
 
-    for (int i = 0; i < result->repair_part_count; i += 1) {
-        repair_part_load(&result->repair_parts[i], file);
+    for (int i = 0; i < result->repair_old_part_count; i += 1) {
+        repair_old_part_load(&result->repair_old_parts[i], file);
         
-        if (!result->repair_parts[i].is_present) {
+        if (!result->repair_old_parts[i].is_present) {
             result->is_missing_parts = true;
         }
     }
@@ -374,7 +374,7 @@ repair_scene_t* repair_scene_load(const char* filename) {
     //     result->assets.sounds[i] = wav64_load(sound_filesnames[i], NULL);
     // }
 
-    update_add(result, repair_scene_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
+    update_add(result, repair_old_scene_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     font_type_use(FONT_DIALOG);
 
@@ -383,13 +383,13 @@ repair_scene_t* repair_scene_load(const char* filename) {
     result->is_active = true;
 
     if (result->is_complete) {
-        repair_scene_exit_with_message(result, "This has already been repaired");
+        repair_old_scene_exit_with_message(result, "This has already been repaired");
 
-        for (int i = 0; i < result->repair_part_count; i += 1) {
-            repair_part_set_complete(&result->repair_parts[i]);
+        for (int i = 0; i < result->repair_old_part_count; i += 1) {
+            repair_old_part_set_complete(&result->repair_old_parts[i]);
         }
     } else if (result->is_missing_parts) {
-        repair_scene_exit_with_message(result, "You are missing some parts");
+        repair_old_scene_exit_with_message(result, "You are missing some parts");
     }
     
     fade_effect_set((color_t){0, 0, 0, 0}, 0.5f);
@@ -397,7 +397,7 @@ repair_scene_t* repair_scene_load(const char* filename) {
     return result;
 }
 
-void repair_scene_destroy(repair_scene_t* scene) {
+void repair_old_scene_destroy(repair_old_scene_t* scene) {
     font_type_release(FONT_DIALOG);
 
     free(scene->exit_scene);
@@ -412,8 +412,8 @@ void repair_scene_destroy(repair_scene_t* scene) {
     material_release(&scene->assets.correct_slot_material);
 
     tmesh_release(&scene->static_meshes);
-    for (int i = 0; i < scene->repair_part_count; i += 1) {
-        repair_part_destroy(&scene->repair_parts[i]);
+    for (int i = 0; i < scene->repair_old_part_count; i += 1) {
+        repair_old_part_destroy(&scene->repair_old_parts[i]);
     }
-    free(scene->repair_parts);
+    free(scene->repair_old_parts);
 }

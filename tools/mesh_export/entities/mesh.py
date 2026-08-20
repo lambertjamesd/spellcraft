@@ -132,7 +132,7 @@ class mesh_data():
 
         return [min_result, max_result]
 
-    def append_mesh(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix, armature: armature.ArmatureData | None):
+    def append_mesh(self, obj: bpy.types.Object | None, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix, armature: armature.ArmatureData | None):
         triangles = []
         max_index = -1
         used_indices = set()
@@ -142,7 +142,7 @@ class mesh_data():
         normal_transform.transpose()
         bone_index = -1
 
-        if obj.parent_bone and armature:
+        if obj and obj.parent_bone and armature:
             bone = armature.find_bone_data(obj.parent_bone)
             final_transform = bone.pose_bone.matrix.inverted() @ obj.matrix_world
             normal_transform = final_transform.to_3x3().inverted().transposed()
@@ -201,7 +201,7 @@ class mesh_data():
             group_index = None
             bone = None
 
-            if not armature is None and not obj.parent_bone:
+            if obj and not armature is None and not obj.parent_bone:
                 group_index = -1
                 group_weight = 0
 
@@ -303,8 +303,8 @@ def pack_vertex(vertex, uv, color, normal, bone_index, gamma = 1):
     return result
 
 class mesh_list_entry:
-    def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
-        self.obj: bpy.types.Object = obj
+    def __init__(self, obj: bpy.types.Object | None, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
+        self.obj: bpy.types.Object | None = obj
         self.mesh: bpy.types.Mesh = mesh
         self.transform: mathutils.Matrix = transform
 
