@@ -48,15 +48,15 @@
     vmadl voutr, VREG(y, r), vw_center; \
     vmadl voutr, VREG(z, r), vw_side; \
     \
-    vmudl voutg, VREG(x, g), vw_side; \
-    vmadl voutg, VREG(y, g), vw_center; \
-    vmadl voutg, VREG(z, g), vw_side; \
+    vmudm voutg, VREG(x, g), vw_side; \
+    vmadm voutg, VREG(y, g), vw_center; \
+    vmadm voutg, VREG(z, g), vw_side; \
     \
     vadd voutr, vr_round; \
     \
-    vmudl voutb, VREG(x, b), vw_side; \
-    vmadl voutb, VREG(y, b), vw_center; \
-    vmadl voutb, VREG(z, b), vw_side; \
+    vmudm voutb, VREG(x, b), vw_side; \
+    vmadm voutb, VREG(y, b), vw_center; \
+    vmadm voutb, VREG(z, b), vw_side; \
     \
     vadd voutg, vg_round; \
     vadd voutb, vb_round; \
