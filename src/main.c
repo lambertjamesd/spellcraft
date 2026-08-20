@@ -27,6 +27,7 @@
 #include "render/z_clear.h"
 #include "render/defs.h"
 #include "profile/profile.h"
+#include "render/blur/blur.h"
 
 #include <libdragon.h>
 #include <n64sys.h>
@@ -146,6 +147,22 @@ void render_finish_callback(void* data) {
 
 #endif
 
+static float blur_strength_frames[] = {
+    0.1f,
+    0.15f,
+    0.2f,
+    0.3f,
+    0.4f,
+    0.6f,
+    0.8f,
+    1.0f,
+    1.0f,
+};
+
+#define BLUR_STRENGTH_COUNT     (sizeof(blur_strength_frames) / sizeof(blur_strength_frames[0]))
+
+uint8_t blur_frame_counter = BLUR_STRENGTH_COUNT;
+
 void render(surface_t* col, surface_t* zbuffer, struct frame_memory_pool* pool) {
 #if ENABLE_PROFILE_rsp
     render_start_time = get_ticks_us();
@@ -156,6 +173,11 @@ void render(surface_t* col, surface_t* zbuffer, struct frame_memory_pool* pool) 
     if (current_game_mode == GAME_MODE_3D || current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
         render_3d(col, zbuffer, pool);
     } else if (current_game_mode == GAME_MODE_MENU) {
+        if (blur_frame_counter < BLUR_STRENGTH_COUNT) {
+            blur_buffer(pause_background->buffer, blur_strength_frames[blur_frame_counter]);
+            blur_frame_counter += 1;
+        }
+
         static surface_t background;
         background = surface_make_linear(pause_background->buffer, FMT_RGBA16, pause_background->width, pause_background->height);
         rdpq_sync_pipe();

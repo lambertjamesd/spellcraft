@@ -35,6 +35,7 @@ void pause_menu_transition(struct pause_menu* pause_menu, enum active_menu targe
     switch (pause_menu->active_menu) {
         case ACTIVE_MENU_NONE:
             current_game_mode = GAME_MODE_TRANSITION_TO_MENU;
+            game_mode_blur_background();
             update_pause_layers(UPDATE_LAYER_WORLD | UPDATE_LAYER_DIALOG | UPDATE_LAYER_CUTSCENE);
             break;
         case ACTIVE_MENU_SPELL_BUILDING:

@@ -20,13 +20,11 @@ void blur_destroy() {
 }
 
 void blur_buffer(void* buffer, float strength) {
-    assert(strength >= 0.0f && strength <= 1.0f);
-
-    int blur_strength = 0x10000 * mathfLerp(1.0f, 0.333333333f, strength);
+    int blur_strength = 0x10000 * clampf(1.0f - strength, 0.0f, 1.0f);
 
     if (blur_strength >= 0x10000) {
         return;
     }
 
-    rspq_write(BLUR_OVERLAY_ID, 0, blur_strength, PhysicalAddr(buffer));
+    rspq_write(BLUR_OVERLAY_ID, 0, blur_strength & 0xFFFF, PhysicalAddr(buffer));
 }
