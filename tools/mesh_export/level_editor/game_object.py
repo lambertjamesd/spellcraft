@@ -265,6 +265,29 @@ class NODE_OT_game_object_positions(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
+
+class NODE_OT_game_object_rotations(bpy.types.Operator):
+    """Set custom property"""
+    bl_idname = "node.game_object_rotations"
+    bl_label = "Set rotation property"
+    bl_description = "Sets a rotation property on a game object"
+    bl_property = "selected_item"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    selected_item: bpy.props.EnumProperty(items=_get_positions)
+    name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        if not context.object:
+            return
+        
+        context.object[self.name] = self.selected_item
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
     
 class NODE_OT_game_object_spawners(bpy.types.Operator):
     """Set custom property"""
@@ -299,6 +322,7 @@ _enum_mapping = {
     'integer_variable': NODE_OT_game_object_integer_variable.bl_idname,
     'any_variable': NODE_OT_game_object_any_variable.bl_idname,
     'struct Vector3': NODE_OT_game_object_positions.bl_idname,
+    'struct Quaternion': NODE_OT_game_object_rotations.bl_idname,
     'entity_spawner': NODE_OT_game_object_spawners.bl_idname,
 }
 
@@ -370,6 +394,8 @@ def _init_default_properties(target):
         elif attr.data_type == 'boolean_variable' or attr.data_type == 'integer_variable' or attr.data_type == 'any_variable':
             target[attr.name] = 'disconnected'
         elif attr.data_type == 'struct Vector3':
+            target[attr.name] = ''
+        elif attr.data_type == 'struct Quaternion':
             target[attr.name] = ''
         elif attr.data_type == 'entity_spawner':
             target[attr.name] = ''
@@ -711,6 +737,7 @@ _classes = [
     NODE_OT_game_object_init,
     NODE_OT_build_map_outline,
     NODE_OT_game_object_positions,
+    NODE_OT_game_object_rotations,
     NODE_OT_game_object_spawners,
     LoadingZonePanel,
     MapOutlinePanel,

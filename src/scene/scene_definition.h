@@ -403,14 +403,20 @@ struct comm_stone_definition {
 };
 
 struct repair_scene_definition {
+    struct Vector3 position;    
+    struct Quaternion rotation;
     boolean_variable puzzle_complete;
     scene_entry_point exit_scene;
 };
 
 struct repair_part_definition {
+    struct Vector3 position;    
+    struct Quaternion rotation;
+    struct Vector3 end_position;
+    struct Quaternion end_rotation;
     boolean_variable has_part;
     bool prevent_rotation;
-    int8_t depends_on;
+    entity_spawner depends_on;
 };
 
 // definition insert point

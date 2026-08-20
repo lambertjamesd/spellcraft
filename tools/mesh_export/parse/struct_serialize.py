@@ -290,6 +290,14 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
             if field_name == 'rotation':
                 write_quaternion_rotation(file, obj)
                 return offset + 16
+            
+            value = get_value(obj, field_name, 0)
+            if isinstance(value, str):
+                if value.startswith('obj '):
+                    write_quaternion_rotation(file, bpy.data.objects[value[len('obj '):]])
+                else:
+                    file.write(struct.pack('>ffff', 0, 0, 0, 1))
+                return offset + 16
         elif definition == 'float':
             if field_name == 'scale':
                 value = get_scale(obj).x
