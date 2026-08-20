@@ -70,7 +70,7 @@ void hud_render_interaction_preview(struct hud* hud) {
     vector2_t screen_pos;
     vector3_t pos = *obj->position;
     pos.y = (obj->bounding_box.max.y + obj->bounding_box.min.y) * 0.5f;
-    camera_screen_from_position(hud->camera, &pos, &screen_pos);
+    camera_screen_from_position(&hud->player->camera_controller.camera, &pos, &screen_pos);
 
     int text_len = strlen(interaction_name);
     int box_width = measure_text(FONT_DIALOG, interaction_name, text_len);
@@ -201,10 +201,9 @@ void hud_render(void *data) {
     hud_render_interaction_preview(hud);
 }
 
-void hud_init(struct hud* hud, struct player* player, camera_t* camera) {
+void hud_init(struct hud* hud, struct player* player) {
     menu_add_callback(hud_render, hud, MENU_PRIORITY_HUD);
     hud->player = player;
-    hud->camera = camera;
     live_cast_renderer_init(&hud->live_cast_renderer, &player->live_cast);
     font_type_use(FONT_DIALOG);
     hud->boss = (struct hud_boss){};

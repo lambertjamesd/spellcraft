@@ -106,7 +106,7 @@ bool lightning_strike_update(struct lightning_strike* strike) {
             .b = 0xFF,
             .a = 0x40,
         });
-        camera_shake(&current_scene->camera_controller, 0.1f);
+        camera_shake(&current_scene->player.camera_controller, 0.1f);
     }
 
     return result;

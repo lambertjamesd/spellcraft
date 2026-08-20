@@ -332,7 +332,7 @@ struct scene* scene_load(const char* filename) {
 
     cutscene_actor_common_init();
     player_init(&scene->player, &player_def);
-    hud_init(&scene->hud, &scene->player, &scene->camera);
+    hud_init(&scene->hud, &scene->player);
 
     uint16_t static_count;
     fread(&static_count, 2, 1, file);

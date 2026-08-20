@@ -23,7 +23,6 @@ typedef struct hud_assets hud_assets_t;
 
 struct hud {
     struct player* player;
-    camera_t* camera;
     hud_assets_t assets;
     live_cast_renderer_t live_cast_renderer;
     struct hud_boss boss;
@@ -31,7 +30,7 @@ struct hud {
 
 typedef struct hud hud_t;
 
-void hud_init(struct hud* hud, struct player* player, camera_t* camera);
+void hud_init(struct hud* hud, struct player* player);
 void hud_destroy(struct hud* hud);
 
 void hud_show_boss_health(struct hud* hud, const char* name, entity_id id);
