@@ -201,21 +201,6 @@ all_exits: $(SCENE_SOURCES:assets/scenes/%.blend=build/assets/scenes/%_exits.txt
 # 	node tools/generate_rsp_defs.js $(<:src/%.S=build/%.objdump) $(<:src/%.S=build/%.nm) $@
 
 ###
-# repair
-###
-
-REPAIR_SOURCES := $(shell find assets/repair -type f -name '*.blend' | sort)
-
-REPAIRS := $(REPAIR_SOURCES:assets/repair/%.blend=filesystem/repair/%.repair)
-
-filesystem/repair/%.repair: assets/repair/%.blend build/assets/scripts/globals.json $(EXPORT_SOURCE)
-	@mkdir -p $(dir $@)
-	@mkdir -p $(dir $(@:filesystem/repair/%.repair=build/assets/repair/%.repair))
-	echo $@ $<
-	$(BLENDER_4) $< --background --factory-startup --python-exit-code 1 --python tools/mesh_export/repair.py -- $(@:filesystem/repair/%.repair=build/assets/repair/%.repair)
-	$(MK_ASSET) -o $(dir $@) -w 256 $(@:filesystem/repair/%.repair=build/assets/repair/%.repair)
-
-###
 # tests
 ###
 
