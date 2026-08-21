@@ -9,6 +9,10 @@
 
 struct repair_scene {
     camera_t camera;
+    
+    vector2_t screen_cursor;
+    entity_id grabbed_part;
+    entity_id hovered_part;
 };
 
 typedef struct repair_scene repair_scene_t;

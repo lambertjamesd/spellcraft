@@ -1,0 +1,12 @@
+{
+    "combineMode": [{
+        "color": ["_0", "_0", "_0", "PRIM"],
+        "alpha": ["_0", "_0", "_0", "PRIM"]
+    }],
+    "primColor": [230, 10, 0, 54],
+    "blendMode": {
+        "cyc1": "TRANSPARENT",
+        "texPersp": false
+    },
+    "zBuffer": false
+}

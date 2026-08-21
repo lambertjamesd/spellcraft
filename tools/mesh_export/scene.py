@@ -30,8 +30,14 @@ from mesh_export.cutscene import variable_layout
 from mesh_export.entities import camera_animation
 from mesh_export.entities import room
 from mesh_export.entities import map_builder
+from mesh_export.entities import animation
+from mesh_export.entities import scene_process
+from mesh_export.entities import armature
 
 from mesh_export.deps import generate_deps
+
+def replace_extension(filename: str, ext: str) -> str:
+    return os.path.splitext(filename)[0]+ext
 
 class StaticEntry():
     def __init__(self, obj: bpy.types.Object, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
@@ -718,10 +724,17 @@ def get_map_icons(scene: Scene, enums: dict[str, struct_parse.EnumInfo]) -> list
 
     return result
 
-def save_mesh_exports(meshes: list[bpy.types.Mesh], output_filename: str):
+def save_mesh_exports(mesh_objects: list[bpy.types.Object], output_filename: str):
     base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
 
-    for mesh in meshes:
+    for mesh_obj in mesh_objects:
+        scene_process.apply_modifiers(mesh_obj)
+
+        mesh = mesh_obj.data
+        
+        if not isinstance(mesh, bpy.types.Mesh):
+            raise Exception(f'{mesh_obj.name} is not a mesh')
+        
         bm = bmesh.new()
         bm.from_mesh(mesh)
         bmesh.ops.triangulate(bm, faces=bm.faces[:])
@@ -742,9 +755,20 @@ def save_mesh_exports(meshes: list[bpy.types.Mesh], output_filename: str):
             settings.default_material_name = material_extract.material_romname(procssed_meshes[0].mat)
             settings.default_material = material_extract.load_material_with_name(procssed_meshes[0].mat)
 
+        arm = None
+
+        if mesh_obj.parent and mesh_obj.parent.type == 'ARMATURE':
+            arm = armature.ArmatureData(mesh_obj.parent, base_transform)
+
+        for modifier in mesh_obj.modifiers:
+            if isinstance(modifier, bpy.types.ArmatureModifier) and modifier.object:
+                arm = armature.ArmatureData(modifier.object, base_transform)
+
         print(f'saving embedded mesh f{output}')
         with open(output, 'wb') as file:
-            tiny3d_mesh_writer.write_mesh(procssed_meshes, None, [], settings, file)
+            tiny3d_mesh_writer.write_mesh(procssed_meshes, arm, [], settings, file)
+            
+        animation.export_animations(replace_extension(output, '.anim'), arm, settings)
         
 
 

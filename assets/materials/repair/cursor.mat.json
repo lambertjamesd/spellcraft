@@ -1,0 +1,24 @@
+{
+    "tex0": {
+        "filename": "../../images/repair/cursor.png",
+        "s": {
+            "repeats": 0,
+            "mirror": false
+        },
+        "t": {
+            "repeats": 0,
+            "mirror": false
+        }
+    },
+    "combineMode": [{
+        "color": ["PRIM", "_0", "TEX0", "_0"],
+        "alpha": ["_0", "_0", "_0", "TEX0"]
+    }],
+    "blendMode": {
+        "cyc1": "OPAQUE",
+        "alphaCompare": "THRESHOLD",
+        "texPersp": false
+    },
+    "blendColor": [0, 0, 0, 128],
+    "zBuffer": false
+}

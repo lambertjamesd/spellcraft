@@ -16,15 +16,12 @@ import mesh_export.entities.mesh_optimizer
 import mesh_export.entities.material_extract
 import mesh_export.entities.animation
 import mesh_export.entities.armature
+import mesh_export.entities.scene_process
 
 from mesh_export.deps import generate_deps
 
 def replace_extension(filename: str, ext: str) -> str:
     return os.path.splitext(filename)[0]+ext
-
-SKIPPED_MODIFIERS = {
-    "ARMATURE",
-}
 
 def process_scene():
     output_filename = sys.argv[-1]
@@ -44,13 +41,7 @@ def process_scene():
         if not obj.name in bpy.context.view_layer.objects:
             continue
 
-        bpy.context.view_layer.objects.active = obj
-
-        for modifier in obj.modifiers:
-            if modifier.type in SKIPPED_MODIFIERS or not modifier.show_render:
-                print("skipping modifier " + modifier.type)
-                continue
-            bpy.ops.object.modifier_apply(modifier=modifier.name, single_user = True)
+        mesh_export.entities.scene_process.apply_modifiers(obj)
 
 
     for obj in bpy.data.objects:

@@ -37,7 +37,7 @@ class SerializeContext():
         self._current_offset = 0
         self._did_write = False
         self._obj_spawner_mapping: dict[str, int] = {}
-        self._mesh_exports: set[bpy.types.Mesh] = set()
+        self._mesh_exports: set[bpy.types.Object] = set()
 
     def get_string_offset(self, value: str):
         if value in self._strings:
@@ -98,10 +98,10 @@ class SerializeContext():
         
         return 0xFFFFFFFF
 
-    def add_mesh_export(self, mesh: bpy.types.Mesh):
+    def add_mesh_export(self, mesh: bpy.types.Object):
         self._mesh_exports.add(mesh)
 
-    def get_meshes_to_export(self) -> list[bpy.types.Mesh]:
+    def get_meshes_to_export(self) -> list[bpy.types.Object]:
         return list(self._mesh_exports)
 
 
@@ -209,7 +209,7 @@ def _get_string_value(obj: bpy.types.Object, definition, field_name: str | None,
         if mesh_obj.library:
             return get_rom_path(mesh_obj.library.filepath, '.tmesh')
         else:
-            context.add_mesh_export(mesh_obj)
+            context.add_mesh_export(obj)
             return get_scene_resource(mesh_obj.name + '.tmesh')
 
     return str(get_value(obj, field_name, ""))
