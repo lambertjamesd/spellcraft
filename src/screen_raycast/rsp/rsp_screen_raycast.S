@@ -7,13 +7,13 @@
         RSPQ_DefineCommand ScreenRaycast_CheckChanged, 8
         RSPQ_DefineCommand ScreenRaycast_ReadEntity, 4
     RSPQ_BeginSavedState
-        .align 3
-        PIXEL_ID: .word 0
-        LAST_COLOR: .word 0
+        .align 4
+            PIXEL_ID: .word 0
+            LAST_COLOR: .word 0
     RSPQ_EndSavedState
 .bss
     .align 4
-        COLOR_BUFFER: .word 0, 0
+        COLOR_BUFFER: .word 0, 0, 0, 0
 
 .text
 
@@ -26,7 +26,10 @@
     # ScreenRaycast_CheckPixel
     # 
     # a0: pixel_addr
-ScreenRaycast_CheckPixel:
+ScreenRaycast_CheckPixel:  
+    jal ScreenRaycast_RDPWait
+    nop
+
     jal ScreenRaycast_ReadPixel
     nop
 
@@ -41,13 +44,16 @@ ScreenRaycast_CheckPixel:
     # a0: pixel_addr
     # a1: id
 ScreenRaycast_CheckChanged:
+    jal ScreenRaycast_RDPWait
+    nop
+
     jal ScreenRaycast_ReadPixel
     lh t2, %lo(LAST_COLOR)
-
+    
     lh t3, 0(dmem_address)
 
-    bne t2, t3, RSPQ_Loop
-    nop
+    beq t2, t3, RSPQ_Loop
+    sh t3, %lo(PIXEL_ID)
     j RSPQ_Loop
     sw a1, %lo(PIXEL_ID)
 
@@ -55,7 +61,7 @@ ScreenRaycast_CheckChanged:
     # ScreenRaycast_CheckPixel
     # 
     # a0: ouput_addr
-ScreenRaycast_ReadEntity:
+ScreenRaycast_ReadEntity:    
     # remove high byte
     sll dram_address, a0, 8
     srl dram_address, 8
@@ -76,6 +82,15 @@ ScreenRaycast_ReadPixel:
     sll dram_address, a0, 8
     srl dram_address, 8
     li dmem_address, %lo(COLOR_BUFFER)
-    li row_stride, 0
-    j DMAIn
     li dma_size, DMA_SIZE(8, 1);
+    j DMAIn
+    li row_stride, 0
+
+ScreenRaycast_RDPWait:
+    mfc0 t2, COP0_DP_STATUS
+    andi t2, DP_STATUS_BUSY | DP_STATUS_DMA_BUSY
+    bnez t2, ScreenRaycast_RDPWait
+    nop
+    jr ra
+    nop
+

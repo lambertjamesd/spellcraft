@@ -5,10 +5,11 @@
 #include "../entity/entity_id.h"
 #include "../scene/scene_definition.h"
 #include "entity_deps.h"
+#include "../render/tmesh.h"
 
 struct repair_part {
     transform_t transform;
-    renderable_t renderable;
+    tmesh_t* mesh;
     entity_id entity_id;
 };
 

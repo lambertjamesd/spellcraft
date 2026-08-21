@@ -31,5 +31,4 @@ void screen_raycast_check_changed(void* pos, int id) {
 void screen_raycast_read_entity(screen_raycast_result_t* result) {
     assert(SCREEN_RAYCAST_ID);
     rspq_write(SCREEN_RAYCAST_ID, 2, PhysicalAddr(result));
-
 }

@@ -14,6 +14,8 @@ static material_t cursor_material;
 static color_t basic_color = {255, 255, 255, 255};
 static color_t hover_color = {20, 200, 255, 255};
 
+uint16_t __attribute__((aligned(16))) z_test[4] = {1, 2, 3, 4};
+
 extern void* zbuffer_data;
 
 void repair_scene_update_raycast_pos(repair_scene_t* scene) {
@@ -45,14 +47,14 @@ void repair_scene_update(void *data) {
     repair_scene->screen_cursor.x += input_handle_deadzone(input.stick_x) * (CURSOR_SPEED / 80) * fixed_time_step;
     repair_scene->screen_cursor.y -= input_handle_deadzone(input.stick_y) * (CURSOR_SPEED / 80) * fixed_time_step;
 
-    repair_scene->screen_cursor.x = clampf(repair_scene->screen_cursor.x, 0.0f, SCREEN_WD);
-    repair_scene->screen_cursor.y = clampf(repair_scene->screen_cursor.y, 0.0f, SCREEN_HT);
+    repair_scene->screen_cursor.x = clampf(repair_scene->screen_cursor.x, 0.0f, SCREEN_WD - 1);
+    repair_scene->screen_cursor.y = clampf(repair_scene->screen_cursor.y, 0.0f, SCREEN_HT - 1);
 
     repair_scene_update_raycast_pos(repair_scene);
 
     repair_scene->hovered_part = repair_scene->last_raycast_result.id;
 
-    debugf("last_id = %d, %d\n", repair_scene->last_raycast_result.id, repair_scene->last_raycast_result.pixel_value);
+    debugf("last_id = %d\n", repair_scene->last_raycast_result.id);
 }
 
 void repair_scene_render_menu(void* data) {
@@ -88,8 +90,6 @@ void repair_scene_destroy(repair_scene_t* repair_scene, struct repair_scene_defi
     update_remove(repair_scene);
 
     menu_remove_callback(repair_scene);
-
-
 }
 
 void repair_scene_common_init() {
