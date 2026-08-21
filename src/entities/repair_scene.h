@@ -6,6 +6,7 @@
 #include "../entity/entity_id.h"
 #include "../scene/scene_definition.h"
 #include "../render/camera.h"
+#include "../screen_raycast/screen_raycast.h"
 
 struct repair_scene {
     camera_t camera;
@@ -13,6 +14,8 @@ struct repair_scene {
     vector2_t screen_cursor;
     entity_id grabbed_part;
     entity_id hovered_part;
+
+    screen_raycast_result_t last_raycast_result;
 };
 
 typedef struct repair_scene repair_scene_t;

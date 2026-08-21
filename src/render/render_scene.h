@@ -31,6 +31,7 @@ struct render_scene {
 
 void render_scene_reset();
 
+void render_scene_render_renderable(void* data, struct render_batch* batch);
 void render_scene_render_renderable_single_axis(void* data, struct render_batch* batch);
 
 void render_scene_add(struct Vector3* center, float radius, render_scene_callback callback, void* data);

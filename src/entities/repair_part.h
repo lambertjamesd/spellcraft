@@ -9,6 +9,7 @@
 struct repair_part {
     transform_t transform;
     renderable_t renderable;
+    entity_id entity_id;
 };
 
 typedef struct repair_part repair_part_t;
@@ -17,5 +18,7 @@ void repair_part_init(repair_part_t* repair_part, struct repair_part_definition*
 void repair_part_destroy(repair_part_t* repair_part, struct repair_part_definition* definition);
 void repair_part_common_init();
 void repair_part_common_destroy();
+
+extern void* repair_part_raycast_position;
 
 #endif
