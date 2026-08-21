@@ -408,6 +408,7 @@ struct comm_stone_definition {
 struct repair_scene_definition {
     struct Vector3 position;    
     struct Quaternion rotation;
+    float fov;
     boolean_variable puzzle_complete;
     scene_entry_point exit_scene;
 };

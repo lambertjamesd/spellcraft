@@ -37,6 +37,7 @@ enum player_state {
     PLAYER_CLIMBING_UP,
     PLAYER_CARRY,
     PLAYER_DIE,
+    PLAYER_DISABLED,
 };
 
 enum player_animation {
@@ -177,6 +178,13 @@ static inline vector2_t* player_get_rotation(struct player* player) {
 
 static inline vector3_t* player_get_velocity(struct player* player) {
     return &player->cutscene_actor.collider.velocity;
+}
+
+static inline void player_disable(player_t* player) {
+    player->state = PLAYER_DISABLED;
+    player->cutscene_actor.collider.is_fixed = true;
+    player->cutscene_actor.collider.collision_layers = 0;
+    player->renderable.hide = true;
 }
 
 #endif

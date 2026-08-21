@@ -349,7 +349,7 @@ def build_map_outline(outlines: list[MapEntry], icons: list[MapIcon], file):
     file.write(HEADER_FOOTER)
 
     if len(outlines) == 0:
-        file.write(struct.pack('>HHHHffff', 0, 0, 0, 0, 0, 0, 0, 0)) 
+        file.write(struct.pack('>HHHHHffff', 0, 0, 0, 0, 0, 0, 0, 0, 0)) 
         file.write(HEADER_FOOTER)
         return
     

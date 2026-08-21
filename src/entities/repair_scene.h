@@ -1,12 +1,14 @@
 #ifndef __ENTITIES_REPAIR_SCENE_H__
 #define __ENTITIES_REPAIR_SCENE_H__
 
+#include "entity_deps.h"
 #include "../math/vector3.h"
 #include "../entity/entity_id.h"
 #include "../scene/scene_definition.h"
+#include "../render/camera.h"
 
 struct repair_scene {
-    vector3_t position;
+    camera_t camera;
 };
 
 typedef struct repair_scene repair_scene_t;

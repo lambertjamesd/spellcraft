@@ -83,6 +83,9 @@ void menu_map_load(menu_map_t* map, FILE* file) {
 
     fread(&map->min, sizeof(vector2_t), 1, file);
     fread(&map->max, sizeof(vector2_t), 1, file);
+    
+    fread(&header_footer, sizeof(int), 1, file);
+    assert(header_footer == HEADER_FOOTER);
 
     map->layers = map->layer_count ? malloc(sizeof(menu_map_layer_t) * map->layer_count) : NULL;
     map->rooms = map->room_count ? malloc(sizeof(menu_map_room_t) * map->room_count) : NULL;
@@ -105,9 +108,6 @@ void menu_map_load(menu_map_t* map, FILE* file) {
     map->solid_color = material_cache_load("rom:/materials/menu/solid_primitive.mat");
     map->map_icon_material = material_cache_load("rom:/materials/menu/map_icons.mat");
     map->number_font_material = material_cache_load("rom:/materials/menu/number_font.mat");
-    
-    fread(&header_footer, sizeof(int), 1, file);
-    assert(header_footer == HEADER_FOOTER);
 
     int nbytes = 3;
     paragraph_test = rdpq_paragraph_build(&(rdpq_textparms_t){}, FONT_DIALOG, "0/1", &nbytes);

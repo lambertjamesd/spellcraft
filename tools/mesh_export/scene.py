@@ -5,6 +5,7 @@ import mathutils
 import math
 import struct
 import io
+import bmesh
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
@@ -686,6 +687,10 @@ def write_scene_music(
         file.write((0).to_bytes(1, 'big'))
         return
 
+    if scene.music == 'none':
+        file.write((0).to_bytes(1, 'big'))
+        return
+
     music = scene.music.encode()
     file.write(len(music).to_bytes(1, 'big'))
     file.write(music)
@@ -717,8 +722,13 @@ def save_mesh_exports(meshes: list[bpy.types.Mesh], output_filename: str):
     base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
 
     for mesh in meshes:
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+        bmesh.ops.triangulate(bm, faces=bm.faces[:])
+        bm.to_mesh(mesh)
+        bm.free()
+
         output = f'filesystem/{os.path.splitext(output_filename)[0][len('build/assets/'):]}_{mesh.name}.tmesh'
-        print('meshes', mesh, output)
         
         mesh_list = entities_mesh.mesh_list(base_transform)
         mesh_list.meshes.append(entities_mesh.mesh_list_entry(None, mesh, base_transform))
@@ -731,9 +741,6 @@ def save_mesh_exports(meshes: list[bpy.types.Mesh], output_filename: str):
         if len(procssed_meshes) == 1 and material_extract.material_can_extract(procssed_meshes[0].mat):
             settings.default_material_name = material_extract.material_romname(procssed_meshes[0].mat)
             settings.default_material = material_extract.load_material_with_name(procssed_meshes[0].mat)
-            print('single material, using as default')
-        else:
-            print('no default material')
 
         print(f'saving embedded mesh f{output}')
         with open(output, 'wb') as file:

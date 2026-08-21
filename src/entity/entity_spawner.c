@@ -75,6 +75,14 @@ static struct entity_field_type_location fields_line_mesh[] = {
     { .offset = offsetof(struct line_mesh_definition, mesh), .type = ENTITY_FIELD_TYPE_LINE_MESH },
 };
 
+static struct entity_field_type_location fields_repair_scene[] = {
+    { .offset = offsetof(struct repair_scene_definition, exit_scene), .type = ENTITY_FIELD_TYPE_STRING },
+};
+
+static struct entity_field_type_location fields_repair_part[] = {
+    { .offset = offsetof(struct repair_part_definition, mesh), .type = ENTITY_FIELD_TYPE_STRING },
+};
+
 static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(empty, fields_empty),
     ENTITY_DEFINITION(biter, fields_empty),
@@ -111,8 +119,8 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(breakable, fields_empty),
     ENTITY_DEFINITION(jelly_pot, fields_empty),
     ENTITY_DEFINITION(comm_stone, fields_empty),
-    ENTITY_DEFINITION(repair_scene, fields_empty),
-    ENTITY_DEFINITION(repair_part, fields_empty),
+    ENTITY_DEFINITION(repair_scene, fields_repair_scene),
+    ENTITY_DEFINITION(repair_part, fields_repair_part),
     // scene_entity_definitions insert point
 };
 

@@ -4,9 +4,11 @@
 #include "../math/vector3.h"
 #include "../entity/entity_id.h"
 #include "../scene/scene_definition.h"
+#include "entity_deps.h"
 
 struct repair_part {
-    vector3_t position;
+    transform_t transform;
+    renderable_t renderable;
 };
 
 typedef struct repair_part repair_part_t;
