@@ -2,33 +2,51 @@
 
 #include <libdragon.h>
 
-static uint32_t SCREEN_RAYCAST_ID = 0;
-DEFINE_RSP_UCODE(rsp_screen_raycast);
+struct screen_raycast_result {
+    int id;
+    int pixel_value;
+};
 
-void screen_raycast_init() {
-    if (!SCREEN_RAYCAST_ID) {
-        SCREEN_RAYCAST_ID = rspq_overlay_register(&rsp_screen_raycast);
+typedef struct screen_raycast_result screen_raycast_result_t;
+
+static screen_raycast_result_t raycast_state;
+static void* output_position;
+
+void screen_raycast_check_before_callback(void* pos) {
+    if (!output_position) {
+        return;
+    }
+
+    raycast_state.pixel_value = *(uint16_t*)output_position;
+}
+
+void screen_raycast_check_before(void* pos) {
+    output_position = pos;
+    rdpq_sync_full(screen_raycast_check_before_callback, pos);
+}
+
+void screen_raycast_check_before_after(void* pos) {
+    if (!output_position) {
+        return;
+    }
+    int pixel_value = *(uint16_t*)output_position;
+    if (pixel_value != raycast_state.pixel_value) {
+        raycast_state.id = (int)pos;
+        raycast_state.pixel_value = pixel_value;
     }
 }
 
-void screen_raycast_destroy() {
-    if (SCREEN_RAYCAST_ID) {
-        rspq_overlay_unregister(SCREEN_RAYCAST_ID);
-        SCREEN_RAYCAST_ID = 0;
-    }
+void screen_raycast_check_after(int id) {
+    rdpq_sync_full(screen_raycast_check_before_after, (void*)id);
 }
 
-void screen_raycast_check_pixel(void* pos) {
-    assert(SCREEN_RAYCAST_ID);
-    rspq_write(SCREEN_RAYCAST_ID, 0, PhysicalAddr(pos));
+void screen_raycast_read_result_deferred(void* data) {
+    int* output = (int*)data;
+
+    *output = raycast_state.id;
+    raycast_state.id = 0;
 }
 
-void screen_raycast_check_changed(void* pos, int id) {
-    assert(SCREEN_RAYCAST_ID);
-    rspq_write(SCREEN_RAYCAST_ID, 1, PhysicalAddr(pos), id);
-}
-
-void screen_raycast_read_entity(screen_raycast_result_t* result) {
-    assert(SCREEN_RAYCAST_ID);
-    rspq_write(SCREEN_RAYCAST_ID, 2, PhysicalAddr(result));
+void screen_raycast_read_result(int* output) {
+    rdpq_call_deferred(screen_raycast_read_result_deferred, output);
 }

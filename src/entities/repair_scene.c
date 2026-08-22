@@ -14,16 +14,17 @@ static material_t cursor_material;
 static color_t basic_color = {255, 255, 255, 255};
 static color_t hover_color = {20, 200, 255, 255};
 
-uint16_t __attribute__((aligned(16))) z_test[4] = {1, 2, 3, 4};
-
 extern void* zbuffer_data;
 
-void repair_scene_update_raycast_pos(repair_scene_t* scene) {
+void repair_scene_render_callback(void* data, struct render_batch* batch) {
+    repair_scene_t* scene = (repair_scene_t*)data;
     int x = (int)scene->screen_cursor.x;
     int y = (int)scene->screen_cursor.y;
 
     int offset = (y * SCREEN_WD + x) * sizeof(uint16_t);
-    repair_part_raycast_position = (uint8_t*)zbuffer_data + offset;
+    void* repair_part_raycast_position = (uint8_t*)zbuffer_data + offset;
+    
+    screen_raycast_check_before(repair_part_raycast_position);
 }
 
 void repair_scene_render_cursor(repair_scene_t* scene) {
@@ -50,17 +51,15 @@ void repair_scene_update(void *data) {
     repair_scene->screen_cursor.x = clampf(repair_scene->screen_cursor.x, 0.0f, SCREEN_WD - 1);
     repair_scene->screen_cursor.y = clampf(repair_scene->screen_cursor.y, 0.0f, SCREEN_HT - 1);
 
-    repair_scene_update_raycast_pos(repair_scene);
+    repair_scene->hovered_part = repair_scene->last_raycast_result;
 
-    repair_scene->hovered_part = repair_scene->last_raycast_result.id;
-
-    debugf("last_id = %d\n", repair_scene->last_raycast_result.id);
+    debugf("last_id = %d\n", repair_scene->last_raycast_result);
 }
 
 void repair_scene_render_menu(void* data) {
     repair_scene_t* repair_scene = (repair_scene_t*)data;
 
-    screen_raycast_read_entity(&repair_scene->last_raycast_result);
+    screen_raycast_read_result(&repair_scene->last_raycast_result);
 
     repair_scene_render_cursor(repair_scene);
 }
@@ -76,12 +75,13 @@ void repair_scene_init(repair_scene_t* repair_scene, struct repair_scene_definit
     menu_add_callback(repair_scene_render_menu, repair_scene, MENU_PRIORITY_HUD);
 
     repair_scene->screen_cursor = (vector2_t){SCREEN_WD / 2, SCREEN_HT / 2};
-    repair_scene_update_raycast_pos(repair_scene);
 
     repair_scene->grabbed_part = 0;
     repair_scene->hovered_part = 0;
 
-    repair_scene->last_raycast_result = (screen_raycast_result_t){};
+    repair_scene->last_raycast_result = 0;
+
+    render_scene_add(NULL, 0.0f, repair_scene_render_callback, repair_scene);
 }
 
 void repair_scene_destroy(repair_scene_t* repair_scene, struct repair_scene_definition* definition) {
@@ -90,14 +90,13 @@ void repair_scene_destroy(repair_scene_t* repair_scene, struct repair_scene_defi
     update_remove(repair_scene);
 
     menu_remove_callback(repair_scene);
+    render_scene_remove(repair_scene);
 }
 
 void repair_scene_common_init() {
     material_load_file(&cursor_material, "rom:/materials/repair/cursor.mat");
-    screen_raycast_init();
 }
 
 void repair_scene_common_destroy() {
     material_release(&cursor_material);
-    screen_raycast_destroy();
 }

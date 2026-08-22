@@ -3,8 +3,6 @@
 #include "../screen_raycast/screen_raycast.h"
 #include "../resource/tmesh_cache.h"
 
-void* repair_part_raycast_position;
-
 void repair_part_do_render(void* data, struct render_batch* batch) {
     repair_part_t* repair_part = (repair_part_t*)data;
 
@@ -19,10 +17,8 @@ void repair_part_do_render(void* data, struct render_batch* batch) {
 
     render_batch_relative_mtx(batch, mtx);
     t3d_mat4_to_fixed_3x4(mtxfp, (T3DMat4*)mtx);
-
-    if (repair_part_raycast_position) {
-        screen_raycast_check_pixel(repair_part_raycast_position);
-    }
+    
+    screen_raycast_check_after(0);
 
     t3d_matrix_push(mtxfp);
 
@@ -30,10 +26,7 @@ void repair_part_do_render(void* data, struct render_batch* batch) {
 
     t3d_matrix_pop(1);
 
-
-    if (repair_part_raycast_position) {
-        screen_raycast_check_changed(repair_part_raycast_position, repair_part->entity_id);
-    }
+    screen_raycast_check_after(repair_part->entity_id);
 }
 
 void repair_part_render(void* data, struct render_batch* batch) {

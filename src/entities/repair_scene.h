@@ -15,7 +15,7 @@ struct repair_scene {
     entity_id grabbed_part;
     entity_id hovered_part;
 
-    screen_raycast_result_t last_raycast_result;
+    int last_raycast_result;
 };
 
 typedef struct repair_scene repair_scene_t;

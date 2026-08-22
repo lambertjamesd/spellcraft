@@ -20,6 +20,4 @@ void repair_part_destroy(repair_part_t* repair_part, struct repair_part_definiti
 void repair_part_common_init();
 void repair_part_common_destroy();
 
-extern void* repair_part_raycast_position;
-
 #endif
