@@ -83,9 +83,6 @@ void menu_map_load(menu_map_t* map, FILE* file) {
 
     fread(&map->min, sizeof(vector2_t), 1, file);
     fread(&map->max, sizeof(vector2_t), 1, file);
-    
-    fread(&header_footer, sizeof(int), 1, file);
-    assert(header_footer == HEADER_FOOTER);
 
     map->layers = map->layer_count ? malloc(sizeof(menu_map_layer_t) * map->layer_count) : NULL;
     map->rooms = map->room_count ? malloc(sizeof(menu_map_room_t) * map->room_count) : NULL;
@@ -103,6 +100,9 @@ void menu_map_load(menu_map_t* map, FILE* file) {
     for (int i = 0; i < map->room_count; i += 1) {
         menu_map_room(&map->rooms[i], &data, file);
     }
+    
+    fread(&header_footer, sizeof(int), 1, file);
+    assert(header_footer == HEADER_FOOTER);
 
     map->outline_material = material_cache_load("rom:/materials/menu/map_mesh.mat");
     map->solid_color = material_cache_load("rom:/materials/menu/solid_primitive.mat");
