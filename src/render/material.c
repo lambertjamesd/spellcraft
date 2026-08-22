@@ -29,6 +29,7 @@ void material_init(struct material* material) {
     material->palette.idx = 0;
     material->palette.size = 0;
     material->flags = 0;
+    material->use_obj_fog = false;
 }
 
 void material_destroy(struct material* material) {
@@ -231,6 +232,12 @@ void material_load(struct material* into, FILE* material_file) {
 
                     if (other_modes & SOM_Z_WRITE) {
                         into->flags |= MATERIAL_FLAGS_Z_WRITE;
+                    }
+
+                    if ((other_modes & (0x3 << 24)) == (_RDPQ_SOM_BLEND1_B1_FOG_ALPHA << 24) || 
+                        (other_modes & (0x3 << 26)) == (_RDPQ_SOM_BLEND1_B1_FOG_ALPHA << 26)
+                    ) {
+                        into->use_obj_fog = true;
                     }
                 }
                 break;

@@ -58,6 +58,7 @@ struct material {
     int16_t sort_priority;
     uint16_t flags;
     uint8_t microcode;
+    bool use_obj_fog;
 };
 
 typedef struct material material_t;

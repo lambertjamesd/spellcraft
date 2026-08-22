@@ -23,6 +23,8 @@ typedef struct fog_state fog_state_t;
 void fog_set(fog_priority_t priority, fog_state_t state, float duration);
 void fog_clear(fog_priority_t priority, float duration);
 
+void fog_apply_obj_fog(fog_state_t* state, float distance);
+
 fog_state_t fog_get();
 
 #endif

@@ -45,6 +45,18 @@ void fog_clear(fog_priority_t priority, float duration) {
     fog_target = fog_calculate_target();
 }
 
+void fog_apply_obj_fog(fog_state_t* state, float distance) {
+    float lerp = (distance - state->min) / (state->max - state->min);
+
+    if (lerp >= 1.0f) {
+        state->color.a = 255;
+    } else if (lerp < 0.0f) {
+        state->color.a = 0;
+    } else {
+        state->color.a = (uint8_t)(lerp * 255.0f);
+    }
+}
+
 fog_state_t fog_get() {
     if (total_time >= fog_end_time) {
         return fog_target;

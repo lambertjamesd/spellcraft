@@ -5,6 +5,7 @@
 #include "../math/mathf.h"
 #include "../particles/static_particles.h"
 #include "../profile/profile.h"
+#include "fog.h"
 #include "defs.h"
 
 void render_batch_init(struct render_batch* batch, struct Transform* camera_transform, struct frame_memory_pool* pool) {
@@ -450,6 +451,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         }
     }
 
+    fog_state_t fog_state = fog_get();
+
 #if ENABLE_PROFILE_render_batch
     int material_render_count = 0;
     int vertex_render_count = 0;
@@ -539,6 +542,11 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         break;
                     }
                 }
+            }
+
+            if (current_mat && current_mat->apply.use_obj_fog) {
+                fog_apply_obj_fog(&fog_state, -element->distance);
+                rdpq_set_fog_color(fog_state.color);
             }
 
             if (transform_count == 0 && default_mtx) {
