@@ -14,6 +14,10 @@ struct repair_scene {
     vector2_t screen_cursor;
     entity_id grabbed_part;
     entity_id hovered_part;
+    scene_entry_point exit_scene;
+
+    bool is_active;
+    bool can_drop;
 
     int last_raycast_result;
 };
