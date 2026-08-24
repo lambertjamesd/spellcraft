@@ -1,8 +1,8 @@
 
+* Ability to set object type
 * Particle group improvements
 * Texture convert in other modes
 * animation scrolling
-* Embedded materials
 
 Details
 

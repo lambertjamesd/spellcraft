@@ -49,3 +49,5 @@ global fire_trials_room_rune_visited: bool;
 global fire_trials_room_vinewalk_visited: bool;
 global fire_trials_room_wheel_hallway_visited: bool;
 global fire_trials_room_wheels_visited: bool;
+global fire_trials_has_pot_shards: bool;
+global fire_trials_has_fixed_pot: bool;

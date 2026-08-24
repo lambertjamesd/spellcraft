@@ -29,6 +29,7 @@
 #include "../entities/comm_stone.h"
 #include "../entities/repair_scene.h"
 #include "../entities/repair_part.h"
+#include "../entities/item_pickup.h"
 // include_list insert point
 
 #include "../puzzle/bool_and_logic.h"
@@ -83,6 +84,10 @@ static struct entity_field_type_location fields_repair_part[] = {
     { .offset = offsetof(struct repair_part_definition, mesh), .type = ENTITY_FIELD_TYPE_STRING },
 };
 
+static struct entity_field_type_location fields_item_pickup[] = {
+    { .offset = offsetof(struct item_pickup_definition, mesh), .type = ENTITY_FIELD_TYPE_STRING },
+};
+
 static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(empty, fields_empty),
     ENTITY_DEFINITION(biter, fields_empty),
@@ -121,6 +126,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(comm_stone, fields_empty),
     ENTITY_DEFINITION(repair_scene, fields_repair_scene),
     ENTITY_DEFINITION(repair_part, fields_repair_part),
+    ENTITY_DEFINITION(item_pickup, fields_item_pickup),
     // scene_entity_definitions insert point
 };
 

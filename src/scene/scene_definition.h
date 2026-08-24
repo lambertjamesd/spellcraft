@@ -46,6 +46,7 @@ enum entity_type_id {
     ENTITY_TYPE_comm_stone,
     ENTITY_TYPE_repair_scene,
     ENTITY_TYPE_repair_part,
+    ENTITY_TYPE_item_pickup,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -421,6 +422,14 @@ struct repair_part_definition {
     boolean_variable has_part;
     bool prevent_rotation;
     entity_spawner depends_on;
+    mesh_location mesh;
+};
+
+struct item_pickup_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    boolean_variable has_item;
+    integer_variable has_item_count;
     mesh_location mesh;
 };
 
