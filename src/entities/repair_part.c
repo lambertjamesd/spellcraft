@@ -17,7 +17,7 @@ void repair_part_do_render(void* data, struct render_batch* batch) {
         return;
     }
     
-    if (!repair_part->is_connected) {
+    if (!repair_part->is_connected && repair_part->is_present) {
         screen_raycast_check_after(0);
     }
 
@@ -27,7 +27,7 @@ void repair_part_do_render(void* data, struct render_batch* batch) {
 
     t3d_matrix_pop(1);
 
-    if (!repair_part->is_connected) {
+    if (!repair_part->is_connected && repair_part->is_present) {
         screen_raycast_check_after(repair_part->entity_id);
     }
 }
@@ -69,7 +69,7 @@ void repair_part_init(repair_part_t* repair_part, struct repair_part_definition*
     repair_part->entity_id = entity_id;
     repair_part->depends_on = definition->depends_on;
     repair_part->prevent_rotation = definition->prevent_rotation;
-    repair_part->is_present = definition->has_part == VARIABLE_DISCONNECTED ? true : expression_get_bool(definition->has_part);
+    repair_part->is_present = true;//definition->has_part == VARIABLE_DISCONNECTED ? true : expression_get_bool(definition->has_part);
     repair_part->is_connected = false;
 }
 

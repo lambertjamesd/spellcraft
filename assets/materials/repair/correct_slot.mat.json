@@ -8,5 +8,6 @@
         "cyc1": "TRANSPARENT",
         "texPersp": false
     },
-    "zBuffer": false
+    "zBuffer": false,
+    "priority": 7
 }
