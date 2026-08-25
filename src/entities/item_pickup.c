@@ -2,7 +2,7 @@
 
 #include "../collision/shapes/cylinder.h"
 
-static dynamic_object_type_t collider_type = {
+static dynamic_object_type_t item_pickup_collider = {
     CYLINDER_COLLIDER(0.4f, 0.4f),
     .center = {0.0f, 0.4f, 0.0f},
 };
@@ -26,11 +26,14 @@ void item_pickup_init(item_pickup_t* item_pickup, struct item_pickup_definition*
     renderable_single_axis_init(&item_pickup->renderable, &item_pickup->transform, definition->mesh);
     render_scene_add_renderable(&item_pickup->renderable, 2.0f);
 
-    dynamic_object_init(entity_id, &item_pickup->collider, &collider_type, COLLISION_LAYER_TANGIBLE, &definition->position, NULL);
+    dynamic_object_init(entity_id, &item_pickup->collider, &item_pickup_collider, COLLISION_LAYER_TANGIBLE, &item_pickup->transform.position, NULL);
 
     collision_scene_add(&item_pickup->collider);
 
-    interactable_init(&item_pickup->interactable, entity_id, INTERACT_TYPE_PICKUP, item_pickup_interact, item_pickup);
+    item_pickup->collider.weight_class = WEIGHT_CLASS_GHOST;
+    item_pickup->collider.is_fixed = true;
+
+    interactable_init(&item_pickup->interactable, entity_id, INTERACT_TYPE_TAKE, item_pickup_interact, item_pickup);
 
     item_pickup->has_item = definition->has_item;
     item_pickup->has_item_count = definition->has_item_count;

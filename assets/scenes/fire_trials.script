@@ -107,3 +107,15 @@ end
 func test_gem_door()
     fire_trials_key_count = 3;
 end
+
+scene pot_shard_guardian: entity_id;
+scene pot_shard_room_unlocked: bool = true;
+scene pot_shard_room_should_unlock: bool = true;
+
+func room_pot_shards()
+    pot_shard_room_should_unlock = pot_shard_guardian == 0 or not fire_trials_has_pot_shards;
+
+    if not pot_shard_room_should_unlock and pot_shard_room_unlocked then
+        pot_shard_room_unlocked = false;
+    end
+end

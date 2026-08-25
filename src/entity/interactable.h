@@ -15,6 +15,7 @@ enum __attribute__ ((__packed__)) interact_type {
     INTERACT_TYPE_CAST,
     INTERACT_TYPE_CHECK,
     INTERACT_TYPE_UNLOCK,
+    INTERACT_TYPE_TAKE,
 };
 
 #define MAX_INTERACT_RANGE  2.0f
