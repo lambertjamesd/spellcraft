@@ -47,6 +47,7 @@ enum entity_type_id {
     ENTITY_TYPE_repair_scene,
     ENTITY_TYPE_repair_part,
     ENTITY_TYPE_item_pickup,
+    ENTITY_TYPE_repair_interaction,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -431,6 +432,15 @@ struct item_pickup_definition {
     boolean_variable has_item;
     integer_variable has_item_count;
     mesh_location mesh;
+};
+
+struct repair_interaction_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    boolean_variable is_repaired;
+    mesh_location broken_mesh;
+    mesh_location repaired_mesh;
+    scene_entry_point on_interact;
 };
 
 // definition insert point

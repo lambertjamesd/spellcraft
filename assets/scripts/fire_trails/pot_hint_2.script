@@ -1,8 +1,0 @@
-
-func main()
-    sign_start;
-
-    say "Fire cannot touch fire spin";
-
-    sign_end;
-end

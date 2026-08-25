@@ -1,8 +1,0 @@
-
-func main()
-    sign_start;
-
-    say "Only push is missing";
-
-    sign_end;
-end

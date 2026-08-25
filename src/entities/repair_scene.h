@@ -15,6 +15,7 @@ struct repair_scene {
     entity_id grabbed_part;
     entity_id hovered_part;
     scene_entry_point exit_scene;
+    boolean_variable puzzle_complete;
 
     bool is_active;
     bool can_drop;

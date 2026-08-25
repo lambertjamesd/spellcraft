@@ -215,6 +215,7 @@ void repair_scene_update(void *data) {
                 break;
             case REPAIR_COMPLETE:
                 repair_scene_exit_with_message(repair_scene, "Repair complete");
+                expression_set_bool(repair_scene->puzzle_complete, true);
                 break;
         }
     }
@@ -247,6 +248,7 @@ void repair_scene_init(repair_scene_t* repair_scene, struct repair_scene_definit
 
     repair_scene->grabbed_part = 0;
     repair_scene->hovered_part = 0;
+    repair_scene->puzzle_complete = definition->puzzle_complete;
 
     repair_scene->last_raycast_result = 0;
     repair_scene->exit_scene = definition->exit_scene;

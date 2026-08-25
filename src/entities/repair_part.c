@@ -69,7 +69,7 @@ void repair_part_init(repair_part_t* repair_part, struct repair_part_definition*
     repair_part->entity_id = entity_id;
     repair_part->depends_on = definition->depends_on;
     repair_part->prevent_rotation = definition->prevent_rotation;
-    repair_part->is_present = true;//definition->has_part == VARIABLE_DISCONNECTED ? true : expression_get_bool(definition->has_part);
+    repair_part->is_present = definition->has_part == VARIABLE_DISCONNECTED ? true : expression_get_bool(definition->has_part);
     repair_part->is_connected = false;
 }
 

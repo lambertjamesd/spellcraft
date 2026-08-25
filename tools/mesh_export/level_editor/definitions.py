@@ -68,7 +68,7 @@ class Definitions:
         return result
 
     def _search_entry_points(self, start_path: str, repo_path: str):
-        siblings = self._search_blend_files(start_path)
+        siblings = self._search_blend_files(os.path.join(start_path, 'scenes'))
 
         result: list[str] = []
         base_path = abspath('//')
@@ -88,7 +88,7 @@ class Definitions:
             stat_result = os.stat(full_path)
             modified = stat_result.st_mtime
 
-            if 'repair/' in relative_path:
+            if relative_path.startswith('repair/'):
                 result.append(f"rom:/{relative_path}".replace('.scene', '.repair'))
                 continue
 
@@ -105,6 +105,12 @@ class Definitions:
                             entry = f"rom:/{relative_path}#{obj_name[len(entry_point.ENTRY_PREFIX):]}"
                             result.append(entry)
                             entries.append(entry)
+
+                    if len(entries) == 0:
+                        entry = f"rom:/{relative_path}"
+
+                        result.append(entry)
+                        entries.append(entry)
 
                     cache[relative_path] = {'entries': entries, 'modified': modified}
                 except:

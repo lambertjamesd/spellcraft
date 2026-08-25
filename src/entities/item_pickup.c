@@ -28,10 +28,10 @@ void item_pickup_init(item_pickup_t* item_pickup, struct item_pickup_definition*
 
     dynamic_object_init(entity_id, &item_pickup->collider, &item_pickup_collider, COLLISION_LAYER_TANGIBLE, &item_pickup->transform.position, NULL);
 
-    collision_scene_add(&item_pickup->collider);
-
     item_pickup->collider.weight_class = WEIGHT_CLASS_GHOST;
     item_pickup->collider.is_fixed = true;
+
+    collision_scene_add(&item_pickup->collider);
 
     interactable_init(&item_pickup->interactable, entity_id, INTERACT_TYPE_TAKE, item_pickup_interact, item_pickup);
 

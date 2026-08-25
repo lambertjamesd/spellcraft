@@ -241,10 +241,16 @@
             "type": "repair_scene"
         },
         {
+            "name": "temples_fire_pot_broken",
+            "description": "",
+            "mesh": "meshes/temples/fire_pot_broken.blend#PotBase",
+            "type": "repair_interaction"
+        },
+        {
             "name": "temples_fire_pot_shards",
             "description": "",
             "mesh": "meshes/temples/fire_pot_shards.blend#pot_shard_0",
-            "type": "1.0"
+            "type": "item_pickup"
         }
     ]
 }
