@@ -218,6 +218,8 @@ struct burning_thorns_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     float scale;
+    mesh_location mesh;
+    boolean_variable is_green;
 };
 
 struct timed_torch_puzzle_definition {

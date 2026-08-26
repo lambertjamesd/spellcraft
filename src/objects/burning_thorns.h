@@ -19,7 +19,10 @@ struct burning_thorns {
     struct element_attr attrs[2];
 
     float burn_time;
+    float green_time;
     burning_effect_t *burning_effect;
+
+    boolean_variable is_green;
 };
 
 typedef struct burning_thorns burning_thorns_t;

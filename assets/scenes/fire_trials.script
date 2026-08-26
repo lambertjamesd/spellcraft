@@ -49,11 +49,23 @@ scene block_puzzle_hidden_jelly_spawner: entity_spawner;
 scene block_puzzle_jelly_cover: entity_id;
 scene block_puzzle_jelly_trigger: entity_id;
 
+scene block_puzzle_is_water_unblocked: bool;
+scene block_puzzle_should_thorns_die: bool;
+scene block_puzzle_are_thorns_green: bool = true;
+
 func room_block_puzzle()
     if not block_puzzle_hidden_jelly_spawned and are_touching(block_puzzle_jelly_trigger, ENTITY_ID_PLAYER) then
         block_puzzle_hidden_jelly_spawned = true;
         spawn block_puzzle_hidden_jelly_spawner;
     end
+
+    if block_puzzle_should_thorns_die and block_puzzle_are_thorns_green then
+        block_puzzle_are_thorns_green = false;
+    end
+end
+
+func room_water_blocker()
+
 end
 
 global fire_trials_bossdoor_kiln_0: bool;

@@ -7,6 +7,8 @@
 #include "../entity/entity_spawner.h"
 #include "../resource/material_cache.h"
 #include "../render/coloru8.h"
+#include "../cutscene/expression_evaluate.h"
+#include "../math/mathf.h"
 
 #define BURN_TIME           2.9f
 #define TRANSITION_TIME     2.6f
@@ -14,6 +16,9 @@
 
 #define DARKEN_TIME         (BURN_TIME - TRANSITION_TIME)
 
+#define GREENING_TIME       1.5f
+
+static color_t green_color = {0xA5, 0xFF, 0x8A, 0xFF};
 static color_t prim_color = {255, 206, 133, 255};
 static color_t color_black = {0, 0, 0, 0};
 
@@ -33,8 +38,19 @@ static struct dynamic_object_type burning_object_shape = {
     .center = { 0.0f, 2.0f, 0.0f },
 };
 
+static inline float burning_thorns_target_green(burning_thorns_t* thorns) {
+    return expression_get_bool(thorns->is_green);
+}
+
 void burning_thorns_update(void* data) {
     burning_thorns_t* thorns = (burning_thorns_t*)data;
+
+    thorns->green_time = mathfMoveTowards(thorns->green_time, burning_thorns_target_green(thorns), fixed_time_step * (1.0f / GREENING_TIME));
+
+    if (thorns->green_time) {
+        thorns->attrs[0].color = coloru8_lerp(&prim_color, &green_color, thorns->green_time);
+        return;
+    }
 
     if (thorns->burn_time == NOT_BURNING) {
         return;
@@ -62,7 +78,7 @@ void burning_thorns_update(void* data) {
 
 float burning_thorns_damage(void* data, struct damage_info* damage) {
     burning_thorns_t* thorns = (burning_thorns_t*)data;
-    if (damage->type & DAMAGE_TYPE_FIRE && thorns->burn_time == NOT_BURNING) {
+    if (damage->type & DAMAGE_TYPE_FIRE && thorns->burn_time == NOT_BURNING && thorns->green_time == 0.0f) {
         // struct Vector3 burn_pos;
         // vector3AddScaled(&thorns->transform.position, &gUp, 2.0f, &burn_pos);
         thorns->burn_time = BURN_TIME;
@@ -74,7 +90,7 @@ float burning_thorns_damage(void* data, struct damage_info* damage) {
 void burning_thorns_init(burning_thorns_t* thorns, struct burning_thorns_definition* definition, entity_id id) {
     transformSaInit(&thorns->transform, &definition->position, &definition->rotation, definition->scale);
 
-    renderable_single_axis_init(&thorns->renderable, &thorns->transform, "rom:/meshes/objects/env_interactive/bramble_dry_barrier.tmesh");
+    renderable_single_axis_init(&thorns->renderable, &thorns->transform, definition->mesh);
     thorns->burn_material = material_cache_load("rom:/materials/temples/bramble_burnaway.mat");
 
     render_scene_add_renderable(&thorns->renderable, 1.4f);
@@ -100,10 +116,13 @@ void burning_thorns_init(burning_thorns_t* thorns, struct burning_thorns_definit
     thorns->collider.scale = definition->scale;
     thorns->collider.is_fixed = 1;
     thorns->collider.weight_class = WEIGHT_CLASS_SUPER_HEAVY;
+    thorns->is_green = definition->is_green;
     collision_scene_add(&thorns->collider);
 
     health_init(&thorns->health, id, 10.0f);
     health_set_callback(&thorns->health, burning_thorns_damage, thorns);
+
+    thorns->green_time = burning_thorns_target_green(thorns);
 }
 
 void burning_thorns_destroy(burning_thorns_t* thorns) {
