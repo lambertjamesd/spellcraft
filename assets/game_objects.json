@@ -223,6 +223,12 @@
             "type": "pottery_wheel"
         },
         {
+            "name": "puzzle_pulley_gate",
+            "description": "",
+            "mesh": "meshes/puzzle/pulley_gate.blend#pulley_gate",
+            "type": "pulley_gate"
+        },
+        {
             "name": "puzzle_timed_torch",
             "description": "",
             "mesh": "meshes/puzzle/timed_torch.blend#timed_torch",

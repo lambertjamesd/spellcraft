@@ -4,7 +4,7 @@
 #include <math.h>
 
 void box_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
 
     output->x = direction->x > 0.0f ? shape_data->box.half_size.x : -shape_data->box.half_size.x;
     output->y = direction->y > 0.0f ? shape_data->box.half_size.y : -shape_data->box.half_size.y;
@@ -12,7 +12,7 @@ void box_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* ou
 }
 
 void box_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
 
     struct Vector3* half_size = &shape_data->box.half_size;
 

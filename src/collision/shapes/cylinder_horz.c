@@ -5,7 +5,7 @@
 #include <math.h>
 
 void cylinder_horz_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
 
     float abs_x = fabsf(direction->x);
     float abs_y = fabsf(direction->y);
@@ -27,7 +27,7 @@ void cylinder_horz_minkowski_sum(void* data, struct Vector3* direction, struct V
 }
 
 void cylinder_horz_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
 
     float radius = shape_data->cylinder.radius;
     float half_height = shape_data->cylinder.half_height;

@@ -6,7 +6,7 @@
 #include <libdragon.h>
 
 void test_cone_minkowski_sum(struct test_context* t) {
-    union dynamic_object_type_data data = {
+    collider_shape_data_t data = {
         .cone = {
             .size = { 1.0f, 1.0f, 2.0f },
         },
@@ -34,7 +34,7 @@ void test_cone_minkowski_sum(struct test_context* t) {
 }
 
 void test_cone_bounding_box(struct test_context* t) {
-    union dynamic_object_type_data data = {
+    collider_shape_data_t data = {
         .cone = {
             .size = { 1.0f, 1.0f, 2.0f },
         },

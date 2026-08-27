@@ -7,7 +7,7 @@ void test_sphere_minkowski_sum(struct test_context* t) {
     struct Vector3 offset;
     struct Vector3 result;
 
-    union dynamic_object_type_data data = {
+    collider_shape_data_t data = {
         .sphere.radius = 2.0f,
     };
 

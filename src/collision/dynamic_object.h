@@ -6,6 +6,7 @@
 #include "../math/box3d.h"
 #include "../math/box2d.h"
 #include "./shapes/swing_shape.h"
+#include "collider_shape.h" 
 #include "contact.h"
 #include "gjk.h"
 #include <stdint.h>
@@ -29,21 +30,10 @@ enum collision_group {
 
 typedef void (*bounding_box_calculator)(void* data, struct Vector2* rotation, struct Box3D* box);
 
-union dynamic_object_type_data
-{
-    struct { float radius; } sphere;
-    struct { float radius; float inner_half_height; } capsule;
-    struct { struct Vector3 half_size; } box;
-    struct { struct Vector3 size; } cone;
-    struct { float radius; float half_height; } cylinder;
-    struct { struct Vector2 range; float radius; float half_height; } sweep;
-    struct { struct swing_shape* shape; } swing;
-};
-
 struct dynamic_object_type {
     MinkowsiSum minkowsi_sum;
     bounding_box_calculator bounding_box;
-    union dynamic_object_type_data data;
+    collider_shape_data_t data;
     float bounce;
     float friction;
     // 0 wont be stable on any slope, 1 will stick to anything not facing downward

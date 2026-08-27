@@ -6,7 +6,7 @@
 #include <libdragon.h>
 
 void sweep_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
 
     struct Vector2 dir_2d;
     dir_2d.x = direction->x;
@@ -38,7 +38,7 @@ void sweep_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* 
 }
 
 void sweep_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
 
     box->min = (struct Vector3){0.0f, -shape_data->sweep.half_height, 0.0f};
     box->max = (struct Vector3){0.0f, shape_data->sweep.half_height, 0.0f};

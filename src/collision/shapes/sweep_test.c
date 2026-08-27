@@ -3,7 +3,7 @@
 #include "../dynamic_object.h"
 #include "../dynamic_object_test.h"
 
-static union dynamic_object_type_data test_sweep_data = {
+static collider_shape_data_t test_sweep_data = {
     .sweep = {
         .range = {0.707106781f, 0.707106781f},
         .radius = 2.0f,

@@ -6,7 +6,7 @@
 #include <libdragon.h>
 
 void test_cylinder_horz_minkowski_sum(struct test_context* t) {
-    union dynamic_object_type_data data = {
+    collider_shape_data_t data = {
         .cylinder.half_height = 1.0f,
         .cylinder.radius = 1.0f,
     };
@@ -46,7 +46,7 @@ void test_cylinder_horz_minkowski_sum(struct test_context* t) {
 }
 
 void test_cylinder_horz_bounding_box(struct test_context* t) {
-    union dynamic_object_type_data data = {
+    collider_shape_data_t data = {
         .cylinder.half_height = 1.0f,
         .cylinder.radius = 1.0f,
     };

@@ -5,7 +5,7 @@
 #include "sphere.h"
 
 void capsule_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
     sphere_minkowski_sum(data, direction, output);
 
     if (direction->y > 0.0f) {
@@ -16,7 +16,7 @@ void capsule_minkowski_sum(void* data, struct Vector3* direction, struct Vector3
 }
 
 void capsule_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
 
     vector3Scale(&gOneVec, &box->max, shape_data->capsule.radius);
     vector3Scale(&gOneVec, &box->min, -shape_data->capsule.radius);

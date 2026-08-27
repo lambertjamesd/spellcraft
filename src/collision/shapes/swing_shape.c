@@ -6,7 +6,7 @@
 #define COLLIDER_DROP   0.5f
 
 void swing_shape_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
     struct swing_shape* shape = shape_data->swing.shape;
 
     if (shape->data_count == 0) {
@@ -37,7 +37,7 @@ void swing_shape_minkowski_sum(void* data, struct Vector3* direction, struct Vec
 }
 
 void swing_shape_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box) {
-    union dynamic_object_type_data* shape_data = (union dynamic_object_type_data*)data;
+    collider_shape_data_t* shape_data = (collider_shape_data_t*)data;
     struct swing_shape* shape = shape_data->swing.shape;
 
     if (shape->data_count == 0) {

@@ -5,6 +5,7 @@
 #include "../math/vector2.h"
 #include "../math/quaternion.h"
 #include "../cutscene/expression.h"
+#include "../collision/collider_shape.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -48,6 +49,7 @@ enum entity_type_id {
     ENTITY_TYPE_repair_part,
     ENTITY_TYPE_item_pickup,
     ENTITY_TYPE_repair_interaction,
+    ENTITY_TYPE_pulley_gate,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -180,6 +182,14 @@ struct water_cube_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     struct Vector3 scale;
+};
+
+struct dynamic_water_definition {
+    struct Vector3 position;
+    mesh_location mesh;
+    collider_shape_t collider;
+    struct Vector3 other_level;
+    boolean_variable is_other_level;
 };
 
 struct mana_plant_definition {
@@ -443,6 +453,13 @@ struct repair_interaction_definition {
     mesh_location broken_mesh;
     mesh_location repaired_mesh;
     scene_entry_point on_interact;
+};
+
+struct pulley_gate_definition {
+    struct Vector3 position;    
+    struct Vector2 rotation;
+    struct Vector3 harness_position;
+    boolean_variable output;
 };
 
 // definition insert point
