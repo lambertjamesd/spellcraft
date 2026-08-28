@@ -33,6 +33,7 @@ struct tmesh {
     struct armature_definition armature;
 
     struct armature_attachment* attachments;
+    float radius;
     uint16_t attachment_count;
     uint8_t light_source;
 };

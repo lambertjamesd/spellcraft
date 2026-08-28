@@ -533,6 +533,8 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
     if settings.default_material_name:
         _transition_material(current_material, settings.default_material, commands, material_transitions)
 
+    radius = max(el.get_radius() for el in mesh_list) if len(mesh_list) > 0 else 0
+    file.write(struct.pack('>f', radius))
     file.write(len(vertices).to_bytes(2, 'big'))
 
     for vertex in vertices:

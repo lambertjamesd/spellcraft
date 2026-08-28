@@ -149,6 +149,10 @@ static render_scene_callback render_callback[] = {
 
 // removed with render_scene_remove()
 void render_scene_add_renderable(struct renderable* renderable, float radius) {
+    if (radius == 0.0f) {
+        radius = renderable->mesh_render.mesh->radius;
+    }
+
     // remove with render_scene_remove()
     render_scene_add(
         transform_mixed_get_position(&renderable->transform), 

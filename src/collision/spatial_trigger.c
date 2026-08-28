@@ -110,3 +110,25 @@ bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct 
             return false;
     }
 }
+
+void spatial_trigger_type_from_shape(spatial_trigger_type_t* type, collider_shape_t* shape) {
+    switch (shape->type) {
+        case COLLIDER_SHAPE_SPHERE:
+            type->type = SPATIAL_TRIGGER_SPHERE;
+            type->data.sphere.radius = shape->half_size.x;
+            break;
+        case SPATIAL_TRIGGER_BOX:
+            type->type = SPATIAL_TRIGGER_SPHERE;
+            type->data.box.half_size = shape->half_size;
+            break;
+        case COLLIDER_SHAPE_CYLINDER:
+            type->type = SPATIAL_TRIGGER_CYLINDER;
+            type->data.cylinder.radius = shape->half_size.x;
+            type->data.cylinder.half_height = shape->half_size.y;
+            break;
+        default:
+            assert(false);
+    }
+
+    type->center = shape->center;
+}

@@ -32,6 +32,7 @@
 #include "../entities/item_pickup.h"
 #include "../entities/repair_interaction.h"
 #include "../entities/pulley_gate.h"
+#include "../entities/dynamic_water.h"
 // include_list insert point
 
 #include "../puzzle/bool_and_logic.h"
@@ -100,6 +101,10 @@ static struct entity_field_type_location fields_repair_interaction[] = {
     { .offset = offsetof(struct repair_interaction_definition, on_interact), .type = ENTITY_FIELD_TYPE_STRING },
 };
 
+static struct entity_field_type_location fields_dynamic_water[] = {
+    { .offset = offsetof(struct dynamic_water_definition, mesh), .type = ENTITY_FIELD_TYPE_STRING },
+};
+
 static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(empty, fields_empty),
     ENTITY_DEFINITION(biter, fields_empty),
@@ -141,6 +146,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(item_pickup, fields_item_pickup),
     ENTITY_DEFINITION(repair_interaction, fields_repair_interaction),
     ENTITY_DEFINITION(pulley_gate, fields_empty),
+    ENTITY_DEFINITION(dynamic_water, fields_dynamic_water),
     // scene_entity_definitions insert point
 };
 

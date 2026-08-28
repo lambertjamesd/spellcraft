@@ -30,7 +30,7 @@ typedef union collider_shape_data collider_shape_data_t;
 
 struct collider_shape {
     collider_shape_type_t type;
-    collider_shape_data_t data;
+    vector3_t half_size;
     vector3_t center;
 };
 

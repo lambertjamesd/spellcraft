@@ -50,6 +50,7 @@ enum entity_type_id {
     ENTITY_TYPE_item_pickup,
     ENTITY_TYPE_repair_interaction,
     ENTITY_TYPE_pulley_gate,
+    ENTITY_TYPE_dynamic_water,
     // type enum insert point
     
     ENTITY_TYPE_count,

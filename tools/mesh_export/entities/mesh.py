@@ -132,6 +132,17 @@ class mesh_data():
 
         return [min_result, max_result]
 
+    def get_radius(self) -> float:
+        result: float = 0
+
+        for vertex in self.vertices:
+            test_result = vertex.dot(vertex)
+
+            if test_result > result:
+                result = test_result
+
+        return math.sqrt(result)
+
     def append_mesh(self, obj: bpy.types.Object | None, mesh: bpy.types.Mesh, material_index: int, final_transform: mathutils.Matrix, armature: armature.ArmatureData | None):
         triangles = []
         max_index = -1

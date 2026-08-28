@@ -14,11 +14,9 @@ static float density_level[] = {
     [DYNAMIC_DENSITY_HEAVY] = GRAVITY_CONSTANT / 1.4f,
 };
 
-void water_cube_update(void* data) {
-    struct water_cube* cube = (struct water_cube*)data;
-
+void water_cube_apply_water(spatial_trigger_t* trigger) {
     for (
-        struct contact* current = cube->trigger.active_contacts;
+        struct contact* current = trigger->active_contacts;
         current;
         current = current->next
     ) {
@@ -28,7 +26,7 @@ void water_cube_update(void* data) {
             continue;
         }
 
-        float water_top = cube->trigger.bounding_box.max.y;
+        float water_top = trigger->bounding_box.max.y;
 
         if (obj->bounding_box.min.y >= water_top) {
             continue;
@@ -71,6 +69,12 @@ void water_cube_update(void* data) {
             DYNAMIC_OBJECT_MARK_UNDER_WATER(obj);
         }
     }
+}
+
+void water_cube_update(void* data) {
+    struct water_cube* cube = (struct water_cube*)data;
+
+    water_cube_apply_water(&cube->trigger);
 }
 
 void water_cube_init(struct water_cube* cube, struct water_cube_definition* definition, entity_id id) {

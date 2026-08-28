@@ -104,6 +104,8 @@ void tmesh_load(struct tmesh* tmesh, FILE* file) {
     // load material
     tmesh->material = material_cache_load_linked_or_embedded(file);
 
+    fread(&tmesh->radius, sizeof(float), 1, file);
+
     // load vertices
 
     fread(&tmesh->vertex_count, sizeof(uint16_t), 1, file);

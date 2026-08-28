@@ -6,6 +6,7 @@
 #include "../math/vector2.h"
 #include "../math/box3d.h"
 #include "../entity/entity_id.h"
+#include "collider_shape.h"
 #include "contact.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -54,5 +55,7 @@ void spatial_trigger_init(struct spatial_trigger* trigger, struct TransformSingl
 void spatial_trigger_recalc_bb(struct spatial_trigger* trigger);
 void spatial_trigger_type_recalc_bb(struct spatial_trigger_type* type, struct TransformSingleAxis* transform, struct Box3D* result);
 bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct Vector3* point);
+
+void spatial_trigger_type_from_shape(spatial_trigger_type_t* type, collider_shape_t* shape);
 
 #endif

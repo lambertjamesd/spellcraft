@@ -127,6 +127,7 @@ fixed_sizes = {
     'any_variable': 2,
     'line_mesh_data_ref': 4,
     'entity_spawner': 4,
+    'collider_shape_t': 28,
 }
 
 fixed_alignments = {
@@ -151,6 +152,7 @@ fixed_alignments = {
     'any_variable': 2,
     'line_mesh_data_ref': 4,
     'entity_spawner': 4,
+    'collider_shape_t': 4,
 }
 
 struct_formats = {
@@ -316,6 +318,42 @@ def _write_padding(file, offset: int, definition, context: SerializeContext) -> 
     
     return new_offset
 
+def _write_collider_def(file, obj: bpy.types.Object, collider_obj: bpy.types.Object) -> bool:
+    relative_transform = obj.matrix_world.inverted() @ collider_obj.matrix_world
+
+    if not isinstance(collider_obj.data, bpy.types.Mesh) or len(collider_obj.data.vertices) == 0:
+        return False
+
+    mesh = collider_obj.data
+
+    min_pos = relative_transform @ mesh.vertices[0].co
+    max_pos = min_pos
+
+    for vtx in mesh.vertices:
+        vtx_pos = relative_transform @ vtx.co
+        min_pos = mathutils.Vector((
+            min(vtx_pos.x, min_pos.x),
+            min(vtx_pos.y, min_pos.y),
+            min(vtx_pos.z, min_pos.z)
+        ))
+        max_pos = mathutils.Vector((
+            max(vtx_pos.x, max_pos.x),
+            max(vtx_pos.y, max_pos.y),
+            max(vtx_pos.z, max_pos.z)
+        ))
+
+    half_size = (max_pos - min_pos) * 0.5
+    center = (min_pos + max_pos) * 0.5
+
+    file.write(struct.pack(
+        ">Iffffff", 
+        2, 
+        half_size.x, half_size.z, half_size.y,
+        center.x, center.z, -center.y
+    ))
+    return True
+
+
 def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext, field_name: str | None = None, offset: int = 0) -> int:
     offset = _write_padding(file, offset, definition, context)
 
@@ -397,6 +435,12 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
             spawner_name = get_value(obj, field_name, '')
             file.write(struct.pack(">I", context.get_spawner_id(spawner_name)))
             return offset + 4
+        elif definition == 'collider_shape_t':
+            value = get_value(obj, field_name, 0)
+            if not isinstance(value, str) or not _write_collider_def(file, obj, bpy.data.objects[value[len('obj '):]]):
+                file.write(struct.pack(">Iffffff", 2, 0, 0, 0, 0, 0, 0))
+            
+            return offset + 28
          
         raise Exception(f"unknown field type '{definition}' {field_name}")
     

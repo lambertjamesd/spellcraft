@@ -302,6 +302,7 @@ _enum_mapping = {
     'struct Quaternion': NODE_OT_game_object_positions.bl_idname,
     'mesh_location': NODE_OT_game_object_positions.bl_idname,
     'entity_spawner': NODE_OT_game_object_spawners.bl_idname,
+    'collider_shape_t': NODE_OT_game_object_positions.bl_idname,
 }
 
 global_attributes = [
@@ -365,7 +366,7 @@ def _init_default_properties(target):
             target[attr.name] = default_value
         elif attr.data_type == 'collectable_sub_type':
             target[attr.name] = 'ITEM_TYPE_NONE'
-        elif attr.data_type == 'script_location' or attr.data_type == 'scene_entry_point' or attr.data_type == 'mesh_location':
+        elif attr.data_type == 'script_location' or attr.data_type == 'scene_entry_point' or attr.data_type == 'mesh_location' or attr.data_type == 'collider_shape_t':
             target[attr.name] = ''
         elif attr.data_type == 'room_id':
             target[attr.name] = 'room_default'
