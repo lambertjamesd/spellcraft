@@ -64,8 +64,10 @@ func room_block_puzzle()
     end
 end
 
-func room_water_blocker()
+scene water_blocker_is_drained: bool;
 
+func room_water_blocker()
+    
 end
 
 global fire_trials_bossdoor_kiln_0: bool;

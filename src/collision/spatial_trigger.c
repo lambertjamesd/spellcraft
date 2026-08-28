@@ -118,7 +118,7 @@ void spatial_trigger_type_from_shape(spatial_trigger_type_t* type, collider_shap
             type->data.sphere.radius = shape->half_size.x;
             break;
         case SPATIAL_TRIGGER_BOX:
-            type->type = SPATIAL_TRIGGER_SPHERE;
+            type->type = SPATIAL_TRIGGER_BOX;
             type->data.box.half_size = shape->half_size;
             break;
         case COLLIDER_SHAPE_CYLINDER:
