@@ -22,8 +22,8 @@ void cut_rope_render(void* data, render_batch_t* render_batch) {
 
     transform_t transform;
     transform.position = cut_rope->position;
-    quatLook(&forward, &gUp, &transform.rotation);
-    transform.scale = gOneVec;
+    quatLook(&forward, &gRight, &transform.rotation);
+    transform.scale = (vector3_t){1.0f, 1.0f, distance};
 
     T3DMat4FP* mtx = render_batch_transformfp_from_full(render_batch, &transform);
 
@@ -44,9 +44,9 @@ void cut_rope_update(void* data) {
         return;
     } else {
         vector3_t connection_point = {
-            (connected_to->bounding_box.max.x + connected_to->bounding_box.max.x) * 0.5,
+            (connected_to->bounding_box.min.x + connected_to->bounding_box.max.x) * 0.5,
             connected_to->bounding_box.max.y,
-            (connected_to->bounding_box.max.z + connected_to->bounding_box.max.z) * 0.5,
+            (connected_to->bounding_box.min.z + connected_to->bounding_box.max.z) * 0.5,
         };
 
         vector3_t offset;
