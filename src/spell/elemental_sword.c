@@ -115,16 +115,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
 
     elemental_sword->trail = sword_trail_new(elemental_sword->definition->color);
 
-    elemental_sword->collider_type = (struct dynamic_object_type){
-        .minkowsi_sum = swing_shape_minkowski_sum,
-        .bounding_box = swing_shape_bounding_box,
-        .data = {
-            .swing = {
-                .shape = &elemental_sword->swing_shape,
-            },
-        },
-    };
-    swing_shape_init(&elemental_sword->swing_shape);
+    swing_shape_init(&elemental_sword->swing_shape, &elemental_sword->collider_type);
 
     dynamic_object_init(
         entity_id, 

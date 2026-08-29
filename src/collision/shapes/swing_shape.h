@@ -12,10 +12,14 @@ struct swing_shape {
     uint8_t data_count;
 };
 
+typedef struct swing_shape swing_shape_t;
+
+struct dynamic_object_type;
+
 void swing_shape_minkowski_sum(void* data, struct Vector3* direction, struct Vector3* output);
 void swing_shape_bounding_box(void* data, struct Vector2* rotation, struct Box3D* box);
 
-void swing_shape_init(struct swing_shape* shape);
+void swing_shape_init(struct swing_shape* shape, struct dynamic_object_type* collider_type);
 void swing_shape_add(struct swing_shape* shape, struct Vector3* a, struct Vector3* b);
 
 #define SWING_COLLIDER(radius) \

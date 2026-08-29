@@ -51,6 +51,7 @@ enum entity_type_id {
     ENTITY_TYPE_repair_interaction,
     ENTITY_TYPE_pulley_gate,
     ENTITY_TYPE_dynamic_water,
+    ENTITY_TYPE_cut_rope,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -461,6 +462,11 @@ struct pulley_gate_definition {
     struct Vector2 rotation;
     struct Vector3 harness_position;
     boolean_variable output;
+};
+
+struct cut_rope_definition {
+    struct Vector3 position;
+    entity_spawner connected_to;
 };
 
 // definition insert point

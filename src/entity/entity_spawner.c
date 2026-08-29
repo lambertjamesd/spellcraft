@@ -33,6 +33,7 @@
 #include "../entities/repair_interaction.h"
 #include "../entities/pulley_gate.h"
 #include "../entities/dynamic_water.h"
+#include "../entities/cut_rope.h"
 // include_list insert point
 
 #include "../puzzle/bool_and_logic.h"
@@ -147,6 +148,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(repair_interaction, fields_repair_interaction),
     ENTITY_DEFINITION(pulley_gate, fields_empty),
     ENTITY_DEFINITION(dynamic_water, fields_dynamic_water),
+    ENTITY_DEFINITION(cut_rope, fields_empty),
     // scene_entity_definitions insert point
 };
 
