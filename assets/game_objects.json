@@ -175,6 +175,12 @@
             "type": "camera_focus"
         },
         {
+            "name": "puzzle_cut_rope",
+            "description": "",
+            "mesh": "meshes/puzzle/cut_rope.blend#cut_rope",
+            "type": "cut_rope"
+        },
+        {
             "name": "puzzle_electric_ball",
             "description": "",
             "mesh": "meshes/puzzle/electric_ball.blend#Sphere.001",

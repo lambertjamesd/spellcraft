@@ -2,6 +2,38 @@
 
 #include "../scene/scene.h"
 
+#define DAMPING     0.99f
+
+static tmesh_t* cut_rope_mesh;
+
+void cut_rope_render(void* data, render_batch_t* render_batch) {
+    cut_rope_t* cut_rope = (cut_rope_t*)data;
+
+    vector3_t offset;
+    vector3Sub(&cut_rope->last_tip, &cut_rope->position, &offset);
+    float distance = sqrtf(vector3MagSqrd(&offset));
+
+    if (distance < 0.0001f) {
+        return;
+    }
+
+    vector3_t forward;
+    vector3Scale(&offset, &forward, 1.0f / distance);
+
+    transform_t transform;
+    transform.position = cut_rope->position;
+    quatLook(&forward, &gUp, &transform.rotation);
+    transform.scale = gOneVec;
+
+    T3DMat4FP* mtx = render_batch_transformfp_from_full(render_batch, &transform);
+
+    if (!mtx) {
+        return;
+    }
+
+    render_batch_add_tmesh(render_batch, cut_rope_mesh, mtx, NULL, NULL, NULL);
+}
+
 void cut_rope_update(void* data) {
     cut_rope_t* cut_rope = (cut_rope_t*)data;
 
@@ -25,7 +57,7 @@ void cut_rope_update(void* data) {
             cut_rope->length = sqrtf(distance_sq);
             cut_rope->last_tip = connection_point;
         } else {
-            if (distance_sq > cut_rope->length * cut_rope->length) {
+            if (!connected_to->is_sleeping && distance_sq > cut_rope->length * cut_rope->length) {
                 vector3_t normal;
                 vector3Scale(&offset, &normal, 1.0f / sqrtf(distance_sq));
 
@@ -36,11 +68,14 @@ void cut_rope_update(void* data) {
                 vector3Add(connected_to->position, &move_by, connected_to->position);
 
                 vector3ProjectPlane(&connected_to->velocity, &normal, &connected_to->velocity);
+                vector3Scale(&connected_to->velocity, &connected_to->velocity, DAMPING);
             } else {
                 cut_rope->last_tip = connection_point;
             }
         }
     }
+
+    // TODO sleep connected
 
     if (!health_is_alive(&cut_rope->health)) {
         entity_despawn(cut_rope->health.entity_id);
@@ -67,7 +102,7 @@ void cut_rope_init(cut_rope_t* cut_rope, struct cut_rope_definition* definition,
         entity_id,
         &cut_rope->collider,
         &cut_rope->collider_type,
-        COLLISION_LAYER_TANGIBLE,
+        COLLISION_LAYER_DAMAGE_ENEMY,
         &gZeroVec,
         NULL
     );
@@ -80,17 +115,21 @@ void cut_rope_init(cut_rope_t* cut_rope, struct cut_rope_definition* definition,
     update_add(cut_rope, cut_rope_update, UPDATE_PRIORITY_PHYICS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     health_init(&cut_rope->health, entity_id, 5.0f);
+
+    render_scene_add(&cut_rope->position, 2.0f, cut_rope_render, cut_rope);
 }
 
 void cut_rope_destroy(cut_rope_t* cut_rope, struct cut_rope_definition* definition) {
     collision_scene_remove(&cut_rope->collider);
     health_destroy(&cut_rope->health);
+    update_remove(cut_rope);
+    render_scene_remove(cut_rope);
 }
 
 void cut_rope_common_init() {
-
+    cut_rope_mesh = tmesh_cache_load("rom:/meshes/puzzle/cut_rope.tmesh");
 }
 
 void cut_rope_common_destroy() {
-
+    tmesh_cache_release(cut_rope_mesh);
 }
