@@ -364,7 +364,8 @@ void jelly_king_fire_jelly(struct jelly_king* jelly_king) {
     jelly_king->minion[jelly_index] = jelly_launch_at(
         cutscene_actor_get_pos(&jelly_king->cutscene_actor),
         &offset,
-        nearest_target ? nearest_target->other_object : 0
+        nearest_target ? nearest_target->other_object : 0,
+        jelly_king->cutscene_actor.collider.collision_group
     );
 }
 
@@ -389,10 +390,6 @@ void jelly_king_attack_aiming(struct jelly_king* jelly_king) {
     if (cutscene_actor_is_animating_clip(&jelly_king->cutscene_actor, jelly_king->animations.attack_ranged)) {
         return;
     } else if (!cutscene_actor_is_animating(&jelly_king->cutscene_actor)) {
-        struct jelly* jelly = entity_get(jelly_king->minion[jelly_king->last_minion]);
-        if (jelly) {
-            jelly_reset_collision_group(jelly);
-        }
         cutscene_actor_run_clip(&jelly_king->cutscene_actor, jelly_king->animations.idle, 0.0f, true);
     }
 

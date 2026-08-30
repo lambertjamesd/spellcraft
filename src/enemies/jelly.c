@@ -13,6 +13,7 @@
 #include "../time/time.h"
 #include "../entity/entity_spawner.h"
 #include "../audio/audio.h"
+#include "../physics/launch_at.h"
 #include "vision.h"
 
 #define MAX_HEALTH      400.0f
@@ -322,6 +323,10 @@ void jelly_update(void* data) {
     if (jelly->transform.scale <= 0.0f) {
         entity_despawn(jelly->health.entity_id);
     }
+
+    if (jelly->collider.collision_group && jelly->collider.velocity.y < 0.0f) {
+        jelly->collider.collision_group = 0;
+    }
 }
 
 void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity_id id) {
@@ -400,20 +405,21 @@ void jelly_common_destroy() {
     tmesh_cache_release(ice_mesh);
 }
 
-void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, entity_id target) {
+void jelly_launch_attack(struct jelly* jelly, struct Vector3* velocity, entity_id target, uint16_t collision_group) {
     jelly->collider.velocity = *velocity;
     dynamic_object_wake(&jelly->collider);
     jelly->jump_timer = 0.0f;
     jelly->is_jumping = 1;
     jelly->is_attacking = 1;
     jelly->current_target = target;
+    jelly->collider.collision_group = collision_group;
 }
 
 void jelly_reset_collision_group(struct jelly* jelly) {
     jelly->collider.collision_group = 0;
 }
 
-entity_id jelly_launch_at(vector3_t* from, vector3_t* offset, entity_id to_target) {
+entity_id jelly_launch_at(vector3_t* from, vector3_t* offset, entity_id to_target, uint16_t collision_group) {
     struct jelly_definition definition;
     definition.position = *from;
 
@@ -427,39 +433,13 @@ entity_id jelly_launch_at(vector3_t* from, vector3_t* offset, entity_id to_targe
     }
 
     struct Vector3 attack_velocity;
-    // 0 = s * t + 1/2 * g * t * t
-    // d = s * t
-
-    // t = (d / s)
-
-    // 0 = s * (d / s) + 0.5 * g * d*d/(s*s)
-    // 0 = d + 0.5 * g * d*d/(s*s)
-    // -d = 0.5 * g * d*d/(s*s)
-    // s*s = -0.5 * g * d
-    // s = sqrt(-0.5 * g * d)
-
-
-    // s = sqrt(-g * 0.5 * distance)
-    // vh = offset * s / distance
-    // vv = s
-
-    float distance = sqrtf(vector3MagSqrd2D(offset));
-
-    if (distance < 0.01f) {
-        attack_velocity = gZeroVec;
-    } else {
-        float speed = sqrtf((-GRAVITY_CONSTANT * 0.5f) * distance);
-        float distance_inv = speed / distance;
-        
-        attack_velocity.x = offset->x * distance_inv;
-        attack_velocity.y = speed;
-        attack_velocity.z = offset->z * distance_inv;
-    }
+    phys_launch_at(from, offset, 3.0f, &attack_velocity);
     
     jelly_launch_attack(
         entity_get(result), 
         &attack_velocity, 
-        to_target
+        to_target,
+        collision_group
     );
 
     return result;

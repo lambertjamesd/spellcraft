@@ -1131,6 +1131,9 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
 
 void player_update_state(struct player* player, struct contact* ground_contact) {
     switch (player->state) {
+        case PLAYER_GROUNDED:
+            player_update_grounded(player, ground_contact);
+            break;
         case PLAYER_SLIDING:
             player_update_sliding(player, ground_contact);
             break;
@@ -1158,8 +1161,9 @@ void player_update_state(struct player* player, struct contact* ground_contact) 
         case PLAYER_DIE:
             player_update_die(player, ground_contact);
             break;
+        case PLAYER_DISABLED:
+            break;
         default:
-            player_update_grounded(player, ground_contact);
             break;
     }
 }

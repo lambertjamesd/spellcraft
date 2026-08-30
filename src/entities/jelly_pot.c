@@ -55,7 +55,8 @@ bool jelly_pot_fire(jelly_pot_t* jelly_pot) {
     jelly_pot->spawned[index] = jelly_launch_at(
         &fire_from,
         &offset,
-        obj->entity_id
+        obj->entity_id,
+        jelly_pot->collider.collision_group
     );
 
     return jelly_pot->spawned[index] != 0;
@@ -84,6 +85,7 @@ void jelly_pot_init(jelly_pot_t* jelly_pot, struct jelly_pot_definition* definit
 
     dynamic_object_init(entity_id, &jelly_pot->collider, &jelly_pot_collider, COLLISION_LAYER_TANGIBLE | COLLISION_LAYER_DAMAGE_ENEMY, &jelly_pot->transform.position, NULL);
     jelly_pot->collider.weight_class = WEIGHT_CLASS_HEAVY;
+    jelly_pot->collider.collision_group = entity_id;
 
     collision_scene_add(&jelly_pot->collider);
 
