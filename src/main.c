@@ -232,6 +232,8 @@ void step_simulation() {
     SC_PROFILE_END(main, update_dispatch);
 }
 
+void* zbuffer_data;
+
 int main(void)
 {
 	resolution_t custom_res = {SCREEN_WD, SCREEN_HT, false};
@@ -252,6 +254,7 @@ int main(void)
     joypad_init();
 
     surface_t zbuffer = surface_alloc(FMT_RGBA16, custom_res.width, custom_res.height);
+    zbuffer_data = zbuffer.buffer;
 
 #if DEBUG_ENABLED
     debug_init_usblog();
