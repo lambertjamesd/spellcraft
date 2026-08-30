@@ -389,8 +389,13 @@ void player_enter_slide_state(struct player* player, struct contact* ground_cont
     player_loop_animation(player, PLAYER_ANIMATION_SLIDE_FORWARD, 1.0f);
 }
 
+void player_enter_jump_state(struct player* player) {
+    player->state = PLAYER_JUMPING;
+    player->cutscene_actor.collider.velocity.y = 3.0f;
+    player_run_clip(player, PLAYER_ANIMATION_JUMP);
+}
+
 void player_enter_grounded_state(struct player* player, struct contact* ground_contact) {
-    player->coyote_time = 0.0f;
     player->state = PLAYER_GROUNDED;
     player->last_good_footing = player->cutscene_actor.transform.position;
 
@@ -470,6 +475,7 @@ void player_die(struct player* player) {
 enum player_ground_movement_result {
     GROUND_MOVEMENT_RESULT_GROUNDED,
     GROUND_MOVEMENT_RESULT_SLIDE,
+    GROUND_MOVEMENT_RESULT_JUMP,
     GROUND_MOVEMENT_RESULT_FALL,
 };
 
@@ -482,13 +488,8 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
     
     *speed = sqrtf(vector3MagSqrd2D(&player->cutscene_actor.collider.velocity));
 
-    if (ground_contact) {
-        player->coyote_time = 0.0f;
-    } else if (player->coyote_time < COYOTE_TIME) {
-        player->coyote_time += fixed_time_step;
-        ground_contact = &fake_contact;
-    } else {
-        return GROUND_MOVEMENT_RESULT_FALL;
+    if (!ground_contact) {
+        return GROUND_MOVEMENT_RESULT_JUMP;
     }
 
     bool is_good_footing = ground_contact->other_object == 0 && ground_contact->surface_type != SURFACE_TYPE_COYOTE;
@@ -1067,6 +1068,11 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
         return;
     }
 
+    if (move_result == GROUND_MOVEMENT_RESULT_JUMP) {
+        player_enter_jump_state(player);
+        return;
+    }
+
     if (move_result == GROUND_MOVEMENT_RESULT_SLIDE) {
         player_enter_slide_state(player, ground_contact);
         return;
@@ -1474,7 +1480,6 @@ void player_init(struct player* player, struct player_definition* definition) {
 
     player->last_good_footing = definition->location;
     player->last_footing_normal = gUp;
-    player->coyote_time = 0.0f;
 
     render_scene_add_renderable(&player->renderable, 2.0f);
     update_add(player, (update_callback)player_update, UPDATE_PRIORITY_PLAYER, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);

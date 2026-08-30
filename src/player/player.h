@@ -140,7 +140,6 @@ struct player {
 
     vector3_t last_good_footing;
     vector3_t last_footing_normal;
-    float coyote_time;
 
     enum player_state state;
     union state_data state_data;
