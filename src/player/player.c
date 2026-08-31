@@ -354,7 +354,15 @@ void player_handle_look(struct player* player, struct Vector3* look_direction) {
     player_look_towards(player, look_direction);
 }
 
+#define MAX_VERTICAL_DELTA      0.01f
+
 bool player_check_grab(struct player* player, struct Vector3* target_direction) {
+    float delta = fabsf(player->cutscene_actor.collider.velocity.y);
+
+    if (delta > MAX_VERTICAL_DELTA) {
+        return false;
+    }
+
     if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, target_direction)) {
         struct Vector3 target;
         grab_checker_get_climb_to(&player->grab_checker, &target);
@@ -571,7 +579,7 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
     struct Vector3 target_direction;
     player_get_input_direction(player, &target_direction);
 
-    player_handle_look(player, &target_direction);
+    // player_handle_look(player, &target_direction);
 
     if (ground_contact && vector3Dot(&target_direction, &ground_contact->normal) < 0.0f) {
         vector3ProjectPlane(&target_direction, &ground_contact->normal, &target_direction);
@@ -580,6 +588,10 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
     float prev_y = player->cutscene_actor.collider.velocity.y;
     vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
     player->cutscene_actor.collider.velocity.y = prev_y;
+
+    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction)) {
+        debugf("should grab\n");
+    }
 }
 
 bool player_handle_a_action(struct player* player, interactable_t* interactable, entity_id interact_entity_id) {
@@ -699,18 +711,7 @@ void player_update_sliding(struct player* player, struct contact* ground_contact
     }
 }
 
-void player_update_jumping(struct player* player, struct contact* ground_contact) {
-    struct dynamic_object* collider = &player->cutscene_actor.collider;
-
-    if (collider->velocity.y < 0.0f) {
-        player_enter_falling_state(player);
-    } else if (ground_contact) {
-        player_enter_grounded_state(player, ground_contact);
-        player_run_clip(player, PLAYER_ANIMATION_LAND);
-    }
-}
-
-void player_update_falling(struct player* player, struct contact* ground_contact) {
+void player_update_airborn(struct player* player, struct contact* ground_contact) {
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
     player_check_for_casting(player);
@@ -723,12 +724,22 @@ void player_update_falling(struct player* player, struct contact* ground_contact
             player_run_clip(player, PLAYER_ANIMATION_LAND);
         }
         return;
-    } else if (collider->under_water) {
+    }
+    
+    if (collider->under_water) {
         player->state = PLAYER_SWIMMING;
         player_loop_animation(player, PLAYER_ANIMATION_TREAD_WATER, 1.0f);
         return;
-    } else if (!player_is_running(player, PLAYER_ANIMATION_JUMP_PEAK)) {
-        player_loop_animation(player, PLAYER_ANIMATION_FALL, 1.0f);
+    }
+    
+    if (player->state == PLAYER_JUMPING) {
+        if (collider->velocity.y < 0.0f) {
+            player_enter_falling_state(player);
+        }
+    } else {
+        if (!player_is_running(player, PLAYER_ANIMATION_JUMP_PEAK)) {
+            player_loop_animation(player, PLAYER_ANIMATION_FALL, 1.0f);
+        }
     }
     
     player_handle_air_movement(player, ground_contact);
@@ -744,8 +755,7 @@ void player_update_swimming(struct player* player, struct contact* ground_contac
         player_run_clip(player, PLAYER_ANIMATION_LAND);
         return;
     } else if (!collider->under_water) {
-        player->state = PLAYER_FALLING;
-        player_loop_animation(player, PLAYER_ANIMATION_FALL, 1.0f);
+        player_enter_falling_state(player);
         return;
     }
 
@@ -1063,8 +1073,7 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     enum player_ground_movement_result move_result = player_handle_ground_movement(player, ground_contact, &target_direction, &speed);
 
     if (move_result == GROUND_MOVEMENT_RESULT_FALL) {
-        player_run_clip(player, PLAYER_ANIMATION_JUMP_PEAK);
-        player->state = PLAYER_FALLING;
+        player_enter_falling_state(player);
         return;
     }
 
@@ -1144,10 +1153,8 @@ void player_update_state(struct player* player, struct contact* ground_contact) 
             player_update_sliding(player, ground_contact);
             break;
         case PLAYER_JUMPING:
-            player_update_jumping(player, ground_contact);
-            break;
         case PLAYER_FALLING:
-            player_update_falling(player, ground_contact);
+            player_update_airborn(player, ground_contact);
             break;
         case PLAYER_SWIMMING:
             player_update_swimming(player, ground_contact);

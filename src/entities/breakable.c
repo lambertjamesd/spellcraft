@@ -65,7 +65,7 @@ void breakable_init(breakable_t* breakable, struct breakable_definition* definit
     breakable->mesh = tmesh_cache_load(breakable_def->mesh_name);
     breakable->break_effect_mesh = breakable_def->break_mesh ? tmesh_cache_load(breakable_def->break_mesh) : NULL;
     breakable->break_animations = breakable_def->break_animations ? animation_cache_load(breakable_def->break_animations) : NULL;
-    render_scene_init_add_renderable(&breakable->renderable, &breakable->transform, breakable->mesh, 4.0f);
+    render_scene_init_add_renderable(&breakable->renderable, &breakable->transform, breakable->mesh, 0.0f);
     animator_init(&breakable->animator, 0);
 
     health_init(&breakable->health, entity_id, breakable_def->health);
