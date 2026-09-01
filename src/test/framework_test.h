@@ -15,6 +15,8 @@ struct test_context {
     jmp_buf jump;
 };
 
+typedef struct test_context test_context_t;
+
 typedef void (*test_callback)(struct test_context* context);
 
 void test_run_raw(test_callback callback, const char* name);

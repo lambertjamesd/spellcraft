@@ -9,6 +9,7 @@ void test_collide_object_swept_to_triangle(struct test_context* t);
 void test_collide_object_to_mesh_swept(struct test_context* t);
 void test_collision_scene_collide_single(struct test_context* t);
 void test_collision_scene_collide(struct test_context* t);
+void test_collision_remove_duplicate_contacts(test_context_t* t);
 void test_ring_malloc(struct test_context* t);
 void test_training_dummy(struct test_context* t);
 void test_sweep_minkowski_sum(struct test_context* t);
@@ -29,6 +30,9 @@ void test_resource_cache(struct test_context* t);
 void test_cutscene_runner(struct test_context* t);
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(5000)
+
+void* zbuffer_data;
+uint8_t blur_frame_counter;
 
 int main() {
     rdpq_init();
@@ -57,6 +61,7 @@ int main() {
 
     test_run(test_collision_scene_collide_single);
     test_run(test_collision_scene_collide);
+    test_run(test_collision_remove_duplicate_contacts);
 
     test_run(test_ring_malloc);
 

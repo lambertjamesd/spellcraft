@@ -382,6 +382,58 @@ void collision_scene_collide_single(struct dynamic_object* object, struct Vector
     vector3Scale(&object->velocity, &object->velocity, 0.9f);
 }
 
+#define COPLANAR_THRESHOLD  0.01f
+
+contact_t* collision_remove_duplicate_contacts(contact_t* active_contacts) {
+    contact_t* curr_prev = NULL;
+    contact_t* curr_next;
+
+    for (
+        contact_t* curr = active_contacts;
+        curr;
+        curr_prev = curr, curr = curr_next
+    ) {
+        contact_t* other_prev = curr;
+        contact_t* other_next;
+
+        curr_next = curr->next;
+
+        for (
+            contact_t* other = curr->next;
+            other;
+            other_prev = other, other = other_next
+        ) {
+            vector3_t offset;
+            vector3Sub(&curr->point, &other->point, &offset);
+
+            other_next = other->next;
+
+            if (fabsf(vector3Dot(&offset, &curr->normal)) < COPLANAR_THRESHOLD) {
+                if (curr_next == other) {
+                    curr_next = other->next;
+                }
+
+                other_prev->next = other->next;
+                other->next = g_scene.next_free_contact;
+                g_scene.next_free_contact = other;
+                other = other_prev;
+            } else if (fabsf(vector3Dot(&offset, &other->normal)) < COPLANAR_THRESHOLD) {
+                if (curr_prev) {
+                    curr_prev->next = curr->next;
+                } else {
+                    active_contacts = curr->next;
+                }
+                curr->next = g_scene.next_free_contact;
+                g_scene.next_free_contact = curr;
+                curr = curr_prev;
+                break;
+            }
+        }
+    }
+
+    return active_contacts;
+}
+
 void collision_scene_snap_to_ground(struct dynamic_object* object, struct Vector3* prev_pos) {
     if (!object->shadow_contact || 
         object->shadow_contact->surface_type == SURFACE_TYPE_WATER ||
@@ -478,6 +530,8 @@ void collision_scene_collide() {
         }
 
         collision_scene_collide_single(element->object, &prev_pos[i]);
+
+        object->active_contacts = collision_remove_duplicate_contacts(object->active_contacts);
 
         bool is_grounded = dynamic_object_get_ground(object) != NULL;
 

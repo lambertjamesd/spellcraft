@@ -31,6 +31,7 @@ enum player_state {
     PLAYER_SLIDING,
     PLAYER_JUMPING,
     PLAYER_FALLING,
+    PLAYER_HANGING,
     PLAYER_SWIMMING,
     PLAYER_KNOCKBACK,
     PLAYER_GETTING_UP,
@@ -116,6 +117,9 @@ union state_data {
         float carry_offset;
         bool should_carry;
     } carrying;
+    struct {
+        vector3_t climb_target;
+    } hanging;
 };
 
 typedef union state_data state_data_t;

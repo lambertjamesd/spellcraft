@@ -26,7 +26,7 @@ void test_menu_microcode(struct test_context* t) {
     test_eqi(t, 2, mtx[5]);
     test_eqi(t, 0, mtx[6]);
     
-    menu_move_to(&(vector2s16_t){{{2, 5}}}, 0, 0, (color_t){});
+    menu_move_to(&(menu2d_line_vtx_t){.pos = (vector2s16_t){{{2, 5}}}});
 
     menu_mtx_pop(1);
 

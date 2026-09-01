@@ -48,6 +48,7 @@
 #define INTERACT_Y_LOWER        -0.75f
 #define INTERACT_Y_UPEER        1.25f
 
+#define WALL_HANG_OFFSET    1.8f
 
 #define MAX_ROTATION_RATE       10.0f
 static struct Vector2 player_max_rotation;
@@ -403,6 +404,11 @@ void player_enter_jump_state(struct player* player) {
     player_run_clip(player, PLAYER_ANIMATION_JUMP);
 }
 
+void player_enter_hanging_state(struct player* player, vector3_t* hang_from) {
+    player->state = PLAYER_HANGING;
+    player->state_data.hanging.climb_target = *hang_from;
+}
+
 void player_enter_grounded_state(struct player* player, struct contact* ground_contact) {
     player->state = PLAYER_GROUNDED;
     player->last_good_footing = player->cutscene_actor.transform.position;
@@ -590,7 +596,15 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
     player->cutscene_actor.collider.velocity.y = prev_y;
 
     if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction)) {
-        debugf("should grab\n");
+        struct Vector3 target;
+        grab_checker_get_climb_to(&player->grab_checker, &target);
+
+        float offset = target.y - player->cutscene_actor.transform.position.y;
+
+        if (offset < WALL_HANG_OFFSET && offset - player->cutscene_actor.collider.velocity.y * fixed_time_step >= WALL_HANG_OFFSET) {
+            player_enter_hanging_state(player, &target);
+        }
+
     }
 }
 
@@ -743,6 +757,18 @@ void player_update_airborn(struct player* player, struct contact* ground_contact
     }
     
     player_handle_air_movement(player, ground_contact);
+}
+
+void player_update_hanging(struct player* player, struct contact* ground_contact) {
+    vector3_t* pos = player_get_position(player);
+
+    vector3_t offset;
+    vector3Sub(&player->state_data.hanging.climb_target, pos, &offset);
+
+    player_look_towards(player, &offset);
+
+    pos->y = player->state_data.hanging.climb_target.y - WALL_HANG_OFFSET;
+    player->cutscene_actor.collider.velocity = gZeroVec;
 }
 
 void player_update_swimming(struct player* player, struct contact* ground_contact) {
@@ -1155,6 +1181,9 @@ void player_update_state(struct player* player, struct contact* ground_contact) 
         case PLAYER_JUMPING:
         case PLAYER_FALLING:
             player_update_airborn(player, ground_contact);
+            break;
+        case PLAYER_HANGING:
+            player_update_hanging(player, ground_contact);
             break;
         case PLAYER_SWIMMING:
             player_update_swimming(player, ground_contact);

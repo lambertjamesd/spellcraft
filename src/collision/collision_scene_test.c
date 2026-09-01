@@ -74,3 +74,23 @@ void test_collision_scene_collide(struct test_context* t) {
     test_near_equalf(t, 0.0f, object->velocity.y);
     test_gtf(t, object->velocity.z, 0);
 }
+
+contact_t* collision_remove_duplicate_contacts(contact_t* active_contacts);
+
+void test_collision_remove_duplicate_contacts(test_context_t* t) {
+    contact_t* a = collision_scene_new_contact();
+    contact_t* b = collision_scene_new_contact();
+    contact_t* c = collision_scene_new_contact();
+    contact_t* d = collision_scene_new_contact();
+
+    *a = (contact_t){.point = {5.0f, 1.0f, 0.0f}, .normal = {.x = 1.0f, .y = 0.0f, .z = 0.0f}, .next = b};
+    *b = (contact_t){.point = {5.0f, 0.5f, 0.0f}, .normal = {.x = 1.0f, .y = 0.0f, .z = 0.0f}, .next = c};
+    *c = (contact_t){.point = {5.0f, 0.0f, 0.0f}, .normal = {.x = 1.0f, .y = 0.0f, .z = 0.0f}, .next = d};
+    *d = (contact_t){.point = {5.0f, -0.5f, 0.0f}, .normal = {.x = 0.707f, .y = 0.707f, .z = 0.0f}, .next = NULL};
+
+    contact_t* active_contacts = collision_remove_duplicate_contacts(a);
+    test_eqi(t, (int)active_contacts->next, 0);
+    test_near_equalf(t, 1.0f, active_contacts->normal.x);
+
+    collision_scene_return_contacts(active_contacts);
+}
