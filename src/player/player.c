@@ -48,7 +48,10 @@
 #define INTERACT_Y_LOWER        -0.75f
 #define INTERACT_Y_UPEER        1.25f
 
-#define WALL_HANG_OFFSET    1.8f
+#define WALL_HANG_OFFSET    1.4f
+#define WALL_HANG_EXTRA     0.2f
+
+#define HANG_INPUT_DELAY    0.2f
 
 #define MAX_ROTATION_RATE       10.0f
 static struct Vector2 player_max_rotation;
@@ -57,15 +60,6 @@ static struct Vector2 z_target_rotation;
 static struct spatial_trigger_type player_z_trigger_shape = {
     SPATIAL_TRIGGER_WEDGE(15.0f, 7.0f, 0.707f, 0.707f),
 };
-
-struct climb_up_data {
-    float max_climb_height;
-    float animation_height;
-    float start_jump_time;
-    float end_jump_time;
-};
-
-typedef struct climb_up_data climb_up_data_t;
 
 static struct climb_up_data climb_up_data[CLIMB_UP_COUNT] = {
     {
@@ -86,6 +80,13 @@ static struct climb_up_data climb_up_data[CLIMB_UP_COUNT] = {
         .start_jump_time = 6.0f / 30.0f,
         .end_jump_time = 13.0f / 30.0f,
     },
+};
+
+static struct climb_up_data climb_from_hang_data = {
+    .max_climb_height = 1.4f,
+    .animation_height = 1.4f,
+    .start_jump_time = 0.0f,
+    .end_jump_time = 0.0f,
 };
 
 // about a 40 degree slope
@@ -170,6 +171,10 @@ float player_animation_time(struct player* player) {
 
 bool player_is_running(struct player* player, enum player_animation clip) {
     return animator_is_running_clip(&player->cutscene_actor.animator, player->animations[clip]);
+}
+
+bool player_is_running_any(struct player* player) {
+    return animator_is_running(&player->cutscene_actor.animator);
 }
 
 struct player_animation_args {
@@ -378,7 +383,7 @@ bool player_check_grab(struct player* player, struct Vector3* target_direction) 
                 player->state = PLAYER_CLIMBING_UP;
                 player->state_data.climbing_up.timer = 0.0f;
                 player->state_data.climbing_up.start_pos = player->cutscene_actor.transform.position;
-                player->state_data.climbing_up.climb_up_index = i;
+                player->state_data.climbing_up.climb_up_data = data;
                 player->state_data.climbing_up.y_velocity = (height - data->animation_height) / (data->end_jump_time - data->start_jump_time); 
                 
                 struct Vector3 offset;
@@ -404,9 +409,22 @@ void player_enter_jump_state(struct player* player) {
     player_run_clip(player, PLAYER_ANIMATION_JUMP);
 }
 
+void player_enter_climb_from_hang(struct player* player) {
+    player_run_clip(player, PLAYER_ANIMATION_CLIMB_FROM_HANG);
+    player->state = PLAYER_CLIMBING_UP;
+    player->state_data.climbing_up.timer = 0.0f;
+    player->state_data.climbing_up.start_pos = player->cutscene_actor.transform.position;
+    player->state_data.climbing_up.climb_up_data = &climb_from_hang_data;
+    player->state_data.climbing_up.y_velocity = 0.0f; 
+
+    player->state_data.climbing_up.target_rotation = player->cutscene_actor.transform.rotation;
+}
+
 void player_enter_hanging_state(struct player* player, vector3_t* hang_from) {
     player->state = PLAYER_HANGING;
     player->state_data.hanging.climb_target = *hang_from;
+    player->state_data.hanging.input_delay = HANG_INPUT_DELAY;
+    player_loop_animation(player, PLAYER_ANIMATION_HANG, 1.0f);
 }
 
 void player_enter_grounded_state(struct player* player, struct contact* ground_contact) {
@@ -601,7 +619,7 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
 
         float offset = target.y - player->cutscene_actor.transform.position.y;
 
-        if (offset < WALL_HANG_OFFSET && offset - player->cutscene_actor.collider.velocity.y * fixed_time_step >= WALL_HANG_OFFSET) {
+        if (offset - WALL_HANG_EXTRA < WALL_HANG_OFFSET && offset - player->cutscene_actor.collider.velocity.y * fixed_time_step >= WALL_HANG_OFFSET) {
             player_enter_hanging_state(player, &target);
         }
 
@@ -769,6 +787,23 @@ void player_update_hanging(struct player* player, struct contact* ground_contact
 
     pos->y = player->state_data.hanging.climb_target.y - WALL_HANG_OFFSET;
     player->cutscene_actor.collider.velocity = gZeroVec;
+
+    if (player->state_data.hanging.input_delay > 0.0f) {
+        player->state_data.hanging.input_delay -= fixed_time_step;
+    } else {
+        vector3_t input_dir;
+        player_get_input_direction(player, &input_dir);
+        vector3_t forward_dir;
+        vector2ToLookDir(&player->cutscene_actor.transform.rotation, &forward_dir);
+    
+        float input_dot = vector3Dot(&input_dir, &forward_dir);
+    
+        if (input_dot > 0.5f) {
+            player_enter_climb_from_hang(player);
+        } else if (input_dot < 0.5f) {
+            player_enter_falling_state(player);
+        }
+    }
 }
 
 void player_update_swimming(struct player* player, struct contact* ground_contact) {
@@ -800,9 +835,9 @@ void player_getting_up(struct player* player, struct contact* ground_contact) {
 
 void player_climbing_up(struct player* player, struct contact* ground_contact) {
     union state_data* state = &player->state_data;
-    struct climb_up_data* climb_up = &climb_up_data[state->climbing_up.climb_up_index];
+    struct climb_up_data* climb_up = state->climbing_up.climb_up_data;
 
-    if (state->climbing_up.timer > climb_up->end_jump_time && !player_is_running(player, PLAYER_ANIMATION_CLIMB_UP_0 + state->climbing_up.climb_up_index)) {
+    if (state->climbing_up.timer > climb_up->end_jump_time && !player_is_running_any(player)) {
         player_enter_grounded_state(player, ground_contact);
         player_run_clip_keep_translation(player, PLAYER_ANIMATION_IDLE);
         return;
@@ -1468,6 +1503,9 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_CLIMB_UP_0] = "climb_0",
     [PLAYER_ANIMATION_CLIMB_UP_1] = "climb_1",
     [PLAYER_ANIMATION_CLIMB_UP_2] = "climb_2",
+
+    [PLAYER_ANIMATION_HANG] = "hang",
+    [PLAYER_ANIMATION_CLIMB_FROM_HANG] = "climb_from_hang",
     
     [PLAYER_ANIMATION_CARRY_PICKUP] = "carry_pickup",
     [PLAYER_ANIMATION_CARRY_IDLE] = "carry_idle",

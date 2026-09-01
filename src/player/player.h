@@ -71,6 +71,9 @@ enum player_animation {
     PLAYER_ANIMATION_CLIMB_UP_0,
     PLAYER_ANIMATION_CLIMB_UP_1,
     PLAYER_ANIMATION_CLIMB_UP_2,
+
+    PLAYER_ANIMATION_CLIMB_FROM_HANG,
+    PLAYER_ANIMATION_HANG,
     
     PLAYER_ANIMATION_CARRY_PICKUP,
     PLAYER_ANIMATION_CARRY_IDLE,
@@ -104,13 +107,23 @@ struct inventory_assets {
     struct tmesh* staffs[INV_STAFF_COUNT];
 };
 
+
+struct climb_up_data {
+    float max_climb_height;
+    float animation_height;
+    float start_jump_time;
+    float end_jump_time;
+};
+
+typedef struct climb_up_data climb_up_data_t;
+
 union state_data {
     struct {
         float timer;
         float y_velocity;
         struct Vector3 start_pos;
         struct Vector2 target_rotation;
-        uint8_t climb_up_index;
+        climb_up_data_t* climb_up_data;
     } climbing_up;
     struct {
         entity_id carrying;
@@ -119,6 +132,7 @@ union state_data {
     } carrying;
     struct {
         vector3_t climb_target;
+        float input_delay;
     } hanging;
 };
 
