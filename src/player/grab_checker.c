@@ -17,7 +17,6 @@ static tmesh_t* grab_checker_mesh;
 
 #define HORIZONTAL_TOLERANCE    0.1f
 #define WALL_CHECK_TOLERANCE    0.701f
-#define MAX_GRAB_HEIGHT         2.2f
 #define GROUND_LEVEL_TOLERANCE  0.5f
 #define GRAB_TIMER_THRESHOLD    0
 
@@ -105,7 +104,7 @@ bool grab_checker_check_for_grab(grab_checker_t* checker) {
     return true;
 }
 
-bool grab_checker_update(grab_checker_t* checker, dynamic_object_t* player_collider, struct Vector3* target_direction) {
+bool grab_checker_update(grab_checker_t* checker, dynamic_object_t* player_collider, struct Vector3* target_direction, float max_grab_height) {
     checker->can_grab = grab_checker_check_for_grab(checker);
     
     contact_t* wall_contact = NULL;
@@ -140,7 +139,7 @@ bool grab_checker_update(grab_checker_t* checker, dynamic_object_t* player_colli
 
     struct Vector3 cast_from = {
         .x = player_collider->position->x - wall_contact->normal.x * CLIMB_OFFSET,
-        .y = player_collider->position->y + MAX_GRAB_HEIGHT,
+        .y = player_collider->position->y + max_grab_height,
         .z = player_collider->position->z - wall_contact->normal.z * CLIMB_OFFSET,
     };
 
@@ -152,7 +151,7 @@ bool grab_checker_update(grab_checker_t* checker, dynamic_object_t* player_colli
         checker->collider.velocity = (struct Vector3){0.0f, -1.0f, 0.0f};
     } else {
         *checker->collider.position = cast_from;
-        checker->collider.velocity = (struct Vector3){0.0f, -MAX_GRAB_HEIGHT / fixed_time_step, 0.0f};
+        checker->collider.velocity = (struct Vector3){0.0f, -max_grab_height / fixed_time_step, 0.0f};
         checker->grab_timer = 0;
     }
     dynamic_object_wake(&checker->collider);

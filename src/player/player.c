@@ -48,9 +48,6 @@
 #define INTERACT_Y_LOWER        -0.75f
 #define INTERACT_Y_UPEER        1.25f
 
-#define WALL_HANG_OFFSET    1.4f
-#define WALL_HANG_EXTRA     0.2f
-
 #define HANG_INPUT_DELAY    0.2f
 
 #define MAX_ROTATION_RATE       10.0f
@@ -67,27 +64,40 @@ static struct climb_up_data climb_up_data[CLIMB_UP_COUNT] = {
         .animation_height = 0.4f,
         .start_jump_time = 14.0f / 30.0f,
         .end_jump_time = 23.0f / 30.0f,
+        .anim = PLAYER_ANIMATION_CLIMB_UP_0,
     },
     {
         .max_climb_height = 1.2f,
         .animation_height = 0.9f,
         .start_jump_time = 6.0f / 30.0f,
         .end_jump_time = 13.0f / 30.0f,
+        .anim = PLAYER_ANIMATION_CLIMB_UP_1,
     },
     {
         .max_climb_height = 2.1f,
         .animation_height = 1.4f,
         .start_jump_time = 6.0f / 30.0f,
         .end_jump_time = 13.0f / 30.0f,
+        .anim = PLAYER_ANIMATION_CLIMB_UP_1,
     },
 };
 
 static struct climb_up_data climb_from_hang_data = {
-    .max_climb_height = 1.4f,
+    .max_climb_height = 1.6f,
     .animation_height = 1.4f,
     .start_jump_time = 0.0f,
     .end_jump_time = 0.0f,
+    .anim = PLAYER_ANIMATION_CLIMB_FROM_HANG,
 };
+
+static struct climb_up_data climb_from_water_data = {
+    .max_climb_height = 2.7f,
+    .animation_height = 1.4f,
+    .start_jump_time = 6.0f / 30.0f,
+    .end_jump_time = 13.0f / 30.0f,
+    .anim = PLAYER_ANIMATION_CLIMB_FROM_WATER,
+};
+
 
 // about a 40 degree slope
 #define MAX_STABLE_SLOPE    0.219131191f
@@ -362,24 +372,18 @@ void player_handle_look(struct player* player, struct Vector3* look_direction) {
 
 #define MAX_VERTICAL_DELTA      0.01f
 
-bool player_check_grab(struct player* player, struct Vector3* target_direction) {
-    float delta = fabsf(player->cutscene_actor.collider.velocity.y);
-
-    if (delta > MAX_VERTICAL_DELTA) {
-        return false;
-    }
-
-    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, target_direction)) {
+bool player_check_grab(struct player* player, struct Vector3* target_direction, climb_up_data_t* climb_data_list, int climb_count) {
+    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, target_direction, climb_data_list[climb_count-1].max_climb_height)) {
         struct Vector3 target;
         grab_checker_get_climb_to(&player->grab_checker, &target);
 
         float height = target.y - player->cutscene_actor.transform.position.y;
 
-        for (int i = 0; i < CLIMB_UP_COUNT; i += 1) {
-            climb_up_data_t* data = &climb_up_data[i];
+        for (int i = 0; i < climb_count; i += 1) {
+            climb_up_data_t* data = &climb_data_list[i];
 
             if (height < data->max_climb_height) {
-                player_run_clip(player, PLAYER_ANIMATION_CLIMB_UP_0 + i);
+                player_run_clip(player, data->anim);
                 player->state = PLAYER_CLIMBING_UP;
                 player->state_data.climbing_up.timer = 0.0f;
                 player->state_data.climbing_up.start_pos = player->cutscene_actor.transform.position;
@@ -603,7 +607,35 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
     struct Vector3 target_direction;
     player_get_input_direction(player, &target_direction);
 
-    // player_handle_look(player, &target_direction);
+    if (ground_contact && vector3Dot(&target_direction, &ground_contact->normal) < 0.0f) {
+        vector3ProjectPlane(&target_direction, &ground_contact->normal, &target_direction);
+    }
+
+    float prev_y = player->cutscene_actor.collider.velocity.y;
+    vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
+    player->cutscene_actor.collider.velocity.y = prev_y;
+
+    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction, climb_from_hang_data.max_climb_height)) {
+        struct Vector3 target;
+        grab_checker_get_climb_to(&player->grab_checker, &target);
+
+        float offset = target.y - player->cutscene_actor.transform.position.y;
+
+        if (offset < climb_from_hang_data.max_climb_height && offset - player->cutscene_actor.collider.velocity.y * fixed_time_step >= climb_from_hang_data.animation_height) {
+            player_enter_hanging_state(player, &target);
+        }
+    }
+}
+
+bool player_handle_water_movement(struct player* player, contact_t* ground_contact) {
+    if (player->cutscene_actor.collider.is_pushed) {
+        return false;
+    }
+
+    struct Vector3 target_direction;
+    player_get_input_direction(player, &target_direction);
+
+    player_handle_look(player, &target_direction);
 
     if (ground_contact && vector3Dot(&target_direction, &ground_contact->normal) < 0.0f) {
         vector3ProjectPlane(&target_direction, &ground_contact->normal, &target_direction);
@@ -613,17 +645,11 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
     vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
     player->cutscene_actor.collider.velocity.y = prev_y;
 
-    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction)) {
-        struct Vector3 target;
-        grab_checker_get_climb_to(&player->grab_checker, &target);
-
-        float offset = target.y - player->cutscene_actor.transform.position.y;
-
-        if (offset - WALL_HANG_EXTRA < WALL_HANG_OFFSET && offset - player->cutscene_actor.collider.velocity.y * fixed_time_step >= WALL_HANG_OFFSET) {
-            player_enter_hanging_state(player, &target);
-        }
-
+    if (player_check_grab(player, &target_direction, &climb_from_water_data, 1)) {
+        return true;
     }
+
+    return false;
 }
 
 bool player_handle_a_action(struct player* player, interactable_t* interactable, entity_id interact_entity_id) {
@@ -785,7 +811,7 @@ void player_update_hanging(struct player* player, struct contact* ground_contact
 
     player_look_towards(player, &offset);
 
-    pos->y = player->state_data.hanging.climb_target.y - WALL_HANG_OFFSET;
+    pos->y = player->state_data.hanging.climb_target.y - climb_from_hang_data.animation_height;
     player->cutscene_actor.collider.velocity = gZeroVec;
 
     if (player->state_data.hanging.input_delay > 0.0f) {
@@ -800,7 +826,7 @@ void player_update_hanging(struct player* player, struct contact* ground_contact
     
         if (input_dot > 0.5f) {
             player_enter_climb_from_hang(player);
-        } else if (input_dot < 0.5f) {
+        } else if (input_dot < -0.5f) {
             player_enter_falling_state(player);
         }
     }
@@ -809,7 +835,9 @@ void player_update_hanging(struct player* player, struct contact* ground_contact
 void player_update_swimming(struct player* player, struct contact* ground_contact) {
     struct dynamic_object* collider = &player->cutscene_actor.collider;
 
-    player_handle_air_movement(player, ground_contact);
+    if (player_handle_water_movement(player, ground_contact)) {
+        return;
+    }
 
     if (ground_contact) {
         player_enter_grounded_state(player, ground_contact);
@@ -836,6 +864,8 @@ void player_getting_up(struct player* player, struct contact* ground_contact) {
 void player_climbing_up(struct player* player, struct contact* ground_contact) {
     union state_data* state = &player->state_data;
     struct climb_up_data* climb_up = state->climbing_up.climb_up_data;
+
+    animator_t* anim = &player->cutscene_actor.animator;
 
     if (state->climbing_up.timer > climb_up->end_jump_time && !player_is_running_any(player)) {
         player_enter_grounded_state(player, ground_contact);
@@ -1126,7 +1156,7 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     struct Vector3 target_direction;
     player_get_input_direction(player, &target_direction);
 
-    if (player_check_grab(player, &target_direction)) {
+    if (fabsf(vel->y) < MAX_VERTICAL_DELTA && player_check_grab(player, &target_direction, climb_up_data, CLIMB_UP_COUNT)) {
         return;
     }
 
@@ -1504,8 +1534,10 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_CLIMB_UP_1] = "climb_1",
     [PLAYER_ANIMATION_CLIMB_UP_2] = "climb_2",
 
-    [PLAYER_ANIMATION_HANG] = "hang",
     [PLAYER_ANIMATION_CLIMB_FROM_HANG] = "climb_from_hang",
+    [PLAYER_ANIMATION_HANG] = "hang",
+
+    [PLAYER_ANIMATION_CLIMB_FROM_WATER] = "climb_from_water",
     
     [PLAYER_ANIMATION_CARRY_PICKUP] = "carry_pickup",
     [PLAYER_ANIMATION_CARRY_IDLE] = "carry_idle",

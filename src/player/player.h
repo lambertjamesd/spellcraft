@@ -75,6 +75,8 @@ enum player_animation {
     PLAYER_ANIMATION_CLIMB_FROM_HANG,
     PLAYER_ANIMATION_HANG,
     
+    PLAYER_ANIMATION_CLIMB_FROM_WATER,
+    
     PLAYER_ANIMATION_CARRY_PICKUP,
     PLAYER_ANIMATION_CARRY_IDLE,
     PLAYER_ANIMATION_CARRY_RUN,
@@ -112,6 +114,7 @@ struct climb_up_data {
     float animation_height;
     float start_jump_time;
     float end_jump_time;
+    enum player_animation anim;
 };
 
 typedef struct climb_up_data climb_up_data_t;
