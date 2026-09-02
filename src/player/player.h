@@ -107,7 +107,6 @@ struct inventory_assets {
     struct tmesh* staffs[INV_STAFF_COUNT];
 };
 
-
 struct climb_up_data {
     float max_climb_height;
     float animation_height;
