@@ -10,6 +10,7 @@ struct breakable_type_def {
     float health;
     dynamic_object_type_t collider;
     uint8_t weight;
+    uint8_t can_pickup;
 };
 
 typedef struct breakable_type_def breakable_type_def_t;
@@ -30,6 +31,7 @@ static breakable_type_def_t breakable_definitions[BREAKABLE_TYPE_COUNT] = {
         },
 
         .weight = WEIGHT_CLASS_HEAVY,
+        .can_pickup = true,
     }
 };
 
@@ -85,6 +87,8 @@ void breakable_init(breakable_t* breakable, struct breakable_definition* definit
     update_add(breakable, breakable_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
 
     breakable->is_breaking = false;
+
+    interactable_init(&breakable->interactable, entity_id, breakable_def->can_pickup ? INTERACT_TYPE_PICKUP : INTERACTION_NONE, NULL, NULL);
 }
 
 void breakable_destroy(breakable_t* breakable, struct breakable_definition* definition) {
@@ -93,6 +97,7 @@ void breakable_destroy(breakable_t* breakable, struct breakable_definition* defi
     health_destroy(&breakable->health);
     update_remove(breakable);
     animator_destroy(&breakable->animator);
+    interactable_destroy(&breakable->interactable);
 
     tmesh_cache_release(breakable->mesh);
 

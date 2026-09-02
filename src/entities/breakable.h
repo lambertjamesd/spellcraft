@@ -13,6 +13,7 @@ struct breakable {
     animator_t animator;
     dynamic_object_t collider;
     health_t health;
+    interactable_t interactable;
     tmesh_t* mesh;
     tmesh_t* break_effect_mesh;
     animation_set_t* break_animations;
