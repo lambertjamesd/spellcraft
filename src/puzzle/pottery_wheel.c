@@ -29,7 +29,7 @@ void pottery_wheel_update(void* data) {
         &wheel->transform.rotation
     );
 
-    if (has_arrived && wheel->target_orientation) {
+    if (has_arrived && wheel->output != VARIABLE_DISCONNECTED) {
         expression_set_integer(wheel->output, wheel->target_orientation);
     }
 

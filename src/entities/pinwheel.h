@@ -12,6 +12,7 @@ struct pinwheel {
     renderable_t renderable;
     dynamic_object_t collider;
     vector3_t forward;
+    float angular_velocity;
 };
 
 typedef struct pinwheel pinwheel_t;

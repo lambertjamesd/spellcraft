@@ -6,8 +6,9 @@
 #include "../time/time.h"
 #include "../cutscene/expression_evaluate.h"
 
-#define ROTATION_SCALAR     2.0f
+#define ROTATION_ACCEL      20.0f
 #define OUTPUT_THRESHOLD    4.0f
+#define ROTATION_DAMPING    0.99f
 
 static dynamic_object_type_t fan_collider = {
     CYLINDER_COLLIDER(0.25f, 0.6f),
@@ -20,16 +21,19 @@ void fan_switch_update(void* data) {
     struct Vector3* vel = &fan_switch->collider.velocity;
     struct Vector2* angle = &fan_switch->transform.rotation;
     
-    float angular_velocity = (vel->x * angle->y - vel->z * angle->x) * ROTATION_SCALAR;
-    vector3Scale(&fan_switch->collider.velocity, &fan_switch->collider.velocity, 0.9f);
+    float vel_delta = (vel->x * angle->y - vel->z * angle->x) * ROTATION_ACCEL;
+    *vel = gZeroVec;
+
+    fan_switch->angular_velocity += vel_delta * fixed_time_step;
+    fan_switch->angular_velocity *= ROTATION_DAMPING;
     
-    float abs_vel = fabsf(angular_velocity);
+    float abs_vel = fabsf(fan_switch->angular_velocity);
 
     expression_set_bool(fan_switch->output, abs_vel > OUTPUT_THRESHOLD);
 
     if (abs_vel > 0.01f) {
         quaternion_t rotation_delta;
-        quatAxisAngle(&gUp, angular_velocity * fixed_time_step, &rotation_delta);
+        quatAxisAngle(&gUp, fan_switch->angular_velocity * fixed_time_step, &rotation_delta);
     
         quaternion_t final_rotation;
         quatMultiply(&fan_switch->renderable.mesh_render.armature.pose[1].rotation, &rotation_delta, &final_rotation);
@@ -54,6 +58,8 @@ void fan_switch_init(fan_switch_t* fan_switch, struct fan_switch_definition* def
 
     fan_switch->collider.is_fixed = 1;
     fan_switch->collider.weight_class = WEIGHT_CLASS_HEAVY;
+
+    fan_switch->angular_velocity = 0.0f;
 
     collision_scene_add(&fan_switch->collider);
 

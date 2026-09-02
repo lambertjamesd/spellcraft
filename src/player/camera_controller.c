@@ -28,7 +28,7 @@ static struct move_towards_parameters camera_move_parameters = {
 #define MAX_ANGLE                       1.5f
 
 #define TURN_SPEED              33.0f
-#define TURN_ACCEL              102.0f
+#define TURN_ACCEL              80.0f
 
 #define MIN_TWO_TARGET_DISTANCE 
 

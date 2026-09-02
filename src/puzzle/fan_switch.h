@@ -12,6 +12,7 @@ struct fan_switch {
     renderable_t renderable;
     dynamic_object_t collider;
     boolean_variable output;
+    float angular_velocity;
 };
 
 typedef struct fan_switch fan_switch_t;

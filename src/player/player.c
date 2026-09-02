@@ -1605,7 +1605,7 @@ void player_init(struct player* player, struct player_definition* definition) {
 
     player->last_spell_animation = NULL;
 
-    player->state = PLAYER_GROUNDED;
+    player->state = PLAYER_FALLING;
 
     player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
     player->assets.staffs[1] = NULL;
