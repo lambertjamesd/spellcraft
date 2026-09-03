@@ -140,12 +140,31 @@ bool collide_object_to_triangle(void* data, int triangle_index, int collision_la
             collide_data->object, 
             dynamic_object_minkowski_sum, 
             &result
-        ) && mesh_triangle_filter_edge_contacts(
+        )
+    ) {
+        if (!mesh_triangle_filter_edge_contacts(
             &collide_data->triangle.triangle, 
             collide_data->triangle.vertices,
             &result.normal
-        )
-    ) {
+        )) {
+            vector3_t a;
+            vector3_t b;
+            uint16_t* indices = collide_data->triangle.triangle.indices;
+            vector3_t* vertices = collide_data->triangle.vertices;
+            vector3Sub(&vertices[indices[1]], &vertices[indices[0]], &a);
+            vector3Sub(&vertices[indices[2]], &vertices[indices[0]], &b);
+
+            vector3_t new_normal;
+            vector3Cross(&a, &b, &new_normal);
+            vector3Normalize(&new_normal, &new_normal);
+
+            if (vector3Dot(&new_normal, &result.normal) < 0.0f) {
+                vector3Negate(&new_normal, &result.normal);
+            } else {
+                result.normal = new_normal;
+            }
+        }
+
         enum surface_type surface_type = collide_data->triangle.triangle.surface_type;
         correct_overlap(
             collide_data->object, 

@@ -30,7 +30,7 @@ bool mesh_triangle_filter_edge_contacts(
 
         vector3Sub(&perp_offset, &opposite, &perp_offset);
 
-        if (vector3Dot(&perp_offset, contact_normal) > 0.0001f) {
+        if (vector3Dot(&perp_offset, contact_normal) > 0.01f) {
             return false;
         }
     }

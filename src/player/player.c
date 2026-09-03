@@ -516,25 +516,25 @@ enum player_ground_movement_result {
 };
 
 enum player_ground_movement_result player_handle_ground_movement(struct player* player, struct contact* ground_contact, struct Vector3* target_direction, float* speed) {
-    contact_t fake_contact = {
-        .normal = player->last_footing_normal,
-        .point = player->cutscene_actor.transform.position,
-        .surface_type = SURFACE_TYPE_COYOTE,
-    };
+    dynamic_object_t* collider = &player->cutscene_actor.collider;
     
-    *speed = sqrtf(vector3MagSqrd2D(&player->cutscene_actor.collider.velocity));
+    *speed = sqrtf(vector3MagSqrd2D(&collider->velocity));
 
     if (!ground_contact) {
         return GROUND_MOVEMENT_RESULT_JUMP;
     }
 
     bool is_good_footing = ground_contact->other_object == 0 && ground_contact->surface_type != SURFACE_TYPE_COYOTE;
-    vector3_t* vel = &player->cutscene_actor.collider.velocity;
+    vector3_t* vel = &collider->velocity;
     vector3_t* pos = &player->cutscene_actor.transform.position;
 
     if (dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
         if (vel->x * ground_contact->normal.x + vel->z * ground_contact->normal.z > 0.0f) {
-            return GROUND_MOVEMENT_RESULT_SLIDE;
+            if (ground_contact->surface_type == SURFACE_TYPE_SLIPPERY) {
+                return GROUND_MOVEMENT_RESULT_SLIDE;
+            }
+
+            return GROUND_MOVEMENT_RESULT_JUMP;
         } else if (ground_contact->other_object == 0) {
             vector3_t offset;
             vector3Sub(pos, &player->last_good_footing, &offset);
@@ -547,7 +547,7 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
 
     player_handle_look(player, target_direction);
 
-    if (player->cutscene_actor.collider.is_pushed) {
+    if (collider->is_pushed) {
         return GROUND_MOVEMENT_RESULT_GROUNDED;
     }
 
