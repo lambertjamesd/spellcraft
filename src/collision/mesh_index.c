@@ -7,12 +7,12 @@ bool mesh_triangle_filter_edge_contacts(
     struct Vector3* vertices,
     struct Vector3* contact_normal
 ) {
-    if (!triangle->enabled_edges) {
+    if (!triangle->skipped_edges) {
         return true;
     }
 
     for (int i = 0; i < 3; i += 1) {
-        if (!HAS_EDGE(triangle, i)) {
+        if (!SKIP_EDGE(triangle, i)) {
             continue;
         }
 
@@ -26,7 +26,7 @@ bool mesh_triangle_filter_edge_contacts(
 
         struct Vector3 perp_offset;
 
-        vector3Project(&offset, &opposite, &perp_offset);
+        vector3Project(&opposite, &offset, &perp_offset);
 
         vector3Sub(&perp_offset, &opposite, &perp_offset);
 

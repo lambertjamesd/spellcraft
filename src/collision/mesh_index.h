@@ -9,10 +9,10 @@
 struct mesh_triangle_indices {
     uint16_t indices[3];
     uint8_t surface_type;
-    uint8_t enabled_edges;
+    uint8_t skipped_edges;
 };
 
-#define HAS_EDGE(triangle, edge_index)  (((triangle)->enabled_edges & (1 << (edge_index))) != 0)
+#define SKIP_EDGE(triangle, edge_index)  (((triangle)->skipped_edges & (1 << (edge_index))) != 0)
 
 struct mesh_shadow_cast_result {
     float y;

@@ -134,12 +134,18 @@ bool collide_object_to_triangle(void* data, int triangle_index, int collision_la
     struct EpaResult result;
 
     if (epaSolve(
-        &simplex, 
-        &collide_data->triangle, 
-        mesh_triangle_minkowski_sum, 
-        collide_data->object, 
-        dynamic_object_minkowski_sum, 
-        &result)) {
+            &simplex, 
+            &collide_data->triangle, 
+            mesh_triangle_minkowski_sum, 
+            collide_data->object, 
+            dynamic_object_minkowski_sum, 
+            &result
+        ) && mesh_triangle_filter_edge_contacts(
+            &collide_data->triangle.triangle, 
+            collide_data->triangle.vertices,
+            &result.normal
+        )
+    ) {
         enum surface_type surface_type = collide_data->triangle.triangle.surface_type;
         correct_overlap(
             collide_data->object, 
