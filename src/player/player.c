@@ -373,7 +373,7 @@ void player_handle_look(struct player* player, struct Vector3* look_direction) {
 #define MAX_VERTICAL_DELTA      0.01f
 
 bool player_check_grab(struct player* player, struct Vector3* target_direction, climb_up_data_t* climb_data_list, int climb_count) {
-    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, target_direction, climb_data_list[climb_count-1].max_climb_height)) {
+    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, target_direction, climb_data_list[climb_count-1].max_climb_height) == GRAB_MODE_CLIMB) {
         struct Vector3 target;
         grab_checker_get_climb_to(&player->grab_checker, &target);
 
@@ -620,7 +620,7 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
     vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
     player->cutscene_actor.collider.velocity.y = prev_y;
 
-    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction, climb_from_hang_data.max_climb_height)) {
+    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction, climb_from_hang_data.max_climb_height) == GRAB_MODE_CLIMB) {
         struct Vector3 target;
         grab_checker_get_climb_to(&player->grab_checker, &target);
 
