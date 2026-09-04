@@ -27,6 +27,7 @@
 #define CLIMB_UP_COUNT              3
 
 enum player_state {
+    PLAYER_START,
     PLAYER_GROUNDED,
     PLAYER_SLIDING,
     PLAYER_JUMPING,

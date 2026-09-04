@@ -1,4 +1,7 @@
 
+* Texture scrolling start position
+* Texture scrolling sine wave
+* Material sort order in the vinewalk room
 * Ability to set object type
 * Particle group improvements
 * Texture convert in other modes

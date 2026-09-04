@@ -445,6 +445,11 @@ void player_enter_falling_state(struct player* player) {
     player_run_clip(player, PLAYER_ANIMATION_JUMP_PEAK);
 }
 
+void player_enter_swimming_state(struct player* player) {
+    player->state = PLAYER_SWIMMING;
+    player_loop_animation(player, PLAYER_ANIMATION_TREAD_WATER, 1.0f);
+}
+
 static vector3_t local_camera_death_pos = {
     .x = 2.0f,
     .y = 3.0f,
@@ -619,9 +624,14 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
         struct Vector3 target;
         grab_checker_get_climb_to(&player->grab_checker, &target);
 
-        float offset = target.y - player->cutscene_actor.transform.position.y;
+        vector3_t offset;
+        vector3Sub(&target, &player->cutscene_actor.transform.position, &offset);
 
-        if (offset < climb_from_hang_data.max_climb_height && offset - player->cutscene_actor.collider.velocity.y * fixed_time_step >= climb_from_hang_data.animation_height) {
+        vector2_t* rot = player_get_rotation(player);
+
+        if (offset.y < climb_from_hang_data.max_climb_height && 
+            offset.y - player->cutscene_actor.collider.velocity.y * fixed_time_step >= climb_from_hang_data.animation_height &&
+            offset.x * -rot->y + offset.z * rot->x > 0) {
             player_enter_hanging_state(player, &target);
         }
     }
@@ -785,8 +795,7 @@ void player_update_airborn(struct player* player, struct contact* ground_contact
     }
     
     if (collider->under_water) {
-        player->state = PLAYER_SWIMMING;
-        player_loop_animation(player, PLAYER_ANIMATION_TREAD_WATER, 1.0f);
+        player_enter_swimming_state(player);
         return;
     }
     
@@ -839,7 +848,7 @@ void player_update_swimming(struct player* player, struct contact* ground_contac
         return;
     }
 
-    if (ground_contact) {
+    if (ground_contact && collider->velocity.y < 0.0f) {
         player_enter_grounded_state(player, ground_contact);
         player_run_clip(player, PLAYER_ANIMATION_LAND);
         return;
@@ -865,8 +874,6 @@ void player_climbing_up(struct player* player, struct contact* ground_contact) {
     union state_data* state = &player->state_data;
     struct climb_up_data* climb_up = state->climbing_up.climb_up_data;
 
-    animator_t* anim = &player->cutscene_actor.animator;
-
     if (state->climbing_up.timer > climb_up->end_jump_time && !player_is_running_any(player)) {
         player_enter_grounded_state(player, ground_contact);
         player_run_clip_keep_translation(player, PLAYER_ANIMATION_IDLE);
@@ -890,8 +897,6 @@ void player_climbing_up(struct player* player, struct contact* ground_contact) {
 }
 
 void player_position_drop(player_t* player, dynamic_object_t* obj) {
-    vector3_t target;
-
     transform_sa_t* player_transform = &player->cutscene_actor.transform;
 
     vector3_t forward;
@@ -1027,6 +1032,10 @@ void player_update_knockback(struct player* player, struct contact* ground_conta
     if (!player_is_running(player, PLAYER_ANIMATION_KNOCKED_BACK)) {
         player_loop_animation(player, PLAYER_ANIMATION_KNOCKBACK_FLY, 1.0f);
     }
+
+    if (player->cutscene_actor.collider.under_water) {
+        player_enter_swimming_state(player);
+    }
 }
 
 void player_strafe_animation(struct player* player, float speed, dynamic_object_t* target_collider) {
@@ -1114,10 +1123,17 @@ void player_strafe_animation(struct player* player, float speed, dynamic_object_
     );
 }
 
+void player_update_start(struct player* player, struct contact* ground_contact) {
+    if (ground_contact) {
+        player_enter_grounded_state(player, ground_contact);
+    } else {
+        player_enter_falling_state(player);
+    }
+}
+
 void player_update_grounded(struct player* player, struct contact* ground_contact) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
     vector3_t* vel = &player->cutscene_actor.collider.velocity;
-    vector3_t* pos = & player->cutscene_actor.transform.position;
     struct dynamic_object* collider = &player->cutscene_actor.collider;
  
     entity_id interact_entity_id = 0;
@@ -1194,8 +1210,7 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     }
 
     if (collider->under_water) {
-        player->state = PLAYER_SWIMMING;
-        player_loop_animation(player, PLAYER_ANIMATION_TREAD_WATER, 1.0f);
+        player_enter_swimming_state(player);
         return;
     }
 
@@ -1237,6 +1252,9 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
 
 void player_update_state(struct player* player, struct contact* ground_contact) {
     switch (player->state) {
+        case PLAYER_START:
+            player_update_start(player, ground_contact);
+            break;
         case PLAYER_GROUNDED:
             player_update_grounded(player, ground_contact);
             break;
@@ -1462,8 +1480,6 @@ void player_update(struct player* player) {
     struct contact* ground = dynamic_object_get_combined_ground(&player->cutscene_actor.collider, &compbined_ground);
     
     player_update_state(player, ground);
-    
-    vector3_t* pos = &player->cutscene_actor.transform.position;
 
     if (player->cutscene_actor.collider.hit_kill_plane) {
         player->cutscene_actor.transform.position = player->last_good_footing;
@@ -1637,7 +1653,7 @@ void player_init(struct player* player, struct player_definition* definition) {
 
     player->last_spell_animation = NULL;
 
-    player->state = PLAYER_FALLING;
+    player->state = PLAYER_START;
 
     player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
     player->assets.staffs[1] = NULL;
