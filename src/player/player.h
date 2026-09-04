@@ -36,6 +36,7 @@ enum player_state {
     PLAYER_SWIMMING,
     PLAYER_KNOCKBACK,
     PLAYER_GETTING_UP,
+    PLAYER_DROP_TO_HANG,
     PLAYER_CLIMBING_UP,
     PLAYER_CARRY,
     PLAYER_DIE,
@@ -73,6 +74,7 @@ enum player_animation {
     PLAYER_ANIMATION_CLIMB_UP_1,
     PLAYER_ANIMATION_CLIMB_UP_2,
 
+    PLAYER_ANIMATION_DROP_TO_HANG,
     PLAYER_ANIMATION_CLIMB_FROM_HANG,
     PLAYER_ANIMATION_HANG,
     
@@ -137,6 +139,10 @@ union state_data {
         vector3_t climb_target;
         float input_delay;
     } hanging;
+    struct {
+        vector3_t climb_target;
+        vector2_t target_rotation;
+    } drop_to_hang;
 };
 
 typedef union state_data state_data_t;

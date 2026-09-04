@@ -17,7 +17,8 @@ struct grab_checker {
     struct Vector3 position;
     dynamic_object_t collider;
     struct Vector3 climb_to;
-    struct Vector2 target_pos;
+    struct Vector3 target_pos;
+    vector2_t target_rot;
     uint8_t grab_mode;
     uint8_t cast_mode;
 };

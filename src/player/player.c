@@ -48,7 +48,9 @@
 #define INTERACT_Y_LOWER        -0.75f
 #define INTERACT_Y_UPEER        1.25f
 
-#define HANG_INPUT_DELAY    0.2f
+#define HANG_INPUT_DELAY        0.2f
+
+#define JUMP_SPEED_THRESHOLD    2.1f
 
 #define MAX_ROTATION_RATE       10.0f
 static struct Vector2 player_max_rotation;
@@ -173,6 +175,18 @@ void player_run_clip_keep_translation(struct player* player, enum player_animati
         -1.0f / MODEL_SCALE,
         &player->cutscene_actor.transform.position
     );
+
+    quaternion_t relative_rotation;
+    quaternion_t inv_before;
+    quatConjugate(&before.rotation, &inv_before);
+    quatMultiply(&inv_before, &after.rotation, &relative_rotation);
+
+    vector3_t rotation_forward;
+    quatMultVector(&relative_rotation, &gForward, &rotation_forward);
+
+    vector2_t rotation;
+    vector2LookDir(&rotation, &rotation_forward);
+    vector2ComplexMul(&player->cutscene_actor.transform.rotation, &rotation, &player->cutscene_actor.transform.rotation);
 }
 
 float player_animation_time(struct player* player) {
@@ -372,34 +386,47 @@ void player_handle_look(struct player* player, struct Vector3* look_direction) {
 
 #define MAX_VERTICAL_DELTA      0.01f
 
+void player_enter_drop_to_hang(player_t* player) {
+    player->state = PLAYER_DROP_TO_HANG;
+    grab_checker_get_climb_to(&player->grab_checker, &player->state_data.drop_to_hang.climb_target);
+    player->state_data.drop_to_hang.target_rotation = player->grab_checker.target_rot;
+    player_run_clip(player, PLAYER_ANIMATION_DROP_TO_HANG);
+}
+
 bool player_check_grab(struct player* player, struct Vector3* target_direction, climb_up_data_t* climb_data_list, int climb_count) {
-    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, target_direction, climb_data_list[climb_count-1].max_climb_height) == GRAB_MODE_CLIMB) {
-        struct Vector3 target;
-        grab_checker_get_climb_to(&player->grab_checker, &target);
-
-        float height = target.y - player->cutscene_actor.transform.position.y;
-
-        for (int i = 0; i < climb_count; i += 1) {
-            climb_up_data_t* data = &climb_data_list[i];
-
-            if (height < data->max_climb_height) {
-                player_run_clip(player, data->anim);
-                player->state = PLAYER_CLIMBING_UP;
-                player->state_data.climbing_up.timer = 0.0f;
-                player->state_data.climbing_up.start_pos = player->cutscene_actor.transform.position;
-                player->state_data.climbing_up.climb_up_data = data;
-                player->state_data.climbing_up.y_velocity = (height - data->animation_height) / (data->end_jump_time - data->start_jump_time); 
-                
-                struct Vector3 offset;
-                vector3Sub(&target, &player->cutscene_actor.transform.position, &offset);
-                vector2LookDir(&player->state_data.climbing_up.target_rotation, &offset);
-
-                return true;
-            }
-        }
-    }
+    switch (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, target_direction, climb_data_list[climb_count-1].max_climb_height)) {
+        case GRAB_MODE_CLIMB: {
+            struct Vector3 target;
+            grab_checker_get_climb_to(&player->grab_checker, &target);
     
-    return false;
+            float height = target.y - player->cutscene_actor.transform.position.y;
+    
+            for (int i = 0; i < climb_count; i += 1) {
+                climb_up_data_t* data = &climb_data_list[i];
+    
+                if (height < data->max_climb_height) {
+                    player_run_clip(player, data->anim);
+                    player->state = PLAYER_CLIMBING_UP;
+                    player->state_data.climbing_up.timer = 0.0f;
+                    player->state_data.climbing_up.start_pos = player->cutscene_actor.transform.position;
+                    player->state_data.climbing_up.climb_up_data = data;
+                    player->state_data.climbing_up.y_velocity = (height - data->animation_height) / (data->end_jump_time - data->start_jump_time); 
+                    
+                    struct Vector3 offset;
+                    vector3Sub(&target, &player->cutscene_actor.transform.position, &offset);
+                    vector2LookDir(&player->state_data.climbing_up.target_rotation, &offset);
+    
+                    return true;
+                }
+            }
+            return false;
+        }
+        case GRAB_MODE_HANG:
+            player_enter_drop_to_hang(player);
+            return true;
+        default:
+            return false;
+    }
 }
 
 void player_enter_slide_state(struct player* player, struct contact* ground_contact) {
@@ -524,13 +551,17 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
     dynamic_object_t* collider = &player->cutscene_actor.collider;
     
     *speed = sqrtf(vector3MagSqrd2D(&collider->velocity));
+    vector3_t* vel = &collider->velocity;
 
     if (!ground_contact) {
-        return GROUND_MOVEMENT_RESULT_JUMP;
+        if (vel->x * vel->x + vel->z * vel->z > JUMP_SPEED_THRESHOLD * JUMP_SPEED_THRESHOLD) {
+            return GROUND_MOVEMENT_RESULT_JUMP;
+        }
+
+        return GROUND_MOVEMENT_RESULT_FALL;
     }
 
     bool is_good_footing = ground_contact->other_object == 0 && ground_contact->surface_type != SURFACE_TYPE_COYOTE;
-    vector3_t* vel = &collider->velocity;
     vector3_t* pos = &player->cutscene_actor.transform.position;
 
     if (dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
@@ -539,7 +570,11 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
                 return GROUND_MOVEMENT_RESULT_SLIDE;
             }
 
-            return GROUND_MOVEMENT_RESULT_JUMP;
+            if (vel->x * vel->x + vel->z * vel->z > JUMP_SPEED_THRESHOLD * JUMP_SPEED_THRESHOLD) {
+                return GROUND_MOVEMENT_RESULT_JUMP;
+            }
+
+            return GROUND_MOVEMENT_RESULT_FALL;
         } else if (ground_contact->other_object == 0) {
             vector3_t offset;
             vector3Sub(pos, &player->last_good_footing, &offset);
@@ -620,20 +655,28 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
     vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
     player->cutscene_actor.collider.velocity.y = prev_y;
 
-    if (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction, climb_from_hang_data.max_climb_height) == GRAB_MODE_CLIMB) {
-        struct Vector3 target;
-        grab_checker_get_climb_to(&player->grab_checker, &target);
-
-        vector3_t offset;
-        vector3Sub(&target, &player->cutscene_actor.transform.position, &offset);
-
-        vector2_t* rot = player_get_rotation(player);
-
-        if (offset.y < climb_from_hang_data.max_climb_height && 
-            offset.y - player->cutscene_actor.collider.velocity.y * fixed_time_step >= climb_from_hang_data.animation_height &&
-            offset.x * -rot->y + offset.z * rot->x > 0) {
-            player_enter_hanging_state(player, &target);
+    switch (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction, climb_from_hang_data.max_climb_height)) {
+        case GRAB_MODE_CLIMB: {
+            struct Vector3 target;
+            grab_checker_get_climb_to(&player->grab_checker, &target);
+    
+            vector3_t offset;
+            vector3Sub(&target, &player->cutscene_actor.transform.position, &offset);
+    
+            vector2_t* rot = player_get_rotation(player);
+    
+            if (offset.y < climb_from_hang_data.max_climb_height && 
+                offset.y - player->cutscene_actor.collider.velocity.y * fixed_time_step >= climb_from_hang_data.animation_height &&
+                offset.x * -rot->y + offset.z * rot->x > 0) {
+                player_enter_hanging_state(player, &target);
+            }
+            break;
         }
+        // case GRAB_MODE_HANG:
+        //     player_enter_drop_to_hang(player);
+        //     break;
+        default:
+            break;
     }
 }
 
@@ -868,6 +911,18 @@ void player_getting_up(struct player* player, struct contact* ground_contact) {
     if (!player_is_running(player, PLAYER_ANIMATION_KNOCKBACK_LAND)) {
         player_enter_grounded_state(player, ground_contact);
     }
+}
+
+void player_drop_to_hang(player_t* player) {
+    if (!player_is_running_any(player)) {
+        player_run_clip_keep_translation(player, PLAYER_ANIMATION_HANG);
+        player_enter_hanging_state(player, &player->state_data.drop_to_hang.climb_target);
+        return;
+    }
+
+    vector2RotateTowards(&player->cutscene_actor.transform.rotation, &player->state_data.drop_to_hang.target_rotation, &player_max_rotation, &player->cutscene_actor.transform.rotation);
+    player->cutscene_actor.collider.velocity = gZeroVec;
+    player->cutscene_actor.transform.position = player->state_data.drop_to_hang.climb_target;
 }
 
 void player_climbing_up(struct player* player, struct contact* ground_contact) {
@@ -1277,6 +1332,9 @@ void player_update_state(struct player* player, struct contact* ground_contact) 
         case PLAYER_GETTING_UP:
             player_getting_up(player, ground_contact);
             break;
+        case PLAYER_DROP_TO_HANG:
+            player_drop_to_hang(player);
+            break;
         case PLAYER_CLIMBING_UP:
             player_climbing_up(player, ground_contact);
             break;
@@ -1550,6 +1608,7 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_CLIMB_UP_1] = "climb_1",
     [PLAYER_ANIMATION_CLIMB_UP_2] = "climb_2",
 
+    [PLAYER_ANIMATION_DROP_TO_HANG] = "drop_to_hang",
     [PLAYER_ANIMATION_CLIMB_FROM_HANG] = "climb_from_hang",
     [PLAYER_ANIMATION_HANG] = "hang",
 
