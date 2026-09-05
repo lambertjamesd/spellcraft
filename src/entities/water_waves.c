@@ -36,7 +36,7 @@ void water_waves_debug_render(void* data) {
 
     surface_t surface;
 
-    surface.buffer = water_waves->simulation.position_buffers[1];
+    surface.buffer = water_waves->simulation.position_buffers[1] + water_waves->simulation.width;
     surface.flags = FMT_I8;
     surface.width = 32;
     surface.height = 32;

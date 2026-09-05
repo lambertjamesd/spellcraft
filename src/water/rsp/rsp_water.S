@@ -36,7 +36,7 @@
         .align 4
         CONSTANTS:
             .half SPRING_CONSTANT, DAMPING_CONSTANT, 0x0888, 0
-            .half 0, 0, 0, 0
+            .half 0x1234, 0x5678, 0x9ABC, 0xDEF0
     RSPQ_EndSavedState
 .bss
     .align 4
@@ -112,9 +112,9 @@
 
 .macro water_sim_chunk
     # accumlate offset * mask factor
-    vmadm pos_offset, pos_left, K16384
+    vmudm pos_offset, pos_left, K16384
     vmadm pos_offset, pos_right, K16384
-    vmudm pos_offset, pos_up, K16384
+    vmadm pos_offset, pos_up, K16384
     vmadm pos_offset, pos_down, K16384
     vsub pos_offset, pos_center
     vmudm vel, vel, c_vel_damping
@@ -570,8 +570,6 @@ WaterCmd_ProcessBlockV2_LastChunk:
     mtc2 zero, pos_right.e7
     water_sim_chunk;
 
-WaterCmd_ProcessBlockV2_EndRow:
-
     ble row_count, 1, WaterCmd_ProcessBlockV2_WriteResult
     addi row_count, -1
 
@@ -585,7 +583,7 @@ WaterCmd_ProcessBlockV2_WriteResult:
     addi dma_size, dma_size, -(2 << 12)
     
     # Save the position block
-    add dram_address, out_dmem, row_stride
+    move dram_address, out_dmem
     jal DMAOut
     li dmem_address, %lo(OUT_POS)
 
