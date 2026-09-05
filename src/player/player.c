@@ -436,7 +436,6 @@ void player_enter_slide_state(struct player* player, struct contact* ground_cont
 
 void player_enter_jump_state(struct player* player) {
     player->state = PLAYER_JUMPING;
-    player->cutscene_actor.collider.velocity.y = 3.0f;
     player_run_clip(player, PLAYER_ANIMATION_JUMP);
 }
 
@@ -640,7 +639,9 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
 }
 
 void player_handle_air_movement(struct player* player, contact_t* ground_contact) {
-    if (player->cutscene_actor.collider.is_pushed) {
+    dynamic_object_t* collider = &player->cutscene_actor.collider;
+
+    if (collider->is_pushed) {
         return;
     }
 
@@ -651,9 +652,9 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
         vector3ProjectPlane(&target_direction, &ground_contact->normal, &target_direction);
     }
 
-    float prev_y = player->cutscene_actor.collider.velocity.y;
-    vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
-    player->cutscene_actor.collider.velocity.y = prev_y;
+    float prev_y = collider->velocity.y;
+    vector3Scale(&target_direction, &collider->velocity, PLAYER_MAX_SPEED);
+    collider->velocity.y = prev_y;
 
     switch (grab_checker_update(&player->grab_checker, &player->cutscene_actor.collider, &target_direction, climb_from_hang_data.max_climb_height)) {
         case GRAB_MODE_CLIMB: {
@@ -666,15 +667,19 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
             vector2_t* rot = player_get_rotation(player);
     
             if (offset.y < climb_from_hang_data.max_climb_height && 
-                offset.y - player->cutscene_actor.collider.velocity.y * fixed_time_step >= climb_from_hang_data.animation_height &&
+                offset.y - collider->velocity.y * fixed_time_step >= climb_from_hang_data.animation_height &&
                 offset.x * -rot->y + offset.z * rot->x > 0) {
                 player_enter_hanging_state(player, &target);
             }
+            grab_checker_clear(&player->grab_checker);
             break;
         }
-        // case GRAB_MODE_HANG:
-        //     player_enter_drop_to_hang(player);
-        //     break;
+        case GRAB_MODE_HANG:
+            if (collider->velocity.y < 0.0f) {
+                player_enter_drop_to_hang(player);
+                break;
+            }
+            grab_checker_clear(&player->grab_checker);
         default:
             break;
     }
@@ -1219,8 +1224,7 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     }
     
     if (collider->is_jumping) {
-        player->state = PLAYER_JUMPING;
-        player_run_clip(player, PLAYER_ANIMATION_JUMP);
+        player_enter_jump_state(player);
         return;
     }
 
@@ -1241,6 +1245,7 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
 
     if (move_result == GROUND_MOVEMENT_RESULT_JUMP) {
         player_enter_jump_state(player);
+        player->cutscene_actor.collider.velocity.y = 3.0f;
         return;
     }
 

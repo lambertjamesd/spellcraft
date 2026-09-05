@@ -261,6 +261,7 @@ struct scene* scene_load(const char* filename) {
 
     struct scene* scene = malloc(sizeof(struct scene));
     current_scene = scene;
+    scene_time = 0.0f;
 
     for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
         scene->loaded_rooms[i].room_index = ROOM_INDEX_NONE;

@@ -27,6 +27,9 @@ typedef struct grab_checker grab_checker_t;
 
 void grab_checker_init(grab_checker_t* checker, struct dynamic_object_type* collider_type);
 grab_mode_t grab_checker_update(grab_checker_t* checker, dynamic_object_t* player_collider, struct Vector3* target_direction, float max_grab_height);
+
+void grab_checker_clear(grab_checker_t* checker);
+
 void grab_checker_destroy(grab_checker_t* checker);
 
 void grab_checker_get_climb_to(grab_checker_t* checker, struct Vector3* out);

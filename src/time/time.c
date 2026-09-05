@@ -28,6 +28,7 @@ float scaled_time_step;
 float scaled_time_step_inv;
 float total_time;
 float game_time;
+float scene_time;
 float global_time_scale = 1.0f;
 float render_time_step;
 float last_render_time = 0.0f;
@@ -97,6 +98,7 @@ void update_dispatch() {
 
     if (g_update_state.enabled_layers & UPDATE_LAYER_WORLD) {
         game_time += scaled_time_step;
+        scene_time += scaled_time_step;
     }
 
     callback_list_begin(&g_update_state.callbacks);

@@ -131,7 +131,14 @@ void grab_checker_cast_climb(grab_checker_t* checker, dynamic_object_t* player_c
     dynamic_object_wake(&checker->collider);
 }
 
-void grab_checker_cast_hang(grab_checker_t* checker, vector3_t* target_direction, contact_t* ground_contact) {
+void grab_checker_cast_hang(grab_checker_t* checker, dynamic_object_t* player_collider, vector3_t* target_direction, contact_t* ground_contact) {
+    if (player_collider->velocity.y > 0.0f) {
+        checker->cast_mode = GRAB_MODE_NONE;
+        checker->position = gZeroVec;
+        checker->target_pos = gZeroVec;
+        return;
+    }
+    
     vector3_t cast_dir;
     if (ground_contact->normal.y > 0.95f) {
         cast_dir = *target_direction;
@@ -145,6 +152,7 @@ void grab_checker_cast_hang(grab_checker_t* checker, vector3_t* target_direction
     if (cast_dir.x == 0.0f && cast_dir.z == 0.0f) {
         checker->cast_mode = GRAB_MODE_NONE;
         checker->position = gZeroVec;
+        checker->target_pos = gZeroVec;
         return;
     }
 
@@ -195,13 +203,19 @@ grab_mode_t grab_checker_update(grab_checker_t* checker, dynamic_object_t* playe
     if (wall_contact) {
         grab_checker_cast_climb(checker, player_collider, wall_contact, max_grab_height);
     } else if (ground_contact) {
-        grab_checker_cast_hang(checker, target_direction, ground_contact);
+        grab_checker_cast_hang(checker, player_collider, target_direction, ground_contact);
     } else {
         checker->cast_mode = GRAB_MODE_NONE;
         checker->position = gZeroVec;
     }
 
     return checker->grab_mode;
+}
+
+void grab_checker_clear(grab_checker_t* checker) {
+    debugf("clear cast mode\n");
+    checker->cast_mode = GRAB_MODE_NONE;
+    checker->grab_mode = GRAB_MODE_NONE;
 }
 
 void grab_checker_destroy(grab_checker_t* checker) {

@@ -42,6 +42,7 @@ extern float scaled_time_step;
 extern float scaled_time_step_inv;
 extern float total_time;
 extern float game_time;
+extern float scene_time;
 extern float global_time_scale;
 extern float render_time_step;
 
