@@ -8,6 +8,7 @@ static uint8_t simulation_count = 0;
 #define PROCESS_BLOCK       0
 #define PROCESS_PROFILE     1
 #define PROCESS_APPLY       2
+#define PROCESS_BLOCK_V2    3
 
 #define SIM_BUFFER_SIZE 1024
 
@@ -18,17 +19,20 @@ void water_simulation_init(water_simulation_t* simulation, int width, int height
         WATER_OVERLAY_ID = rspq_overlay_register(&rsp_water);
     }
 
+    assert(width % 8 == 0);
+
     ++simulation_count;
 
     simulation->width = width;
     simulation->height = height;
 
     int pixel_count = width * height;
-    int total_size = (sizeof(int16_t) + sizeof(int16_t) * 2) * pixel_count;
+    int padded_pixel_count = pixel_count + width * 2;
+    int total_size = 2 * padded_pixel_count * sizeof(uint8_t) + pixel_count * sizeof(uint16_t);
 
     simulation->velocity_buffer = malloc(total_size);
     simulation->position_buffers[0] = (int8_t*)(simulation->velocity_buffer + pixel_count);
-    simulation->position_buffers[1] = simulation->position_buffers[0] + pixel_count;
+    simulation->position_buffers[1] = simulation->position_buffers[0] + padded_pixel_count;
 
     simulation->read_buffer = 0;
     simulation->y_stride = SIM_BUFFER_SIZE / (width * sizeof(int16_t)) - 1;
@@ -70,7 +74,14 @@ void water_simulation_update(water_simulation_t* simulation) {
             y_count = rows_remaining;
         }
 
-        rspq_write(WATER_OVERLAY_ID, PROCESS_BLOCK, ((int)y_count << Y_STRIDE_OFFSET) | simluation_stride, PhysicalAddr(vel), PhysicalAddr(in), PhysicalAddr(out));
+        rspq_write(
+            WATER_OVERLAY_ID, 
+            PROCESS_BLOCK_V2, 
+            ((int)y_count << Y_STRIDE_OFFSET) | simluation_stride, 
+            PhysicalAddr(vel), 
+            PhysicalAddr(in), 
+            PhysicalAddr(out + simluation_stride)
+        );
 
         vel += block_y_stride;
         in += block_y_stride;
@@ -81,7 +92,7 @@ void water_simulation_update(water_simulation_t* simulation) {
 
     int* data = rspq_overlay_get_state(&rsp_water);
 
-    debugf("%d\n", data[2]);
+    debugf("%d\n", data[0]);
 
     simulation->read_buffer = write_index;
 }

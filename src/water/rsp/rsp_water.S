@@ -13,6 +13,7 @@
         RSPQ_DefineCommand WaterCmd_ProcessBlock, 16
         RSPQ_DefineCommand WaterCmd_Profile, 4
         RSPQ_DefineCommand WaterCmd_Apply, 40
+        RSPQ_DefineCommand WaterCmd_ProcessBlockV2, 16
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
@@ -115,14 +116,13 @@
     vmadm pos_offset, pos_right, K16384
     vmudm pos_offset, pos_up, K16384
     vmadm pos_offset, pos_down, K16384
-    vsub pos_offset, pos_offset, pos_center
+    vsub pos_offset, pos_center
     vmudm vel, vel, c_vel_damping
     # apply acceleration to velocity
     vmadm vel, pos_offset, c_spring_k
 
     # save velocity
     sqv vel, 0, vel_ptr
-    srv vel, VECTOR_SIZE, vel_ptr
 
     # round position
     vadd pos_center, pos_center, K128
@@ -468,7 +468,7 @@ WaterCmd_WriteBackVtx:
 
     
     ##########################################
-    # WaterCmd_ProcessBlock
+    # WaterCmd_ProcessBlockV2
     # 
     # a0: h:12 w:12
     # a1: vel
@@ -499,7 +499,9 @@ WaterCmd_ProcessBlockV2:
 
     # put back sizes for position copy
     srl row_stride, row_stride, 1
+    # +2 height
     addi dma_size, (2 << 12)
+    # u16 to u8
     sub dma_size, row_stride
     
     # Load the position block
@@ -516,8 +518,6 @@ WaterCmd_ProcessBlockV2:
     li row_out_ptr, %lo(OUT_POS)
 
     add row_pos_ptr, row_pos_ptr, row_stride
-    add row_vel_ptr, row_vel_ptr, vel_stride
-    add row_out_ptr, row_out_ptr, row_stride
 WaterCmd_ProcessBlockV2_NextRow:
     add pos_ptr, row_pos_ptr, zero
     sub up_ptr, row_pos_ptr, row_stride
@@ -527,7 +527,6 @@ WaterCmd_ProcessBlockV2_NextRow:
     add vel_ptr, row_vel_ptr, zero
     add out_ptr, row_out_ptr, zero
     
-
     srl col_count, a0, 3
     andi col_count, 0x1F
 
@@ -553,7 +552,7 @@ WaterCmd_ProcessBlockV2_RowLoop:
     addi down_ptr, 8
     addi pos_ptr, 8
     addi out_ptr, 8
-    addi vel, 16
+    addi vel_ptr, 16
     
     lpv pos_left, 0, left_ptr
     lpv pos_right, 0, right_ptr
@@ -571,6 +570,8 @@ WaterCmd_ProcessBlockV2_LastChunk:
     mtc2 zero, pos_right.e7
     water_sim_chunk;
 
+WaterCmd_ProcessBlockV2_EndRow:
+
     ble row_count, 1, WaterCmd_ProcessBlockV2_WriteResult
     addi row_count, -1
 
@@ -586,7 +587,7 @@ WaterCmd_ProcessBlockV2_WriteResult:
     # Save the position block
     add dram_address, out_dmem, row_stride
     jal DMAOut
-    addi dmem_address, row_stride, %lo(OUT_POS)
+    li dmem_address, %lo(OUT_POS)
 
     # double size for velocity block transfer
     add dma_size, dma_size, row_stride
