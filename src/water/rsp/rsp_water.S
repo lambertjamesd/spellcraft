@@ -13,7 +13,6 @@
         RSPQ_DefineCommand WaterCmd_ProcessBlock, 16
         RSPQ_DefineCommand WaterCmd_Profile, 4
         RSPQ_DefineCommand WaterCmd_Apply, 40
-        RSPQ_DefineCommand WaterCmd_ProcessBlockV2, 16
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
@@ -36,7 +35,7 @@
         .align 4
         CONSTANTS:
             .half SPRING_CONSTANT, DAMPING_CONSTANT, 0x0888, 0
-            .half 0x1234, 0x5678, 0x9ABC, 0xDEF0
+            .half 0, 0, 0, 0
     RSPQ_EndSavedState
 .bss
     .align 4
@@ -139,22 +138,22 @@
     ##########################################
     # WaterCmd_ProcessBlock
     # 
-    # a0: stride
+    # a0: h:12 w:12
     # a1: vel
     # a2: in_pos
     # a3: out_pos
 WaterCmd_ProcessBlock:
-    # Load the velocity block
+    .set at
     srl row_count, a0, Y_STRIDE_OFFSET
-    andi row_count, row_count, 0xFF
-
+    andi row_count, 0xFF
+    
     andi row_stride, a0, 0xFFF
     # same as
     # (((row_count + 2) - 1) << 12) | (row_stride -  1)
     # the +2 is to add padding, the -1 is to properly fill the dma register
     li dma_size, 0xFFFFFF
-    and t6, dma_size, a0    
-    addi dma_size, t6, (1 << 12) - 1
+    and dma_size, a0    
+    addi dma_size, -(1 << 12) - 1
 
     # double dma size for velocity
     add dma_size, dma_size, row_stride
@@ -168,25 +167,25 @@ WaterCmd_ProcessBlock:
 
     # put back sizes for position copy
     srl row_stride, row_stride, 1
-    addi dma_size, t6, (1 << 12) - 1
+    # +2 height
+    addi dma_size, (2 << 12)
+    # u16 to u8
+    sub dma_size, row_stride
     
     # Load the position block
     move dram_address, pos_dmem
     jal DMAIn
     li dmem_address, %lo(IN_POS)
 
-    li ptr, %lo(SPRING_K)
-    lqv spring_k, 0x00, ptr
-    lqv vel_damping, 0x10, ptr
-    lqv dt, 0x20, ptr
+    # load constants
+    li ptr, %lo(CONSTANTS)
+    lqv constants, 0x00, ptr
 
     li row_pos_ptr, %lo(IN_POS)
     li row_vel_ptr, %lo(VEL)
     li row_out_ptr, %lo(OUT_POS)
 
     add row_pos_ptr, row_pos_ptr, row_stride
-    add row_vel_ptr, row_vel_ptr, vel_stride
-    add row_out_ptr, row_out_ptr, row_stride
 WaterCmd_ProcessBlock_NextRow:
     add pos_ptr, row_pos_ptr, zero
     sub up_ptr, row_pos_ptr, row_stride
@@ -195,103 +194,74 @@ WaterCmd_ProcessBlock_NextRow:
     addi right_ptr, row_pos_ptr, 1
     add vel_ptr, row_vel_ptr, zero
     add out_ptr, row_out_ptr, zero
-
-    # load the first row without prev out position
-    lpv pos_center, 0, pos_ptr
-    lpv pos_up, 0, up_ptr
-    lpv pos_down, 0, down_ptr
-    lpv pos_left, 0, left_ptr
-    lpv pos_right, 0, right_ptr
-    lqv vel, 0, vel_ptr
-    lrv vel, VECTOR_SIZE, vel_ptr
-
-    # -2 for 1 pixel of padding on each side
-    addi col_count, row_stride, -FRAME_STEP - 2
-
-WaterCmd_ProcessBlock_NextFrame:
-    # accumlate offset * mask factor
-    vmudm pos_offset, pos_up, K16384
-    vmadm pos_offset, pos_down, K16384
-    vmadm pos_offset, pos_left, K16384
-    vmadm pos_offset, pos_right, K16384
-    vsub pos_offset, pos_offset, pos_center
-    vmudm vel, vel, vel_damping
-    # apply acceleration to velocity
-    vmadm vel, pos_offset, spring_k
-
-    # save velocity
-    sqv vel, 0, vel_ptr
-    srv vel, VECTOR_SIZE, vel_ptr
-
-    # round position
-    vadd pos_center, pos_center, K128
-
-    # apply pos by delta time (masked)
-    vmudm vel, vel, dt
-    vadd pos_center, pos_center, vel
-
-    # save position
-    spv pos_center, 0, out_ptr
-
-    # increment pointers
-    addi pos_ptr, pos_ptr, FRAME_STEP
-    addi left_ptr, left_ptr, FRAME_STEP
-    addi right_ptr, right_ptr, FRAME_STEP
-    addi up_ptr, up_ptr, FRAME_STEP
-    addi down_ptr, down_ptr, FRAME_STEP
-    addi vel_ptr, vel_ptr, VEL_FRAME_STEP
-    addi out_ptr, out_ptr, FRAME_STEP
-    addi col_count, col_count, -FRAME_STEP
     
-    # check if row has ended
-    bltz col_count, WaterCmd_ProcessBlock_IncRow
-    nop
+    srl col_count, a0, 3
+    andi col_count, 0x1F
 
-    ####################
-    # load next
-    lpv pos_center, 0, pos_ptr
-    # preserve pixel on edge, this is why the load next
-    # block must be different than the one above
-    lbv pos_center.e0, 0, out_ptr
+WaterCmd_ProcessBlock_RowStart:
+    lpv pos_left, 0, left_ptr
+    # pad left with 0
+    mtc2 zero, pos_left.e0
+    lpv pos_right, 0, right_ptr
     lpv pos_up, 0, up_ptr
     lpv pos_down, 0, down_ptr
+    lpv pos_center, 0, pos_ptr
+
+    lqv vel, 0, vel_ptr
+
+    ble col_count, 1, WaterCmd_ProcessBlock_LastChunk
+    nop
+WaterCmd_ProcessBlock_RowLoop:
+    water_sim_chunk;
+
+    addi left_ptr, 8
+    addi right_ptr, 8
+    addi up_ptr, 8
+    addi down_ptr, 8
+    addi pos_ptr, 8
+    addi out_ptr, 8
+    addi vel_ptr, 16
+    
     lpv pos_left, 0, left_ptr
     lpv pos_right, 0, right_ptr
+    lpv pos_up, 0, up_ptr
+    lpv pos_down, 0, down_ptr
+    lpv pos_center, 0, pos_ptr
+
     lqv vel, 0, vel_ptr
-    lrv vel, VECTOR_SIZE, vel_ptr
 
-    j WaterCmd_ProcessBlock_NextFrame
-    nop
+    bgt col_count, 1, WaterCmd_ProcessBlock_RowLoop
+    addi col_count, -1
 
-WaterCmd_ProcessBlock_IncRow:
+WaterCmd_ProcessBlock_LastChunk:
+    # pad right with 0
+    mtc2 zero, pos_right.e7
+    water_sim_chunk;
 
-    # check if rows have finished
-    addi row_count, row_count, -1
-    blez row_count, WaterCmd_ProcessBlock_Exit
+    ble row_count, 1, WaterCmd_ProcessBlock_WriteResult
+    addi row_count, -1
 
-    # increment pointers
-    add row_pos_ptr, row_pos_ptr, row_stride
-    add row_vel_ptr, row_vel_ptr, vel_stride
+    add row_pos_ptr, row_stride
+    add row_vel_ptr, vel_stride
     j WaterCmd_ProcessBlock_NextRow
-    add row_out_ptr, row_out_ptr, row_stride
+    add row_out_ptr, row_stride
 
-    # end loop
-WaterCmd_ProcessBlock_Exit:
+WaterCmd_ProcessBlock_WriteResult:
     # dont output the top and bottom padding rows
     addi dma_size, dma_size, -(2 << 12)
     
     # Save the position block
-    add dram_address, out_dmem, row_stride
+    move dram_address, out_dmem
     jal DMAOut
-    addi dmem_address, row_stride, %lo(OUT_POS)
+    li dmem_address, %lo(OUT_POS)
 
     # double size for velocity block transfer
     add dma_size, dma_size, row_stride
     sll row_stride, row_stride, 1
 
     # Save the velocity block
-    add dram_address, vel_dmem, row_stride
-    addi dmem_address, row_stride, %lo(VEL)
+    move dram_address, vel_dmem
+    li dmem_address, %lo(VEL)
     jal_and_j DMAOut, RSPQ_Loop
 
     ##########################################
@@ -465,133 +435,3 @@ WaterCmd_SkipB:
 
 WaterCmd_WriteBackVtx:
     jal_and_j DMAOut, WaterCmd_NextIndexRange
-
-    
-    ##########################################
-    # WaterCmd_ProcessBlockV2
-    # 
-    # a0: h:12 w:12
-    # a1: vel
-    # a2: in_pos
-    # a3: out_pos
-WaterCmd_ProcessBlockV2:
-    .set at
-    srl row_count, a0, Y_STRIDE_OFFSET
-    andi row_count, 0xFF
-    
-    andi row_stride, a0, 0xFFF
-    # same as
-    # (((row_count + 2) - 1) << 12) | (row_stride -  1)
-    # the +2 is to add padding, the -1 is to properly fill the dma register
-    li dma_size, 0xFFFFFF
-    and dma_size, a0    
-    addi dma_size, -(1 << 12) - 1
-
-    # double dma size for velocity
-    add dma_size, dma_size, row_stride
-    sll vel_stride, row_stride, 1
-    sll row_stride, row_stride, 1
-
-    # load the velocity block
-    move dram_address, vel_dmem
-    jal DMAIn
-    li dmem_address, %lo(VEL)
-
-    # put back sizes for position copy
-    srl row_stride, row_stride, 1
-    # +2 height
-    addi dma_size, (2 << 12)
-    # u16 to u8
-    sub dma_size, row_stride
-    
-    # Load the position block
-    move dram_address, pos_dmem
-    jal DMAIn
-    li dmem_address, %lo(IN_POS)
-
-    # load constants
-    li ptr, %lo(CONSTANTS)
-    lqv constants, 0x00, ptr
-
-    li row_pos_ptr, %lo(IN_POS)
-    li row_vel_ptr, %lo(VEL)
-    li row_out_ptr, %lo(OUT_POS)
-
-    add row_pos_ptr, row_pos_ptr, row_stride
-WaterCmd_ProcessBlockV2_NextRow:
-    add pos_ptr, row_pos_ptr, zero
-    sub up_ptr, row_pos_ptr, row_stride
-    add down_ptr, row_pos_ptr, row_stride
-    addi left_ptr, row_pos_ptr, -1
-    addi right_ptr, row_pos_ptr, 1
-    add vel_ptr, row_vel_ptr, zero
-    add out_ptr, row_out_ptr, zero
-    
-    srl col_count, a0, 3
-    andi col_count, 0x1F
-
-WaterCmd_ProcessBlockV2_RowStart:
-    lpv pos_left, 0, left_ptr
-    # pad left with 0
-    mtc2 zero, pos_left.e0
-    lpv pos_right, 0, right_ptr
-    lpv pos_up, 0, up_ptr
-    lpv pos_down, 0, down_ptr
-    lpv pos_center, 0, pos_ptr
-
-    lqv vel, 0, vel_ptr
-
-    ble col_count, 1, WaterCmd_ProcessBlockV2_LastChunk
-    nop
-WaterCmd_ProcessBlockV2_RowLoop:
-    water_sim_chunk;
-
-    addi left_ptr, 8
-    addi right_ptr, 8
-    addi up_ptr, 8
-    addi down_ptr, 8
-    addi pos_ptr, 8
-    addi out_ptr, 8
-    addi vel_ptr, 16
-    
-    lpv pos_left, 0, left_ptr
-    lpv pos_right, 0, right_ptr
-    lpv pos_up, 0, up_ptr
-    lpv pos_down, 0, down_ptr
-    lpv pos_center, 0, pos_ptr
-
-    lqv vel, 0, vel_ptr
-
-    bgt col_count, 1, WaterCmd_ProcessBlockV2_RowLoop
-    addi col_count, -1
-
-WaterCmd_ProcessBlockV2_LastChunk:
-    # pad right with 0
-    mtc2 zero, pos_right.e7
-    water_sim_chunk;
-
-    ble row_count, 1, WaterCmd_ProcessBlockV2_WriteResult
-    addi row_count, -1
-
-    add row_pos_ptr, row_stride
-    add row_vel_ptr, vel_stride
-    j WaterCmd_ProcessBlockV2_NextRow
-    add row_out_ptr, row_stride
-
-WaterCmd_ProcessBlockV2_WriteResult:
-    # dont output the top and bottom padding rows
-    addi dma_size, dma_size, -(2 << 12)
-    
-    # Save the position block
-    move dram_address, out_dmem
-    jal DMAOut
-    li dmem_address, %lo(OUT_POS)
-
-    # double size for velocity block transfer
-    add dma_size, dma_size, row_stride
-    sll row_stride, row_stride, 1
-
-    # Save the velocity block
-    move dram_address, vel_dmem
-    li dmem_address, %lo(VEL)
-    jal_and_j DMAOut, RSPQ_Loop
