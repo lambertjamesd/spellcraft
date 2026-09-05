@@ -422,8 +422,8 @@ bool player_check_grab(struct player* player, struct Vector3* target_direction, 
             return false;
         }
         case GRAB_MODE_HANG:
-            player_enter_drop_to_hang(player);
-            return true;
+            // player_enter_drop_to_hang(player);
+            return false;
         default:
             return false;
     }
@@ -675,11 +675,11 @@ void player_handle_air_movement(struct player* player, contact_t* ground_contact
             break;
         }
         case GRAB_MODE_HANG:
-            if (collider->velocity.y < 0.0f) {
-                player_enter_drop_to_hang(player);
-                break;
-            }
-            grab_checker_clear(&player->grab_checker);
+            // if (collider->velocity.y < 0.0f) {
+            //     player_enter_drop_to_hang(player);
+            //     break;
+            // }
+            // grab_checker_clear(&player->grab_checker);
         default:
             break;
     }
