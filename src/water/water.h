@@ -16,18 +16,11 @@ struct water_simulation {
 
 typedef struct water_simulation water_simulation_t;
 
-struct water_index_range {
-    uint16_t min, max;
-};
-
-typedef struct water_index_range water_index_range_t;
-
 struct water_apply_args {
     T3DVertPacked* vtx;
-    water_index_range_t* index_ranges;
     vector2s16_t min;
     vector2s16_t scale;
-    uint16_t index_range_count;
+    uint16_t vtx_count;
 };
 
 typedef struct water_apply_args water_apply_args_t;

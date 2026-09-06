@@ -9,7 +9,8 @@ static uint8_t simulation_count = 0;
 #define PROCESS_PROFILE     1
 #define PROCESS_APPLY       2
 
-#define SIM_BUFFER_SIZE 1024
+#define SIM_BUFFER_SIZE     1024
+#define MAX_VERT_PER_CHUNK  (SIM_BUFFER_SIZE / 16)
 
 DEFINE_RSP_UCODE(rsp_water);
 
@@ -89,14 +90,21 @@ void water_simulation_update(water_simulation_t* simulation) {
 }
 
 void water_simulation_apply(water_simulation_t* simulation, water_apply_args_t* args) {
-    rspq_write_t write = rspq_write_begin(WATER_OVERLAY_ID, PROCESS_APPLY, 6);
+    for (int vtx_offset = 0; vtx_offset < args->vtx_count; vtx_offset += MAX_VERT_PER_CHUNK) {
+        rspq_write_t write = rspq_write_begin(WATER_OVERLAY_ID, PROCESS_APPLY, 5);
 
-    rspq_write_arg(&write, args->index_range_count);
-    rspq_write_arg(&write, (int)PhysicalAddr(simulation->position_buffers[simulation->read_buffer]));
-    rspq_write_arg(&write, PhysicalAddr(args->vtx));
-    rspq_write_arg(&write, PhysicalAddr(args->index_ranges));
-    rspq_write_arg(&write, args->min.equalTest);
-    rspq_write_arg(&write, args->scale.equalTest);
+        int remaining = args->vtx_count - vtx_offset;
 
-    rspq_write_end(&write);
+        if (remaining > MAX_VERT_PER_CHUNK) {
+            remaining = MAX_VERT_PER_CHUNK; 
+        }
+    
+        rspq_write_arg(&write, remaining);
+        rspq_write_arg(&write, (int)PhysicalAddr(simulation->position_buffers[simulation->read_buffer]));
+        rspq_write_arg(&write, PhysicalAddr(args->vtx + vtx_offset));
+        rspq_write_arg(&write, args->min.equalTest);
+        rspq_write_arg(&write, args->scale.equalTest);
+    
+        rspq_write_end(&write);
+    }
 }

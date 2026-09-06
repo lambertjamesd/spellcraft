@@ -4,12 +4,9 @@
 
 static sprite_t* sprite_test;
 static tmesh_t* mesh_test;
-static water_index_range_t ranges[1];
 static water_apply_args_t args = {
-    .index_ranges = ranges,
-    .index_range_count = 1,
-    .min = {{{0, 0}}},
-    .scale = {{{0xFFFF, 0xFFFF}}},
+    .min = {{{-128, -128}}},
+    .scale = {{{0x2000, 0xff}}},
 };
 
 void water_waves_debug_render(void* data) {
@@ -28,7 +25,7 @@ void water_waves_debug_render(void* data) {
     }
 
     water_simulation_update(&water_waves->simulation);
-    // water_simulation_apply(&water_waves->simulation, &args);
+    water_simulation_apply(&water_waves->simulation, &args);
 
     rdpq_set_combiner_raw(RDPQ_COMBINER1((0, 0, 0, TEX0), (0, 0, 0, 1)));
     
@@ -111,14 +108,8 @@ void water_waves_common_init() {
 
     mesh_test = tmesh_cache_load("rom:/meshes/test/water_sim.tmesh");
 
-    for (int i = 0; i < mesh_test->vertex_count; i += 1) {
-        mesh_test->vertices[i].normA = 0;
-        mesh_test->vertices[i].normB = 0;
-    }
-
     args.vtx = mesh_test->vertices;
-    ranges[0].min = 0;
-    ranges[1].max = 16 * mesh_test->vertex_count;
+    args.vtx_count = mesh_test->vertex_count;
 }
 
 void water_waves_common_destroy() {

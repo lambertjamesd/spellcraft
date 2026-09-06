@@ -12,11 +12,12 @@
     RSPQ_BeginOverlayHeader
         RSPQ_DefineCommand WaterCmd_ProcessBlock, 16
         RSPQ_DefineCommand WaterCmd_Profile, 4
-        RSPQ_DefineCommand WaterCmd_Apply, 40
+        RSPQ_DefineCommand WaterCmd_Apply, 20
     RSPQ_EndOverlayHeader
     RSPQ_BeginSavedState
         .align 4
         DEBUG:
+            .half 0x0000, 0x0000, 0x0000, 0x0000
             .half 0x0000, 0x0000, 0x0000, 0x0000
         TIMER:
             .word 0
@@ -45,22 +46,13 @@
 
 #define VECTOR_SIZE     16
 
-#define FRAME_STEP      6
-#define VEL_FRAME_STEP  12
-
 #define VECTOR_SIZE_LOG2        4
 #define VECTOR_SIZE             16
 
-#define MAX_INDEX_BATCH_COUNT   32
-#define INDEX_RANGE_SIZE_LOG2   2
-#define INDEX_RANGE_SIZE        (1 << INDEX_RANGE_SIZE_LOG2)
-#define MAX_INDEX_BATCH_SIZE    (MAX_INDEX_BATCH_COUNT*INDEX_RANGE_SIZE)
-
-#define MAX_VTX_SIZE            ((SIM_BUFFER_SIZE*2)-MAX_INDEX_BATCH_SIZE)
+#define MAX_VTX_SIZE            (SIM_BUFFER_SIZE*2)
 #define MAX_VTX_COUNT           (MAX_VTX_SIZE / VECTOR_SIZE)
 
-#define INDEX_BUFFERS   VEL
-#define VTX_BUFFER      (VEL+MAX_INDEX_BATCH_SIZE)
+#define VTX_BUFFER      VEL
 
 #define dma_size     t0
 #define row_stride   t1
@@ -281,11 +273,10 @@ WaterCmd_Profile_SkipDelta:
 
     ##########################################
     # WaterCmd_Apply
-    # a0: index_range_size
+    # a0: vertex_count
     # a1: pos_buffer
     # a2: vtx_buffer
-    # a3: index_range_buffer
-    # CMD_ADDR(16, ...) min.xy
+    # a3: min.xy
     # CMD_ADDR(20, ...) size_inv.xz
 WaterCmd_Apply:
     .set noat
@@ -299,16 +290,11 @@ WaterCmd_Apply:
     #define vtx_ptr         t2
     #define max_vtx_ptr     t3
     #define clip_mask       t4
-    #define index_ptr       t5
-    #define max_index_ptr   t6
-    #define idx_range_ptr   t7
-    #define idx_range_end   t8
 
-    #define index_range_size   a0
+    #define vertex_count       a0
     #define pos_buffer         a1
     #define vtx_buffer         a2
-    #define index_range_buffer a3
-    
+    #define min.xy             a3
 
     li dma_size, 32*32-1
     move row_stride, zero
@@ -316,63 +302,34 @@ WaterCmd_Apply:
     jal DMAIn
     li dmem_address, %lo(IN_POS)
 
-    addi t4, rspq_dmem_buf_ptr, CMD_OFFSET(16, 24)
-    llv min_pos 0, 0, t4
-    llv min_pos 8, 0, t4
+    li t4, %lo(VEL)
+    sw a3, %lo(VEL)
+    lsv min_pos 0, 0, t4
+    lsv min_pos 4, 2, t4
+    lsv min_pos 8, 0, t4
+    lsv min_pos 12, 0, t4
+
+    addi t4, rspq_dmem_buf_ptr, CMD_OFFSET(16, 20)
     
-    llv size_inv 0, 4, t4
+    llv size_inv 0, 0, t4
 
     li t4, 32
     mtc2 t4, sim_size.e0
 
-    andi index_range_size, a0, 0xFFFF
-    sll index_range_size, index_range_size, INDEX_RANGE_SIZE_LOG2
+    andi vertex_count, 0xFFFF
+    beq zero, vertex_count, RSPQ_Loop
 
-WaterCmd_NextIndexBatch:
-    beq zero, index_range_size, RSPQ_Loop
-
-    addi $at, index_range_size, -MAX_INDEX_BATCH_SIZE
-    bgtz $at, WaterCmd_LoadIndexBatch
-    li dma_size, MAX_INDEX_BATCH_SIZE
-
-    # load index buffers
-    move dma_size, index_range_size
-WaterCmd_LoadIndexBatch:
-    li idx_range_ptr, %lo(INDEX_BUFFERS)
-    add idx_range_end, idx_range_ptr, dma_size
-
-    sub index_range_size, index_range_size, dma_size
-    move dram_address, index_range_buffer
-    add index_range_buffer, index_range_buffer, dma_size
-    addi dma_size, dma_size, -1
-    move row_stride, zero
-    jal DMAIn
-    li dmem_address, %lo(INDEX_BUFFERS)
-WaterCmd_NextIndexRange:
-    beq idx_range_ptr, idx_range_end, WaterCmd_NextIndexBatch
-    lhu vtx_ptr, 0(idx_range_ptr)
-    lhu max_vtx_ptr, 2(idx_range_ptr)
-
-    sub dma_size, max_vtx_ptr, vtx_ptr
-    addi $at, dma_size, -MAX_VTX_SIZE
-    blez $at, WaterCmd_IncRangePtr
-    add dram_address, vtx_ptr, vtx_buffer
-
-    li dma_size, MAX_VTX_SIZE
-    add vtx_ptr, vtx_ptr, dma_size
-    j WaterCmd_LoadVtxRange
-    sh vtx_ptr, 0(idx_range_ptr)
-WaterCmd_IncRangePtr:
-    addi idx_range_ptr, idx_range_ptr, INDEX_RANGE_SIZE
-WaterCmd_LoadVtxRange:
-    li vtx_ptr, %lo(VTX_BUFFER)
-    add max_vtx_ptr, vtx_ptr, dma_size
-
-    sll dma_size, dma_size, 12 - INDEX_RANGE_SIZE_LOG2
-    addi dma_size, dma_size, -(1 << 12) + (INDEX_RANGE_SIZE - 1)
-    li row_stride, 16
+    # load vertices
+    sll dma_size, vertex_count, 12
+    addi dma_size, dma_size, -(1 << 12) + 15
+    li row_stride, 32
+    move dram_address, vtx_buffer
     jal DMAIn
     li dmem_address, %lo(VTX_BUFFER)
+    
+    li vtx_ptr, %lo(VTX_BUFFER)
+    sll max_vtx_ptr, vertex_count, 4
+    add max_vtx_ptr, vtx_ptr
 
 WaterCmd_NextVtx:
     beq vtx_ptr, max_vtx_ptr, WaterCmd_WriteBackVtx
@@ -380,58 +337,60 @@ WaterCmd_NextVtx:
     lqv vtx_pos, 0, 0, vtx_ptr
     vsub vtx_pos, vtx_pos, min_pos
 
+    vxor voffset, voffset
+
     vmudm vtx_pos, vtx_pos, size_inv.e0
 
-    #define clip_mask_read  t4
+    #define clip_mask_read  t5
     vlt vtmp, vtx_pos, vzero
     cfc2 clip_mask_read, COP2_CTRL_VCC
 
     vge vtmp, vtx_pos, sim_size.e0
     cfc2 clip_mask, COP2_CTRL_VCC
 
-    or clip_mask, clip_mask, clip_mask_read
+    or clip_mask, clip_mask_read
     #undef clip_mask_read
-    #define pos_read    t4
-    #define pixel_index t5
+    #define pos_read    t5
+    #define pixel_index t6
 
-    andi $at, clip_mask, 0x03
+    andi $at, clip_mask, 0x05
     bne $at, zero, WaterCmd_SkipA
 
-    mfc2 pos_read, vtx_pos.e1
+    mfc2 pos_read, vtx_pos.e2
     sll pixel_index, pos_read, 5
     mfc2 pos_read, vtx_pos.e0
-    add pixel_index, pixel_index, pos_read
+    add pixel_index, pos_read
 
-    lh pos_read, %lo(IN_POS)(pixel_index)
+    lb pos_read, %lo(IN_POS)(pixel_index)
+    sll pos_read, 8
 
-    mtc2 pos_read, voffset.e2
+    mtc2 pos_read, voffset.e1
 
 WaterCmd_SkipA:
-    andi $at, clip_mask, 0x30
+    andi $at, clip_mask, 0x50
     bne $at, zero, WaterCmd_SkipB
 
-    mfc2 pos_read, vtx_pos.e5
+    mfc2 pos_read, vtx_pos.e6
     sll pixel_index, pos_read, 5
     mfc2 pos_read, vtx_pos.e4
     add pixel_index, pixel_index, pos_read
 
-    lh pos_read, %lo(IN_POS)(pixel_index)
+    lb pos_read, %lo(IN_POS)(pixel_index)
+    sll pos_read, 8
 
-    mtc2 pos_read, voffset.e6
+    mtc2 pos_read, voffset.e5
 WaterCmd_SkipB:
     #undef pos_read
 
     # scale the offset
     vmudm voffset, voffset, size_inv.e1
-    # add original pos to offset
-    vadd voffset, voffset, vtx_pos.h3
 
     # store new vertical position
-    ssv voffset, 4, 4, vtx_ptr
-    ssv voffset, 12, 12, vtx_ptr
+    ssv voffset, 2, 2, vtx_ptr
+    ssv voffset, 10, 10, vtx_ptr
 
     j WaterCmd_NextVtx
     addi vtx_ptr, vtx_ptr, 16
 
 WaterCmd_WriteBackVtx:
-    jal_and_j DMAOut, WaterCmd_NextIndexRange
+    jal_and_j DMAOut, RSPQ_Loop
