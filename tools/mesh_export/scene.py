@@ -216,7 +216,7 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
         # this signals the mesh should be embedded
         file.write(b'\0')
 
-        tiny3d_mesh_writer.write_mesh(mesh, None, [], settings, file)
+        tiny3d_mesh_writer.write_mesh(mesh, None, [], settings, file, preserve_chunk_order=True)
 
         if len(mesh) == 0:
             file.write(struct.pack('>fff', 0, 0, 0))
