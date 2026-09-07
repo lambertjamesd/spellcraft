@@ -3,8 +3,9 @@
 
 #define SIM_BUFFER_SIZE 576
 
-#define SPRING_CONSTANT     0x4999
-#define DAMPING_CONSTANT    0xFFF0
+#define SPRING_CONSTANT     0xFFFF
+#define DAMPING_CONSTANT    0xFFFF
+#define DT                  0x0888
 
 #define CMD_OFFSET(offset, cmdsize) (%lo(RSPQ_DMEM_BUFFER) + (offset) - (cmdsize))
 
@@ -23,7 +24,7 @@
             .word 0
         .align 4
         CONSTANTS:
-            .half SPRING_CONSTANT, DAMPING_CONSTANT, 0x0888, 0
+            .half SPRING_CONSTANT, DAMPING_CONSTANT, DT, 0
             .half 0, 0, 0, 0
     RSPQ_EndSavedState
 .bss

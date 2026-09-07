@@ -4,33 +4,19 @@
 #include <stdint.h>
 #include <t3d/t3d.h>
 #include "../math/vector2s16.h"
+#include "../render/tmesh.h"
 
-struct water_simulation {
-    uint16_t width;
-    uint16_t height;
-    int16_t* velocity_buffer;
-    int8_t* position_buffers[2];
-    uint8_t read_buffer;
-    uint8_t y_stride;
-};
+void water_simulation_retain();
+void water_simulation_release();
 
-typedef struct water_simulation water_simulation_t;
+void water_simulation_enable_debug_render();
+void water_simulation_disable_debug_render();
 
-struct water_apply_args {
-    T3DVertPacked* vtx;
-    vector2s16_t min;
-    vector2s16_t scale;
-    uint16_t vtx_count;
-};
+void water_simulation_update();
 
-typedef struct water_apply_args water_apply_args_t;
+void water_simulation_apply(tmesh_t* mesh, vector3_t* position);
 
-void water_simulation_init(water_simulation_t* simulation, int width, int height);
-
-void water_simulation_update(water_simulation_t* simulation);
-
-void water_simulation_destroy(water_simulation_t* simulation);
-
-void water_simulation_apply(water_simulation_t* simulation, water_apply_args_t* args);
+void water_simulation_set_center(vector3_t* position);
+void water_simulation_set(vector3_t* position, int8_t value, int8_t radius);
 
 #endif

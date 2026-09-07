@@ -8,9 +8,8 @@
 #include "entity_deps.h"
 
 struct water_waves {
-    transform_sa_t transform;
-    water_simulation_t simulation;
-    renderable_t renderable;
+    vector3_t position;
+    tmesh_t* mesh;
 };
 
 typedef struct water_waves water_waves_t;
