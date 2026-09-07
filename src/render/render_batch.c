@@ -30,10 +30,10 @@ struct render_batch_element* render_batch_add(struct render_batch* batch) {
     ++batch->element_count;
 
     if (batch->curr_pos) {
-        result->distance = batch->camera_matrix[0][2] * batch->curr_pos->x + 
+        result->distance = -(batch->camera_matrix[0][2] * batch->curr_pos->x + 
             batch->camera_matrix[1][2] * batch->curr_pos->y + 
             batch->camera_matrix[2][2] * batch->curr_pos->z + 
-            batch->camera_matrix[3][2];
+            batch->camera_matrix[3][2]);
     } else {
         result->distance = 0.0f;
     }
@@ -545,7 +545,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
             }
 
             if (current_mat && current_mat->apply.use_obj_fog) {
-                fog_apply_obj_fog(&fog_state, -element->distance);
+                fog_apply_obj_fog(&fog_state, element->distance);
                 rdpq_set_fog_color(fog_state.color);
             }
 
