@@ -637,6 +637,13 @@ def write_fog(file):
     file.write(struct.pack('>ff', min, max))
     color.write(file)
 
+def write_clear_color(file):
+    if not hasattr(bpy.context.scene, 'clear_color'):
+        file.write(struct.pack('>BBBB', 0, 0, 0, 255))
+        
+    color = material.color_from_vec(bpy.context.scene.clear_color)
+    color.write(file)
+
 def include_all(collection):
     collection.exclude = False
 
@@ -892,6 +899,7 @@ def process_scene():
         map_builder.build_map_outline(scene.map_entries, get_map_icons(scene, enums), file)
 
         write_fog(file)
+        write_clear_color(file)
 
         camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
 

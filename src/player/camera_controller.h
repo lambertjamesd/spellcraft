@@ -82,4 +82,6 @@ void camera_shake(struct camera_controller* controller, float strength);
 
 void camera_shift_by(struct camera_controller* controller, vector3_t* offset);
 
+bool camera_is_touching_wall(struct camera_controller* controller);
+
 #endif

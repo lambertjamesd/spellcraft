@@ -392,6 +392,7 @@ struct scene* scene_load(const char* filename) {
 
     scene_load_fog(&scene->fog, file);
     fog_set(FOG_PRIORITY_SCENE, (fog_state_t){.color = scene->fog.color, .min = scene->fog.min, .max = scene->fog.max}, 0.0f);
+    fread(&scene->clear_color, sizeof(color_t), 1, file);
 
     scene_load_camera_animations(&scene->camera_animations, filename, file);
 

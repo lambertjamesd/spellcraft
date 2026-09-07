@@ -72,6 +72,10 @@ static struct entity_field_type_location fields_script_runner[] = {
     { .offset = offsetof(struct script_runner_definition, target), .type = ENTITY_FIELD_TYPE_STRING },
 };
 
+static struct entity_field_type_location fields_room_portal[] = {
+    { .offset = offsetof(struct room_portal_definition, mesh), .type = ENTITY_FIELD_TYPE_STRING },
+};
+
 static struct entity_field_type_location fields_burning_thorns[] = {
     { .offset = offsetof(struct burning_thorns_definition, mesh), .type = ENTITY_FIELD_TYPE_STRING },
 };
@@ -122,7 +126,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(door, fields_empty),
     ENTITY_DEFINITION(timed_torch_puzzle, fields_empty),
     ENTITY_DEFINITION(elevator, fields_empty),
-    ENTITY_DEFINITION(room_portal, fields_empty),
+    ENTITY_DEFINITION(room_portal, fields_room_portal),
     ENTITY_DEFINITION(burning_thorns, fields_burning_thorns),
     ENTITY_DEFINITION(bool_and_logic, fields_empty),
     ENTITY_DEFINITION(camera_focus, fields_empty),

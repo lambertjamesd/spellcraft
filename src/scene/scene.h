@@ -129,6 +129,7 @@ struct scene {
     menu_map_t map;
 
     scene_fog_t fog;
+    color_t clear_color;
 
     room_entity_block_t* room_entities;
     shared_entity_block_t shared_entities;

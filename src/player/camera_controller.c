@@ -581,3 +581,7 @@ void camera_shift_by(struct camera_controller* controller, vector3_t* offset) {
     vector3Add(&controller->looking_at, offset, &controller->looking_at);
     vector3Add(&controller->stable_position, offset, &controller->stable_position);
 }
+
+bool camera_is_touching_wall(struct camera_controller* controller) {
+    return controller->wall_checker.collider.active_contacts != NULL;
+}

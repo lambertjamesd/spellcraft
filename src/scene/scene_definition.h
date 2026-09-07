@@ -224,6 +224,7 @@ struct room_portal_definition {
     float scale;
     room_id room_a;
     room_id room_b;
+    mesh_location mesh;
 };
 
 struct burning_thorns_definition {

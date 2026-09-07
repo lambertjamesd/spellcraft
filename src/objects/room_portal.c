@@ -88,7 +88,7 @@ void room_portal_init(struct room_portal* portal, struct room_portal_definition*
     vector3Scale(&gOneVec, &scale, definition->scale);
     transformInit(&portal->transform, &definition->position, &definition->rotation, &scale);
 
-    renderable_init(&portal->renderable, &portal->transform, "rom:/meshes/objects/room_portal.tmesh");
+    renderable_init(&portal->renderable, &portal->transform, definition->mesh);
     render_scene_add_renderable(&portal->renderable, definition->scale * 1.4f);
     update_add(portal, room_portal_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
     

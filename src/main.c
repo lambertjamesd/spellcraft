@@ -91,9 +91,15 @@ void render_3d(surface_t* col, surface_t* z_buffer, struct frame_memory_pool* po
     }
     rdpq_set_color_image(col);
     rdpq_set_z_image(z_buffer);
-    // if ((current_scene && !current_scene->overworld) || ENABLE_LOD_RENDER_DEBUG) {
-        // t3d_screen_clear_color(RGBA32(0, 0, 0, 0));
-    // }
+
+    if (current_scene && (current_scene->clear_color.a > 128 || camera_is_touching_wall(&current_scene->player.camera_controller))) {
+        t3d_screen_clear_color(RGBA32(
+            current_scene->clear_color.r,
+            current_scene->clear_color.g,
+            current_scene->clear_color.b,
+            current_scene->clear_color.a
+        ));
+    }
     
     t3d_frame_start();
 
