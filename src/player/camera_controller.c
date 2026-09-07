@@ -394,19 +394,6 @@ entity_id camera_determine_secondary_target(struct camera_controller* controller
     return controller->player->z_target;
 }
 
-#define MAX_NEAR_PLANE  1.2f
-#define MIN_NEAR_PLANE  0.3f
-#define PLAYER_CLIP_RADIUS 0.25f
-
-void camera_controller_determine_near_plane(struct camera_controller* controller) {
-    vector3_t offset;
-    vector3Sub(player_get_position(controller->player), &controller->camera.transform.position, &offset);
-
-    float target_near_plane = sqrtf(vector3MagSqrd2D(&offset)) - PLAYER_CLIP_RADIUS;
-
-    camera_set_near(&controller->camera, clampf(target_near_plane, MIN_NEAR_PLANE, MAX_NEAR_PLANE));
-}
-
 void camera_controller_update(struct camera_controller* controller) {
     float follow_distance = camera_get_distance(controller);
 
@@ -455,8 +442,6 @@ void camera_controller_update(struct camera_controller* controller) {
     vector3AddScaled(&controller->shake_offset, &controller->shake_velocity, fixed_time_step, &controller->shake_offset);
     vector3Scale(&controller->shake_velocity, &controller->shake_velocity, 0.5f);
     vector3Add(&controller->stable_position, &controller->shake_offset, &controller->camera.transform.position);
-
-    camera_controller_determine_near_plane(controller);
 }
 
 void camera_controller_init(struct camera_controller* controller, struct player* player) {
