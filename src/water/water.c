@@ -2,6 +2,7 @@
 
 #include <libdragon.h>
 #include "../render/render_scene.h"
+#include "../render/defs.h"
 #include "../menu/menu_rendering.h"
 
 static uint32_t WATER_OVERLAY_ID = 0;
@@ -13,11 +14,12 @@ static uint32_t WATER_OVERLAY_ID = 0;
 #define SIM_BUFFER_SIZE     1024
 #define MAX_VERT_PER_CHUNK  (SIM_BUFFER_SIZE / 16)
 
-#define SIM_WIDTH           32
-#define SIM_HEIGHT          32
-#define PIXEL_COUNT         (SIM_WIDTH * SIM_HEIGHT)
-#define PADDED_PIXEL_COUNT  (PIXEL_COUNT + SIM_WIDTH * 2)
-#define Y_STRIDE            (SIM_BUFFER_SIZE / (SIM_WIDTH * sizeof(int16_t)) - 1)
+#define SIM_SIZE            32
+#define PIXEL_COUNT         (SIM_SIZE * SIM_SIZE)
+#define PADDED_PIXEL_COUNT  (PIXEL_COUNT + SIM_SIZE * 2)
+#define Y_STRIDE            (SIM_BUFFER_SIZE / (SIM_SIZE * sizeof(int16_t)) - 1)
+
+#define SIM_WORLD_SIZE      16 
 
 DEFINE_RSP_UCODE(rsp_water);
 
@@ -28,6 +30,7 @@ struct water_simulation {
     uint8_t read_buffer;
     bool is_dirty;
     vector2s16_t min;
+    vector2s16_t next_min;
     vector2s16_t scale;
 };
 
@@ -55,7 +58,9 @@ void water_simulation_retain() {
     simulation.position_buffers[0] = (int8_t*)(simulation.velocity_buffer + PIXEL_COUNT);
     simulation.position_buffers[1] = simulation.position_buffers[0] + PADDED_PIXEL_COUNT;
     simulation.read_buffer = 0;
-    simulation.scale = (vector2s16_t){{{0x0400, 0x0400}}};
+    simulation.min = (vector2s16_t){};
+    simulation.next_min = (vector2s16_t){};
+    simulation.scale = (vector2s16_t){{{0x10000 * SIM_SIZE / (SIM_WORLD_SIZE * MODEL_SCALE), 0x10000 * SIM_SIZE / (SIM_WORLD_SIZE * MODEL_SCALE)}}};
 
     memset(simulation.velocity_buffer, 0, total_size);
 
@@ -86,12 +91,12 @@ void water_simulation_update() {
     int8_t* in = simulation.position_buffers[simulation.read_buffer];
     int8_t* out = simulation.position_buffers[write_index];
 
-    int block_y_stride = SIM_WIDTH * Y_STRIDE;
-    int simluation_stride = SIM_WIDTH * sizeof(int8_t);
+    int block_y_stride = SIM_SIZE * Y_STRIDE;
+    int simluation_stride = SIM_SIZE * sizeof(int8_t);
     
-    for (int y = 1; y + 1 < SIM_HEIGHT; y += Y_STRIDE) {
+    for (int y = 1; y + 1 < SIM_SIZE; y += Y_STRIDE) {
         int y_count = Y_STRIDE;
-        int rows_remaining = SIM_HEIGHT - y - 1;
+        int rows_remaining = SIM_SIZE - y - 1;
 
         if (y_count > rows_remaining) {
             y_count = rows_remaining;
@@ -112,12 +117,17 @@ void water_simulation_update() {
     }
 
     simulation.read_buffer = write_index;
+    simulation.min = simulation.next_min;
 }
 
 void water_simulation_apply(tmesh_t* mesh, vector3_t* position) {
     if (simulation.is_dirty) {
         water_simulation_update();
     }
+
+    vector2s16_t min;
+    water_simulation_rounded_position(position, &min);
+    vector2s16Sub(&simulation.min, &min, &min);
 
     for (int vtx_offset = 0; vtx_offset < mesh->vertex_count; vtx_offset += MAX_VERT_PER_CHUNK) {
         rspq_write_t write = rspq_write_begin(WATER_OVERLAY_ID, PROCESS_APPLY, 5);
@@ -131,7 +141,7 @@ void water_simulation_apply(tmesh_t* mesh, vector3_t* position) {
         rspq_write_arg(&write, remaining);
         rspq_write_arg(&write, (int)PhysicalAddr(simulation.position_buffers[simulation.read_buffer]));
         rspq_write_arg(&write, PhysicalAddr(mesh->vertices + vtx_offset));
-        rspq_write_arg(&write, simulation.min.equalTest);
+        rspq_write_arg(&write, min.equalTest);
         rspq_write_arg(&write, simulation.scale.equalTest);
     
         rspq_write_end(&write);
@@ -146,7 +156,7 @@ void water_simulation_debug_render(void* data) {
 
     surface_t surface;
 
-    surface.buffer = simulation.position_buffers[1] + SIM_WIDTH;
+    surface.buffer = simulation.position_buffers[1] + SIM_SIZE;
     surface.flags = FMT_I8;
     surface.width = 32;
     surface.height = 32;
@@ -197,4 +207,65 @@ void water_simulation_enable_debug_render() {
 void water_simulation_disable_debug_render() {
     menu_remove_callback(&simulation);
     sprite_free(sprite_test);
+}
+
+void water_simulation_set_center(vector3_t* position) {
+    water_simulation_rounded_position(position, &simulation.next_min);
+    simulation.next_min.x = (simulation.next_min.x - SIM_SIZE / 2 + 4) & ~0x7; 
+    simulation.next_min.y = simulation.next_min.y - SIM_SIZE / 2;
+}
+
+void water_simulation_set_callback(void* data) {
+    int args = (int)data;
+
+    int8_t value = (int8_t)(uint8_t)args;
+    uint8_t sim_radius = (uint8_t)(args >> 8);
+    int8_t y_center = (int8_t)(uint8_t)(args >> 16);
+    int8_t x_center = (int8_t)(uint8_t)(args >> 24);
+
+    int min_x = x_center - sim_radius;
+    int min_y = y_center - sim_radius;
+    int max_x = x_center + sim_radius;
+    int max_y = y_center + sim_radius;
+
+    if (min_x < 0) min_x = 0;
+    if (min_y < 0) min_y = 0;
+    if (max_x > SIM_SIZE) max_x = SIM_SIZE;
+    if (max_y > SIM_SIZE) max_y = SIM_SIZE;
+
+    int8_t* buffer = UncachedAddr(simulation.position_buffers[simulation.read_buffer] + SIM_SIZE);
+
+    for (int y = min_y; y < max_y; y += 1) {
+        for (int x = min_x; x < max_x; x += 1) {
+            buffer[y * SIM_SIZE + x] = value;
+        }
+    }
+}
+
+void water_simulation_set(vector3_t* position, float radius, int8_t value) {
+    if (simulation.ref_count == 0) {
+        return;
+    }
+    
+    vector2s16_t sim_pos;
+    water_simulation_rounded_position(position, &sim_pos);
+    vector2s16Sub(&sim_pos, &simulation.min, &sim_pos);
+
+    int sim_radius = (int)ceilf(radius * ((float)SIM_SIZE / (float)SIM_WORLD_SIZE));
+
+    if (sim_pos.x < sim_radius || 
+        sim_pos.y < sim_radius || 
+        sim_pos.x > SIM_SIZE + sim_radius ||
+        sim_pos.y > SIM_SIZE + sim_radius
+    ) {
+        return;
+    }
+
+    int args = ((int)(sim_pos.x & 0xFF) << 24) | ((int)(sim_pos.y & 0xFF) << 16) | ((sim_radius & 0xFF) << 8) | ((int)(uint8_t)value & 0xFF);
+    rspq_call_deferred(water_simulation_set_callback, (void*)args);
+}
+
+void water_simulation_rounded_position(vector3_t* input, vector2s16_t* output) {
+    output->x = roundf(input->x * ((float)SIM_SIZE / (float)SIM_WORLD_SIZE));
+    output->y = roundf(input->z * ((float)SIM_SIZE / (float)SIM_WORLD_SIZE));
 }

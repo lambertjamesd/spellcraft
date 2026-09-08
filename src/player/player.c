@@ -22,6 +22,7 @@
 #include "../effects/area_title.h"
 #include "../scene/scene.h"
 #include "../menu/tutorial_menu.h"
+#include "../water/water.h"
 
 #include "../effects/fade_effect.h"
 
@@ -1534,6 +1535,7 @@ void player_update(struct player* player) {
     health_recieve_contact_damage(&player->health, player->cutscene_actor.collider.active_contacts);
 
     dynamic_object_wake(&player->cutscene_actor.collider);
+    water_simulation_set_center(player_get_position(player));
 
     if (cutscene_actor_update(&player->cutscene_actor) || !update_has_layer(UPDATE_LAYER_WORLD)) {
         return;

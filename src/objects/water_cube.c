@@ -4,6 +4,7 @@
 #include "../collision/collide.h"
 #include "../time/time.h"
 #include "../math/mathf.h"
+#include "../water/water.h"
 
 #define MAX_MOVE_AMOUNT     10.0f
 
@@ -64,6 +65,7 @@ void water_cube_apply_water(spatial_trigger_t* trigger) {
 
         vector3Scale(&obj->velocity, &obj->velocity, mathfLerp(1.0f, 0.9f, underwater_ratio));
         obj->velocity.y -= underwater_ratio * density_level[obj->density_class] * fixed_time_step;
+        water_simulation_set(&current->point, (obj->bounding_box.max.x - obj->bounding_box.min.x) * 0.5f, -127);
 
         if (underwater_ratio > 0.5f) {
             DYNAMIC_OBJECT_MARK_UNDER_WATER(obj);
