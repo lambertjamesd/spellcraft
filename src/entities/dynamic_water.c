@@ -1,8 +1,22 @@
 #include "dynamic_water.h"
 
 #include "../objects/water_cube.h"
+#include "../water/water.h"
 
 #define CHANGE_RATE     1.0f
+
+void dynamic_water_render(void* data, render_batch_t* batch) {
+    dynamic_water_t* water = (dynamic_water_t*)data;
+    water_simulation_apply(water->mesh, &water->transform.position);
+
+    T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &water->transform);
+
+    if (!mtx) {
+        return;
+    }
+
+    render_batch_add_tmesh(batch, water->mesh, mtx, NULL, NULL, NULL);
+}
 
 void dynamic_water_update(void* data) {
     dynamic_water_t* dynamic_water = (dynamic_water_t*)data;
@@ -26,8 +40,8 @@ void dynamic_water_init(dynamic_water_t* dynamic_water, struct dynamic_water_def
 
     dynamic_water->transform.position.y = expression_get_bool(dynamic_water->is_other_level) ? dynamic_water->other_level : dynamic_water->start_level;
 
-    renderable_single_axis_init(&dynamic_water->renderable, &dynamic_water->transform, definition->mesh);
-    render_scene_add_renderable(&dynamic_water->renderable, 0.0f);
+    dynamic_water->mesh = tmesh_cache_load(definition->mesh);
+    render_scene_add(&dynamic_water->transform.position, dynamic_water->mesh->radius, dynamic_water_render, dynamic_water);
 
     spatial_trigger_type_from_shape(&dynamic_water->trigger_type, &definition->collider);
     spatial_trigger_init(&dynamic_water->trigger, &dynamic_water->transform, &dynamic_water->trigger_type, COLLISION_LAYER_TANGIBLE, entity_id);
@@ -37,16 +51,18 @@ void dynamic_water_init(dynamic_water_t* dynamic_water, struct dynamic_water_def
 }
 
 void dynamic_water_destroy(dynamic_water_t* dynamic_water, struct dynamic_water_definition* definition) {
-    render_scene_remove(&dynamic_water->renderable);
-    renderable_destroy(&dynamic_water->renderable);
+    render_scene_remove(dynamic_water);
+    tmesh_cache_release(dynamic_water->mesh);
     collision_scene_remove_trigger(&dynamic_water->trigger);
     update_remove(dynamic_water);
 }
 
 void dynamic_water_common_init() {
+    water_simulation_retain();
 
 }
 
 void dynamic_water_common_destroy() {
+    water_simulation_release();
 
 }

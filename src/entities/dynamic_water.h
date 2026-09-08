@@ -8,7 +8,6 @@
 
 struct dynamic_water {
     transform_sa_t transform;
-    renderable_t renderable;
     spatial_trigger_t trigger;
     spatial_trigger_type_t trigger_type;
 
@@ -16,6 +15,8 @@ struct dynamic_water {
     float other_level;
 
     boolean_variable is_other_level;
+    tmesh_t* mesh;
+    vector3_t min;
 };
 
 typedef struct dynamic_water dynamic_water_t;

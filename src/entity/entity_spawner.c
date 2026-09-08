@@ -22,7 +22,6 @@
 #include "../objects/trigger_cube.h"
 #include "../objects/line_mesh.h"
 #include "../entities/script_runner.h"
-#include "../entities/water_waves.h"
 #include "../entities/pinwheel.h"
 #include "../entities/breakable.h"
 #include "../entities/jelly_pot.h"
@@ -140,7 +139,6 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(trigger_cube, fields_empty),
     ENTITY_DEFINITION(line_mesh, fields_line_mesh),
     ENTITY_DEFINITION(script_runner, fields_script_runner),
-    ENTITY_DEFINITION(water_waves, fields_empty),
     ENTITY_DEFINITION(golem_enemy, fields_empty),
     ENTITY_DEFINITION(pinwheel, fields_empty),
     ENTITY_DEFINITION(breakable, fields_empty),

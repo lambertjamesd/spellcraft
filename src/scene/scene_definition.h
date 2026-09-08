@@ -39,7 +39,6 @@ enum entity_type_id {
     ENTITY_TYPE_trigger_cube,
     ENTITY_TYPE_line_mesh,
     ENTITY_TYPE_script_runner,
-    ENTITY_TYPE_water_waves,
     ENTITY_TYPE_golem_enemy,
     ENTITY_TYPE_pinwheel,
     ENTITY_TYPE_breakable,
@@ -383,12 +382,6 @@ struct trigger_cube_definition {
 struct line_mesh_definition {
     struct Vector3 position;
     line_mesh_data_ref mesh;
-};
-
-struct water_waves_definition {
-    struct Vector3 position;    
-    uint16_t width;
-    uint16_t height;
 };
 
 struct golem_enemy_definition {
