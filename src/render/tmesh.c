@@ -278,3 +278,24 @@ armature_attachment_t* tmesh_find_attachment(tmesh_t* mesh, const char* name) {
 
     return NULL;
 }
+
+void tmesh_compute_bounding_box(tmesh_t* mesh, vector3s16_t* min, vector3s16_t* max) {
+    if (mesh->vertex_count == 0) {
+        *min = (vector3s16_t){};
+        *max = (vector3s16_t){};
+        return;
+    }
+
+    min->x = mesh->vertices[0].posA[0];
+    min->y = mesh->vertices[0].posA[1];
+    min->z = mesh->vertices[0].posA[2];
+
+    *max = *min;
+
+    for (int i = 0; i < mesh->vertex_count; i += 1) {
+        vector3s16Min(min, (vector3s16_t*)mesh->vertices[i].posA, min);
+        vector3s16Max(max, (vector3s16_t*)mesh->vertices[i].posA, max);
+        vector3s16Min(min, (vector3s16_t*)mesh->vertices[i].posB, min);
+        vector3s16Max(max, (vector3s16_t*)mesh->vertices[i].posB, max);
+    }
+}

@@ -7,7 +7,7 @@
 
 void dynamic_water_render(void* data, render_batch_t* batch) {
     dynamic_water_t* water = (dynamic_water_t*)data;
-    water_simulation_apply(water->mesh, &water->transform.position);
+    water_simulation_apply(water->mesh, &water->min);
 
     T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &water->transform);
 
@@ -47,6 +47,13 @@ void dynamic_water_init(dynamic_water_t* dynamic_water, struct dynamic_water_def
     spatial_trigger_init(&dynamic_water->trigger, &dynamic_water->transform, &dynamic_water->trigger_type, COLLISION_LAYER_TANGIBLE, entity_id);
     collision_scene_add_trigger(&dynamic_water->trigger);
 
+    vector3s16_t min;
+    vector3s16_t max;
+    tmesh_compute_bounding_box(dynamic_water->mesh, &min, &max);
+    dynamic_water->min.x = dynamic_water->transform.position.x + min.x * (1.0f / MODEL_SCALE);
+    dynamic_water->min.y = dynamic_water->transform.position.y + min.y * (1.0f / MODEL_SCALE);
+    dynamic_water->min.z = dynamic_water->transform.position.z + min.z * (1.0f / MODEL_SCALE);
+
     update_add(dynamic_water, dynamic_water_update, UPDATE_PRIORITY_PHYICS | UPDATE_LAYER_CUTSCENE, UPDATE_LAYER_WORLD);
 }
 
@@ -60,9 +67,11 @@ void dynamic_water_destroy(dynamic_water_t* dynamic_water, struct dynamic_water_
 void dynamic_water_common_init() {
     water_simulation_retain();
 
+    water_simulation_enable_debug_render();
 }
 
 void dynamic_water_common_destroy() {
     water_simulation_release();
 
+    water_simulation_disable_debug_render();
 }

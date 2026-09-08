@@ -78,7 +78,6 @@ void water_simulation_release() {
     free(simulation.velocity_buffer);
     simulation.velocity_buffer = NULL;
     render_scene_remove_step(&simulation);
-
 }
 
 // 12 is chosen to simplify calculating dma transfer sizes
@@ -88,33 +87,68 @@ void water_simulation_update() {
     int write_index = 1 - simulation.read_buffer;
 
     int16_t* vel = simulation.velocity_buffer;
+    int16_t* vel_out = simulation.velocity_buffer;
     int8_t* in = simulation.position_buffers[simulation.read_buffer];
-    int8_t* out = simulation.position_buffers[write_index];
+    int8_t* out = simulation.position_buffers[write_index] + SIM_SIZE * sizeof(int8_t);
+
+    int x_size = SIM_SIZE;
+    int y_size = SIM_SIZE;
+
+    vector2s16_t diff;
+    vector2s16Sub(&simulation.next_min, &simulation.min, &diff);
+
+    if (diff.x > 0) {
+        in += diff.x;
+        vel += diff.x;
+        x_size -= diff.x;
+    } else {
+        out -= diff.x;
+        vel_out -= diff.x;
+        x_size += diff.x;
+    }
 
     int block_y_stride = SIM_SIZE * Y_STRIDE;
-    int simluation_stride = SIM_SIZE * sizeof(int8_t);
-    
-    for (int y = 1; y + 1 < SIM_SIZE; y += Y_STRIDE) {
+
+    if (diff.y > 0) {
+        in += diff.y * SIM_SIZE;
+        vel += diff.y * SIM_SIZE;
+        y_size -= diff.y;
+    } else {
+        out -= diff.y * SIM_SIZE;
+        vel_out -= diff.y * SIM_SIZE;
+        y_size += diff.y;
+
+        if (y_size > Y_STRIDE) {
+            int start_offset = (y_size - Y_STRIDE) * SIM_SIZE;
+
+            in += start_offset;
+            out += start_offset;
+            vel_out += start_offset;
+            block_y_stride = -block_y_stride;
+        }
+    }
+
+    for (int y = 0; y < y_size && x_size > 0; y += Y_STRIDE) {
         int y_count = Y_STRIDE;
-        int rows_remaining = SIM_SIZE - y - 1;
+        int rows_remaining = SIM_SIZE - y;
 
         if (y_count > rows_remaining) {
             y_count = rows_remaining;
         }
 
-        rspq_write(
-            WATER_OVERLAY_ID, 
-            PROCESS_BLOCK, 
-            ((int)y_count << Y_STRIDE_OFFSET) | simluation_stride, 
-            PhysicalAddr(vel), 
-            PhysicalAddr(in), 
-            PhysicalAddr(out + simluation_stride)
-        );
+        rspq_write_t write = rspq_write_begin(WATER_OVERLAY_ID, PROCESS_BLOCK, 5);
+        rspq_write_arg(&write, ((int)y_count << Y_STRIDE_OFFSET) | x_size); 
+        rspq_write_arg(&write, PhysicalAddr(vel));
+        rspq_write_arg(&write, PhysicalAddr(in));
+        rspq_write_arg(&write, PhysicalAddr(vel_out));
+        rspq_write_arg(&write, PhysicalAddr(out));
+        rspq_write_end(&write);
 
         vel += block_y_stride;
         in += block_y_stride;
         out += block_y_stride;
     }
+
 
     simulation.read_buffer = write_index;
     simulation.min = simulation.next_min;
@@ -139,7 +173,7 @@ void water_simulation_apply(tmesh_t* mesh, vector3_t* position) {
         }
     
         rspq_write_arg(&write, remaining);
-        rspq_write_arg(&write, (int)PhysicalAddr(simulation.position_buffers[simulation.read_buffer]));
+        rspq_write_arg(&write, (int)PhysicalAddr(simulation.position_buffers[simulation.read_buffer] + SIM_SIZE));
         rspq_write_arg(&write, PhysicalAddr(mesh->vertices + vtx_offset));
         rspq_write_arg(&write, min.equalTest);
         rspq_write_arg(&write, simulation.scale.equalTest);

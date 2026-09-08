@@ -7,6 +7,7 @@
 #include "material.h"
 #include "armature.h"
 #include "../math/transform.h"
+#include "../math/vector3s16.h"
 
 enum light_source {
     LIGHT_SOURCE_NONE,
@@ -45,5 +46,7 @@ void tmesh_load_filename(struct tmesh* tmesh, const char* filename);
 void tmesh_release(struct tmesh* tmesh);
 
 armature_attachment_t* tmesh_find_attachment(tmesh_t* mesh, const char* name);
+
+void tmesh_compute_bounding_box(tmesh_t* mesh, vector3s16_t* min, vector3s16_t* max);
 
 #endif

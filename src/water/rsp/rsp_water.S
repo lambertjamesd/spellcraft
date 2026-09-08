@@ -11,7 +11,7 @@
 
 .data
     RSPQ_BeginOverlayHeader
-        RSPQ_DefineCommand WaterCmd_ProcessBlock, 16
+        RSPQ_DefineCommand WaterCmd_ProcessBlock, 20
         RSPQ_DefineCommand WaterCmd_Profile, 4
         RSPQ_DefineCommand WaterCmd_Apply, 20
     RSPQ_EndOverlayHeader
@@ -85,9 +85,9 @@
 #define pos_offset $v10
 #define vel $v11
 
-#define vel_dmem    a1
-#define pos_dmem    a2
-#define out_dmem    a3
+#define vel_dmem     a1
+#define pos_dmem     a2
+#define vel_out_dmem a3
 
 #define Y_STRIDE_OFFSET 12
 
@@ -123,7 +123,8 @@
     # a0: h:12 w:12
     # a1: vel
     # a2: in_pos
-    # a3: out_pos
+    # a3: out_vel
+    # CMD_ADDR(16, ...) out_pos
 WaterCmd_ProcessBlock:
     .set at
     srl row_count, a0, Y_STRIDE_OFFSET
@@ -233,7 +234,7 @@ WaterCmd_ProcessBlock_WriteResult:
     addi dma_size, dma_size, -(2 << 12)
     
     # Save the position block
-    move dram_address, out_dmem
+    lw dram_address, CMD_ADDR(16, 20)
     jal DMAOut
     li dmem_address, %lo(OUT_POS)
 
@@ -242,7 +243,7 @@ WaterCmd_ProcessBlock_WriteResult:
     li row_stride, 64
 
     # Save the velocity block
-    move dram_address, vel_dmem
+    move dram_address, vel_out_dmem
     li dmem_address, %lo(VEL)
     jal_and_j DMAOut, RSPQ_Loop
 
@@ -266,8 +267,8 @@ WaterCmd_Profile_SkipDelta:
     # a0: vertex_count
     # a1: pos_buffer
     # a2: vtx_buffer
-    # a3: min.xy
-    # CMD_ADDR(20, ...) size_inv.xz
+    # a3: min_xy
+    # CMD_ADDR(16, ...) size_inv.xz
 WaterCmd_Apply:
     .set noat
     #define vtx_pos         $v01
@@ -284,7 +285,7 @@ WaterCmd_Apply:
     #define vertex_count       a0
     #define pos_buffer         a1
     #define vtx_buffer         a2
-    #define min.xy             a3
+    #define min_xy             a3
 
     li dma_size, 32*32-1
     move row_stride, zero
