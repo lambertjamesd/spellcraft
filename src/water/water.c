@@ -11,7 +11,7 @@ static uint32_t WATER_OVERLAY_ID = 0;
 #define PROCESS_PROFILE     1
 #define PROCESS_APPLY       2
 
-#define SIM_BUFFER_SIZE     1024
+#define SIM_BUFFER_SIZE     1088
 #define MAX_VERT_PER_CHUNK  (SIM_BUFFER_SIZE / 16)
 
 #define SIM_SIZE            32
@@ -98,39 +98,40 @@ void water_simulation_update() {
     vector2s16Sub(&simulation.next_min, &simulation.min, &diff);
 
     if (diff.x > 0) {
-        in += diff.x;
-        vel += diff.x;
+        out += diff.x;
+        vel_out += diff.x;
         x_size -= diff.x;
     } else {
-        out -= diff.x;
-        vel_out -= diff.x;
+        in -= diff.x;
+        vel -= diff.x;
         x_size += diff.x;
     }
 
     int block_y_stride = SIM_SIZE * Y_STRIDE;
 
     if (diff.y > 0) {
-        in += diff.y * SIM_SIZE;
-        vel += diff.y * SIM_SIZE;
+        out += diff.y * SIM_SIZE;
+        vel_out += diff.y * SIM_SIZE;
         y_size -= diff.y;
-    } else {
-        out -= diff.y * SIM_SIZE;
-        vel_out -= diff.y * SIM_SIZE;
-        y_size += diff.y;
 
         if (y_size > Y_STRIDE) {
             int start_offset = (y_size - Y_STRIDE) * SIM_SIZE;
 
             in += start_offset;
             out += start_offset;
+            vel += start_offset;
             vel_out += start_offset;
             block_y_stride = -block_y_stride;
         }
+    } else {
+        in -= diff.y * SIM_SIZE;
+        vel -= diff.y * SIM_SIZE;
+        y_size += diff.y;
     }
 
     for (int y = 0; y < y_size && x_size > 0; y += Y_STRIDE) {
         int y_count = Y_STRIDE;
-        int rows_remaining = SIM_SIZE - y;
+        int rows_remaining = y_size - y;
 
         if (y_count > rows_remaining) {
             y_count = rows_remaining;
@@ -144,11 +145,17 @@ void water_simulation_update() {
         rspq_write_arg(&write, PhysicalAddr(out));
         rspq_write_end(&write);
 
+        if (block_y_stride < 0 && rows_remaining < Y_STRIDE * 2) {
+            int next_rows_remaining = rows_remaining - Y_STRIDE;
+            block_y_stride = -next_rows_remaining * SIM_SIZE;
+        }
+        
         vel += block_y_stride;
+
         in += block_y_stride;
         out += block_y_stride;
+        vel_out += block_y_stride;
     }
-
 
     simulation.read_buffer = write_index;
     simulation.min = simulation.next_min;

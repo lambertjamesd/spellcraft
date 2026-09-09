@@ -1,7 +1,7 @@
 
 #include <rsp_queue.inc>
 
-#define SIM_BUFFER_SIZE 576
+#define SIM_BUFFER_SIZE 608
 
 #define SPRING_CONSTANT     0xFFFF
 #define DAMPING_CONSTANT    0xFFFF
@@ -121,9 +121,9 @@
     # WaterCmd_ProcessBlock
     # 
     # a0: h:12 w:12
-    # a1: vel
-    # a2: in_pos
-    # a3: out_vel
+    # a1: vel_dmem
+    # a2: pos_dmem
+    # a3: vel_out_dmem
     # CMD_ADDR(16, ...) out_pos
 WaterCmd_ProcessBlock:
     .set at
