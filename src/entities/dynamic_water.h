@@ -16,7 +16,6 @@ struct dynamic_water {
 
     boolean_variable is_other_level;
     tmesh_t* mesh;
-    vector3_t min;
 };
 
 typedef struct dynamic_water dynamic_water_t;

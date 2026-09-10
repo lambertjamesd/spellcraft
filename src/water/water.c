@@ -60,7 +60,7 @@ void water_simulation_retain() {
     simulation.read_buffer = 0;
     simulation.min = (vector2s16_t){};
     simulation.next_min = (vector2s16_t){};
-    simulation.scale = (vector2s16_t){{{0x10000 * SIM_SIZE / (SIM_WORLD_SIZE * MODEL_SCALE), 0x10000 * SIM_SIZE / (SIM_WORLD_SIZE * MODEL_SCALE)}}};
+    simulation.scale = (vector2s16_t){{{0x10000 * SIM_SIZE / (SIM_WORLD_SIZE * MODEL_SCALE), 0xFF}}};
 
     memset(simulation.velocity_buffer, 0, total_size);
 
@@ -166,23 +166,27 @@ void water_simulation_apply(tmesh_t* mesh, vector3_t* position) {
         water_simulation_update();
     }
 
-    vector2s16_t min;
-    water_simulation_rounded_position(position, &min);
-    vector2s16Sub(&simulation.min, &min, &min);
+    vector2s16_t offset;
+    water_simulation_rounded_position(position, &offset);
+    vector2s16Sub(&offset, &simulation.min, &offset);
+    offset.x *= (MODEL_SCALE * SIM_WORLD_SIZE) / SIM_SIZE;
+    offset.y *= (MODEL_SCALE * SIM_WORLD_SIZE) / SIM_SIZE;
 
-    for (int vtx_offset = 0; vtx_offset < mesh->vertex_count; vtx_offset += MAX_VERT_PER_CHUNK) {
+    int vtx_count = mesh->vertex_count;
+
+    for (int vtx_offset = 0; vtx_offset < vtx_count; vtx_offset += MAX_VERT_PER_CHUNK) {
         rspq_write_t write = rspq_write_begin(WATER_OVERLAY_ID, PROCESS_APPLY, 5);
 
-        int remaining = mesh->vertex_count - vtx_offset;
+        int remaining = vtx_count - vtx_offset;
 
         if (remaining > MAX_VERT_PER_CHUNK) {
             remaining = MAX_VERT_PER_CHUNK; 
         }
-    
+
         rspq_write_arg(&write, remaining);
         rspq_write_arg(&write, (int)PhysicalAddr(simulation.position_buffers[simulation.read_buffer] + SIM_SIZE));
         rspq_write_arg(&write, PhysicalAddr(mesh->vertices + vtx_offset));
-        rspq_write_arg(&write, min.equalTest);
+        rspq_write_arg(&write, offset.equalTest);
         rspq_write_arg(&write, simulation.scale.equalTest);
     
         rspq_write_end(&write);
@@ -306,6 +310,9 @@ void water_simulation_set(vector3_t* position, float radius, int8_t value) {
     rspq_call_deferred(water_simulation_set_callback, (void*)args);
 }
 
+// sim_space = world * SIM_SIZE / SIM_WORLD_SIZE
+// model_space = world * MODEL_SCALE
+// model_space = sim_space * (MODEL_SCALE * SIM_WORLD_SIZE) / SIM_SIZE
 void water_simulation_rounded_position(vector3_t* input, vector2s16_t* output) {
     output->x = roundf(input->x * ((float)SIM_SIZE / (float)SIM_WORLD_SIZE));
     output->y = roundf(input->z * ((float)SIM_SIZE / (float)SIM_WORLD_SIZE));

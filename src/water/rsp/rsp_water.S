@@ -267,12 +267,12 @@ WaterCmd_Profile_SkipDelta:
     # a0: vertex_count
     # a1: pos_buffer
     # a2: vtx_buffer
-    # a3: min_xy
+    # a3: offset_xy
     # CMD_ADDR(16, ...) size_inv.xz
 WaterCmd_Apply:
     .set noat
     #define vtx_pos         $v01
-    #define min_pos         $v02
+    #define pos_offset      $v02
     #define size_inv        $v03
     #define sim_size        $v04
     #define vtmp            $v05
@@ -285,7 +285,7 @@ WaterCmd_Apply:
     #define vertex_count       a0
     #define pos_buffer         a1
     #define vtx_buffer         a2
-    #define min_xy             a3
+    #define offset_xy          a3
 
     li dma_size, 32*32-1
     move row_stride, zero
@@ -294,11 +294,11 @@ WaterCmd_Apply:
     li dmem_address, %lo(IN_POS)
 
     li t4, %lo(VEL)
-    sw a3, %lo(VEL)
-    lsv min_pos 0, 0, t4
-    lsv min_pos 4, 2, t4
-    lsv min_pos 8, 0, t4
-    lsv min_pos 12, 0, t4
+    sw offset_xy, %lo(VEL)
+    lsv pos_offset 0, 0, t4
+    lsv pos_offset 4, 2, t4
+    lsv pos_offset 8, 0, t4
+    lsv pos_offset 12, 2, t4
 
     addi t4, rspq_dmem_buf_ptr, CMD_OFFSET(16, 20)
     
@@ -326,7 +326,7 @@ WaterCmd_NextVtx:
     beq vtx_ptr, max_vtx_ptr, WaterCmd_WriteBackVtx
 
     lqv vtx_pos, 0, 0, vtx_ptr
-    vsub vtx_pos, vtx_pos, min_pos
+    vadd vtx_pos, pos_offset
 
     vxor voffset, voffset
 
