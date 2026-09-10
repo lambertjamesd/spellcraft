@@ -4,7 +4,7 @@
 #define SIM_BUFFER_SIZE 608
 
 #define SPRING_CONSTANT     0xFFFF
-#define DAMPING_CONSTANT    0xFFFF
+#define DAMPING_CONSTANT    0xFFF0
 #define DT                  0x0888
 
 #define CMD_OFFSET(offset, cmdsize) (%lo(RSPQ_DMEM_BUFFER) + (offset) - (cmdsize))

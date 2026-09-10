@@ -19,7 +19,7 @@ static uint32_t WATER_OVERLAY_ID = 0;
 #define PADDED_PIXEL_COUNT  (PIXEL_COUNT + SIM_SIZE * 2)
 #define Y_STRIDE            (SIM_BUFFER_SIZE / (SIM_SIZE * sizeof(int16_t)) - 1)
 
-#define SIM_WORLD_SIZE      16 
+#define SIM_WORLD_SIZE      16
 
 DEFINE_RSP_UCODE(rsp_water);
 
@@ -60,7 +60,7 @@ void water_simulation_retain() {
     simulation.read_buffer = 0;
     simulation.min = (vector2s16_t){};
     simulation.next_min = (vector2s16_t){};
-    simulation.scale = (vector2s16_t){{{0x10000 * SIM_SIZE / (SIM_WORLD_SIZE * MODEL_SCALE), 0xFF}}};
+    simulation.scale = (vector2s16_t){{{0x10000 * SIM_SIZE / (SIM_WORLD_SIZE * MODEL_SCALE), 0xCF}}};
 
     memset(simulation.velocity_buffer, 0, total_size);
 
@@ -98,21 +98,25 @@ void water_simulation_update() {
     vector2s16Sub(&simulation.next_min, &simulation.min, &diff);
 
     if (diff.x > 0) {
-        out += diff.x;
-        vel_out += diff.x;
+        in += diff.x;
+        vel += diff.x;
         x_size -= diff.x;
     } else {
-        in -= diff.x;
-        vel -= diff.x;
+        out -= diff.x;
+        vel_out -= diff.x;
         x_size += diff.x;
     }
 
     int block_y_stride = SIM_SIZE * Y_STRIDE;
 
     if (diff.y > 0) {
-        out += diff.y * SIM_SIZE;
-        vel_out += diff.y * SIM_SIZE;
+        in += diff.y * SIM_SIZE;
+        vel += diff.y * SIM_SIZE;
         y_size -= diff.y;
+    } else {
+        out -= diff.y * SIM_SIZE;
+        vel_out -= diff.y * SIM_SIZE;
+        y_size += diff.y;
 
         if (y_size > Y_STRIDE) {
             int start_offset = (y_size - Y_STRIDE) * SIM_SIZE;
@@ -123,10 +127,6 @@ void water_simulation_update() {
             vel_out += start_offset;
             block_y_stride = -block_y_stride;
         }
-    } else {
-        in -= diff.y * SIM_SIZE;
-        vel -= diff.y * SIM_SIZE;
-        y_size += diff.y;
     }
 
     for (int y = 0; y < y_size && x_size > 0; y += Y_STRIDE) {

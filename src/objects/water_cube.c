@@ -8,6 +8,9 @@
 
 #define MAX_MOVE_AMOUNT     10.0f
 
+#define VEL_POS_RATIO       64.0f
+#define HORZ_VEL_RATIO      0.05f
+
 static float density_level[] = {
     [DYNAMIC_DENSITY_LIGHT] = GRAVITY_CONSTANT / 0.3f,
     [DYNAMIC_DENSITY_MEDIUM] = GRAVITY_CONSTANT / 0.6f,
@@ -63,9 +66,17 @@ void water_cube_apply_water(spatial_trigger_t* trigger) {
             1.0f : 
             (water_top - obj->bounding_box.min.y) / (obj->bounding_box.max.y - obj->bounding_box.min.y);
 
+        float target_pos = VEL_POS_RATIO * (obj->velocity.y - (obj->velocity.x * obj->velocity.x + obj->velocity.z * obj->velocity.z) * HORZ_VEL_RATIO);
+
+        if (target_pos > 127.0f) {
+            target_pos = 127.0f;
+        } else if (target_pos < -127.0f) {
+            target_pos = -127.0f;
+        }
+
         vector3Scale(&obj->velocity, &obj->velocity, mathfLerp(1.0f, 0.9f, underwater_ratio));
         obj->velocity.y -= underwater_ratio * density_level[obj->density_class] * fixed_time_step;
-        water_simulation_set(&current->point, (obj->bounding_box.max.x - obj->bounding_box.min.x) * 0.5f, -127);
+        water_simulation_set(&current->point, (obj->bounding_box.max.x - obj->bounding_box.min.x) * 0.5f, (int)target_pos);
 
         if (underwater_ratio > 0.5f) {
             DYNAMIC_OBJECT_MARK_UNDER_WATER(obj);
