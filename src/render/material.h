@@ -21,6 +21,7 @@ typedef enum material_sort_priority material_sort_priority_t;
 
 struct material_tex {
     bool texture_enabled;
+    bool use_placeholder;
     sprite_t* sprite;
     rdpq_tileparms_t params;
     uint16_t s0, t0, s1, t1;

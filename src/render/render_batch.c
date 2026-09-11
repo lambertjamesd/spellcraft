@@ -206,7 +206,7 @@ struct render_batch_element* render_batch_add_tmesh(
         if (armature->image_frame_0 != NO_IMAGE_FRAME && armature->image_frame_0 < armature->definition->image_frames_0) {
             attr->type = ELEMENT_ATTR_IMAGE;
             attr->offset = 0;
-            attr->image.sprite = armature->definition->frames[armature->image_frame_0];
+            attr->image.data = armature->definition->frames[armature->image_frame_0]->data;
             ++attr;
         }
 
@@ -528,7 +528,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         t3d_segment_set(T3D_SEGMENT_SKELETON, attr->pose.pose);
                         break;
                     case ELEMENT_ATTR_IMAGE:
-                        rdpq_set_lookup_address(attr->offset+1, (void*)PhysicalAddr(attr->image.sprite->data));
+                        rdpq_set_lookup_address(attr->offset+1, (void*)PhysicalAddr(attr->image.data));
                         break;
                     case ELEMENT_ATTR_PRIM_COLOR:
                         rdpq_set_prim_register_raw(attr->color, 0, 0);

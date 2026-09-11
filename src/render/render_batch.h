@@ -68,7 +68,7 @@ struct element_attr {
             T3DMat4FP* pose;
         } pose;
         struct {
-            sprite_t* sprite;
+            void* data;
         } image;
         color_t color;
         T3DMat4FP* transform;

@@ -6,6 +6,11 @@ import re
 import json
 from enum import Enum
 
+class ImageJsonProps():
+    def __init__(self):
+        self.palette: list[int] | None = None
+        self.fmt: str | None = None
+
 class PngMetadata():
     def __init__(self, filename):
         self.palette: list[int] | None = None
@@ -39,14 +44,24 @@ class PngMetadata():
             elif chunk_type == 'IHDR':
                 self.width = struct.unpack('>I', chunk_data[0:4])[0]
                 self.height = struct.unpack('>I', chunk_data[4:8])[0]
-                self.fmt = self._get_meta_format(filename) or self._get_format_from_png(chunk_data[8], chunk_data[9])
+                self.fmt = self._get_format_from_png(chunk_data[8], chunk_data[9])
             
             index += 8 + chunk_length + 4  # Move to next chunk (including CRC)
-        
-        if self.fmt == 'FMT_CI4' or self.fmt == 'FMT_CI8':
+
+        meta_data = self._get_meta(filename)
+
+        if meta_data.fmt:
+            self.fmt = meta_data.fmt
+
+        if meta_data.palette:
+            self.palette = meta_data.palette
+        elif self.fmt == 'FMT_CI4' or self.fmt == 'FMT_CI8':
             self.palette = self._get_palette_from_png(palette, transparency)
         else:
             self.palette = None
+
+        if meta_data.palette:
+            self.palette = meta_data.palette
 
     def _get_palette_from_png(self, palette, transparency):
         if not palette or len(palette) == 0:
@@ -55,17 +70,13 @@ class PngMetadata():
         result = []
 
         for index, entry in enumerate(palette):
-            r = entry[0]
-            g = entry[1]
-            b = entry[2]
-            a = transparency[index] if index < len(transparency) else 255
-
-            r5 = (r >> 3) & 0x1F  # 5 bits
-            g5 = (g >> 3) & 0x1F  # 5 bits
-            b5 = (b >> 3) & 0x1F  # 5 bits
-            a1 = (a >> 7) & 0x01  # 1 bit
-            
-            result.append((r5 << 11) | (g5 << 6) | (b5 << 1) | a1)
+            col = Color(
+                entry[0], 
+                entry[1], 
+                entry[2], 
+                transparency[index] if index < len(transparency) else 255
+            )
+            result.append(col.pack16())
 
         return result
 
@@ -94,13 +105,30 @@ class PngMetadata():
         
         return 'FMT_RGBA16'
 
-    def _get_meta_format(self, filename):
+    def _get_meta(self, filename) -> ImageJsonProps:
+        result = ImageJsonProps()
+
         json_filename = filename.replace('.png', '.json')
         if not os.path.isfile(json_filename):
-            return None
+            return result
         with open(json_filename, 'r') as file:
             metadata = json.load(file)
-        return 'FMT_' + metadata['format']
+
+        if 'format' in metadata:
+            result.fmt = 'FMT_' + metadata['format']
+
+        if 'palette' in metadata:
+            result.palette = []
+
+            for idx, el in enumerate(metadata['palette']):
+                col = _parse_color(el, f"palette[{str(idx)}]")
+
+                if col:
+                    result.palette.append(col.pack16())
+                else:
+                    result.palette.append(0)
+
+        return result
 
 class Color():
     def __init__(self, r, g, b, a):
@@ -114,6 +142,14 @@ class Color():
     
     def write(self, file):
         file.write(struct.pack('>BBBB', self.r, self.g, self.b, self.a))
+
+    def pack16(self):
+        r5 = (self.r >> 3) & 0x1F  # 5 bits
+        g5 = (self.g >> 3) & 0x1F  # 5 bits
+        b5 = (self.b >> 3) & 0x1F  # 5 bits
+        a1 = (self.a >> 7) & 0x01  # 1 bit
+        
+        return (r5 << 11) | (g5 << 6) | (b5 << 1) | a1
 
     def __eq__(self, value: object) -> bool:
         if not value or not isinstance(value, Color):
@@ -574,6 +610,7 @@ class Tex():
         self.fmt = 'FMT_NONE'
         self.width = 128
         self.height = 128
+        self.use_texture_reference: bool = False
 
         self._png_metadata: PngMetadata | None = None
 
@@ -592,6 +629,7 @@ class Tex():
         result.width = self.width
         result.height = self.height
         result._png_metadata = self._png_metadata
+        result.use_texture_reference = self.use_texture_reference
         return result
     
     def does_scroll(self):
@@ -680,6 +718,9 @@ class Tex():
 
         if self.palette != 0:
             result = f"{result} palette={self.palette}"
+
+        if self.use_texture_reference:
+            result = f"{result} tex_ref=True"
 
         return result
     

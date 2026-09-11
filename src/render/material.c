@@ -17,11 +17,13 @@ void material_init(struct material* material) {
     material->tex0.texture_enabled = false;
     material->tex0.num_frames = 0;
     material->tex0.frames = NULL;
+    material->tex0.use_placeholder = false;
 
     material->tex1.sprite = NULL;
     material->tex1.texture_enabled = false;
     material->tex1.num_frames = 0;
     material->tex1.frames = NULL;
+    material->tex1.use_placeholder = false;
 
     material->sort_priority = MAT_SORT_OPAQUE;
 
@@ -131,6 +133,8 @@ void material_load_tex(struct material_tex* tex, FILE* file) {
     } else {
         tex->frames = NULL;
     }
+
+    fread(&tex->use_placeholder, sizeof(bool), 1, file);
 
     fread(&tex->scroll_x, sizeof(float), 1, file);
     fread(&tex->scroll_y, sizeof(float), 1, file);
@@ -371,7 +375,7 @@ void material_load(struct material* into, FILE* material_file) {
     if (into->tex0.texture_enabled) {
         if (into->tex0.sprite) {
             material_upload_tex(TILE0, &into->tex0);
-        } else if (into->tex0.num_frames) {
+        } else if (into->tex0.num_frames || into->tex0.use_placeholder) {
             material_upload_placeholder(TILE0, &into->tex0);
         }
 
@@ -380,7 +384,7 @@ void material_load(struct material* into, FILE* material_file) {
     if (into->tex1.texture_enabled) {
         if (into->tex1.sprite) {
             material_upload_tex(TILE1, &into->tex1);
-        } else if (into->tex1.num_frames) {
+        } else if (into->tex1.num_frames || into->tex0.use_placeholder) {
             material_upload_placeholder(TILE1, &into->tex1);
         }
 

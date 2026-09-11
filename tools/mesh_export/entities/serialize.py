@@ -311,6 +311,8 @@ def _serialize_tex(file, tex: material.Tex | None, prev_tex: material.Tex | None
     else:
         file.write(b'\0\0')
 
+    file.write(b'\x01' if tex.use_texture_reference else b'\0')
+
     file.write(struct.pack('>ff', tex.s.scroll, -tex.t.scroll))
 
 def _serialize_palette(file, palette: list, palette_offset: int):

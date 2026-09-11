@@ -369,6 +369,8 @@ def _determine_tex_from_f3d(tex, uv_scroll, base_path: str, flipbook: bool = Fal
     if not tex['tex_set'] or not image:
         return None
 
+    use_texture_reference = 'use_tex_reference' in tex and tex['use_tex_reference']
+
     result = material.Tex()
 
     filename = os.path.normpath(os.path.join(os.path.dirname(base_path), image.filepath[2:]))
@@ -378,6 +380,10 @@ def _determine_tex_from_f3d(tex, uv_scroll, base_path: str, flipbook: bool = Fal
         result.set_filename(filename)
     else:
         result.set_frames(frames)
+
+    if use_texture_reference:
+        result.use_texture_reference = True
+        result.filename = None
 
     _determine_tex_axis_from_f3d(tex['S'], result.width, uv_scroll['x'] if uv_scroll and 'x' in uv_scroll else None, result.s)
     _determine_tex_axis_from_f3d(tex['T'], result.height, uv_scroll['y'] if uv_scroll and 'y' in uv_scroll else None, result.t)

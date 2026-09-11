@@ -19,7 +19,7 @@ static uint32_t WATER_OVERLAY_ID = 0;
 #define PADDED_PIXEL_COUNT  (PIXEL_COUNT + SIM_SIZE * 2)
 #define Y_STRIDE            (SIM_BUFFER_SIZE / (SIM_SIZE * sizeof(int16_t)) - 1)
 
-#define SIM_WORLD_SIZE      16
+#define SIM_WORLD_SIZE      8
 
 DEFINE_RSP_UCODE(rsp_water);
 
@@ -161,9 +161,12 @@ void water_simulation_update() {
     simulation.min = simulation.next_min;
 }
 
-void water_simulation_apply(tmesh_t* mesh, vector3_t* position) {
+bool water_simulation_apply(tmesh_t* mesh, vector3_t* position) {
+    bool is_first = false;
+
     if (simulation.is_dirty) {
         water_simulation_update();
+        is_first = true;
     }
 
     vector2s16_t offset;
@@ -191,6 +194,8 @@ void water_simulation_apply(tmesh_t* mesh, vector3_t* position) {
     
         rspq_write_end(&write);
     }
+
+    return is_first;
 }
 
 
@@ -258,6 +263,16 @@ void water_simulation_set_center(vector3_t* position) {
     water_simulation_rounded_position(position, &simulation.next_min);
     simulation.next_min.x = (simulation.next_min.x - SIM_SIZE / 2 + 4) & ~0x7; 
     simulation.next_min.y = simulation.next_min.y - SIM_SIZE / 2;
+}
+
+void water_simulation_get_center(vector3_t* position) {
+    position->x = (simulation.min.x + SIM_SIZE / 2) * ((float)SIM_WORLD_SIZE / (float)SIM_SIZE);
+    position->y = 0.0f;
+    position->z = (simulation.min.y + SIM_SIZE / 2) * ((float)SIM_WORLD_SIZE / (float)SIM_SIZE);
+}
+
+void* water_simulation_get_data() {
+    return simulation.position_buffers[simulation.read_buffer] + SIM_SIZE;
 }
 
 void water_simulation_set_callback(void* data) {

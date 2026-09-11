@@ -14,11 +14,15 @@ void water_simulation_disable_debug_render();
 
 void water_simulation_update();
 
-void water_simulation_apply(tmesh_t* mesh, vector3_t* position);
+bool water_simulation_apply(tmesh_t* mesh, vector3_t* position);
 
 void water_simulation_set_center(vector3_t* position);
 void water_simulation_set(vector3_t* position, float radius, int8_t value);
 
 void water_simulation_rounded_position(vector3_t* input, vector2s16_t* output);
+
+void water_simulation_get_center(vector3_t* position);
+
+void* water_simulation_get_data();
 
 #endif
