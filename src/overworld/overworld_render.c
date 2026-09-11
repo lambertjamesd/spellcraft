@@ -379,7 +379,6 @@ void overworld_render_lod_1(struct overworld* overworld, struct Camera* camera, 
     int camera_z = -(int)(mtx.m[3][2] * CENTER_SCALE);
 
     rdpq_sync_pipe();
-    rdpq_mode_zbuf(false, false);
 
     T3DMat4FP* mtx_fp = UncachedAddr(frame_malloc(pool, sizeof(T3DMat4FP)));
     t3d_mat4_to_fixed_3x4(mtx_fp, &mtx);
@@ -395,7 +394,6 @@ void overworld_render_lod_1(struct overworld* overworld, struct Camera* camera, 
     overworld_render_lod_1_entries(&overworld->lod1, camera_x, camera_z, camera, mtx_fp, skybox_mtx, clipping_planes);
 
     rdpq_sync_pipe();
-    rdpq_mode_zbuf(true, true);
 } 
 
 struct overworld_tile_render_info {
@@ -470,7 +468,6 @@ void overworld_render_low_priority(overworld_tile_render_info_t* curr) {
     
     for (int i = 0; i < curr->layer->pre_scrolling_mesh_count; i += 1) {
         material_pair_apply(curr->layer->scrolling_meshes[i].material, NULL);
-        rdpq_mode_zbuf(false, false);
         rspq_block_run(curr->layer->scrolling_meshes[i].block);
     }
     
@@ -552,7 +549,6 @@ void overworld_render(struct overworld* overworld, mat4x4 view_proj_matrix, stru
     SC_PROFILE_END(render, overworld_render_low_priority);
 
     rdpq_sync_pipe();
-    rdpq_mode_zbuf(true, true);
     
     SC_PROFILE_START(render);
     for (overworld_tile_render_info_t* curr = tiles; curr < block; ++curr) {
