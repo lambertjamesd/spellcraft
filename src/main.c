@@ -27,6 +27,7 @@
 #include "overworld/overworld_load.h"
 #include "render/z_clear.h"
 #include "render/defs.h"
+#include "profile/metrics.h"
 #include "profile/profile.h"
 #include "render/blur/blur.h"
 
@@ -167,6 +168,10 @@ uint8_t blur_frame_counter = BLUR_STRENGTH_COUNT;
     static timer_output_t rsp_timer_output;
 #endif
 
+#if ENABLE_METRICS
+    static timer_output_t metrics_timer;
+#endif
+
 void render(surface_t* col, surface_t* zbuffer, struct frame_memory_pool* pool) {
 #if ENABLE_PROFILE_rsp
     rsp_timer_start(0);
@@ -192,6 +197,8 @@ void render(surface_t* col, surface_t* zbuffer, struct frame_memory_pool* pool) 
     render_menu(pool);
 #if ENABLE_PROFILE_rsp
     rsp_timer_end(0, &rsp_timer_output);
+#endif
+#if ENABLE_PROFILE_rsp
     debugf("render = %f\n", rsp_timer_output_ms(&rsp_timer_output));
 #endif
 }
@@ -237,18 +244,87 @@ void step_simulation() {
     SC_PROFILE_END(main, update_dispatch);
 }
 
+static int buffer_count = 3;
+static resolution_t custom_res = {SCREEN_WD, SCREEN_HT, false};
+
+bool render_frame(surface_t* zbuffer) {
+    if (current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
+        buffer_count = 2;
+        display_change(custom_res, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
+
+        surface_t* fb = display_get();
+        
+        frame_memory_pool_t* pool = frame_pool_curr();
+        frame_pool_reset(pool);
+
+        rdpq_attach(fb, zbuffer);
+
+        render_3d(pause_background, zbuffer, pool);
+        rdpq_sync_pipe();
+
+        // copy the frame buffer into the z buffer
+        // to be used as the background while the game
+        // is paused
+        rdpq_set_color_image_raw(
+            0, 
+            PhysicalAddr(pause_background->buffer), 
+            FMT_RGBA16, 
+            pause_background->width, 
+            pause_background->height, 
+            pause_background->stride
+        );
+        
+        rdpq_set_mode_standard();
+        rdpq_mode_combiner(RDPQ_COMBINER_TEX);
+        rdpq_tex_blit(pause_background, 0, 0, NULL);
+
+        rdpq_sync_pipe();
+        rdpq_set_color_image(fb);
+
+        render_menu(pool);
+
+        rdpq_detach_show();
+
+        current_game_mode = GAME_MODE_MENU;
+        
+        frame_pool_next();
+
+        return true;
+    }
+
+    if (buffer_count == 2 && current_game_mode == GAME_MODE_3D) {
+        display_change(custom_res, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
+    }
+
+    surface_t* fb = display_try_get();
+
+    if (!fb) {
+        return false;
+    }
+        
+    frame_memory_pool_t* pool = frame_pool_curr();
+    frame_pool_reset(pool);
+
+    rdpq_attach(fb, zbuffer);
+
+    render(fb, zbuffer, pool);
+
+    rdpq_detach_show();
+
+    frame_pool_next();
+
+    return true;
+}
+
 void* zbuffer_data;
 
 int main(void)
 {
-	resolution_t custom_res = {SCREEN_WD, SCREEN_HT, false};
-
 	if (get_tv_type() == 0) //TEMP: if PAL, adjust vertical res
 	{
 		custom_res.height = 288;
 	}
 
-    int buffer_count = 3;
     display_init(custom_res, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
     // display_set_fps_limit(30.0f);
 	// *(volatile uint32_t*)0xA4400000 |= 0x300; //disables resampling on the VI
@@ -272,8 +348,12 @@ int main(void)
 
     setup();
 
-#if ENABLE_PROFILE_rsp
+#if ENABLE_PROFILE_rsp || ENABLE_METRICS
     rsp_timer_init();
+#endif
+
+#if ENABLE_METRICS
+    metrics_init();
 #endif
     
     register_VI_handler(on_vi_interrupt);
@@ -302,69 +382,23 @@ int main(void)
 
         SC_PROFILE_START(main);
 
-        if (current_game_mode == GAME_MODE_TRANSITION_TO_MENU) {
-            buffer_count = 2;
-            display_change(custom_res, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
+#if ENABLE_METRICS
+        metric_cpu_start(PERFORMANCE_METRIC_RENDER_TIME);
+        rsp_timer_start(1);
+#endif
 
-            surface_t* fb = display_get();
-            
-            frame_memory_pool_t* pool = frame_pool_curr();
-            frame_pool_reset(pool);
-
-            rdpq_attach(fb, &zbuffer);
-
-            render_3d(pause_background, &zbuffer, pool);
-            rdpq_sync_pipe();
-
-            // copy the frame buffer into the z buffer
-            // to be used as the background while the game
-            // is paused
-            rdpq_set_color_image_raw(
-                0, 
-                PhysicalAddr(pause_background->buffer), 
-                FMT_RGBA16, 
-                pause_background->width, 
-                pause_background->height, 
-                pause_background->stride
-            );
-            
-            rdpq_set_mode_standard();
-            rdpq_mode_combiner(RDPQ_COMBINER_TEX);
-            rdpq_tex_blit(pause_background, 0, 0, NULL);
-
-            rdpq_sync_pipe();
-            rdpq_set_color_image(fb);
-
-            render_menu(pool);
-
-            rdpq_detach_show();
-
-            current_game_mode = GAME_MODE_MENU;
-            
-            frame_pool_next();
-        } else {
-            if (buffer_count == 2 && current_game_mode == GAME_MODE_3D) {
-                display_change(custom_res, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
-            }
-
-            surface_t* fb = display_try_get();
-
-            if (fb) {            
-                frame_memory_pool_t* pool = frame_pool_curr();
-                frame_pool_reset(pool);
-
-                rdpq_attach(fb, &zbuffer);
-
-                render(fb, &zbuffer, pool);
-
-                rdpq_detach_show();
-
-                frame_pool_next();
-            } 
+        if (render_frame(&zbuffer)) {
+#if ENABLE_METRICS
+            metric_cpu_end(PERFORMANCE_METRIC_RENDER_TIME);
+            rsp_timer_end(1, &metrics_timer);
+            metric_set(PERFORMANCE_METRIC_RSP_TIME, rsp_timer_output_ms(&metrics_timer));
+#endif
         }
         
         SC_PROFILE_END(main, render);
-
+#if ENABLE_METRICS
+        metric_cpu_start(PERFORMANCE_METRIC_UPDATE_TIME);
+#endif
         for (int it = 0; it < update_count; it += 1) {
             SC_PROFILE_START(main);
             joypad_poll();
@@ -395,5 +429,18 @@ int main(void)
 
             SC_PROFILE_END(main, update);
         }
+    
+#if ENABLE_METRICS
+        metric_cpu_end(PERFORMANCE_METRIC_UPDATE_TIME);
+        heap_stats_t stats;
+        sys_get_heap_stats(&stats);
+
+        if (is_memory_expanded()) {
+            stats.total -= 1024 * 1024 * 4;
+        }
+        
+        metric_set(PERFORMANCE_METRIC_RAM, (float)stats.used / (float)stats.total);
+        metric_set(PERFORMANCE_METRIC_RAM_FRAG, 1.0f - stats.fragmentation);
+#endif
     }
 }

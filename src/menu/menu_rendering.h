@@ -9,6 +9,7 @@ enum menu_priority {
     MENU_PRIORITY_OVERLAY,
     MENU_PRIORITY_DIALOG,
     MENU_PRIORITY_TITLE,
+    MENU_PRIORITY_METRICS,
 };
 
 void menu_reset();

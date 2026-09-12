@@ -11,28 +11,28 @@ void dynamic_water_render(void* data, render_batch_t* batch) {
     dynamic_water_t* water = (dynamic_water_t*)data;
 
     if (water_simulation_apply(water->mesh, &water->transform.position)) {
-        transform_sa_t effect_transform;
-        water_simulation_get_center(&effect_transform.position);
-        effect_transform.position.y = water->transform.position.y;
-        effect_transform.rotation = gRight2;
-        effect_transform.scale = 8.0f;
+        // transform_sa_t effect_transform;
+        // water_simulation_get_center(&effect_transform.position);
+        // effect_transform.position.y = water->transform.position.y;
+        // effect_transform.rotation = gRight2;
+        // effect_transform.scale = 8.0f;
         
-        T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &effect_transform);
+        // T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &effect_transform);
         
-        if (!mtx) {
-            return;
-        }
+        // if (!mtx) {
+        //     return;
+        // }
 
-        element_attr_t* attrs = frame_malloc(batch->pool, sizeof(struct element_attr) * 2);
+        // element_attr_t* attrs = frame_malloc(batch->pool, sizeof(struct element_attr) * 2);
 
-        if (attrs) {
-            attrs[0].type = ELEMENT_ATTR_IMAGE;
-            attrs[0].offset = 0;
-            attrs[0].image.data = water_simulation_get_data();
-            attrs[1].type = ELEMENT_ATTR_NONE;
-        }
+        // if (attrs) {
+        //     attrs[0].type = ELEMENT_ATTR_IMAGE;
+        //     attrs[0].offset = 0;
+        //     attrs[0].image.data = water_simulation_get_data();
+        //     attrs[1].type = ELEMENT_ATTR_NONE;
+        // }
 
-        render_batch_add_tmesh(batch, effect_mesh, mtx, NULL, NULL, attrs);
+        // render_batch_add_tmesh(batch, effect_mesh, mtx, NULL, NULL, attrs);
     }
 
     T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &water->transform);
