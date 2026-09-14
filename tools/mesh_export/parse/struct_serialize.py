@@ -28,6 +28,12 @@ def get_rom_path(library_path: str, new_suffix: str) -> str:
 
     return f'rom:{os.path.splitext(library_location[len(base):])[0]}{new_suffix}'
 
+class RoomExport():
+    def __init__(self):
+        self.name: str = ""
+        self.static: list[bpy.types.Object] = []
+        self.colliders: list[bpy.types.Object] = []
+
 class SerializeContext():
     def __init__(self, enums):
         self.enums = enums
@@ -38,6 +44,7 @@ class SerializeContext():
         self._did_write = False
         self._obj_spawner_mapping: dict[str, int] = {}
         self._mesh_exports: set[bpy.types.Object] = set()
+        self.room_exports: list[RoomExport] = []
 
     def get_string_offset(self, value: str):
         if value in self._strings:
@@ -103,6 +110,12 @@ class SerializeContext():
 
     def get_meshes_to_export(self) -> list[bpy.types.Object]:
         return list(self._mesh_exports)
+
+    def get_room(self, index: int) -> RoomExport:
+        while index >= len(self.room_exports):
+            self.room_exports.append(RoomExport())
+
+        return self.room_exports[index]
 
 
 fixed_sizes = {

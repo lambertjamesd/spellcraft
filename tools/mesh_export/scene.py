@@ -191,7 +191,7 @@ class room_static_meshes:
 
         return result
 
-def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection: room.room_collection, file):
+def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection: room.room_collection, context: struct_serialize.SerializeContext, file):
     settings = export_settings.ExportSettings()
     settings.default_material = material.Material("Default")
     settings.default_material.priority = 0
@@ -206,6 +206,7 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
         mesh_list_for_rooms.append(entities_mesh.mesh_list(base_transform))
 
     for entry in scene.static:
+        context.get_room(room_collection.get_obj_room_index(entry.obj)).static.append(entry.obj)
         mesh_list_for_rooms[room_collection.get_obj_room_index(entry.obj)].append(entry.obj)
 
     meshes_for_rooms: list[list[entities_mesh.mesh_data]] = list(map(lambda x: x.generate_mesh_data_by_order(), mesh_list_for_rooms))
@@ -717,6 +718,9 @@ def get_map_icons(scene: Scene, enums: dict[str, struct_parse.EnumInfo]) -> list
 
     return result
 
+def get_asset_filename(output_filename: str, asset_name: str) -> str:
+    return f'filesystem/{os.path.splitext(output_filename)[0][len('build/assets/'):]}_{asset_name}'
+
 def save_mesh_exports(mesh_objects: list[bpy.types.Object], output_filename: str):
     base_transform = mathutils.Matrix.Rotation(-math.pi * 0.5, 4, 'X')
 
@@ -734,7 +738,7 @@ def save_mesh_exports(mesh_objects: list[bpy.types.Object], output_filename: str
         bm.to_mesh(mesh)
         bm.free()
 
-        output = f'filesystem/{os.path.splitext(output_filename)[0][len('build/assets/'):]}_{mesh.name}.tmesh'
+        output = get_asset_filename(output_filename, f'{mesh.name}.tmesh')
         
         mesh_list = entities_mesh.mesh_list(base_transform)
         mesh_list.meshes.append(entities_mesh.mesh_list_entry(None, mesh, base_transform))
@@ -763,7 +767,33 @@ def save_mesh_exports(mesh_objects: list[bpy.types.Object], output_filename: str
             
         animation.export_animations(replace_extension(output, '.anim'), arm, settings)
         
+def save_room_exports(rooms: list[struct_serialize.RoomExport], output_filename: str, base_transform: mathutils.Matrix):
+    settings = export_settings.ExportSettings()
+    settings.default_material = material.Material("Default")
+    settings.default_material.priority = 0
+    settings.default_material_name = 'rom:/materials/background.mat'
 
+    for room in rooms:
+        output = get_asset_filename(output_filename, f'{room.name}.room')
+        room_meshes = entities_mesh.mesh_list(base_transform)
+
+        for obj in room.static:
+            room_meshes.append(obj)
+
+        mesh = room_meshes.generate_mesh_data_by_order()
+
+        with open(output, 'wb') as file:
+            # this signals the mesh should be embedded
+            file.write(b'\0')
+
+            tiny3d_mesh_writer.write_mesh(mesh, None, [], settings, file, preserve_chunk_order=True)
+
+            if len(mesh) == 0:
+                file.write(struct.pack('>fff', 0, 0, 0))
+            else:
+                min, max = mesh[0].bounding_box()
+                center = (min + max) * 0.5
+                file.write(struct.pack('>fff', center.x, center.y, center.z))
 
 def process_scene():
     input_filename = sys.argv[1]
@@ -840,6 +870,9 @@ def process_scene():
 
     context = struct_serialize.SerializeContext(enums)
 
+    for idx, room in enumerate(room_collection.rooms):
+        context.get_room(idx).name = room.name
+
     has_overworld = check_for_overworld(base_transform, overworld_filename, definitions, enums, variable_context)
 
     with open(output_filename, 'wb') as file:
@@ -856,7 +889,7 @@ def process_scene():
 
             file.write(struct.pack('>H', room_collection.get_obj_room_index(location.obj)))
 
-        write_static(scene, base_transform, room_collection, file)
+        write_static(scene, base_transform, room_collection, context, file)
         write_particles(scene, base_transform, room_collection, file)
 
         scene.scene_mesh_collider.find_needed_edges()
@@ -879,6 +912,7 @@ def process_scene():
 
         context.write_strings(file)
         save_mesh_exports(context.get_meshes_to_export(), output_filename)
+        save_room_exports(context.room_exports, output_filename, base_transform)
 
         write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file)
 
