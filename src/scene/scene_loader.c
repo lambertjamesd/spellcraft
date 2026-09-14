@@ -187,6 +187,10 @@ void scene_load_room_metadata(scene_t* scene, FILE* file) {
     if (scene->room_count) {
         scene->room_metadata = malloc(sizeof(room_metadata_t) * scene->room_count);
         fread(scene->room_metadata, sizeof(room_metadata_t), scene->room_count, file);
+
+        for (int i = 0; i < scene->room_count; i += 1) {
+            scene->room_metadata[i].name += (int)scene->string_table;
+        }
     } else {
         scene->room_metadata = NULL;
     }
@@ -335,27 +339,9 @@ struct scene* scene_load(const char* filename) {
     player_init(&scene->player, &player_def);
     hud_init(&scene->hud, &scene->player);
 
-    uint16_t static_count;
-    fread(&static_count, 2, 1, file);
-    scene->static_entity_count = static_count;
-
-    scene->static_entities = malloc(sizeof(struct static_entity) * static_count);
-
-    for (int i = 0; i < static_count; ++i) {
-        uint8_t str_len;
-        fread(&str_len, 1, 1, file);
-
-        struct static_entity* entity = &scene->static_entities[i];
-        tmesh_load(&scene->static_entities[i].tmesh, file);
-        fread(&scene->static_entities[i].center, sizeof(vector3_t), 1, file);
-    }
-
     uint16_t room_count;
     fread(&room_count, 2, 1, file);
     scene->room_count = room_count;
-
-    scene->room_static_ranges = malloc(sizeof(struct static_entity_range) * room_count);
-    fread(scene->room_static_ranges, sizeof(struct static_entity_range), room_count, file);
 
     scene_load_static_particles(scene, room_count, file);
 
@@ -457,13 +443,6 @@ void scene_release(struct scene* scene) {
 
     scene_release_room_entities(scene->room_entities, scene->room_count);  
     scene_release_shared_entities(&scene->shared_entities);  
-
-    for (int i = 0; i < scene->static_entity_count; ++i) {
-        struct static_entity* entity = &scene->static_entities[i];
-        tmesh_release(&entity->tmesh);
-    }
-    free(scene->static_entities);
-    free(scene->room_static_ranges);
 
     scene_release_particles(scene);
 

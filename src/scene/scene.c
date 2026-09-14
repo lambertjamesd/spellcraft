@@ -25,17 +25,7 @@ void scene_render_room(struct scene* scene, int room_index, struct render_batch*
         return;
     }
 
-    struct static_entity_range range = scene->room_static_ranges[room_index];
-
-    struct static_entity* curr = scene->static_entities + range.start;
-    struct static_entity* end = scene->static_entities + range.end;
-
-    for (; curr < end; ++curr) {
-        batch->curr_pos = &curr->center;
-        render_batch_add_tmesh(batch, &curr->tmesh, NULL, NULL, NULL, NULL);
-    }
-
-    range = scene->room_particle_ranges[room_index];
+    struct static_entity_range range = scene->room_particle_ranges[room_index];
     
     static_particles_t* curr_particle = scene->static_particles + range.start;
     static_particles_t* end_particle = scene->static_particles + range.end;
@@ -96,11 +86,16 @@ void scene_render(void* data, struct render_batch* batch) {
     }
     
     for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
-        if (scene->loaded_rooms[i].room_index == ROOM_INDEX_NONE) {
+        loaded_room_t* room = &scene->loaded_rooms[i];
+
+        if (room->room_index == ROOM_INDEX_NONE) {
             continue;
         }
 
-        scene_render_room(scene, scene->loaded_rooms[i].room_index, batch);
+        scene_render_room(scene, room->room_index, batch);
+        
+        batch->curr_pos = &room->center;
+        render_batch_add_tmesh(batch, &room->tmesh, NULL, NULL, NULL, NULL);
     }
 }
 
@@ -356,6 +351,20 @@ void scene_add_shared_reference(struct scene* scene, int entity_index, evaluatio
     entity->entity_id = scene_load_entity(scene, &stream, eval_context).id;
 }
 
+void scene_build_room_filename(char* result, const char* room_name) {
+    strcpy(result, prev_loaded_scene);
+    char* curr = result + strlen(prev_loaded_scene);
+    while (curr >= result && *curr != '.') --curr;
+
+    *curr = '_';
+    ++curr;
+
+    strcpy(curr, room_name);
+    curr += strlen(curr);
+    
+    strcpy(curr, ".room");
+}
+
 void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
     room_entity_block_t* room_source = &scene->room_entities[room_index];
 
@@ -386,6 +395,23 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
     }
 
     evaluation_context_destroy(&eval_context);
+
+    char room_filename[MAX_SCENE_NAME_LENGTH + 10];
+    scene_build_room_filename(room_filename, scene->room_metadata[room_index].name);
+
+    FILE* room_file = asset_fopen(room_filename, NULL);
+    tmesh_load(&room->tmesh, room_file);
+    fread(&room->center, sizeof(vector3_t), 1, room_file);
+    fclose(room_file);
+}
+
+void scene_room_unload(loaded_room_t* room) {
+    for (int entity_index = 0; entity_index < room->entity_count; entity_index += 1) {
+        entity_despawn(room->entities[entity_index].id);
+    }
+    free(room->entities);
+    room->entities = NULL;
+    tmesh_release(&room->tmesh);
 }
 
 bool scene_show_room(struct scene* scene, int room_index) {
@@ -414,11 +440,7 @@ void scene_hide_room(struct scene* scene, int room_index) {
         loaded_room_t* room = &scene->loaded_rooms[i];
 
         if (room->room_index == room_index) {
-            for (int entity_index = 0; entity_index < room->entity_count; entity_index += 1) {
-                entity_despawn(room->entities[entity_index].id);
-            }
-            free(room->entities);
-            room->entities = NULL;
+            scene_room_unload(room);
             room->room_index = ROOM_INDEX_NONE;
 
 

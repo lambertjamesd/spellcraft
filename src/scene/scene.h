@@ -16,11 +16,6 @@
 #include "../menu/map.h"
 #include "../audio/audio.h"
 
-struct static_entity {
-    struct tmesh tmesh;
-    vector3_t center;
-};
-
 struct loading_zone {
     struct Box3D bounding_box;
     vector2_t rotation;
@@ -83,6 +78,8 @@ struct loaded_room {
     uint16_t room_index;
     uint16_t entity_count;
     loaded_entity_t* entities;
+    tmesh_t tmesh;
+    vector3_t center;
 };
 
 typedef struct loaded_room loaded_room_t;
@@ -99,6 +96,7 @@ struct scene_fog {
 struct room_metadata {
     uint16_t cutscene_fn;
     boolean_variable has_visited;
+    char* name;
 };
 
 typedef struct room_metadata room_metadata_t;
@@ -106,8 +104,6 @@ typedef struct room_metadata room_metadata_t;
 typedef struct scene_fog scene_fog_t;
 
 struct scene {
-    struct static_entity* static_entities;
-    struct static_entity_range* room_static_ranges;
     static_particles_t* static_particles;
     struct static_entity_range* room_particle_ranges;
 
@@ -135,7 +131,6 @@ struct scene {
     shared_entity_block_t shared_entities;
 
     uint16_t room_count;
-    uint16_t static_entity_count;
     uint16_t static_particles_count;
     uint16_t loading_zone_count;
     uint16_t named_location_count;

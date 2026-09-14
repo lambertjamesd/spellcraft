@@ -200,41 +200,11 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
     for entry in scene.static:
         room_collection.get_obj_room_index(entry.obj)
 
-    mesh_list_for_rooms = []
-
-    for i in range(len(room_collection.rooms)):
-        mesh_list_for_rooms.append(entities_mesh.mesh_list(base_transform))
-
     for entry in scene.static:
         context.get_room(room_collection.get_obj_room_index(entry.obj)).static.append(entry.obj)
-        mesh_list_for_rooms[room_collection.get_obj_room_index(entry.obj)].append(entry.obj)
 
-    meshes_for_rooms: list[list[entities_mesh.mesh_data]] = list(map(lambda x: x.generate_mesh_data_by_order(), mesh_list_for_rooms))
+    file.write(len(room_collection.rooms).to_bytes(2, 'big'))
 
-    file.write(len(meshes_for_rooms).to_bytes(2, 'big'))
-
-    for mesh in meshes_for_rooms:
-        # this signals the mesh should be embedded
-        file.write(b'\0')
-
-        tiny3d_mesh_writer.write_mesh(mesh, None, [], settings, file, preserve_chunk_order=True)
-
-        if len(mesh) == 0:
-            file.write(struct.pack('>fff', 0, 0, 0))
-        else:
-            min, max = mesh[0].bounding_box()
-            center = (min + max) * 0.5
-            file.write(struct.pack('>fff', center.x, center.y, center.z))
-
-
-    room_count = len(meshes_for_rooms)
-    file.write(room_count.to_bytes(2, 'big'))
-    index_start = 0
-
-    for room_meshes in meshes_for_rooms:
-        room_mesh_count = 1
-        file.write(struct.pack('>HH', index_start, index_start + room_mesh_count))
-        index_start += room_mesh_count
 
 def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collection: room.room_collection, file):
     room_to_particle: list[list[entities_particles.Particles]] = []
@@ -656,6 +626,7 @@ def write_room_metadata(
         function_names: list[str], 
         enums: dict[str, struct_parse.EnumInfo],
         scene_name: str,
+        context: struct_serialize.SerializeContext,
         file: io.BufferedIOBase
     ):
 
@@ -672,9 +643,10 @@ def write_room_metadata(
             print(f"warning: {visited_room_name} not defined")
 
         file.write(struct.pack(
-            '>HH',
+            '>HHI',
             fn_index,
-            visited_room
+            visited_room,
+            context.get_string_offset(room.name)
         ))
 
 def write_scene_music(
@@ -783,9 +755,6 @@ def save_room_exports(rooms: list[struct_serialize.RoomExport], output_filename:
         mesh = room_meshes.generate_mesh_data_by_order()
 
         with open(output, 'wb') as file:
-            # this signals the mesh should be embedded
-            file.write(b'\0')
-
             tiny3d_mesh_writer.write_mesh(mesh, None, [], settings, file, preserve_chunk_order=True)
 
             if len(mesh) == 0:
@@ -872,6 +841,7 @@ def process_scene():
 
     for idx, room in enumerate(room_collection.rooms):
         context.get_room(idx).name = room.name
+        context.get_string_offset(room.name)
 
     has_overworld = check_for_overworld(base_transform, overworld_filename, definitions, enums, variable_context)
 
@@ -937,7 +907,7 @@ def process_scene():
 
         camera_animation.export_camera_animations(output_filename.replace('.scene', '.sanim'), file)
 
-        write_room_metadata(room_collection, function_names, enums, scene_name, file)
+        write_room_metadata(room_collection, function_names, enums, scene_name, context, file)
 
         write_scene_music(file);
 
