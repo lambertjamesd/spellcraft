@@ -345,9 +345,6 @@ struct scene* scene_load(const char* filename) {
 
     scene_load_static_particles(scene, room_count, file);
 
-    mesh_collider_load(&scene->mesh_collider, file);
-    collision_scene_add_static_mesh(&scene->mesh_collider);
-
     uint16_t strings_length;
     fread(&strings_length, 2, 1, file);
 
@@ -456,9 +453,6 @@ void scene_release(struct scene* scene) {
 
     inventory_destroy();
     cutscene_actor_common_destroy();
-
-    collision_scene_remove_static_mesh(&scene->mesh_collider);
-    mesh_collider_release(&scene->mesh_collider);
 
     if (scene->overworld) {
         overworld_free(scene->overworld);

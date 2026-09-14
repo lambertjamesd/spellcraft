@@ -80,6 +80,7 @@ struct loaded_room {
     loaded_entity_t* entities;
     tmesh_t tmesh;
     vector3_t center;
+    mesh_collider_t mesh_collider;
 };
 
 typedef struct loaded_room loaded_room_t;
@@ -106,8 +107,6 @@ typedef struct scene_fog scene_fog_t;
 struct scene {
     static_particles_t* static_particles;
     struct static_entity_range* room_particle_ranges;
-
-    struct mesh_collider mesh_collider;
 
     struct player player;
 

@@ -28,11 +28,16 @@ def get_rom_path(library_path: str, new_suffix: str) -> str:
 
     return f'rom:{os.path.splitext(library_location[len(base):])[0]}{new_suffix}'
 
+class ColliderInfo():
+    def __init__(self, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
+        self.mesh: bpy.types.Mesh = mesh
+        self.transform: mathutils.Matrix = transform
+
 class RoomExport():
     def __init__(self):
         self.name: str = ""
         self.static: list[bpy.types.Object] = []
-        self.colliders: list[bpy.types.Object] = []
+        self.colliders: list[ColliderInfo] = []
 
 class SerializeContext():
     def __init__(self, enums):

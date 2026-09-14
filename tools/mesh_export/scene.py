@@ -101,8 +101,14 @@ class Scene():
         self.particles: list[ParticlesEntry] = []
         self.locations: list[LocationEntry] = []
         self.loading_zones: list[LoadingZone] = []
-        self.scene_mesh_collider = mesh_collider.MeshCollider()
+        self.room_mesh_colliders: list[mesh_collider.MeshCollider] = []
         self.map_entries: list[map_builder.MapEntry] = []
+
+    def add_collider(self, room_index: int, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
+        while room_index >= len(self.room_mesh_colliders):
+            self.room_mesh_colliders.append(mesh_collider.MeshCollider())
+
+        self.room_mesh_colliders[room_index].append(mesh, transform)
 
 def write_string(value: str, file):
     byte_encoded = value.encode()
@@ -446,8 +452,7 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
         final_transform = base_transform @ obj.matrix_world
 
         if obj.data and 'static_collision' in obj.data:
-            print('appending static', obj.name)
-            scene.scene_mesh_collider.append(obj.data['static_collision'], final_transform)
+            scene.add_collider(room_collection.get_obj_room_index(obj), obj.data['static_collision'], final_transform)
 
         obj_type = get_object_type(obj)
 
@@ -474,7 +479,7 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
             scene.static.append(StaticEntry(obj, mesh, final_transform))
 
         if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH' or 'collision' in obj.name:
-            scene.scene_mesh_collider.append(mesh, final_transform)
+            scene.add_collider(room_collection.get_obj_room_index(obj), mesh, final_transform)
 
 def write_room_entiites(
         room_collection: entities_room.room_collection, 
@@ -739,13 +744,13 @@ def save_mesh_exports(mesh_objects: list[bpy.types.Object], output_filename: str
             
         animation.export_animations(replace_extension(output, '.anim'), arm, settings)
         
-def save_room_exports(rooms: list[struct_serialize.RoomExport], output_filename: str, base_transform: mathutils.Matrix):
+def save_room_exports(scene: Scene, rooms: list[struct_serialize.RoomExport], output_filename: str, base_transform: mathutils.Matrix):
     settings = export_settings.ExportSettings()
     settings.default_material = material.Material("Default")
     settings.default_material.priority = 0
     settings.default_material_name = 'rom:/materials/background.mat'
 
-    for room in rooms:
+    for room_index, room in enumerate(rooms):
         output = get_asset_filename(output_filename, f'{room.name}.room')
         room_meshes = entities_mesh.mesh_list(base_transform)
 
@@ -763,6 +768,11 @@ def save_room_exports(rooms: list[struct_serialize.RoomExport], output_filename:
                 min, max = mesh[0].bounding_box()
                 center = (min + max) * 0.5
                 file.write(struct.pack('>fff', center.x, center.y, center.z))
+
+            collider = scene.room_mesh_colliders[room_index] if room_index < len(scene.room_mesh_colliders) else mesh_collider.MeshCollider()
+
+            collider.find_needed_edges()
+            collider.write_out(file)
 
 def process_scene():
     input_filename = sys.argv[1]
@@ -862,9 +872,6 @@ def process_scene():
         write_static(scene, base_transform, room_collection, context, file)
         write_particles(scene, base_transform, room_collection, file)
 
-        scene.scene_mesh_collider.find_needed_edges()
-        scene.scene_mesh_collider.write_out(file)
-
         for loading_zone in scene.loading_zones:
             context.get_string_offset(loading_zone.target)
 
@@ -882,7 +889,7 @@ def process_scene():
 
         context.write_strings(file)
         save_mesh_exports(context.get_meshes_to_export(), output_filename)
-        save_room_exports(context.room_exports, output_filename, base_transform)
+        save_room_exports(scene, context.room_exports, output_filename, base_transform)
 
         write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file)
 

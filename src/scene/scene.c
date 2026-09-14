@@ -10,6 +10,7 @@
 #include "../time/time.h"
 #include "../config.h"
 #include "../profile/profile.h"
+#include "../resource/mesh_collider.h"
 
 struct scene* current_scene;
 
@@ -402,6 +403,10 @@ void scene_load_room(struct scene* scene, loaded_room_t* room, int room_index) {
     FILE* room_file = asset_fopen(room_filename, NULL);
     tmesh_load(&room->tmesh, room_file);
     fread(&room->center, sizeof(vector3_t), 1, room_file);
+
+    mesh_collider_load(&room->mesh_collider, room_file);
+    collision_scene_add_static_mesh(&room->mesh_collider);
+
     fclose(room_file);
 }
 
@@ -412,6 +417,8 @@ void scene_room_unload(loaded_room_t* room) {
     free(room->entities);
     room->entities = NULL;
     tmesh_release(&room->tmesh);
+    collision_scene_remove_static_mesh(&room->mesh_collider);
+    mesh_collider_release(&room->mesh_collider);
 }
 
 bool scene_show_room(struct scene* scene, int room_index) {
