@@ -25,7 +25,7 @@ static struct slot_offset slot_offsets[] = {
     [SPELL_SYMBOL_AIR] = { SPELL_SLOT_OFFSET, 0 },
 };
 
-static color_t spell_active_colors[] = {
+color_t spell_active_colors[] = {
     [ITEM_TYPE_NONE] = { 255, 255, 255, 255 },
     [SPELL_SYMBOL_FIRE] = { 240, 100, 10, 255 },
     [SPELL_SYMBOL_WATER] = { 10, 200, 240, 255 },

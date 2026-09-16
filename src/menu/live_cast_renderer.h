@@ -25,6 +25,8 @@ struct live_cast_renderer {
 
 typedef struct live_cast_renderer live_cast_renderer_t;
 
+extern color_t spell_active_colors[];
+
 void live_cast_renderer_init(live_cast_renderer_t* live_cast_renderer, live_cast_t* live_cast);
 void live_cast_renderer_destroy(live_cast_renderer_t* live_cast_renderer);
 

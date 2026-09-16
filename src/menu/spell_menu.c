@@ -13,6 +13,7 @@
 #include "../render/defs.h"
 #include "../spell/spell.h"
 #include "../util/cleanup.h"
+#include "./live_cast_renderer.h"
 
 #define FIXED_POINT_SCALE   4.0f
 #define MAP_X           20
@@ -360,8 +361,6 @@ void spell_menu_show(struct spell_menu* spell_menu) {
     
     spell_menu->solid_color = material_cache_load("rom:/materials/menu/solid_primitive.mat");
     spell_menu->spell_material = material_cache_load("rom:/materials/menu/prim_tex_alpha.mat");
-
-    spell_menu_show_rune_upgrade(spell_menu, SPELL_SYMBOL_FIRE);
 }
 
 void spell_menu_hide(struct spell_menu* spell_menu) {
@@ -449,6 +448,15 @@ void spell_menu_update(struct spell_menu* spell_menu) {
     }
 }
 
+color_t spell_menu_blend_color(color_t base, color_t target, color_t curr) {
+    return (color_t){
+        curr.r + (((target.r - base.r) * 4) >> 4),
+        curr.g + (((target.g - base.g) * 4) >> 4),
+        curr.b + (((target.b - base.b) * 4) >> 4),
+        curr.a,
+    };
+}
+
 void spell_menu_render(struct spell_menu* spell_menu) {
     menu_common_render_background(20, 20, 200, 200);
 
@@ -517,7 +525,27 @@ void spell_menu_render(struct spell_menu* spell_menu) {
         rdpq_sync_tile();
         surface_t surf = sprite_get_pixels(spell_menu->spell_icons[i]);
         rdpq_tex_upload(TILE0, &surf, NULL);
-        rdpq_set_prim_register_raw((color_t){255, i * 8, 0, 255}, 0, 0);
+
+        color_t start_color = spell_active_colors[rune.primary_rune];
+        color_t symbol_color = start_color;
+
+        if (rune.earthy) {
+            symbol_color = spell_menu_blend_color(start_color, spell_active_colors[SPELL_SYMBOL_EARTH], symbol_color);
+        }
+        
+        if (rune.watery) {
+            symbol_color = spell_menu_blend_color(start_color, spell_active_colors[SPELL_SYMBOL_WATER], symbol_color);
+        }
+        
+        if (rune.flaming) {
+            symbol_color = spell_menu_blend_color(start_color, spell_active_colors[SPELL_SYMBOL_FIRE], symbol_color);
+        }
+        
+        if (rune.windy) {
+            symbol_color = spell_menu_blend_color(start_color, spell_active_colors[SPELL_SYMBOL_AIR], symbol_color);
+        }
+
+        rdpq_set_prim_register_raw(symbol_color, 0, 0);
         __rdpq_texture_rectangle_raw_fx(
             TILE0,
             anchor.x - half_size, anchor.y - half_size,
