@@ -32,22 +32,6 @@ void rsp_timer_end(unsigned index, timer_output_t* output) {
     is_dirty = true;
 }
 
-float rsp_timer_get(unsigned index) {
-    assert(index < MAX_TIMERS);
-
-    if (is_dirty) {
-        int* data = rspq_overlay_get_state(&rsp_timing);
-
-        for (int i = 0; i < MAX_TIMERS; i += 1) {
-            cached_timers[i] = data[i] * TICKS_TO_SECONDS;
-        }
-
-        is_dirty = false;
-    }
-
-    return cached_timers[index];
-}
-
 float rsp_timer_output_ms(timer_output_t* output) {
-    return output->result * TICKS_TO_SECONDS;
+    return ((timer_output_t*)UncachedAddr(output))->result * TICKS_TO_SECONDS;
 }

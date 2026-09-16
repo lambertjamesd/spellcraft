@@ -25,6 +25,8 @@
 
 #include "../entity/entity_spawner.h"
 
+#define DEBUG_MEMORY_USAGE      0
+
 // WRLD
 #define EXPECTED_HEADER 0x57524C44
 
@@ -257,6 +259,11 @@ void scene_fade_in(struct cutscene* cutscene, void* data, cutscene_runner_contex
 }
 
 struct scene* scene_load(const char* filename) {
+#if DEBUG_MEMORY_USAGE
+    heap_stats_t memory_before;
+    sys_get_heap_stats(&memory_before);
+#endif
+
     FILE* file = asset_fopen(filename, NULL);
 
     int header;
@@ -399,6 +406,12 @@ struct scene* scene_load(const char* filename) {
     } else {
         cutscene_ref_run_then_destroy(&starting_cutscene, 0, scene_fade_in, NULL);
     }
+    
+#if DEBUG_MEMORY_USAGE
+    heap_stats_t memory_after;
+    sys_get_heap_stats(&memory_after);
+    debugf("scene_load memory %f->%f  used %f\n", memory_before.used * (1.0f / 1024.f), memory_after.used * (1.0f / 1024.f), (memory_before.free - memory_after.free) * (1.0f / 1024.0f));
+#endif
 
     return scene;
 }

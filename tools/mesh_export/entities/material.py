@@ -1182,7 +1182,7 @@ def _parse_tex(json_data, key_path, relative_to):
         result.t.max = result.height << 2
         result.t.mask = log_pow_2(result.height)
     else:
-        if not 'filename' in json_data and not 'frames' in json_data:
+        if not 'filename' in json_data and not 'frames' in json_data and not 'useTextureReference' in json_data:
             raise Exception(f"{key_path}.filename or .frames must be defined")
         
         if 'filename' in json_data:
@@ -1209,6 +1209,14 @@ def _parse_tex(json_data, key_path, relative_to):
 
         if 'frames' in json_data:
             result.set_frames(list(map(lambda x: _resolve_tex(x, relative_to), json_data['frames'])))
+            
+        if 'useTextureReference' in json_data:
+            ref = json_data['useTextureReference']
+
+            result.use_texture_reference = True
+            result.width = ref['width']
+            result.height = ref['height']
+            result.fmt = ref['fmt']
 
     return result
 

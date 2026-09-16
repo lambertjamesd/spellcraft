@@ -5,9 +5,16 @@
 #include "../player/inventory.h"
 #include "../render/material.h"
 #include "../scene/scene_definition.h"
+#include "../menu/rsp_menu.h"
+
+#define SPELL_ICON_COUNT     32
 
 struct spell_menu {    
     material_pair_t* solid_color;
+    material_pair_t* spell_material;
+
+    sprite_t* spell_icons[SPELL_ICON_COUNT];
+    menu2d_vtx_t* spell_icon_vertices;
 
     float appear_timer;
     int appear_index;
@@ -15,6 +22,8 @@ struct spell_menu {
     vector2_t offset;
     float scale;
 };
+
+typedef struct spell_menu spell_menu_t;
 
 void spell_menu_init(struct spell_menu* spell_menu);
 void spell_menu_destroy(struct spell_menu* spell_menu);

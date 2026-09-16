@@ -440,7 +440,7 @@ int main(void)
         }
         
         metric_set(PERFORMANCE_METRIC_RAM, (float)stats.used / (float)stats.total);
-        metric_set(PERFORMANCE_METRIC_RAM_FRAG, 1.0f - stats.fragmentation);
+        metric_set(PERFORMANCE_METRIC_RAM_FRAG, (float)stats.fragmented / (float)stats.total);
 #endif
     }
 }

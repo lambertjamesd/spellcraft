@@ -14,8 +14,6 @@ void rsp_timer_destroy();
 void rsp_timer_start(unsigned index);
 void rsp_timer_end(unsigned index, timer_output_t* output);
 
-float rsp_timer_get(unsigned index);
-
 float rsp_timer_output_ms(timer_output_t* output);
 
 #endif

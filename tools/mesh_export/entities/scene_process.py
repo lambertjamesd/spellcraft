@@ -2,6 +2,7 @@ import bpy
 
 SKIPPED_MODIFIERS = {
     "ARMATURE",
+    "SUBSURF",
 }
 
 def apply_modifiers(obj: bpy.types.Object):

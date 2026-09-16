@@ -46,7 +46,6 @@ WaterCmd_EndTime:
     sub t0, t1
 
     beq a1, zero, RSPQ_Loop
-    sw t0, %lo(TIMERS)(a0)
 
     sw t0, %lo(TIMER_OUT)
 

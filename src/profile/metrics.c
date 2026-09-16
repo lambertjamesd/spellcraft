@@ -80,23 +80,22 @@ void metrics_render(void* data) {
     y += METRICS_HEIGHT + METRICS_SPACING;
 
     rdpq_sync_pipe();
-    rdpq_set_prim_color((color_t){255, 0, 255, 255});
-    int ram_frag = (int)(metrics[PERFORMANCE_METRIC_RAM_FRAG] * metrics[PERFORMANCE_METRIC_RAM] * FRAME_WIDTH);
+    rdpq_set_prim_color((color_t){0, 255, 255, 255});
+    int ram_usage = (int)(metrics[PERFORMANCE_METRIC_RAM] * FRAME_WIDTH);
     rdpq_fill_rectangle(
         x,
         y,
-        x + ram_frag,
+        x + ram_usage,
         y + METRICS_HEIGHT
     );
 
     rdpq_sync_pipe();
-    rdpq_set_prim_color((color_t){0, 255, 255, 255});
-    int ram_usage = (int)(metrics[PERFORMANCE_METRIC_RAM] * FRAME_WIDTH);
-
+    rdpq_set_prim_color((color_t){255, 0, 255, 255});
+    int ram_frag = (int)(metrics[PERFORMANCE_METRIC_RAM_FRAG] * FRAME_WIDTH);
     rdpq_fill_rectangle(
-        x + ram_frag,
-        y,
         x + ram_usage,
+        y,
+        x + ram_usage + ram_frag,
         y + METRICS_HEIGHT
     );
     
