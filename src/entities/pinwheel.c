@@ -4,7 +4,6 @@
 
 #define ROTATION_ACCEL      20.0f
 #define ROTATION_DAMPING    0.99f
-#define STOP_DAMPING        0.9f
 
 static dynamic_object_type_t fan_collider = {
     CYLINDER_COLLIDER(0.25f, 0.6f),
@@ -17,11 +16,10 @@ void pinwheel_update(void* data) {
     struct Vector3* vel = &pinwheel->collider.velocity;
     
     float vel_delta = -vector3Dot(vel, &pinwheel->forward) * ROTATION_ACCEL;
-    bool is_being_pushed = vel_delta > 0.0f;
     *vel = gZeroVec;
     
     pinwheel->angular_velocity += vel_delta * fixed_time_step;
-    pinwheel->angular_velocity *= is_being_pushed ? ROTATION_DAMPING : STOP_DAMPING;
+    pinwheel->angular_velocity *= ROTATION_DAMPING;
     
     float abs_vel = fabsf(pinwheel->angular_velocity);
 
