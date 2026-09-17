@@ -95,8 +95,9 @@ void pause_menu_update(struct pause_menu* pause_menu) {
 
     if (pressed.start) {
         if (pause_menu->active_menu == ACTIVE_MENU_NONE) {
-            pause_menu_transition(pause_menu, ACTIVE_MENU_SPELLS, NULL);
+            pause_menu_transition(pause_menu, pause_menu->prev_active_menu, NULL);
         } else {
+            pause_menu->prev_active_menu = pause_menu->active_menu;
             pause_menu_transition(pause_menu, ACTIVE_MENU_NONE, NULL);
         }
     } else if (pressed.r) {
@@ -131,6 +132,7 @@ void pause_menu_init(struct pause_menu* pause_menu) {
     menu_add_callback(pause_menu_render, pause_menu, MENU_PRIORITY_HUD);
     inventory_menu_init(&pause_menu->inventory_menu);
     pause_menu->active_menu = ACTIVE_MENU_NONE;
+    pause_menu->prev_active_menu = ACTIVE_MENU_SPELLS;
 }
 
 void pause_menu_destroy(struct pause_menu* pause_menu) {

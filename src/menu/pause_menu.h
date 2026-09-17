@@ -21,6 +21,7 @@ struct pause_menu {
     struct inventory_menu inventory_menu;
     menu_map_show_state_t map_menu;
     enum active_menu active_menu;
+    enum active_menu prev_active_menu;
 };
 
 void pause_menu_init(struct pause_menu* pause_menu);

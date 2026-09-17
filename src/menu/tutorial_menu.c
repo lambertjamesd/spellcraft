@@ -18,7 +18,7 @@ static rspq_block_t* tut_render_block;
 static const char* tut_messages[] = {
     [TUTORIAL_MENU_STATE_NONE] = "",
     [TUTORIAL_MENU_CREATE_FIRE] = "Hold @z+@cr",
-    [TUTORIAL_MENU_CAST] = "Cast @a",
+    [TUTORIAL_MENU_CAST] = "Cast @b",
 };
 
 #define ICON_SIZE      16

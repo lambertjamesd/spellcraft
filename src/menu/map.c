@@ -373,7 +373,7 @@ void menu_map_show(menu_map_t* map, menu_map_show_state_t* show_state, uint16_t 
 
     int layer_index = room->min_layer;
 
-    for (int i = 0; i < room->layer_count; i += 1) {
+    for (int i = 0; i < room->layer_count && layer_index + 1 < map->layer_count; i += 1) {
         if (player_pos->y < room->max_layer_y[i]) {
             break;
         }
