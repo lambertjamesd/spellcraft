@@ -62,6 +62,11 @@ void water_cube_apply_water(spatial_trigger_t* trigger) {
             continue;   
         }
 
+        if (DYNAMIC_OBJECT_WAS_MARKED_UNDER_WATER(obj)) {
+            // already has water physics
+            continue;
+        }
+
         float underwater_ratio = obj->bounding_box.max.y <= water_top ? 
             1.0f : 
             (water_top - obj->bounding_box.min.y) / (obj->bounding_box.max.y - obj->bounding_box.min.y);

@@ -188,6 +188,7 @@ struct water_cube_definition {
 struct dynamic_water_definition {
     struct Vector3 position;
     mesh_location mesh;
+    mesh_location mesh_lod1;
     collider_shape_t collider;
     struct Vector3 other_level;
     boolean_variable is_other_level;

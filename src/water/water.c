@@ -21,6 +21,8 @@ static uint32_t WATER_OVERLAY_ID = 0;
 
 #define SIM_WORLD_SIZE      8
 
+#define SIM_RADIUS_MESH     (SIM_WORLD_SIZE * MODEL_SCALE / 2)
+
 DEFINE_RSP_UCODE(rsp_water);
 
 struct water_simulation {
@@ -161,19 +163,21 @@ void water_simulation_update() {
     simulation.min = simulation.next_min;
 }
 
-bool water_simulation_apply(tmesh_t* mesh, vector3_t* position) {
-    bool is_first = false;
+bool water_simulation_apply(tmesh_t* mesh, vector3_t* position, vector3s16_t* local_min, vector3s16_t* local_max) {
+    vector2s16_t offset;
+    water_simulation_rounded_position(position, &offset);
+    vector2s16Sub(&offset, &simulation.next_min, &offset);
+    offset.x *= (MODEL_SCALE * SIM_WORLD_SIZE) / SIM_SIZE;
+    offset.y *= (MODEL_SCALE * SIM_WORLD_SIZE) / SIM_SIZE;
+
+    if (-offset.x + SIM_RADIUS_MESH < local_min->x || -offset.y + SIM_RADIUS_MESH < local_min->z ||
+        -offset.x - SIM_RADIUS_MESH > local_max->x || -offset.y - SIM_RADIUS_MESH > local_max->z) {
+        return false;
+    }
 
     if (simulation.is_dirty) {
         water_simulation_update();
-        is_first = true;
     }
-
-    vector2s16_t offset;
-    water_simulation_rounded_position(position, &offset);
-    vector2s16Sub(&offset, &simulation.min, &offset);
-    offset.x *= (MODEL_SCALE * SIM_WORLD_SIZE) / SIM_SIZE;
-    offset.y *= (MODEL_SCALE * SIM_WORLD_SIZE) / SIM_SIZE;
 
     int vtx_count = mesh->vertex_count;
 
@@ -195,7 +199,7 @@ bool water_simulation_apply(tmesh_t* mesh, vector3_t* position) {
         rspq_write_end(&write);
     }
 
-    return is_first;
+    return true;
 }
 
 

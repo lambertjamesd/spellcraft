@@ -2,6 +2,7 @@
 #define __ENTITIES_DYNAMIC_WATER_H__
 
 #include "../math/vector3.h"
+#include "../math/vector3s16.h"
 #include "../entity/entity_id.h"
 #include "../scene/scene_definition.h"
 #include "entity_deps.h"
@@ -15,7 +16,12 @@ struct dynamic_water {
     float other_level;
 
     boolean_variable is_other_level;
+
+    vector3s16_t local_min;
+    vector3s16_t local_max;
+
     tmesh_t* mesh;
+    tmesh_t* mesh_lod1;
 };
 
 typedef struct dynamic_water dynamic_water_t;

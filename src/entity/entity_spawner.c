@@ -107,6 +107,7 @@ static struct entity_field_type_location fields_repair_interaction[] = {
 
 static struct entity_field_type_location fields_dynamic_water[] = {
     { .offset = offsetof(struct dynamic_water_definition, mesh), .type = ENTITY_FIELD_TYPE_STRING },
+    { .offset = offsetof(struct dynamic_water_definition, mesh_lod1), .type = ENTITY_FIELD_TYPE_STRING },
 };
 
 static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {

@@ -5,47 +5,25 @@
 
 #define CHANGE_RATE     1.0f
 
-tmesh_t* effect_mesh;
-
 void dynamic_water_render(void* data, render_batch_t* batch) {
     dynamic_water_t* water = (dynamic_water_t*)data;
 
-    if (water_simulation_apply(water->mesh, &water->transform.position)) {
-        // transform_sa_t effect_transform;
-        // water_simulation_get_center(&effect_transform.position);
-        // effect_transform.position.y = water->transform.position.y;
-        // effect_transform.rotation = gRight2;
-        // effect_transform.scale = 8.0f;
-        
-        // T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &effect_transform);
-        
-        // if (!mtx) {
-        //     return;
-        // }
-
-        // element_attr_t* attrs = frame_malloc(batch->pool, sizeof(struct element_attr) * 2);
-
-        // if (attrs) {
-        //     attrs[0].type = ELEMENT_ATTR_IMAGE;
-        //     attrs[0].offset = 0;
-        //     attrs[0].image.data = water_simulation_get_data();
-        //     attrs[1].type = ELEMENT_ATTR_NONE;
-        // }
-
-        // render_batch_add_tmesh(batch, effect_mesh, mtx, NULL, NULL, attrs);
-    }
+    bool did_apply = water_simulation_apply(water->mesh, &water->transform.position, &water->local_min, &water->local_max);
 
     T3DMat4FP* mtx = render_batch_transformfp_from_sa(batch, &water->transform);
 
     if (!mtx) {
         return;
     }
-    render_batch_add_tmesh(batch, water->mesh, mtx, NULL, NULL, NULL);
+    render_batch_add_tmesh(batch, did_apply ? water->mesh : water->mesh_lod1, mtx, NULL, NULL, NULL);
 }
 
 void dynamic_water_update(void* data) {
     dynamic_water_t* dynamic_water = (dynamic_water_t*)data;
-    water_cube_apply_water(&dynamic_water->trigger);
+
+    if (dynamic_water->trigger_type.data.box.half_size.x != 0.0f) {
+        water_cube_apply_water(&dynamic_water->trigger);
+    }
 
     float target = expression_get_bool(dynamic_water->is_other_level) ? dynamic_water->other_level : dynamic_water->start_level;
 
@@ -66,11 +44,17 @@ void dynamic_water_init(dynamic_water_t* dynamic_water, struct dynamic_water_def
     dynamic_water->transform.position.y = expression_get_bool(dynamic_water->is_other_level) ? dynamic_water->other_level : dynamic_water->start_level;
 
     dynamic_water->mesh = tmesh_cache_load(definition->mesh);
+    dynamic_water->mesh_lod1 = tmesh_cache_load(definition->mesh_lod1);
     render_scene_add(&dynamic_water->transform.position, dynamic_water->mesh->radius, dynamic_water_render, dynamic_water);
 
+    tmesh_compute_bounding_box(dynamic_water->mesh, &dynamic_water->local_min, &dynamic_water->local_max);
+
     spatial_trigger_type_from_shape(&dynamic_water->trigger_type, &definition->collider);
-    spatial_trigger_init(&dynamic_water->trigger, &dynamic_water->transform, &dynamic_water->trigger_type, COLLISION_LAYER_TANGIBLE, entity_id);
-    collision_scene_add_trigger(&dynamic_water->trigger);
+
+    if (dynamic_water->trigger_type.data.box.half_size.x != 0.0f) {
+        spatial_trigger_init(&dynamic_water->trigger, &dynamic_water->transform, &dynamic_water->trigger_type, COLLISION_LAYER_TANGIBLE, entity_id);
+        collision_scene_add_trigger(&dynamic_water->trigger);
+    }
 
     update_add(dynamic_water, dynamic_water_update, UPDATE_PRIORITY_PHYICS | UPDATE_LAYER_CUTSCENE, UPDATE_LAYER_WORLD);
 }
@@ -78,22 +62,21 @@ void dynamic_water_init(dynamic_water_t* dynamic_water, struct dynamic_water_def
 void dynamic_water_destroy(dynamic_water_t* dynamic_water, struct dynamic_water_definition* definition) {
     render_scene_remove(dynamic_water);
     tmesh_cache_release(dynamic_water->mesh);
-    collision_scene_remove_trigger(&dynamic_water->trigger);
+    tmesh_cache_release(dynamic_water->mesh_lod1);
+    if (dynamic_water->trigger_type.data.box.half_size.x != 0.0f) {
+        collision_scene_remove_trigger(&dynamic_water->trigger);
+    }
     update_remove(dynamic_water);
 }
 
 void dynamic_water_common_init() {
     water_simulation_retain();
 
-    water_simulation_enable_debug_render();
-
-    effect_mesh = tmesh_cache_load("rom:/meshes/water/water_waves.tmesh");
+    // water_simulation_enable_debug_render();
 }
 
 void dynamic_water_common_destroy() {
     water_simulation_release();
 
-    water_simulation_disable_debug_render();
-
-    tmesh_cache_release(effect_mesh);
+    // water_simulation_disable_debug_render();
 }

@@ -229,7 +229,7 @@ def _get_string_value(obj: bpy.types.Object, definition, field_name: str | None,
         if mesh_obj.library:
             return get_rom_path(mesh_obj.library.filepath, '.tmesh')
         else:
-            context.add_mesh_export(obj)
+            context.add_mesh_export(to_extract)
             return get_scene_resource(mesh_obj.name + '.tmesh')
 
     return str(get_value(obj, field_name, ""))
@@ -455,7 +455,8 @@ def write_obj(file, obj: bpy.types.Object, definition, context: SerializeContext
             return offset + 4
         elif definition == 'collider_shape_t':
             value = get_value(obj, field_name, 0)
-            if not isinstance(value, str) or not _write_collider_def(file, obj, bpy.data.objects[value[len('obj '):]]):
+            
+            if not isinstance(value, str) or not value or not _write_collider_def(file, obj, bpy.data.objects[value[len('obj '):]]):
                 file.write(struct.pack(">Iffffff", 2, 0, 0, 0, 0, 0, 0))
             
             return offset + 28

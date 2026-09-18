@@ -51,6 +51,8 @@ typedef struct dynamic_object_type dynamic_object_type_t;
 #define DYNAMIC_OBJECT_MARK_UNDER_WATER(object)         (object)->under_water = 2
 #define DYNAMIC_OBJECT_MARK_ICE_DASH(object)            (object)->has_ice_dash = 2
 
+#define DYNAMIC_OBJECT_WAS_MARKED_UNDER_WATER(object)   ((object)->under_water == 2)
+
 enum dynamic_density_class {
     DYNAMIC_DENSITY_LIGHT,
     DYNAMIC_DENSITY_MEDIUM,
