@@ -15,7 +15,7 @@ struct room_portal {
     float last_player_distance;
 
     room_id current_room;
-    bool did_fade;
+    uint8_t last_target_alpha;
 
     struct element_attr attrs[2];
 };

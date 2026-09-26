@@ -248,6 +248,7 @@ struct scene* scene_load(const char* filename) {
 
     for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
         scene->loaded_rooms[i].state = LOADED_ROOM_STATE_UNUSED;
+        scene->loaded_rooms[i].room_index = ROOM_NONE;
     }
 
     scene->next_loaded_room_cutscene = 0;

@@ -378,9 +378,10 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
 
     switch (step->step) {
         case 0: {
+            room->entity_count = 0;
+            room->entities = NULL;
+
             if (room_source->block == NULL) {
-                room->entity_count = 0;
-                room->entities = NULL;
                 return INCREMENTAL_STEP_FINISH;
             }
 
@@ -443,6 +444,18 @@ void scene_room_loaded(void* data, void* resource) {
     room->state = LOADED_ROOM_STATE_LOADED;
 }
 
+loaded_room_t* scene_find_room(struct scene* scene, int room_index) {
+    for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
+        loaded_room_t* room = &scene->loaded_rooms[i];
+
+        if (room->room_index == room_index) {
+            return room;
+        }
+    }
+
+    return NULL;
+}
+
 void scene_load_room(struct scene* scene, loaded_room_t* room) {
     room->state = LOADED_ROOM_STATE_LOADING;
     incremental_loader_enqueue(INCREMENTAL_RESOURCE_ROOM, room, scene, scene_room_loaded, room);
@@ -460,7 +473,7 @@ void scene_room_unload(loaded_room_t* room) {
 }
 
 bool scene_show_room(struct scene* scene, int room_index) {
-    if (scene_is_showing_room(scene, room_index)) {
+    if (scene_find_room(scene, room_index)) {
         return true;
     }
 
@@ -491,6 +504,7 @@ void scene_hide_room(struct scene* scene, int room_index) {
 
             scene_room_unload(room);
             room->state = LOADED_ROOM_STATE_UNUSED;
+            room->room_index = ROOM_NONE;
 
             room_entity_block_t* room_source = &scene->room_entities[room_index];
             for (int i = 0; i < room_source->shared_entity_count; i += 1) {
@@ -514,25 +528,12 @@ void scene_hide_room(struct scene* scene, int room_index) {
     }
 }
 
-loaded_room_t* scene_find_room(struct scene* scene, int room_index) {
-    for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
-        loaded_room_t* room = &scene->loaded_rooms[i];
-
-        if (room->room_index == room_index && room->state == LOADED_ROOM_STATE_LOADED) {
-            return room;
-        }
-    }
-
-    return NULL;
-}
-
-
 void scene_spawn_entity(struct scene* scene, entity_spawner spawner) {
     int room_index = spawner >> 16;
     int entity_index = spawner & 0xFFFF;
     loaded_room_t* room = scene_find_room(scene, room_index);
 
-    if (room == NULL) {
+    if (room == NULL || room->state != LOADED_ROOM_STATE_LOADED) {
         return;
     }
 
@@ -561,7 +562,7 @@ entity_id scene_lookup_entity(struct scene* scene, entity_spawner spawner) {
 
     loaded_room_t* room = scene_find_room(scene, room_index);
 
-    if (room == NULL) {
+    if (room == NULL || room->state != LOADED_ROOM_STATE_LOADED) {
         return 0;
     }
 
@@ -573,7 +574,13 @@ entity_id scene_lookup_entity(struct scene* scene, entity_spawner spawner) {
 }
 
 bool scene_is_showing_room(struct scene* scene, int room_index) {
-    return scene_find_room(scene, room_index) != NULL;
+    loaded_room_t* room = scene_find_room(scene, room_index);
+    return room != NULL && room->state == LOADED_ROOM_STATE_LOADED;
+}
+
+bool scene_is_loading_room(struct scene* scene, int room_index) {
+    loaded_room_t* room = scene_find_room(scene, room_index);
+    return room != NULL && room->state == LOADED_ROOM_STATE_LOADING;
 }
 
 bool scene_has_next() {
