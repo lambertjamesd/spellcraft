@@ -95,6 +95,8 @@ void room_portal_update(void* data) {
         scene_hide_room(current_scene, room_portal_other_room(portal, portal->current_room));
         portal->attrs[0].color = (color_t){0, 0, 0, 255};
     }
+
+    portal->renderable.hide = portal->attrs[0].color.a == 0;
     
     if (portal->last_player_distance) {
         if (side_a != last_side_a &&
