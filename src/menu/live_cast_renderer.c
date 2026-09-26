@@ -162,7 +162,11 @@ void live_cast_render_symbol_runes(rune_pattern_t rune, int x, int y) {
 void live_cast_renderer_render(live_cast_renderer_t* live_cast_renderer) {
     material_pair_apply(live_cast_renderer->icon_background, NULL);
 
+    bool is_casting = joypad_get_buttons_held(0).z;
+
     int prev_spell_count = live_cast_prev_rune_count(live_cast_renderer->live_cast);
+
+    debugf("prev_spell_count %d\n", prev_spell_count);
 
     if (live_cast_renderer->last_active_index != prev_spell_count) {
         for (int i = 0; i < 4; i += 1) {
@@ -182,22 +186,38 @@ void live_cast_renderer_render(live_cast_renderer_t* live_cast_renderer) {
 
     bool has_more = rune_pattern_symbol_count(rune) < inventory_get_item_level(rune.primary_rune);
 
-    for (int i = SPELL_SYMBOL_FIRE; i <= SPELL_SYMBOL_AIR; i += 1) {
-        struct symbol_modifier_parameters target = live_cast_renderer_determine_target(rune, i, has_more);
-        struct symbol_modifier_parameters* parameters = &live_cast_renderer->symbol_modifiers[i - SPELL_SYMBOL_FIRE];
+    if (is_casting || rune.primary_rune) {
+        for (int i = SPELL_SYMBOL_FIRE; i <= SPELL_SYMBOL_AIR; i += 1) {
+            struct symbol_modifier_parameters target = live_cast_renderer_determine_target(rune, i, has_more);
+            struct symbol_modifier_parameters* parameters = &live_cast_renderer->symbol_modifiers[i - SPELL_SYMBOL_FIRE];
+            
+            parameters->background_alpha = move_towards_int(parameters->background_alpha, target.background_alpha, 64);
+            parameters->rune_alpha = move_towards_int(parameters->rune_alpha, target.rune_alpha, 64);
+            parameters->x_offset = move_towards_int(parameters->x_offset, target.x_offset, 4);
+            parameters->y_offset = move_towards_int(parameters->y_offset, target.y_offset, 4);
+            parameters->size = move_towards_int(parameters->size, target.size, 1);
+        }
         
-        parameters->background_alpha = move_towards_int(parameters->background_alpha, target.background_alpha, 64);
-        parameters->rune_alpha = move_towards_int(parameters->rune_alpha, target.rune_alpha, 64);
-        parameters->x_offset = move_towards_int(parameters->x_offset, target.x_offset, 4);
-        parameters->y_offset = move_towards_int(parameters->y_offset, target.y_offset, 4);
-        parameters->size = move_towards_int(parameters->size, target.size, 1);
+        live_cast_renderer->prev_runes_offset = move_towards_int(
+            live_cast_renderer->prev_runes_offset,
+            -SPELL_SPACING * prev_spell_count,
+            SPELL_SPACING / 8
+        );
+    } else {
+        for (int i = SPELL_SYMBOL_FIRE; i <= SPELL_SYMBOL_AIR; i += 1) {
+            struct symbol_modifier_parameters* parameters = &live_cast_renderer->symbol_modifiers[i - SPELL_SYMBOL_FIRE];
+
+            parameters->background_alpha = move_towards_int(parameters->background_alpha, 0, 64);
+            parameters->rune_alpha = move_towards_int(parameters->rune_alpha, 0, 64);
+        }
+        
+        live_cast_renderer->prev_runes_offset = move_towards_int(
+            live_cast_renderer->prev_runes_offset,
+            prev_spell_count ? -SPELL_SPACING * (prev_spell_count - 1) : 0,
+            SPELL_SPACING / 8
+        );
     }
-    
-    live_cast_renderer->prev_runes_offset = move_towards_int(
-        live_cast_renderer->prev_runes_offset,
-        -SPELL_SPACING * prev_spell_count,
-        SPELL_SPACING / 8
-    );
+
 
     for (int i = SPELL_SYMBOL_FIRE; i <= SPELL_SYMBOL_AIR; i += 1) {
         struct symbol_modifier_parameters parameters = live_cast_renderer->symbol_modifiers[i - SPELL_SYMBOL_FIRE];

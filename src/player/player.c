@@ -1436,7 +1436,7 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
     source->flags.cast_held = input.btn.b;
 
     if (input.btn.z) {
-        if (pressed.b) {
+        if (pressed.l) {
             live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_LIFE);
         } else if (pressed.c_up) {
             live_cast_append_symbol(&player->live_cast, SPELL_SYMBOL_AIR);
