@@ -372,6 +372,7 @@ struct scene* scene_load(const char* filename) {
     audio_play_music(scene->music);
 
     scene_show_room(scene, current_room);
+    incremental_loader_flush_queue();
 
     if (starting_cutscene.type == CUTSCENE_REF_NONE) {
         fade_effect_set((color_t){0, 0, 0, 0}, 0.5f);
@@ -420,7 +421,7 @@ void scene_release(struct scene* scene) {
     for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
         loaded_room_t* room = &scene->loaded_rooms[i];
 
-        if (room->state != LOADED_ROOM_STATE_UNUSED) {
+        if (room->state == LOADED_ROOM_STATE_LOADED) {
             scene_hide_room(scene, room->room_index);
         }
     }

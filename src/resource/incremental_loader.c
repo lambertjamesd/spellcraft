@@ -93,7 +93,7 @@ void incremental_loader_enqueue(incremental_resource_type_t type, void* resource
 
     incremental_loader_init(next, type, resource, file);
     next->complete_callback = callback;
-    next->complete_callback = data;
+    next->data = data;
 }
 
 void incremental_loader_process_queue(uint64_t max_ticks) {
