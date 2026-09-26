@@ -59,23 +59,19 @@ void room_portal_update(void* data) {
         target_alpha = (uint8_t)(255.0f * alpha);
 
         if (scene_is_showing_room(current_scene, portal->room_a) && scene_is_showing_room(current_scene, portal->room_b)) {
-            int next_alpha = portal->attrs[0].color.a;
+            int current_alpha = portal->attrs[0].color.a;
 
-            if (next_alpha < target_alpha) {
-                next_alpha += MAX_FADE_PER_FRAME;
+            if (current_alpha < target_alpha) {
+                current_alpha = target_alpha;
+            } else if (current_alpha > target_alpha) {
+                current_alpha -= MAX_FADE_PER_FRAME;
 
-                if (next_alpha > target_alpha) {
-                    next_alpha = target_alpha;
-                }
-            } else if (next_alpha > target_alpha) {
-                next_alpha -= MAX_FADE_PER_FRAME;
-
-                if (next_alpha < target_alpha) {
-                    next_alpha = target_alpha;
+                if (current_alpha < target_alpha) {
+                    current_alpha = target_alpha;
                 }
             }
 
-            portal->attrs[0].color = (color_t){0, 0, 0, next_alpha};
+            portal->attrs[0].color = (color_t){0, 0, 0, current_alpha};
         } else {
             portal->attrs[0].color = (color_t){0, 0, 0, 255};
         }
