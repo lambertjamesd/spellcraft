@@ -39,7 +39,6 @@
 #define PLAYER_STRAFE_BLEND_FRAMES  8
 
 #define SLIDE_DELAY 0.25f
-#define COYOTE_TIME 0.1f
 #define SHADOW_AS_GROUND_DISTANCE   0.15f
 
 #define CARRY_GRAB_TIME   (11.0f / 30.0f)
@@ -1249,13 +1248,19 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     enum player_ground_movement_result move_result = player_handle_ground_movement(player, ground_contact, &target_direction, &speed);
 
     if (move_result == GROUND_MOVEMENT_RESULT_FALL) {
-        player_enter_falling_state(player);
-        return;
+        contact_t* shadow_contact = player->cutscene_actor.collider.shadow_contact;
+
+        float fall_height = shadow_contact ? player_get_position(player)->y - shadow_contact->point.y : JUMP_OVERHANG_HEIGHT;
+
+        if (fall_height > JUMP_OVERHANG_HEIGHT) {
+            player_enter_falling_state(player);
+            return;
+        }
     }
 
     if (move_result == GROUND_MOVEMENT_RESULT_JUMP) {
         player_enter_jump_state(player);
-        player->cutscene_actor.collider.velocity.y = 3.0f;
+        vel->y = 3.0f;
         return;
     }
 
