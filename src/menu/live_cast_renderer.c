@@ -166,8 +166,6 @@ void live_cast_renderer_render(live_cast_renderer_t* live_cast_renderer) {
 
     int prev_spell_count = live_cast_prev_rune_count(live_cast_renderer->live_cast);
 
-    debugf("prev_spell_count %d\n", prev_spell_count);
-
     if (live_cast_renderer->last_active_index != prev_spell_count) {
         for (int i = 0; i < 4; i += 1) {
             live_cast_renderer->symbol_modifiers[i] = (struct symbol_modifier_parameters) {

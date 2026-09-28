@@ -431,7 +431,7 @@ def build_room_entity_block(objects: list[ObjectEntry], variable_context, contex
 
     return block.getvalue()
 
-def find_scene_objects(scene: Scene, definitions, room_collection: room.room_collection, base_transform):
+def find_scene_objects(scene: Scene, definitions, room_collection: room.room_collection, base_transform, context):
     object_blacklist = find_static_blacklist()
 
     for obj in bpy.data.objects:
@@ -451,9 +451,6 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
 
         final_transform = base_transform @ obj.matrix_world
 
-        if obj.data and 'static_collision' in obj.data:
-            scene.add_collider(room_collection.get_obj_room_index(obj), obj.data['static_collision'], final_transform)
-
         obj_type = get_object_type(obj)
 
         if obj_type != None:
@@ -462,8 +459,26 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
             if obj_type == 'static_particles':
                 scene.particles.append(ParticlesEntry(obj))
             else:
-                scene.objects.append(process_linked_object(obj, definitions, room_collection.get_obj_room_index(obj)))
+                obj_entry = process_linked_object(obj, definitions, room_collection.get_obj_room_index(obj))
+
+                if not obj_entry:
+                    continue
+
+                if obj.data and 'static_collision' in obj.data:
+                    room_ids = obj_entry.get_multiroom_ids(context)
+
+                    if len(room_ids) == 0:
+                        room_ids = [room_collection.get_obj_room_index(obj)]
+
+                    static_collision = obj.data['static_collision']
+                    for room_id in room_ids:
+                        scene.add_collider(room_id, static_collision, final_transform)
+
+                scene.objects.append(obj_entry)
             continue
+
+        if obj.data and 'static_collision' in obj.data:
+            scene.add_collider(room_collection.get_obj_room_index(obj), obj.data['static_collision'], final_transform)
 
         if obj.type != "MESH" or not isinstance(obj.data, bpy.types.Mesh):
             continue
@@ -821,7 +836,8 @@ def process_scene():
     with open('build/assets/scripts/globals.json') as file:
         globals.deserialize(file)
         
-    find_scene_objects(scene, definitions, room_collection, base_transform)
+    context = struct_serialize.SerializeContext(enums)
+    find_scene_objects(scene, definitions, room_collection, base_transform, context)
 
     generated_bools = []
 
@@ -846,8 +862,6 @@ def process_scene():
     build_variable_enum(enums, globals, scene_vars)
 
     variable_context = variable_layout.VariableContext(globals, scene_vars, None)
-
-    context = struct_serialize.SerializeContext(enums)
 
     for idx, room in enumerate(room_collection.rooms):
         context.get_room(idx).name = room.name
