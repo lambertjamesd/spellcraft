@@ -127,19 +127,17 @@ grab_mode_t grab_checker_check_for_grab(grab_checker_t* checker) {
 void grab_checker_cast_climb(grab_checker_t* checker, dynamic_object_t* player_collider, contact_t* wall_contact, float max_grab_height) {
     checker->cast_mode = GRAB_MODE_CLIMB;
 
+    checker->position.x = player_collider->position->x - wall_contact->normal.x * CLIMB_OFFSET;
+    checker->position.z = player_collider->position->z - wall_contact->normal.z * CLIMB_OFFSET;
+
     if (checker->climb_timer) {
-        checker->collider.position->x = player_collider->position->x - wall_contact->normal.x * CLIMB_OFFSET;
-        checker->collider.position->z = player_collider->position->z - wall_contact->normal.z * CLIMB_OFFSET;
+        checker->collider.position->y += 0.1f;
         checker->collider.velocity = (struct Vector3){0.0f, -1.0f, 0.0f};
      } else {
-        checker->position = (vector3_t){
-            .x = player_collider->position->x - wall_contact->normal.x * CLIMB_OFFSET,
-            .y = player_collider->position->y + max_grab_height,
-            .z = player_collider->position->z - wall_contact->normal.z * CLIMB_OFFSET,
-        };
+        checker->position.y = player_collider->position->y + max_grab_height;
+        checker->collider.velocity = (struct Vector3){0.0f, -max_grab_height / fixed_time_step, 0.0f};
     }
 
-    checker->collider.velocity = (struct Vector3){0.0f, -max_grab_height / fixed_time_step, 0.0f};
     checker->target_pos = checker->position;
     checker->wall_collider_id = wall_contact->other_object;
     dynamic_object_wake(&checker->collider);
