@@ -561,7 +561,6 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
         contact_t* shadow_contact = player->cutscene_actor.collider.shadow_contact;
         if (shadow_contact && player->state_data.grounded.last_surface_type == SURFACE_TYPE_STICKY) {
             ground_contact = shadow_contact;
-            *pos = shadow_contact->point;
             vector3ProjectPlane(vel, &shadow_contact->normal, vel);
         } else if (vel->x * vel->x + vel->z * vel->z > JUMP_SPEED_THRESHOLD * JUMP_SPEED_THRESHOLD && (!shadow_contact || pos->y - shadow_contact->point.y > JUMP_OVERHANG_HEIGHT)) {
             return GROUND_MOVEMENT_RESULT_JUMP;
