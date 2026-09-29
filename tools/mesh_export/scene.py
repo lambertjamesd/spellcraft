@@ -760,11 +760,6 @@ def save_mesh_exports(mesh_objects: list[bpy.types.Object], output_filename: str
         animation.export_animations(replace_extension(output, '.anim'), arm, settings)
         
 def save_room_exports(scene: Scene, rooms: list[struct_serialize.RoomExport], output_filename: str, base_transform: mathutils.Matrix):
-    settings = export_settings.ExportSettings()
-    settings.default_material = material.Material("Default")
-    settings.default_material.priority = 0
-    settings.default_material_name = 'rom:/materials/background.mat'
-
     for room_index, room in enumerate(rooms):
         output = get_asset_filename(output_filename, f'{room.name}.room')
         room_meshes = entities_mesh.mesh_list(base_transform)
@@ -772,17 +767,30 @@ def save_room_exports(scene: Scene, rooms: list[struct_serialize.RoomExport], ou
         for obj in room.static:
             room_meshes.append(obj)
 
-        mesh = room_meshes.generate_mesh_data_by_order()
+        meshes = room_meshes.generate_mesh_data_by_order()
 
         with open(output, 'wb') as file:
-            tiny3d_mesh_writer.write_mesh(mesh, None, [], settings, file, preserve_chunk_order=True)
+            file.write(len(meshes).to_bytes(2, 'big'))
 
-            if len(mesh) == 0:
-                file.write(struct.pack('>fff', 0, 0, 0))
-            else:
-                min, max = mesh[0].bounding_box()
-                center = (min + max) * 0.5
-                file.write(struct.pack('>fff', center.x, center.y, center.z))
+            for mesh in meshes:
+                settings = export_settings.ExportSettings()
+                settings.default_material = material.Material("Default")
+                settings.default_material.priority = 0
+                settings.default_material_name = 'rom:/materials/background.mat'
+                            
+                if len(mesh) == 0:
+                    file.write(struct.pack('>fff', 0, 0, 0))
+                else:
+                    min, max = mesh[0].bounding_box()
+                    center = (min + max) * 0.5
+                    file.write(struct.pack('>fff', center.x, center.y, center.z))
+
+                    settings.default_material = material_extract.load_material_with_name(mesh[0].mat)
+                    if mesh[0].mat:
+                        settings.default_material_name = material_extract.material_romname(mesh[0].mat) or 'rom:/materials/default.mat'
+                    
+                    
+                tiny3d_mesh_writer.write_mesh(mesh, None, [], settings, file, preserve_chunk_order=True)
 
             collider = scene.room_mesh_colliders[room_index] if room_index < len(scene.room_mesh_colliders) else mesh_collider.MeshCollider()
 

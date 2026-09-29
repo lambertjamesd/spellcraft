@@ -85,13 +85,18 @@ enum loaded_room_state {
 
 typedef enum loaded_room_state loaded_room_state_t;
 
+typedef struct {
+    tmesh_t tmesh;
+    vector3_t center;
+} room_static_entry_t;
+
 struct loaded_room {
     uint16_t state;
     uint16_t room_index;
     uint16_t entity_count;
+    uint16_t static_count;
+    room_static_entry_t* static_entries;
     loaded_entity_t* entities;
-    tmesh_t tmesh;
-    vector3_t center;
     mesh_collider_t mesh_collider;
     struct scene* scene;
 };

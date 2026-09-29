@@ -5,6 +5,7 @@ import bmesh
 import math
 
 from . import armature
+from . import material_extract
 
 def interpolate_color(a, b, lerp):
     lerp_inv = 1 - lerp
@@ -319,6 +320,12 @@ class mesh_list_entry:
         self.mesh: bpy.types.Mesh = mesh
         self.transform: mathutils.Matrix = transform
 
+class room_mesh_block:
+    def __init__(self):
+        self.center: mathutils.Vector = mathutils.Vector()
+        self.priority: int = 1
+        self.mesh_data: list[list[mesh_data]] = []
+
 class mesh_list():
     def __init__(self, base_transform: mathutils.Matrix) -> None:
         self.meshes: list[mesh_list_entry] = []
@@ -333,27 +340,40 @@ class mesh_list():
         bm.free()
         self.meshes.append(mesh_list_entry(obj, mesh, self.base_transform @ obj.matrix_world))
 
-    def generate_mesh_data_by_order(self, armature: armature.ArmatureData | None = None) -> list[mesh_data]:
-        result: list[mesh_data] = []
+    def generate_mesh_data_by_order(self, armature: armature.ArmatureData | None = None) -> list[list[mesh_data]]:
+        blocks: list[room_mesh_block] = []
 
         for entry in self.meshes:
             mesh = entry.mesh
             transform = entry.transform
 
-            for material_index in range(max(len(mesh.materials), 1)):
-                if material_index < len(mesh.materials):
-                    mat = mesh.materials[material_index]
+            curr = room_mesh_block()
+            blocks.append(curr)
 
-                    if mat == None:
-                        continue
-                else:
+            for material_index in range(max(len(mesh.materials), 1)):
+                mat = mesh.materials[material_index]
+
+                if mat == None:
                     continue
 
-                data_for_mat = mesh_data(mat)
+                parsed_mat = material_extract.load_material_with_name(mat)
 
-                data_for_mat.append_mesh(entry.obj, mesh, material_index, transform, armature)
+                if material_index == 0 and parsed_mat.priority != None:
+                    curr.priority = parsed_mat.priority
 
-                result.append(data_for_mat)
+                if parsed_mat.does_scroll() or len(curr.mesh_data) == 0:
+                    curr.mesh_data.append([])
+
+                curr_mesh = mesh_data(mat)
+                curr_mesh.append_mesh(entry.obj, mesh, material_index, transform, armature)
+                curr.mesh_data[-1].append(curr_mesh)
+
+        blocks.sort(key=lambda x: x.priority)
+
+        result: list[list[mesh_data]] = []
+
+        for entry in blocks:
+            result += entry.mesh_data
 
         return result
 

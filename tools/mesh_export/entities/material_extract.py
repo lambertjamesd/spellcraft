@@ -696,7 +696,7 @@ def material_romname(bpy_mat: bpy.types.Material) -> str | None:
     return None
         
 
-def load_material_with_name(bpy_mat: bpy.types.Material) -> material.Material:
+def load_material_with_name(bpy_mat: bpy.types.Material | None) -> material.Material:
     if not bpy_mat:
         return material.Material()
     

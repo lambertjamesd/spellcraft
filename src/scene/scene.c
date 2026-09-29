@@ -95,8 +95,10 @@ void scene_render(void* data, struct render_batch* batch) {
 
         scene_render_room(scene, room->room_index, batch);
         
-        batch->curr_pos = &room->center;
-        render_batch_add_tmesh(batch, &room->tmesh, NULL, NULL, NULL, NULL);
+        for (int static_index = 0; static_index < room->static_count; static_index += 1) {
+            batch->curr_pos = &room->static_entries[static_index].center;
+            render_batch_add_tmesh(batch, &room->static_entries[static_index].tmesh, NULL, NULL, NULL, NULL);
+        }
     }
 }
 
@@ -389,20 +391,27 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
             scene_build_room_filename(room_filename, scene->room_metadata[room->room_index].name);
         
             load_room_file = asset_fopen(room_filename, NULL);
-
-            incremental_loader_push(loader, INCREMENTAL_RESOURCE_TMESH, &room->tmesh, load_room_file);       
+            fread(&room->static_count, sizeof(uint16_t), 1, load_room_file);
+            room->static_entries = malloc(sizeof(room_static_entry_t) * room->static_count);
             return INCREMENTAL_STEP_ONCE;
         }
-        case 1: {
-            fread(&room->center, sizeof(vector3_t), 1, load_room_file);
-        
+        case 1 : {
+            if (step->index < room->static_count) {
+                fread(&room->static_entries[step->index].center, sizeof(vector3_t), 1, load_room_file);
+                incremental_loader_push(loader, INCREMENTAL_RESOURCE_TMESH, &room->static_entries[step->index].tmesh, load_room_file);
+                return INCREMENTAL_STEP_INDEX;
+            } else {
+                return INCREMENTAL_STEP_ONCE;
+            }
+        }
+        case 2: {        
             mesh_collider_load(&room->mesh_collider, load_room_file);
             collision_scene_add_static_mesh(&room->mesh_collider);
 
             fclose(load_room_file);
             return INCREMENTAL_STEP_ONCE;
         }
-        case 2: {
+        case 3: {
             memory_stream_init(&load_room_stream, room_source->block, room_source->block_size);
         
             uint16_t entity_count;
@@ -414,7 +423,7 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
             evaluation_context_init(&load_room_eval_context); 
             return INCREMENTAL_STEP_ONCE;
         }
-        case 3: {
+        case 4: {
             if (step->index < room->entity_count) {
                 room->entities[step->index] = scene_load_entity(scene, &load_room_stream, &load_room_eval_context);
                 return INCREMENTAL_STEP_INDEX;
@@ -422,14 +431,14 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
                 return INCREMENTAL_STEP_ONCE;
             }
         }
-        case 4: {
+        case 5: {
             if (step->index < room_source->shared_entity_count) {
                 scene_add_shared_reference(scene, room_source->shared_entity_index[step->index], &load_room_eval_context);
                 return INCREMENTAL_STEP_INDEX;
             } else {
                 return INCREMENTAL_STEP_ONCE;
             }
-        } case 5: {
+        } case 6: {
             evaluation_context_destroy(&load_room_eval_context);
             return INCREMENTAL_STEP_FINISH;
         }
@@ -467,7 +476,10 @@ void scene_room_unload(loaded_room_t* room) {
     }
     free(room->entities);
     room->entities = NULL;
-    tmesh_release(&room->tmesh);
+    for (int i = 0; i < room->static_count; i += 1) {
+        tmesh_release(&room->static_entries[i].tmesh);
+    }
+    free(room->static_entries);
     collision_scene_remove_static_mesh(&room->mesh_collider);
     mesh_collider_release(&room->mesh_collider);
 }
