@@ -370,6 +370,8 @@ int main(void)
             SC_PROFILE_END(main, overworld_check_unload_queue);
         }
 
+        incremental_loader_process_queue(TICKS_FROM_MS(2));
+
         while (vi_delay > 0) {}
 
         int update_count = -vi_delay / VI_PER_FRAME + 1;
