@@ -35,6 +35,22 @@ static breakable_type_def_t breakable_definitions[BREAKABLE_TYPE_COUNT] = {
     }
 };
 
+void breakable_shard_update(breakable_shard_t* shard) {
+    vector3AddScaled(&shard->transform.position, &shard->velocity, fixed_time_step, &shard->transform.position);
+    shard->velocity.y += GRAVITY_CONSTANT * fixed_time_step;
+    quatApplyAngularVelocity(&shard->transform.rotation, &shard->angular_velocity, fixed_time_step, &shard->transform.rotation);
+}
+
+void breakable_launch_shards(breakable_t* breakable, breakable_shard_t* shard) {
+    if (!breakable->break_effect_mesh->armature.bone_count) {
+        return;
+    }
+
+    transform_t starting_pose[breakable->break_effect_mesh->armature.bone_count];
+
+    
+}
+
 void breakable_update(void* data) {
     breakable_t* breakable = (breakable_t*)data;
 
@@ -88,6 +104,7 @@ void breakable_init(breakable_t* breakable, struct breakable_definition* definit
     update_add(breakable, breakable_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD);
 
     breakable->is_breaking = false;
+    breakable->shards = NULL;
 
     interactable_init(&breakable->interactable, entity_id, breakable_def->can_pickup ? INTERACT_TYPE_PICKUP : INTERACTION_NONE, NULL, NULL);
 }

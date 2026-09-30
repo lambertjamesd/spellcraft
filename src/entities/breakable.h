@@ -7,6 +7,12 @@
 #include "entity_deps.h"
 #include "../effects/mesh_animation.h"
 
+typedef struct {
+    transform_t transform;
+    vector3_t velocity;
+    vector3_t angular_velocity;
+} breakable_shard_t;
+
 struct breakable {
     transform_sa_t transform;
     renderable_t renderable;
@@ -17,6 +23,7 @@ struct breakable {
     tmesh_t* mesh;
     tmesh_t* break_effect_mesh;
     animation_set_t* break_animations;
+    breakable_shard_t* shards;
     bool is_breaking;
 };
 
