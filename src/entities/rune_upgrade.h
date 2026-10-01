@@ -9,6 +9,7 @@
 struct rune_upgrade {
     transform_sa_t transform;
     renderable_t renderable;
+    element_attr_t attrs[2];
     animator_t animator;
     animation_set_t* animations;
 
@@ -17,6 +18,8 @@ struct rune_upgrade {
 
     integer_variable rune_level;
     boolean_variable has_item;
+
+    uint8_t last_env_alpha;
 };
 
 typedef struct rune_upgrade rune_upgrade_t;

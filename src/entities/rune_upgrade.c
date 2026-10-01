@@ -13,9 +13,26 @@ static vector3_t player_cutscene_offset = {
     1.8f,
 };
 
+#define FADE_OUT_START_TIME 2.2f
+#define FADE_OUT_END_TIME   2.9f
+
 void rune_upgrade_update(void* data) {
     rune_upgrade_t* rune_upgrade = (rune_upgrade_t*)data;
+
+    if (rune_upgrade->interactable.interact_type == INTERACT_TYPE_NONE && !animator_is_running(&rune_upgrade->animator)) {
+        rune_upgrade->attrs[0].color = (color_t){0, 0, 0, 255};
+        return;
+    }
+
     animator_update(&rune_upgrade->animator, fixed_time_step);
+
+    if (rune_upgrade->animator.current_time < FADE_OUT_START_TIME) {
+        rune_upgrade->attrs[0].color = (color_t){0, 0, 0, (sinf(scene_time) + 1.0f) * 24.f};
+    } else if (rune_upgrade->animator.current_time < FADE_OUT_END_TIME) {
+        rune_upgrade->attrs[0].color = (color_t){0, 0, 0, (uint8_t)((rune_upgrade->animator.current_time - FADE_OUT_START_TIME) * (255.0f / (FADE_OUT_END_TIME - FADE_OUT_START_TIME)))};
+    } else {
+        rune_upgrade->attrs[0].color = (color_t){0, 0, 0, 255};
+    }
 }
 
 void rune_upgrade_revert_idle(void* data) {
@@ -72,6 +89,12 @@ void rune_upgrade_init(rune_upgrade_t* rune_upgrade, struct rune_upgrade_definit
     renderable_single_axis_init(&rune_upgrade->renderable, &rune_upgrade->transform, definition->mesh);
     render_scene_add_renderable(&rune_upgrade->renderable, 0.0f);
 
+    bool has_item = expression_get_bool(definition->has_item);
+
+    rune_upgrade->attrs[0] = (element_attr_t){.type = ELEMENT_ATTR_ENV_COLOR, .color = {0, 0, 0, has_item ? 255 : 0}};
+    rune_upgrade->attrs[1] = (element_attr_t){.type = ELEMENT_ATTR_NONE};
+    rune_upgrade->renderable.attrs = &rune_upgrade->attrs[0];
+
     animator_init(&rune_upgrade->animator, rune_upgrade->renderable.mesh_render.armature.bone_count);
     renderable_set_animator(&rune_upgrade->renderable, &rune_upgrade->animator);
     update_add(rune_upgrade, rune_upgrade_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_CUTSCENE | UPDATE_LAYER_WORLD);
@@ -95,7 +118,7 @@ void rune_upgrade_init(rune_upgrade_t* rune_upgrade, struct rune_upgrade_definit
     interactable_init(
         &rune_upgrade->interactable, 
         entity_id, 
-        expression_get_bool(definition->has_item) ? INTERACT_TYPE_NONE : INTERACT_TYPE_CHECK, 
+        has_item ? INTERACT_TYPE_NONE : INTERACT_TYPE_CHECK, 
         rune_upgrade_interact, 
         rune_upgrade
     );

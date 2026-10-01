@@ -29,7 +29,7 @@ struct renderable {
         } point_render;
     };
     enum transform_type type;
-    struct element_attr* attrs;
+    element_attr_t* attrs;
     uint16_t hide: 1;
 };
 
