@@ -5,7 +5,7 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None, st
     if not start or not end:
         return end
     
-    if start == end:
+    if start == end and not end.palette_data:
         return None
     
     accept_last_image_data = True
