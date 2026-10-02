@@ -34,7 +34,16 @@ void camera_wall_checker_init(camera_wall_checker_t* checker) {
     collision_scene_add(&checker->collider);
 }
 
+contact_t* camera_wall_checker_get_floor_contact(camera_wall_checker_t* checker) {
+    if (checker->collider.shadow_contact) {
+        return checker->collider.shadow_contact;
+    }
+    
+    return dynamic_object_get_ground(&checker->collider);
+}
+
 void camera_wall_checker_update(camera_wall_checker_t* checker, vector3_t* look_target, vector3_t* position, float follow_distance) {
+    float start_y = checker->position.y;
     checker->actual_distance = sqrtf(vector3DistSqrd(&checker->position, &checker->cast_from));
 
     checker->position = *look_target;
@@ -48,6 +57,16 @@ void camera_wall_checker_update(camera_wall_checker_t* checker, vector3_t* look_
     
     vector3Scale(&direction, &checker->collider.velocity, follow_distance / fixed_time_step);
     dynamic_object_wake(&checker->collider);
+    // stop it from sticking to the floor
+    checker->collider.is_jumping = true;
+
+    contact_t* floor = camera_wall_checker_get_floor_contact(checker);
+
+    if (floor) {
+        checker->floor_height = start_y - floor->point.y;
+    } else {
+        checker->floor_height = 100.0f;
+    }
 }
 
 void camera_wall_checker_destroy(camera_wall_checker_t* checker) {

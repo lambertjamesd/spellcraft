@@ -28,6 +28,7 @@ void test_hash_map(struct test_context* t);
 void test_memory_leaks(struct test_context* t);
 void test_resource_cache(struct test_context* t);
 void test_cutscene_runner(struct test_context* t);
+void test_mesh_triangle_shadow_cast(struct test_context* t);
 
 #define DEBUG_CONNECT_DELAY     TICKS_FROM_MS(5000)
 
@@ -49,6 +50,8 @@ int main() {
 
     console_init();
     console_set_render_mode(RENDER_MANUAL);
+
+    test_run(test_mesh_triangle_shadow_cast);
 
     test_run(test_menu_microcode);
 
@@ -86,11 +89,13 @@ int main() {
     
     test_run(test_hash_map);
 
-    // test_run(test_memory_leaks);
+    test_run(test_memory_leaks);
 
     test_run(test_resource_cache);
 
     test_report_failures();
+
+    debugf("TESTS DONE\n");
 
     return 0;
 }

@@ -235,11 +235,31 @@ def _rasterize_triangle_3d(points: list[mathutils.Vector]) -> list[tuple[int, in
 KD_TREE_LEAF_NODE = 0
 KD_TREE_BRANCH_NODE = 1
 
-def _transform_value(min, size_inv, value) -> int:
-    result = int((value - min) * size_inv)
+KD_TREE_BRANCH_SIZE = 8
+KD_TREE_MAX_LEAF_TRIANGLES = 0xFF
+KD_TREE_MAX_U16 = 0xFFFF
 
-    if result > 0xFFFF:
-        return 0xFFFF
+def _check_u16(value: int, name: str) -> int:
+    if value > KD_TREE_MAX_U16:
+        raise Exception(f'mesh collider {name} is {value} which exceeds the max of {KD_TREE_MAX_U16}, try splitting the collider into smaller pieces')
+    return value
+
+def _round_f32(value: float) -> float:
+    return struct.unpack('>f', struct.pack('>f', value))[0]
+
+# the runtime quantizes using float32 math so the result can differ
+# from this calculation by a unit. a_max is rounded up and b_min is
+# rounded down with an extra unit of margin so lookups stay conservative
+def _transform_value(min, size_inv, value, round_up: bool) -> int:
+    result = (value - min) * size_inv
+
+    if round_up:
+        result = math.ceil(result) + 1
+    else:
+        result = math.floor(result) - 1
+
+    if result > KD_TREE_MAX_U16:
+        return KD_TREE_MAX_U16
     if result < 0:
         return 0
     return result
@@ -260,7 +280,17 @@ class KdNode():
         self.min_point = min_point
         self.max_point = max_point
 
-        size = max_point - min_point
+        # choose the split axis using the spread of the centroids
+        # large triangles inflate the bounds and would otherwise
+        # cause triangles far apart on other axes to share a leaf
+        centroid_min = triangles[0].centroid if len(triangles) > 0 else mathutils.Vector((0, 0, 0))
+        centroid_max = centroid_min
+
+        for triangle in triangles:
+            centroid_min = _vector_min(centroid_min, triangle.centroid)
+            centroid_max = _vector_max(centroid_max, triangle.centroid)
+
+        size = centroid_max - centroid_min
     
         axis = 0
 
@@ -271,8 +301,8 @@ class KdNode():
 
         self.axis = axis
 
-        if len(triangles) < 4 or size[axis] < 0.5:
-            self.triangles = triangles[:256]
+        if len(triangles) <= KD_TREE_MAX_LEAF_TRIANGLES and (len(triangles) < 4 or size[axis] < 0.5):
+            self.triangles = triangles
             return
 
         triangles = sorted(triangles, key = lambda x: x.centroid[axis])
@@ -284,7 +314,7 @@ class KdNode():
         
     def to_bytes(self, triangle_array, min, size_inv):
         if self.triangles != None:
-            result = struct.pack(">BBH", KD_TREE_LEAF_NODE, len(self.triangles), len(triangle_array))
+            result = struct.pack(">BBH", KD_TREE_LEAF_NODE, len(self.triangles), _check_u16(len(triangle_array), 'triangle offset'))
             triangle_array.extend(self.triangles)
             return result
 
@@ -295,9 +325,9 @@ class KdNode():
             ">BBHHH",
             KD_TREE_BRANCH_NODE,
             self.axis,
-            _transform_value(min[self.axis], size_inv[self.axis], self.left.max_point[self.axis]),
-            _transform_value(min[self.axis], size_inv[self.axis], self.right.min_point[self.axis]),
-            len(left_bytes) + 8
+            _transform_value(min[self.axis], size_inv[self.axis], self.left.max_point[self.axis], round_up=True),
+            _transform_value(min[self.axis], size_inv[self.axis], self.right.min_point[self.axis], round_up=False),
+            _check_u16(len(left_bytes) + KD_TREE_BRANCH_SIZE, 'branch offset')
         ) + left_bytes + right_bytes
             
     def to_string(self, indent):
@@ -331,12 +361,25 @@ class KdMeshIndex():
         if size.z < 0.1:
             size.z = 0.1
 
-        size_inv = 0xFFFF * mathutils.Vector((1 / size.x, 1 / size.y, 1 / size.z))
-        nodes_data = self.root.to_bytes(triangles, min_point, size_inv)
+        # pad the bounds so geometry never quantizes to 0 or 0xFFFF
+        # kd_tree_lookup rejects boxes that quantize to those values
+        padding = mathutils.Vector((size.x * 0.001, size.y * 0.001, size.z * 0.001))
+        min_point = min_point - padding
+        size = size + padding + padding
 
-        file.write(struct.pack(">fff", min_point.x, min_point.y, min_point.z))
-        file.write(struct.pack(">fff", size_inv.x, size_inv.y, size_inv.z))
-        file.write(struct.pack(">HHH", len(nodes_data), len(triangles), len(self.vertices)))
+        # quantize using the same float32 values the runtime will load
+        min_f32 = [_round_f32(min_point.x), _round_f32(min_point.y), _round_f32(min_point.z)]
+        size_inv_f32 = [_round_f32(0xFFFF / size.x), _round_f32(0xFFFF / size.y), _round_f32(0xFFFF / size.z)]
+        nodes_data = self.root.to_bytes(triangles, min_f32, size_inv_f32)
+
+        file.write(struct.pack(">fff", *min_f32))
+        file.write(struct.pack(">fff", *size_inv_f32))
+        file.write(struct.pack(
+            ">HHH",
+            _check_u16(len(nodes_data), 'node data size'),
+            _check_u16(len(triangles), 'triangle count'),
+            _check_u16(len(self.vertices), 'vertex count'),
+        ))
         file.write(nodes_data)
         for triangle in triangles:
             triangle.serialize(file)
