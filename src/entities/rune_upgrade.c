@@ -134,6 +134,7 @@ void rune_upgrade_destroy(rune_upgrade_t* rune_upgrade, struct rune_upgrade_defi
 
     animator_destroy(&rune_upgrade->animator);
     animation_cache_release(rune_upgrade->animations);
+    update_remove(rune_upgrade);
 }
 
 void rune_upgrade_common_init() {

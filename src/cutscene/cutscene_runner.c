@@ -138,7 +138,9 @@ void cutscene_runner_init_step(struct cutscene_active_entry* cutscene, struct cu
             break;
         }
         case CUTSCENE_STEP_CALLBACK: {
-            step->data.callback.callback(step->data.callback.data);
+            if (step->data.callback.init) {
+                step->data.callback.init(step->data.callback.data);
+            }
             break;
         }
         case CUTSCENE_STEP_TEMPLATE_STRING: {
@@ -179,6 +181,11 @@ bool cutscene_runner_update_step(struct cutscene_active_entry* active_entry, str
             return true;
         case CUTSCENE_STEP_JUMP:
             CUTSCENE_CURR_FRAME(active_entry)->current_instruction += step->data.jump.offset;
+            return true;
+        case CUTSCENE_STEP_CALLBACK:
+            if (step->data.callback.step) {
+                return step->data.callback.step(step->data.callback.data);
+            }
             return true;
         case CUTSCENE_STEP_FUNCTION_CALL: {
             cutscene_stack_entry_t* curr_frame = CUTSCENE_CURR_FRAME(active_entry);

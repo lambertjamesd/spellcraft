@@ -70,6 +70,19 @@ void door_cutscene_open(void* data) {
     door->collider.collision_layers = 0;
 }
 
+bool door_is_view_blocked(door_base_t* door) {
+    return door->renderable.mesh_render.armature.active_events != 0;
+}
+
+bool door_is_next_room_loaded(door_base_t* door) {
+    return door->preview_room == ROOM_NONE || scene_is_showing_room(current_scene, door->preview_room);
+}
+
+bool door_cutscene_wait(void* data) {
+    door_base_t* door = (door_base_t*)data;
+    return door_is_next_room_loaded(door);
+}
+
 void door_cutscene_close(void* data) {
     door_base_t* door = (door_base_t*)data;
     animator_run_clip(&door->animator, door->animations.close, 0.0f, false);
@@ -129,9 +142,9 @@ void door_base_interact(struct interactable* interactable, entity_id from) {
         cutscene_builder_delay(&builder, animation_clip_get_duration(door->lock_animator.current_clip));
     }
 
-    cutscene_builder_callback(&builder, door_cutscene_open, door);
+    cutscene_builder_wait_for(&builder, door_cutscene_open, door_cutscene_wait, door);
 
-    cutscene_builder_delay(&builder, 0.75f);
+    cutscene_builder_delay(&builder, 0.42f);
     cutscene_builder_interact_position(
         &builder, 
         INTERACTION_MOVE, 
@@ -174,7 +187,14 @@ void door_base_interact(struct interactable* interactable, entity_id from) {
 }
 
 void door_base_update(door_base_t* door) {
-    animator_update(&door->animator, fixed_time_step);
+    if (!animator_is_running_clip(&door->animator, door->animations.open) || 
+        door_is_view_blocked(door) || 
+        door_is_next_room_loaded(door)
+    ) {
+        animator_update(&door->animator, fixed_time_step);
+    } else {
+        animator_update(&door->animator, 0.0f);
+    }
     animator_update(&door->lock_animator, fixed_time_step);
 
     if (door->next_room != ROOM_NONE && !animator_is_running(&door->animator)) {

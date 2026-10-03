@@ -411,13 +411,26 @@ void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_vari
     }
 }
 
-void cutscene_builder_callback(struct cutscene_builder* builder, cutscene_step_callback callback, void* data) {
+void cutscene_builder_callback(struct cutscene_builder* builder, cutscene_init_callback callback, void* data) {
     struct cutscene_step* step = cutscene_builder_next_step(builder);
 
     *step = (struct cutscene_step){
         .type = CUTSCENE_STEP_CALLBACK,
         .data.callback = {
-            .callback = callback,
+            .init = callback,
+            .data = data,
+        },
+    };
+}
+
+void cutscene_builder_wait_for(struct cutscene_builder* builder, cutscene_init_callback init, cutscene_step_callback on_step, void* data) {
+    struct cutscene_step* step = cutscene_builder_next_step(builder);
+
+    *step = (struct cutscene_step){
+        .type = CUTSCENE_STEP_CALLBACK,
+        .data.callback = {
+            .init = init,
+            .step = on_step,
             .data = data,
         },
     };
