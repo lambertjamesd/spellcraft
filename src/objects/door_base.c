@@ -71,7 +71,7 @@ void door_cutscene_open(void* data) {
 }
 
 bool door_is_view_blocked(door_base_t* door) {
-    return door->renderable.mesh_render.armature.active_events != 0;
+    return door->animator.events.attack;
 }
 
 bool door_is_next_room_loaded(door_base_t* door) {
@@ -192,8 +192,6 @@ void door_base_update(door_base_t* door) {
         door_is_next_room_loaded(door)
     ) {
         animator_update(&door->animator, fixed_time_step);
-    } else {
-        animator_update(&door->animator, 0.0f);
     }
     animator_update(&door->lock_animator, fixed_time_step);
 
