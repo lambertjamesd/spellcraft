@@ -286,11 +286,19 @@ float camera_controller_determine_player_move_target(struct camera_controller* c
     // slowly move the looking_at towards the look target to prevent a jarring motion
     move_towards(&controller->looking_at, &controller->looking_at_speed, &looking_at, &camera_move_parameters);
 
+    controller->min_target_y = controller->wall_checker.floor_y + height - (offset.y > 0.0f ? offset.y : 0.0f);
+
     return target_distance;
 }
 
 void camera_controller_update_position(struct camera_controller* controller) {
-    move_towards(&controller->stable_position, &controller->speed, &controller->target, &camera_move_parameters);
+    vector3_t target = controller->target;
+
+    if (target.y < controller->min_target_y) {
+        target.y = controller->min_target_y;
+    }
+    
+    move_towards(&controller->stable_position, &controller->speed, &target, &camera_move_parameters);
 
     struct Vector3 offset;
     vector3Sub(&controller->looking_at, &controller->stable_position, &offset);
@@ -473,6 +481,7 @@ void camera_controller_init(struct camera_controller* controller, struct player*
     controller->follow_distace = 3.0f;
     controller->shake_offset = gZeroVec;
     controller->shake_velocity = gZeroVec;
+    controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 
     controller->camera.transform.position = controller->target;
     controller->stable_position = controller->target;
@@ -497,6 +506,7 @@ void camera_look_at(struct camera_controller* controller, struct Vector3* target
     controller->look_target = *target;
     controller->state = CAMERA_STATE_LOOK_AT_WITH_PLAYER;
     controller->camera.fov = 70.0f;
+    controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 
 void camera_follow_player(struct camera_controller* controller) {
@@ -509,18 +519,21 @@ void camera_follow_player(struct camera_controller* controller) {
             .vertical_angle_vel = 0.0f,
         },
     };
+    controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 
 void camera_return(struct camera_controller* controller) {
     controller->state = CAMERA_STATE_RETURN_TO_PLAYER;
     controller->speed = 0.0f;
     controller->state_data.return_to_player.move_behind = false;
+    controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 
 void camera_behind_player(struct camera_controller* controller) {
     controller->state = CAMERA_STATE_RETURN_TO_PLAYER;
     controller->speed = 0.0f;
     controller->state_data.return_to_player.move_behind = true;
+    controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation, transform_sa_t* relative_to) {
@@ -533,6 +546,7 @@ void camera_play_animation(struct camera_controller* controller, struct camera_a
         transformSaInitIdentity(&controller->state_data.animate.relative_to);
     }
     controller->state_data.animate.blend_frames = 0;
+    controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 
 void camera_move_to(struct camera_controller* controller, struct Vector3* position, bool instant, bool move_target) {
@@ -550,6 +564,7 @@ void camera_move_to(struct camera_controller* controller, struct Vector3* positi
             controller->stable_position = *position;
         }
     }
+    controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 
 void camera_set_fixed(struct camera_controller* controller, struct Vector3* position, struct Quaternion* rotation, float fov) {
@@ -558,6 +573,7 @@ void camera_set_fixed(struct camera_controller* controller, struct Vector3* posi
     controller->stable_position = *position;
     controller->camera.transform.rotation = *rotation;
     controller->camera.fov = fov;
+    controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 
 bool camera_is_animating(struct camera_controller* controller) {

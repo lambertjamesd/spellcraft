@@ -43,7 +43,6 @@ contact_t* camera_wall_checker_get_floor_contact(camera_wall_checker_t* checker)
 }
 
 void camera_wall_checker_update(camera_wall_checker_t* checker, vector3_t* look_target, vector3_t* position, float follow_distance) {
-    float start_y = checker->position.y;
     checker->actual_distance = sqrtf(vector3DistSqrd(&checker->position, &checker->cast_from));
 
     checker->position = *look_target;
@@ -63,9 +62,9 @@ void camera_wall_checker_update(camera_wall_checker_t* checker, vector3_t* look_
     contact_t* floor = camera_wall_checker_get_floor_contact(checker);
 
     if (floor) {
-        checker->floor_height = start_y - floor->point.y;
+        checker->floor_y = floor->point.y;
     } else {
-        checker->floor_height = 100.0f;
+        checker->floor_y = CAMERA_Y_UNCONSTRAINED;
     }
 }
 

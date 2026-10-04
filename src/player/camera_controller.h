@@ -9,6 +9,8 @@
 #define CAMERA_FOLLOW_DISTANCE  3.4f
 #define CAMERA_FOLLOW_HEIGHT    1.6f
 
+#define CAMERA_Y_UNCONSTRAINED  -1000000000.0f
+
 struct player;
 
 enum camera_controller_state {
@@ -54,6 +56,7 @@ struct camera_controller {
     struct player* player;
     float follow_distace;
     struct Vector3 target;
+    float min_target_y;
     float speed;
     struct Vector3 looking_at;
     float looking_at_speed;

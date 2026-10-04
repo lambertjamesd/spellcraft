@@ -8,7 +8,7 @@ struct camera_wall_checker {
     vector3_t position;
     vector3_t cast_from;
     float actual_distance;
-    float floor_height;
+    float floor_y;
     dynamic_object_t collider;
 };
 
