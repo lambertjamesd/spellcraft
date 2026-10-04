@@ -144,9 +144,6 @@ union state_data {
         vector3_t climb_target;
         vector2_t target_rotation;
     } drop_to_hang;
-    struct {
-        uint16_t last_surface_type;
-    } grounded;
 };
 
 typedef union state_data state_data_t;
@@ -174,6 +171,7 @@ struct player {
 
     enum player_state state;
     union state_data state_data;
+    uint16_t last_surface_type;
 
     struct spatial_trigger z_target_trigger;
     struct TransformSingleAxis z_target_transform;

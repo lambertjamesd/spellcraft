@@ -464,9 +464,9 @@ void player_enter_grounded_state(struct player* player, struct contact* ground_c
 
     if (ground_contact) {
         player->last_footing_normal = ground_contact->normal;
-        player->state_data.grounded.last_surface_type = ground_contact->surface_type;
+        player->last_surface_type = ground_contact->surface_type;
     } else {
-        player->state_data.grounded.last_surface_type = SURFACE_TYPE_NONE;
+        player->last_surface_type = SURFACE_TYPE_NONE;
     }
 }
 
@@ -559,7 +559,7 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
 
     if (!ground_contact) {
         contact_t* shadow_contact = player->cutscene_actor.collider.shadow_contact;
-        if (shadow_contact && player->state_data.grounded.last_surface_type == SURFACE_TYPE_STICKY) {
+        if (shadow_contact && player->last_surface_type == SURFACE_TYPE_STICKY) {
             ground_contact = shadow_contact;
             vector3ProjectPlane(vel, &shadow_contact->normal, vel);
         } else if (vel->x * vel->x + vel->z * vel->z > JUMP_SPEED_THRESHOLD * JUMP_SPEED_THRESHOLD && (!shadow_contact || pos->y - shadow_contact->point.y > JUMP_OVERHANG_HEIGHT)) {
@@ -569,7 +569,7 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
         }
     }
 
-    player->state_data.grounded.last_surface_type = ground_contact->surface_type;
+    player->last_surface_type = ground_contact->surface_type;
 
     bool is_good_footing = ground_contact->other_object == 0 && ground_contact->surface_type != SURFACE_TYPE_COYOTE;
 
