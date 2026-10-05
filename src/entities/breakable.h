@@ -8,7 +8,8 @@
 #include "../effects/mesh_animation.h"
 
 typedef struct {
-    transform_t transform;
+    transform_t* transform;
+    vector3_t start_scale;
     vector3_t velocity;
     vector3_t angular_velocity;
 } breakable_shard_t;
@@ -24,7 +25,9 @@ struct breakable {
     tmesh_t* break_effect_mesh;
     animation_set_t* break_animations;
     breakable_shard_t* shards;
+    uint8_t shard_count;
     bool is_breaking;
+    float break_timer;
 };
 
 typedef struct breakable breakable_t;

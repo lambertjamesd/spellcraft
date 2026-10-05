@@ -25,4 +25,6 @@ struct armature_definition {
     uint16_t flags;
 };
 
+typedef struct armature_definition armature_definition_t;
+
 #endif

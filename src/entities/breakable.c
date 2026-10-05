@@ -2,6 +2,7 @@
 
 #include "../collision/shapes/cylinder.h"
 #include "../entity/entity_spawner.h"
+#include "../math/mathf.h"
 
 struct breakable_type_def {
     const char* mesh_name;
@@ -14,6 +15,11 @@ struct breakable_type_def {
 };
 
 typedef struct breakable_type_def breakable_type_def_t;
+
+#define SHARD_FLY_TIME      1.0f
+#define SHARD_SCALE_TIME    0.5f
+#define HORZ_SHARD_VEL      (2.0f * MODEL_SCALE)
+#define ANGULAR_VEL         7.0f
 
 static breakable_type_def_t breakable_definitions[BREAKABLE_TYPE_COUNT] = {
     [BREAKABLE_FIRE_POT_MED] = {
@@ -35,41 +41,92 @@ static breakable_type_def_t breakable_definitions[BREAKABLE_TYPE_COUNT] = {
     }
 };
 
-void breakable_shard_update(breakable_shard_t* shard) {
-    vector3AddScaled(&shard->transform.position, &shard->velocity, fixed_time_step, &shard->transform.position);
-    shard->velocity.y += GRAVITY_CONSTANT * fixed_time_step;
-    quatApplyAngularVelocity(&shard->transform.rotation, &shard->angular_velocity, fixed_time_step, &shard->transform.rotation);
+void breakable_shard_update(breakable_shard_t* shard, float scale_lerp) {
+    vector3AddScaled(&shard->transform->position, &shard->velocity, fixed_time_step, &shard->transform->position);
+    quatApplyAngularVelocity(&shard->transform->rotation, &shard->angular_velocity, fixed_time_step, &shard->transform->rotation);
+    vector3Scale(&shard->start_scale, &shard->transform->scale, scale_lerp);
 }
 
-void breakable_launch_shards(breakable_t* breakable, breakable_shard_t* shard) {
+void breakable_launch_shards(breakable_t* breakable) {
     if (!breakable->break_effect_mesh->armature.bone_count) {
         return;
     }
 
-    transform_t starting_pose[breakable->break_effect_mesh->armature.bone_count];
+    breakable->break_timer = SHARD_FLY_TIME;
 
-    
+    armature_definition_t* def = &breakable->break_effect_mesh->armature;
+
+    uint8_t shard_count = 0;
+
+    for (int i = 0; i < def->bone_count; i += 1) {
+        if (def->parent_linkage[i] == NO_BONE_PARENT) {
+            shard_count += 1;
+        }
+    }
+
+    breakable->shard_count = shard_count;
+    breakable->shards = malloc(sizeof(breakable_shard_t) * shard_count);
+
+    uint8_t shard_index = 0;
+
+    breakable_shard_t* shard = breakable->shards;
+
+    for (int i = 0; i < def->bone_count; i += 1) {
+        if (def->parent_linkage[i] == NO_BONE_PARENT) {
+            shard->transform = &breakable->renderable.mesh_render.armature.pose[i];
+            shard->start_scale = shard->transform->scale;
+            shard->velocity = (vector3_t){
+                randomInRangef(-HORZ_SHARD_VEL, HORZ_SHARD_VEL),
+                HORZ_SHARD_VEL,
+                randomInRangef(-HORZ_SHARD_VEL, HORZ_SHARD_VEL),
+            };
+            shard->angular_velocity = (vector3_t){
+                randomInRangef(-ANGULAR_VEL, ANGULAR_VEL),
+                randomInRangef(-ANGULAR_VEL, ANGULAR_VEL),
+                randomInRangef(-ANGULAR_VEL, ANGULAR_VEL),
+            },
+            
+            shard += 1;
+        }
+    }
 }
 
 void breakable_update(void* data) {
     breakable_t* breakable = (breakable_t*)data;
 
-    animator_update(&breakable->animator, fixed_time_step);
+    // animator_update(&breakable->animator, fixed_time_step);
 
     if (breakable->is_breaking) {
-        if (!animator_is_running(&breakable->animator)) {
+        if (breakable->break_timer <= 0.0f) {
             entity_despawn(breakable->collider.entity_id);
+        } else {
+            breakable->break_timer -= fixed_time_step;
+
+            float scale_lerp = 1.0f;
+
+            if (breakable->break_timer < SHARD_SCALE_TIME) {
+                scale_lerp = breakable->break_timer * (1.0f / SHARD_SCALE_TIME);
+            }
+
+            for (int i = 0; i < breakable->shard_count; i += 1) {
+                breakable_shard_update(&breakable->shards[i], scale_lerp);
+            }
         }
     } else {
         if (!health_is_alive(&breakable->health)) {
             breakable->is_breaking = true;
             breakable->interactable.interact_type = INTERACT_TYPE_NONE;
+            breakable->collider.collision_layers = 0;
 
             if (breakable->break_effect_mesh) {
+                // animator_init(&breakable->animator, breakable->break_effect_mesh->armature.bone_count);
+                // animator_run_clip(&breakable->animator, animation_set_find_clip(breakable->break_animations, "break"), 0.0f, false);
+                // renderable_set_animator(&breakable->renderable, &breakable->animator);
+                // breakable->break_timer = animation_clip_get_duration(breakable->animator.current_clip);
+                
                 renderable_set_mesh_direct(&breakable->renderable, breakable->break_effect_mesh);
-                animator_init(&breakable->animator, breakable->break_effect_mesh->armature.bone_count);
-                animator_run_clip(&breakable->animator, animation_set_find_clip(breakable->break_animations, "break"), 0.0f, false);
-                renderable_set_animator(&breakable->renderable, &breakable->animator);
+                breakable->break_timer = SHARD_FLY_TIME;
+                breakable_launch_shards(breakable);
             }
         }
     }
@@ -105,6 +162,7 @@ void breakable_init(breakable_t* breakable, struct breakable_definition* definit
 
     breakable->is_breaking = false;
     breakable->shards = NULL;
+    breakable->break_timer = 0.0f;
 
     interactable_init(&breakable->interactable, entity_id, breakable_def->can_pickup ? INTERACT_TYPE_PICKUP : INTERACTION_NONE, NULL, NULL);
 }
@@ -125,6 +183,11 @@ void breakable_destroy(breakable_t* breakable, struct breakable_definition* defi
     
     if (breakable->break_animations) {
         animation_cache_release(breakable->break_animations);
+    }
+
+    if (breakable->shards) {
+        free(breakable->shards);
+        breakable->shards = NULL;
     }
 }
 
