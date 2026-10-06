@@ -86,8 +86,14 @@ bool spatial_trigger_does_contain_point(struct spatial_trigger* trigger, struct 
             }
             
             relative_pos.y = 0.0f;
-            if (vector3MagSqrd(&relative_pos) >= data->wedge.radius * data->wedge.radius) {
+            float distance_sq = relative_pos.x * relative_pos.x + relative_pos.z * relative_pos.z;
+
+            if (distance_sq >= data->wedge.radius * data->wedge.radius) {
                 return false;
+            }
+
+            if (distance_sq < data->wedge.cylinder_radius * data->wedge.cylinder_radius) {
+                return true;
             }
 
             struct Vector3 unrotated;

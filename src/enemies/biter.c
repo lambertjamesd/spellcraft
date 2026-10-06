@@ -11,12 +11,13 @@
 #include "vision.h"
 #include "../math/mathf.h"
 
-#define VISION_DISTANCE     8.0f
-#define ATTACK_RANGE        1.0f
-#define MOVE_SPEED          6.5f
-#define MOVE_ACCELERATION   8.0f
+#define VISION_DISTANCE             8.0f
+#define CYLINDER_VISION_DISTANCE    4.0f
+#define ATTACK_RANGE                1.0f
+#define MOVE_SPEED                  6.5f
+#define MOVE_ACCELERATION           8.0f
 
-#define BITER_HEALTH        30.0f
+#define BITER_HEALTH                30.0f
 
 static struct Vector2 biter_max_rotation;
 
@@ -41,6 +42,7 @@ static struct spatial_trigger_type biter_vision_type = {
             .radius = VISION_DISTANCE,
             .half_height = VISION_DISTANCE,
             .angle = {SQRT_1_2, SQRT_1_2},
+            .cylinder_radius = CYLINDER_VISION_DISTANCE,
         },
     },
 };

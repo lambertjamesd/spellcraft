@@ -22,7 +22,7 @@ union spatial_trigger_data {
     struct { float radius; } sphere;
     struct { float radius; float half_height; } cylinder;
     struct { struct Vector3 half_size; } box;
-    struct { float radius; float half_height; struct Vector2 angle; } wedge;
+    struct { float radius; float half_height; struct Vector2 angle; float cylinder_radius; } wedge;
 };
 
 struct spatial_trigger_type {

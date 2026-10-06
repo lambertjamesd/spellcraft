@@ -7,6 +7,7 @@
 #include "../entity/entity_spawner.h"
 
 #define VISION_DISTANCE 10.0f
+#define CYLINDER_VISION_DISTANCE    2.0f
 
 #define GOLEM_TURN_RATE             0.7f
 #define GOLEM_HEAD_TURN_RATE        2.0f
@@ -66,6 +67,7 @@ static spatial_trigger_type_t golem_vision = {
             .radius = VISION_DISTANCE,
             .half_height = VISION_DISTANCE,
             .angle = {SQRT_1_2, SQRT_1_2},
+            .cylinder_radius = CYLINDER_VISION_DISTANCE,
         },
     },
 };

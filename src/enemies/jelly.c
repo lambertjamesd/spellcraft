@@ -25,13 +25,14 @@
 
 #define FREEZE_TIME     1.0f
 
-#define JUMP_INTERVAL   2.0f
+#define JUMP_INTERVAL   1.0f
 #define JUMP_IMPULSE         4.0f
 #define JUMP_SIDE_IMPULSE    2.0f
-#define JUMP_WINDUP     0.9f
+#define JUMP_WINDUP     0.5f
 #define JUMP_TIME       0.2f
 
-#define VISION_DISTANCE 8.0f
+#define VISION_DISTANCE             8.0f
+#define CYLINDER_VISION_DISTANCE    4.0f
 
 #define SCALE_CHANGE_RATE   0.05f
 
@@ -67,6 +68,7 @@ static struct spatial_trigger_type jelly_vision_type = {
             .radius = VISION_DISTANCE,
             .half_height = VISION_DISTANCE,
             .angle = {SQRT_1_2, SQRT_1_2},
+            .cylinder_radius = CYLINDER_VISION_DISTANCE,
         },
     },
 };
