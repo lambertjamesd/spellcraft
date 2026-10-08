@@ -14,10 +14,73 @@ struct dialog_box dialog_box;
 
 void dialog_box_init() {
     dialog_box.current_message = NULL;
+    dialog_box.paragraph = NULL;
     font_type_use(FONT_DIALOG);
 }
 
 static int last_x = 0;
+
+void dialog_box_set_len(int length) {
+    if (dialog_box.paragraph->nchars < dialog_box.original_character_count) {
+        dialog_box.paragraph->chars[dialog_box.paragraph->nchars].font_id = FONT_DIALOG;
+    }
+    dialog_box.paragraph->nchars = length;
+    if (length < dialog_box.original_character_count) {
+        dialog_box.paragraph->chars[length].font_id = 0;
+    }
+}
+
+void dialog_box_layout_next() {
+    if (dialog_box.paragraph) {
+        rdpq_paragraph_free(dialog_box.paragraph);
+    }
+
+    char* end = dialog_box.current_message_start;
+
+    while (*end && (end[0] != '\n' || end[1] != '\n')) ++end;
+    int nbytes = end - dialog_box.current_message_start;
+
+    rdpq_paragraph_t *layout = malloc(sizeof(rdpq_paragraph_t) + sizeof(rdpq_paragraph_char_t) * (nbytes+1));
+    memset(layout, 0, sizeof(*layout));
+    layout->capacity = nbytes+1;
+
+    rdpq_paragraph_builder_begin(&(rdpq_textparms_t){
+        // .line_spacing = -3,
+        .align = ALIGN_LEFT,
+        .valign = VALIGN_TOP,
+        .width = 260,
+        .height = 60,
+        .wrap = WRAP_WORD,
+    }, FONT_DIALOG, layout);
+
+    char* start = dialog_box.current_message_start;
+    char* curr = start;
+
+    while (curr < end) {
+        char* next = curr;
+        uint32_t character_point = utf8_decode(&next);
+
+        if (character_point == '\n') {
+            if (start != curr) {
+                rdpq_paragraph_builder_span(start, curr-start);
+                start = next;
+            }
+            rdpq_paragraph_builder_newline();
+        }
+
+        curr = next;
+    }
+
+    if (start != curr) {
+        rdpq_paragraph_builder_span(start, curr-start);
+    }
+
+    dialog_box.paragraph = rdpq_paragraph_builder_end();
+    dialog_box.original_character_count = dialog_box.paragraph->nchars;
+    dialog_box.original_line_count = dialog_box.paragraph->nlines;
+    dialog_box.current_message_end = end;
+    dialog_box_set_len(0);
+}
 
 void dialog_box_update(void* data) {
     joypad_inputs_t input = joypad_get_inputs(0);
@@ -27,13 +90,14 @@ void dialog_box_update(void* data) {
         dialog_box.requested_characters += fixed_time_step * (input.btn.a ? CHARACTERS_PER_SECOND * 4.0f : CHARACTERS_PER_SECOND);
 
         while (dialog_box.requested_characters >= 1.0f) {
-            uint32_t character_point = utf8_decode(&dialog_box.current_message_end);
+            dialog_box_set_len(dialog_box.paragraph->nchars + 1);
+            
+            if (dialog_box.paragraph->nchars >= dialog_box.original_character_count) {
+                dialog_box.paused = true;
+                dialog_box.paragraph->nchars = dialog_box.original_character_count;
 
-            if (character_point == 0 || (character_point == '\n' && *dialog_box.current_message_end == '\n')) {
-                dialog_box.paused = 1;
-
-                if (character_point == 0) {
-                    dialog_box.end_of_message = 1;
+                if (*dialog_box.current_message_end == '\0') {
+                    dialog_box.end_of_message = true;
                 }
 
                 dialog_box.requested_characters = 0;
@@ -58,9 +122,9 @@ void dialog_box_update(void* data) {
                 }
                 dialog_box_hide();
             } else {
-                dialog_box.current_message_start = dialog_box.current_message_end + 1;
-                dialog_box.current_message_end = dialog_box.current_message_start;
+                dialog_box.current_message_start = dialog_box.current_message_end + 2;
                 dialog_box.paused = 0;
+                dialog_box_layout_next();
             }
         }
 
@@ -83,19 +147,7 @@ void dialog_box_render(void* data) {
 
     rdpq_sync_pipe();
 
-    rdpq_text_printn(&(rdpq_textparms_t){
-            // .line_spacing = -3,
-            .align = ALIGN_LEFT,
-            .valign = VALIGN_TOP,
-            .width = 260,
-            .height = 60,
-            .wrap = WRAP_WORD,
-        }, 
-        FONT_DIALOG, 
-        30, 170, 
-        dialog_box.current_message_start,
-        dialog_box.current_message_end - dialog_box.current_message_start
-    );
+    rdpq_paragraph_render(dialog_box.paragraph, 30, 170);
 
     if (dialog_box.paused && dialog_box.is_asking_question) {
         rdpq_text_printn(&(rdpq_textparms_t){
@@ -193,6 +245,8 @@ void dialog_box_show(char* message, int* args, dialog_end_callback end_callback,
     dialog_box.current_message_start = dialog_box.current_message;
     dialog_box.current_message_end = dialog_box.current_message;
 
+    dialog_box_layout_next();
+    
     dialog_box.requested_characters = 0.0f;
     dialog_box.paused = 0;
     dialog_box.end_of_message = 0;
@@ -216,6 +270,8 @@ void dialog_box_hide() {
     menu_remove_callback(&dialog_box);
     update_remove(&dialog_box);
     dialog_box.current_message = NULL;
+    rdpq_paragraph_free(dialog_box.paragraph);
+    dialog_box.paragraph = NULL;
 }
 
 void dialog_box_destroy() {

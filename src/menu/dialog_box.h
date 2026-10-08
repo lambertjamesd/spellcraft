@@ -12,13 +12,16 @@ struct dialog_box {
     char* current_message;
     char current_text[MAX_MESSAGE_CHARACTERS];
     rdpq_font_t* font;
+    rdpq_paragraph_t* paragraph;
+    int original_character_count;
+    int original_line_count;
 
     char* current_message_start;
     char* current_message_end;
     float requested_characters;
 
-    uint16_t paused: 1;
-    uint16_t end_of_message: 1;
+    bool paused;
+    bool end_of_message;
 
     dialog_end_callback end_callback;
     void* end_callback_data;

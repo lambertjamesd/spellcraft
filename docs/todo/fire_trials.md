@@ -1,28 +1,25 @@
 # Fire Trials TODO
 
-* Create pot
-* Add slippery surface
+* Throw carry items
+* Stop walk animation when using door
+* Only activate live spell casting when first holding z
+* golems float
+* golems can be pushed
+* burning barrier collision can disappear sooner
 * Boss key parts in the kiln
 * Health/mana upgrades hidden as collectables
-* Rework bottom floor
 * Hide some item in the side room
-* Repair mechanic in basement
 * swimming animation
 * Polish up fire sword (maybe multiple attack animations)
 * Jelly death animation
-* Procedrual damage animation for player
-* Rune upgrade tablet design
 * Health and mana UI
 * Improve walk animations
 * Climb animations
 * Build fire kiln
 * Better visuals for current rooms
 * Figure out fast64 asset linking bug
-* use pots in first push block puzzle
 * reconsider block z targeting
-* small ledges should step easier
 * start adding sounds
-* jelly wait to attack if offscreen?
 * speed up searching for entry points
 * jelly king fight
   * it is broken
