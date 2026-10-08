@@ -6,6 +6,7 @@
 #include "defs.h"
 #include "../config.h"
 #include "../profile/profile.h"
+#include "fog.h"
 
 #define MIN_RENDER_SCENE_SIZE   64
 
@@ -200,6 +201,9 @@ void render_scene_render(T3DViewport* viewport, struct frame_memory_pool* pool) 
     t3d_viewport_attach(viewport);
     // just in case I need this fix
     t3d_state_set_vertex_fx_scale(FX_SCALE);
+    fog_state_t fog_state = fog_get();
+    rdpq_set_fog_color(fog_state.color);
+    t3d_fog_set_range(fog_state.min * WORLD_SCALE, fog_state.max * WORLD_SCALE);
 
     SC_PROFILE_START(render);
 
