@@ -27,8 +27,8 @@
 
 #define JUMP_INTERVAL   1.0f
 #define JUMP_IMPULSE         4.0f
-#define JUMP_SIDE_IMPULSE    2.0f
-#define JUMP_WINDUP     0.5f
+#define JUMP_SIDE_IMPULSE    4.0f
+#define JUMP_WINDUP     0.25f
 #define JUMP_TIME       0.2f
 
 #define VISION_DISTANCE             8.0f
@@ -167,18 +167,17 @@ void jelly_update_target(struct jelly* jelly, struct Vector3* jump_target, bool 
         return;
     }
 
-    if (jelly->jump_timer == 0.0f) {
-        struct Vector2 target_rotation;
-        vector2LookDir(&target_rotation, &offset);
-        vector2RotateTowards(&jelly->transform.rotation, 
-                &target_rotation, 
-                &jelly_max_rotation, 
-                &jelly->transform.rotation
-        );
-        if (vector2Dot(&jelly->transform.rotation, &target_rotation) < 0.9f) {
-            *jump_target = gZeroVec;
-            return;
-        }
+    struct Vector2 target_rotation;
+    vector2LookDir(&target_rotation, &offset);
+    vector2RotateTowards(&jelly->transform.rotation, 
+            &target_rotation, 
+            &jelly_max_rotation, 
+            &jelly->transform.rotation
+    );
+    if (jelly->jump_timer <= 0.0f &&
+         vector2Dot(&jelly->transform.rotation, &target_rotation) < 0.9f) {
+        *jump_target = gZeroVec;
+        return;
     }
 
     vector2ToLookDir(&jelly->transform.rotation, jump_target);
@@ -187,7 +186,7 @@ void jelly_update_target(struct jelly* jelly, struct Vector3* jump_target, bool 
         jelly->collider.velocity.x += JUMP_SIDE_IMPULSE * jump_target->x;
         jelly->collider.velocity.y += JUMP_IMPULSE;
         jelly->collider.velocity.z += JUMP_SIDE_IMPULSE * jump_target->z;
-        jelly->jump_timer = 0.0f;
+        jelly->jump_timer = randomInRangef(-0.5f, 0.0f);
         jelly->is_jumping = 1;
         jelly->is_attacking = 1;
         
