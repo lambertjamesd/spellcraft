@@ -35,9 +35,9 @@ void inventory_menu_update(struct inventory_menu* menu) {
     }
 }
 
-#define MENU_X  20
+#define MENU_X  30
 #define MENU_Y  20
-#define MENU_W  200
+#define MENU_W  260
 #define MENU_H  200
 
 #define ICON_W  32
@@ -50,7 +50,7 @@ void inventory_menu_update(struct inventory_menu* menu) {
 #define ICON_X(col) (COL_SPACING + (col) * (COL_SPACING + ICON_W))
 
 void inventory_menu_render(struct inventory_menu* menu) {
-    menu_common_render_background(MENU_X, MENU_Y, MENU_W, MENU_H);
+    menu_common_render_background_transparent(MENU_X, MENU_Y, MENU_W, MENU_H);
 
     struct staff_stats* equipped_staff = inventory_equipped_staff();
 

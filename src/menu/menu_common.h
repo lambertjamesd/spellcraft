@@ -14,5 +14,6 @@ extern material_pair_t* sprite_blit;
 void menu_common_init();
 
 void menu_common_render_background(int x, int y, int w, int h);
+void menu_common_render_background_transparent(int x, int y, int w, int h);
 
 #endif

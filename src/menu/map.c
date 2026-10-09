@@ -24,10 +24,10 @@
 #define MAX_ZOOM        2.0f
 #define MIN_ZOOM        0.25f
 
-#define MAP_X           20
+#define MAP_X           30
 #define MAP_Y           20
-#define MAP_SIZE        200
-
+#define MAP_WIDTH       260
+#define MAP_HEIGHT      200
 
 #define HEADER_FOOTER   0x4D415020
 
@@ -396,20 +396,20 @@ void menu_map_hide(menu_map_t* map, menu_map_show_state_t* show_state) {
 }
 
 void menu_map_render(menu_map_t* map, menu_map_show_state_t* show_state) {
-    menu_common_render_background(MAP_X, MAP_Y, MAP_SIZE, MAP_SIZE);
+    menu_common_render_background_transparent(MAP_X, MAP_Y, MAP_WIDTH, MAP_HEIGHT);
 
     if (!show_state->block) {
         return;
     }
     
-    menu_set_viewport(MAP_X, MAP_Y, MAP_X + MAP_SIZE, MAP_Y + MAP_SIZE);
-    rdpq_set_scissor(MAP_X, MAP_Y, MAP_X + MAP_SIZE, MAP_Y + MAP_SIZE);
+    menu_set_viewport(MAP_X, MAP_Y, MAP_X + MAP_WIDTH, MAP_Y + MAP_HEIGHT);
+    rdpq_set_scissor(MAP_X, MAP_Y, MAP_X + MAP_WIDTH, MAP_Y + MAP_HEIGHT);
 
     transform_2d_fp_t* mtx = frame_malloc(frame_pool_curr(), sizeof(transform_2d_fp_t));
 
     menu_transform_to_fixed(UncachedAddr(mtx), (transform_2d_t){
-        show_state->scale, 0.0f, (MAP_X + MAP_SIZE * 0.5f + SCALE_FACTOR * show_state->center.x * show_state->scale) * FIXED_POINT_SCALE,
-        0.0f, show_state->scale, (MAP_Y + MAP_SIZE * 0.5f + SCALE_FACTOR * show_state->center.y * show_state->scale) * FIXED_POINT_SCALE
+        show_state->scale, 0.0f, (MAP_X + MAP_WIDTH * 0.5f + SCALE_FACTOR * show_state->center.x * show_state->scale) * FIXED_POINT_SCALE,
+        0.0f, show_state->scale, (MAP_Y + MAP_HEIGHT * 0.5f + SCALE_FACTOR * show_state->center.y * show_state->scale) * FIXED_POINT_SCALE
     });
 
     menu_mtx((transform_2d_fp_t*)PhysicalAddr(mtx), true, true);

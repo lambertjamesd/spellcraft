@@ -6,6 +6,7 @@
 
 static material_pair_t* menu_background_material;
 static material_pair_t* menu_border_material;
+static material_pair_t* menu_border_TR_material;
 
 material_pair_t* menu_icons_material;
 material_pair_t* menu_spell_icons[SPELL_ICON_COUNT];
@@ -32,6 +33,8 @@ void menu_common_init() {
     menu_background_material = material_cache_load("rom:/materials/menu/menu_corner.mat");
     // material_cache_release() never called
     menu_border_material = material_cache_load("rom:/materials/menu/menu_border.mat");
+    // material_cache_release() never called
+    menu_border_TR_material = material_cache_load("rom:/materials/menu/menu_border_transparent.mat");
     // material_cache_release() never called
     menu_icons_material = material_cache_load("rom:/materials/menu/menu_icons.mat");
     // material_cache_release() never called
@@ -120,5 +123,91 @@ void menu_common_render_background(int x, int y, int w, int h) {
         x + w, y + h,
         0, 0,
         64, 64
+    );
+}
+
+#define TR_IM_SIZE              16
+#define TR_PADDING             5
+#define TR_MARGIN              3
+
+#define TR_CORNER_SIZE         7
+
+void menu_common_render_background_transparent(int x, int y, int w, int h) {
+    material_pair_apply(menu_border_TR_material, NULL);
+
+    // TL
+    rdpq_texture_rectangle(
+        TILE0,
+        x - TR_PADDING, y - TR_PADDING,
+        x + TR_MARGIN, y + TR_MARGIN,
+        0, 0
+    );
+
+    // T
+    rdpq_texture_rectangle_scaled(
+        TILE0,
+        x+TR_MARGIN, y - TR_PADDING,
+        x + w-TR_MARGIN, y + TR_MARGIN, 
+        TR_CORNER_SIZE, 0,
+        TR_IM_SIZE-TR_CORNER_SIZE, TR_PADDING + TR_MARGIN
+    );
+
+    // TR
+    rdpq_texture_rectangle(
+        TILE0,
+        x + w-TR_MARGIN, y - TR_PADDING,
+        x + w+TR_PADDING, y + TR_MARGIN, 
+        TR_IM_SIZE-TR_PADDING-TR_MARGIN, 0
+    );
+
+    // L
+    rdpq_texture_rectangle_scaled(
+        TILE0,
+        x-TR_PADDING, y+TR_MARGIN,
+        x+TR_MARGIN, y + h-TR_MARGIN, 
+        0, TR_CORNER_SIZE,
+        TR_PADDING+TR_MARGIN, TR_IM_SIZE-TR_CORNER_SIZE
+    );
+
+    // BL
+    rdpq_texture_rectangle(
+        TILE0,
+        x - TR_PADDING, y + h - TR_MARGIN,
+        x + TR_MARGIN, y + h + TR_PADDING, 
+        0, TR_IM_SIZE - TR_PADDING - TR_MARGIN
+    );
+
+    // B
+    rdpq_texture_rectangle_scaled(
+        TILE0,
+        x+TR_MARGIN, y + h-TR_MARGIN,
+        x + w-TR_MARGIN, y + h + TR_PADDING, 
+        TR_CORNER_SIZE, TR_IM_SIZE - TR_PADDING - TR_MARGIN,
+        TR_IM_SIZE-TR_CORNER_SIZE, TR_IM_SIZE
+    );
+
+    // BR
+    rdpq_texture_rectangle(
+        TILE0,
+        x + w-TR_MARGIN, y + h-TR_MARGIN,
+        x + w + TR_PADDING, y + h + TR_PADDING, 
+        TR_IM_SIZE-TR_MARGIN-TR_PADDING, TR_IM_SIZE-TR_MARGIN-TR_PADDING
+    );
+
+    // R
+    rdpq_texture_rectangle_scaled(
+        TILE0,
+        x + w-TR_MARGIN, y+TR_MARGIN,
+        x + w + TR_PADDING, y + h-TR_MARGIN, 
+        TR_IM_SIZE-TR_MARGIN-TR_PADDING, TR_CORNER_SIZE,
+        TR_IM_SIZE, TR_IM_SIZE-TR_CORNER_SIZE
+    );
+
+    rdpq_texture_rectangle_scaled(
+        TILE0,
+        x+TR_MARGIN, y+TR_MARGIN,
+        x + w-TR_MARGIN, y + h-TR_MARGIN,
+        TR_CORNER_SIZE, TR_CORNER_SIZE,
+        TR_IM_SIZE-TR_CORNER_SIZE, TR_IM_SIZE-TR_CORNER_SIZE
     );
 }

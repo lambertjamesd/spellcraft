@@ -15,9 +15,9 @@ static material_pair_t* spell_symbol_material;
 #define SPELL_SYMBOL_LOCATION_Y(index)  ((((index) - SPELL_SYMBOL_FIRE) / SPELL_SYMBOLS_PER_ROW) * 32 + 142)
 
 void spell_building_render_menu(struct spell_building_menu* menu) {
-    menu_common_render_background(32, 32, 256, 96);
+    menu_common_render_background_transparent(32, 32, 256, 96);
 
-    menu_common_render_background(32, 134, 256, 74);
+    menu_common_render_background_transparent(32, 134, 256, 74);
 }
 
 void spell_building_menu_update(struct spell_building_menu* menu) {

@@ -1,0 +1,23 @@
+{
+    "tex0": {
+        "filename": "../../images/menu/border_transparent.png",
+        "s": {
+            "repeats": 0,
+            "mirror": false
+        },
+        "t": {
+            "repeats": 0,
+            "mirror": false
+        }
+    },
+    "combineMode": [{
+        "color": ["TEX0", "_0", "PRIM", "_0"],
+        "alpha": ["_1", "PRIM", "TEX0", "PRIM"]
+    }],
+    "blendMode": {
+        "cyc1": "TRANSPARENT",
+        "texPersp": false
+    },
+    "primColor": [255, 255, 255, 96],
+    "zBuffer": false
+}

@@ -16,9 +16,10 @@
 #include "./live_cast_renderer.h"
 
 #define FIXED_POINT_SCALE   4.0f
-#define MAP_X           20
+#define MAP_X           30
 #define MAP_Y           20
-#define MAP_SIZE        200
+#define MAP_WIDTH       260
+#define MAP_HEIGHT      200
 
 #define SIDE_DISTANCE   40
 #define LERP_MARGIN     0x2000
@@ -458,9 +459,9 @@ color_t spell_menu_blend_color(color_t base, color_t target, color_t curr) {
 }
 
 void spell_menu_render(struct spell_menu* spell_menu) {
-    menu_common_render_background(20, 20, 200, 200);
+    menu_common_render_background_transparent(MAP_X, MAP_Y, MAP_WIDTH, MAP_HEIGHT);
 
-    rdpq_set_scissor(MAP_X, MAP_Y, MAP_X + MAP_SIZE, MAP_Y + MAP_SIZE);
+    rdpq_set_scissor(MAP_X, MAP_Y, MAP_X + MAP_WIDTH, MAP_Y + MAP_HEIGHT);
 
     material_apply(&spell_menu->solid_color->apply);
     
@@ -471,8 +472,8 @@ void spell_menu_render(struct spell_menu* spell_menu) {
     }
 
     transform_2d_t transform = {
-        spell_menu->scale, 0.0f, (MAP_X + MAP_SIZE * 0.5f + spell_menu->offset.x * spell_menu->scale) * FIXED_POINT_SCALE,
-        0.0f, spell_menu->scale, (MAP_X + MAP_SIZE * 0.5f + spell_menu->offset.y * spell_menu->scale) * FIXED_POINT_SCALE
+        spell_menu->scale, 0.0f, (MAP_X + MAP_WIDTH * 0.5f + spell_menu->offset.x * spell_menu->scale) * FIXED_POINT_SCALE,
+        0.0f, spell_menu->scale, (MAP_X + MAP_HEIGHT * 0.5f + spell_menu->offset.y * spell_menu->scale) * FIXED_POINT_SCALE
     };
 
     menu_transform_to_fixed(UncachedAddr(mtx), transform);
