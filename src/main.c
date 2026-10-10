@@ -57,10 +57,10 @@ void setup() {
     // scene_queue_next("rom:/scenes/fire_trials.scene#bossdoor");
     // scene_queue_next("rom:/scenes/fire_trials.scene#test_firespinroom");
 	
-    scene_queue_next("rom:/scenes/fire_trials.scene");
+    // scene_queue_next("rom:/scenes/fire_trials.scene");
     // scene_queue_next("rom:/scenes/overworld_test.scene");
     // scene_queue_next("rom:/scenes/ability_testing.scene");
-    // scene_queue_next("rom:/scenes/material_testing.scene");
+    scene_queue_next("rom:/scenes/material_testing.scene");
     // scene_queue_next("rom:/scenes/texture_stresstest.scene");
     // scene_queue_next("rom:/scenes/playerhome_basement.scene");
     // scene_queue_next("rom:/scenes/StartArea_ForestWest.scene#west");
