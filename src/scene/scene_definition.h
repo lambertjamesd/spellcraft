@@ -148,6 +148,7 @@ struct collectable_definition {
     struct Vector2 rotation;
     enum collectable_type collectable_type;
     collectable_sub_type collectable_sub_type;
+    boolean_variable has_item;
 };
 
 struct training_dummy_definition {

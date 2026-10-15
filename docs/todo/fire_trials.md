@@ -1,11 +1,11 @@
 # Fire Trials TODO
 
+* fix up health collectable
 * Throw carry items
-* Stop walk animation when using door
 * Only activate live spell casting when first holding z
 * golems float
 * golems can be pushed
-* burning barrier collision can disappear sooner
+* push spell should surround the player
 * Boss key parts in the kiln
 * Health/mana upgrades hidden as collectables
 * Hide some item in the side room

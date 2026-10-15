@@ -51,3 +51,4 @@ global fire_trials_room_wheel_hallway_visited: bool;
 global fire_trials_room_wheels_visited: bool;
 global fire_trials_has_pot_shards: bool;
 global fire_trials_has_fixed_pot: bool;
+global fire_trials_crossing_health_upgrade: bool;

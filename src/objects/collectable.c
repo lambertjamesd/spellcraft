@@ -3,6 +3,7 @@
 #include "../collision/collision_scene.h"
 #include "../collision/shapes/sphere.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../cutscene/expression_evaluate.h"
 #include "../cutscene/show_item.h"
 #include "../menu/dialog_box.h"
 #include "../player/inventory.h"
@@ -48,6 +49,7 @@ void collectable_assets_load() {
 void collectable_init(struct collectable* collectable, struct collectable_definition* definition, entity_id id) {
     collectable->collectable_type = definition->collectable_type;
     collectable->collectable_sub_type = definition->collectable_sub_type;
+    collectable->has_item = definition->has_item;
     transformSaInit(&collectable->transform, &definition->position, &definition->rotation, 1.0f);
     
     dynamic_object_init(
@@ -71,10 +73,13 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
 void collectable_collected(struct collectable* collectable) {
     collectable_destroy(collectable);
 
+    if (collectable->has_item != VARIABLE_DISCONNECTED) {
+        expression_set_bool(collectable->has_item, true);
+    }
+
     if (collectable->collectable_type == COLLECTABLE_TYPE_HEALTH) {
         dialog_box_show( 
-            "You got a heart\n\n"
-            "Now if I only had a brain",
+            "You found a health upgrade",
             NULL, NULL, NULL
         );
     }
@@ -104,11 +109,11 @@ void collectable_destroy(struct collectable* collectable) {
 }
 
 void collectable_common_init() {
-
+    hash_map_init(&collectable_hash_map, 8);
 }
 
 void collectable_common_destroy() {
-
+    hash_map_destroy(&collectable_hash_map);
 }
 
 struct collectable* collectable_get(entity_id id) {

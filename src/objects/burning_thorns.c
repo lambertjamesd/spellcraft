@@ -12,6 +12,7 @@
 
 #define BURN_TIME           2.9f
 #define TRANSITION_TIME     2.6f
+#define COLLIDE_HIDE_TIME   1.5f
 #define NOT_BURNING         -1.0f
 
 #define DARKEN_TIME         (BURN_TIME - TRANSITION_TIME)
@@ -26,10 +27,6 @@ static color_t burn_away_start = {0, 0, 0, 128};
 static color_t burn_away_end = {128, 128, 128, 0};
 
 static uint8_t burning_thorn_offset(uint8_t input, uint8_t amount) {
-    // if (amount > input) {
-    //     return 0;
-    // }
-
     return input + amount;
 }
 
@@ -74,6 +71,9 @@ void burning_thorns_update(void* data) {
         thorns->attrs[0].color = coloru8_lerp(&color_black, &prim_color, lerp_value);
     }
 
+    if (thorns->burn_time < COLLIDE_HIDE_TIME) {
+        thorns->collider.collision_layers = 0;
+    }
 }
 
 float burning_thorns_damage(void* data, struct damage_info* damage) {

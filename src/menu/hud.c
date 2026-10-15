@@ -41,7 +41,7 @@
 #define BOSS_HEALTH_WIDTH       260
 #define BOSS_HEALTH_Y           20
 
-static color_t mana_color = {80, 0, 240, 200};
+static color_t mana_color = {60, 240, 20, 200};
 static color_t health_color = {240, 80, 0, 200};
 
 void hud_render_interaction_preview(struct hud* hud) {

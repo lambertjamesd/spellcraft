@@ -138,6 +138,8 @@ void door_base_interact(struct interactable* interactable, entity_id from) {
 
     cutscene_builder_pause(&builder, true, false);
 
+    cutscene_builder_npc_animate(&builder, ENTITY_ID_PLAYER, "idle", true);
+
     if (door->is_unlocking && animator_is_running(&door->lock_animator)) {
         cutscene_builder_delay(&builder, animation_clip_get_duration(door->lock_animator.current_clip));
     }
