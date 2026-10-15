@@ -34,7 +34,7 @@ struct render_batch_particle_size {
 };
 
 struct render_batch_particles {
-    TPXParticle* particles;
+    TPXParticleS8* particles;
     uint16_t particle_count;
     // particle_size = WORLD_SCALE is a radius of 1
     // when particle_scale = 0xFFFF and particle_size = 127

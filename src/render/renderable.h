@@ -19,7 +19,7 @@ struct renderable {
             animator_t* animator;
         } mesh_render;
         struct {
-            TPXParticle particle_data;
+            TPXParticleS8 particle_data;
             render_batch_particles_t particles;
             material_pair_t* material;
             uint8_t frame_max_x;

@@ -16,7 +16,7 @@ static_particles_t* static_particles_load(uint16_t* count, FILE* file) {
         return NULL;
     }
 
-    TPXParticle* curr = malloc(total_particle_size);
+    TPXParticleS8* curr = malloc(total_particle_size);
     fread(curr, total_particle_size, 1, file);
 
     static_particles_t* static_particles = malloc(sizeof(static_particles_t) * static_particle_count);

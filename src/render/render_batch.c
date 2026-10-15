@@ -268,9 +268,9 @@ struct render_batch_element* render_batch_add_dynamic_particles(
     T3DMat4FP* mtx
 ) {
     int aligned_count = (count + 1) & ~1;
-    render_batch_particles_t* particles = frame_malloc(batch->pool, ALIGN_16(sizeof(render_batch_particles_t)) + sizeof(TPXParticle) * (aligned_count >> 1));
+    render_batch_particles_t* particles = frame_malloc(batch->pool, ALIGN_16(sizeof(render_batch_particles_t)) + sizeof(TPXParticleS8) * (aligned_count >> 1));
 
-    TPXParticle* tpx_particles = (TPXParticle*)(ALIGN_16((int)(particles + 1)));
+    TPXParticleS8* tpx_particles = (TPXParticleS8*)(ALIGN_16((int)(particles + 1)));
     particles->particles = tpx_particles;
     particles->particle_count = aligned_count;
     particles->particle_size = size->particle_size;
@@ -278,7 +278,7 @@ struct render_batch_element* render_batch_add_dynamic_particles(
     particles->particle_scale_height = size->particle_scale_height;
 
     if (aligned_count != count) {
-        TPXParticle* last = &tpx_particles[(aligned_count >> 1) - 1];
+        TPXParticleS8* last = &tpx_particles[(aligned_count >> 1) - 1];
         last->sizeB = 0;
     }
 
