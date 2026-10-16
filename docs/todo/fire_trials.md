@@ -1,6 +1,5 @@
 # Fire Trials TODO
 
-* fix up health collectable
 * Throw carry items
 * Only activate live spell casting when first holding z
 * golems float

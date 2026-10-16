@@ -5,10 +5,18 @@
 #include "../collision/collision_scene.h"
 #include <stddef.h>
 
+static float push_factors[] = {
+    [PUSH_RESISTANCE_NONE] = 1.0f,
+    [PUSH_RESISTANCE_LIGHT] = 0.8f,
+    [PUSH_RESISTANCE_MED] = 0.5f,
+    [PUSH_RESISTANCE_HEAVY] = 0.02f,
+    [PUSH_RESISTANCE_IMMOBILE] = 0.0f,
+};
+
 void single_push_apply_burst_velocity_with_dir(float top_speed, struct dynamic_object* obj, struct Vector3* wind_direction) {
     struct Vector3 tangent;
     vector3ProjectPlane(&obj->velocity, wind_direction, &tangent);
-    vector3AddScaled(&tangent, wind_direction, top_speed, &obj->velocity);
+    vector3AddScaled(&tangent, wind_direction, top_speed * push_factors[obj->type->push_resistance], &obj->velocity);
     DYNAMIC_OBJECT_MARK_PUSHED(obj);
     dynamic_object_wake(obj);
 }
@@ -19,7 +27,7 @@ void single_push_apply_velocity_with_dir(struct push_single_definition* definiti
     struct Vector3 normal;
     vector3Sub(&obj->velocity, &tangent, &normal);
     struct Vector3 wind_velocity;
-    vector3Scale(wind_direction, &wind_velocity, definition->top_speed);
+    vector3Scale(wind_direction, &wind_velocity, definition->top_speed * push_factors[obj->type->push_resistance]);
     vector3MoveTowards(&normal, &wind_velocity, definition->acceleration * fixed_time_step, &normal);
     vector3Add(&tangent, &normal, &obj->velocity);
 

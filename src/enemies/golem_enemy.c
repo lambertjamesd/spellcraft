@@ -54,6 +54,9 @@ static const char* golem_animation_names[GOLEM_ANIM_COUNT] = {
 static dynamic_object_type_t golem_collider = {
     CAPSULE_COLLIDER(0.7f, 0.8f),
     .center = {0.0f, 1.5f, 0.0f},
+    .friction = 1.0f,
+    .bounce = 0.0f,
+    .push_resistance = PUSH_RESISTANCE_HEAVY,
 };
 
 static dynamic_object_type_t golem_fist_collider = {

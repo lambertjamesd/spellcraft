@@ -28,6 +28,16 @@ enum collision_group {
     COLLISION_GROUP_PLAYER = 1,
 };
 
+enum push_resistance {
+    PUSH_RESISTANCE_NONE,
+    PUSH_RESISTANCE_LIGHT,
+    PUSH_RESISTANCE_MED,
+    PUSH_RESISTANCE_HEAVY,
+    PUSH_RESISTANCE_IMMOBILE,
+};
+
+typedef enum push_resistance push_resistance_t;
+
 typedef void (*bounding_box_calculator)(void* data, struct Vector2* rotation, struct Box3D* box);
 
 struct dynamic_object_type {
@@ -40,6 +50,7 @@ struct dynamic_object_type {
     // or 1 - cos(slope angle)
     float max_stable_slope;
     uint16_t surface_type;
+    uint8_t push_resistance;
     struct Vector3 center;
 };
 
