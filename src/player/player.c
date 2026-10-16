@@ -42,8 +42,9 @@
 #define SHADOW_AS_GROUND_DISTANCE   0.15f
 
 #define CARRY_GRAB_TIME   (11.0f / 30.0f)
-#define CARRY_DROP_TIME   (5.0f / 30.0f)
 #define CARRY_DROP_SPEED    3.2f
+#define CARRY_THROW_THRESHOLD   PLAYER_RUN_THRESHOLD
+#define CARRY_THROW_VEL         4.0f
 
 #define INTERACT_Y_LOWER        -0.75f
 #define INTERACT_Y_UPEER        1.25f
@@ -967,7 +968,7 @@ void player_climbing_up(struct player* player, struct contact* ground_contact) {
     player->state_data.climbing_up.timer += fixed_time_step;
 }
 
-void player_position_drop(player_t* player, dynamic_object_t* obj) {
+void player_position_drop(player_t* player, dynamic_object_t* obj, bool throw) {
     transform_sa_t* player_transform = &player->cutscene_actor.transform;
 
     vector3_t forward;
@@ -983,12 +984,19 @@ void player_position_drop(player_t* player, dynamic_object_t* obj) {
     obj->velocity.x = player->cutscene_actor.collider.velocity.x;
     obj->velocity.y = player->cutscene_actor.collider.velocity.y - CARRY_DROP_SPEED;
     obj->velocity.z = player->cutscene_actor.collider.velocity.z;
+
+    if (throw) {
+        obj->velocity.x -= forward.x * CARRY_THROW_VEL;
+        obj->velocity.y = CARRY_THROW_VEL;
+        obj->velocity.z -= forward.z * CARRY_THROW_VEL;
+    }
 }
 
 void player_carry(player_t* player, contact_t* ground_contact) {
     state_data_t* state_data = (state_data_t*)&player->state_data;
 
     dynamic_object_t* obj = collision_scene_find_object(state_data->carrying.carrying);
+    vector3_t* vel = player_get_velocity(player);
 
     if (!obj) {
         player->state = ground_contact ? PLAYER_GROUNDED : PLAYER_FALLING;
@@ -1009,7 +1017,7 @@ void player_carry(player_t* player, contact_t* ground_contact) {
         transformSaTransformPoint(player_transform, &cast_transform.position, &position);
         position.y += state_data->carrying.carry_offset;
         *obj->position = position;
-        obj->velocity = player->cutscene_actor.collider.velocity;
+        obj->velocity = *vel;
 
         if (obj->rotation) {
             *obj->rotation = player_transform->rotation;
@@ -1017,7 +1025,7 @@ void player_carry(player_t* player, contact_t* ground_contact) {
     }
 
     if (player_is_running(player, PLAYER_ANIMATION_CARRY_PICKUP)) {
-        if (animator_get_time(&player->cutscene_actor.animator) > CARRY_GRAB_TIME) {
+        if (animator_get_time(&player->cutscene_actor.animator) > CARRY_GRAB_TIME && !player->state_data.carrying.should_carry) {
             player->state_data.carrying.should_carry = true;
             obj->is_fixed = true;
             obj->weight_class = WEIGHT_CLASS_GHOST;
@@ -1026,12 +1034,13 @@ void player_carry(player_t* player, contact_t* ground_contact) {
         return;
     }
 
-    if (player_is_running(player, PLAYER_ANIMATION_CARRY_DROP)) {
-        if (animator_get_time(&player->cutscene_actor.animator) > CARRY_DROP_TIME) {
-            player_position_drop(player, obj);
+    if (player_is_running(player, PLAYER_ANIMATION_CARRY_DROP) || player_is_running(player, PLAYER_ANIMATION_THROW)) {
+        if (player->cutscene_actor.animator.events.attack && player->state_data.carrying.should_carry) {
+            player_position_drop(player, obj, player_is_running(player, PLAYER_ANIMATION_THROW));
             player->state_data.carrying.should_carry = false;
             obj->is_fixed = false;
-            obj->weight_class =  WEIGHT_CLASS_LIGHT;
+            obj->weight_class = WEIGHT_CLASS_LIGHT;
+            dynamic_object_wake(obj);
         }
 
         return;
@@ -1045,7 +1054,11 @@ void player_carry(player_t* player, contact_t* ground_contact) {
     joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
 
     if (pressed.a) {
-        player_run_clip(player, PLAYER_ANIMATION_CARRY_DROP);
+        if (vector3MagSqrd2D(vel) < CARRY_THROW_THRESHOLD * CARRY_THROW_THRESHOLD) {
+            player_run_clip(player, PLAYER_ANIMATION_CARRY_DROP);
+        } else {
+            player_run_clip(player, PLAYER_ANIMATION_THROW);
+        }
         return;
     }
     
@@ -1080,6 +1093,10 @@ void player_carry(player_t* player, contact_t* ground_contact) {
     }
 
     player_loop_animation(player, PLAYER_ANIMATION_CARRY_RUN, speed * (1.0f / PLAYER_MAX_SPEED));
+}
+
+void player_throw(struct player* player, struct contact* ground_contact) {
+
 }
 
 void player_update_die(struct player* player, struct contact* ground_contact) {
@@ -1642,6 +1659,8 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_CARRY_RUN] = "carry_run",
     [PLAYER_ANIMATION_CARRY_WALK] = "carry_walk",
     [PLAYER_ANIMATION_CARRY_DROP] = "carry_drop",
+
+    [PLAYER_ANIMATION_THROW] = "throw",
 
     [PLAYER_ANIMATION_SLIDE_FORWARD] = "slide_forward",
 
