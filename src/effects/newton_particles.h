@@ -27,6 +27,9 @@ struct particle_emitter_shape {
             float radius;
             float half_height;
         } cylinder;
+        struct {
+            float radius;
+        } circle;
     };
 };
 

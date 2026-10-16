@@ -12,6 +12,7 @@
 #include "../spell/spell.h"
 #include "../time/time.h"
 #include "../util/hash_map.h"
+#include "../entity/entity_spawner.h"
 
 #define COLLECTABLE_RADIUS  0.75f
 
@@ -71,16 +72,25 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
 }
 
 void collectable_collected(struct collectable* collectable) {
-    collectable_destroy(collectable);
-
     if (collectable->has_item != VARIABLE_DISCONNECTED) {
         expression_set_bool(collectable->has_item, true);
     }
 
     if (collectable->collectable_type == COLLECTABLE_TYPE_HEALTH) {
-        dialog_box_show( 
-            "You found a health upgrade",
-            NULL, NULL, NULL
+        struct cutscene_builder builder;
+        cutscene_builder_init(&builder);
+        cutscene_builder_pause(&builder, true, false);
+        cutscene_builder_dialog(
+            &builder,
+            "You found a health upgrade"
+        );
+        cutscene_builder_pause(&builder, false, false);
+        cutscene_runner_run(
+            cutscene_builder_finish(&builder),
+            0,
+            cutscene_runner_free_on_finish(),
+            NULL,
+            collectable->dynamic_object.entity_id
         );
     }
 
@@ -99,6 +109,8 @@ void collectable_collected(struct collectable* collectable) {
             collectable->dynamic_object.entity_id
         );
     }
+
+    entity_despawn(collectable->dynamic_object.entity_id);
 }
 
 void collectable_destroy(struct collectable* collectable) {

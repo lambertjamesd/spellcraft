@@ -998,6 +998,7 @@ void player_carry(player_t* player, contact_t* ground_contact) {
         transform_sa_t* player_transform = &player->cutscene_actor.transform;
 
         struct Transform cast_transform;
+        animator_apply(&player->cutscene_actor.animator, player->cutscene_actor.armature);
         armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attachments[0].bone_index, &cast_transform);
 
         struct Vector3 position;
@@ -1412,6 +1413,7 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
 
     if (source->flags.is_animating) {
         struct Transform cast_transform;
+        animator_apply(&player->cutscene_actor.animator, player->cutscene_actor.armature);
         armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attachments[0].bone_index, &cast_transform);
 
         struct Vector3 direction;
