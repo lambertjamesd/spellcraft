@@ -2,8 +2,6 @@
 
 * Throw carry items
 * Only activate live spell casting when first holding z
-* golems float
-* golems can be pushed
 * push spell should surround the player
 * Boss key parts in the kiln
 * Health/mana upgrades hidden as collectables

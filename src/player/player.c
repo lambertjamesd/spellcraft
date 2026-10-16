@@ -125,6 +125,7 @@ static struct cutscene_actor_def player_actor_def = {
         .center = {0.0f, 0.75f, 0.0f},
         .max_stable_slope = MAX_STABLE_SLOPE,
         .friction = 0.2f,
+        .density = DYNAMIC_DENSITY_MEDIUM,
     },
 };
 
@@ -1714,7 +1715,6 @@ void player_init(struct player* player, struct player_definition* definition) {
         "rom:/meshes/characters/apprentice.anim"
     );
 
-    player->cutscene_actor.collider.density_class = DYNAMIC_DENSITY_MEDIUM;
     player->cutscene_actor.collider.weight_class = WEIGHT_CLASS_MEDIUM;
     player->cutscene_actor.collider.kill_plane_immune = 1;
 

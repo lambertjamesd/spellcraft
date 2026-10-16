@@ -29,7 +29,6 @@ void dynamic_object_init(
     object->is_pushed = 0;
     object->is_jumping = 0;
     object->under_water = 0;
-    object->density_class = DYNAMIC_DENSITY_LIGHT;
     object->weight_class = WEIGHT_CLASS_LIGHT;
     object->has_ice_dash = 0;
     object->kill_plane_immune = 0;

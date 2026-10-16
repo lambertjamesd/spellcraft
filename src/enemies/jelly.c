@@ -51,6 +51,7 @@ static struct dynamic_object_type jelly_collider = {
     // about a 40 degree slope
     .max_stable_slope = 0.219131191f,
     .center = {0.0f, 1.0f, 0.0f},
+    .density = DYNAMIC_DENSITY_NEUTRAL,
 };
 
 static struct dynamic_object_type jelly_ice_collider = {
@@ -59,6 +60,7 @@ static struct dynamic_object_type jelly_ice_collider = {
     .bounce = 0.1f,
     .max_stable_slope = 0.0f,
     .center = {0.0f, 1.0f, 0.0f},
+    .density = DYNAMIC_DENSITY_MEDIUM,
 };
 
 static struct spatial_trigger_type jelly_vision_type = {
@@ -82,14 +84,12 @@ void jelly_freeze(struct jelly* jelly) {
     jelly->is_frozen = 1;
     jelly->freeze_timer = 0.0f;
     jelly->collider.type = &jelly_ice_collider;
-    jelly->collider.density_class = DYNAMIC_DENSITY_MEDIUM;
 }
 
 void jelly_thaw(struct jelly* jelly) {
     jelly->is_frozen = 0;
     jelly->freeze_timer = 0.0f;
     jelly->collider.type = &jelly_collider;
-    jelly->collider.density_class = DYNAMIC_DENSITY_NEUTRAL;
 }
 
 float jelly_recalc_radius(struct jelly* jelly) {
@@ -357,7 +357,6 @@ void jelly_init(struct jelly* jelly, struct jelly_definition* definition, entity
         &jelly->transform.rotation
     );
 
-    jelly->collider.density_class = DYNAMIC_DENSITY_NEUTRAL;
     jelly->collider.scale = jelly_recalc_radius(jelly);
     jelly->target_radius = jelly->collider.scale;
     jelly->transform.scale = jelly->collider.scale;

@@ -36,6 +36,13 @@ enum push_resistance {
     PUSH_RESISTANCE_IMMOBILE,
 };
 
+enum dynamic_density_class {
+    DYNAMIC_DENSITY_LIGHT,
+    DYNAMIC_DENSITY_MEDIUM,
+    DYNAMIC_DENSITY_NEUTRAL,
+    DYNAMIC_DENSITY_HEAVY,
+};
+
 typedef enum push_resistance push_resistance_t;
 
 typedef void (*bounding_box_calculator)(void* data, struct Vector2* rotation, struct Box3D* box);
@@ -51,6 +58,7 @@ struct dynamic_object_type {
     float max_stable_slope;
     uint16_t surface_type;
     uint8_t push_resistance;
+    uint8_t density;
     struct Vector3 center;
 };
 
@@ -63,13 +71,6 @@ typedef struct dynamic_object_type dynamic_object_type_t;
 #define DYNAMIC_OBJECT_MARK_ICE_DASH(object)            (object)->has_ice_dash = 2
 
 #define DYNAMIC_OBJECT_WAS_MARKED_UNDER_WATER(object)   ((object)->under_water == 2)
-
-enum dynamic_density_class {
-    DYNAMIC_DENSITY_LIGHT,
-    DYNAMIC_DENSITY_MEDIUM,
-    DYNAMIC_DENSITY_NEUTRAL,
-    DYNAMIC_DENSITY_HEAVY,
-};
 
 enum dynamic_object_trigger_type {
     TRIGGER_TYPE_NONE,
@@ -105,7 +106,6 @@ struct dynamic_object {
     uint16_t disable_friction: 2;
     uint16_t under_water: 2;
     uint16_t has_ice_dash: 2;
-    uint16_t density_class: 2;
     uint16_t weight_class: 3;
     uint16_t kill_plane_immune: 1;
     uint16_t hit_kill_plane: 1;

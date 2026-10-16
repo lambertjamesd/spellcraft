@@ -57,6 +57,7 @@ static dynamic_object_type_t golem_collider = {
     .friction = 1.0f,
     .bounce = 0.0f,
     .push_resistance = PUSH_RESISTANCE_HEAVY,
+    .density = DYNAMIC_DENSITY_HEAVY,
 };
 
 static dynamic_object_type_t golem_fist_collider = {
@@ -432,7 +433,7 @@ void golem_enemy_update(void* data) {
     golem_enemy->head_transform.position = golem_enemy->transform.position;
     vector2ComplexMul(&golem_enemy->head_rotation, &golem_enemy->transform.rotation, &golem_enemy->head_transform.rotation);
 
-    if (!health_is_alive(&golem_enemy->health) && golem_enemy->state != GOLEM_STATE_DIE) {
+    if ((!health_is_alive(&golem_enemy->health) || golem_enemy->collider.under_water) && golem_enemy->state != GOLEM_STATE_DIE) {
         golem_enemy_die(golem_enemy);
     }
 }

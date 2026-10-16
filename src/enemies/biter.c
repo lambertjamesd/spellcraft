@@ -33,6 +33,7 @@ static struct dynamic_object_type biter_collision_type = {
     // about a 40 degree slope
     .max_stable_slope = 0.219131191f,
     .center = { 0.0f, 0.4f, 0.0f },
+    .density = DYNAMIC_DENSITY_MEDIUM,
 };
 
 static struct spatial_trigger_type biter_vision_type = {
@@ -303,8 +304,6 @@ void biter_init(struct biter* biter, struct biter_definition* definition, entity
         COLLISION_LAYER_DAMAGE_PLAYER,
         id
     );
-
-    biter->dynamic_object.density_class = DYNAMIC_DENSITY_MEDIUM;
 
     collision_scene_add(&biter->dynamic_object);
     collision_scene_add_trigger(&biter->vision);

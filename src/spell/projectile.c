@@ -42,6 +42,7 @@ static struct dynamic_object_type projectile_collision = {
     },
     .bounce = 0.4f,
     .friction = 0.25f,
+    .density = DYNAMIC_DENSITY_HEAVY,
 };
 
 void projectile_render(struct projectile* projectile, struct render_batch* batch) {
@@ -101,7 +102,6 @@ void projectile_init(struct projectile* projectile, struct spell_data_source* da
         NULL
     );
     projectile->dynamic_object.collision_group = COLLISION_GROUP_PLAYER;
-    projectile->dynamic_object.density_class = DYNAMIC_DENSITY_HEAVY;
 
     vector3Scale(&data_source->direction, &projectile->dynamic_object.velocity, projectile_speed[element]);
     dynamic_object_wake(&projectile->dynamic_object);
