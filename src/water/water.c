@@ -301,7 +301,14 @@ void water_simulation_set_callback(void* data) {
 
     for (int y = min_y; y < max_y; y += 1) {
         for (int x = min_x; x < max_x; x += 1) {
-            buffer[y * SIM_SIZE + x] = value;
+            int next = (int)buffer[y * SIM_SIZE + x] + value;
+
+            if (next > 127) {
+                next = 127;
+            } else if (next < -128) {
+                next = -128;
+            }
+            buffer[y * SIM_SIZE + x] = next;
         }
     }
 }

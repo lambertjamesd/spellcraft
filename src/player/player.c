@@ -28,6 +28,9 @@
 
 #define PLAYER_MAX_SPEED    4.2f
 
+#define PLAYER_MAX_SWIM_SPEED   2.2f
+#define PLAYER_SWIM_ACCEL       8.2f
+
 #define PLAYER_DASH_THRESHOLD   4.7f
 #define PLAYER_RUN_THRESHOLD    1.4f
 #define PLAYER_RUN_ANIM_SPEED   4.2f
@@ -711,9 +714,19 @@ bool player_handle_water_movement(struct player* player, contact_t* ground_conta
         vector3ProjectPlane(&target_direction, &ground_contact->normal, &target_direction);
     }
 
-    float prev_y = player->cutscene_actor.collider.velocity.y;
-    vector3Scale(&target_direction, &player->cutscene_actor.collider.velocity, PLAYER_MAX_SPEED);
-    player->cutscene_actor.collider.velocity.y = prev_y;
+    vector3_t* vel = player_get_velocity(player);
+
+    vector3_t target_vel;
+    vector3Scale(&target_direction, &target_vel, PLAYER_MAX_SWIM_SPEED);
+
+    float prev_y = vel->y;
+    vector3MoveTowards(
+        vel,
+        &target_vel,
+        fixed_time_step * PLAYER_SWIM_ACCEL,
+        vel
+    );
+    vel->y = prev_y;
 
     if (player_check_grab(player, &target_direction, &climb_from_water_data, 1)) {
         return true;
@@ -921,7 +934,7 @@ void player_update_swimming(struct player* player, struct contact* ground_contac
     horizontal_velocity.y = 0.0f;
     float speed = sqrtf(vector3MagSqrd(&horizontal_velocity));
 
-    player_loop_animation(player, speed > 0.1f ? PLAYER_ANIMATION_SWIM : PLAYER_ANIMATION_TREAD_WATER, 1.0f);
+    player_loop_animation(player, speed > 0.2f ? PLAYER_ANIMATION_SWIM : PLAYER_ANIMATION_TREAD_WATER, 1.0f);
 }
 
 void player_getting_up(struct player* player, struct contact* ground_contact) {

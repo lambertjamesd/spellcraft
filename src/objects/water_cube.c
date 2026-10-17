@@ -10,6 +10,7 @@
 
 #define VEL_POS_RATIO       64.0f
 #define HORZ_VEL_RATIO      0.05f
+#define MAX_DRAG            0.95f
 
 static float density_level[] = {
     [DYNAMIC_DENSITY_LIGHT] = GRAVITY_CONSTANT / 0.3f,
@@ -79,7 +80,7 @@ void water_cube_apply_water(spatial_trigger_t* trigger) {
             target_pos = -127.0f;
         }
 
-        vector3Scale(&obj->velocity, &obj->velocity, mathfLerp(1.0f, 0.9f, underwater_ratio));
+        vector3Scale(&obj->velocity, &obj->velocity, mathfLerp(1.0f, MAX_DRAG, underwater_ratio));
         obj->velocity.y -= underwater_ratio * density_level[obj->type->density] * fixed_time_step;
         water_simulation_set(&current->point, (obj->bounding_box.max.x - obj->bounding_box.min.x) * 0.5f, (int)target_pos);
 
