@@ -345,7 +345,7 @@ static vector2_t rotate_amount = {
 };
 static fog_state_t comm_stone_fog = {
     .color = {30, 10, 70, 255}, 
-    .min = 5.0f, 
+    .min = 10.0f, 
     .max = -2.0f,
 };
 
