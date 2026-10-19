@@ -19,7 +19,7 @@ static float density_level[] = {
     [DYNAMIC_DENSITY_HEAVY] = GRAVITY_CONSTANT / 1.4f,
 };
 
-void water_cube_apply_water(spatial_trigger_t* trigger) {
+void water_cube_apply_water(spatial_trigger_t* trigger, bool apply_sim) {
     for (
         struct contact* current = trigger->active_contacts;
         current;
@@ -68,6 +68,11 @@ void water_cube_apply_water(spatial_trigger_t* trigger) {
             continue;
         }
 
+        if (apply_sim) {
+            float offset = water_simuation_get_offset(&current->point);
+            water_top += offset;
+        }
+
         float underwater_ratio = obj->bounding_box.max.y <= water_top ? 
             1.0f : 
             (water_top - obj->bounding_box.min.y) / (obj->bounding_box.max.y - obj->bounding_box.min.y);
@@ -82,7 +87,7 @@ void water_cube_apply_water(spatial_trigger_t* trigger) {
 
         vector3Scale(&obj->velocity, &obj->velocity, mathfLerp(1.0f, MAX_DRAG, underwater_ratio));
         obj->velocity.y -= underwater_ratio * density_level[obj->type->density] * fixed_time_step;
-        water_simulation_set(&current->point, (obj->bounding_box.max.x - obj->bounding_box.min.x) * 0.5f, (int)target_pos);
+        water_simulation_apply_impulse(&current->point, (obj->bounding_box.max.x - obj->bounding_box.min.x) * 0.5f, (int)target_pos);
 
         if (underwater_ratio > 0.5f) {
             DYNAMIC_OBJECT_MARK_UNDER_WATER(obj);
@@ -93,7 +98,7 @@ void water_cube_apply_water(spatial_trigger_t* trigger) {
 void water_cube_update(void* data) {
     struct water_cube* cube = (struct water_cube*)data;
 
-    water_cube_apply_water(&cube->trigger);
+    water_cube_apply_water(&cube->trigger, false);
 }
 
 void water_cube_init(struct water_cube* cube, struct water_cube_definition* definition, entity_id id) {

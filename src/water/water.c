@@ -263,7 +263,7 @@ void water_simulation_disable_debug_render() {
     sprite_free(sprite_test);
 }
 
-void water_simulation_set_center(vector3_t* position) {
+void water_simulation_apply_impulse_center(vector3_t* position) {
     water_simulation_rounded_position(position, &simulation.next_min);
     simulation.next_min.x = (simulation.next_min.x - SIM_SIZE / 2 + 4) & ~0x7; 
     simulation.next_min.y = simulation.next_min.y - SIM_SIZE / 2;
@@ -279,7 +279,7 @@ void* water_simulation_get_data() {
     return simulation.position_buffers[simulation.read_buffer] + SIM_SIZE;
 }
 
-void water_simulation_set_callback(void* data) {
+void water_simulation_apply_impulse_callback(void* data) {
     int args = (int)data;
 
     int8_t value = (int8_t)(uint8_t)args;
@@ -313,7 +313,7 @@ void water_simulation_set_callback(void* data) {
     }
 }
 
-void water_simulation_set(vector3_t* position, float radius, int8_t value) {
+void water_simulation_apply_impulse(vector3_t* position, float radius, int8_t value) {
     if (simulation.ref_count == 0) {
         return;
     }
@@ -333,7 +333,28 @@ void water_simulation_set(vector3_t* position, float radius, int8_t value) {
     }
 
     int args = ((int)(sim_pos.x & 0xFF) << 24) | ((int)(sim_pos.y & 0xFF) << 16) | ((sim_radius & 0xFF) << 8) | ((int)(uint8_t)value & 0xFF);
-    rspq_call_deferred(water_simulation_set_callback, (void*)args);
+    rspq_call_deferred(water_simulation_apply_impulse_callback, (void*)args);
+}
+
+float water_simuation_get_offset(vector3_t* position) {
+    if (simulation.ref_count == 0) {
+        return 0.0f;
+    }
+
+    vector2s16_t sim_pos;
+    water_simulation_rounded_position(position, &sim_pos);
+    vector2s16Sub(&sim_pos, &simulation.min, &sim_pos);
+
+    if (sim_pos.x < 0 || 
+        sim_pos.y < 0 || 
+        sim_pos.x > SIM_SIZE ||
+        sim_pos.y > SIM_SIZE
+    ) {
+        return 0.0f;
+    }
+
+    int8_t* buffer = simulation.position_buffers[simulation.read_buffer] + SIM_SIZE;
+    return ((int)buffer[sim_pos.y * SIM_SIZE + sim_pos.x] * simulation.scale.y) * (1.0f / (MODEL_SCALE * 0x10000));
 }
 
 // sim_space = world * SIM_SIZE / SIM_WORLD_SIZE

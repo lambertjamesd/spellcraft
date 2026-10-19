@@ -17,12 +17,13 @@ void water_simulation_update();
 
 bool water_simulation_apply(tmesh_t* mesh, vector3_t* position, vector3s16_t* local_min, vector3s16_t* local_max);
 
-void water_simulation_set_center(vector3_t* position);
-void water_simulation_set(vector3_t* position, float radius, int8_t value);
+void water_simulation_apply_impulse_center(vector3_t* position);
+void water_simulation_apply_impulse(vector3_t* position, float radius, int8_t value);
 
 void water_simulation_rounded_position(vector3_t* input, vector2s16_t* output);
 
 void water_simulation_get_center(vector3_t* position);
+float water_simuation_get_offset(vector3_t* position);
 
 void* water_simulation_get_data();
 

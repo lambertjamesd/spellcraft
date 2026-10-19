@@ -22,7 +22,7 @@ void dynamic_water_update(void* data) {
     dynamic_water_t* dynamic_water = (dynamic_water_t*)data;
 
     if (dynamic_water->trigger_type.data.box.half_size.x != 0.0f) {
-        water_cube_apply_water(&dynamic_water->trigger);
+        water_cube_apply_water(&dynamic_water->trigger, true);
     }
 
     float target = expression_get_bool(dynamic_water->is_other_level) ? dynamic_water->other_level : dynamic_water->start_level;
