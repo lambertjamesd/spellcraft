@@ -28,6 +28,7 @@ typedef void (*interaction_callback)(struct interactable* interactable, entity_i
 
 struct interactable_flags {
     uint16_t target_straight_on: 1;
+    uint16_t thrown: 1;
 };
 
 struct interactable {

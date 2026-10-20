@@ -96,6 +96,10 @@ void breakable_update(void* data) {
 
     // animator_update(&breakable->animator, fixed_time_step);
 
+    if (breakable->interactable.flags.thrown && breakable->collider.active_contacts && breakable->collider.active_contacts->other_object != ENTITY_ID_PLAYER) {
+        health_damage_all(&breakable->health);
+    }
+
     if (breakable->is_breaking) {
         if (breakable->break_timer <= 0.0f) {
             entity_despawn(breakable->collider.entity_id);

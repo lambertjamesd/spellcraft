@@ -47,7 +47,8 @@
 #define CARRY_GRAB_TIME   (11.0f / 30.0f)
 #define CARRY_DROP_SPEED    3.2f
 #define CARRY_THROW_THRESHOLD   PLAYER_RUN_THRESHOLD
-#define CARRY_THROW_VEL         4.0f
+#define CARRY_THROW_VEL         2.0f
+#define CARRY_THROW_VEL_VERT    4.0f
 
 #define INTERACT_Y_LOWER        -0.75f
 #define INTERACT_Y_UPEER        1.25f
@@ -1000,7 +1001,7 @@ void player_position_drop(player_t* player, dynamic_object_t* obj, bool throw) {
 
     if (throw) {
         obj->velocity.x -= forward.x * CARRY_THROW_VEL;
-        obj->velocity.y = CARRY_THROW_VEL;
+        obj->velocity.y = CARRY_THROW_VEL_VERT;
         obj->velocity.z -= forward.z * CARRY_THROW_VEL;
     }
 }
@@ -1054,6 +1055,7 @@ void player_carry(player_t* player, contact_t* ground_contact) {
             obj->is_fixed = false;
             obj->weight_class = WEIGHT_CLASS_LIGHT;
             dynamic_object_wake(obj);
+            interactable_get(obj->entity_id)->flags.thrown = true;
         }
 
         return;

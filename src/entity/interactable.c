@@ -43,7 +43,7 @@ void interactable_init(struct interactable* interactable, entity_id id, interact
     interactable->data = data;
     hash_map_set(&interactable_entity_mapping, id, interactable);
     
-    interactable->flags.target_straight_on = false;
+    interactable->flags = (struct interactable_flags){};
 }
 
 void interactable_destroy(struct interactable* interactable) {
