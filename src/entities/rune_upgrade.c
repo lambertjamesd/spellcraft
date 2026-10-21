@@ -66,7 +66,7 @@ void rune_upgrade_interact(interactable_t* interactable, entity_id from) {
     cutscene_builder_pause(&cutscene, true, false);
     cutscene_builder_snap_to_pos(&cutscene, ENTITY_ID_PLAYER, &player_pos);
     cutscene_builder_snap_to_rot(&cutscene, ENTITY_ID_PLAYER, &player_rot);
-    cutscene_builder_camera_animate(&cutscene, "get_rune", ENTITY_ID_PLAYER);
+    cutscene_builder_camera_animate(&cutscene, "get_rune", ENTITY_ID_PLAYER, 0);
     cutscene_builder_npc_animate(&cutscene, ENTITY_ID_PLAYER, "get_rune", false);
     cutscene_builder_camera_wait(&cutscene);
     cutscene_builder_camera_return(&cutscene);

@@ -379,10 +379,12 @@ void camera_controller_update_animation(struct camera_controller* controller) {
         sizeof(struct camera_animation_frame)
     );
 
+    vector3_t final_pos;
+
     transformSaTransformPoint(
         &controller->state_data.animate.relative_to, 
         &anim_frame_buffer.position, 
-        &controller->stable_position
+        &final_pos
     );
 
     quaternion_t unpacked_rotation;
@@ -404,9 +406,23 @@ void camera_controller_update_animation(struct camera_controller* controller) {
     quaternion_t relative_rotation;
     quatAxisComplex(&gUp, &controller->state_data.animate.relative_to.rotation, &relative_rotation);
 
-    quatMultiply(&relative_rotation, &unpacked_rotation, &controller->camera.transform.rotation);
+    quaternion_t final_rotation;
+    quatMultiply(&relative_rotation, &unpacked_rotation, &final_rotation);
     controller->camera.fov = (180.0f / M_PI) * anim_frame_buffer.fov;
     controller->state_data.animate.current_frame += 1;
+
+    transform_t* transform = &controller->camera.transform;
+
+    if (controller->state_data.animate.blend_frames) {
+        float lerp = 1.0f / (1.0f + controller->state_data.animate.blend_frames);
+        quatLerp(&transform->rotation, &final_rotation, lerp, &transform->rotation);
+        vector3Lerp(&transform->position, &final_pos, lerp, &transform->position);
+        --controller->state_data.animate.blend_frames;
+    } else {
+        transform->position = final_pos;
+        transform->rotation = final_rotation;
+    }
+
     camera_look_at_from_rotation(controller);
 }
 
@@ -536,7 +552,7 @@ void camera_behind_player(struct camera_controller* controller) {
     controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 
-void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation, transform_sa_t* relative_to) {
+void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation, transform_sa_t* relative_to, int blend_frames) {
     controller->state = CAMERA_STATE_ANIMATE;
     controller->state_data.animate.animation = animation;
     controller->state_data.animate.current_frame = 0;
@@ -545,7 +561,7 @@ void camera_play_animation(struct camera_controller* controller, struct camera_a
     } else {
         transformSaInitIdentity(&controller->state_data.animate.relative_to);
     }
-    controller->state_data.animate.blend_frames = 0;
+    controller->state_data.animate.blend_frames = blend_frames;
     controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 

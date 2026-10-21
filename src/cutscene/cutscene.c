@@ -369,14 +369,15 @@ void cutscene_builder_camera_look_at_pos(struct cutscene_builder* builder, struc
     cutscene_builder_call_function(builder, CUTSCENE_FN_CAMERA_LOOK_AT_POS, 4, 0);
 }
 
-void cutscene_builder_camera_animate(cutscene_builder_t* builder, const char* name, entity_id relative_to) {
+void cutscene_builder_camera_animate(cutscene_builder_t* builder, const char* name, entity_id relative_to, int blend_frames) {
     cutscene_builder_message(builder, name);
 
     expression_builder_t expr;
     expression_builder_init(&expr);
     expression_builder_load_literal(&expr, relative_to);
+    expression_builder_load_literal(&expr, blend_frames);
     cutscene_builder_expression(builder, &expr);
-    cutscene_builder_call_function(builder, CUTSCENE_FN_CAMERA_ANIMATE, 2, 0);
+    cutscene_builder_call_function(builder, CUTSCENE_FN_CAMERA_ANIMATE, 3, 0);
 }
 
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value) {

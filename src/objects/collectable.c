@@ -71,6 +71,10 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
     hash_map_set(&collectable_hash_map, collectable->dynamic_object.entity_id, collectable);
 }
 
+void collectable_float_above_hand(void* data) {
+
+}
+
 void collectable_collected(struct collectable* collectable) {
     if (collectable->has_item != VARIABLE_DISCONNECTED) {
         expression_set_bool(collectable->has_item, true);
@@ -78,12 +82,21 @@ void collectable_collected(struct collectable* collectable) {
 
     if (collectable->collectable_type == COLLECTABLE_TYPE_HEALTH) {
         struct cutscene_builder builder;
+
+        collectable->dynamic_object.collision_layers = 0;
         cutscene_builder_init(&builder);
         cutscene_builder_pause(&builder, true, false);
+        cutscene_builder_npc_animate(&builder, ENTITY_ID_PLAYER, "item_get", false);
+        cutscene_builder_camera_animate(&builder, "item_get", ENTITY_ID_PLAYER, 10);
+        cutscene_builder_camera_wait(&builder);
+        cutscene_builder_npc_animate(&builder, ENTITY_ID_PLAYER, "item_get_loop", true);
         cutscene_builder_dialog(
             &builder,
             "You found a health upgrade"
         );
+        cutscene_builder_npc_animate(&builder, ENTITY_ID_PLAYER, "", false);
+        cutscene_builder_callback(&builder, (cutscene_init_callback)entity_despawn, (void*)ENTITY_ID_PLAYER);
+        cutscene_builder_camera_return(&builder);
         cutscene_builder_pause(&builder, false, false);
         cutscene_runner_run(
             cutscene_builder_finish(&builder),
@@ -92,6 +105,8 @@ void collectable_collected(struct collectable* collectable) {
             NULL,
             collectable->dynamic_object.entity_id
         );
+
+        return;
     }
 
     if (collectable->collectable_type == COLLECTABLE_TYPE_SPELL_RUNE) {

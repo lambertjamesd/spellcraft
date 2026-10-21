@@ -10,7 +10,7 @@ func main()
 
     fade FADE_COLOR_NONE, 1;
 
-    cam_animate "enter", 0;
+    cam_animate "enter", 0, 0;
 
     interact_with_location INTERACTION_MOVE, NPC_TYPE_PLAYER, "enter_run_target";
     npc_set_speed NPC_TYPE_PLAYER, 1.65;

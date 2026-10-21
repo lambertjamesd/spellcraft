@@ -199,7 +199,7 @@ void cutscene_builder_camera_return(struct cutscene_builder* builder);
 void cutscene_builder_camera_look_at(struct cutscene_builder* builder, entity_id target);
 void cutscene_builder_camera_move_to(struct cutscene_builder* builder, struct Vector3* position, bool instant);
 void cutscene_builder_camera_look_at_pos(struct cutscene_builder* builder, struct Vector3* position, bool instant);
-void cutscene_builder_camera_animate(cutscene_builder_t* builder, const char* name, entity_id relative_to);
+void cutscene_builder_camera_animate(cutscene_builder_t* builder, const char* name, entity_id relative_to, int blend_frames);
 void cutscene_builder_set_boolean(struct cutscene_builder* builder, boolean_variable variable, bool value);
 void cutscene_builder_callback(struct cutscene_builder* builder, cutscene_init_callback callback, void* data);
 void cutscene_builder_wait_for(struct cutscene_builder* builder, cutscene_init_callback init, cutscene_step_callback step, void* data);

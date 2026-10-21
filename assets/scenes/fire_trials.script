@@ -99,7 +99,7 @@ func room_bossfight()
         pause;
         interact_with_npc INTERACTION_MOVE, ENTITY_ID_PLAYER, bossfight_walk_to;
         npc_set_speed ENTITY_ID_PLAYER, 3.0;
-        cam_animate "bossfight", 0;
+        cam_animate "bossfight", 0, 0;
         spawn bossfight_jelly_king_spawner;
         npc_animate bossfight_jelly_king, "spawn", false;
         

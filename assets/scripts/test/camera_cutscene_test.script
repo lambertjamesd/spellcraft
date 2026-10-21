@@ -4,7 +4,7 @@ func main()
 
     fade FADE_COLOR_BLACK, 1;
     delay 1;
-    cam_animate "cutscene_test", 0;
+    cam_animate "cutscene_test", 0, 0;
     fade FADE_COLOR_NONE, 1;
     say "Watch out for the jelly enemies";
     cam_wait;

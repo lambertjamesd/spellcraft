@@ -229,7 +229,7 @@ void cutscene_cam_behind_player_init(cutscene_runner_context_t* context, int arg
 
 // cam_animate
 void cutscene_cam_anim_init(cutscene_runner_context_t* context, int arg_count) {
-    READ_ARGS(context, 2, arg_count, args);
+    READ_ARGS(context, 3, arg_count, args);
 
     transform_sa_t relative_to;
 
@@ -260,7 +260,8 @@ void cutscene_cam_anim_init(cutscene_runner_context_t* context, int arg_count) {
     camera_play_animation(
         cutscene_get_camera_controller(), 
         animation,
-        &relative_to
+        &relative_to,
+        args[2]
     );
 }
 
@@ -679,7 +680,7 @@ static cutscene_step_fn_t function_steps[] = {
     [CUTSCENE_FN_CAMERA_LOOK_AT_NPC] = {.init = cutscene_camera_look_at_npc_init }, // func cam_look_npc(target: entity_id)
     [CUTSCENE_FN_CAMERA_MOVE_TO] = {.init = cutscene_cam_move_to_init }, // func cam_move_to_pos(x: float, y: float, z: float, instant: bool)
     [CUTSCENE_FN_CAMERA_LOOK_AT_POS] = {.init = cutscene_cam_look_at_init }, // func cam_look_at_pos(x: float, y: float, z: float, instant: bool)
-    [CUTSCENE_FN_CAMERA_ANIMATE] = {.init = cutscene_cam_anim_init }, // func cam_animate(animation: str, relative_to: entity_id)
+    [CUTSCENE_FN_CAMERA_ANIMATE] = {.init = cutscene_cam_anim_init }, // func cam_animate(animation: str, relative_to: entity_id, blend_frames: i32)
     [CUTSCENE_FN_LOAD_SCENE] = {.init = cutscene_load_scene_init }, // func load_scene(scene_name: str)
     [CUTSCENE_FN_LOAD_FADE] = {.init = cutscene_fade_init }, // func fade(fade_to: i32, duration: float)
     [CUTSCENE_FN_COMM_STONE_START] = {.init = cutscene_comm_stone_start_init, .step = cutscene_comm_stone_start_step}, // func comm_stone_start()
