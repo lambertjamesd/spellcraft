@@ -71,8 +71,6 @@ enum fixed_entity_ids {
     ENTITY_ID_FIRST_DYNAMIC,
 };
 
-typedef uint32_t collectable_sub_type;
-
 #define ROOM_NONE 0xFFFF
 
 typedef uint16_t room_id;
@@ -94,8 +92,8 @@ struct crate_definition {
 
 enum collectable_type {
     COLLECTABLE_TYPE_HEALTH,
-    COLLECTABLE_TYPE_POTION,
-    COLLECTABLE_TYPE_SPELL_RUNE,
+    COLLECTABLE_TYPE_MANA_UPGRADE,
+    COLLECTABLE_TYPE_SPELL_SCROLL,
 };
 
 enum inventory_item_type {
@@ -147,7 +145,6 @@ struct collectable_definition {
     struct Vector3 position;
     struct Vector2 rotation;
     enum collectable_type collectable_type;
-    collectable_sub_type collectable_sub_type;
     boolean_variable has_item;
 };
 

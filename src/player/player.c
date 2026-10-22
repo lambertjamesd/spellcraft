@@ -1003,6 +1003,7 @@ void player_position_drop(player_t* player, dynamic_object_t* obj, bool throw) {
         obj->velocity.x -= forward.x * CARRY_THROW_VEL;
         obj->velocity.y = CARRY_THROW_VEL_VERT;
         obj->velocity.z -= forward.z * CARRY_THROW_VEL;
+        obj->collision_group = player->cutscene_actor.collider.collision_group;
     }
 }
 
