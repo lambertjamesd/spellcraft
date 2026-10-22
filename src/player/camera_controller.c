@@ -416,10 +416,10 @@ void camera_controller_update_animation(struct camera_controller* controller) {
     if (controller->state_data.animate.blend_frames) {
         float lerp = 1.0f / (1.0f + controller->state_data.animate.blend_frames);
         quatLerp(&transform->rotation, &final_rotation, lerp, &transform->rotation);
-        vector3Lerp(&transform->position, &final_pos, lerp, &transform->position);
+        vector3Lerp(&controller->stable_position, &final_pos, lerp, &controller->stable_position);
         --controller->state_data.animate.blend_frames;
     } else {
-        transform->position = final_pos;
+        controller->stable_position = final_pos;
         transform->rotation = final_rotation;
     }
 

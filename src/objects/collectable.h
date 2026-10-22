@@ -16,6 +16,8 @@ struct collectable {
     boolean_variable has_item;
 };
 
+typedef struct collectable collectable_t;
+
 void collectable_assets_load();
 
 void collectable_init(struct collectable* collectable, struct collectable_definition* definition, entity_id id);

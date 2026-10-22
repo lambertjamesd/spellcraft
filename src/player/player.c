@@ -1822,3 +1822,11 @@ void player_destroy(struct player* player) {
     camera_animation_list_destroy(&player->camera_animations);
     camera_animation_unmap(ENTITY_ID_PLAYER);
 }
+
+player_t* player_get() {
+    if (current_scene) {
+        return &current_scene->player;
+    }
+
+    return NULL;
+}
