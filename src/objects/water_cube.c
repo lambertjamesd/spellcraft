@@ -10,7 +10,7 @@
 
 #define VEL_POS_RATIO       64.0f
 #define HORZ_VEL_RATIO      0.05f
-#define MAX_DRAG            0.95f
+#define MAX_DRAG            0.90f
 
 static float density_level[] = {
     [DYNAMIC_DENSITY_LIGHT] = GRAVITY_CONSTANT / 0.3f,

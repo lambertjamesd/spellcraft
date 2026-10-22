@@ -1050,12 +1050,15 @@ void player_carry(player_t* player, contact_t* ground_contact) {
 
     if (player_is_running(player, PLAYER_ANIMATION_CARRY_DROP) || player_is_running(player, PLAYER_ANIMATION_THROW)) {
         if (player->cutscene_actor.animator.events.attack && player->state_data.carrying.should_carry) {
-            player_position_drop(player, obj, player_is_running(player, PLAYER_ANIMATION_THROW));
+            bool was_throw = player_is_running(player, PLAYER_ANIMATION_THROW);
+            player_position_drop(player, obj, was_throw);
             player->state_data.carrying.should_carry = false;
             obj->is_fixed = false;
             obj->weight_class = WEIGHT_CLASS_LIGHT;
             dynamic_object_wake(obj);
-            interactable_get(obj->entity_id)->flags.thrown = true;
+            if (was_throw) {
+                interactable_get(obj->entity_id)->flags.thrown = true;
+            }
         }
 
         return;
