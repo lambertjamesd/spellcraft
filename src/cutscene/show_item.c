@@ -6,6 +6,8 @@
 #include "../resource/material_cache.h"
 #include "../player/inventory.h"
 #include "../menu/menu_rendering.h"
+#include "../effects/item_get_cutscene.h"
+#include "../render/render_scene.h"
 
 #define RUNE_SHOW_TIME              3.0f
 #define RUNE_FADE_TIME              0.25f
@@ -39,6 +41,11 @@ static const char* item_icon_materials[] = {
 
     [ITEM_TYPE_STAFF_DEFAULT] = "rom:/materials/objects/icons/default_staff_icon.mat",
     [ITEM_TYPE_KEY_GEM] = "rom:/materials/objects/icons/key_gem.mat",
+};
+
+
+static const char* item_meshes[ITEM_TYPE_COUNT] = {
+    [ITEM_TYPE_KEY_GEM] = "rom:/meshes/objects/pickups/lock_gem.tmesh",
 };
 
 struct spell_level_messages {
@@ -300,11 +307,38 @@ void show_item_in_cutscene(struct cutscene_builder* cutscene_builder, enum inven
     cutscene_builder_pause(cutscene_builder, false, true);
 }
 
+typedef struct {
+    transform_sa_t transform;
+    renderable_t renderable;
+} show_item_renderable_t;
+
+void show_item_hide_mesh(void* data) {
+    show_item_renderable_t* item = (show_item_renderable_t*)data;
+
+    item->renderable.hide = true;
+    render_scene_remove(&item->renderable);
+    rdpq_call_deferred(free, item);
+}
+
 void show_item_with_var_in_cutscene(struct cutscene_builder* cutscene_builder, any_variable item) {
     inventory_item_type_t type = inventory_item_from_var(item);
 
     if (type == ITEM_TYPE_NONE) {
         cutscene_builder_pause(cutscene_builder, false, true);
+        return;
+    }
+
+    if (item_meshes[type]) {
+        show_item_renderable_t* item = malloc(sizeof(show_item_renderable_t));
+
+        transformSaInitIdentity(&item->transform);
+        renderable_single_axis_init(&item->renderable, &item->transform, item_meshes[type]);
+        render_scene_add_renderable(&item->renderable, 0.0f);
+
+        item_get_cutscene_run(cutscene_builder, item_get_message[type], &item->renderable, show_item_hide_mesh, item);
+
+        cutscene_builder_pause(cutscene_builder, false, false);
+
         return;
     }
 

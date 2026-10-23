@@ -14,6 +14,7 @@
 #include "../util/hash_map.h"
 #include "../entity/entity_spawner.h"
 #include "../player/player.h"
+#include "../effects/item_get_cutscene.h"
 
 #define COLLECTABLE_RADIUS  0.75f
 
@@ -78,22 +79,20 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
     hash_map_set(&collectable_hash_map, collectable->dynamic_object.entity_id, collectable);
 }
 
-static vector3_t relative_player_pos = {
-    0.393962f,
-    1.16192f,
-    0.481766f,
-};
-
-void collectable_float_above_hand(void* data) {
+void collectable_finish_collect(void* data) {
     collectable_t* collectable = (collectable_t*)data;
 
-    collectable->renderable.hide = false;
+    switch (collectable->collectable_type) {
+        case COLLECTABLE_TYPE_HEALTH:
+            health_t* health = &player_get()->health;
+            health->max_health += 5.0f;
+            health->current_health = health->max_health;
+            break;
+        default:
+            break;
+    }
 
-    transformSaTransformPoint(&player_get()->cutscene_actor.transform, &relative_player_pos, &collectable->transform.position);
-    collectable->transform.scale = 0.5f;
-    health_t* health = &player_get()->health;
-    health->max_health += 5.0f;
-    health->current_health = health->max_health;
+    entity_despawn(collectable->dynamic_object.entity_id);
 }
 
 void collectable_collected(struct collectable* collectable) {
@@ -101,38 +100,30 @@ void collectable_collected(struct collectable* collectable) {
         expression_set_bool(collectable->has_item, true);
     }
 
-    struct cutscene_builder builder;
-
     collectable->dynamic_object.is_fixed = true;
     collectable->dynamic_object.weight_class = WEIGHT_CLASS_GHOST;
     collectable->dynamic_object.collision_layers = 0;
     collectable->dynamic_object.has_gravity = false;
     collectable->dynamic_object.velocity = gZeroVec;
-    collectable->renderable.hide = true;
+    collectable->transform.scale = 0.5f;
+
+    cutscene_builder_t builder;
     cutscene_builder_init(&builder);
     cutscene_builder_pause(&builder, true, false);
-    cutscene_builder_npc_animate(&builder, ENTITY_ID_PLAYER, "item_get", false);
-    cutscene_builder_camera_animate(&builder, "item_get", ENTITY_ID_PLAYER, 0);
-
-    cutscene_builder_delay(&builder, 1.0f);
-    cutscene_builder_callback(&builder, collectable_float_above_hand, collectable);
-
-    cutscene_builder_camera_wait(&builder);
-    cutscene_builder_npc_animate(&builder, ENTITY_ID_PLAYER, "item_get_loop", true);
-    cutscene_builder_dialog(
+    item_get_cutscene_run(
         &builder,
-        collectable_information[collectable->collectable_type].message
+        collectable_information[collectable->collectable_type].message, 
+        &collectable->renderable, 
+        collectable_finish_collect,
+        collectable
     );
-    cutscene_builder_npc_animate(&builder, ENTITY_ID_PLAYER, "item_get_store", false);
-    cutscene_builder_callback(&builder, (cutscene_init_callback)entity_despawn, (void*)(int)collectable->dynamic_object.entity_id);
-    cutscene_builder_camera_return(&builder);
     cutscene_builder_pause(&builder, false, false);
     cutscene_runner_run(
         cutscene_builder_finish(&builder),
         0,
         cutscene_runner_free_on_finish(),
         NULL,
-        collectable->dynamic_object.entity_id
+        0
     );
 }
 

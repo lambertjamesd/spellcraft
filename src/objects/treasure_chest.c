@@ -26,7 +26,7 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
     cutscene_builder_init(&builder);
 
     cutscene_builder_pause(&builder, true, false);
-    cutscene_builder_delay(&builder, 1.0f);
+    cutscene_builder_delay(&builder, 0.5f);
 
     show_item_with_var_in_cutscene(&builder, treasure_chest->item_ref);
 
