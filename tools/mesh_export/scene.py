@@ -787,8 +787,7 @@ def save_room_exports(scene: Scene, rooms: list[struct_serialize.RoomExport], ou
 
                     settings.default_material = material_extract.load_material_with_name(mesh[0].mat)
                     if mesh[0].mat:
-                        settings.default_material_name = material_extract.material_romname(mesh[0].mat) or 'rom:/materials/default.mat'
-                    
+                        settings.default_material_name = material_extract.material_romname(mesh[0].mat) or ''
                     
                 tiny3d_mesh_writer.write_mesh(mesh, None, [], settings, file, preserve_chunk_order=True)
 
