@@ -333,8 +333,8 @@ def _determine_tex_axis_from_f3d(axis, image_size, uv_scroll, result: material.T
     if uv_scroll and uv_scroll['animType'] == 'Linear':
         result.scroll = uv_scroll['speed'] if 'speed' in uv_scroll else 1
 
-    result.min = 0
-    result.max = image_size << 2
+    result.min = math.floor(axis['low'] + 0.5)
+    result.max = math.floor(axis['high'] + 0.5)
 
 filename_number_suffix = r'\d+\.png$'
 
