@@ -24,6 +24,9 @@ def determine_tex_delta(start: material.Tex | None, end: material.Tex | None, st
     if start.frames == end.frames:
         result.frames = None
 
+    if result.filename == None and result.palette_data == None and result.frames == None:
+        return None
+
     return result
 
 def determine_fog_delta(start: material.Fog | None, end: material.Fog | None) -> material.Fog | None:
@@ -78,8 +81,8 @@ def determine_material_delta(start: material.Material, end: material.Material) -
         result.vtx_effect = end.vtx_effect
 
     # this is a mystery to me
-    # result.fog = determine_fog_delta(start.fog, end.fog)
-    result.fog = end.fog
+    result.fog = determine_fog_delta(start.fog, end.fog)
+    # result.fog = end.fog
 
     if end.flags and (not start.flags or start.flags != end.flags):
         result.flags = end.flags
