@@ -560,6 +560,19 @@ class OtherModes():
 class Palette():
     def __init__(self):
         self.colors: list[Color] = []
+
+class TexScrollType(Enum):
+    NONE = 0
+    LINEAR = 1
+    SINE = 2
+
+class TexScroll():
+    def __init__(self):
+        self.type: TexScrollType = TexScrollType.NONE
+        self.start: float = 0
+        self.end: float = 0
+        self.time: float = 0
+        self.pingpong: bool = False
     
 class TexAxis():
     def __init__(self):
@@ -569,7 +582,7 @@ class TexAxis():
         self.clamp = False # was repeats
         self.mask = 0 # was repeats
         self.mirror = False
-        self.scroll = 0
+        self.scroll: TexScroll = TexScroll()
 
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, TexAxis):
@@ -633,7 +646,7 @@ class Tex():
         return result
     
     def does_scroll(self):
-        return self.s.scroll != 0 or self.t.scroll != 0
+        return self.s.scroll.type != TexScrollType.NONE or self.t.scroll.type != TexScrollType.NONE
     
     def set_filename(self, filename):
         self.filename = filename
@@ -1144,7 +1157,6 @@ def _parse_tex_axis(json_data, image_size, into: TexAxis, key_path):
     into.max = image_size << 2
     into.shift = _optional_number(json_data, 'shift', key_path, into.shift)
     into.mirror = _optional_boolean(json_data, 'mirror', key_path, False)
-    into.scroll = _optional_number(json_data, 'scroll', key_path, into.scroll)
 
     repeats = _optional_number(json_data, 'repeats', key_path, 2048)
     into.mask = log_pow_2(image_size)

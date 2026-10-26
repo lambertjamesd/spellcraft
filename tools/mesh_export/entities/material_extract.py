@@ -331,7 +331,10 @@ def _determine_tex_axis_from_f3d(axis, image_size, uv_scroll, result: material.T
         result.mirror = True
 
     if uv_scroll and uv_scroll['animType'] == 'Linear':
-        result.scroll = uv_scroll['speed'] if 'speed' in uv_scroll else 1
+        speed = float(uv_scroll['speed'] if 'speed' in uv_scroll else 1)
+        result.scroll.type = result.scroll.type = material.TexScrollType.LINEAR
+        result.scroll.end = 1
+        result.scroll.time = 1 / speed
 
     result.min = math.floor(axis['low'] * 4 + 0.5)
     result.max = math.floor(axis['high'] * 4 + 0.5)
@@ -363,7 +366,18 @@ def _look_for_frames(filename: str) -> list[str]:
 
     return result
 
-def _determine_tex_from_f3d(tex, uv_scroll, base_path: str, flipbook: bool = False) -> material.Tex | None:
+def _determine_scroll(tex_axis: material.TexAxis, tex_scroll_axis):
+    if tex_scroll_axis.type == 'NONE' or tex_scroll_axis.time == 0:
+        tex_axis.scroll.type = material.TexScrollType.NONE
+    else:
+        tex_axis.scroll.type = material.TexScrollType[tex_scroll_axis.type]
+        tex_axis.scroll.start = tex_scroll_axis.start
+        tex_axis.scroll.end = tex_scroll_axis.end
+        tex_axis.scroll.time = tex_scroll_axis.time
+        tex_axis.scroll.pingpong = tex_scroll_axis.pingpong
+
+
+def _determine_tex_from_f3d(tex, uv_scroll, base_path: str, tex_scroll, flipbook: bool = False) -> material.Tex | None:
     image = tex['tex']
 
     if not tex['tex_set'] or not image:
@@ -395,9 +409,16 @@ def _determine_tex_from_f3d(tex, uv_scroll, base_path: str, flipbook: bool = Fal
         interval = tex['tile_scroll'].get('interval') or 1
 
         if s_scroll and interval:
-            result.s.scroll += s_scroll / interval
+            result.s.scroll.type = material.TexScrollType.LINEAR
+            result.s.scroll.end = s_scroll
+            result.s.scroll.time = interval
         if t_scroll and interval:
-            result.t.scroll += t_scroll / interval
+            result.t.scroll.type = material.TexScrollType.LINEAR
+            result.t.scroll.end = t_scroll
+            result.t.scroll.time = interval
+
+    _determine_scroll(result.s, tex_scroll.s)
+    _determine_scroll(result.t, tex_scroll.t)
 
     return result
 
@@ -633,8 +654,9 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
 
     flipbook_0 = 'flipbook_0' in mat and mat['flipbook_0']
 
-    result.tex0 = _determine_tex_from_f3d(_get_safe(f3d_mat, 'tex0'), uv_anim_0, base_path, flipbook = flipbook_0) if result.combine_mode.uses('TEX0') else None
-    result.tex1 = _determine_tex_from_f3d(_get_safe(f3d_mat, 'tex1'), uv_anim_1, base_path) if result.combine_mode.uses('TEX1') else None
+    result.tex0 = _determine_tex_from_f3d(_get_safe(f3d_mat, 'tex0'), uv_anim_0, base_path, mat.tex_scroll_0, flipbook = flipbook_0) if result.combine_mode.uses('TEX0') else None
+    result.tex1 = _determine_tex_from_f3d(_get_safe(f3d_mat, 'tex1'), uv_anim_1, base_path, mat.tex_scroll_1) if result.combine_mode.uses('TEX1') else None
+    
     result.layout_textures()
 
     if result.tex0 and result.tex0.palette_data or result.tex1 and result.tex1.palette_data:

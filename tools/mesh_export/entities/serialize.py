@@ -1,5 +1,6 @@
 import sys
 import os
+import math
 
 from . import material
 import struct
@@ -313,7 +314,22 @@ def _serialize_tex(file, tex: material.Tex | None, prev_tex: material.Tex | None
 
     file.write(b'\x01' if tex.use_texture_reference else b'\0')
 
-    file.write(struct.pack('>ff', tex.s.scroll, -tex.t.scroll))
+    file.write(struct.pack('>BBhhhf',
+        tex.s.scroll.type.value,
+        1 if tex.s.scroll.pingpong else 0,
+        0,
+        math.floor(tex.s.scroll.start * tex.width * 4 + 0.5),
+        math.floor(tex.s.scroll.end * tex.width * 4 + 0.5),
+        tex.s.scroll.time,
+    ))
+    file.write(struct.pack('>BBhhhf',
+        tex.t.scroll.type.value,
+        1 if tex.t.scroll.pingpong else 0,
+        0,
+        math.floor(tex.t.scroll.start * tex.width * 4 + 0.5),
+        math.floor(tex.t.scroll.end * tex.width * 4 + 0.5),
+        tex.t.scroll.time,
+    ))
 
 def _serialize_palette(file, palette: list, palette_offset: int):
     file.write(COMMAND_PALETTE.to_bytes(1, 'big'))

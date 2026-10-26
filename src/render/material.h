@@ -3,6 +3,7 @@
 
 #include <GL/gl.h>
 #include <libdragon.h>
+#include <stdbool.h>
 
 enum material_sort_priority {
     MAT_SORT_BACKGROUND,
@@ -19,6 +20,25 @@ typedef enum material_sort_priority material_sort_priority_t;
 
 #define DEBUG_MATERIALS 0
 
+enum material_scroll_type {
+    MATERIAL_SCROLL_NONE,
+    MATERIAL_SCROLL_LINEAR,
+    MATERIAL_SCROLL_SINE,
+};
+
+typedef enum material_scroll_type material_scroll_type_t;
+
+struct material_scroll {
+    uint8_t type; // material_scroll_type_t
+    bool pingpong;
+    uint16_t reserved;
+    int16_t start;
+    int16_t end;
+    float time;
+};
+
+typedef struct material_scroll material_scroll_t;
+
 struct material_tex {
     bool texture_enabled;
     bool use_placeholder;
@@ -30,7 +50,7 @@ struct material_tex {
     uint16_t width, height;
     uint16_t num_frames;
     sprite_t** frames;
-    float scroll_x, scroll_y;
+    material_scroll_t scroll_x, scroll_y;
     // rdpq_set_lookup_address
     // surface_make_placeholder_linear
 };

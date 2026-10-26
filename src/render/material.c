@@ -8,6 +8,7 @@
 #include "../config.h"
 #include "../util/rspq.h"
 #include "../ext/libdragon.h"
+#include "../math/mathf.h"
 
 void material_init(struct material* material) {
     material->block = 0;
@@ -136,8 +137,8 @@ void material_load_tex(struct material_tex* tex, FILE* file) {
 
     fread(&tex->use_placeholder, sizeof(bool), 1, file);
 
-    fread(&tex->scroll_x, sizeof(float), 1, file);
-    fread(&tex->scroll_y, sizeof(float), 1, file);
+    fread(&tex->scroll_x, sizeof(material_scroll_t), 1, file);
+    fread(&tex->scroll_y, sizeof(material_scroll_t), 1, file);
 
     if (filename_len) {
         tex->sprite = sprite_cache_load(filename);
@@ -405,24 +406,29 @@ void material_release(struct material* material) {
     material_destroy(material);
 }
 
+int material_calc_offset(material_scroll_t* scroll) {
+    switch (scroll->type) {
+        case MATERIAL_SCROLL_LINEAR: {
+            float time = fmodf(scene_time, scroll->pingpong ? scroll->time * 2.0f : scroll->time);
+
+            if (scroll->pingpong && time > scroll->time) {
+                time = scroll->time * 2.0f - time;
+            }
+
+            return (int)mathfLerp(scroll->start, scroll->end, time);
+        }
+        default: 
+            return 0;
+    }
+}
+
 void material_check_texture_scroll(int tile, struct material_tex* tex) {
-    if (!tex->texture_enabled || (!tex->scroll_x && !tex->scroll_y)) {
+    if (!tex->texture_enabled || (!tex->scroll_x.type && !tex->scroll_y.type)) {
         return;
     }
 
-    int w = tex->width << 2;
-    int h = tex->height << 2;
-
-    int x_offset = (int)(total_time * tex->scroll_x * w) % w;
-    int y_offset = (int)(total_time * tex->scroll_y * h) % h;
-
-    if (x_offset < 0) {
-        x_offset += w;
-    }
-
-    if (y_offset < 0) {
-        y_offset += h;
-    }
+    int x_offset =  material_calc_offset(&tex->scroll_x);
+    int y_offset =  material_calc_offset(&tex->scroll_y);
 
     rdpq_set_tile_size_fx(
         tile, 
