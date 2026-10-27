@@ -407,19 +407,32 @@ void material_release(struct material* material) {
 }
 
 int material_calc_offset(material_scroll_t* scroll) {
-    switch (scroll->type) {
-        case MATERIAL_SCROLL_LINEAR: {
-            float time = fmodf(scene_time, scroll->pingpong ? scroll->time * 2.0f : scroll->time);
-
-            if (scroll->pingpong && time > scroll->time) {
-                time = scroll->time * 2.0f - time;
-            }
-
-            return (int)mathfLerp(scroll->start, scroll->end, time);
-        }
-        default: 
-            return 0;
+    if (scroll->type == MATERIAL_SCROLL_NONE || scroll->time == 0.0f) {
+        return 0;
     }
+
+    float time = fmodf(scene_time / scroll->time + (1.0f / 255.0f) * scroll->phase_shift, scroll->pingpong ? 2.0f : 1.0f);
+
+    if (scroll->pingpong && time > 1.0f) {
+        time = 2.0f - time;
+    }
+
+    switch (scroll->type) {
+        case MATERIAL_SCROLL_EASE_IN:
+            time = 1.0f - time;
+            time = 1.0f - (time * time);
+            break;
+        case MATERIAL_SCROLL_EASE_OUT:
+            time = time * time;
+            break;
+        case MATERIAL_SCROLL_EASE_IN_OUT:
+            time = time * time * (3.0f - 2.0f * time);
+            break;
+        default:
+            break;
+    }
+
+    return (int)mathfLerp(scroll->start, scroll->end, time);
 }
 
 void material_check_texture_scroll(int tile, struct material_tex* tex) {

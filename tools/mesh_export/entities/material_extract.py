@@ -333,8 +333,14 @@ def _determine_tex_axis_from_f3d(axis, image_size, uv_scroll, result: material.T
     if uv_scroll and uv_scroll['animType'] == 'Linear':
         speed = float(uv_scroll['speed'] if 'speed' in uv_scroll else 1)
         result.scroll.type = result.scroll.type = material.TexScrollType.LINEAR
-        result.scroll.end = 1
-        result.scroll.time = 1 / speed
+
+        if speed < 0:
+            result.scroll.start = 1
+            result.scroll.time = 1 / -speed
+        else:
+            result.scroll.end = 1
+            result.scroll.time = 1 / speed
+
 
     result.min = math.floor(axis['low'] * 4 + 0.5)
     result.max = math.floor(axis['high'] * 4 + 0.5)
@@ -374,6 +380,7 @@ def _determine_scroll(tex_axis: material.TexAxis, tex_scroll_axis):
         tex_axis.scroll.start = tex_scroll_axis.start
         tex_axis.scroll.end = tex_scroll_axis.end
         tex_axis.scroll.time = tex_scroll_axis.time
+        tex_axis.scroll.phase_shift = tex_scroll_axis.phase_shift
         tex_axis.scroll.pingpong = tex_scroll_axis.pingpong
 
 
@@ -410,11 +417,17 @@ def _determine_tex_from_f3d(tex, uv_scroll, base_path: str, tex_scroll, flipbook
 
         if s_scroll and interval:
             result.s.scroll.type = material.TexScrollType.LINEAR
-            result.s.scroll.end = s_scroll
+            if s_scroll < 0:
+                result.s.scroll.start = -s_scroll
+            else:
+                result.s.scroll.end = s_scroll
             result.s.scroll.time = interval
         if t_scroll and interval:
             result.t.scroll.type = material.TexScrollType.LINEAR
-            result.t.scroll.end = t_scroll
+            if t_scroll < 0:
+                result.t.scroll.start = -t_scroll
+            else:
+                result.t.scroll.end = t_scroll
             result.t.scroll.time = interval
 
     _determine_scroll(result.s, tex_scroll.s)

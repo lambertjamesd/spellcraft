@@ -564,7 +564,9 @@ class Palette():
 class TexScrollType(Enum):
     NONE = 0
     LINEAR = 1
-    SINE = 2
+    EASE_IN = 2
+    EASE_OUT = 3
+    EASE_IN_OUT = 4
 
 class TexScroll():
     def __init__(self):
@@ -572,6 +574,7 @@ class TexScroll():
         self.start: float = 0
         self.end: float = 0
         self.time: float = 0
+        self.phase_shift: float = 0
         self.pingpong: bool = False
     
 class TexAxis():

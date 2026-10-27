@@ -18,7 +18,9 @@ enumMicrocode = [
 enumTexScrollType = [
     ("NONE", "None", "No scrolling"),
     ("LINEAR", "Linear", "Scroll from start to end over time"),
-    ("SINE", "Sine", ""),
+    ("EASE_IN", "Ease In", ""),
+    ("EASE_OUT", "Ease Out", ""),
+    ("EASE_IN_OUT", "Ease In and Out", ""),
 ]
 
 class TexScrollAxisProperties(bpy.types.PropertyGroup):
@@ -26,6 +28,7 @@ class TexScrollAxisProperties(bpy.types.PropertyGroup):
     start: bpy.props.FloatProperty(name="Start", default=0)
     end: bpy.props.FloatProperty(name="End", default=0)
     time: bpy.props.FloatProperty(name="Time", default=0, min=0)
+    phase_shift: bpy.props.FloatProperty(name="Phase Shift", default=0, min=0, max=1)
     pingpong: bpy.props.BoolProperty(name="Ping Pong", default=False, description="Reverse direction at the end instead of looping")
 
 class TexScrollProperties(bpy.types.PropertyGroup):
@@ -57,6 +60,7 @@ class MATERIAL_PT_spellcraft_collision(bpy.types.Panel):
         col.prop(axis, "start")
         col.prop(axis, "end")
         col.prop(axis, "time")
+        col.prop(axis, "phase_shift")
         col.prop(axis, "pingpong")
 
     def _draw_tex(self, layout, tex_scroll, label):

@@ -23,7 +23,9 @@ typedef enum material_sort_priority material_sort_priority_t;
 enum material_scroll_type {
     MATERIAL_SCROLL_NONE,
     MATERIAL_SCROLL_LINEAR,
-    MATERIAL_SCROLL_SINE,
+    MATERIAL_SCROLL_EASE_IN,
+    MATERIAL_SCROLL_EASE_OUT,
+    MATERIAL_SCROLL_EASE_IN_OUT,
 };
 
 typedef enum material_scroll_type material_scroll_type_t;
@@ -31,7 +33,8 @@ typedef enum material_scroll_type material_scroll_type_t;
 struct material_scroll {
     uint8_t type; // material_scroll_type_t
     bool pingpong;
-    uint16_t reserved;
+    uint8_t phase_shift;
+    uint8_t reserved;
     int16_t start;
     int16_t end;
     float time;

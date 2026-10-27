@@ -278,6 +278,17 @@ def _serialize_tex_axis(file, axis: material.TexAxis):
     file.write(int(axis.mask & 0xFF).to_bytes(1, 'big'))
     file.write(int(axis.shift & 0xFF).to_bytes(1, 'big'))
 
+def _serialize_scroll(file, scroll: material.TexScroll, size: int):
+    file.write(struct.pack('>BBBBhhf',
+        scroll.type.value,
+        1 if scroll.pingpong else 0,
+        math.floor(scroll.phase_shift * 255 + 0.5),
+        0,
+        math.floor(scroll.start * size * 4 + 0.5),
+        math.floor(scroll.end * size * 4 + 0.5),
+        scroll.time,
+    ))
+
 def _serialize_tex(file, tex: material.Tex | None, prev_tex: material.Tex | None = None):
     if not tex:
         file.write(b'\0')
@@ -314,22 +325,8 @@ def _serialize_tex(file, tex: material.Tex | None, prev_tex: material.Tex | None
 
     file.write(b'\x01' if tex.use_texture_reference else b'\0')
 
-    file.write(struct.pack('>BBhhhf',
-        tex.s.scroll.type.value,
-        1 if tex.s.scroll.pingpong else 0,
-        0,
-        math.floor(tex.s.scroll.start * tex.width * 4 + 0.5),
-        math.floor(tex.s.scroll.end * tex.width * 4 + 0.5),
-        tex.s.scroll.time,
-    ))
-    file.write(struct.pack('>BBhhhf',
-        tex.t.scroll.type.value,
-        1 if tex.t.scroll.pingpong else 0,
-        0,
-        math.floor(tex.t.scroll.start * tex.width * 4 + 0.5),
-        math.floor(tex.t.scroll.end * tex.width * 4 + 0.5),
-        tex.t.scroll.time,
-    ))
+    _serialize_scroll(file, tex.s.scroll, tex.width)
+    _serialize_scroll(file, tex.t.scroll, tex.height)
 
 def _serialize_palette(file, palette: list, palette_offset: int):
     file.write(COMMAND_PALETTE.to_bytes(1, 'big'))
