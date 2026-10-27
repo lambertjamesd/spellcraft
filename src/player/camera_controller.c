@@ -436,6 +436,7 @@ void camera_controller_orbit_to_animate(struct camera_controller* controller) {
     orbit->coords.radius = mathfLerp(orbit->coords.radius, orbit->target_rad, lerp);
 
     cylinder_coords_to_vec3(&orbit->coords, &controller->stable_position);
+    vector3Add(&controller->stable_position, &controller->state_data.animate.relative_to.position, &controller->stable_position);
 
     --controller->state_data.animate.blend_frames;
 
@@ -617,22 +618,23 @@ void camera_behind_player(struct camera_controller* controller) {
 }
 
 void camera_init_orbit(struct camera_controller* controller) {
-    vector3_t curr_offset;
-
-    vector3Sub(&controller->state_data.animate.relative_to.position, &controller->stable_position, &curr_offset);
-
-    orbit_args_t* result = &controller->state_data.animate.orbit_args;
-    cylinder_coords_from_vec3(&curr_offset, &result->coords);
-
     vector3_t pos;
     quaternion_t rot;
     float fov;
     if (!camera_controller_request_frame(controller, &pos, &rot, &fov)) {
         pos = gZeroVec;
     }
+    
+    vector3_t curr_offset;
+
+    vector3Sub(&controller->stable_position, &controller->state_data.animate.relative_to.position, &curr_offset);
+
+    orbit_args_t* result = &controller->state_data.animate.orbit_args;
+    cylinder_coords_from_vec3(&curr_offset, &result->coords);
 
     cylinder_coords_t target;
-    cylinder_coords_from_vec3(&pos, &target);
+    vector3Sub(&pos, &controller->state_data.animate.relative_to.position, &curr_offset);
+    cylinder_coords_from_vec3(&curr_offset, &target);
 
     vector2RelativeRotation(&result->coords.direction, &target.direction, &result->max_rotation);
     vector2RotExp(&result->max_rotation, 1.0f / controller->state_data.animate.blend_frames, &result->max_rotation);
