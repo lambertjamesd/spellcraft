@@ -365,13 +365,13 @@ void camera_controller_move_to(struct camera_controller* controller) {
 
 static struct camera_animation_frame __attribute__((aligned(16))) anim_frame_buffer;
 
-void camera_controller_update_animation(struct camera_controller* controller) {
+bool camera_controller_request_frame(struct camera_controller* controller, vector3_t* pos, quaternion_t* rotation, float* fov) {
     struct camera_animation* animation = controller->state_data.animate.animation;
 
     if (!animation || controller->state_data.animate.current_frame >= animation->frame_count) {
-        return;
+        return false;
     }
-
+    
     data_cache_hit_invalidate((void*)&anim_frame_buffer, 16);
     dma_read(
         &anim_frame_buffer, 
@@ -379,12 +379,10 @@ void camera_controller_update_animation(struct camera_controller* controller) {
         sizeof(struct camera_animation_frame)
     );
 
-    vector3_t final_pos;
-
     transformSaTransformPoint(
         &controller->state_data.animate.relative_to, 
         &anim_frame_buffer.position, 
-        &final_pos
+        pos
     );
 
     quaternion_t unpacked_rotation;
@@ -406,23 +404,83 @@ void camera_controller_update_animation(struct camera_controller* controller) {
     quaternion_t relative_rotation;
     quatAxisComplex(&gUp, &controller->state_data.animate.relative_to.rotation, &relative_rotation);
 
-    quaternion_t final_rotation;
-    quatMultiply(&relative_rotation, &unpacked_rotation, &final_rotation);
-    controller->camera.fov = (180.0f / M_PI) * anim_frame_buffer.fov;
-    controller->state_data.animate.current_frame += 1;
+    quatMultiply(&relative_rotation, &unpacked_rotation, rotation);
+    *fov = (180.0f / M_PI) * anim_frame_buffer.fov;
+    
+    return true;
+}
 
-    transform_t* transform = &controller->camera.transform;
+void camera_controller_orbit_to_animate(struct camera_controller* controller) {
+    vector3_t target_pos;
+    quaternion_t target_rot;
+    float target_fov;
 
-    if (controller->state_data.animate.blend_frames) {
-        float lerp = 1.0f / (1.0f + controller->state_data.animate.blend_frames);
-        quatLerp(&transform->rotation, &final_rotation, lerp, &transform->rotation);
-        vector3Lerp(&controller->stable_position, &final_pos, lerp, &controller->stable_position);
-        --controller->state_data.animate.blend_frames;
-    } else {
-        controller->stable_position = final_pos;
-        transform->rotation = final_rotation;
+    if (!camera_controller_request_frame(
+        controller, 
+        &target_pos, 
+        &target_rot, 
+        &target_fov
+    )) {
+        controller->state = CAMERA_STATE_ANIMATE;
+        return;
     }
 
+    float lerp = 1.0f / (1.0f + controller->state_data.animate.blend_frames);
+
+    quatLerp(&controller->camera.transform.rotation, &target_rot, lerp, &controller->camera.transform.rotation);
+    controller->camera.fov = mathfLerp(controller->camera.fov, target_fov, lerp);
+
+    orbit_args_t* orbit = &controller->state_data.animate.orbit_args;
+    vector2ComplexMul(&orbit->coords.direction, &orbit->max_rotation, &orbit->coords.direction);
+    orbit->coords.height = mathfLerp(orbit->coords.height, orbit->target_height, lerp);
+    orbit->coords.radius = mathfLerp(orbit->coords.radius, orbit->target_rad, lerp);
+
+    cylinder_coords_to_vec3(&orbit->coords, &controller->stable_position);
+
+    --controller->state_data.animate.blend_frames;
+
+    if (!controller->state_data.animate.blend_frames) {
+        controller->state = CAMERA_STATE_ANIMATE;
+    }
+}
+
+void camera_controller_blend_to_animate(struct camera_controller* controller) {
+    vector3_t target_pos;
+    quaternion_t target_rot;
+    float target_fov;
+
+    if (!camera_controller_request_frame(
+        controller, 
+        &target_pos, 
+        &target_rot, 
+        &target_fov
+    )) {
+        controller->state = CAMERA_STATE_ANIMATE;
+        return;
+    }
+
+    float lerp = 1.0f / (1.0f + controller->state_data.animate.blend_frames);
+    quatLerp(&controller->camera.transform.rotation, &target_rot, lerp, &controller->camera.transform.rotation);
+    vector3Lerp(&controller->stable_position, &target_pos, lerp, &controller->stable_position);
+    controller->camera.fov = mathfLerp(controller->camera.fov, target_fov, lerp);
+
+    --controller->state_data.animate.blend_frames;
+
+    if (!controller->state_data.animate.blend_frames) {
+        controller->state = CAMERA_STATE_ANIMATE;
+    }
+}
+
+void camera_controller_update_animation(struct camera_controller* controller) {
+    if (!camera_controller_request_frame(
+        controller, 
+        &controller->stable_position, 
+        &controller->camera.transform.rotation, 
+        &controller->camera.fov
+    )) {
+        return;
+    }
+    controller->state_data.animate.current_frame += 1;
     camera_look_at_from_rotation(controller);
 }
 
@@ -457,6 +515,12 @@ void camera_controller_update(struct camera_controller* controller) {
         case CAMERA_STATE_LOOK_AT_WITH_PLAYER:
             camera_controller_watch_target(controller, &controller->look_target);
             camera_controller_update_position(controller);
+            break;
+        case CAMERA_STATE_BLEND_TO_ANIMATE:
+            camera_controller_blend_to_animate(controller);
+            break;
+        case CAMERA_STATE_ORBIT_TO_ANIMATE:
+            camera_controller_orbit_to_animate(controller);
             break;
         case CAMERA_STATE_ANIMATE:
             camera_controller_update_animation(controller);
@@ -552,8 +616,31 @@ void camera_behind_player(struct camera_controller* controller) {
     controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 }
 
+void camera_init_orbit(struct camera_controller* controller) {
+    vector3_t curr_offset;
+
+    vector3Sub(&controller->state_data.animate.relative_to.position, &controller->stable_position, &curr_offset);
+
+    orbit_args_t* result = &controller->state_data.animate.orbit_args;
+    cylinder_coords_from_vec3(&curr_offset, &result->coords);
+
+    vector3_t pos;
+    quaternion_t rot;
+    float fov;
+    if (!camera_controller_request_frame(controller, &pos, &rot, &fov)) {
+        pos = gZeroVec;
+    }
+
+    cylinder_coords_t target;
+    cylinder_coords_from_vec3(&pos, &target);
+
+    vector2RelativeRotation(&result->coords.direction, &target.direction, &result->max_rotation);
+    vector2RotExp(&result->max_rotation, 1.0f / controller->state_data.animate.blend_frames, &result->max_rotation);
+    result->target_height = target.height;
+    result->target_rad = target.radius;
+}
+
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation, transform_sa_t* relative_to, int blend_frames) {
-    controller->state = CAMERA_STATE_ANIMATE;
     controller->state_data.animate.animation = animation;
     controller->state_data.animate.current_frame = 0;
     if (relative_to) {
@@ -563,6 +650,17 @@ void camera_play_animation(struct camera_controller* controller, struct camera_a
     }
     controller->state_data.animate.blend_frames = blend_frames;
     controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
+
+    if (blend_frames) {
+        if (relative_to) {
+            controller->state = CAMERA_STATE_ORBIT_TO_ANIMATE;
+            camera_init_orbit(controller);
+        } else {
+            controller->state = CAMERA_STATE_BLEND_TO_ANIMATE;
+        }
+    } else {
+        controller->state = CAMERA_STATE_ANIMATE;
+    }
 }
 
 void camera_move_to(struct camera_controller* controller, struct Vector3* position, bool instant, bool move_target) {

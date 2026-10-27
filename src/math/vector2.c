@@ -2,6 +2,7 @@
 #include "vector2.h"
 #include "vector3.h"
 #include "mathf.h"
+#include <math.h>
 
 struct Vector2 gRight2 = {1.0f, 0.0f};
 struct Vector2 gUp2 = {0.0f, 1.0f};
@@ -22,6 +23,16 @@ void vector2ComplexConj(struct Vector2* a, struct Vector2* out) {
 void vector2ComplexFromAngle(float radians, struct Vector2* out) {
     out->x = cosf(radians);
     out->y = sinf(radians);
+}
+
+void vector2RelativeRotation(struct Vector2* from, struct Vector2* to, struct Vector2* out) {
+    float x = from->x * to->x + from->y * to->y;
+    out->y = from->x * to->y - from->y * to->x;
+    out->x = x;
+}
+
+void vector2RotExp(struct Vector2* a, float exp, struct Vector2* out) {
+    vector2ComplexFromAngle(atan2f(a->y, a->x) * exp, out);
 }
 
 int vector2RotateTowards(struct Vector2* from, struct Vector2* towards, struct Vector2* max, struct Vector2* out) {

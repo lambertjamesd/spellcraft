@@ -260,7 +260,7 @@ void cutscene_cam_anim_init(cutscene_runner_context_t* context, int arg_count) {
     camera_play_animation(
         cutscene_get_camera_controller(), 
         animation,
-        &relative_to,
+        obj ? &relative_to : NULL,
         args[2]
     );
 }

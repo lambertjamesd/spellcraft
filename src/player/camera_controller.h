@@ -2,6 +2,7 @@
 #define __SCENE_CAMERA_CONTROLLER_H__
 
 #include "../render/camera.h"
+#include "../math/cylinder_coords.h"
 #include "camera_animation.h"
 #include "camera_wall_checker.h"
 #include "../math/transform_single_axis.h"
@@ -17,6 +18,8 @@ enum camera_controller_state {
     CAMERA_STATE_FOLLOW,
     CAMERA_STATE_LOOK_AT_WITH_PLAYER,
     CAMERA_STATE_ANIMATE,
+    CAMERA_STATE_BLEND_TO_ANIMATE,
+    CAMERA_STATE_ORBIT_TO_ANIMATE,
     CAMERA_STATE_RETURN_TO_PLAYER,
     CAMERA_STATE_FIXED,
     CAMERA_STATE_MOVE_TO,
@@ -29,12 +32,20 @@ struct camera_cached_calcuations {
     float sin_1_3_fov_horz;
 };
 
+typedef struct {
+    vector2_t max_rotation;
+    cylinder_coords_t coords;
+    float target_height;
+    float target_rad;
+} orbit_args_t;
+
 union camera_controller_state_data {
     struct {
         struct camera_animation* animation;
         transform_sa_t relative_to;
         uint16_t current_frame;
         uint8_t blend_frames;
+        orbit_args_t orbit_args;
     } animate;
     struct {
         bool moving_position;
