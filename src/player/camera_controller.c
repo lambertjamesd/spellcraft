@@ -8,6 +8,7 @@
 #include "../render/defs.h"
 #include "../entity/interactable.h"
 #include "../render/render_scene.h"
+#include "../util/lerp.h"
 #include "player.h"
 #include <math.h>
 
@@ -425,20 +426,24 @@ void camera_controller_orbit_to_animate(struct camera_controller* controller) {
         return;
     }
 
-    float lerp = 1.0f / (1.0f + controller->state_data.animate.blend_frames);
+    
+    float last_lerp = lerp_ease_out((float)controller->state_data.animate.blend_frames / (float)controller->state_data.animate.total_blend_frames);
+    --controller->state_data.animate.blend_frames;
+    float current_lerp = lerp_ease_out((float)controller->state_data.animate.blend_frames / (float)controller->state_data.animate.total_blend_frames);
+    float lerp = current_lerp / last_lerp;
 
-    quatLerp(&controller->camera.transform.rotation, &target_rot, lerp, &controller->camera.transform.rotation);
-    controller->camera.fov = mathfLerp(controller->camera.fov, target_fov, lerp);
+    quatLerp(&target_rot, &controller->camera.transform.rotation, lerp, &controller->camera.transform.rotation);
+    controller->camera.fov = mathfLerp(target_fov, controller->camera.fov, lerp);
 
     orbit_args_t* orbit = &controller->state_data.animate.orbit_args;
     vector2ComplexMul(&orbit->coords.direction, &orbit->max_rotation, &orbit->coords.direction);
-    orbit->coords.height = mathfLerp(orbit->coords.height, orbit->target_height, lerp);
-    orbit->coords.radius = mathfLerp(orbit->coords.radius, orbit->target_rad, lerp);
+    orbit->coords.height = mathfLerp(orbit->target_height, orbit->coords.height, lerp);
+    orbit->coords.radius = mathfLerp(orbit->target_rad, orbit->coords.radius, lerp);
 
     cylinder_coords_to_vec3(&orbit->coords, &controller->stable_position);
     vector3Add(&controller->stable_position, &controller->state_data.animate.relative_to.position, &controller->stable_position);
 
-    --controller->state_data.animate.blend_frames;
+    camera_look_at_from_rotation(controller);
 
     if (!controller->state_data.animate.blend_frames) {
         controller->state = CAMERA_STATE_ANIMATE;
@@ -466,6 +471,8 @@ void camera_controller_blend_to_animate(struct camera_controller* controller) {
     controller->camera.fov = mathfLerp(controller->camera.fov, target_fov, lerp);
 
     --controller->state_data.animate.blend_frames;
+    
+    camera_look_at_from_rotation(controller);
 
     if (!controller->state_data.animate.blend_frames) {
         controller->state = CAMERA_STATE_ANIMATE;
@@ -651,6 +658,7 @@ void camera_play_animation(struct camera_controller* controller, struct camera_a
         transformSaInitIdentity(&controller->state_data.animate.relative_to);
     }
     controller->state_data.animate.blend_frames = blend_frames;
+    controller->state_data.animate.total_blend_frames = blend_frames;
     controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
 
     if (blend_frames) {

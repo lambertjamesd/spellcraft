@@ -45,6 +45,7 @@ union camera_controller_state_data {
         transform_sa_t relative_to;
         uint16_t current_frame;
         uint8_t blend_frames;
+        uint8_t total_blend_frames;
         orbit_args_t orbit_args;
     } animate;
     struct {

@@ -110,6 +110,5 @@ bool spell_exec_charge(struct spell_exec* exec);
 
 float spell_exec_max_mana(struct spell_exec* exec);
 float spell_exec_current_mana(struct spell_exec* exec);
-float spell_exec_prev_mana(struct spell_exec* exec);
 
 #endif

@@ -19,6 +19,15 @@ struct hud_assets {
     material_pair_t* overlay_material;
 };
 
+struct status_bar_state {
+    float last_max;
+    float last_value;
+    uint8_t max_delay;
+    uint8_t value_delay;
+};
+
+typedef struct status_bar_state status_bar_state_t;
+
 typedef struct hud_assets hud_assets_t;
 
 struct hud {
@@ -26,6 +35,8 @@ struct hud {
     hud_assets_t assets;
     live_cast_renderer_t live_cast_renderer;
     struct hud_boss boss;
+    struct status_bar_state health;
+    struct status_bar_state mana;
 };
 
 typedef struct hud hud_t;

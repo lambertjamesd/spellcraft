@@ -585,7 +585,3 @@ float spell_exec_max_mana(struct spell_exec* exec) {
 float spell_exec_current_mana(struct spell_exec* exec) {
     return exec->spell_sources.mana_pool.current_mana;
 }
-
-float spell_exec_prev_mana(struct spell_exec* exec) {
-    return mana_pool_get_previous_mana(&exec->spell_sources.mana_pool);
-}

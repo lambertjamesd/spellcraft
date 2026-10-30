@@ -9,6 +9,7 @@
 #include "../util/rspq.h"
 #include "../ext/libdragon.h"
 #include "../math/mathf.h"
+#include "../util/lerp.h"
 
 void material_init(struct material* material) {
     material->block = 0;
@@ -419,14 +420,13 @@ int material_calc_offset(material_scroll_t* scroll) {
 
     switch (scroll->type) {
         case MATERIAL_SCROLL_EASE_IN:
-            time = 1.0f - time;
-            time = 1.0f - (time * time);
+            time = lerp_ease_in(time);
             break;
         case MATERIAL_SCROLL_EASE_OUT:
-            time = time * time;
+            time = lerp_ease_out(time);
             break;
         case MATERIAL_SCROLL_EASE_IN_OUT:
-            time = time * time * (3.0f - 2.0f * time);
+            time = lerp_ease_in_out(time);
             break;
         default:
             break;

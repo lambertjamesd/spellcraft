@@ -13,7 +13,6 @@ struct mana_pool {
     float max_mana;
     float current_mana;
     float charged_mana;
-    float previous_mana;
     float mana_regen_rate;
     float last_request_time;
     float power_scale;
@@ -29,8 +28,6 @@ float mana_pool_request_ratio(struct mana_pool* pool, float amount);
 void mana_pool_charge(struct mana_pool* pool, float amount);
 
 void mana_pool_add(struct mana_pool* pool, float amount);
-
-float mana_pool_get_previous_mana(struct mana_pool* pool);
 
 float mana_pool_request_charged_mana(struct mana_pool* pool);
 

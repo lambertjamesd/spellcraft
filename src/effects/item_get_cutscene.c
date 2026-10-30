@@ -21,7 +21,7 @@ void item_get_float_above_hand(void* data) {
 void item_get_cutscene_run(cutscene_builder_t* builder, const char* message, renderable_t* renderable, item_get_finish on_finish, void* data) {   
     renderable->hide = true;
     cutscene_builder_npc_animate(builder, ENTITY_ID_PLAYER, "item_get", false);
-    cutscene_builder_camera_animate(builder, "item_get", ENTITY_ID_PLAYER, 10);
+    cutscene_builder_camera_animate(builder, "item_get", ENTITY_ID_PLAYER, 15);
 
     cutscene_builder_delay(builder, 1.0f);
     cutscene_builder_callback(builder, item_get_float_above_hand, renderable);

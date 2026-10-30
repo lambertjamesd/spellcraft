@@ -13,6 +13,10 @@
 #include "../render/defs.h"
 #include "../scene/scene.h"
 #include "button_icons.h"
+#include "../math/mathf.h"
+
+#define HEALTH_GROW_RATE        30.0f
+#define HEALTH_CHANGE_DELAY     15
 
 #define SCREEN_EDGE_MARGIN      20.0f
 #define TEXT_PADDING            2
@@ -43,6 +47,15 @@
 
 static color_t mana_color = {60, 240, 20, 200};
 static color_t health_color = {240, 80, 0, 200};
+
+void hud_status_bar_init(status_bar_state_t* status) {
+    *status = (status_bar_state_t) {
+        .last_max = 0,
+        .last_value = 0,
+        .max_delay = 0,
+        .value_delay = 0,
+    };
+}
 
 void hud_render_interaction_preview(struct hud* hud) {
     if (!hud->player->hover_interaction || !update_has_layer(UPDATE_LAYER_WORLD)) {
@@ -130,7 +143,7 @@ void hud_draw_bar(int max_width, int current_width, int prev_width, int y, color
         0, 0
     );
     if (current_width < prev_width) {
-        rdpq_set_prim_color((color_t){220, 100, 0, 200});
+        rdpq_set_prim_color((color_t){60, 10, 0, 200});
         rdpq_texture_rectangle(
             TILE0, 
             MANA_BAR_X + current_width, y, 
@@ -169,6 +182,57 @@ void hud_render_boss_name(hud_t* hud) {
     );
 }
 
+
+void hud_status_render(status_bar_state_t* status, float max, float value, float y, color_t color) {
+    if (status->last_max != max) {
+        if (status->max_delay) {
+            --status->max_delay;
+        } else {
+            status->last_max = mathfMoveTowards(
+                status->last_max,
+                max,
+                fixed_time_step * HEALTH_GROW_RATE
+            );
+        }
+    } else {
+        status->max_delay = HEALTH_CHANGE_DELAY;
+    }
+
+    if (status->last_value < value) {
+        status->last_value = value;
+    } else if (status->last_value == value) {
+        status->value_delay = HEALTH_CHANGE_DELAY;
+    } else {
+        if (status->value_delay) {
+            --status->value_delay;
+        } else {
+            status->last_value = mathfMoveTowards(
+                status->last_value,
+                value,
+                fixed_time_step * HEALTH_GROW_RATE
+            );
+        }
+    }
+
+    if (value > status->last_max) {
+        value = status->last_max;
+    }
+
+    float last_value = status->last_value;
+
+    if (last_value > status->last_max) {
+        last_value = status->last_max;
+    }
+
+    hud_draw_bar(
+        MANA_TO_SIZE(status->last_max),
+        MANA_TO_SIZE(value),
+        MANA_TO_SIZE(last_value),
+        y,
+        color
+    );
+}
+
 void hud_render(void *data) {
     if (!update_has_layer(UPDATE_LAYER_WORLD)) {
         return;
@@ -178,19 +242,19 @@ void hud_render(void *data) {
 
     hud_render_boss_name(hud);
 
-    hud_draw_bar(
-        MANA_TO_SIZE(spell_exec_max_mana(&hud->player->spell_exec)),
-        MANA_TO_SIZE(spell_exec_current_mana(&hud->player->spell_exec)),
-        MANA_TO_SIZE(spell_exec_prev_mana(&hud->player->spell_exec)),
+    hud_status_render(
+        &hud->mana,
+        spell_exec_max_mana(&hud->player->spell_exec),
+        spell_exec_current_mana(&hud->player->spell_exec),
         MANA_BAR_Y,
         mana_color
     );
 
-    hud_draw_bar(
-        MANA_TO_SIZE(hud->player->health.max_health),
-        MANA_TO_SIZE(hud->player->health.current_health),
-        MANA_TO_SIZE(0),
-        HEALTH_BAR_Y,
+    hud_status_render(
+        &hud->health, 
+        hud->player->health.max_health, 
+        hud->player->health.current_health, 
+        HEALTH_BAR_Y, 
         health_color
     );
 
@@ -210,6 +274,9 @@ void hud_init(struct hud* hud, struct player* player) {
     
     hud->assets.overlay_material = material_cache_load("rom:/materials/menu/solid_primitive.mat");
     button_icon_load(BUTTON_TYPE_A);
+
+    hud_status_bar_init(&hud->health);
+    hud_status_bar_init(&hud->mana);
 }
 
 void hud_destroy(struct hud* hud) {
