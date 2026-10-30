@@ -446,6 +446,7 @@ void player_enter_slide_state(struct player* player, struct contact* ground_cont
 void player_enter_jump_state(struct player* player) {
     player->state = PLAYER_JUMPING;
     player_run_clip(player, PLAYER_ANIMATION_JUMP);
+    player->cutscene_actor.animator.blend_frames = 0;
 }
 
 void player_enter_climb_from_hang(struct player* player) {
