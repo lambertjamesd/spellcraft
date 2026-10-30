@@ -111,4 +111,8 @@ bool spell_exec_charge(struct spell_exec* exec);
 float spell_exec_max_mana(struct spell_exec* exec);
 float spell_exec_current_mana(struct spell_exec* exec);
 
+static inline mana_pool_t* spell_exec_get_pool(struct spell_exec* exec) {
+    return &exec->spell_sources.mana_pool;
+}
+
 #endif

@@ -179,5 +179,21 @@
 #define VAR_TYP_talk_count DATA_TYPE_S16
 #define VAR_LOC_talk_count (global_location_t){.data_type = DATA_TYPE_S16, .word_offset = 10}
 
+#define VAR_POS_player_current_health 6
+#define VAR_TYP_player_current_health DATA_TYPE_F32
+#define VAR_LOC_player_current_health (global_location_t){.data_type = DATA_TYPE_F32, .word_offset = 6}
+
+#define VAR_POS_player_current_mana 7
+#define VAR_TYP_player_current_mana DATA_TYPE_F32
+#define VAR_LOC_player_current_mana (global_location_t){.data_type = DATA_TYPE_F32, .word_offset = 7}
+
+#define VAR_POS_player_max_health 8
+#define VAR_TYP_player_max_health DATA_TYPE_F32
+#define VAR_LOC_player_max_health (global_location_t){.data_type = DATA_TYPE_F32, .word_offset = 8}
+
+#define VAR_POS_player_max_mana 9
+#define VAR_TYP_player_max_mana DATA_TYPE_F32
+#define VAR_LOC_player_max_mana (global_location_t){.data_type = DATA_TYPE_F32, .word_offset = 9}
+
 
 #endif

@@ -48,12 +48,12 @@
 static color_t mana_color = {60, 240, 20, 200};
 static color_t health_color = {240, 80, 0, 200};
 
-void hud_status_bar_init(status_bar_state_t* status) {
+void hud_status_bar_init(status_bar_state_t* status, float current, float max) {
     *status = (status_bar_state_t) {
-        .last_max = 0,
-        .last_value = 0,
-        .max_delay = 0,
-        .value_delay = 0,
+        .last_max = max,
+        .last_value = current,
+        .max_delay = HEALTH_CHANGE_DELAY,
+        .value_delay = HEALTH_CHANGE_DELAY,
     };
 }
 
@@ -275,8 +275,9 @@ void hud_init(struct hud* hud, struct player* player) {
     hud->assets.overlay_material = material_cache_load("rom:/materials/menu/solid_primitive.mat");
     button_icon_load(BUTTON_TYPE_A);
 
-    hud_status_bar_init(&hud->health);
-    hud_status_bar_init(&hud->mana);
+    hud_status_bar_init(&hud->health, player->health.current_health, player->health.max_health);
+    mana_pool_t* pool = spell_exec_get_pool(&player->spell_exec);
+    hud_status_bar_init(&hud->mana, pool->max_mana, pool->current_mana);
 }
 
 void hud_destroy(struct hud* hud) {

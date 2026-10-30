@@ -20,5 +20,15 @@
 #define LOAD_GLOBAL(name) CONCAT(LOAD_, VAR_TYP_##name)(VAR_POS_##name)
 
 int global_load_location(global_location_t location);
+void global_save_location(global_location_t location, int value);
+
+static inline float global_load_float(global_location_t location) {
+    int result = global_load_location(location);
+    return *(float*)&result;
+}
+
+static inline void global_save_float(global_location_t location, float value) {
+    global_save_location(location, *(int*)&value);
+}
 
 #endif

@@ -17,6 +17,9 @@
 #include "../effects/item_get_cutscene.h"
 
 #define COLLECTABLE_RADIUS  0.75f
+#define ROTATION_RATE       0.8f
+
+static vector2_t rotation_per_frame;
 
 static struct dynamic_object_type collectable_collision = {
     .minkowsi_sum = sphere_minkowski_sum,
@@ -56,6 +59,11 @@ void collectable_assets_load() {
     hash_map_init(&collectable_hash_map, 8);
 }
 
+void collectable_update(void* data) {
+    collectable_t* collectable = (collectable_t*)data;
+    vector2ComplexMul(&collectable->transform.rotation, &rotation_per_frame, &collectable->transform.rotation);
+}
+
 void collectable_init(struct collectable* collectable, struct collectable_definition* definition, entity_id id) {
     collectable->collectable_type = definition->collectable_type;
     collectable->has_item = definition->has_item;
@@ -77,6 +85,8 @@ void collectable_init(struct collectable* collectable, struct collectable_defini
     render_scene_add_renderable(&collectable->renderable, 0.2f);
     
     hash_map_set(&collectable_hash_map, collectable->dynamic_object.entity_id, collectable);
+
+    update_add(collectable, collectable_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 }
 
 void collectable_finish_collect(void* data) {
@@ -85,8 +95,13 @@ void collectable_finish_collect(void* data) {
     switch (collectable->collectable_type) {
         case COLLECTABLE_TYPE_HEALTH:
             health_t* health = &player_get()->health;
-            health->max_health += 5.0f;
+            health->max_health += 10.0f;
             health->current_health = health->max_health;
+            break;
+        case COLLECTABLE_TYPE_MANA_UPGRADE:
+            mana_pool_t* pool = spell_exec_get_pool(&player_get()->spell_exec);
+            pool->max_mana += 10.0f;
+            pool->current_mana = pool->max_mana;
             break;
         default:
             break;
@@ -132,10 +147,12 @@ void collectable_destroy(struct collectable* collectable) {
     render_scene_remove(&collectable->renderable);
     renderable_destroy(&collectable->renderable);
     hash_map_delete(&collectable_hash_map, collectable->dynamic_object.entity_id);
+    update_remove(collectable);
 }
 
 void collectable_common_init() {
     hash_map_init(&collectable_hash_map, 8);
+    vector2ComplexFromAngle(ROTATION_RATE * fixed_time_step, &rotation_per_frame);
 }
 
 void collectable_common_destroy() {

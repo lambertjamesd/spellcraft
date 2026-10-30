@@ -97,6 +97,12 @@
             "type": "collectable"
         },
         {
+            "name": "objects_pickups_manabottle",
+            "description": "",
+            "mesh": "meshes/objects/pickups/manabottle.blend#manabottle",
+            "type": "collectable"
+        },
+        {
             "name": "objects_pickups_scroll",
             "description": "",
             "mesh": "meshes/objects/pickups/scroll.blend#scroll",

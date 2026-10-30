@@ -18,6 +18,8 @@ struct mana_pool {
     float power_scale;
 };
 
+typedef struct mana_pool mana_pool_t;
+
 void mana_pool_reset();
 
 void mana_pool_init(struct mana_pool* pool, struct mana_pool_definition* definition);

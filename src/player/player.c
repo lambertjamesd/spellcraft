@@ -19,6 +19,8 @@
 #include "../audio/audio.h"
 #include "../cutscene/cutscene.h"
 #include "../cutscene/cutscene_runner.h"
+#include "../cutscene/globals.h"
+#include "../cutscene/global_list.h"
 #include "../effects/area_title.h"
 #include "../scene/scene.h"
 #include "../menu/tutorial_menu.h"
@@ -1757,9 +1759,13 @@ void player_init(struct player* player, struct player_definition* definition) {
     player->cutscene_actor.collider.kill_plane_immune = 1;
 
     spell_exec_init(&player->spell_exec);
-    mana_pool_set_entity_id(&player->spell_exec.spell_sources.mana_pool, ENTITY_ID_PLAYER);
+    mana_pool_t* pool = spell_exec_get_pool(&player->spell_exec);
+    mana_pool_set_entity_id(pool, ENTITY_ID_PLAYER);
+    pool->max_mana = global_load_float(VAR_LOC_player_max_mana);
+    pool->current_mana = global_load_float(VAR_LOC_player_current_mana);
     live_cast_init(&player->live_cast);
-    health_init(&player->health, ENTITY_ID_PLAYER, 100.0f);
+    health_init(&player->health, ENTITY_ID_PLAYER, global_load_float(VAR_LOC_player_max_health));
+    player->health.current_health = global_load_float(VAR_LOC_player_current_health);
     player->health.has_i_frames = true;
     health_set_callback(&player->health, player_on_damage, player);
     grab_checker_init(&player->grab_checker, &player_actor_def.collider);
@@ -1803,6 +1809,12 @@ void player_init(struct player* player, struct player_definition* definition) {
 }
 
 void player_destroy(struct player* player) {
+    global_save_float(VAR_LOC_player_max_health, player->health.max_health);
+    global_save_float(VAR_LOC_player_current_health, player->health.current_health);
+    mana_pool_t* pool = spell_exec_get_pool(&player->spell_exec);
+    global_save_float(VAR_LOC_player_max_mana, pool->max_mana);
+    global_save_float(VAR_LOC_player_current_mana, pool->current_mana);
+
     renderable_destroy(&player->renderable);
     spell_exec_destroy(&player->spell_exec);
     live_cast_destroy(&player->live_cast);
