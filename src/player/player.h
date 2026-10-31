@@ -40,6 +40,7 @@ enum player_state {
     PLAYER_DROP_TO_HANG,
     PLAYER_CLIMBING_UP,
     PLAYER_CARRY,
+    PLAYER_MEDITATE,
     PLAYER_DIE,
     PLAYER_DISABLED,
 };
@@ -90,6 +91,9 @@ enum player_animation {
     PLAYER_ANIMATION_THROW,
 
     PLAYER_ANIMATION_SLIDE_FORWARD,
+
+    PLAYER_ANIMATION_MEDITATE_START,
+    PLAYER_ANIMATION_MEDITATE_LOOP,
 
     PLAYER_ANIMATION_DIE,
 
@@ -146,6 +150,9 @@ union state_data {
         vector3_t climb_target;
         vector2_t target_rotation;
     } drop_to_hang;
+    struct {
+        scale_in_fade_out_t* glow_effect;
+    } meditate;
 };
 
 typedef union state_data state_data_t;

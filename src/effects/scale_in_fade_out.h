@@ -11,7 +11,10 @@ struct scale_in_fade_out {
     float start_time;
     float end_time;
     float radius;
+    color_t base_color;
 };
+
+typedef struct scale_in_fade_out scale_in_fade_out_t;
 
 struct scale_in_fade_out* scale_in_fade_out_new(struct tmesh* mesh, struct Vector3* pos, struct Vector3* direction, float radius);
 

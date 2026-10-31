@@ -60,6 +60,8 @@
 #define JUMP_SPEED_THRESHOLD    2.1f
 #define JUMP_OVERHANG_HEIGHT    0.4f
 
+#define MAX_MEDITATE_MANA       30.0f
+
 #define MAX_ROTATION_RATE       10.0f
 static struct Vector2 player_max_rotation;
 static struct Vector2 z_target_rotation;
@@ -135,6 +137,12 @@ static struct cutscene_actor_def player_actor_def = {
         .density = DYNAMIC_DENSITY_MEDIUM,
     },
 };
+
+struct player_effect_resources {
+    tmesh_t* meditate_glow;
+};
+
+static struct player_effect_resources player_effects;
 
 void player_get_move_basis(struct Transform* transform, struct Vector3* forward, struct Vector3* right) {
     quatMultVector(&transform->rotation, &gForward, forward);
@@ -489,6 +497,13 @@ void player_enter_swimming_state(struct player* player) {
     player_loop_animation(player, PLAYER_ANIMATION_TREAD_WATER, 1.0f);
 }
 
+void player_enter_meditate_state(struct player* player) {
+    player->state = PLAYER_MEDITATE;
+    player_run_clip(player, PLAYER_ANIMATION_MEDITATE_START);
+
+    player->state_data.meditate.glow_effect = NULL;
+}
+
 static vector3_t local_camera_death_pos = {
     .x = 2.0f,
     .y = 3.0f,
@@ -788,6 +803,12 @@ void player_check_for_animation_request(struct player* player, struct spell_data
         source->flags.cast_state = SPELL_CAST_STATE_INACTIVE;
         source->flags.animator_attack = false;
     }
+}
+
+bool player_should_medidate(struct player* player) {
+    joypad_buttons_t held = joypad_get_buttons_held(0);
+    mana_pool_t* mana_pool = spell_exec_get_pool(&player->spell_exec);
+    return held.b && mana_pool->current_mana <= 0.0001f;
 }
 
 bool player_check_for_casting(struct player* player) {
@@ -1117,8 +1138,53 @@ void player_carry(player_t* player, contact_t* ground_contact) {
     player_loop_animation(player, PLAYER_ANIMATION_CARRY_RUN, speed * (1.0f / PLAYER_MAX_SPEED));
 }
 
-void player_throw(struct player* player, struct contact* ground_contact) {
+void player_exit_meditate(struct player* player) {
+    if (player->state_data.meditate.glow_effect) {
+        scale_in_fade_out_stop(player->state_data.meditate.glow_effect);
+        player->state_data.meditate.glow_effect = NULL;
+    }
+}
 
+void player_meditate(struct player* player, struct contact* ground_contact) {
+    if (!ground_contact) {
+        player_exit_meditate(player);
+        player_enter_falling_state(player);
+        return;
+    }
+
+    if (player->cutscene_actor.collider.under_water) {
+        player_exit_meditate(player);
+        player_enter_swimming_state(player);
+        return;
+    }
+    
+    joypad_buttons_t buttons = joypad_get_buttons_held(0);
+    mana_pool_t* pool = spell_exec_get_pool(&player->spell_exec);
+
+    if (!buttons.b || pool->current_mana >= MAX_MEDITATE_MANA) {
+        player_exit_meditate(player);
+        player_enter_grounded_state(player, ground_contact);
+        return;
+    }
+
+    if (player_is_running(player, PLAYER_ANIMATION_MEDITATE_LOOP)) {
+        pool->current_mana += fixed_time_step * 10.0f;
+    } else if (!player_is_running(player, PLAYER_ANIMATION_MEDITATE_START)) {
+        player_loop_animation(player, PLAYER_ANIMATION_MEDITATE_LOOP, 1.0f);
+    } else if (!player->state_data.meditate.glow_effect && player->cutscene_actor.animator.events.attack) {
+        player->state_data.meditate.glow_effect = scale_in_fade_out_new(
+            player_effects.meditate_glow,
+            player_get_position(player),
+            &gRight,
+            1.0f
+        );
+        player->state_data.meditate.glow_effect->base_color = (color_t){
+            0x34,
+            0xB8,
+            0x41,
+            0xBA,
+        };
+    }
 }
 
 void player_update_die(struct player* player, struct contact* ground_contact) {
@@ -1266,6 +1332,11 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
         return;
     }
 
+    if (player_should_medidate(player)) {
+        player_enter_meditate_state(player);
+        return;
+    }
+
     player_check_for_casting(player);
 
     if (player->last_spell_animation && animator_is_running_clip(&player->cutscene_actor.animator, player->last_spell_animation)) {
@@ -1400,6 +1471,9 @@ void player_update_state(struct player* player, struct contact* ground_contact) 
             break;
         case PLAYER_CARRY:
             player_carry(player, ground_contact);
+            break;
+        case PLAYER_MEDITATE:
+            player_meditate(player, ground_contact);
             break;
         case PLAYER_DIE:
             player_update_die(player, ground_contact);
@@ -1686,6 +1760,9 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
 
     [PLAYER_ANIMATION_SLIDE_FORWARD] = "slide_forward",
 
+    [PLAYER_ANIMATION_MEDITATE_START] = "meditate_start",
+    [PLAYER_ANIMATION_MEDITATE_LOOP] = "meditate_loop",
+
     [PLAYER_ANIMATION_DIE] = "die",
     
     [PLAYER_ANIMATION_STRAFE_IDLE] = "strafe_idle",
@@ -1807,6 +1884,8 @@ void player_init(struct player* player, struct player_definition* definition) {
     camera_controller_init(&player->camera_controller, player);
     player_init_cam_anim(player);
     camera_animation_map(&player->camera_animations, ENTITY_ID_PLAYER);
+
+    player_effects.meditate_glow = tmesh_cache_load("rom:/meshes/effects/mana_regen.tmesh");
 }
 
 void player_destroy(struct player* player) {
@@ -1815,6 +1894,14 @@ void player_destroy(struct player* player) {
     mana_pool_t* pool = spell_exec_get_pool(&player->spell_exec);
     global_save_float(VAR_LOC_player_max_mana, pool->max_mana);
     global_save_float(VAR_LOC_player_current_mana, pool->current_mana);
+    
+    switch (player->state) {
+        case PLAYER_MEDITATE:
+            player_exit_meditate(player);
+            break;
+        default:
+            break;
+    }
 
     renderable_destroy(&player->renderable);
     spell_exec_destroy(&player->spell_exec);
@@ -1838,6 +1925,8 @@ void player_destroy(struct player* player) {
     camera_controller_destroy(&player->camera_controller);
     camera_animation_list_destroy(&player->camera_animations);
     camera_animation_unmap(ENTITY_ID_PLAYER);
+
+    tmesh_cache_release(player_effects.meditate_glow);
 }
 
 player_t* player_get() {

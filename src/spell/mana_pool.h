@@ -5,7 +5,6 @@
 
 struct mana_pool_definition {
     float max_mana;
-    float mana_regen_rate;
     float power_scale;
 };
 
@@ -13,8 +12,6 @@ struct mana_pool {
     float max_mana;
     float current_mana;
     float charged_mana;
-    float mana_regen_rate;
-    float last_request_time;
     float power_scale;
 };
 

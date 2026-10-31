@@ -10,7 +10,7 @@ global fire_rune_has_level_3: bool;
 
 global ice_rune_level: i8 = 0;
 global earth_rune_level: i8 = 0;
-global air_rune_level: i8 = 0;
+global air_rune_level: i8 = 1;
 global life_rune_level: i8 = 0;
 
 global recast_rune_level: i8 = 0;

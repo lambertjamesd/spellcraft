@@ -21,14 +21,10 @@ void mana_pool_init(struct mana_pool* pool, struct mana_pool_definition* definit
     pool->max_mana = definition->max_mana;
     pool->current_mana = definition->max_mana;
     pool->charged_mana = 0.0f;
-    pool->mana_regen_rate = definition->mana_regen_rate;
     pool->power_scale = definition->power_scale;
-    pool->last_request_time = 0.0f;
 }
 
 void mana_pool_update(struct mana_pool* pool) {
-    float time_to_last_cast = game_time - pool->last_request_time;
-
     if (pool->charged_mana > 0.0f) {
         if (pool->charged_mana < 0.1f) {
             pool->current_mana += pool->charged_mana;
@@ -38,13 +34,7 @@ void mana_pool_update(struct mana_pool* pool) {
             pool->current_mana += leak_amount;
             pool->charged_mana -= leak_amount;
         }
-    } else if (time_to_last_cast > MANA_REGEN_DELAY) {
-        pool->current_mana += pool->mana_regen_rate * fixed_time_step;
-
-        if (pool->current_mana > pool->max_mana) {
-            pool->current_mana = pool->max_mana;
-        }
-    } 
+    }
 }
 
 void mana_pool_charge(struct mana_pool* pool, float amount) {
@@ -73,8 +63,6 @@ float mana_pool_request(struct mana_pool* pool, float amount) {
         pool->current_mana -= scale_amount;
     }
 
-    pool->last_request_time = game_time;
-
     return scale_amount;
 }
 
@@ -93,8 +81,6 @@ float mana_pool_request_ratio(struct mana_pool* pool, float amount) {
     } else {
         pool->current_mana -= scale_amount;
     }
-
-    pool->last_request_time = game_time;
 
     return result;
 }
