@@ -69,10 +69,16 @@ RUN apt-get install -y \
 
 # Install Fast64
 RUN wget https://github.com/Fast-64/fast64/archive/refs/heads/main.zip
+
+# Build the mesh_export addon zip inside the image. tools/mesh_export.zip is
+# gitignored, so it does not exist on a fresh checkout and COPYing it made
+# `docker build .` fail unless `make tools/mesh_export.zip` had been run first.
+RUN apt-get install -y zip
+COPY tools/mesh_export /tmp/mesh_export_src/mesh_export
+RUN cd /tmp/mesh_export_src && zip -rq /mesh_export.zip mesh_export/
+
 USER ubuntu
 RUN /opt/blender/blender --command extension install-file -r user_default --enable main.zip
-
-COPY tools/mesh_export.zip mesh_export.zip
-RUN /opt/blender/blender --command extension install-file -r user_default --enable mesh_export.zip
+RUN /opt/blender/blender --command extension install-file -r user_default --enable /mesh_export.zip
 
 WORKDIR /spellcraft
