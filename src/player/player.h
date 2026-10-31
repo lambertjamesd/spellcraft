@@ -94,6 +94,7 @@ enum player_animation {
 
     PLAYER_ANIMATION_MEDITATE_START,
     PLAYER_ANIMATION_MEDITATE_LOOP,
+    PLAYER_ANIMATION_MEDITATE_END,
 
     PLAYER_ANIMATION_DIE,
 
@@ -152,6 +153,7 @@ union state_data {
     } drop_to_hang;
     struct {
         scale_in_fade_out_t* glow_effect;
+        bool is_active;
     } meditate;
 };
 

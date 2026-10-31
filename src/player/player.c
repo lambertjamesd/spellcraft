@@ -502,6 +502,7 @@ void player_enter_meditate_state(struct player* player) {
     player_run_clip(player, PLAYER_ANIMATION_MEDITATE_START);
 
     player->state_data.meditate.glow_effect = NULL;
+    player->state_data.meditate.is_active = true;
 }
 
 static vector3_t local_camera_death_pos = {
@@ -806,9 +807,9 @@ void player_check_for_animation_request(struct player* player, struct spell_data
 }
 
 bool player_should_medidate(struct player* player) {
-    joypad_buttons_t held = joypad_get_buttons_held(0);
+    joypad_buttons_t pressed = joypad_get_buttons_pressed(0);
     mana_pool_t* mana_pool = spell_exec_get_pool(&player->spell_exec);
-    return held.b && mana_pool->current_mana <= 0.0001f;
+    return pressed.b && mana_pool->current_mana <= 0.0001f;
 }
 
 bool player_check_for_casting(struct player* player) {
@@ -1143,6 +1144,7 @@ void player_exit_meditate(struct player* player) {
         scale_in_fade_out_stop(player->state_data.meditate.glow_effect);
         player->state_data.meditate.glow_effect = NULL;
     }
+    player->state_data.meditate.is_active = false;
 }
 
 void player_meditate(struct player* player, struct contact* ground_contact) {
@@ -1161,9 +1163,18 @@ void player_meditate(struct player* player, struct contact* ground_contact) {
     joypad_buttons_t buttons = joypad_get_buttons_held(0);
     mana_pool_t* pool = spell_exec_get_pool(&player->spell_exec);
 
+    if (!player->state_data.meditate.is_active) {
+        if (!player_is_running(player, PLAYER_ANIMATION_MEDITATE_END)) {
+            player_enter_grounded_state(player, ground_contact);
+        }
+        return;
+    }
+
     if (!buttons.b || pool->current_mana >= MAX_MEDITATE_MANA) {
         player_exit_meditate(player);
-        player_enter_grounded_state(player, ground_contact);
+        if (player_is_running(player, PLAYER_ANIMATION_MEDITATE_LOOP)) {
+            player_run_clip(player, PLAYER_ANIMATION_MEDITATE_END);
+        }
         return;
     }
 
@@ -1335,6 +1346,8 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     if (player_should_medidate(player)) {
         player_enter_meditate_state(player);
         return;
+    } else if (!tutorial_is_running() && spell_exec_get_pool(&player->spell_exec)->current_mana <= 0.0f) {
+        tutorial_set_step(TUTORIAL_MENU_MEDITATE);
     }
 
     player_check_for_casting(player);
@@ -1762,6 +1775,7 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
 
     [PLAYER_ANIMATION_MEDITATE_START] = "meditate_start",
     [PLAYER_ANIMATION_MEDITATE_LOOP] = "meditate_loop",
+    [PLAYER_ANIMATION_MEDITATE_END] = "meditate_end",
 
     [PLAYER_ANIMATION_DIE] = "die",
     

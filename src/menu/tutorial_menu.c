@@ -19,6 +19,7 @@ static const char* tut_messages[] = {
     [TUTORIAL_MENU_STATE_NONE] = "",
     [TUTORIAL_MENU_CREATE_FIRE] = "Hold @z+@cr",
     [TUTORIAL_MENU_CAST] = "Cast @b",
+    [TUTORIAL_MENU_MEDITATE] = "Hold @b",
 };
 
 #define ICON_SIZE      16
@@ -72,6 +73,11 @@ void tutorial_update(void* data) {
             break;
         case TUTORIAL_MENU_CAST:
             if (current_scene->player.live_cast.was_cast) {
+                tutorial_set_step(TUTORIAL_MENU_STATE_NONE);
+            }
+            break;
+        case TUTORIAL_MENU_MEDITATE:
+            if (spell_exec_get_pool(&player_get()->spell_exec)->current_mana > 0.0f) {
                 tutorial_set_step(TUTORIAL_MENU_STATE_NONE);
             }
             break;
