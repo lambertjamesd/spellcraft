@@ -112,7 +112,7 @@ SOUND_EFFECTS := $(SOUND_EFFECT_SOURCES:assets/%.wav=filesystem/%.wav64)
 filesystem/%.wav64: assets/%.wav $$(wildcard assets/%.txt)
 	@mkdir -p $(dir $@)
 	@echo "    [AUDIO] $@"
-	$(N64_AUDIOCONV) ${shell cat ${<:%.wav=%.txt} || echo --wav-compress 1 --wav-resample 22050} -o $@ $<
+	$(N64_AUDIOCONV) ${shell cat ${<:%.wav=%.txt} || echo --wav-compress 1 --wav-resample 22050} -o $(dir $@) $<
 	
 ###
 # music
@@ -125,7 +125,7 @@ MUSIC := $(MUSIC_SOURCES:assets/%.mp3=filesystem/%.wav64)
 filesystem/%.wav64: assets/%.mp3 $$(wildcard assets/%.txt)
 	@mkdir -p $(dir $@)
 	@echo "    [AUDIO] $@"
-	$(N64_AUDIOCONV) ${shell cat ${<:%.mp3=%.txt} || echo --wav-compress 1 --wav-resample 22050} -o $@ $<
+	$(N64_AUDIOCONV) ${shell cat ${<:%.mp3=%.txt} || echo --wav-compress 1 --wav-resample 22050} -o $(dir $@) $<
 
 ###
 # material_builder
