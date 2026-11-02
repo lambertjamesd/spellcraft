@@ -1405,6 +1405,8 @@ void player_update_grounded(struct player* player, struct contact* ground_contac
     }
 
     if (player_is_running(player, PLAYER_ANIMATION_LAND)) {
+        vel->x = 0.0f;
+        vel->z = 0.0f;
         return;
     }
 
