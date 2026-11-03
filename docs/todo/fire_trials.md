@@ -5,11 +5,9 @@
 * Boss key parts in the kiln
 * Health/mana upgrades hidden as collectables
 * Hide some item in the side room
-* swimming animation
 * Polish up fire sword (maybe multiple attack animations)
 * Jelly death animation
 * Health and mana UI
-* Improve walk animations
 * Climb animations
 * Build fire kiln
 * Better visuals for current rooms

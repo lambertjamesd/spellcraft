@@ -113,7 +113,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
 
     elemental_sword->mesh = element_type == ELEMENT_TYPE_ICE ? spell_assets_get()->ice_sword : spell_assets_get()->fire_sword;
 
-    elemental_sword->trail = sword_trail_new(elemental_sword->definition->color);
+    elemental_sword->trail = sword_trail_new(spell_assets_get()->sword_trail_material);
 
     swing_shape_init(&elemental_sword->swing_shape, &elemental_sword->collider_type);
 

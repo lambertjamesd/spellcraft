@@ -27,7 +27,7 @@ void spell_assets_init() {
     // material_cache_release() never called
     assets.dash_trail_material = material_cache_load("rom:/materials/spell/dash_trail.mat");
     // material_cache_release() never called
-    assets.sword_trail_material = material_cache_load("rom:/materials/spell/sword_trail.mat");
+    assets.sword_trail_material = material_cache_load("rom:/materials/spell/firetrail.mat");
 
     // material_cache_release() never called
     assets.ice_material = material_cache_load("rom:/materials/objects/ice.mat");

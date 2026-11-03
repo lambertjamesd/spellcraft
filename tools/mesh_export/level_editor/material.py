@@ -36,12 +36,12 @@ class TexScrollProperties(bpy.types.PropertyGroup):
     t: bpy.props.PointerProperty(type=TexScrollAxisProperties)
 
 class MATERIAL_PT_spellcraft_collision(bpy.types.Panel):
-    bl_label = "Collision Inspector"
+    bl_label = "Game engine"
     bl_idname = "MATERIAL_PT_spellcraft_collision"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "material"
-    bl_options = {"HIDE_HEADER"}
+    bl_options = {"DEFAULT_CLOSED"}
 
     @classmethod
     def poll(cls, context):

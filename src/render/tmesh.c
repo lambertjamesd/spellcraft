@@ -11,6 +11,8 @@ enum TMeshCommandType {
     TMESH_COMMAND_TRIANGLES,
     TMESH_COMMAND_MATERIAL,
     TMESH_COMMAND_BONE,
+
+    TMESH_COMMAND_COLOR_SWEEP,
 };
 
 void tmesh_unpack_pos(struct Vector3* pos, FILE* file) {
@@ -95,15 +97,28 @@ void tmesh_load_armature(struct tmesh* tmesh, FILE* file) {
     fread(&tmesh->armature.flags, sizeof(uint16_t), 1, file);
 }
 
+void tmesh_load_color_sweep(color_sweep_t* sweep, int vertex_count, FILE* file) {
+    fread(&sweep->duration, 4, 1, file);
+    fread(&sweep->max_offset, 4, 1, file);
+    color_ramp_load(&sweep->color_ramp, file);
+    sweep->phase = malloc(sizeof(uint16_t) * vertex_count);
+    fread(&sweep->phase, sizeof(uint16_t), vertex_count, file);
+}
+
 incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, incremental_loader_step_t* step) {
     tmesh_t* tmesh = step->resource;
     FILE* file = step->file;
+
     switch (step->step) {
         case 0: {
             int header;
         
             fread(&header, 1, 4, file);
             assert(header == EXPECTED_HEADER);
+
+            tmesh->color_sweep.duration = 0.0f;
+            tmesh->color_sweep.phase = NULL;
+            tmesh->color_sweep.color_ramp.keyframes = NULL;
             
             return INCREMENTAL_STEP_ONCE;
         }
@@ -236,6 +251,11 @@ incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, i
                         }
                         break;
                     }
+                    case TMESH_COMMAND_COLOR_SWEEP:
+                    {
+                        tmesh_load_color_sweep(&tmesh->color_sweep, tmesh->vertex_count, file);
+                        break;
+                    }
                     default:
                         assert(false);
                 }
@@ -328,4 +348,8 @@ void tmesh_compute_bounding_box(tmesh_t* mesh, vector3s16_t* min, vector3s16_t* 
         vector3s16Min(min, (vector3s16_t*)mesh->vertices[i].posB, min);
         vector3s16Max(max, (vector3s16_t*)mesh->vertices[i].posB, max);
     }
+}
+
+void tmesh_apply_sweep(struct tmesh* tmesh, float time) {
+
 }
