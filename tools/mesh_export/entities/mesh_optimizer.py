@@ -13,16 +13,16 @@ def remove_duplicates(mesh_data: mesh.mesh_data) -> mesh.mesh_data:
     first_vertex_index = {}
     index_mapping = {}
 
-    result = mesh.mesh_data(mesh_data.mat)
+    result = mesh_data.copy_blank()
 
     for idx, vertex in enumerate(mesh_data.vertices):
-        key = mesh.pack_vertex(
+        key = (mesh.pack_vertex(
             vertex,
             mesh_data.uv[idx],
             mesh_data.color[idx],
             mesh_data.normals[idx],
             mesh_data.bone_indices[idx]
-        )
+        ), mesh_data.phase[idx])
 
         if key in first_vertex_index:
             index_mapping[idx] = first_vertex_index[key]
@@ -36,6 +36,7 @@ def remove_duplicates(mesh_data: mesh.mesh_data) -> mesh.mesh_data:
             result.color.append(mesh_data.color[idx])
             result.uv.append(mesh_data.uv[idx])
             result.bone_indices.append(mesh_data.bone_indices[idx])
+            result.phase.append(mesh_data.phase[idx])
 
     for index in mesh_data.indices:
         result.indices.append(index_mapping[index])
@@ -47,7 +48,7 @@ def remove_unused_vertices(mesh_data: mesh.mesh_data) -> mesh.mesh_data:
 
     index_mapping = {}
 
-    result = mesh.mesh_data(mesh_data.mat)
+    result = mesh_data.copy_blank()
 
     for i in range(len(mesh_data.vertices)):
         if i in indices_set:
@@ -58,6 +59,7 @@ def remove_unused_vertices(mesh_data: mesh.mesh_data) -> mesh.mesh_data:
             result.color.append(mesh_data.color[i])
             result.uv.append(mesh_data.uv[i])
             result.bone_indices.append(mesh_data.bone_indices[i])
+            result.phase.append(mesh_data.phase[i])
 
     result.indices = [index_mapping[index] for index in mesh_data.indices]
 

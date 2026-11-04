@@ -12,11 +12,6 @@ class ColorSweepProperties(bpy.types.PropertyGroup):
     )
     duration: bpy.props.FloatProperty(name="Duration", default=1, min=0)
     max_offset: bpy.props.FloatProperty(name="Max Offset", default=0, min=0)
-    phase: bpy.props.StringProperty(
-        name="Phase",
-        default="",
-        description="Vertex attribute used to offset the sweep per vertex",
-    )
 
 class MESH_OT_spellcraft_color_sweep_add_gradient(bpy.types.Operator):
     bl_idname = "mesh.spellcraft_color_sweep_add_gradient"
@@ -66,8 +61,6 @@ class MESH_PT_spellcraft_color_sweep(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(color_sweep, "duration")
         col.prop(color_sweep, "max_offset")
-
-        layout.prop_search(color_sweep, "phase", mesh, "attributes", icon="GROUP_VERTEX")
 
 def register():
     bpy.utils.register_class(ColorSweepProperties)

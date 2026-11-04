@@ -101,8 +101,10 @@ void tmesh_load_color_sweep(color_sweep_t* sweep, int vertex_count, FILE* file) 
     fread(&sweep->duration, 4, 1, file);
     fread(&sweep->max_offset, 4, 1, file);
     color_ramp_load(&sweep->color_ramp, file);
-    sweep->phase = malloc(sizeof(uint16_t) * vertex_count);
-    fread(&sweep->phase, sizeof(uint16_t), vertex_count, file);
+    // each T3DVertPacked holds two vertices
+    int phase_count = vertex_count * 2;
+    sweep->phase = malloc(sizeof(uint16_t) * phase_count);
+    fread(sweep->phase, sizeof(uint16_t), phase_count, file);
 }
 
 incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, incremental_loader_step_t* step) {
@@ -317,6 +319,9 @@ void tmesh_release(struct tmesh* tmesh) {
     free(tmesh->armature.frames);
 
     armature_definition_destroy(&tmesh->armature);
+
+    free(tmesh->color_sweep.phase);
+    color_ramp_free(&tmesh->color_sweep.color_ramp);
 }
 
 armature_attachment_t* tmesh_find_attachment(tmesh_t* mesh, const char* name) {
