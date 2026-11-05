@@ -1,4 +1,4 @@
 [submodule "libdragon"]
 	path = libdragon
-	url = git@github.com:lambertjamesd/libdragon.git
+	url = https://github.com/lambertjamesd/libdragon.git
 	branch = bypass-rdpq-overlay
