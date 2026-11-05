@@ -106,7 +106,7 @@ void material_load_file(struct material* into, const char* filename);
 void material_release(struct material* material);
 
 void material_apply(struct material* material);
-void material_apply_scroll(struct material* material);
+void material_apply_scroll(struct material* material, float anim_time);
 
 void material_debug(struct material* material, const char* name);
 

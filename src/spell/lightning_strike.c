@@ -140,7 +140,7 @@ void lightning_strike_render(struct lightning_strike* strike, render_batch_t* ba
         element_attr_t attrs[3];
         attrs[0] = (element_attr_t){.type = ELEMENT_ATTR_PRIM_COLOR, .color = LIGHTNING_EVAL_COLOR(bolt_keyframes, strike->timer)};
         attrs[1] = (element_attr_t){
-            .type = ELEMENT_ATTR_SCROLL, 
+            .type = ELEMENT_ATTR_SCROLL_TEX0, 
             .scroll = {(int16_t)((SCROLL_AMOUNT / BOLT_TIME) * (strike->timer - STRIKE_DELAY)), 0},
         };
         attrs[2].type = ELEMENT_ATTR_NONE;

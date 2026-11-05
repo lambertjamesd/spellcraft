@@ -407,12 +407,12 @@ void material_release(struct material* material) {
     material_destroy(material);
 }
 
-int material_calc_offset(material_scroll_t* scroll) {
+int material_calc_offset(material_scroll_t* scroll, float anim_time) {
     if (scroll->type == MATERIAL_SCROLL_NONE || scroll->time == 0.0f) {
         return 0;
     }
 
-    float time = fmodf(scene_time / scroll->time + (1.0f / 255.0f) * scroll->phase_shift, scroll->pingpong ? 2.0f : 1.0f);
+    float time = fmodf(anim_time / scroll->time + (1.0f / 255.0f) * scroll->phase_shift, scroll->pingpong ? 2.0f : 1.0f);
 
     if (scroll->pingpong && time > 1.0f) {
         time = 2.0f - time;
@@ -435,13 +435,13 @@ int material_calc_offset(material_scroll_t* scroll) {
     return (int)mathfLerp(scroll->start, scroll->end, time);
 }
 
-void material_check_texture_scroll(int tile, struct material_tex* tex) {
+void material_check_texture_scroll(int tile, struct material_tex* tex, float anim_time) {
     if (!tex->texture_enabled || (!tex->scroll_x.type && !tex->scroll_y.type)) {
         return;
     }
 
-    int x_offset =  material_calc_offset(&tex->scroll_x);
-    int y_offset =  material_calc_offset(&tex->scroll_y);
+    int x_offset =  material_calc_offset(&tex->scroll_x, anim_time);
+    int y_offset =  material_calc_offset(&tex->scroll_y, anim_time);
 
     rdpq_set_tile_size_fx(
         tile, 
@@ -453,13 +453,13 @@ void material_check_texture_scroll(int tile, struct material_tex* tex) {
 void material_apply(struct material* material) {
     rspq_block_run(material->block);
 
-    material_check_texture_scroll(TILE0, &material->tex0);
-    material_check_texture_scroll(TILE1, &material->tex1);
+    material_check_texture_scroll(TILE0, &material->tex0, scene_time);
+    material_check_texture_scroll(TILE1, &material->tex1, scene_time);
 }
 
-void material_apply_scroll(struct material* material) {
-    material_check_texture_scroll(TILE0, &material->tex0);
-    material_check_texture_scroll(TILE1, &material->tex1);
+void material_apply_scroll(struct material* material, float anim_time) {
+    material_check_texture_scroll(TILE0, &material->tex0, anim_time);
+    material_check_texture_scroll(TILE1, &material->tex1, anim_time);
 }
 
 void material_debug(struct material* material, const char* name) {

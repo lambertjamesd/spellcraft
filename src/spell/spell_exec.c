@@ -47,8 +47,14 @@ void spell_slot_init(
                 wind_init(&slot->data.wind, input, event_options, wind_lookup_definition(rune.watery ? ELEMENT_TYPE_LIGHTNING : ELEMENT_TYPE_FIRE, rune.earthy));
             } else {
                 if (!rune.watery) {
-                    slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
-                    elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_FIRE);
+                    if (rune.earthy) {
+                        struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, rune.earthy, rune.windy, rune.flaming, rune.watery);
+                        slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
+                        element_emitter_init(&slot->data.element_emitter, input, event_options, def);
+                    } else {
+                        slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
+                        elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_FIRE);
+                    }
                 } else if (rune.earthy) {
                     slot->type = SPELL_EXEC_SLOT_TYPE_LIGHTNING_STORM;
                     lightning_storm_init(&slot->data.lightning_storm, input, event_options);

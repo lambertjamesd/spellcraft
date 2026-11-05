@@ -483,6 +483,8 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
         int index = order[i];
         struct render_batch_element* element = &batch->elements[index];
 
+        bool should_apply_scroll = false;
+
         if (current_mat != element->material) {
             if (element->material) {
 #if ENABLE_PROFILE_render_batch
@@ -495,7 +497,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
             current_mat = element->material;
         } else if (current_mat) {
-            material_apply_scroll(&current_mat->apply);
+            should_apply_scroll = true;
         }
 
         if (light_source != element->light_source) {
@@ -544,7 +546,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                         }
                         transform_count = 1;
                         break;
-                    case ELEMENT_ATTR_SCROLL:
+                    case ELEMENT_ATTR_SCROLL_TEX0:
                         if (current_mat) {
                             struct material_tex* tex = &current_mat->apply.tex0;
                             rdpq_set_tile_size_fx(
@@ -552,6 +554,18 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                                 attr->scroll.x + tex->s0, attr->scroll.y + tex->t0, 
                                 attr->scroll.x + tex->s1, attr->scroll.y + tex->t1
                             );
+                            should_apply_scroll = false;
+                        }
+                        break;
+                    case ELEMENT_ATTR_SCROLL_TEX1:
+                        if (current_mat) {
+                            struct material_tex* tex = &current_mat->apply.tex0;
+                            rdpq_set_tile_size_fx(
+                                TILE1, 
+                                attr->scroll.x + tex->s0, attr->scroll.y + tex->t0, 
+                                attr->scroll.x + tex->s1, attr->scroll.y + tex->t1
+                            );
+                            should_apply_scroll = false;
                         }
                         break;
                     case ELEMENT_ATTR_TRANSFORM_LIST: {
@@ -576,6 +590,10 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                     t3d_matrix_push(default_mtx);
                 }
                 transform_count = 1;
+            }
+
+            if (should_apply_scroll) {
+                material_apply_scroll(&current_mat->apply, scene_time);
             }
 
             rspq_block_run(element->mesh.block);      
