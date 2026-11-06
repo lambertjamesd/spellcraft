@@ -74,3 +74,28 @@ void rdpq_tex_upload_raw(rdpq_tile_t tile, const surface_t *tex, const rdpq_tile
     rdpq_load_block(tile, 0, 0, rdpq_load_block_size(tex), rdpq_load_block_tmem_pitch(tex));
     rdpq_sync_pipe();
 }
+
+struct rdpq_block_unsafe {
+    struct rdpq_block_unsafe* next;
+    uint32_t tracking;
+    uint32_t cmds[] __attribute__((aligned(8)));  ///< RDP commands
+};
+
+struct rspq_block_unsafe {
+    uint8_t nesting_level;   ///< Nesting level of the block
+    uint8_t min_ph_level;    ///< Lowest slot used by any called placeholders, default: max nesting level
+    uint8_t padding[2];      ///< Padding
+    struct rdpq_block_unsafe *rdp_block; ///< Option RDP static buffer (with RDP commands)
+    void *atexit; ///< List of callbacks to call upon freeing the block
+    uint32_t cmds[];         ///< Block contents (commands)
+};
+
+uint32_t* rsqp_get_rdp_cmds(rspq_block_t* block) {
+    struct rspq_block_unsafe* unsafe = (struct rspq_block_unsafe*)block;
+
+    if (!unsafe->rdp_block) {
+        return NULL;
+    }
+
+    return unsafe->rdp_block->cmds;
+}

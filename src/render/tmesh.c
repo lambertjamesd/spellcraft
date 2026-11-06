@@ -11,8 +11,7 @@ enum TMeshCommandType {
     TMESH_COMMAND_TRIANGLES,
     TMESH_COMMAND_MATERIAL,
     TMESH_COMMAND_BONE,
-
-    TMESH_COMMAND_COLOR_SWEEP,
+    TMESH_COMMAND_PLACEHOLDER,
 };
 
 void tmesh_unpack_pos(struct Vector3* pos, FILE* file) {
@@ -97,16 +96,6 @@ void tmesh_load_armature(struct tmesh* tmesh, FILE* file) {
     fread(&tmesh->armature.flags, sizeof(uint16_t), 1, file);
 }
 
-void tmesh_load_color_sweep(color_sweep_t* sweep, int vertex_count, FILE* file) {
-    fread(&sweep->duration, 4, 1, file);
-    fread(&sweep->max_offset, 4, 1, file);
-    color_ramp_load(&sweep->color_ramp, file);
-    // each T3DVertPacked holds two vertices
-    int phase_count = vertex_count * 2;
-    sweep->phase = malloc(sizeof(uint16_t) * phase_count);
-    fread(sweep->phase, sizeof(uint16_t), phase_count, file);
-}
-
 incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, incremental_loader_step_t* step) {
     tmesh_t* tmesh = step->resource;
     FILE* file = step->file;
@@ -117,10 +106,6 @@ incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, i
         
             fread(&header, 1, 4, file);
             assert(header == EXPECTED_HEADER);
-
-            tmesh->color_sweep.duration = 0.0f;
-            tmesh->color_sweep.phase = NULL;
-            tmesh->color_sweep.color_ramp.keyframes = NULL;
             
             return INCREMENTAL_STEP_ONCE;
         }
@@ -185,7 +170,23 @@ incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, i
         
             fread(&tmesh->light_source, 1, 1, file);
             return INCREMENTAL_STEP_ONCE;
-        } case 7: {
+        } 
+        case 7: {
+            fread(&tmesh->placeholder_count, 1, 1, file);
+
+            if (tmesh->placeholder_count) {
+                tmesh->placeholders = malloc(sizeof(material_placeholder_block_t) * tmesh->placeholder_count);
+
+                for (int i = 0; i < tmesh->placeholder_count; i += 1) {
+                    material_placeholder_block_load(&tmesh->placeholders[i], file);
+                }
+            } else {
+                tmesh->placeholders = NULL;
+            }
+
+            return INCREMENTAL_STEP_ONCE;
+        } 
+        case 8: {
             // load mesh draw commands
             
             uint16_t command_count;
@@ -253,9 +254,12 @@ incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, i
                         }
                         break;
                     }
-                    case TMESH_COMMAND_COLOR_SWEEP:
+                    case TMESH_COMMAND_PLACEHOLDER:
                     {
-                        tmesh_load_color_sweep(&tmesh->color_sweep, tmesh->vertex_count, file);
+                        uint8_t placeholder_index;
+                        fread(&placeholder_index, 1, 1, file);
+                        assert(placeholder_index < 7);
+                        rspq_block_run((rspq_block_t*)(int)placeholder_index);
                         break;
                     }
                     default:
@@ -318,10 +322,14 @@ void tmesh_release(struct tmesh* tmesh) {
 
     free(tmesh->armature.frames);
 
-    armature_definition_destroy(&tmesh->armature);
+    if (tmesh->placeholders) {
+        for (int i = 0; i < tmesh->placeholder_count; i += 1) {
+            material_placeholder_block_free(&tmesh->placeholders[i]);
+        }
+        free(tmesh->placeholders);
+    }
 
-    free(tmesh->color_sweep.phase);
-    color_ramp_free(&tmesh->color_sweep.color_ramp);
+    armature_definition_destroy(&tmesh->armature);
 }
 
 armature_attachment_t* tmesh_find_attachment(tmesh_t* mesh, const char* name) {
@@ -353,8 +361,4 @@ void tmesh_compute_bounding_box(tmesh_t* mesh, vector3s16_t* min, vector3s16_t* 
         vector3s16Min(min, (vector3s16_t*)mesh->vertices[i].posB, min);
         vector3s16Max(max, (vector3s16_t*)mesh->vertices[i].posB, max);
     }
-}
-
-void tmesh_apply_sweep(struct tmesh* tmesh, float time) {
-
 }

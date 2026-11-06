@@ -10,6 +10,7 @@
 #include "../ext/libdragon.h"
 #include "../math/mathf.h"
 #include "../util/lerp.h"
+#include "render.h"
 
 void material_init(struct material* material) {
     material->block = 0;
@@ -469,4 +470,104 @@ void material_debug(struct material* material, const char* name) {
     uint32_t switch_count = rspq_count_overlay_switches(material->block, &overlay);
     debugf( " switch %d overlay %x\n", (int)switch_count, (int)overlay);
 #endif
+}
+
+
+void material_placeholder_block_load(material_placeholder_block_t* placeholder, FILE* file) {
+    fread(&placeholder->has_prim, 1, 1, file);
+    fread(&placeholder->has_env, 1, 1, file);
+    fread(&placeholder->has_tex0_scroll, 1, 1, file);
+    fread(&placeholder->has_tex1_scroll, 1, 1, file);
+
+    for (int block_idx = 0; block_idx < 2; block_idx += 1) {
+        rspq_block_begin();
+        if (placeholder->has_prim) {
+            rdpq_set_prim_register_raw((color_t){}, 0, 0);
+        }
+        if (placeholder->has_env) {
+            rdpq_set_env_color((color_t){});
+        }
+        if (placeholder->has_tex0_scroll) {
+            rdpq_set_tile_size_fx(TILE0, 0, 0, 0, 0);
+        }
+        if (placeholder->has_tex1_scroll) {
+            rdpq_set_tile_size_fx(TILE1, 0, 0, 0, 0);
+        }
+        placeholder->blocks[block_idx] = rspq_block_end();
+    }
+}
+
+void material_placeholder_block_free(material_placeholder_block_t* placeholder) {
+    rspq_block_free(placeholder->blocks[0]);
+    rspq_block_free(placeholder->blocks[1]);
+}
+
+void material_placeholder_set_prim(material_placeholder_block_t* placeholder, color_t color) {
+    if (!placeholder->has_prim) {
+        return;
+    }
+
+    uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
+    cmd[1] = *(uint32_t*)&color;
+}
+
+void material_placeholder_set_env(material_placeholder_block_t* placeholder, color_t color) {
+    if (!placeholder->has_env) {
+        return;
+    }
+
+    uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
+
+    if (placeholder->has_prim) {
+        cmd += 2;
+    }
+
+    cmd[1] = *(uint32_t*)&color;
+}
+
+#define PACK(value, offset, size)   (((uint32_t)(value) & ((1 << (size)) - 1)) << (offset))
+
+static inline void material_placeholder_write_tile_size(uint32_t* block, rdpq_tile_t tile, uint16_t s0, uint16_t t0, uint16_t s1, uint16_t t1) {
+    block[0] = PACK(RDPQ_CMD_SET_TILE_SIZE, 24, 8) | PACK(s0, 12, 12) | PACK(t0, 12, 12);
+    block[1] = PACK(tile, 24, 4) | PACK(s1, 12, 12) | PACK(t1, 12, 12);
+}
+
+void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0, uint16_t s1, uint16_t t1) {
+    if (!placeholder->has_tex0_scroll) {
+        return;
+    }
+
+    uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
+
+    if (placeholder->has_prim) {
+        cmd += 2;
+    }
+    
+    if (placeholder->has_env) {
+        cmd += 2;
+    }
+
+    material_placeholder_write_tile_size(cmd, TILE0, s0, t0, s1, t1);
+}
+
+void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0, uint16_t s1, uint16_t t1) {
+    if (!placeholder->has_tex1_scroll) {
+        return;
+    }
+
+    uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
+
+    if (placeholder->has_prim) {
+        cmd += 2;
+    }
+    
+    if (placeholder->has_env) {
+        cmd += 2;
+    }
+    
+    if (placeholder->has_tex0_scroll) {
+        cmd += 2;
+    }
+
+    material_placeholder_write_tile_size(cmd, TILE1, s0, t0, s1, t1);
 }

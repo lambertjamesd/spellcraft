@@ -23,7 +23,6 @@ class vertex_data(NamedTuple):
     color: list[float]
     uv: mathutils.Vector | list[float]
     bone_index: int
-    phase: float
 
 def interpolate_vertex(a: vertex_data, b: vertex_data, lerp: float) -> vertex_data:
     lerp_inv = 1 - lerp
@@ -33,13 +32,7 @@ def interpolate_vertex(a: vertex_data, b: vertex_data, lerp: float) -> vertex_da
         color=interpolate_color(a.color, b.color, lerp),
         uv=mathutils.Vector(a.uv) * lerp_inv + mathutils.Vector(b.uv) * lerp,
         bone_index=a.bone_index, # just copy over the first bone
-        phase=a.phase * lerp_inv + b.phase * lerp,
     )
-
-class color_sweep(NamedTuple):
-    duration: float
-    max_offset: float
-    gradient: bpy.types.ColorRamp
 
 class mesh_data():
     def __init__(self, mat: bpy.types.Material | None) -> None:
@@ -49,11 +42,8 @@ class mesh_data():
         self.color: list = []
         self.uv: list = []
         self.bone_indices: list = []
-        self.phase: list[float] = []
         
         self.indices: list[int] = []
-
-        self.color_sweep: color_sweep | None = None
 
     def copy(self):
         result = mesh_data(self.mat)
@@ -64,8 +54,6 @@ class mesh_data():
         result.uv = self.uv.copy()
         result.indices = self.indices.copy()
         result.bone_indices = self.bone_indices.copy()
-        result.phase = self.phase.copy()
-        result.color_sweep = self.color_sweep
 
         return result
     
@@ -85,7 +73,6 @@ class mesh_data():
     
     def copy_blank(self):
         result = mesh_data(self.mat)
-        result.color_sweep = self.color_sweep
         return result
     
     def translate(self, offset: mathutils.Vector):
@@ -102,7 +89,6 @@ class mesh_data():
         self.color.append(vertex.color)
         self.uv.append(vertex.uv)
         self.bone_indices.append(vertex.bone_index)
-        self.phase.append(vertex.phase)
 
     def append_triangle(self, a: int, b: int, c: int):
         self.indices.append(a)
@@ -119,7 +105,6 @@ class mesh_data():
         self.uv += other.uv
         self.indices += list(map(lambda x: x + start_index, other.indices))
         self.bone_indices += other.bone_indices
-        self.phase += other.phase
 
     def get_triangles(self):
         result: list[list[int]] = []
@@ -136,7 +121,6 @@ class mesh_data():
             color=self.color[index],
             uv=self.uv[index],
             bone_index=self.bone_indices[index],
-            phase=self.phase[index],
         )
     
     def get_vertex_interpolated(self, a: int, b: int, lerp: float) -> vertex_data:
@@ -185,20 +169,6 @@ class mesh_data():
         normal_transform.transpose()
         bone_index = -1
 
-        if not self.color_sweep and hasattr(mesh, 'color_sweep') and mesh.color_sweep.duration >= 0 and (mesh.color_sweep.gradient is not None):
-            gradient: bpy.types.Texture = mesh.color_sweep.gradient
-
-
-
-            if not gradient.color_ramp:
-                raise Exception('expected color sweep to have a color ramp')
-
-            self.color_sweep = color_sweep(
-                duration=mesh.color_sweep.duration,
-                max_offset=mesh.color_sweep.max_offset,
-                gradient=gradient.color_ramp,
-            )
-
         if obj and obj.parent_bone and armature:
             bone = armature.find_bone_data(obj.parent_bone)
             final_transform = bone.pose_bone.matrix.inverted() @ obj.matrix_world
@@ -244,8 +214,6 @@ class mesh_data():
 
         if not color and any_color:
             color = any_color
-
-        phase = mesh.attributes.get('phase')
 
         for loop_index in range(max_index + 1):
             if not loop_index in used_indices:
@@ -302,13 +270,6 @@ class mesh_data():
             self.color.append(color_vertex)
 
             self.bone_indices.append(bone_index)
-
-            if phase and phase.domain == 'CORNER':
-                self.phase.append(float(phase.data[loop_index].value))
-            elif phase and phase.domain == 'POINT':
-                self.phase.append(float(phase.data[vtx_index].value))
-            else:
-                self.phase.append(0)
 
             index_mapping[loop_index] = next_output
             next_output += 1

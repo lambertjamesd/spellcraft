@@ -363,7 +363,6 @@ TMESH_COMMAND_VERTICES = 0
 TMESH_COMMAND_TRIANGLES = 1
 TMESH_COMMAND_MATERIAL = 2
 TMESH_COMMAND_BONE = 3
-TMESH_COMMAND_COLOR_SWEEP = 4
 
 COLOR_SWEEP_TIME_SCALE = 4096
 
@@ -419,24 +418,7 @@ def _build_bone_command(bone_index: int):
 def _pack_sweep_time(value: float) -> int:
     return min(max(math.floor(value * COLOR_SWEEP_TIME_SCALE + 0.5), 0), COLOR_SWEEP_TIME_SCALE)
 
-def _build_color_sweep_command(sweep: mesh.color_sweep, phases: list[float]) -> bytes:
-    result = struct.pack('>Bff', TMESH_COMMAND_COLOR_SWEEP, sweep.duration, sweep.max_offset)
-
-    # matches color_ramp_load
-    elements = sorted(sweep.gradient.elements, key=lambda x: x.position)
-    result += struct.pack('>HH', len(elements), COLOR_SWEEP_TIME_SCALE)
-
-    for element in elements:
-        # matches color_ramp_keyframe_t, color_t followed by uint16_t time and 2 bytes of padding
-        result += _pack_color(element.color)
-        result += struct.pack('>Hxx', _pack_sweep_time(element.position))
-
-    for phase in phases:
-        result += struct.pack('>H', _pack_sweep_time(phase))
-
-    return result
-
-def _write_mesh_chunk_common(batch_layouts: list[_batch_layout], chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], phases: list[float], current_bone: int) -> int:
+def _write_mesh_chunk_common(batch_layouts: list[_batch_layout], chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], current_bone: int) -> int:
     for batch in batch_layouts:
         source_index = len(vertices)
 
@@ -463,22 +445,17 @@ def _write_mesh_chunk_common(batch_layouts: list[_batch_layout], chunk: mesh_opt
 
             vertices.append(_pack_vertices(chunk, a, b, settings))
 
-            # each packed entry holds two vertices, keep phases in the same order
-            # a vertex loaded by more than one batch gets an entry each time it is loaded
-            phases.append(chunk.data.phase[a])
-            phases.append(chunk.data.phase[b] if b != -1 else 0)
-
         command_list.append(_build_triangles_command(batch.triangles))
 
     return current_bone
 
-def _write_much_chunk_sorted(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], phases: list[float], sort_direction: mathutils.Vector, current_bone: int) -> int:
+def _write_much_chunk_sorted(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], sort_direction: mathutils.Vector, current_bone: int) -> int:
     batch_layouts = _determine_triangle_order(chunk.data, sort_direction)
-    return _write_mesh_chunk_common(batch_layouts, chunk, settings, command_list, vertices, phases, current_bone)
+    return _write_mesh_chunk_common(batch_layouts, chunk, settings, command_list, vertices, current_bone)
 
-def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], phases: list[float], current_bone: int) -> int:
+def _write_mesh_chunk(chunk: mesh_optimizer.mesh_chunk, settings: export_settings.ExportSettings, command_list: list[bytes], vertices: list[bytes], current_bone: int) -> int:
     batch_layouts = _determine_triangle_order(chunk.data, None)
-    return _write_mesh_chunk_common(batch_layouts, chunk, settings, command_list, vertices, phases, current_bone)
+    return _write_mesh_chunk_common(batch_layouts, chunk, settings, command_list, vertices, current_bone)
         
 def _transition_material(current_material: material.Material, target_material: material.Material, commands: list, material_transitions: list):
     delta = material_delta.determine_material_delta(current_material, target_material)
@@ -530,7 +507,6 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
 
     commands = []
     vertices = []
-    phases: list[float] = []
 
     current_material = material.Material()
 
@@ -555,9 +531,9 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
         _transition_material(current_material, chunk.material, commands, material_transitions)
 
         if settings.sort_direction:
-            current_bone = _write_much_chunk_sorted(chunk, settings, commands, vertices, phases, settings.sort_direction, current_bone)
+            current_bone = _write_much_chunk_sorted(chunk, settings, commands, vertices, settings.sort_direction, current_bone)
         else:
-            current_bone = _write_mesh_chunk(chunk, settings, commands, vertices, phases, current_bone)
+            current_bone = _write_mesh_chunk(chunk, settings, commands, vertices, current_bone)
 
     if settings.default_material_name:
         _transition_material(current_material, settings.default_material, commands, material_transitions)
@@ -589,11 +565,6 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
         file.write(struct.pack(">h", int(scale.x * 256)))
         
     file.write(settings.light_source.to_bytes(1, 'big'))
-
-    sweep = next((m.color_sweep for m in mesh_list if m.color_sweep is not None), None)
-
-    if sweep:
-        commands.append(_build_color_sweep_command(sweep, phases))
 
     file.write(len(commands).to_bytes(2, 'big'))
 

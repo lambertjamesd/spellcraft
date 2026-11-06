@@ -9,7 +9,6 @@
 #include "../math/transform.h"
 #include "../math/vector3s16.h"
 #include "../resource/incremental_loader.h"
-#include "color_ramp.h"
 
 enum light_source {
     LIGHT_SOURCE_NONE,
@@ -26,15 +25,6 @@ struct armature_attachment {
 
 typedef struct armature_attachment armature_attachment_t;
 
-struct color_sweep {
-    float duration;
-    float max_offset;
-    color_ramp_t color_ramp;
-    uint16_t* phase;
-};
-
-typedef struct color_sweep color_sweep_t;
-
 struct tmesh {
     material_pair_t* material;
     struct material* transition_materials;
@@ -45,11 +35,11 @@ struct tmesh {
     struct armature_definition armature;
 
     struct armature_attachment* attachments;
+    material_placeholder_block_t* placeholders;
     float radius;
     uint16_t attachment_count;
     uint8_t light_source;
-
-    color_sweep_t color_sweep;
+    uint8_t placeholder_count;
 };
 
 typedef struct tmesh tmesh_t;
