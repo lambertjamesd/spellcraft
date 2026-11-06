@@ -172,21 +172,6 @@ incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, i
             return INCREMENTAL_STEP_ONCE;
         } 
         case 7: {
-            fread(&tmesh->placeholder_count, 1, 1, file);
-
-            if (tmesh->placeholder_count) {
-                tmesh->placeholders = malloc(sizeof(material_placeholder_block_t) * tmesh->placeholder_count);
-
-                for (int i = 0; i < tmesh->placeholder_count; i += 1) {
-                    material_placeholder_block_load(&tmesh->placeholders[i], file);
-                }
-            } else {
-                tmesh->placeholders = NULL;
-            }
-
-            return INCREMENTAL_STEP_ONCE;
-        } 
-        case 8: {
             // load mesh draw commands
             
             uint16_t command_count;
@@ -321,13 +306,6 @@ void tmesh_release(struct tmesh* tmesh) {
     }
 
     free(tmesh->armature.frames);
-
-    if (tmesh->placeholders) {
-        for (int i = 0; i < tmesh->placeholder_count; i += 1) {
-            material_placeholder_block_free(&tmesh->placeholders[i]);
-        }
-        free(tmesh->placeholders);
-    }
 
     armature_definition_destroy(&tmesh->armature);
 }

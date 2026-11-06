@@ -35,11 +35,9 @@ struct tmesh {
     struct armature_definition armature;
 
     struct armature_attachment* attachments;
-    material_placeholder_block_t* placeholders;
     float radius;
     uint16_t attachment_count;
     uint8_t light_source;
-    uint8_t placeholder_count;
 };
 
 typedef struct tmesh tmesh_t;

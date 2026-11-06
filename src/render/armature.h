@@ -7,6 +7,7 @@
 #include "../math/transform.h"
 #include "armature_definition.h"
 #include "../render/frame_alloc.h"
+#include "../render/material.h"
 
 #define NO_BONE_PARENT  0xFF
 #define NO_IMAGE_FRAME  0xFF
@@ -22,7 +23,7 @@ struct armature {
     uint16_t has_prim_color: 1;
     uint16_t has_env_color: 1;
     color_t prim_color;
-    color_t env_color;
+    color_t env_color;  
 };
 
 typedef struct armature armature_t;
