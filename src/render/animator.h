@@ -7,6 +7,7 @@
 #include "animation_clip.h"
 #include "armature.h"
 #include "../math/transform.h"
+#include "material.h"
 
 union animator_events {
     struct {
@@ -28,6 +29,7 @@ struct animator {
     uint16_t bone_state_frames[2];
     uint16_t next_frame_state_index;
     uint16_t bone_count;
+    uint16_t bone_state_size;
     uint8_t loop;
     uint8_t done;
     uint8_t blend_frames;

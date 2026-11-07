@@ -97,5 +97,5 @@ uint32_t* rsqp_get_rdp_cmds(rspq_block_t* block) {
         return NULL;
     }
 
-    return unsafe->rdp_block->cmds;
+    return UncachedAddr(unsafe->rdp_block->cmds);
 }

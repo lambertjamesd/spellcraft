@@ -7,6 +7,7 @@
 #include "../profile/profile.h"
 #include "fog.h"
 #include "defs.h"
+#include "render.h"
 
 void render_batch_init(struct render_batch* batch, struct Transform* camera_transform, struct frame_memory_pool* pool) {
     batch->element_count = 0;
@@ -131,6 +132,10 @@ struct render_batch_element* render_batch_add_tmesh(
         if (armature->has_env_color) {
             attr_count += 1;
         }
+
+        if (armature->placeholders) {
+            attr_count += 1;
+        }
     }
 
     if (attr_count) {
@@ -219,6 +224,13 @@ struct render_batch_element* render_batch_add_tmesh(
         if (armature->has_env_color) {
             attr->type = ELEMENT_ATTR_ENV_COLOR;
             attr->color = armature->env_color;
+            ++attr;
+        }
+
+        if (armature->placeholders) {
+            attr->type = ELEMENT_ATTR_MAT_PLACEHOLDERS;
+            attr->placeholders.count = armature->definition->placeholder_count;
+            attr->placeholders.addr = (uint32_t)armature->placeholders;
             ++attr;
         }
     }
@@ -573,6 +585,15 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
                             t3d_matrix_push(attr->transform_list[mtx_index]);
                         }
                         transform_count = attr->offset;
+                        break;
+                    }
+                    case ELEMENT_ATTR_MAT_PLACEHOLDERS: {
+                        material_placeholder_block_t* placeholder = (material_placeholder_block_t*)((int)KSEG0_START_ADDR | attr->placeholders.addr);
+                        int count = attr->placeholders.count;
+
+                        for (int i = 0; i < count; i += 1) {
+                            rspq_block_set_placeholder((rspq_block_t*)i, placeholder->blocks[render_parity]);
+                        }
                         break;
                     }
                 }

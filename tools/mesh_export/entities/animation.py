@@ -28,7 +28,14 @@ def export_animations(filename: str, arm: armature.ArmatureData | None, settings
 
         for frame in range(frame_start, frame_end):
             bpy.context.scene.frame_set(frame)
-            packed_animation.add_frame(arm.generate_pose_data(settings), arm.generate_event_data(), arm.generate_image_frame_data(), arm.gemerate_prim_frame_data(), arm.gemerate_env_frame_data())
+            packed_animation.add_frame(
+                arm.generate_pose_data(settings), 
+                arm.generate_event_data(), 
+                arm.generate_image_frame_data(), 
+                arm.gemerate_prim_frame_data(), 
+                arm.gemerate_env_frame_data(),
+                arm.generate_packed_data(),
+            )
 
         attributes = packed_animation.determine_needed_channels(default_pose)
         attributes_for_anim.append(attributes)
@@ -76,6 +83,12 @@ def export_animations(filename: str, arm: armature.ArmatureData | None, settings
 
             if current_size & 1:
                 file.write(b'\0')
+                current_size += 1
+
+            expected_size = anim.frame_count() * attributes_for_anim[anim_idx].determine_attribute_list_size()
                 
             anim.write_to_file(file, attributes_for_anim[anim_idx])
+
+            if file.tell() - current_size != expected_size:
+                raise Exception('Mismatched animation frame size')
 

@@ -65,35 +65,46 @@ void tmesh_load_armature(struct tmesh* tmesh, FILE* file) {
     uint16_t bone_count;
     fread(&bone_count, 2, 1, file);
 
-    armature_definition_init(&tmesh->armature, bone_count);
+    armature_definition_t* def = &tmesh->armature;
+
+    armature_definition_init(def, bone_count);
 
     if (!bone_count) {
         return;
     }
 
-    fread(tmesh->armature.parent_linkage, 1, bone_count, file);
-    fread(tmesh->armature.default_pose, sizeof(struct armature_packed_transform), bone_count, file);
+    fread(def->parent_linkage, 1, bone_count, file);
+    fread(def->default_pose, sizeof(struct armature_packed_transform), bone_count, file);
 
-    fread(&tmesh->armature.image_frames_0, 1, 1, file);
-    fread(&tmesh->armature.image_frames_1, 1, 1, file);
+    fread(&def->image_frames_0, 1, 1, file);
+    fread(&def->image_frames_1, 1, 1, file);
 
-    int total_images = tmesh->armature.image_frames_0 + tmesh->armature.image_frames_1;
+    int total_images = def->image_frames_0 + def->image_frames_1;
 
     if (total_images) {
-        tmesh->armature.frames = malloc(sizeof(sprite_t*) * total_images);
+        def->frames = malloc(sizeof(sprite_t*) * total_images);
         for (int i = 0; i < total_images; i += 1) {
             uint8_t filename_len;
             fread(&filename_len, 1, 1, file);
             char filename[filename_len + 1];
             fread(filename, filename_len, 1, file);
             filename[filename_len] = '\0';
-            tmesh->armature.frames[i] = sprite_cache_load(filename);
+            def->frames[i] = sprite_cache_load(filename);
         }
     } else {
-        tmesh->armature.frames = NULL;
+        def->frames = NULL;
     }
 
-    fread(&tmesh->armature.flags, sizeof(uint16_t), 1, file);
+    fread(&def->placeholder_count, 1, 1, file);
+
+    if (def->placeholder_count) {
+        def->placeholders = malloc(sizeof(material_placeholder_block_definition_t) * def->placeholder_count);
+        fread(def->placeholders, sizeof(material_placeholder_block_definition_t), def->placeholder_count, file);
+    } else {
+        def->placeholders = NULL;
+    }
+
+    fread(&def->flags, sizeof(uint16_t), 1, file);
 }
 
 incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, incremental_loader_step_t* step) {

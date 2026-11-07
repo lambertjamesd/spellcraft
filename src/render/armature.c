@@ -63,6 +63,7 @@ void armature_init(struct armature* armature, struct armature_definition* defini
         armature->bone_count = 0;
         armature->has_prim_color = false;
         armature->has_env_color = false;
+        armature->placeholders = NULL;
     }
 
     armature->definition = definition;
@@ -79,37 +80,26 @@ void armature_init(struct armature* armature, struct armature_definition* defini
     } else {
         armature->pose = 0;
     }
+
+    if (definition->placeholder_count) {
+        armature->placeholders = malloc(sizeof(material_placeholder_block_t) * definition->placeholder_count);
+        
+        for (int i = 0; i < definition->placeholder_count; i += 1) {
+            material_placeholder_block_init(&armature->placeholders[i], &definition->placeholders[i]);
+        }
+    } else {
+        armature->placeholders = NULL;
+    }
 }
 
 void armature_destroy(struct armature* armature) {
+    for (int i = 0; i < armature->definition->placeholder_count; i += 1) {
+        material_placeholder_block_destroy(&armature->placeholders[i]);
+    }
+
+    free(armature->placeholders);
     free(armature->pose);
     armature->pose = 0;
-}
-
-void armature_def_apply(struct armature_definition* definition, T3DMat4FP* pose) {
-    if (!definition->bone_count) {
-        return;
-    }
-
-    struct Transform fullTransforms[definition->bone_count];
-
-    for (int i = 0; i < definition->bone_count; i += 1) {
-        int parent = definition->parent_linkage[i];
-
-        if (parent == ARM_NO_PARENT_LINK) {
-            armature_unpack_transform(&definition->default_pose[i], &fullTransforms[i]);
-        } else {
-            struct Transform unpacked;
-            armature_unpack_transform(&definition->default_pose[i], &unpacked);
-            transformConcat(&fullTransforms[parent], &unpacked, &fullTransforms[i]);
-        }
-
-        T3DMat4 mtx;
-        transformToMatrix(&fullTransforms[i], mtx.m);
-        t3d_mat4_to_fixed(&pose[i], &mtx);
-    }
-
-    data_cache_hit_writeback_invalidate(pose, sizeof(T3DMat4FP) * definition->bone_count);
 }
 
 void armature_build_pose(struct armature* armature, T3DMat4* pose) {

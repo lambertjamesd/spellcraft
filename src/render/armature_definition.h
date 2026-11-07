@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <t3d/t3d.h>
 
+#include "material.h"
+
 #define ARM_NO_PARENT_LINK  0xff
 
 #define ARMATURE_DEF_FLAGS_HAS_PRIM     (1 << 15)
@@ -16,15 +18,6 @@ struct armature_packed_transform {
     int16_t sx, sy, sz;
 };
 
-struct armature_placeholder_block_definition {
-    bool has_prim;
-    bool has_env;
-    bool has_tex0_scroll;
-    bool has_tex1_scroll;
-};
-
-typedef struct armature_placeholder_block_definition armature_placeholder_block_definition_t;
-
 struct armature_definition {
     uint8_t* parent_linkage;
     struct armature_packed_transform* default_pose;
@@ -32,7 +25,7 @@ struct armature_definition {
     uint8_t image_frames_0;
     uint8_t image_frames_1;
     sprite_t** frames;
-    armature_placeholder_block_definition_t* placeholders;
+    material_placeholder_block_definition_t* placeholders;
     uint16_t flags;
     uint8_t placeholder_count;
 };

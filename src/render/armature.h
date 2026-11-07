@@ -24,6 +24,7 @@ struct armature {
     uint16_t has_env_color: 1;
     color_t prim_color;
     color_t env_color;  
+    material_placeholder_block_t* placeholders;
 };
 
 typedef struct armature armature_t;
@@ -33,9 +34,6 @@ void armature_definition_destroy(struct armature_definition* definition);
 
 void armature_init(struct armature* armature, struct armature_definition* definition);
 void armature_destroy(struct armature* armature);
-
-// this wont be needed once instancing is working
-void armature_def_apply(struct armature_definition* definition, T3DMat4FP* pose);
 
 void armature_build_pose(struct armature* armature, T3DMat4* pose);
 

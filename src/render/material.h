@@ -127,22 +127,35 @@ static inline void material_pair_apply(material_pair_t* material, material_pair_
     material_apply(&material->apply);
 }
 
+struct material_placeholder_block_definition {
+    bool has_prim;
+    bool has_env;
+    uint16_t tex0_width;
+    uint16_t tex0_height;
+    uint16_t tex1_width;
+    uint16_t tex1_height;
+};
+
+typedef struct material_placeholder_block_definition material_placeholder_block_definition_t;
+
 struct material_placeholder_block {
     bool has_prim;
     bool has_env;
-    bool has_tex0_scroll;
-    bool has_tex1_scroll;
+    uint16_t tex0_width;
+    uint16_t tex0_height;
+    uint16_t tex1_width;
+    uint16_t tex1_height;
     rspq_block_t* blocks[2];
 };
 
 typedef struct material_placeholder_block material_placeholder_block_t;
 
-void material_placeholder_block_load(material_placeholder_block_t* block, FILE* file);
-void material_placeholder_block_free(material_placeholder_block_t* block);
+void material_placeholder_block_init(material_placeholder_block_t* block, material_placeholder_block_definition_t* def);
+void material_placeholder_block_destroy(material_placeholder_block_t* block);
 
 void material_placeholder_set_prim(material_placeholder_block_t* placeholder, color_t color);
 void material_placeholder_set_env(material_placeholder_block_t* placeholder, color_t color);
-void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0, uint16_t s1, uint16_t t1);
-void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0, uint16_t s1, uint16_t t1);
+void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0);
+void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0);
 
 #endif

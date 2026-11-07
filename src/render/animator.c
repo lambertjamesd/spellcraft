@@ -17,12 +17,13 @@ void animator_init(struct animator* animator, int bone_count) {
     animator->current_clip = NULL;
     animator->current_time = 0.0f;
     animator->blend_lerp = 0.0f;
-    int bone_state_size = ALIGN_UP(sizeof(struct armature_packed_transform) * bone_count + sizeof(uint16_t));
+    // TODO take into account placeholders
+    animator->bone_state_size = ALIGN_UP(sizeof(struct armature_packed_transform) * bone_count + sizeof(uint16_t));
     if (bone_count) {
-        animator->bone_state[0] = malloc(bone_state_size);
-        animator->bone_state[1] = malloc(bone_state_size);
-        data_cache_hit_writeback(animator->bone_state[0], bone_state_size);
-        data_cache_hit_writeback(animator->bone_state[1], bone_state_size);
+        animator->bone_state[0] = malloc(animator->bone_state_size);
+        animator->bone_state[1] = malloc(animator->bone_state_size);
+        data_cache_hit_writeback(animator->bone_state[0], animator->bone_state_size);
+        data_cache_hit_writeback(animator->bone_state[1], animator->bone_state_size);
     } else {
         animator->bone_state[0] = NULL;
         animator->bone_state[1] = NULL;
@@ -73,6 +74,7 @@ void animator_request_frame(struct animator* animator, int next_frame) {
     start &= ~0xF;
     end = (end + 0xF) & ~0xF;
 
+    assert(current_clip->frame_size <= animator->bone_state_size);
     data_cache_hit_invalidate((void*)start, end - start);
     dma_read(animator->bone_state[animator->next_frame_state_index], current_clip->frames_rom_address + current_clip->frame_size * next_frame, current_clip->frame_size);
 }
@@ -153,7 +155,11 @@ void animator_normalize(struct animator* animator, struct Transform* transforms)
     }
 }
 
-void animator_blend_transform(struct animator* animator, int16_t* frame, struct animation_used_attributes* used_attributes, struct Transform* transforms, int bone_count, float weight) {
+void animator_blend_transform(struct animator* animator, int16_t* frame, struct Transform* transforms, material_placeholder_block_t* placeholders, int bone_count, float weight) {
+    animation_clip_t* clip = animator->current_clip;
+
+    struct animation_used_attributes* used_attributes = animator->current_clip->used_bone_attributes;
+
     for (int i = 0; i < bone_count; ++i) {
         struct Transform boneTransform;
         frame = animator_extract_bone(frame, *used_attributes, &boneTransform);
@@ -183,40 +189,71 @@ void animator_blend_transform(struct animator* animator, int16_t* frame, struct 
         used_attributes += 1;
     }
 
-    if (animator->current_clip->has_events) {
+    if (clip->has_events) {
         animator->events.all |= (uint16_t)*frame;
         frame += 1;
     }
 
-    if (animator->current_clip->has_image_frames) {
+    if (clip->has_image_frames) {
         uint16_t frames = (uint16_t)*frame;
         animator->image_frame_0 = (uint8_t)(frames >> 8);
         animator->image_frame_1 = (uint8_t)(frames & 0xFF);
         frame += 1;
     }
 
-    if (animator->current_clip->has_prim_color) {
+    if (clip->has_prim_color) {
         memcpy(&animator->prim_color, frame, sizeof(color_t));
         frame += 2;
     }
 
-    if (animator->current_clip->has_env_color) {
+    if (clip->has_env_color) {
         memcpy(&animator->env_color, frame, sizeof(color_t));
         frame += 2;
     }
+
+    int16_t* frame_end = frame + (clip->placecholders_size >> 1);
+
+    while (frame < frame_end && placeholders) {
+        if (placeholders->has_prim) {
+            material_placeholder_set_prim(placeholders, *(color_t*)frame);
+            frame += 2;
+        }
+        if (placeholders->has_env) {
+            material_placeholder_set_env(placeholders, *(color_t*)frame);
+            frame += 2;
+        }
+        if (placeholders->tex0_width) {
+            material_placeholder_set_scroll0(
+                placeholders, 
+                (uint16_t)frame[0],
+                (uint16_t)frame[1]
+            );
+            frame += 2;
+        }
+        if (placeholders->tex1_width) {
+            material_placeholder_set_scroll1(
+                placeholders, 
+                (uint16_t)frame[0],
+                (uint16_t)frame[1]
+            );
+            frame += 2;
+        }
+
+        placeholders += 1;
+    }
 }
 
-void animator_read_transform_with_weight(struct animator* animator, struct Transform* transforms, float weight) {
+void animator_read_transform_with_weight(struct animator* animator, struct Transform* transforms, material_placeholder_block_t* placeholders, float weight) {
     if (animator->blend_lerp >= 1.0f) {
-        animator_blend_transform(animator, animator->bone_state[animator->next_frame_state_index], animator->current_clip->used_bone_attributes, transforms, animator->bone_count, weight);
+        animator_blend_transform(animator, animator->bone_state[animator->next_frame_state_index], transforms, placeholders, animator->bone_count, weight);
         return;
     }
 
-    animator_blend_transform(animator, animator->bone_state[animator->next_frame_state_index], animator->current_clip->used_bone_attributes, transforms, animator->bone_count, animator->blend_lerp * weight);
-    animator_blend_transform(animator, animator->bone_state[animator->next_frame_state_index ^ 1], animator->current_clip->used_bone_attributes, transforms, animator->bone_count, (1.0f - animator->blend_lerp) * weight);
+    animator_blend_transform(animator, animator->bone_state[animator->next_frame_state_index], transforms, placeholders, animator->bone_count, animator->blend_lerp * weight);
+    animator_blend_transform(animator, animator->bone_state[animator->next_frame_state_index ^ 1], transforms, placeholders, animator->bone_count, (1.0f - animator->blend_lerp) * weight);
 }
 
-void animator_read_transform(struct animator* animator, struct Transform* transforms) {
+void animator_read_transform(struct animator* animator, struct Transform* transforms, material_placeholder_block_t* placeholders) {
     if (animator->next_frame_state_index == -1) {
         return;
     }
@@ -225,12 +262,12 @@ void animator_read_transform(struct animator* animator, struct Transform* transf
         float blend_weight = 1.0f / (animator->blend_frames + 1);
 
         animator_scale_for_blending(animator, animator->current_clip->used_bone_attributes, transforms, 1.0f - blend_weight);
-        animator_read_transform_with_weight(animator, transforms, blend_weight);
+        animator_read_transform_with_weight(animator, transforms, placeholders, blend_weight);
 
         --animator->blend_frames;
     } else {
         animator_init_zero_transform(animator, animator->current_clip->used_bone_attributes, transforms);
-        animator_read_transform_with_weight(animator, transforms, 1.0f);
+        animator_read_transform_with_weight(animator, transforms, placeholders, 1.0f);
     }
 
     animator_normalize(animator, transforms);
@@ -360,7 +397,7 @@ void animator_apply(struct animator* animator, struct armature* armature) {
     animator->last_applied_armature = armature;
 
     animator_request_needed_frames(animator);
-    animator_read_transform(animator, armature->pose);
+    animator_read_transform(animator, armature->pose, armature->placeholders);
     animator_copy_attributes(animator, armature);
 
     if (animator->done) {
@@ -443,7 +480,7 @@ void animation_blender_blend(animation_blender_t* blender, animator_t* animator,
 
     if (animator->next_frame_state_index != -1) {
         animator->events.all = 0;
-        animator_read_transform_with_weight(animator, blender->armature->pose, weight);
+        animator_read_transform_with_weight(animator, blender->armature->pose, blender->armature->placeholders, weight);
     }
 
     animator_step(animator, delta_time);

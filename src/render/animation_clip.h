@@ -23,6 +23,7 @@ struct animation_clip {
     uint16_t has_image_frames: 1;
     uint16_t has_prim_color: 1;
     uint16_t has_env_color: 1;
+    uint16_t placecholders_size: 8;
 
     uint32_t frames_rom_address;
 

@@ -473,11 +473,8 @@ void material_debug(struct material* material, const char* name) {
 }
 
 
-void material_placeholder_block_load(material_placeholder_block_t* placeholder, FILE* file) {
-    fread(&placeholder->has_prim, 1, 1, file);
-    fread(&placeholder->has_env, 1, 1, file);
-    fread(&placeholder->has_tex0_scroll, 1, 1, file);
-    fread(&placeholder->has_tex1_scroll, 1, 1, file);
+void material_placeholder_block_init(material_placeholder_block_t* placeholder, material_placeholder_block_definition_t* def) {
+    memcpy(placeholder, def, sizeof(material_placeholder_block_definition_t));
 
     for (int block_idx = 0; block_idx < 2; block_idx += 1) {
         rspq_block_begin();
@@ -487,17 +484,17 @@ void material_placeholder_block_load(material_placeholder_block_t* placeholder, 
         if (placeholder->has_env) {
             rdpq_set_env_color((color_t){});
         }
-        if (placeholder->has_tex0_scroll) {
+        if (placeholder->tex0_width) {
             rdpq_set_tile_size_fx(TILE0, 0, 0, 0, 0);
         }
-        if (placeholder->has_tex1_scroll) {
+        if (placeholder->tex1_width) {
             rdpq_set_tile_size_fx(TILE1, 0, 0, 0, 0);
         }
         placeholder->blocks[block_idx] = rspq_block_end();
     }
 }
 
-void material_placeholder_block_free(material_placeholder_block_t* placeholder) {
+void material_placeholder_block_destroy(material_placeholder_block_t* placeholder) {
     rspq_block_free(placeholder->blocks[0]);
     rspq_block_free(placeholder->blocks[1]);
 }
@@ -532,8 +529,8 @@ static inline void material_placeholder_write_tile_size(uint32_t* block, rdpq_ti
     block[1] = PACK(tile, 24, 4) | PACK(s1, 12, 12) | PACK(t1, 12, 12);
 }
 
-void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0, uint16_t s1, uint16_t t1) {
-    if (!placeholder->has_tex0_scroll) {
+void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0) {
+    if (!placeholder->tex0_width) {
         return;
     }
 
@@ -547,11 +544,18 @@ void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder,
         cmd += 2;
     }
 
-    material_placeholder_write_tile_size(cmd, TILE0, s0, t0, s1, t1);
+    material_placeholder_write_tile_size(
+        cmd, 
+        TILE0, 
+        s0, 
+        t0, 
+        s0 + (placeholder->tex0_width << 2) - 1,
+        t0 + (placeholder->tex0_height << 2) - 1
+    );
 }
 
-void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0, uint16_t s1, uint16_t t1) {
-    if (!placeholder->has_tex1_scroll) {
+void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0) {
+    if (!placeholder->tex1_width) {
         return;
     }
 
@@ -565,9 +569,16 @@ void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder,
         cmd += 2;
     }
     
-    if (placeholder->has_tex0_scroll) {
+    if (placeholder->tex0_width) {
         cmd += 2;
     }
 
-    material_placeholder_write_tile_size(cmd, TILE1, s0, t0, s1, t1);
+    material_placeholder_write_tile_size(
+        cmd, 
+        TILE1, 
+        s0, 
+        t0, 
+        s0 + (placeholder->tex1_width << 2) - 1,
+        t0 + (placeholder->tex1_height << 2) - 1
+    );
 }

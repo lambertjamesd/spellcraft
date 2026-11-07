@@ -63,9 +63,10 @@ class ArmatureAttributes():
         self.has_image_frames: bool = False
         self.has_prim_color: bool = False
         self.has_env_color: bool = False
+        self.placeholder_size: int = 0
 
     def determine_attribute_list_size(self) -> int:
-        result = 0
+        result = self.placeholder_size
 
         for attr in self.bone_attributes:
             result += attr.determine_attribute_size()
@@ -85,7 +86,7 @@ class ArmatureAttributes():
         return result
     
     def determine_used_flags(self) -> int:
-        result: int = 0
+        result: int = self.placeholder_size << 4
 
         if self.has_events:
             result |= 1 << 15
@@ -177,25 +178,73 @@ class PackedColorData():
         self.r = int((color[0] ** 0.454545) * 255)
         self.g = int((color[1] ** 0.454545) * 255)
         self.b = int((color[2] ** 0.454545) * 255)
-        self.a = int((color[3] ** 0.454545) * 255)
+        self.a = int(color[3] * 255)
 
     def write_to_file(self, file):
         file.write(struct.pack('>BBBB', self.r, self.g, self.b, self.a))
 
+class PlaceholderBlock():
+    def __init__(self, prim: PackedColorData | None, env: PackedColorData | None, tex0_scroll: mathutils.Vector | None, tex1_scroll: mathutils.Vector | None):
+        self.prim: PackedColorData | None = prim
+        self.env: PackedColorData | None = env
+        self.tex0_scroll: mathutils.Vector | None = tex0_scroll
+        self.tex1_scroll: mathutils.Vector | None = tex1_scroll
+        
+    def write_to_file(self, file):
+        if self.prim:
+            self.prim.write_to_file(file)
+        if self.env:
+            self.env.write_to_file(file)
+        if self.tex0_scroll:
+            file.write(struct.pack('>HH', int(self.tex0_scroll.x * 4), int(self.tex0_scroll.y * 4)))
+        if self.tex1_scroll:
+            file.write(struct.pack('>HH', int(self.tex1_scroll.x * 4), int(self.tex1_scroll.y * 4)))
+
+    def byte_size(self):
+        result = 0
+
+        if self.prim:
+            result += 4
+        if self.env:
+            result += 4
+        if self.tex0_scroll:
+            result += 4
+        if self.tex1_scroll:
+            result += 4
+
+        return result
+
 class PackedFrame():
-    def __init__(self, pose: list[PackedArmatureData], events: PackedEventData, image_data: PackedImageFrameData, prim_color: PackedColorData | None, env_color: PackedColorData | None):
+    def __init__(
+            self, 
+            pose: list[PackedArmatureData], 
+            events: PackedEventData, 
+            image_data: PackedImageFrameData, 
+            prim_color: PackedColorData | None, 
+            env_color: PackedColorData | None,
+            placeholders: list[PlaceholderBlock]
+        ):
         self.pose: list[PackedArmatureData] = pose
         self.events: PackedEventData = events
         self.image_data: PackedImageFrameData = image_data
         self.prim_color: PackedColorData | None = prim_color
         self.env_color: PackedColorData | None = env_color
+        self.placeholders: list[PlaceholderBlock] = placeholders
 
 class PackedAnimation():
     def __init__(self):
         self._frames: list[PackedFrame] = []
 
-    def add_frame(self, frame: list[PackedArmatureData], events: PackedEventData, image_data: PackedImageFrameData, prim_color: PackedColorData | None, env_color: PackedColorData | None):
-        self._frames.append(PackedFrame(frame, events, image_data, prim_color, env_color))
+    def add_frame(
+            self, 
+            frame: list[PackedArmatureData], 
+            events: PackedEventData, 
+            image_data: PackedImageFrameData, 
+            prim_color: PackedColorData | None, 
+            env_color: PackedColorData | None,
+            placeholders: list[PlaceholderBlock]
+        ):
+        self._frames.append(PackedFrame(frame, events, image_data, prim_color, env_color, placeholders))
 
     def frame_count(self):
         return len(self._frames)
@@ -219,6 +268,9 @@ class PackedAnimation():
             if frame.env_color:
                 result.has_env_color = True
 
+            if len(frame.placeholders) > 0 and result.placeholder_size == 0:
+                result.placeholder_size = sum(map(lambda x: x.byte_size(), frame.placeholders))
+
         return result
     
     def write_to_file(self, file, attributes: ArmatureAttributes):
@@ -234,6 +286,8 @@ class PackedAnimation():
                 frame.prim_color.write_to_file(file)
             if attributes.has_env_color:
                 frame.env_color.write_to_file(file)
+            for placeholder in frame.placeholders:
+                placeholder.write_to_file(file)
 
 class ArmatureBone:
     def __init__(self, index: int, bone: bpy.types.Bone, pose_bone: bpy.types.PoseBone, armature_transform: mathutils.Matrix):
@@ -275,6 +329,38 @@ def is_connected_to_arm(obj: bpy.types.Object, armature: bpy.types.Armature) -> 
 
     return False
 
+def needs_placeholder(obj: bpy.types.Object):
+    return obj.mat_anim.has_prim or obj.mat_anim.has_env or obj.mat_anim.has_tex0_scroll or obj.mat_anim.has_tex1_scroll
+
+class MaterialPlaceholder:
+    def __init__(self, obj: bpy.types.Object):
+        self.obj: bpy.types.Object = obj
+        self.has_prim: bool = obj.mat_anim.has_prim
+        self.has_env: bool = obj.mat_anim.has_env
+        self.tex0_size = mathutils.Vector()
+        self.tex1_size = mathutils.Vector()
+
+        if obj.mat_anim.has_tex0_scroll or obj.mat_anim.has_tex1_scroll:
+            if not isinstance(obj.data, bpy.types.Mesh):
+                raise Exception(f"{obj.name} is not a mesh")
+
+            mesh: bpy.types.Mesh = obj.data
+            mat = material_extract.load_material_with_name(mesh.materials[0])
+
+            if mat.tex0:
+                self.tex0_size = mathutils.Vector((mat.tex0.width, mat.tex0.height, 0))
+            if mat.tex1:
+                self.tex1_size = mathutils.Vector((mat.tex1.width, mat.tex1.height, 0))
+
+    def has_tex0_scroll(self) -> bool:
+        return self.tex0_size.x != 0
+    
+    def has_tex1_scroll(self) -> bool:
+            return self.tex1_size.x != 0
+
+def _extract_tex_scroll(size: mathutils.Vector, scroll: list[float]) -> mathutils.Vector:
+    return size * mathutils.Vector((scroll[0], scroll[1], 0))
+
 class ArmatureData:
     def __init__(self, obj: bpy.types.Object, base_transform: mathutils.Matrix):
         self.relative_vertex_transform: mathutils.Matrix = base_transform @ obj.matrix_world
@@ -288,6 +374,7 @@ class ArmatureData:
         self._ordered_bones: list[ArmatureBone] = []
         self.image_frame_list_0: list[str] = []
         self.image_frame_list_1: list[str] = []
+        self.placeholder_obj: list[MaterialPlaceholder] = []
 
     def check_connected_mesh_object(self, obj: bpy.types.Object):
         if obj.type != "MESH" or not obj.data or not isinstance(obj.data, bpy.types.Mesh):
@@ -320,6 +407,9 @@ class ArmatureData:
                 self.image_frame_list_0 = parsed_filename.tex0.frame_filenames()
             if parsed_filename.tex1 and parsed_filename.tex1.frames:
                 self.image_frame_list_1 = parsed_filename.tex1.frame_filenames()
+
+        if needs_placeholder(obj):
+            self.placeholder_obj.append(MaterialPlaceholder(obj))
 
 
     def mark_bone_used(self, name: str | None):
@@ -429,17 +519,31 @@ class ArmatureData:
 
         return result
 
-    def gemerate_prim_frame_data(self) -> PackedColorData:
+    def gemerate_prim_frame_data(self) -> PackedColorData | None:
         if 'prim_color' in self.obj:
             return PackedColorData(self.obj['prim_color'])
 
         return None
         
-    def gemerate_env_frame_data(self) -> PackedColorData:
+    def gemerate_env_frame_data(self) -> PackedColorData | None:
         if 'env_color' in self.obj:
             return PackedColorData(self.obj['env_color'])
 
         return None
+
+    def generate_packed_data(self) -> list[PlaceholderBlock]:
+        result: list[PlaceholderBlock] = []
+
+        for placeholder in self.placeholder_obj:
+            result.append(PlaceholderBlock(
+                PackedColorData(placeholder.obj.mat_anim.prim_color) if placeholder.has_prim else None,
+                PackedColorData(placeholder.obj.mat_anim.env_color) if placeholder.has_env else None,
+                _extract_tex_scroll(placeholder.tex0_size, placeholder.obj.mat_anim.tex0_scroll) if placeholder.has_tex0_scroll() else None,
+                _extract_tex_scroll(placeholder.tex1_size, placeholder.obj.mat_anim.tex1_scroll) if placeholder.has_tex1_scroll() else None,
+            ))
+
+        return result
+
 
 def get_channels(group: bpy.types.ActionGroup, suffix: str) -> list[bpy.types.FCurve]:
     result = []
@@ -508,6 +612,19 @@ def write_armature(file, arm: ArmatureData | None, settings: export_settings.Exp
 
     if 'env_color' in arm.obj:
         flags |= 1 << 14
+
+    file.write(struct.pack('>B', len(arm.placeholder_obj)))
+
+    for placeholder in arm.placeholder_obj:
+        file.write(struct.pack(
+            '>BBHHHH', 
+            1 if placeholder.has_prim else 0,
+            1 if placeholder.has_env else 0,
+            int(placeholder.tex0_size.x),
+            int(placeholder.tex0_size.y),
+            int(placeholder.tex1_size.x),
+            int(placeholder.tex1_size.y),
+        ))
 
     file.write(struct.pack('>H', flags))
     

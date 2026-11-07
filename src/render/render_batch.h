@@ -59,6 +59,7 @@ enum element_attr_type {
     ELEMENT_ATTR_TRANSFORM_LIST,
     ELEMENT_ATTR_SCROLL_TEX0,
     ELEMENT_ATTR_SCROLL_TEX1,
+    ELEMENT_ATTR_MAT_PLACEHOLDERS,
 };
 
 struct element_attr {
@@ -77,6 +78,10 @@ struct element_attr {
         struct {
             int16_t x, y;
         } scroll;
+        struct {
+            uint32_t count: 8;
+            uint32_t addr: 24;   
+        } placeholders;
     };
 };
 
