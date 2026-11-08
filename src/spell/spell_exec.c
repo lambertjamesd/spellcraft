@@ -48,9 +48,8 @@ void spell_slot_init(
             } else {
                 if (!rune.watery) {
                     if (rune.earthy) {
-                        struct element_emitter_definition* def = element_emitter_find_def(ELEMENT_TYPE_FIRE, rune.earthy, rune.windy, rune.flaming, rune.watery);
-                        slot->type = SPELL_EXEC_SLOT_TYPE_ELEMENT_EMITTER;
-                        element_emitter_init(&slot->data.element_emitter, input, event_options, def);
+                        slot->type = SPELL_EXEC_SLOT_TYPE_BURST;
+                        burst_attack_init(&slot->data.burst_attack, input, event_options, NULL);
                     } else {
                         slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
                         elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_FIRE);
@@ -249,6 +248,9 @@ void spell_slot_destroy(struct spell_exec* exec, int slot_index) {
         case SPELL_EXEC_SLOT_TYPE_HURRICANE:
             hurricane_destroy(&slot->data.hurricane);
             break;
+        case SPELL_EXEC_SLOT_TYPE_BURST:
+            burst_attack_destroy(&slot->data.burst_attack);
+            break;
         default:
             break;
     }
@@ -308,6 +310,9 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             break;
         case SPELL_EXEC_SLOT_TYPE_HURRICANE:
             isActive = hurricane_update(&slot->data.hurricane);
+            break;
+        case SPELL_EXEC_SLOT_TYPE_BURST:
+            isActive = burst_attack_update(&slot->data.burst_attack);
             break;
         default:
             break;
