@@ -18,6 +18,7 @@ void burst_attack_init(burst_attack_t* burst_attack, struct spell_data_source* s
 
     renderable_single_axis_init(&burst_attack->renderable, &burst_attack->transform, ground_fire.mesh_name);
     render_scene_add_renderable(&burst_attack->renderable, 0.0f);
+    renderable_set_animator(&burst_attack->renderable, &burst_attack->animator);
 
     burst_attack->animations = animation_cache_load(ground_fire.animation_file);
 
