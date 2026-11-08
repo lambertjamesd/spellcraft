@@ -505,6 +505,10 @@ void material_placeholder_set_prim(material_placeholder_block_t* placeholder, co
     }
 
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
+    
+    // skip pipe sync
+    cmd += 2;
+    
     cmd[1] = *(uint32_t*)&color;
 }
 
@@ -514,6 +518,9 @@ void material_placeholder_set_env(material_placeholder_block_t* placeholder, col
     }
 
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
+    
+    // skip pipe sync
+    cmd += 2;
 
     if (placeholder->has_prim) {
         cmd += 2;
@@ -535,6 +542,9 @@ void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder,
     }
 
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
+
+    // skip pipe sync
+    cmd += 2;
 
     if (placeholder->has_prim) {
         cmd += 2;
@@ -560,6 +570,9 @@ void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder,
     }
 
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
+    
+    // skip pipe sync
+    cmd += 2;
 
     if (placeholder->has_prim) {
         cmd += 2;
