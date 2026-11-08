@@ -466,6 +466,13 @@ class ArmatureData:
                 return self._filtered_bones[parent_name]
             
         return None
+
+    def find_placeholder_index(self, obj: bpy.types.Object | None) -> int | None:
+        for idx, placeholder in enumerate(self.placeholder_obj):
+            if placeholder.obj == obj:
+                return idx
+
+        return None
     
     def get_filtered_bones(self) -> list[ArmatureBone]:
         return self._ordered_bones

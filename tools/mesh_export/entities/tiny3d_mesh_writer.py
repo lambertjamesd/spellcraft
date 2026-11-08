@@ -363,6 +363,7 @@ TMESH_COMMAND_VERTICES = 0
 TMESH_COMMAND_TRIANGLES = 1
 TMESH_COMMAND_MATERIAL = 2
 TMESH_COMMAND_BONE = 3
+TMESH_COMMAND_PLACEHOLDER = 4
 
 COLOR_SWEEP_TIME_SCALE = 4096
 
@@ -414,6 +415,9 @@ def _build_material_command(material_index: int):
 
 def _build_bone_command(bone_index: int):
     return struct.pack('>Bh', TMESH_COMMAND_BONE, bone_index)
+
+def _build_placeholder_command(placeholder_index: int):
+    return struct.pack('>BB', TMESH_COMMAND_PLACEHOLDER, placeholder_index)
 
 def _pack_sweep_time(value: float) -> int:
     return min(max(math.floor(value * COLOR_SWEEP_TIME_SCALE + 0.5), 0), COLOR_SWEEP_TIME_SCALE)
@@ -526,9 +530,14 @@ def write_mesh(mesh_list: list[mesh.mesh_data], arm: armature.ArmatureData | Non
     material_transitions: list[tuple[material.Material, material.Material]] = []
 
     current_bone = -1
+    current_placeholder = None
 
     for chunk in chunks:
         _transition_material(current_material, chunk.material, commands, material_transitions)
+
+        if current_placeholder != chunk.data.placeholder_index and chunk.data.placeholder_index is not None:
+            commands.append(_build_placeholder_command(chunk.data.placeholder_index))
+            current_placeholder = chunk.data.placeholder_index
 
         if settings.sort_direction:
             current_bone = _write_much_chunk_sorted(chunk, settings, commands, vertices, settings.sort_direction, current_bone)

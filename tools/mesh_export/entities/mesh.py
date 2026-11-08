@@ -35,7 +35,7 @@ def interpolate_vertex(a: vertex_data, b: vertex_data, lerp: float) -> vertex_da
     )
 
 class mesh_data():
-    def __init__(self, mat: bpy.types.Material | None) -> None:
+    def __init__(self, mat: bpy.types.Material | None, placeholder_index: int | None = None) -> None:
         self.mat: bpy.types.Material | None = mat
         self.vertices: list[mathutils.Vector] = []
         self.normals: list = []
@@ -44,6 +44,8 @@ class mesh_data():
         self.bone_indices: list = []
         
         self.indices: list[int] = []
+
+        self.placeholder_index: int | None = placeholder_index
 
     def copy(self):
         result = mesh_data(self.mat)
@@ -54,6 +56,7 @@ class mesh_data():
         result.uv = self.uv.copy()
         result.indices = self.indices.copy()
         result.bone_indices = self.bone_indices.copy()
+        result.placeholder_index = self.placeholder_index
 
         return result
     
@@ -73,6 +76,7 @@ class mesh_data():
     
     def copy_blank(self):
         result = mesh_data(self.mat)
+        result.placeholder_index = self.placeholder_index
         return result
     
     def translate(self, offset: mathutils.Vector):
@@ -379,7 +383,10 @@ class mesh_list():
                 if parsed_mat.does_scroll() or len(curr.mesh_data) == 0:
                     curr.mesh_data.append([])
 
-                curr_mesh = mesh_data(mat)
+                curr_mesh = mesh_data(
+                    mat,
+                    placeholder_index = armature.find_placeholder_index(entry.obj) if armature else None
+                )
                 curr_mesh.append_mesh(entry.obj, mesh, material_index, transform, armature)
                 curr.mesh_data[-1].append(curr_mesh)
 
@@ -411,7 +418,8 @@ class mesh_list():
                     continue
 
                 if not name in mesh_by_material:
-                    mesh_by_material[name] = mesh_data(mat)
+                    placeholder_index=armature.find_placeholder_index(entry.obj) if armature else None
+                    mesh_by_material[name] = mesh_data(mat, placeholder_index=placeholder_index)
 
                 mesh_data_instance = mesh_by_material[name]
 
