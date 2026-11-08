@@ -45,6 +45,8 @@ void armature_definition_init(struct armature_definition* definition, int bone_c
     definition->frames = NULL;
 
     definition->flags = 0;
+    definition->placeholder_count = 0;
+    definition->placeholders = NULL;
 }
 
 void armature_definition_destroy(struct armature_definition* definition) {
