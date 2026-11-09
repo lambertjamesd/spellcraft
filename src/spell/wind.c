@@ -171,7 +171,9 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     wind->is_casting = false;
     wind->data_source = spell_data_source_retain(source);
 
-    if (!spell_data_source_request_animation(source, SPELL_ANIMATION_CAST_FORWARD)) {
+    if (spell_data_source_request_animation(source, SPELL_ANIMATION_CAST_FORWARD)) {
+        source->flags.source = SPELL_CAST_SOURCE_STAFF;
+    } else {
         wind_activate(wind);
     }
 }

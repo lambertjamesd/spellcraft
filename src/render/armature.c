@@ -95,7 +95,7 @@ void armature_init(struct armature* armature, struct armature_definition* defini
 }
 
 void armature_destroy(struct armature* armature) {
-    for (int i = 0; i < armature->definition && armature->definition->placeholder_count; i += 1) {
+    for (int i = 0; armature->definition && i < armature->definition->placeholder_count; i += 1) {
         material_placeholder_block_destroy(&armature->placeholders[i]);
     }
 

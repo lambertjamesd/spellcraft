@@ -522,6 +522,7 @@ void spell_exec_start(struct spell_exec* exec, int button_index, struct spell* s
         return;
     }
 
+    data_source->flags.source = SPELL_CAST_SOURCE_CENTER;
     spell_exec_step(exec, button_index, spell, 0, data_source, 0.0f);
 }
 

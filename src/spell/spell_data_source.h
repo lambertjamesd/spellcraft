@@ -27,6 +27,12 @@ enum spell_animation {
     SPELL_ANIMATION_CAST_FORWARD_HOLD,
 };
 
+enum spell_cast_source {
+    SPELL_CAST_SOURCE_CENTER,
+    SPELL_CAST_SOURCE_STAFF,
+    SPELL_CAST_SOURCE_FEET,
+};
+
 union spell_source_flags {
     struct {
         uint16_t cast_state: 2;
@@ -35,6 +41,8 @@ union spell_source_flags {
         uint16_t can_recast: 1;
         uint16_t cast_held: 1;
         uint16_t animator_attack: 1;
+        uint16_t source: 2;
+
     };
     uint16_t all;
 };

@@ -109,6 +109,10 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
 
     elemental_sword->has_animation = spell_data_source_request_animation(source, elemental_sword->definition->animation);
 
+    if (elemental_sword->has_animation) {
+        source->flags.source = SPELL_CAST_SOURCE_STAFF;
+    }
+
     render_scene_add(&source->position, 1.0f, elemental_sword_render, elemental_sword);
 
     elemental_sword->mesh = element_type == ELEMENT_TYPE_ICE ? spell_assets_get()->ice_sword : spell_assets_get()->fire_sword;
