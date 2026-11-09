@@ -82,8 +82,6 @@ def process_part(name: str, data: part_data, mk_asset: str, build_dir: str, outp
     # uncompressed intermediate mesh goes in the build directory
     intermediate_filename = os.path.join(build_dir, f"{part_name}.tmesh")
 
-    print(intermediate_filename, name)
-
     with open(intermediate_filename, 'wb') as file:
         mesh_export.entities.tiny3d_mesh_writer.write_mesh(meshes, arm, attachments, settings, file)
 

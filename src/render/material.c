@@ -499,6 +499,9 @@ void material_placeholder_block_destroy(material_placeholder_block_t* placeholde
     rspq_block_free(placeholder->blocks[1]);
 }
 
+#define UNPACK(value, offset, size)        (((value) >> offset) & ((1 << (size)) - 1))
+#define PACK(value, offset, size)   (((uint32_t)(value) & ((1 << (size)) - 1)) << (offset))
+
 void material_placeholder_set_prim(material_placeholder_block_t* placeholder, color_t color) {
     if (!placeholder->has_prim) {
         return;
@@ -509,6 +512,7 @@ void material_placeholder_set_prim(material_placeholder_block_t* placeholder, co
     // skip pipe sync
     cmd += 2;
     
+    assert(UNPACK(cmd[0], 24, 6) == RDPQ_CMD_SET_PRIM_COLOR);
     cmd[1] = *(uint32_t*)&color;
 }
 
@@ -526,14 +530,14 @@ void material_placeholder_set_env(material_placeholder_block_t* placeholder, col
         cmd += 2;
     }
 
+    assert(UNPACK(cmd[0], 24, 6) == RDPQ_CMD_SET_ENV_COLOR);
     cmd[1] = *(uint32_t*)&color;
 }
 
-#define PACK(value, offset, size)   (((uint32_t)(value) & ((1 << (size)) - 1)) << (offset))
-
 static inline void material_placeholder_write_tile_size(uint32_t* block, rdpq_tile_t tile, uint16_t s0, uint16_t t0, uint16_t s1, uint16_t t1) {
-    block[0] = PACK(RDPQ_CMD_SET_TILE_SIZE, 24, 8) | PACK(s0, 12, 12) | PACK(t0, 12, 12);
-    block[1] = PACK(tile, 24, 4) | PACK(s1, 12, 12) | PACK(t1, 12, 12);
+    assert(UNPACK(block[0], 24, 6) == RDPQ_CMD_SET_TILE_SIZE);
+    block[0] = PACK(3, 30, 2) | PACK(RDPQ_CMD_SET_TILE_SIZE, 24, 6) | PACK(s0, 12, 12) | PACK(t0, 0, 12);
+    block[1] = PACK(tile, 24, 3) | PACK(s1, 12, 12) | PACK(t1, 0, 12);
 }
 
 void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder, uint16_t s0, uint16_t t0) {
@@ -543,8 +547,10 @@ void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder,
 
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
 
-    // skip pipe sync
-    cmd += 2;
+    if (placeholder->has_prim || placeholder->has_env) {
+        // skip pipe sync
+        cmd += 2;
+    }
 
     if (placeholder->has_prim) {
         cmd += 2;
@@ -553,14 +559,17 @@ void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder,
     if (placeholder->has_env) {
         cmd += 2;
     }
+    
+    // skip tile sync
+    cmd += 2;
 
     material_placeholder_write_tile_size(
         cmd, 
         TILE0, 
         s0, 
         t0, 
-        s0 + (placeholder->tex0_width << 2) - 1,
-        t0 + (placeholder->tex0_height << 2) - 1
+        s0 + (placeholder->tex0_width << 2) - 4,
+        t0 + (placeholder->tex0_height << 2) - 4
     );
 }
 
@@ -571,8 +580,10 @@ void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder,
 
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
     
-    // skip pipe sync
-    cmd += 2;
+    if (placeholder->has_prim || placeholder->has_env) {
+        // skip pipe sync
+        cmd += 2;
+    }
 
     if (placeholder->has_prim) {
         cmd += 2;
@@ -586,12 +597,15 @@ void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder,
         cmd += 2;
     }
 
+    // skip tile sync
+    cmd += 2;
+
     material_placeholder_write_tile_size(
         cmd, 
         TILE1, 
         s0, 
         t0, 
-        s0 + (placeholder->tex1_width << 2) - 1,
-        t0 + (placeholder->tex1_height << 2) - 1
+        s0 + (placeholder->tex1_width << 2) - 4,
+        t0 + (placeholder->tex1_height << 2) - 4
     );
 }

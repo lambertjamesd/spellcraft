@@ -83,7 +83,7 @@ void armature_init(struct armature* armature, struct armature_definition* defini
         armature->pose = 0;
     }
 
-    if (definition->placeholder_count) {
+    if (definition && definition->placeholder_count) {
         armature->placeholders = malloc(sizeof(material_placeholder_block_t) * definition->placeholder_count);
         
         for (int i = 0; i < definition->placeholder_count; i += 1) {

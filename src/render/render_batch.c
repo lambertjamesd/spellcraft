@@ -593,6 +593,7 @@ void render_batch_finish(struct render_batch* batch, mat4x4 view_proj_matrix, T3
 
                         for (int i = 0; i < count; i += 1) {
                             rspq_block_set_placeholder((rspq_block_t*)i, placeholder->blocks[render_parity]);
+                            placeholder += 1;
                         }
                         break;
                     }
