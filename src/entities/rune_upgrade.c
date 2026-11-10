@@ -95,7 +95,7 @@ void rune_upgrade_init(rune_upgrade_t* rune_upgrade, struct rune_upgrade_definit
     rune_upgrade->attrs[1] = (element_attr_t){.type = ELEMENT_ATTR_NONE};
     rune_upgrade->renderable.attrs = &rune_upgrade->attrs[0];
 
-    animator_init(&rune_upgrade->animator, rune_upgrade->renderable.mesh_render.armature.bone_count);
+    animator_init(&rune_upgrade->animator, rune_upgrade->renderable.mesh_render.armature.definition);
     renderable_set_animator(&rune_upgrade->renderable, &rune_upgrade->animator);
     update_add(rune_upgrade, rune_upgrade_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_CUTSCENE | UPDATE_LAYER_WORLD);
 

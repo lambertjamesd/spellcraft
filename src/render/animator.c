@@ -13,12 +13,33 @@ void animator_sync() {
     dma_wait();
 }
 
-void animator_init(struct animator* animator, int bone_count) {
+int animator_placeholder_size(material_placeholder_block_definition_t* def) {
+    int result = 0;
+
+    if (def->has_env) result += 4;
+    if (def->has_prim) result += 4;
+    if (def->tex0_width) result += 4;
+    if (def->tex1_width) result += 4;
+
+    return result;
+}
+
+void animator_init(struct animator* animator, armature_definition_t* arm_def) {
     animator->current_clip = NULL;
     animator->current_time = 0.0f;
     animator->blend_lerp = 0.0f;
-    // TODO take into account placeholders
-    animator->bone_state_size = ALIGN_UP(sizeof(struct armature_packed_transform) * bone_count + sizeof(uint16_t));
+
+    int bone_count = arm_def ? arm_def->bone_count : 0;
+
+    int placeholder_size = 0;
+
+    if (arm_def) {
+        for (int i = 0; i < arm_def->placeholder_count; i += 1) {
+            placeholder_size += animator_placeholder_size(&arm_def->placeholders[i]);
+        }
+    }
+
+    animator->bone_state_size = ALIGN_UP(sizeof(struct armature_packed_transform) * bone_count + sizeof(uint16_t) + placeholder_size);
     if (bone_count) {
         animator->bone_state[0] = malloc(animator->bone_state_size);
         animator->bone_state[1] = malloc(animator->bone_state_size);

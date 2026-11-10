@@ -939,7 +939,7 @@ class Material():
     def is_empty(self):
         return self.combine_mode == None and self.other_modes == None and self.env_color == None and self.prim_color == None and \
             self.blend_color == None and self.lighting == None and self.tex0 == None and self.tex1 == None and self.culling == None and \
-            self.vtx_effect == None and self.fog == None and self.flags == None
+            self.vtx_effect == None and self.fog == None and self.flags == None and self.priority == None
 
     def __str__(self):
         return f"""Material {self.name}: ({self.priority}) 

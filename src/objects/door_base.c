@@ -236,7 +236,7 @@ void door_base_init(door_base_t* door, door_base_definition_t* definition, entit
     door->lock_animation_set = NULL;
     door->is_unlocking = false;
     door->interact_blocker = NULL;
-    animator_init(&door->lock_animator, 0);
+    animator_init(&door->lock_animator, NULL);
     armature_init(&door->lock_armatrue, NULL);
 
     collision_scene_add(&door->collider);
@@ -247,7 +247,7 @@ void door_base_init(door_base_t* door, door_base_definition_t* definition, entit
     door->animations.open = animation_set_find_clip(door->animation_set, "open");
     door->animations.close = animation_set_find_clip(door->animation_set, "close");
 
-    animator_init(&door->animator, door->renderable.mesh_render.armature.bone_count);
+    animator_init(&door->animator, door->renderable.mesh_render.armature.definition);
     animator_run_clip(&door->animator, door->animations.close, animation_clip_get_duration(door->animations.close), false);
 }
 
@@ -277,7 +277,7 @@ void door_base_lock(door_base_t* door, door_lock_definition_t* lock_definition) 
     door->lock_model = tmesh_cache_load(lock_definition->mesh_filename);
     door->animation_set = lock_definition->animations_filename ? animation_cache_load(lock_definition->animations_filename) : NULL;
 
-    animator_init(&door->lock_animator, door->lock_model->armature.bone_count);
+    animator_init(&door->lock_animator, &door->lock_model->armature);
     armature_init(&door->lock_armatrue, &door->lock_model->armature);
 
     animator_run_clip(&door->lock_animator, animation_set_find_clip(door->animation_set, "lock"), 0.0f, false);

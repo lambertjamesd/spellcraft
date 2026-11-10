@@ -30,6 +30,7 @@
 #include "profile/metrics.h"
 #include "profile/profile.h"
 #include "render/blur/blur.h"
+#include "render/render.h"
 
 #include <libdragon.h>
 #include <n64sys.h>
@@ -192,6 +193,9 @@ void render(surface_t* col, surface_t* zbuffer, struct frame_memory_pool* pool) 
         rdpq_tex_blit(&background, 0, 0, NULL);
     }
     render_menu(pool);
+
+    render_parity = render_parity ^ 0x1;
+
 #if ENABLE_PROFILE_rsp
     rsp_timer_end(0, &rsp_timer_output);
 #endif

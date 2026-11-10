@@ -53,7 +53,7 @@ void cutscene_actor_init(
     actor->animations.walk = animation_set_find_clip(actor->animation_set, "walk");
     actor->animations.run = animation_set_find_clip(actor->animation_set, "run");
 
-    animator_init(&actor->animator, armature ? armature->bone_count : 0);
+    animator_init(&actor->animator, armature ? armature->definition : NULL);
     actor->armature = armature;
     actor->target = gZeroVec;
     actor->animate_speed = 1.0f;

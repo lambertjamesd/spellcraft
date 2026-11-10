@@ -16,7 +16,7 @@ struct mesh_animation* mesh_animation_new(struct Vector3* position, struct Vecto
 
     render_scene_add_renderable(&result->renderable, 1.0f);
 
-    animator_init(&result->animtor, mesh->armature.bone_count);
+    animator_init(&result->animtor, &mesh->armature);
     animator_run_clip(&result->animtor, clip, 0.0f, false);
 
     result->animations = NULL;

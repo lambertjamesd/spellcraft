@@ -324,7 +324,7 @@ void biter_init(struct biter* biter, struct biter_definition* definition, entity
     biter->current_state = BITER_STATE_IDLE;
     biter->rest_timer = 0.0f;
 
-    animator_init(&biter->animator, biter->renderable.mesh_render.armature.bone_count);
+    animator_init(&biter->animator, biter->renderable.mesh_render.armature.definition);
 
     vector2ComplexFromAngle(fixed_time_step * 3.0f, &biter_max_rotation);
     biter_enter_idle(biter);

@@ -55,6 +55,10 @@ enum player_animation {
     PLAYER_ANIMATION_AIR_DASH,
     PLAYER_ANIMATION_TAKE_DAMAGE,
     
+    PLAYER_ANIMATION_ATTACK_GROUND,
+    PLAYER_ANIMATION_ATTACK_GROUND_HOLD,
+    PLAYER_ANIMATION_ATTACK_GROUND_END,
+    
     PLAYER_ANIMATION_TREAD_WATER,
     PLAYER_ANIMATION_SWIM,
     
@@ -106,6 +110,8 @@ enum player_animation {
 
     PLAYER_ANIMATION_COUNT,
 };
+
+typedef enum player_animation player_animation_t;
 
 enum player_sound {
     PLAYER_SOUND_COUNT,

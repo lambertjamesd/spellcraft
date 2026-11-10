@@ -76,7 +76,7 @@ void treasure_chest_init(struct treasure_chest* treasure_chest, struct treasure_
     treasure_chest->animations.open = animation_set_find_clip(treasure_chest->animation_set, "open");
     treasure_chest->animations.idle = animation_set_find_clip(treasure_chest->animation_set, "idle");
 
-    animator_init(&treasure_chest->animator, treasure_chest->renderable.mesh_render.armature.bone_count);
+    animator_init(&treasure_chest->animator, treasure_chest->renderable.mesh_render.armature.definition);
     update_add(treasure_chest, treasure_chest_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 
     bool has_item;

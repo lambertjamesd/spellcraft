@@ -43,7 +43,7 @@ struct animator {
 
 typedef struct animator animator_t;
 
-void animator_init(struct animator* animator, int bone_count);
+void animator_init(struct animator* animator, armature_definition_t* arm_def);
 void animator_destroy(struct animator* animator);
 void animator_update(struct animator* animator, float delta_time);
 void animator_apply(struct animator* animator, struct armature* armature);

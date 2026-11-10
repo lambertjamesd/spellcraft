@@ -72,6 +72,19 @@ def process_part(name: str, data: part_data, mk_asset: str, build_dir: str, outp
         settings.default_material = mesh_export.entities.material_extract.load_material_with_name(meshes[0].mat)
         print('single material, using as default')
     else:
+        priority = 100
+
+        for mesh in meshes:
+            mesh_priority = mesh_export.entities.material_extract.load_material_with_name(mesh.mat).priority
+
+            if mesh_priority is not None and mesh_priority < priority:
+                priority = mesh_priority
+
+        if priority != 100 and priority != 1:
+            print(f"using mesh priority {priority}")
+            settings.default_material.priority = priority
+            settings.default_material_name = ""
+
         print('no default material')
 
     if 'light_source' in use_scene:

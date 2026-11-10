@@ -763,36 +763,36 @@ bool player_handle_a_action(struct player* player, interactable_t* interactable,
     return false;
 }
 
+static player_animation_t spell_animation_mapping[SPELL_ANIMATION_COUNT] = {
+    [SPELL_ANIMATION_NONE] = PLAYER_ANIMATION_COUNT,
+    [SPELL_ANIMATION_SWING_0] = PLAYER_ANIMATION_SWING_ATTACK_0,
+    [SPELL_ANIMATION_SWING_1] = PLAYER_ANIMATION_SWING_ATTACK_1,
+    [SPELL_ANIMATION_SPIN] = PLAYER_ANIMATION_SPIN_ATTACK,
+    [SPELL_ANIMATION_CAST_UP] = PLAYER_ANIMATION_CAST_UP,
+    [SPELL_ANIMATION_CAST_FORWARD] = PLAYER_ANIMATION_ATTACK,
+    [SPELL_ANIMATION_CAST_FORWARD_HOLD] = PLAYER_ANIMATION_ATTACK_HOLD,
+    [SPELL_ANIMATION_CAST_FORWARD_END] = PLAYER_ANIMATION_COUNT,
+    [SPELL_ANIMATION_CAST_GROUND] = PLAYER_ANIMATION_ATTACK_GROUND,
+    [SPELL_ANIMATION_CAST_GROUND_HOLD] = PLAYER_ANIMATION_ATTACK_GROUND_HOLD,
+    [SPELL_ANIMATION_CAST_GROUND_END] = PLAYER_ANIMATION_ATTACK_GROUND_END,
+};
+
 void player_check_for_animation_request(struct player* player, struct spell_data_source* source) {
     if (source->request_animation) {
         source->flags.is_animating = 1;
 
-        enum player_animation to_play = PLAYER_ANIMATION_COUNT;
-        switch (source->request_animation) {
-            case SPELL_ANIMATION_SWING_0:
-                to_play = PLAYER_ANIMATION_SWING_ATTACK_0;
-                break;
-            case SPELL_ANIMATION_SWING_1:
-                to_play = PLAYER_ANIMATION_SWING_ATTACK_1;
-                break;
-            case SPELL_ANIMATION_SPIN:
-                to_play = PLAYER_ANIMATION_SPIN_ATTACK;
-                break;
-            case SPELL_ANIMATION_CAST_UP:
-                to_play = PLAYER_ANIMATION_CAST_UP;
-                break;
-            case SPELL_ANIMATION_CAST_FORWARD:
-                to_play = PLAYER_ANIMATION_ATTACK;
-                break;
-            case SPELL_ANIMATION_CAST_FORWARD_HOLD:
-                to_play = PLAYER_ANIMATION_ATTACK_HOLD;
-                break;
-        }
+        enum player_animation to_play = source->request_animation < SPELL_ANIMATION_COUNT ? 
+            spell_animation_mapping[source->request_animation] : 
+            PLAYER_ANIMATION_COUNT;
         
         if (to_play != PLAYER_ANIMATION_COUNT) {
             if (!player_is_running(player, to_play)) {
                 player_run_clip(player, to_play);
             }
+            if (source->flags.source == SPELL_CAST_SOURCE_STAFF) {
+                player->cutscene_actor.animator.blend_frames = 0;
+            }
+
             player->last_spell_animation = player->animations[to_play];
         } else {
             player->last_spell_animation = NULL;
@@ -1749,6 +1749,10 @@ static const char* animation_clip_names[PLAYER_ANIMATION_COUNT] = {
     [PLAYER_ANIMATION_ATTACK_HOLD] = "attack1_hold",
     [PLAYER_ANIMATION_AIR_DASH] = "air_das",
     [PLAYER_ANIMATION_TAKE_DAMAGE] = "take_damage",
+    
+    [PLAYER_ANIMATION_ATTACK_GROUND] = "attack_ground_start",
+    [PLAYER_ANIMATION_ATTACK_GROUND_HOLD] = "attack_ground_loop",
+    [PLAYER_ANIMATION_ATTACK_GROUND_END] = "attack_ground_end",
     
     [PLAYER_ANIMATION_TREAD_WATER] = "tread_water",
     [PLAYER_ANIMATION_SWIM] = "swim",

@@ -10,15 +10,24 @@
 #include "../render/renderable.h"
 #include "../render/animator.h"
 #include "../render/animation_clip.h"
+#include "../entity/damage.h"
 
 struct burst_attack_definition {
     const char* mesh_name;
     const char* animation_file;
     const char* animation;
-    collider_shape_t collider;
+    dynamic_object_type_t collider;
+    spell_animation_t player_anim;
+    struct damage_source damage_source;
 };
 
 typedef struct burst_attack_definition burst_attack_definition_t;
+
+enum spell_burst_phase {
+    SPELL_BURST_PHASE_START,
+    SPELL_BURST_PHASE_DAMAGE,
+    SPELL_BURST_PHASE_END,
+};
 
 struct burst_attack {
     transform_sa_t transform;
@@ -26,12 +35,16 @@ struct burst_attack {
     animator_t animator;
     animation_set_t* animations;
     dynamic_object_t collider;
-    struct spell_data_source* data_source;
+    spell_data_source_t* data_source;
+    burst_attack_definition_t* def;
+    bool has_spell;
+    uint8_t spell_phase;
+    struct damaged_set damaged_set;
 };
 
 typedef struct burst_attack burst_attack_t;
 
-void burst_attack_init(burst_attack_t* burst_attack, struct spell_data_source* source, struct spell_event_options event_options, burst_attack_definition_t* effect_definition);
+void burst_attack_init(burst_attack_t* burst_attack, spell_data_source_t* source, struct spell_event_options event_options, burst_attack_definition_t* effect_definition);
 void burst_attack_destroy(burst_attack_t* burst_attack);
 
 bool burst_attack_update(burst_attack_t* burst_attack);

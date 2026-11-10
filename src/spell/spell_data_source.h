@@ -25,7 +25,15 @@ enum spell_animation {
     SPELL_ANIMATION_CAST_UP,
     SPELL_ANIMATION_CAST_FORWARD,
     SPELL_ANIMATION_CAST_FORWARD_HOLD,
+    SPELL_ANIMATION_CAST_FORWARD_END,
+    SPELL_ANIMATION_CAST_GROUND,
+    SPELL_ANIMATION_CAST_GROUND_HOLD,
+    SPELL_ANIMATION_CAST_GROUND_END,
+
+    SPELL_ANIMATION_COUNT,
 };
+
+typedef enum spell_animation spell_animation_t;
 
 enum spell_cast_source {
     SPELL_CAST_SOURCE_CENTER,
@@ -78,6 +86,10 @@ struct spell_data_source* spell_data_source_retain(struct spell_data_source* dat
 void spell_data_source_release(struct spell_data_source* data_source);
 bool spell_data_source_request_animation(struct spell_data_source* data_source, enum spell_animation animation);
 void spell_data_source_cancel_animation(struct spell_data_source* data_source);
+
+static inline void spell_data_source_set_cast_source(spell_data_source_t* data_source, enum spell_cast_source source) {
+    data_source->flags.source = source;
+}
 
 void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform);
 

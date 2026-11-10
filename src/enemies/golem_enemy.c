@@ -475,7 +475,7 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
 
     renderable_single_axis_init_direct(&golem_enemy->renderable, &golem_enemy->transform, golem_full);
     render_scene_add(&golem_enemy->transform.position, 1.5f, golem_enemy_render, golem_enemy);
-    animator_init(&golem_enemy->animator, golem_full->armature.bone_count);
+    animator_init(&golem_enemy->animator, &golem_full->armature);
 
     spatial_trigger_init(&golem_enemy->vision, &golem_enemy->head_transform, &golem_vision, COLLISION_LAYER_DAMAGE_PLAYER, entity_id);
     collision_scene_add_trigger(&golem_enemy->vision);

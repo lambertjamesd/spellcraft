@@ -511,7 +511,7 @@ class ArmatureData:
         result: PackedEventData = PackedEventData()
 
         for index, name in enumerate(event_names):
-            if name in self.obj and self.obj[name]:
+            if getattr(self.obj.arm_anim, name) or name in self.obj and self.obj[name]:
                 result.add_event(index)
 
         return result
