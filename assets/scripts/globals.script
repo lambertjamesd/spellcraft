@@ -2,7 +2,7 @@
 global has_staff_default: bool = true;
 global has_talked_outside: bool;
 
-global fire_rune_level: i8 = 1;
+global fire_rune_level: i8 = 2;
 global fire_rune_has_level_0: bool;
 global fire_rune_has_level_1: bool;
 global fire_rune_has_level_2: bool;
