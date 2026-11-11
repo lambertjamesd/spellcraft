@@ -214,7 +214,7 @@ void collide_object_to_object(struct dynamic_object* a, struct dynamic_object* b
         return;
     }
 
-    if (a->trigger_type != 0 && b->trigger_type != 0) {
+    if (a->trigger_type != TRIGGER_TYPE_NONE && b->trigger_type != TRIGGER_TYPE_NONE) {
         return;
     }
 

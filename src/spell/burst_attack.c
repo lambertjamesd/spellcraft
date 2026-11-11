@@ -44,11 +44,19 @@ void burst_attack_create_spell(burst_attack_t* burst_attack) {
     animator_init(&burst_attack->animator, burst_attack->renderable.mesh_render.armature.definition);
     animator_run_clip(&burst_attack->animator, animation_set_find_clip(burst_attack->animations, burst_attack->def->animation), 0.0f, false);
 
-    dynamic_object_init(entity_id_new(), &burst_attack->collider, &burst_attack->def->collider, COLLISION_LAYER_DAMAGE_ENEMY, &burst_attack->transform.position, &burst_attack->transform.rotation);
+    dynamic_object_init(
+        entity_id_new(), 
+        &burst_attack->collider, 
+        &burst_attack->def->collider,
+        COLLISION_LAYER_DAMAGE_ENEMY, 
+        &burst_attack->transform.position, 
+        &burst_attack->transform.rotation
+    );
+    dynamic_object_wake(&burst_attack->collider);
 
     burst_attack->collider.is_fixed = true;
     burst_attack->collider.weight_class = WEIGHT_CLASS_GHOST;
-    burst_attack->collider.trigger_type = TRIGGER_TYPE_BASIC;
+    burst_attack->collider.trigger_type = TRIGGER_TYPE_OVERLAP;
 
     collision_scene_add(&burst_attack->collider);
 }
