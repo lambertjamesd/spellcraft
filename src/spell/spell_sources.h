@@ -9,6 +9,8 @@ struct spell_sources {
     struct mana_pool mana_pool; 
 };
 
+typedef struct spell_sources spell_sources_t;
+
 void spell_sources_init(struct spell_sources* sources);
 
 #endif

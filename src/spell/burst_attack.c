@@ -7,7 +7,7 @@
 #include "../time/time.h"
 #include "../entity/health.h"
 
-static burst_attack_definition_t ground_fire = {
+burst_attack_definition_t burst_attack_ground_fire = {
     .mesh_name = "rom:/meshes/spell/groundfire.tmesh",
     .animation_file = "rom:/meshes/spell/groundfire.anim",
     .animation = "attack",
@@ -19,21 +19,24 @@ static burst_attack_definition_t ground_fire = {
     },
 
     .damage_source = {
-        .amount = 10.0f,
+        .amount = 20.0f,
         .type = DAMAGE_TYPE_FIRE,
     },
+
+    .mana_cost = 5.0f,
 };
 
-void burst_attack_create_spell(burst_attack_t* burst_attack) {
+void burst_attack_create_spell(burst_attack_t* burst_attack, float scale) {
     if (burst_attack->has_spell) {
         return;
     }
 
     vector2_t rotation;
     vector2LookDir(&rotation, &burst_attack->data_source->direction);
-    transformSaInit(&burst_attack->transform, &burst_attack->data_source->position, &rotation, 1.0f);
+    transformSaInit(&burst_attack->transform, &burst_attack->data_source->position, &rotation, scale);
 
     burst_attack->has_spell = true;
+    burst_attack->damage_source.amount *= scale;
     
     renderable_single_axis_init(&burst_attack->renderable, &burst_attack->transform, burst_attack->def->mesh_name);
     render_scene_add_renderable(&burst_attack->renderable, 0.0f);
@@ -52,7 +55,9 @@ void burst_attack_create_spell(burst_attack_t* burst_attack) {
         &burst_attack->transform.position, 
         &burst_attack->transform.rotation
     );
+    burst_attack->collider.scale = scale;
     dynamic_object_wake(&burst_attack->collider);
+    dynamic_object_recalc_bb(&burst_attack->collider);
 
     burst_attack->collider.is_fixed = true;
     burst_attack->collider.weight_class = WEIGHT_CLASS_GHOST;
@@ -74,12 +79,12 @@ void burst_attack_destroy_spell(burst_attack_t* burst_attack) {
     collision_scene_remove(&burst_attack->collider);
 }
 
-void burst_attack_init(burst_attack_t* burst_attack, spell_data_source_t* source, struct spell_event_options event_options, burst_attack_definition_t* effect_definition) {
+void burst_attack_init(burst_attack_t* burst_attack, spell_data_source_t* source, burst_attack_definition_t* effect_definition) {
     vector2_t rotation;
     vector2LookDir(&rotation, &source->direction);
     transformSaInit(&burst_attack->transform, &source->position, &rotation, 1.0f);
 
-    burst_attack->def = &ground_fire;
+    burst_attack->def = effect_definition;
     burst_attack->data_source = spell_data_source_retain(source);
     burst_attack->has_spell = false;
     burst_attack->spell_phase = SPELL_BURST_PHASE_START;
@@ -89,6 +94,8 @@ void burst_attack_init(burst_attack_t* burst_attack, spell_data_source_t* source
     spell_data_source_set_cast_source(source, SPELL_CAST_SOURCE_FEET);
 
     spell_data_source_request_animation(source, burst_attack->def->player_anim);
+
+    burst_attack->damage_source = effect_definition->damage_source;
 }
 
 void burst_attack_destroy(burst_attack_t* burst_attack) {
@@ -96,12 +103,8 @@ void burst_attack_destroy(burst_attack_t* burst_attack) {
     spell_data_source_release(burst_attack->data_source);
 }
 
-bool burst_attack_update(burst_attack_t* burst_attack) {
+bool burst_attack_update(burst_attack_t* burst_attack, spell_sources_t* spell_sources) {
     animator_update(&burst_attack->animator, fixed_time_step);
-
-    if (!burst_attack->data_source->flags.is_animating && burst_attack->spell_phase != SPELL_BURST_PHASE_END) {
-        spell_data_source_request_animation(burst_attack->data_source, burst_attack->def->player_anim + 1);
-    }
 
     if (burst_attack->has_spell) {
         switch (burst_attack->spell_phase) {
@@ -112,10 +115,13 @@ bool burst_attack_update(burst_attack_t* burst_attack) {
                 break;
             case SPELL_BURST_PHASE_DAMAGE:
                 if (!burst_attack->animator.events.attack) {
-                    spell_data_source_request_animation(burst_attack->data_source, burst_attack->def->player_anim + 2);
                     burst_attack->spell_phase = SPELL_BURST_PHASE_END;
                 } else {
-                    health_apply_contact_damage(burst_attack->collider.active_contacts, &burst_attack->def->damage_source, &burst_attack->damaged_set);
+                    health_apply_contact_damage(
+                        burst_attack->collider.active_contacts, 
+                        &burst_attack->damage_source, 
+                        &burst_attack->damaged_set
+                    );
                 }
                 break;
             case SPELL_BURST_PHASE_END:
@@ -125,10 +131,16 @@ bool burst_attack_update(burst_attack_t* burst_attack) {
                 break;
         }
     } else if (burst_attack->spell_phase == SPELL_BURST_PHASE_START) {
-        if (burst_attack->data_source->flags.cast_state) {
-            burst_attack_create_spell(burst_attack);
+        if (burst_attack->data_source->flags.cast_state && !burst_attack->has_spell) {
+            float mana = mana_pool_request(&spell_sources->mana_pool, burst_attack->def->mana_cost);
+            if (mana > 0.0f) {
+                burst_attack_create_spell(burst_attack, mana / burst_attack->def->mana_cost);
+            } else {
+                burst_attack->spell_phase = SPELL_BURST_PHASE_END;
+            }
+            
         }
     }
 
-    return burst_attack->has_spell || burst_attack->spell_phase != SPELL_BURST_PHASE_END || burst_attack->data_source->flags.is_animating;
+    return burst_attack->has_spell || burst_attack->spell_phase != SPELL_BURST_PHASE_END;
 }

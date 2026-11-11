@@ -122,15 +122,11 @@ void breakable_update(void* data) {
             breakable->interactable.interact_type = INTERACT_TYPE_NONE;
             breakable->collider.collision_layers = 0;
 
-            if (breakable->break_effect_mesh) {
-                // animator_init(&breakable->animator, breakable->break_effect_mesh->armature.bone_count);
-                // animator_run_clip(&breakable->animator, animation_set_find_clip(breakable->break_animations, "break"), 0.0f, false);
-                // renderable_set_animator(&breakable->renderable, &breakable->animator);
-                // breakable->break_timer = animation_clip_get_duration(breakable->animator.current_clip);
-                
+            if (breakable->break_effect_mesh) {                
                 renderable_set_mesh_direct(&breakable->renderable, breakable->break_effect_mesh);
                 breakable->break_timer = SHARD_FLY_TIME;
                 breakable_launch_shards(breakable);
+                dynamic_object_wake(&breakable->collider);
             }
         }
     }

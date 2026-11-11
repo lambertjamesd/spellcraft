@@ -49,7 +49,7 @@ void spell_slot_init(
                 if (!rune.watery) {
                     if (rune.earthy) {
                         slot->type = SPELL_EXEC_SLOT_TYPE_BURST;
-                        burst_attack_init(&slot->data.burst_attack, input, event_options, NULL);
+                        burst_attack_init(&slot->data.burst_attack, input, &burst_attack_ground_fire);
                     } else {
                         slot->type = SPELL_EXEC_SLOT_TYPE_SWORD;
                         elemental_sword_init(&slot->data.sword, input, event_options, ELEMENT_TYPE_FIRE);
@@ -312,7 +312,7 @@ void spell_slot_update(struct spell_exec* exec, int spell_slot_index) {
             isActive = hurricane_update(&slot->data.hurricane);
             break;
         case SPELL_EXEC_SLOT_TYPE_BURST:
-            isActive = burst_attack_update(&slot->data.burst_attack);
+            isActive = burst_attack_update(&slot->data.burst_attack, &exec->spell_sources);
             break;
         default:
             break;

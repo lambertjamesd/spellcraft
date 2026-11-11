@@ -18,7 +18,8 @@ struct burst_attack_definition {
     const char* animation;
     dynamic_object_type_t collider;
     spell_animation_t player_anim;
-    struct damage_source damage_source;
+    damage_source_t damage_source;
+    float mana_cost;
 };
 
 typedef struct burst_attack_definition burst_attack_definition_t;
@@ -40,13 +41,16 @@ struct burst_attack {
     bool has_spell;
     uint8_t spell_phase;
     struct damaged_set damaged_set;
+    damage_source_t damage_source;
 };
 
 typedef struct burst_attack burst_attack_t;
 
-void burst_attack_init(burst_attack_t* burst_attack, spell_data_source_t* source, struct spell_event_options event_options, burst_attack_definition_t* effect_definition);
+extern burst_attack_definition_t burst_attack_ground_fire;
+
+void burst_attack_init(burst_attack_t* burst_attack, spell_data_source_t* source, burst_attack_definition_t* effect_definition);
 void burst_attack_destroy(burst_attack_t* burst_attack);
 
-bool burst_attack_update(burst_attack_t* burst_attack);
+bool burst_attack_update(burst_attack_t* burst_attack, spell_sources_t* spell_sources);
 
 #endif
