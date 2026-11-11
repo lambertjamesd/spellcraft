@@ -136,6 +136,9 @@ typedef struct climb_up_data climb_up_data_t;
 
 union state_data {
     struct {
+        int ground_delay;
+    } start;
+    struct {
         float timer;
         float y_velocity;
         struct Vector3 start_pos;

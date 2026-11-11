@@ -446,6 +446,11 @@ bool player_check_grab(struct player* player, struct Vector3* target_direction, 
     }
 }
 
+void player_enter_start(player_t* player) {
+    player->state = PLAYER_START;
+    player->state_data.start.ground_delay = 5;
+}
+
 void player_enter_slide_state(struct player* player, struct contact* ground_contact) {
     player->state = PLAYER_SLIDING;
     player_loop_animation(player, PLAYER_ANIMATION_SLIDE_FORWARD, 1.0f);
@@ -1311,6 +1316,8 @@ void player_strafe_animation(struct player* player, float speed, dynamic_object_
 void player_update_start(struct player* player, struct contact* ground_contact) {
     if (ground_contact) {
         player_enter_grounded_state(player, ground_contact);
+    } else if (player->state_data.start.ground_delay) {
+        --player->state_data.start.ground_delay;
     } else {
         player_enter_falling_state(player);
     }
@@ -1891,7 +1898,7 @@ void player_init(struct player* player, struct player_definition* definition) {
 
     player->last_spell_animation = NULL;
 
-    player->state = PLAYER_START;
+    player_enter_start(player);
 
     player->assets.staffs[0] = tmesh_cache_load("rom:/meshes/objects/staff_default.tmesh");
     player->assets.staffs[1] = NULL;

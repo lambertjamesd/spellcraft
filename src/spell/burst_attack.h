@@ -20,6 +20,7 @@ struct burst_attack_definition {
     spell_animation_t player_anim;
     damage_source_t damage_source;
     float mana_cost;
+    float size_scale;
 };
 
 typedef struct burst_attack_definition burst_attack_definition_t;

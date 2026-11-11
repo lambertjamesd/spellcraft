@@ -24,6 +24,7 @@ burst_attack_definition_t burst_attack_ground_fire = {
     },
 
     .mana_cost = 5.0f,
+    .size_scale = 1.25f,
 };
 
 void burst_attack_create_spell(burst_attack_t* burst_attack, float scale) {
@@ -31,9 +32,11 @@ void burst_attack_create_spell(burst_attack_t* burst_attack, float scale) {
         return;
     }
 
+    float size_scale = scale * burst_attack->def->size_scale;
+
     vector2_t rotation;
     vector2LookDir(&rotation, &burst_attack->data_source->direction);
-    transformSaInit(&burst_attack->transform, &burst_attack->data_source->position, &rotation, scale);
+    transformSaInit(&burst_attack->transform, &burst_attack->data_source->position, &rotation, size_scale);
 
     burst_attack->has_spell = true;
     burst_attack->damage_source.amount *= scale;
@@ -55,7 +58,7 @@ void burst_attack_create_spell(burst_attack_t* burst_attack, float scale) {
         &burst_attack->transform.position, 
         &burst_attack->transform.rotation
     );
-    burst_attack->collider.scale = scale;
+    burst_attack->collider.scale = size_scale;
     dynamic_object_wake(&burst_attack->collider);
     dynamic_object_recalc_bb(&burst_attack->collider);
 
