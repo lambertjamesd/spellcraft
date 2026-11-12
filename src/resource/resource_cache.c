@@ -15,6 +15,54 @@
 
 #define HASH_RESOURCE(resource, mask)   ((((uint32_t)(resource) >> 4) * MAGIC_PRIME) & (mask))
 
+#define MAX_RESOURCE_CACHES         8
+
+static resource_cache_t* resource_caches_to_sweep[MAX_RESOURCE_CACHES];
+static uint8_t resource_cache_sweep_count;
+static bool resource_cache_needs_sync = true;
+
+void resource_cache_remove(struct resource_cache* cache, struct resource_cache_entry* entry, int entry_index, int resource_index);
+
+void resource_cache_sweep(void* data) {
+    resource_cache_needs_sync = false;
+
+    for (int cache_index = 0; cache_index < resource_cache_sweep_count; cache_index += 1) {
+        resource_cache_t* cache = resource_caches_to_sweep[cache_index];
+
+        for (int entry_index = 0; entry_index < cache->entry_capacity;) {
+            int index = cache->resource_index[entry_index];
+
+            if (index == NO_ENTRY) {
+                entry_index += 1;
+                continue;
+            }
+
+            resource_cache_entry_t* entry = &cache->entries[index];
+
+            if (entry->reference_count > 0) {
+                entry_index += 1;
+                continue;
+            }
+
+            resource_cache_remove(cache, entry, index, entry_index);
+        }
+    }
+
+    resource_cache_sweep_count = 0; 
+
+    resource_cache_needs_sync = true;
+}
+
+void resource_cache_schedule_sweep(resource_cache_t* cache) {
+    if (!resource_cache_sweep_count) {
+        rspq_call_deferred(resource_cache_sweep, NULL);
+    }
+
+    assert(resource_cache_sweep_count < MAX_RESOURCE_CACHES);
+    resource_caches_to_sweep[resource_cache_sweep_count] = cache;
+    ++resource_cache_sweep_count;
+}
+
 uint32_t resource_string_hash(const void* key) {
     uint32_t hash = 0;
     for (const unsigned char *p = key; *p != '\0'; p++) {
@@ -39,9 +87,10 @@ void resource_cache_destroy(struct resource_cache* cache) {
     memset(cache, 0, sizeof(resource_cache_t));
 }
 
-void resource_cache_init(struct resource_cache* cache) {
+void resource_cache_init(struct resource_cache* cache, resource_cache_free_callback free_callback) {
     cache->entry_capacity = MIN_TABLE_SIZE;
     cache->entry_count = 0;
+    cache->free_callback = free_callback;
 
     cache->entries = malloc(sizeof(struct resource_cache_entry) * MIN_TABLE_SIZE);
     cache->filename_index = malloc(sizeof(short) * MIN_TABLE_SIZE);
@@ -150,10 +199,7 @@ struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, co
 #if DEBUG_LOADING_ORDER
     debugf("resource_cache_use filename = %s\n", filename);
 #endif
-    // initialize on demand
-    if (!cache->entries) {
-        resource_cache_init(cache);
-    }
+    assert(cache->entries);
 
     uint32_t filename_hash = resource_string_hash(filename);
 
@@ -247,7 +293,7 @@ void resource_cache_remove(struct resource_cache* cache, struct resource_cache_e
     resource_cache_adjust_filename_index(cache, filename_index, mask);
 }
 
-bool resource_cache_free(struct resource_cache* cache, void* resource) {
+void resource_cache_free(struct resource_cache* cache, void* resource) {
 #if DEBUG_LOADING_ORDER
     debugf("resource_cache_free resource = %08x\n", resource);
 #endif
@@ -292,17 +338,19 @@ bool resource_cache_free(struct resource_cache* cache, void* resource) {
             entry->reference_count -= 1;
 
             if (entry->reference_count == 0) {
-                resource_cache_remove(cache, entry, index, index_check);
-                return true;
+                if (resource_cache_needs_sync) {
+                    resource_cache_schedule_sweep(cache);
+                } else {
+                    resource_cache_remove(cache, entry, index, index_check);
+                }
+                return;
             }
 
-            return false;
+            return;
         }
 
         index_check = (index_check + 1) & mask;
     }
-
-    return false;
 }
 
 void resource_cache_set_resource(struct resource_cache* cache, struct resource_cache_entry* entry, void* resource) {

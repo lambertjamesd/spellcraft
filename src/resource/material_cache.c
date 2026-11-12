@@ -9,7 +9,13 @@
 
 struct resource_cache material_resource_cache;
 
+void material_cache_entry_free(void* material) {
+    material_pair_release(material);
+    free(material);
+}
+
 material_pair_t* material_cache_load(const char* filename) {
+    resource_cache_maybe_init(&material_resource_cache, material_cache_entry_free);
     struct resource_cache_entry* entry = resource_cache_use(&material_resource_cache, filename);
 
     if (!entry->resource) {
@@ -28,10 +34,7 @@ material_pair_t* material_cache_load(const char* filename) {
 }
 
 void material_cache_release_direct(material_pair_t* material) {
-    if (resource_cache_free(&material_resource_cache, material)) {
-        material_pair_release(material);
-        free(material);
-    }
+    resource_cache_free(&material_resource_cache, material);
 }
 
 void material_cache_release(material_pair_t* material) {

@@ -14,6 +14,8 @@ struct resource_cache_entry {
 
 typedef struct resource_cache_entry resource_cache_entry_t;
 
+typedef void (*resource_cache_free_callback)(void* resource);
+
 struct resource_cache {
     struct resource_cache_entry* entries;
     short entry_capacity;
@@ -21,14 +23,24 @@ struct resource_cache {
 
     short* filename_index;
     short* resource_index;
+
+    resource_cache_free_callback free_callback;
 };
 
 typedef struct resource_cache resource_cache_t;
 
-void resource_cache_init(struct resource_cache* cache);
+void resource_cache_init(struct resource_cache* cache, resource_cache_free_callback free_callback);
+
+static inline void resource_cache_maybe_init(struct resource_cache* cache, resource_cache_free_callback free_callback) {
+    if (cache->entries) {
+        return;
+    }
+    resource_cache_init(cache, free_callback);
+}
+
 void resource_cache_destroy(struct resource_cache* cache);
 struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, const char* filename);
-bool resource_cache_free(struct resource_cache* cache, void* resource);
+void resource_cache_free(struct resource_cache* cache, void* resource);
 
 void resource_cache_set_resource(struct resource_cache* cache, struct resource_cache_entry* entry, void* resource);
 

@@ -5,7 +5,13 @@
 
 struct resource_cache tmesh_resource_cache;
 
+void tmesh_cache_free_entry(void* mesh) {
+    tmesh_release(mesh);
+    free(mesh); 
+}
+
 struct tmesh* tmesh_cache_load(const char* filename) {
+    resource_cache_maybe_init(&tmesh_resource_cache, tmesh_cache_free_entry);
     struct resource_cache_entry* entry = resource_cache_use(&tmesh_resource_cache, filename);
 
     if (!entry->resource) {
@@ -21,15 +27,13 @@ struct tmesh* tmesh_cache_load(const char* filename) {
     return entry->resource;
 }
 
+// TODO cleanup
 void tmesh_cache_release_direct(struct tmesh* mesh) {
-    if (resource_cache_free(&tmesh_resource_cache, mesh)) {
-        tmesh_release(mesh);
-        free(mesh); 
-    }
+    resource_cache_free(&tmesh_resource_cache, mesh);
 }
 
 void tmesh_cache_release(struct tmesh* mesh) {
-    cleanup_safe((cleanup_callback)tmesh_cache_release_direct, mesh);
+    resource_cache_free(&tmesh_resource_cache, mesh);
 }
 
 void tmesh_cache_destroy() {
