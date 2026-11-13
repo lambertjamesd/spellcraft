@@ -24,6 +24,8 @@ static uint8_t resource_cache_sweep_count;
 static bool resource_cache_needs_sync = true;
 // incremented each time an entry is released
 static uint16_t resource_cache_release_ticket;
+// true while a deferred sweep is queued on the RSP
+static bool resource_cache_sweep_pending;
 
 void resource_cache_remove(struct resource_cache* cache, struct resource_cache_entry* entry, int entry_index, int resource_index);
 
@@ -98,6 +100,7 @@ static void resource_cache_sweep_all(uint16_t sweep_ticket) {
 }
 
 static void resource_cache_sweep(void* data) {
+    resource_cache_sweep_pending = false;
     resource_cache_sweep_all((uint16_t)(uintptr_t)data);
 }
 
@@ -105,12 +108,9 @@ static void resource_cache_schedule_sweep(resource_cache_t* cache, resource_cach
     resource_cache_release_ticket += 1;
     entry->release_ticket = resource_cache_release_ticket;
 
-    // a sweep is scheduled for every release so entries are only removed
-    // once the RSP has processed all commands queued before the release. 
-    // Since sweeps remove all entries released up to their ticket, a sweep 
-    // that is never called still gets handled by the next one
-    rspq_call_deferred(resource_cache_sweep, (void*)(uintptr_t)resource_cache_release_ticket);
-
+    // the deferred sweep itself is queued in resource_cache_update. 
+    // Releases can happen inside other deferred calls and libdragon can
+    // drop a deferred call queued from there
     if (cache->sweep_scheduled) {
         return;
     }
@@ -119,6 +119,19 @@ static void resource_cache_schedule_sweep(resource_cache_t* cache, resource_cach
     resource_caches_to_sweep[resource_cache_sweep_count] = cache;
     ++resource_cache_sweep_count;
     cache->sweep_scheduled = true;
+}
+
+void resource_cache_update() {
+    if (resource_cache_sweep_pending || !resource_cache_sweep_count) {
+        return;
+    }
+
+    // only one sweep is queued at a time. Entries released after it was
+    // queued are left for the sweep queued by a later update. A sweep 
+    // removes all entries released up to its ticket since the RSP has 
+    // processed every command queued before those releases
+    resource_cache_sweep_pending = true;
+    rspq_call_deferred(resource_cache_sweep, (void*)(uintptr_t)resource_cache_release_ticket);
 }
 
 void resource_cache_flush() {

@@ -47,6 +47,12 @@ static int free_count_for(void* resource) {
     return result;
 }
 
+// simulates the main loop queuing a sweep and the RSP catching up
+static void sweep_and_wait() {
+    resource_cache_update();
+    rspq_wait();
+}
+
 static void reset_caches(resource_cache_free_callback callback, resource_cache_free_callback other_callback) {
     // flush anything left over from a previous failed test
     resource_cache_flush();
@@ -84,7 +90,7 @@ static void test_resource_cache_reference_counting(struct test_context* t) {
     test_eqi(t, 1, cache.entry_count);
 
     resource_cache_free(&cache, RESOURCE_A);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 0, free_log_count);
     test_eqi(t, 1, cache.entry_count);
 
@@ -93,7 +99,7 @@ static void test_resource_cache_reference_counting(struct test_context* t) {
     test_eqi(t, 0, free_log_count);
     test_eqi(t, 1, cache.entry_count);
 
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 1, free_log_count);
     test_eqi(t, (int)RESOURCE_A, (int)free_log[0]);
     test_eqi(t, 0, cache.entry_count);
@@ -104,7 +110,7 @@ static void test_resource_cache_reference_counting(struct test_context* t) {
     test_eqi(t, 1, entry->reference_count);
     resource_cache_set_resource(&cache, entry, RESOURCE_B);
     resource_cache_free(&cache, RESOURCE_B);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 2, free_log_count);
     test_eqi(t, (int)RESOURCE_B, (int)free_log[1]);
 
@@ -123,12 +129,12 @@ static void test_resource_cache_revive_before_sweep(struct test_context* t) {
     test_eqi(t, (int)RESOURCE_A, (int)entry->resource);
     test_eqi(t, 1, entry->reference_count);
 
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 0, free_log_count);
     test_eqi(t, 1, cache.entry_count);
 
     resource_cache_free(&cache, RESOURCE_A);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 1, free_log_count);
     test_eqi(t, 0, cache.entry_count);
 
@@ -143,7 +149,7 @@ static void test_resource_cache_hash_collision(struct test_context* t) {
     load(&cache, "b", RESOURCE_COLLISION);
 
     resource_cache_free(&cache, RESOURCE_A);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 1, free_count_for(RESOURCE_A));
     test_eqi(t, 0, free_count_for(RESOURCE_COLLISION));
 
@@ -154,7 +160,7 @@ static void test_resource_cache_hash_collision(struct test_context* t) {
 
     resource_cache_free(&cache, RESOURCE_COLLISION);
     resource_cache_free(&cache, RESOURCE_COLLISION);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 1, free_count_for(RESOURCE_COLLISION));
     test_eqi(t, 0, cache.entry_count);
 
@@ -197,7 +203,7 @@ static void test_resource_cache_many_entries(struct test_context* t) {
         resource_cache_free(&cache, (void*)((i + 1) * 16));
     }
 
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, LARGE_NUMBER_COUNT / 2, free_log_count);
     test_eqi(t, LARGE_NUMBER_COUNT / 2, cache.entry_count);
 
@@ -205,7 +211,7 @@ static void test_resource_cache_many_entries(struct test_context* t) {
         resource_cache_free(&cache, (void*)((i + 1) * 16));
     }
 
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, LARGE_NUMBER_COUNT, free_log_count);
     test_eqi(t, 0, cache.entry_count);
 
@@ -227,7 +233,7 @@ static void test_resource_cache_real_addresses(struct test_context* t) {
 
     resource_cache_free(&cache, (void*)0x80179d10);
     resource_cache_free(&cache, (void*)0x801dda18);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 2, cache.entry_count);
 
     resource_cache_entry_t* entry = resource_cache_use(&cache, "rom:/meshes/vehicles/bike.anim");
@@ -236,7 +242,7 @@ static void test_resource_cache_real_addresses(struct test_context* t) {
 
     resource_cache_free(&cache, (void*)0x801d5a58);
     resource_cache_free(&cache, (void*)0x801da518);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 4, free_log_count);
     test_eqi(t, 0, cache.entry_count);
 
@@ -252,7 +258,7 @@ static void test_resource_cache_multiple_caches(struct test_context* t) {
 
     resource_cache_free(&cache, RESOURCE_A);
     resource_cache_free(&other_cache, RESOURCE_B);
-    rspq_wait();
+    sweep_and_wait();
 
     test_eqi(t, 1, free_log_count);
     test_eqi(t, (int)RESOURCE_A, (int)free_log[0]);
@@ -285,7 +291,7 @@ static void test_resource_cache_cascading_free(struct test_context* t) {
     test_eqi(t, 0, free_log_count);
     test_eqi(t, 0, other_free_log_count);
 
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 1, free_log_count);
     test_eqi(t, true, dependency_released_immediately);
     test_eqi(t, 1, other_free_log_count);
@@ -297,7 +303,7 @@ static void test_resource_cache_cascading_free(struct test_context* t) {
     load(&other_cache, "material", RESOURCE_B);
     resource_cache_free(&other_cache, RESOURCE_B);
     test_eqi(t, 1, other_free_log_count);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 2, other_free_log_count);
 
     resource_cache_destroy(&cache);
@@ -324,7 +330,7 @@ static void test_resource_cache_destroy_flushes(struct test_context* t) {
     resource_cache_maybe_init(&cache, record_free);
     load(&cache, "a", RESOURCE_A);
     resource_cache_free(&cache, RESOURCE_A);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 3, free_log_count);
 
     resource_cache_destroy(&cache);
@@ -344,12 +350,12 @@ static void test_resource_cache_release_in_deferred_call(struct test_context* t)
     // libdragon can drop a deferred call that is queued from inside another 
     // deferred call. Releasing a resource from cleanup code does exactly that
     rspq_call_deferred(release_resource_a, NULL);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 0, free_count_for(RESOURCE_B));
 
     // even if the sweep for A was dropped, the sweep for B should also remove A
     resource_cache_free(&cache, RESOURCE_B);
-    rspq_wait();
+    sweep_and_wait();
     test_eqi(t, 1, free_count_for(RESOURCE_A));
     test_eqi(t, 1, free_count_for(RESOURCE_B));
     test_eqi(t, 0, cache.entry_count);
@@ -360,6 +366,40 @@ static void test_resource_cache_release_in_deferred_call(struct test_context* t)
     resource_cache_flush();
     test_eqi(t, 2, free_count_for(RESOURCE_A));
     test_eqi(t, 0, cache.entry_count);
+
+    resource_cache_destroy(&cache);
+    resource_cache_destroy(&other_cache);
+}
+
+static void test_resource_cache_release_after_sweep_queued(struct test_context* t) {
+    reset_caches(record_free, record_other_free);
+
+    load(&cache, "a", RESOURCE_A);
+    load(&cache, "b", RESOURCE_B);
+
+    // without an update no sweep is queued
+    resource_cache_free(&cache, RESOURCE_A);
+    rspq_wait();
+    test_eqi(t, 0, free_log_count);
+
+    resource_cache_update();
+    // released after the sweep was queued so the RSP may still be using it
+    resource_cache_free(&cache, RESOURCE_B);
+    // only one sweep should be pending at a time
+    resource_cache_update();
+    rspq_wait();
+    test_eqi(t, 1, free_count_for(RESOURCE_A));
+    test_eqi(t, 0, free_count_for(RESOURCE_B));
+    test_eqi(t, 1, cache.entry_count);
+
+    // the next update should queue another sweep for the remaining entry
+    sweep_and_wait();
+    test_eqi(t, 1, free_count_for(RESOURCE_B));
+    test_eqi(t, 0, cache.entry_count);
+
+    // nothing left to sweep
+    sweep_and_wait();
+    test_eqi(t, 2, free_log_count);
 
     resource_cache_destroy(&cache);
     resource_cache_destroy(&other_cache);
@@ -388,5 +428,6 @@ void test_resource_cache(struct test_context* t) {
     test_resource_cache_cascading_free(t);
     test_resource_cache_destroy_flushes(t);
     test_resource_cache_release_in_deferred_call(t);
+    test_resource_cache_release_after_sweep_queued(t);
     test_resource_cache_maybe_init(t);
 }

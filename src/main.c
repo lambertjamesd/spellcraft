@@ -364,6 +364,8 @@ int main(void)
 #endif
 
     while(1) {
+        // runs before check_scene_load so sweeps are still queued on scene loads
+        resource_cache_update();
         savefile_check_autosave();
         if (current_scene && current_scene->overworld) {
             SC_PROFILE_START(main);

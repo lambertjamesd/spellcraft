@@ -47,10 +47,15 @@ void resource_cache_destroy(struct resource_cache* cache);
 struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, const char* filename);
 // decrements the reference count of resource. Once it reaches 0 the resource
 // is removed from the cache and free_callback is called on it. Unless called
-// from within a deferred sweep, the removal is deferred until the RSP has 
-// finished processing the commands queued so far, so the resource may still
-// be revived by resource_cache_use until then
+// from within a deferred sweep, the removal is deferred until a sweep queued
+// by resource_cache_update has been reached by the RSP, so the resource may 
+// still be revived by resource_cache_use until then
 void resource_cache_free(struct resource_cache* cache, void* resource);
+
+// queues a deferred sweep for released resources if one isn't already
+// pending. Call once per frame from the main loop, outside of any rspq block
+// or deferred call
+void resource_cache_update();
 
 // waits for the RSP to finish and then removes all released resources
 void resource_cache_flush();
