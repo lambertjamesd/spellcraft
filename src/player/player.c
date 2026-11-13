@@ -601,7 +601,7 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
 
     player->last_surface_type = ground_contact->surface_type;
 
-    bool is_good_footing = ground_contact->other_object == 0 && ground_contact->surface_type != SURFACE_TYPE_COYOTE;
+    bool is_good_footing = ground_contact->other_object == 0;
 
     if (dynamic_object_should_slide(MAX_STABLE_SLOPE, ground_contact->normal.y, ground_contact->surface_type)) {
         if (vel->x * ground_contact->normal.x + vel->z * ground_contact->normal.z > 0.0f) {
@@ -657,9 +657,6 @@ enum player_ground_movement_result player_handle_ground_movement(struct player* 
         float prev_y = vel->y;
 
         vector3Scale(&projected_target_direction, vel, PLAYER_MAX_SPEED);
-        if (ground_contact->surface_type == SURFACE_TYPE_COYOTE) {
-            vel->y = prev_y;
-        }
     }
 
     if (ground_contact->other_object) {
@@ -1585,6 +1582,10 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
     }
 
     source->flags.cast_held = input.btn.b;
+
+    if (pressed.z) {
+        live_cast_reset(&player->live_cast);   
+    }
 
     if (input.btn.z) {
         if (pressed.l) {

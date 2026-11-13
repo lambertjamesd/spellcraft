@@ -4,6 +4,7 @@
 
 #include "resource/material_cache.h"
 #include "resource/sprite_cache.h"
+#include "resource/resource_cache.h"
 #include "render/camera.h"
 #include "math/transform.h"
 #include "savefile/savefile.h"

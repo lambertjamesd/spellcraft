@@ -373,9 +373,7 @@ def _look_for_frames(filename: str) -> list[str]:
     return result
 
 def _determine_scroll(tex_axis: material.TexAxis, tex_scroll_axis):
-    if tex_scroll_axis.type == 'NONE' or tex_scroll_axis.time == 0:
-        tex_axis.scroll.type = material.TexScrollType.NONE
-    else:
+    if tex_scroll_axis.type != 'NONE' and tex_scroll_axis.time != 0:
         tex_axis.scroll.type = material.TexScrollType[tex_scroll_axis.type]
         tex_axis.scroll.start = tex_scroll_axis.start
         tex_axis.scroll.end = tex_scroll_axis.end

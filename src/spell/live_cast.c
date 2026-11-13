@@ -10,6 +10,7 @@ void live_cast_init(struct live_cast* live_cast) {
     spell_init(&live_cast->pending_spell, 0);
     live_cast->current_spell_output = 0;
     live_cast->was_cast = false;
+    live_cast->should_reset = true;
 }
 
 void live_cast_destroy(struct live_cast* live_cast) {
@@ -57,9 +58,10 @@ bool live_cast_toggle(bool curr_value, bool has_room) {
 
 bool live_cast_append_symbol(struct live_cast* live_cast, enum inventory_item_type symbol_type) {
     spell_t* spell = &live_cast->pending_spell;
-    if (live_cast->was_cast) {
+    if (live_cast->was_cast || live_cast->should_reset) {
         spell_init(spell, 0);
         live_cast->was_cast = false;
+        live_cast->should_reset = false;
         live_cast->current_spell_output = 0;
     }
 

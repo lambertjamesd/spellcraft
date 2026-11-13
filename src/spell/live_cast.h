@@ -10,7 +10,8 @@
 struct live_cast {
     struct spell pending_spell;
     uint8_t current_spell_output;
-    uint8_t was_cast;
+    bool was_cast;
+    bool should_reset;
 };
 
 typedef struct live_cast live_cast_t;
@@ -30,5 +31,9 @@ int live_cast_prev_rune_count(struct live_cast* live_cast);
 rune_pattern_t live_cast_get_rune(struct live_cast* live_cast, int index);
 
 bool live_cast_has_spell(live_cast_t* live_cast, enum inventory_item_type primary, bool fire, bool water, bool earth, bool air);
+
+static inline void live_cast_reset(live_cast_t* live_cast) {
+    live_cast->should_reset = true;
+}
 
 #endif
