@@ -38,7 +38,8 @@ void material_cache_release_direct(material_pair_t* material) {
 }
 
 void material_cache_release(material_pair_t* material) {
-    cleanup_safe((cleanup_callback)material_cache_release_direct, material);
+    // the resource cache already waits for the RSP before freeing
+    resource_cache_free(&material_resource_cache, material);
 }
 
 material_pair_t* material_cache_load_from_file(FILE* file) {

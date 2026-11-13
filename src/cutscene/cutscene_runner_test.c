@@ -43,6 +43,9 @@ void test_do_test(cutscene_t* cutscene, on_fn_end_t expect, const char* name) {
 struct on_string_fn_end {
     struct test_context* t;
     const char* result;
+    // strings without template arguments point directly at the script data
+    // instead of being copied to the string stack
+    bool is_literal;
     bool complete;
 };
 
@@ -58,8 +61,15 @@ void test_cutscene_string_end(cutscene_t* cutscene, void* data, cutscene_runner_
     evaluation_context_popn(&context->eval, &result, 1);
 
     test_str_equal(expect->t, expect->result, (char*)result);
-    test_eqi(expect->t, (int)context->string_stack, result);
-    test_eqi(expect->t, (int)context->current_string_start, result + strlen(context->string_stack) + 1);
+
+    if (expect->is_literal) {
+        // nothing should be left on the string stack
+        test_eqi(expect->t, (int)context->string_stack, (int)context->current_string_start);
+    } else {
+        // the returned string should be compacted to the start of the string stack
+        test_eqi(expect->t, (int)context->string_stack, result);
+        test_eqi(expect->t, (int)context->current_string_start, result + strlen(context->string_stack) + 1);
+    }
 
     expect->complete = true;
 }
@@ -158,6 +168,7 @@ void test_cutscene_runner(struct test_context* t) {
         (on_string_fn_end_t) {
             .t = t,
             .result = "this is a string",
+            .is_literal = true,
         },
         "compact_strings"
     );

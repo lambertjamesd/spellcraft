@@ -10,6 +10,8 @@ struct resource_cache_entry {
     short reference_count;
     short filename_index;
     uint32_t filename_hash;
+    // used to know when it is safe to remove an entry once released
+    uint16_t release_ticket;
 };
 
 typedef struct resource_cache_entry resource_cache_entry_t;
@@ -25,6 +27,7 @@ struct resource_cache {
     short* resource_index;
 
     resource_cache_free_callback free_callback;
+    bool sweep_scheduled;
 };
 
 typedef struct resource_cache resource_cache_t;
@@ -38,9 +41,19 @@ static inline void resource_cache_maybe_init(struct resource_cache* cache, resou
     resource_cache_init(cache, free_callback);
 }
 
+// processes any pending deferred removals and then frees the cache
+// all resources must have been released before calling this
 void resource_cache_destroy(struct resource_cache* cache);
 struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, const char* filename);
+// decrements the reference count of resource. Once it reaches 0 the resource
+// is removed from the cache and free_callback is called on it. Unless called
+// from within a deferred sweep, the removal is deferred until the RSP has 
+// finished processing the commands queued so far, so the resource may still
+// be revived by resource_cache_use until then
 void resource_cache_free(struct resource_cache* cache, void* resource);
+
+// waits for the RSP to finish and then removes all released resources
+void resource_cache_flush();
 
 void resource_cache_set_resource(struct resource_cache* cache, struct resource_cache_entry* entry, void* resource);
 

@@ -17,50 +17,114 @@
 
 #define MAX_RESOURCE_CACHES         8
 
+// caches with entries waiting to be removed
 static resource_cache_t* resource_caches_to_sweep[MAX_RESOURCE_CACHES];
 static uint8_t resource_cache_sweep_count;
+// false while sweeping since the RSP is known to be done with released resources
 static bool resource_cache_needs_sync = true;
+// incremented each time an entry is released
+static uint16_t resource_cache_release_ticket;
 
 void resource_cache_remove(struct resource_cache* cache, struct resource_cache_entry* entry, int entry_index, int resource_index);
 
-void resource_cache_sweep(void* data) {
-    resource_cache_needs_sync = false;
+// removes the entry from the cache and then calls the free callback on the resource
+// the callback is called after removal since it may release resources in other caches
+static void resource_cache_remove_and_free(struct resource_cache* cache, struct resource_cache_entry* entry, int entry_index, int resource_index) {
+    void* resource = entry->resource;
+    resource_cache_remove(cache, entry, entry_index, resource_index);
 
-    for (int cache_index = 0; cache_index < resource_cache_sweep_count; cache_index += 1) {
-        resource_cache_t* cache = resource_caches_to_sweep[cache_index];
+    if (cache->free_callback && resource) {
+        cache->free_callback(resource);
+    }
+}
 
-        for (int entry_index = 0; entry_index < cache->entry_capacity;) {
-            int index = cache->resource_index[entry_index];
+static inline bool resource_cache_ticket_reached(uint16_t entry_ticket, uint16_t sweep_ticket) {
+    // handles the ticket wrapping around
+    return (int16_t)(sweep_ticket - entry_ticket) >= 0;
+}
 
-            if (index == NO_ENTRY) {
-                entry_index += 1;
-                continue;
-            }
+// removes released entries up to and including sweep_ticket
+// returns true if released entries still remain
+static bool resource_cache_sweep_single(resource_cache_t* cache, uint16_t sweep_ticket) {
+    bool has_remaining = false;
 
-            resource_cache_entry_t* entry = &cache->entries[index];
+    for (int resource_index = 0; resource_index < cache->entry_capacity;) {
+        int index = cache->resource_index[resource_index];
 
-            if (entry->reference_count > 0) {
-                entry_index += 1;
-                continue;
-            }
-
-            resource_cache_remove(cache, entry, index, entry_index);
+        if (index == NO_ENTRY) {
+            resource_index += 1;
+            continue;
         }
+
+        resource_cache_entry_t* entry = &cache->entries[index];
+
+        if (entry->reference_count > 0) {
+            resource_index += 1;
+            continue;
+        }
+
+        if (!resource_cache_ticket_reached(entry->release_ticket, sweep_ticket)) {
+            // released after this sweep was scheduled so the RSP may still be using it
+            has_remaining = true;
+            resource_index += 1;
+            continue;
+        }
+
+        // removing an entry can shift another entry into the
+        // current slot so don't advance resource_index here
+        resource_cache_remove_and_free(cache, entry, index, resource_index);
     }
 
-    resource_cache_sweep_count = 0; 
+    return has_remaining;
+}
+
+static void resource_cache_sweep_all(uint16_t sweep_ticket) {
+    resource_cache_needs_sync = false;
+
+    for (int cache_index = 0; cache_index < resource_cache_sweep_count;) {
+        resource_cache_t* cache = resource_caches_to_sweep[cache_index];
+
+        if (resource_cache_sweep_single(cache, sweep_ticket)) {
+            cache_index += 1;
+            continue;
+        }
+
+        cache->sweep_scheduled = false;
+        resource_cache_sweep_count -= 1;
+        resource_caches_to_sweep[cache_index] = resource_caches_to_sweep[resource_cache_sweep_count];
+    }
 
     resource_cache_needs_sync = true;
 }
 
-void resource_cache_schedule_sweep(resource_cache_t* cache) {
-    if (!resource_cache_sweep_count) {
-        rspq_call_deferred(resource_cache_sweep, NULL);
+static void resource_cache_sweep(void* data) {
+    resource_cache_sweep_all((uint16_t)(uintptr_t)data);
+}
+
+static void resource_cache_schedule_sweep(resource_cache_t* cache, resource_cache_entry_t* entry) {
+    resource_cache_release_ticket += 1;
+    entry->release_ticket = resource_cache_release_ticket;
+
+    // a sweep is scheduled for every release so entries are only removed
+    // once the RSP has processed all commands queued before the release. 
+    // Since sweeps remove all entries released up to their ticket, a sweep 
+    // that is never called still gets handled by the next one
+    rspq_call_deferred(resource_cache_sweep, (void*)(uintptr_t)resource_cache_release_ticket);
+
+    if (cache->sweep_scheduled) {
+        return;
     }
 
     assert(resource_cache_sweep_count < MAX_RESOURCE_CACHES);
     resource_caches_to_sweep[resource_cache_sweep_count] = cache;
     ++resource_cache_sweep_count;
+    cache->sweep_scheduled = true;
+}
+
+void resource_cache_flush() {
+    rspq_wait();
+    // the RSP is idle so everything released can be removed
+    resource_cache_sweep_all(resource_cache_release_ticket);
 }
 
 uint32_t resource_string_hash(const void* key) {
@@ -73,6 +137,16 @@ uint32_t resource_string_hash(const void* key) {
 
 
 void resource_cache_destroy(struct resource_cache* cache) {
+    if (!cache->entries) {
+        return;
+    }
+
+    // entries with no references are waiting on a deferred sweep
+    if (cache->sweep_scheduled) {
+        resource_cache_flush();
+    }
+    assert(!cache->sweep_scheduled);
+
 #if DEBUG_ENABLED
     for (int i = 0; i < cache->entry_count; i += 1) {
         debugf("resource still loaded %s\n", cache->entries[i].filename);
@@ -152,7 +226,11 @@ void resource_cache_resize(struct resource_cache* cache) {
         int filename_index = resource_find_insert_index(new_filename_index, target_entry->filename_hash & new_mask, new_mask);
         new_filename_index[filename_index] = i;
         target_entry->filename_index = filename_index;
-        new_resource_index[resource_find_insert_index(new_resource_index, HASH_RESOURCE(target_entry->resource, new_mask), new_mask)] = i;
+
+        // entries without a resource yet get indexed in resource_cache_set_resource
+        if (target_entry->resource) {
+            new_resource_index[resource_find_insert_index(new_resource_index, HASH_RESOURCE(target_entry->resource, new_mask), new_mask)] = i;
+        }
     }
 
     free(cache->entries);
@@ -224,39 +302,54 @@ struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, co
     }
 }
 
+// returns true if the slot at index is not reachable from home 
+// without passing through the empty slot at empty_index
+static inline bool resource_cache_should_shift(int home, int empty_index, int index) {
+    if (empty_index <= index) {
+        return home <= empty_index || home > index;
+    } else {
+        return home <= empty_index && home > index;
+    }
+}
+
+// backward shift deletion for linear probing. Entries are only ever moved
+// backwards towards the removed slot, never past their home slot
 void resource_cache_adjust_resource_index(struct resource_cache* cache, int resource_index, uint32_t mask) {
-    resource_index = (resource_index + 1) & mask;
+    int empty_index = resource_index;
+    int index = (resource_index + 1) & mask;
 
-    while (cache->resource_index[resource_index] != NO_ENTRY) {
-        int entry_index = cache->resource_index[resource_index];
+    while (cache->resource_index[index] != NO_ENTRY) {
+        int entry_index = cache->resource_index[index];
         struct resource_cache_entry* entry = &cache->entries[entry_index];
-        int expected_index = resource_find_insert_index(cache->resource_index, HASH_RESOURCE(entry->resource, mask), mask);
+        int home = HASH_RESOURCE(entry->resource, mask);
 
-        if (expected_index != resource_index) {
-            cache->resource_index[expected_index] = entry_index;
-            cache->resource_index[resource_index] = NO_ENTRY;
+        if (resource_cache_should_shift(home, empty_index, index)) {
+            cache->resource_index[empty_index] = entry_index;
+            cache->resource_index[index] = NO_ENTRY;
+            empty_index = index;
         }
 
-        resource_index = (resource_index + 1) & mask;
+        index = (index + 1) & mask;
     }
 }
 
 void resource_cache_adjust_filename_index(struct resource_cache* cache, int filename_index, uint32_t mask) {
-    filename_index = (filename_index + 1) & mask;
+    int empty_index = filename_index;
+    int index = (filename_index + 1) & mask;
 
-    while (cache->filename_index[filename_index] != NO_ENTRY) {
-        int entry_index = cache->filename_index[filename_index];
+    while (cache->filename_index[index] != NO_ENTRY) {
+        int entry_index = cache->filename_index[index];
         struct resource_cache_entry* entry = &cache->entries[entry_index];
+        int home = entry->filename_hash & mask;
 
-        int expected_index = resource_find_insert_index(cache->filename_index, entry->filename_hash & mask, mask);
-
-        if (expected_index != filename_index) {
-            cache->filename_index[expected_index] = entry_index;
-            entry->filename_index = expected_index;
-            cache->filename_index[filename_index] = NO_ENTRY;
+        if (resource_cache_should_shift(home, empty_index, index)) {
+            cache->filename_index[empty_index] = entry_index;
+            entry->filename_index = empty_index;
+            cache->filename_index[index] = NO_ENTRY;
+            empty_index = index;
         }
 
-        filename_index = (filename_index + 1) & mask;
+        index = (index + 1) & mask;
     }
 }
 
@@ -275,6 +368,11 @@ void resource_cache_remove(struct resource_cache* cache, struct resource_cache_e
         *entry = *last_entry;
 
         cache->filename_index[entry->filename_index] = entry_index;
+    }
+
+    // the entry that was moved may not have a resource assigned yet
+    if (entry_index != cache->entry_count && entry->resource) {
+        int last_entry_index = cache->entry_count;
         int existing_resource_index = resource_find_entry(cache->resource_index, HASH_RESOURCE(entry->resource, mask), mask, last_entry_index);
 
 #if DEBUG_ENABLED
@@ -311,7 +409,7 @@ void resource_cache_free(struct resource_cache* cache, void* resource) {
             int entry_index = 0;
             
             for (; entry_index < cache->entry_count; entry_index += 1) {
-                struct resource_cache_entry* entry = &cache->entries[index];
+                struct resource_cache_entry* entry = &cache->entries[entry_index];
                 
                 if (entry->resource == resource) {
                     break;
@@ -339,11 +437,10 @@ void resource_cache_free(struct resource_cache* cache, void* resource) {
 
             if (entry->reference_count == 0) {
                 if (resource_cache_needs_sync) {
-                    resource_cache_schedule_sweep(cache);
+                    resource_cache_schedule_sweep(cache, entry);
                 } else {
-                    resource_cache_remove(cache, entry, index, index_check);
+                    resource_cache_remove_and_free(cache, entry, index, index_check);
                 }
-                return;
             }
 
             return;

@@ -3,6 +3,7 @@
 
 #include "util/init.h"
 #include "test/framework_test.h"
+#include "savefile/savefile.h"
 
 void test_menu_microcode(struct test_context* t);
 void test_collide_object_swept_to_triangle(struct test_context* t);
@@ -46,10 +47,18 @@ int main() {
     long long start_time = timer_ticks();
     while (timer_ticks() - start_time < DEBUG_CONNECT_DELAY);
 
+    // scenes read globals from the save file when loading
+    savefile_new();
     init_engine();
 
     console_init();
     console_set_render_mode(RENDER_MANUAL);
+
+    // pure unit tests first so a crash loading a scene doesn't hide them
+    test_run(test_resource_cache);
+    test_run(test_hash_map);
+    test_run(test_ring_malloc);
+    test_run(test_matrix_inverse);
 
     test_run(test_mesh_triangle_shadow_cast);
 
@@ -66,14 +75,10 @@ int main() {
     test_run(test_collision_scene_collide);
     test_run(test_collision_remove_duplicate_contacts);
 
-    test_run(test_ring_malloc);
-
     test_run(test_training_dummy);
 
     test_run(test_sweep_minkowski_sum);
     test_run(test_sweep_bounding_box);
-
-    test_run(test_matrix_inverse);
 
     test_run(test_overworld_create_top_view);
 
@@ -84,14 +89,9 @@ int main() {
     test_run(test_cylinder_horz_bounding_box);
     test_run(test_sphere_minkowski_sum);
     test_run(test_cone_minkowski_sum);
-    test_run(test_cone_minkowski_sum);
     test_run(test_cone_bounding_box);
     
-    test_run(test_hash_map);
-
     test_run(test_memory_leaks);
-
-    test_run(test_resource_cache);
 
     test_report_failures();
 

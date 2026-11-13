@@ -21,14 +21,19 @@ void test_verify_bb_calculator(struct test_context* t, void* data, bounding_box_
 
             VECTOR3_AS_ARRAY(&direction)[axis] = (i & 1) ? 1.0f : -1.0f;
 
+            // matches dynamic_object_minkowski_sum, rotate the world direction
+            // into local space then rotate the result back into world space
+            // a positive angle around up matches vector3RotateWith2
             struct Quaternion dirRotation;
             quatAxisAngle(&gUp, -DEG_TO_RAD(angle), &dirRotation);
-            quatMultVector(&dirRotation, &direction, &direction);
+
+            struct Quaternion invDirRotation;
+            quatConjugate(&dirRotation, &invDirRotation);
+            quatMultVector(&invDirRotation, &direction, &direction);
 
             struct Vector3 minkowsi_result;
             minkowsi_sum(data, &direction, &minkowsi_result);
 
-            quatConjugate(&dirRotation, &dirRotation);
             quatMultVector(&dirRotation, &minkowsi_result, &minkowsi_result);
 
             fprintf(stderr, "    testing axis=%d dir=%d\n", axis, (i & 1) ? 1 : -1);

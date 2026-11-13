@@ -22,6 +22,8 @@ void camera_wall_checker_init(camera_wall_checker_t* checker) {
     checker->position = gZeroVec;
     checker->cast_from = gZeroVec;
     checker->actual_distance = MAX_CAST_DISTANCE;
+    // read by the camera controller before the first update
+    checker->floor_y = CAMERA_Y_UNCONSTRAINED;
     dynamic_object_init(
         entity_id_new(),
         &checker->collider,

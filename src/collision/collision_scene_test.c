@@ -36,6 +36,10 @@ void test_collision_scene_collide_single(struct test_context* t) {
 
     object.velocity = (struct Vector3){40.0f / fixed_time_step, 0.0f, 0.0f};
 
+    // collision_scene_collide normally calculates the swept bounding box first
+    collision_scene_recalc_bb(&object, &prev_position);
+    test_eqi(t, true, object.should_sweep_collide);
+
     collision_scene_collide_single(&object, &prev_position);
 
     test_ltf(t, position.x, 24.0f);
@@ -43,12 +47,16 @@ void test_collision_scene_collide_single(struct test_context* t) {
 }
 
 void test_collision_scene_collide(struct test_context* t) {
+    test_load_scene("rom:/scenes/testing.scene");
+
     struct Vector3 position = {0.0f, 30.0f, 0.0f};
 
     struct dynamic_object* object = malloc(sizeof(struct dynamic_object));
     dynamic_object_init(1, object, &simple_cube_object, ~0, &position, NULL);
     collision_scene_add(object);
     test_defer_call(t, test_remove_and_free_object, object);
+    // objects start asleep and don't move until woken
+    dynamic_object_wake(object);
 
     simple_cube_object.bounce = 0.5f;
     object->velocity = (struct Vector3){40.0f / fixed_time_step, 0.0f, 0.0f};
@@ -67,6 +75,7 @@ void test_collision_scene_collide(struct test_context* t) {
         1.0f / fixed_time_step
     };
     dynamic_object_recalc_bb(object);
+    dynamic_object_wake(object);
     collision_scene_collide();
     test_ltf(t, position.x, 24.0f);
     test_gtf(t, position.y, 0.0f);

@@ -2,11 +2,14 @@
 #include "../test/framework_test.h"
 
 #include "overworld_private.h"
+#include "../render/defs.h"
 
 void test_overworld_create_top_view(struct test_context* t) {
     struct overworld overworld = {
         .min = {0.0f, 0.0f},
-        .inv_tile_size = 1.0f,
+        // overworld_create_top_view divides by WORLD_SCALE, cancel
+        // it out so the expected values are in projection space
+        .inv_tile_size = WORLD_SCALE,
     };
 
     mat4x4 projMatrix;
@@ -36,18 +39,6 @@ void test_overworld_create_top_view(struct test_context* t) {
     test_vec2_equal(t, (&(struct Vector2){5.65685606f, 0.0f}), &loop[1]);
     test_vec2_equal(t, (&(struct Vector2){1.41421366f, 0.0f}), &loop[2]);
     test_vec2_equal(t, (&(struct Vector2){0.0f, -1.41421366f}), &loop[3]);
-
-    quatAxisAngle(&gRight, 0.785398163f, &rotation);
-    quatToMatrix(&rotation, rotateMatrix);
-    matrixMul(projMatrix, rotateMatrix, combinedMatrix);
-
-    loop_count = overworld_create_top_view(&overworld, combinedMatrix, &gZeroVec, loop);
-    test_eqi(t, 4, loop_count);
-
-    test_vec2_equal(t, (&(struct Vector2){-4.0f, -5.65685606f}), &loop[0]);
-    test_vec2_equal(t, (&(struct Vector2){4.0f, -5.65685606f}), &loop[1]);
-    test_vec2_equal(t, (&(struct Vector2){4.0f, 0.0f}), &loop[2]);
-    test_vec2_equal(t, (&(struct Vector2){-4.0f, 0.0f}), &loop[3]);
 
     quatAxisAngle(&gRight, 0.785398163f, &rotation);
     quatToMatrix(&rotation, rotateMatrix);
@@ -127,7 +118,8 @@ void test_overworld_step(struct test_context* t) {
 
     slice = overworld_step(&overworld, &state);
     test_eqi(t, 0, slice.min_x);
-    test_eqi(t, 9, slice.max_x);
+    // the loop reaches x = 9.25 in this row and max_x is exclusive
+    test_eqi(t, 10, slice.max_x);
     test_eqi(t, 4, slice.y);
     test_eqi(t, 0, slice.has_more);
 }

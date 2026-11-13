@@ -157,7 +157,16 @@ void test_load_scene(const char* name) {
     current_test_scene_name = name;
 
     scene_release(current_test_scene);
-    current_test_scene = scene_load(name);
+    // room filenames are derived from the queued scene name
+    scene_queue_next(name);
+    current_test_scene = scene_load(scene_get_next());
+    scene_clear_next();
+}
+
+void test_unload_scene() {
+    scene_release(current_test_scene);
+    current_test_scene = NULL;
+    current_test_scene_name = NULL;
 }
 
 struct test_deferred_call_data {
