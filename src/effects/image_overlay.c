@@ -22,6 +22,7 @@ void image_overlay_set(const char* sprite_filename) {
             menu_add_callback(image_overlay_render, &image_overlay, MENU_PRIORITY_MENU);
             material_load_file(&image_overlay.material, "rom:/materials/menu/sprite_opaque.mat");
         } else {
+            rspq_wait();
             menu_remove_callback(&image_overlay);
             material_destroy(&image_overlay.material);
         }

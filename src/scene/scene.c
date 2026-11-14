@@ -471,6 +471,8 @@ void scene_load_room(struct scene* scene, loaded_room_t* room) {
 }
 
 void scene_room_unload(loaded_room_t* room) {
+    rspq_wait();
+
     for (int entity_index = 0; entity_index < room->entity_count; entity_index += 1) {
         entity_despawn(room->entities[entity_index].id);
     }
