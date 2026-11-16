@@ -28,6 +28,7 @@ void test_kd_tree_lookup(struct test_context* t);
 void test_hash_map(struct test_context* t);
 void test_memory_leaks(struct test_context* t);
 void test_resource_cache(struct test_context* t);
+void test_resource_swap(struct test_context* t);
 void test_cutscene_runner(struct test_context* t);
 void test_mesh_triangle_shadow_cast(struct test_context* t);
 
@@ -56,6 +57,7 @@ int main() {
 
     // pure unit tests first so a crash loading a scene doesn't hide them
     test_run(test_resource_cache);
+    test_run(test_resource_swap);
     test_run(test_hash_map);
     test_run(test_ring_malloc);
     test_run(test_matrix_inverse);

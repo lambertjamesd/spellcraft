@@ -4,6 +4,7 @@
 #include "../render/material.h"
 #include <stdio.h>
 
+void material_cache_init();
 // load a material or reuse the existing one if already loaded
 // callers of this function must call material_cache_release
 // when they are done with the material

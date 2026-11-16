@@ -17,6 +17,12 @@ struct resource_cache_entry {
 typedef struct resource_cache_entry resource_cache_entry_t;
 
 typedef void (*resource_cache_free_callback)(void* resource);
+// swaps the contents of new_resource into existing_resource in place so
+// existing pointers to existing_resource pick up the change. Afterwards
+// new_resource is passed to the free callback so it must be left holding
+// the old contents, or left untouched if the swap is rejected
+typedef void (*resource_cache_swap_resource)(void* new_resource, void* existing_resource);
+typedef void* (*resource_cache_load)(const char* filename);
 
 struct resource_cache {
     struct resource_cache_entry* entries;
@@ -26,25 +32,32 @@ struct resource_cache {
     short* filename_index;
     short* resource_index;
 
+    resource_cache_load load;
     resource_cache_free_callback free_callback;
+    resource_cache_swap_resource swap;
     bool sweep_scheduled;
 };
 
 typedef struct resource_cache resource_cache_t;
 
-void resource_cache_init(struct resource_cache* cache, resource_cache_free_callback free_callback);
+// sets the callbacks for a cache. If swap and ext are both set, files ending
+// in ext are hot reloaded in place. Registering the same cache again replaces
+// the previous registration. Entries are allocated on first use
+void resource_cache_register(struct resource_cache* cache, resource_cache_load load, resource_cache_free_callback free_callback, resource_cache_swap_resource swap, const char* ext);
+// reloads filename into the existing resource if it is currently loaded
+// returns true if a resource was reloaded
+bool resource_cache_reload(const char* filename);
+bool resource_cache_reload_single(struct resource_cache* cache, const char* filename);
 
-static inline void resource_cache_maybe_init(struct resource_cache* cache, resource_cache_free_callback free_callback) {
-    if (cache->entries) {
-        return;
-    }
-    resource_cache_init(cache, free_callback);
-}
+void resource_cache_init_entries(struct resource_cache* cache);
+resource_cache_entry_t* resource_cache_find_entry(struct resource_cache* cache, const char* filename, bool create_on_empty);
 
 // processes any pending deferred removals and then frees the cache
 // all resources must have been released before calling this
 void resource_cache_destroy(struct resource_cache* cache);
-struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, const char* filename);
+// returns the resource for filename, loading it if needed, 
+// and increments its reference count
+void* resource_cache_use(struct resource_cache* cache, const char* filename);
 // decrements the reference count of resource. Once it reaches 0 the resource
 // is removed from the cache and free_callback is called on it. Unless called
 // from within a deferred sweep, the removal is deferred until a sweep queued

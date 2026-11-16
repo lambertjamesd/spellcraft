@@ -4,15 +4,23 @@
 
 static struct resource_cache wav_resource_cache;
 
+static void* wav_cache_entry_load(const char* filename) {
+    return wav64_load(filename, NULL);
+}
+
+// wav64 streams from ROM so it isn't hot reloaded
+void wav_cache_init() {
+    resource_cache_register(
+        &wav_resource_cache,
+        wav_cache_entry_load,
+        (resource_cache_free_callback)wav64_close,
+        NULL,
+        NULL
+    );
+}
+
 wav64_t* wav_cache_load(const char* filename) {
-    resource_cache_maybe_init(&wav_resource_cache, (resource_cache_free_callback)wav64_close);
-    struct resource_cache_entry* entry = resource_cache_use(&wav_resource_cache, filename);
-
-    if (entry->resource == NULL) {
-        resource_cache_set_resource(&wav_resource_cache, entry, wav64_load(filename, NULL));
-    }
-
-    return entry->resource;
+    return resource_cache_use(&wav_resource_cache, filename);
 }
 
 void wav_cache_release(wav64_t* wav) {

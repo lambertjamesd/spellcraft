@@ -52,8 +52,10 @@ void armature_definition_init(struct armature_definition* definition, int bone_c
 void armature_definition_destroy(struct armature_definition* definition) {
     free(definition->default_pose);
     free(definition->parent_linkage);
+    free(definition->placeholders);
     definition->default_pose = 0;
     definition->parent_linkage = 0;
+    definition->placeholders = NULL;
 }
 
 void armature_init(struct armature* armature, struct armature_definition* definition) {

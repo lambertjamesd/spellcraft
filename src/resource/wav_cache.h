@@ -3,6 +3,7 @@
 
 #include <libdragon.h>
 
+void wav_cache_init();
 wav64_t* wav_cache_load(const char* filename);
 void wav_cache_release(wav64_t* wav);
 

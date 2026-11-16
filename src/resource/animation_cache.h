@@ -3,6 +3,7 @@
 
 #include "../render/animation_clip.h"
 
+void animation_cache_init();
 struct animation_set* animation_cache_load(const char* filename);
 void animation_cache_release(struct animation_set* animations);
 

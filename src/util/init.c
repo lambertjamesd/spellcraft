@@ -19,7 +19,19 @@
 #include "../menu/rsp_menu.h"
 #include "../render/blur/blur.h"
 
+#include "../resource/animation_cache.h"
+#include "../resource/material_cache.h"
+#include "../resource/sprite_cache.h"
+#include "../resource/tmesh_cache.h"
+#include "../resource/wav_cache.h"
+
 void init_engine() {
+    animation_cache_init();
+    material_cache_init();
+    sprite_cache_init();
+    tmesh_cache_init();
+    wav_cache_init();
+
     spell_assets_init();
     effect_assets_init();
     object_assets_init();

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <assert.h>
 #include "../config.h"
+#include "../util/file.h"
 
 // a 32 bit prime number
 #define MAGIC_PRIME 2748002342
@@ -26,6 +27,15 @@ static bool resource_cache_needs_sync = true;
 static uint16_t resource_cache_release_ticket;
 // true while a deferred sweep is queued on the RSP
 static bool resource_cache_sweep_pending;
+
+struct resource_cache_hot_reload {
+    resource_cache_t* cache;
+    const char* ext;
+};
+
+typedef struct resource_cache_hot_reload resource_cache_hot_reload_t;
+
+resource_cache_hot_reload_t resource_cache_hot_reload[MAX_RESOURCE_CACHES];
 
 void resource_cache_remove(struct resource_cache* cache, struct resource_cache_entry* entry, int entry_index, int resource_index);
 
@@ -122,6 +132,22 @@ static void resource_cache_schedule_sweep(resource_cache_t* cache, resource_cach
 }
 
 void resource_cache_update() {
+#if DEBUG_ENABLED
+    dfs_hotload_poll();
+    
+    if (dfs_hotload_num_changed()) {
+        rspq_wait();
+        for (int i = 0; i < dfs_hotload_num_changed(); i++) {
+            const char* changed = dfs_hotload_get_changed(i);
+            if (resource_cache_reload(changed)) {
+                debugf("changed: %s\n", changed);
+            }
+        }
+    }
+
+    dfs_hotload_clear_changed();
+#endif
+
     if (resource_cache_sweep_pending || !resource_cache_sweep_count) {
         return;
     }
@@ -171,13 +197,100 @@ void resource_cache_destroy(struct resource_cache* cache) {
     free(cache->filename_index);
     free(cache->resource_index);
 
-    memset(cache, 0, sizeof(resource_cache_t));
+    // keep load, free_callback and swap so the cache can be used again
+    // without registering it a second time
+    cache->entries = NULL;
+    cache->filename_index = NULL;
+    cache->resource_index = NULL;
+    cache->entry_capacity = 0;
+    cache->entry_count = 0;
 }
 
-void resource_cache_init(struct resource_cache* cache, resource_cache_free_callback free_callback) {
+static void resource_cache_set_hot_reload(struct resource_cache* cache, const char* ext) {
+    resource_cache_hot_reload_t* empty_slot = NULL;
+
+    for (int i = 0; i < MAX_RESOURCE_CACHES; i += 1) {
+        resource_cache_hot_reload_t* slot = &resource_cache_hot_reload[i];
+
+        // registering the same cache again replaces the existing slot
+        if (slot->cache == cache) {
+            slot->ext = ext;
+            slot->cache = ext ? cache : NULL;
+            return;
+        }
+
+        if (!slot->cache && !empty_slot) {
+            empty_slot = slot;
+        }
+    }
+
+    if (!ext) {
+        return;
+    }
+
+    assert(empty_slot);
+    empty_slot->cache = cache;
+    empty_slot->ext = ext;
+}
+
+void resource_cache_register(struct resource_cache* cache, resource_cache_load load, resource_cache_free_callback free_callback, resource_cache_swap_resource swap, const char* ext) {
+    cache->load = load;
+    cache->free_callback = free_callback;
+    cache->swap = swap;
+
+    resource_cache_set_hot_reload(cache, swap ? ext : NULL);
+}
+
+bool resource_cache_reload_single(struct resource_cache* cache, const char* filename) {
+    resource_cache_entry_t* entry = resource_cache_find_entry(cache, filename, false);
+
+    if (!entry || !entry->resource) {
+        return false;
+    }
+
+    // the entry pointer can be invalidated if loading touches this cache 
+    // so only hold onto the resource itself
+    void* existing = entry->resource;
+    void* next = cache->load(filename);
+
+    if (!next) {
+        return false;
+    }
+
+    // the swap modifies the existing resource in place and the old contents
+    // are freed right after so the RSP can't still be using either of them
+    rspq_wait();
+
+    // after the swap next holds the old contents, or the new contents
+    // if the swap was rejected, either way it is no longer needed
+    cache->swap(next, existing);
+
+    if (cache->free_callback) {
+        cache->free_callback(next);
+    }
+
+    return true;
+}
+
+bool resource_cache_reload(const char* filename) {
+    const char* ext = filename_find_ext((char*)filename);
+
+    for (int i = 0; i < MAX_RESOURCE_CACHES; i += 1) {
+        resource_cache_hot_reload_t* slot = &resource_cache_hot_reload[i];
+
+        if (!slot->cache || strcmp(ext, slot->ext) != 0) {
+            continue;
+        }
+
+        return resource_cache_reload_single(slot->cache, filename);
+    }
+
+    return false;
+}
+
+void resource_cache_init_entries(struct resource_cache* cache) {
     cache->entry_capacity = MIN_TABLE_SIZE;
     cache->entry_count = 0;
-    cache->free_callback = free_callback;
 
     cache->entries = malloc(sizeof(struct resource_cache_entry) * MIN_TABLE_SIZE);
     cache->filename_index = malloc(sizeof(short) * MIN_TABLE_SIZE);
@@ -275,7 +388,7 @@ struct resource_cache_entry* resource_cache_insert(struct resource_cache* cache,
     entry->filename = malloc(filename_len  + 1);
     strcpy(entry->filename, filename);
     entry->resource = NULL;
-    entry->reference_count = 1;
+    entry->reference_count = 0;
     entry->filename_index = filename_index;
     entry->filename_hash = filename_hash;
 
@@ -286,11 +399,14 @@ struct resource_cache_entry* resource_cache_insert(struct resource_cache* cache,
     return entry;
 }
 
-struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, const char* filename) {
-#if DEBUG_LOADING_ORDER
-    debugf("resource_cache_use filename = %s\n", filename);
-#endif
-    assert(cache->entries);
+struct resource_cache_entry* resource_cache_find_entry(struct resource_cache* cache, const char* filename, bool create_on_empty) {
+    if (!cache->entries) {
+        if (!create_on_empty) {
+            return NULL;
+        }
+
+        resource_cache_init_entries(cache);
+    }
 
     uint32_t filename_hash = resource_string_hash(filename);
 
@@ -301,18 +417,39 @@ struct resource_cache_entry* resource_cache_use(struct resource_cache* cache, co
         int index = cache->filename_index[index_check];
 
         if (index == NO_ENTRY) {
-            return resource_cache_insert(cache, index_check, filename_hash, filename);
+            if (create_on_empty) {
+                return resource_cache_insert(cache, index_check, filename_hash, filename);
+            }
+            return NULL;
         }
 
         struct resource_cache_entry* entry = &cache->entries[index];
 
         if (entry->filename_hash == filename_hash && strcmp(filename, entry->filename) == 0) {
-            entry->reference_count += 1;
             return entry;
         }
 
         index_check = (index_check + 1) & mask;
     }
+}
+
+void* resource_cache_use(struct resource_cache* cache, const char* filename) {
+#if DEBUG_LOADING_ORDER
+    debugf("resource_cache_use filename = %s\n", filename);
+#endif
+    resource_cache_entry_t* entry = resource_cache_find_entry(cache, filename, true);
+    entry->reference_count += 1;
+
+    if (!entry->resource) {
+        void* resource = cache->load(filename);
+        // load can use this cache recursively which may resize
+        // the entries so the entry has to be looked up again
+        entry = resource_cache_find_entry(cache, filename, false);
+        assert(entry);
+        resource_cache_set_resource(cache, entry, resource);
+    }
+
+    return entry->resource;
 }
 
 // returns true if the slot at index is not reachable from home 

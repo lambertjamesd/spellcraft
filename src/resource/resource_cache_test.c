@@ -2,6 +2,11 @@
 
 #include "resource_cache.h"
 
+#include <string.h>
+#include <stdio.h>
+#include <malloc.h>
+#include <stdlib.h>
+
 #define RESOURCE_A              (void*)16
 #define RESOURCE_B              (void*)32
 #define RESOURCE_COLLISION      (void*)(16 + 16 * 32)
@@ -53,41 +58,59 @@ static void sweep_and_wait() {
     rspq_wait();
 }
 
+// the resource returned by the next call to test_load
+static void* next_resource;
+static int load_count;
+
+static void* test_load(const char* filename) {
+    load_count += 1;
+    return next_resource;
+}
+
 static void reset_caches(resource_cache_free_callback callback, resource_cache_free_callback other_callback) {
     // flush anything left over from a previous failed test
     resource_cache_flush();
 
     memset(&cache, 0, sizeof(resource_cache_t));
     memset(&other_cache, 0, sizeof(resource_cache_t));
-    resource_cache_init(&cache, callback);
-    resource_cache_init(&other_cache, other_callback);
+    resource_cache_register(&cache, test_load, callback, NULL, NULL);
+    resource_cache_register(&other_cache, test_load, other_callback, NULL, NULL);
 
     free_log_count = 0;
     other_free_log_count = 0;
+    load_count = 0;
+    next_resource = NULL;
 }
 
-static resource_cache_entry_t* load(resource_cache_t* target, const char* name, void* resource) {
-    resource_cache_entry_t* entry = resource_cache_use(target, name);
+// uses name, loading it as resource if it isn't already loaded
+static void* load(resource_cache_t* target, const char* name, void* resource) {
+    next_resource = resource;
+    return resource_cache_use(target, name);
+}
 
-    if (!entry->resource) {
-        resource_cache_set_resource(target, entry, resource);
-    }
-
-    return entry;
+static resource_cache_entry_t* find(resource_cache_t* target, const char* name) {
+    return resource_cache_find_entry(target, name, false);
 }
 
 static void test_resource_cache_reference_counting(struct test_context* t) {
     reset_caches(record_free, record_other_free);
 
-    resource_cache_entry_t* entry = resource_cache_use(&cache, "a");
-    test_eqi(t, 0, (int)entry->resource);
-    test_eqi(t, 1, entry->reference_count);
-    resource_cache_set_resource(&cache, entry, RESOURCE_A);
+    // entries are allocated on first use
+    test_eqi(t, 0, (int)cache.entries);
+    test_eqi(t, 0, (int)find(&cache, "a"));
 
-    entry = resource_cache_use(&cache, "a");
+    test_eqi(t, (int)RESOURCE_A, (int)load(&cache, "a", RESOURCE_A));
+    resource_cache_entry_t* entry = find(&cache, "a");
     test_eqi(t, (int)RESOURCE_A, (int)entry->resource);
+    test_eqi(t, 1, entry->reference_count);
+    test_eqi(t, 1, load_count);
+
+    // already loaded so the loader shouldn't be called again
+    test_eqi(t, (int)RESOURCE_A, (int)load(&cache, "a", RESOURCE_B));
+    entry = find(&cache, "a");
     test_eqi(t, 2, entry->reference_count);
     test_eqi(t, 1, cache.entry_count);
+    test_eqi(t, 1, load_count);
 
     resource_cache_free(&cache, RESOURCE_A);
     sweep_and_wait();
@@ -105,10 +128,9 @@ static void test_resource_cache_reference_counting(struct test_context* t) {
     test_eqi(t, 0, cache.entry_count);
 
     // loading again after removal should start from scratch
-    entry = resource_cache_use(&cache, "a");
-    test_eqi(t, 0, (int)entry->resource);
-    test_eqi(t, 1, entry->reference_count);
-    resource_cache_set_resource(&cache, entry, RESOURCE_B);
+    test_eqi(t, (int)RESOURCE_B, (int)load(&cache, "a", RESOURCE_B));
+    test_eqi(t, 2, load_count);
+    test_eqi(t, 1, find(&cache, "a")->reference_count);
     resource_cache_free(&cache, RESOURCE_B);
     sweep_and_wait();
     test_eqi(t, 2, free_log_count);
@@ -125,9 +147,9 @@ static void test_resource_cache_revive_before_sweep(struct test_context* t) {
     resource_cache_free(&cache, RESOURCE_A);
 
     // using the resource again before the sweep should keep it alive
-    resource_cache_entry_t* entry = resource_cache_use(&cache, "a");
-    test_eqi(t, (int)RESOURCE_A, (int)entry->resource);
-    test_eqi(t, 1, entry->reference_count);
+    test_eqi(t, (int)RESOURCE_A, (int)load(&cache, "a", RESOURCE_B));
+    test_eqi(t, 1, find(&cache, "a")->reference_count);
+    test_eqi(t, 1, load_count);
 
     sweep_and_wait();
     test_eqi(t, 0, free_log_count);
@@ -154,9 +176,8 @@ static void test_resource_cache_hash_collision(struct test_context* t) {
     test_eqi(t, 0, free_count_for(RESOURCE_COLLISION));
 
     // the colliding entry should still be found by both name and resource
-    resource_cache_entry_t* entry = resource_cache_use(&cache, "b");
-    test_eqi(t, (int)RESOURCE_COLLISION, (int)entry->resource);
-    test_eqi(t, 2, entry->reference_count);
+    test_eqi(t, (int)RESOURCE_COLLISION, (int)load(&cache, "b", RESOURCE_B));
+    test_eqi(t, 2, find(&cache, "b")->reference_count);
 
     resource_cache_free(&cache, RESOURCE_COLLISION);
     resource_cache_free(&cache, RESOURCE_COLLISION);
@@ -175,14 +196,12 @@ static void test_resource_cache_many_entries(struct test_context* t) {
     for (int i = 0; i < LARGE_NUMBER_COUNT; i += 1) {
         char name[10];
         sprintf(name, "%i", i);
-        resource_cache_entry_t* entry = resource_cache_use(&cache, name);
-
         int random_index = ((((uint32_t)i + 1) * PRIME_NUMBER) % LARGE_NUMBER_COUNT) + 1;
-
-        test_eqi(t, 1, entry->reference_count);
-        test_eqi(t, 0, (int)entry->resource);
-        resource_cache_set_resource(&cache, entry, (void*)(random_index * 16));
+        load(&cache, name, (void*)(random_index * 16));
+        test_eqi(t, 1, find(&cache, name)->reference_count);
     }
+
+    test_eqi(t, LARGE_NUMBER_COUNT, load_count);
 
     test_eqi(t, LARGE_NUMBER_COUNT, cache.entry_count);
 
@@ -190,11 +209,11 @@ static void test_resource_cache_many_entries(struct test_context* t) {
     for (int i = 0; i < LARGE_NUMBER_COUNT; i += 1) {
         char name[10];
         sprintf(name, "%i", i);
-        resource_cache_entry_t* entry = resource_cache_use(&cache, name);
         int random_index = ((((uint32_t)i + 1) * PRIME_NUMBER) % LARGE_NUMBER_COUNT) + 1;
-        test_eqi(t, random_index * 16, (int)entry->resource);
-        test_eqi(t, 2, entry->reference_count);
-        resource_cache_free(&cache, entry->resource);
+        void* resource = load(&cache, name, NULL);
+        test_eqi(t, random_index * 16, (int)resource);
+        test_eqi(t, 2, find(&cache, name)->reference_count);
+        resource_cache_free(&cache, resource);
     }
 
     // release many entries from the same cache in a single frame. The cache
@@ -236,8 +255,7 @@ static void test_resource_cache_real_addresses(struct test_context* t) {
     sweep_and_wait();
     test_eqi(t, 2, cache.entry_count);
 
-    resource_cache_entry_t* entry = resource_cache_use(&cache, "rom:/meshes/vehicles/bike.anim");
-    test_eqi(t, 0x801d5a58, (int)entry->resource);
+    test_eqi(t, 0x801d5a58, (int)load(&cache, "rom:/meshes/vehicles/bike.anim", NULL));
     resource_cache_free(&cache, (void*)0x801d5a58);
 
     resource_cache_free(&cache, (void*)0x801d5a58);
@@ -326,8 +344,9 @@ static void test_resource_cache_destroy_flushes(struct test_context* t) {
     // destroying twice is harmless
     resource_cache_destroy(&cache);
 
-    // a destroyed cache can be initialized again
-    resource_cache_maybe_init(&cache, record_free);
+    // a destroyed cache can be used again without registering it again
+    test_eqi(t, (int)record_free, (int)cache.free_callback);
+    test_eqi(t, (int)test_load, (int)cache.load);
     load(&cache, "a", RESOURCE_A);
     resource_cache_free(&cache, RESOURCE_A);
     sweep_and_wait();
@@ -405,15 +424,277 @@ static void test_resource_cache_release_after_sweep_queued(struct test_context* 
     resource_cache_destroy(&other_cache);
 }
 
-static void test_resource_cache_maybe_init(struct test_context* t) {
+static void test_resource_cache_lazy_init(struct test_context* t) {
     reset_caches(record_free, record_other_free);
 
+    // nothing to free or reload before the first use
+    test_eqi(t, 0, (int)cache.entries);
+    test_eqi(t, false, resource_cache_reload_single(&cache, "a"));
+    resource_cache_destroy(&cache);
+
+    load(&cache, "a", RESOURCE_A);
     resource_cache_entry_t* entries_before = cache.entries;
-    resource_cache_maybe_init(&cache, record_other_free);
-    // already initialized, should not reset the cache or change the callback
+    test_neqi(t, 0, (int)entries_before);
+
+    // using another resource should not reset the cache
+    load(&cache, "b", RESOURCE_B);
     test_eqi(t, (int)entries_before, (int)cache.entries);
     test_eqi(t, (int)record_free, (int)cache.free_callback);
 
+    resource_cache_free(&cache, RESOURCE_A);
+    resource_cache_free(&cache, RESOURCE_B);
+    resource_cache_destroy(&cache);
+    resource_cache_destroy(&other_cache);
+}
+
+static resource_cache_t* recursive_cache_target;
+
+// loads a resource from the same cache, simulating a resource 
+// that depends on another resource of the same type
+static void* recursive_load(const char* filename) {
+    if (strcmp(filename, "parent") != 0) {
+        return (void*)(uintptr_t)(atoi(filename) * 16);
+    }
+
+    char name[10];
+
+    // enough entries to resize the cache while the parent entry is being loaded
+    for (int i = 0; i < LARGE_NUMBER_COUNT / 4; i += 1) {
+        sprintf(name, "%d", i + 10);
+        resource_cache_use(recursive_cache_target, name);
+    }
+
+    return RESOURCE_A;
+}
+
+static void test_resource_cache_recursive_load(struct test_context* t) {
+    reset_caches(record_free, record_other_free);
+    resource_cache_register(&cache, recursive_load, record_free, NULL, NULL);
+    recursive_cache_target = &cache;
+
+    test_eqi(t, (int)RESOURCE_A, (int)resource_cache_use(&cache, "parent"));
+
+    resource_cache_entry_t* entry = find(&cache, "parent");
+    test_eqi(t, (int)RESOURCE_A, (int)entry->resource);
+    test_eqi(t, 1, entry->reference_count);
+    test_eqi(t, LARGE_NUMBER_COUNT / 4 + 1, cache.entry_count);
+
+    resource_cache_free(&cache, RESOURCE_A);
+    for (int i = 0; i < LARGE_NUMBER_COUNT / 4; i += 1) {
+        char name[10];
+        sprintf(name, "%d", i + 10);
+        resource_cache_free(&cache, find(&cache, name)->resource);
+    }
+
+    resource_cache_destroy(&cache);
+    resource_cache_destroy(&other_cache);
+}
+
+/////////////////////////
+// hot reload swapping
+/////////////////////////
+
+#define SWAP_EXT    ".swaptest"
+
+struct test_resource {
+    int size;
+    int value;
+};
+
+typedef struct test_resource test_resource_t;
+
+#define MAX_SWAP_FREE_LOG   16
+
+static int swap_free_values[MAX_SWAP_FREE_LOG];
+static int swap_free_count;
+static int swap_count;
+
+static test_resource_t* test_resource_new(int size, int value) {
+    test_resource_t* result = malloc(sizeof(test_resource_t));
+    result->size = size;
+    result->value = value;
+    return result;
+}
+
+static void test_resource_free(void* resource) {
+    test_resource_t* test_resource = resource;
+
+    if (swap_free_count < MAX_SWAP_FREE_LOG) {
+        swap_free_values[swap_free_count] = test_resource->value;
+    }
+    swap_free_count += 1;
+
+    free(resource);
+}
+
+// rejects the swap if the size changes, like a sprite changing width
+static void test_resource_swap(void* a, void* b) {
+    test_resource_t* new_resource = a;
+    test_resource_t* existing_resource = b;
+
+    swap_count += 1;
+
+    if (new_resource->size != existing_resource->size) {
+        return;
+    }
+
+    test_resource_t tmp = *new_resource;
+    *new_resource = *existing_resource;
+    *existing_resource = tmp;
+}
+
+static void reset_swap_cache() {
+    reset_caches(record_free, record_other_free);
+    resource_cache_register(&cache, test_load, test_resource_free, test_resource_swap, SWAP_EXT);
+    swap_free_count = 0;
+    swap_count = 0;
+}
+
+static void test_resource_cache_swap_in_place(struct test_context* t) {
+    reset_swap_cache();
+
+    test_resource_t* existing = load(&cache, "rom:/a" SWAP_EXT, test_resource_new(4, 1));
+    // a second reference to the same resource
+    load(&cache, "rom:/a" SWAP_EXT, NULL);
+
+    next_resource = test_resource_new(4, 2);
+    test_eqi(t, true, resource_cache_reload("rom:/a" SWAP_EXT));
+    test_eqi(t, 2, load_count);
+    test_eqi(t, 1, swap_count);
+
+    // the existing pointer should now hold the new contents
+    test_eqi(t, 2, existing->value);
+    // the old contents should be freed right away
+    test_eqi(t, 1, swap_free_count);
+    test_eqi(t, 1, swap_free_values[0]);
+
+    // the cache should still know about the existing pointer
+    resource_cache_entry_t* entry = find(&cache, "rom:/a" SWAP_EXT);
+    test_eqi(t, (int)existing, (int)entry->resource);
+    test_eqi(t, 2, entry->reference_count);
+    test_eqi(t, 1, cache.entry_count);
+    test_eqi(t, (int)existing, (int)load(&cache, "rom:/a" SWAP_EXT, NULL));
+
+    // releasing should free the swapped resource exactly once
+    resource_cache_free(&cache, existing);
+    resource_cache_free(&cache, existing);
+    resource_cache_free(&cache, existing);
+    sweep_and_wait();
+    test_eqi(t, 2, swap_free_count);
+    test_eqi(t, 2, swap_free_values[1]);
+    test_eqi(t, 0, cache.entry_count);
+
+    resource_cache_destroy(&cache);
+    resource_cache_destroy(&other_cache);
+}
+
+static void test_resource_cache_swap_rejected(struct test_context* t) {
+    reset_swap_cache();
+
+    test_resource_t* existing = load(&cache, "rom:/a" SWAP_EXT, test_resource_new(4, 1));
+
+    // the size changed so the swap should be rejected
+    next_resource = test_resource_new(8, 2);
+    test_eqi(t, true, resource_cache_reload("rom:/a" SWAP_EXT));
+    test_eqi(t, 1, swap_count);
+
+    test_eqi(t, 4, existing->size);
+    test_eqi(t, 1, existing->value);
+    // the rejected resource should still be freed
+    test_eqi(t, 1, swap_free_count);
+    test_eqi(t, 2, swap_free_values[0]);
+
+    resource_cache_free(&cache, existing);
+    sweep_and_wait();
+    test_eqi(t, 2, swap_free_count);
+    test_eqi(t, 1, swap_free_values[1]);
+
+    resource_cache_destroy(&cache);
+    resource_cache_destroy(&other_cache);
+}
+
+static void test_resource_cache_swap_ignored(struct test_context* t) {
+    reset_swap_cache();
+
+    // nothing loaded yet
+    next_resource = NULL;
+    test_eqi(t, false, resource_cache_reload("rom:/a" SWAP_EXT));
+    test_eqi(t, 0, load_count);
+
+    test_resource_t* existing = load(&cache, "rom:/a" SWAP_EXT, test_resource_new(4, 1));
+
+    // files that aren't loaded should not be loaded by a reload
+    test_eqi(t, false, resource_cache_reload("rom:/b" SWAP_EXT));
+    // unknown extensions and files without an extension
+    test_eqi(t, false, resource_cache_reload("rom:/a.unknown"));
+    test_eqi(t, false, resource_cache_reload("rom:/a"));
+    test_eqi(t, false, resource_cache_reload("rom:/a" SWAP_EXT "/b"));
+    test_eqi(t, 1, load_count);
+    test_eqi(t, 0, swap_count);
+
+    // a failed load should leave the resource alone
+    next_resource = NULL;
+    test_eqi(t, false, resource_cache_reload("rom:/a" SWAP_EXT));
+    test_eqi(t, 0, swap_count);
+    test_eqi(t, 1, existing->value);
+
+    resource_cache_free(&cache, existing);
+    sweep_and_wait();
+    test_eqi(t, 1, swap_free_count);
+
+    resource_cache_destroy(&cache);
+    resource_cache_destroy(&other_cache);
+}
+
+static void test_resource_cache_swap_pending_release(struct test_context* t) {
+    reset_swap_cache();
+
+    test_resource_t* existing = load(&cache, "rom:/a" SWAP_EXT, test_resource_new(4, 1));
+    // released but waiting on a sweep
+    resource_cache_free(&cache, existing);
+
+    next_resource = test_resource_new(4, 2);
+    test_eqi(t, true, resource_cache_reload("rom:/a" SWAP_EXT));
+    test_eqi(t, 2, existing->value);
+    test_eqi(t, 1, swap_free_count);
+
+    // the sweep should still remove the swapped entry
+    sweep_and_wait();
+    test_eqi(t, 2, swap_free_count);
+    test_eqi(t, 2, swap_free_values[1]);
+    test_eqi(t, 0, cache.entry_count);
+
+    resource_cache_destroy(&cache);
+    resource_cache_destroy(&other_cache);
+}
+
+static void test_resource_cache_swap_register(struct test_context* t) {
+    reset_swap_cache();
+
+    // registering the same cache again should reuse its hot reload slot
+    for (int i = 0; i < 32; i += 1) {
+        resource_cache_register(&cache, test_load, test_resource_free, test_resource_swap, SWAP_EXT);
+    }
+
+    test_resource_t* existing = load(&cache, "rom:/a" SWAP_EXT, test_resource_new(4, 1));
+
+    // registering without a swap disables hot reloading
+    resource_cache_register(&cache, test_load, test_resource_free, NULL, SWAP_EXT);
+    next_resource = NULL;
+    test_eqi(t, false, resource_cache_reload("rom:/a" SWAP_EXT));
+    test_eqi(t, 1, load_count);
+
+    // and it can be enabled again
+    resource_cache_register(&cache, test_load, test_resource_free, test_resource_swap, SWAP_EXT);
+    next_resource = test_resource_new(4, 2);
+    test_eqi(t, true, resource_cache_reload("rom:/a" SWAP_EXT));
+    test_eqi(t, 2, existing->value);
+
+    resource_cache_free(&cache, existing);
+    sweep_and_wait();
+    test_eqi(t, 2, swap_free_count);
+
+    resource_cache_register(&cache, test_load, record_free, NULL, NULL);
     resource_cache_destroy(&cache);
     resource_cache_destroy(&other_cache);
 }
@@ -429,5 +710,11 @@ void test_resource_cache(struct test_context* t) {
     test_resource_cache_destroy_flushes(t);
     test_resource_cache_release_in_deferred_call(t);
     test_resource_cache_release_after_sweep_queued(t);
-    test_resource_cache_maybe_init(t);
+    test_resource_cache_lazy_init(t);
+    test_resource_cache_recursive_load(t);
+    test_resource_cache_swap_in_place(t);
+    test_resource_cache_swap_rejected(t);
+    test_resource_cache_swap_ignored(t);
+    test_resource_cache_swap_pending_release(t);
+    test_resource_cache_swap_register(t);
 }
