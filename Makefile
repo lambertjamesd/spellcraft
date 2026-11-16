@@ -69,9 +69,7 @@ MESH_SOURCES := $(shell find assets/meshes -type f -name '*.blend' | sort)
 TMESHES := $(MESH_SOURCES:assets/meshes/%.blend=filesystem/meshes/%.tmesh)
 
 filesystem/meshes/%.tmesh filesystem/meshes/%.anim: assets/meshes/%.blend tools/mesh_export/t3d_mesh.d.template
-	@mkdir -p $(dir $@)
-	@mkdir -p $(dir $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh))
-	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/t3d_mesh.py -- $(MK_ASSET) $(dir $(@:filesystem/meshes/%.tmesh=build/assets/meshes/%.tmesh)) $(dir $@)
+	MK_ASSET=$(MK_ASSET) $(BLENDER_5) $< --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/t3d_mesh.py
 
 assets/game_objects.json: tools/mesh_export/rebuild_prefabs.py $(EXPORT_SOURCE)
 	$(BLENDER_5) --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/rebuild_prefabs.py -- assets/game_objects.json

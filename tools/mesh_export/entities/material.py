@@ -695,16 +695,19 @@ class Tex():
         if not self.filename:
             return ""
         
-        if not self.filename.startswith('assets'):
+        # paths use \ on windows but rom paths always use /
+        filename = self.filename.replace('\\', '/')
+
+        if not filename.startswith('assets'):
             raise Exception('filename should be relative')
 
-        return f"rom:{self.filename[len('assets'):-len('.png')]}.sprite"
+        return f"rom:{filename[len('assets'):-len('.png')]}.sprite"
         
     def frame_filenames(self) -> list[str]:
         if not self.frames:
             return []
 
-        return list(map(lambda x: f"rom:{x[len('assets'):-len('.png')]}.sprite", self.frames))
+        return list(map(lambda x: f"rom:{x.replace(chr(92), '/')[len('assets'):-len('.png')]}.sprite", self.frames))
 
     def byte_size(self) -> int:
         return _fmt_bit_size[self.fmt] * self.width * self.height // 8

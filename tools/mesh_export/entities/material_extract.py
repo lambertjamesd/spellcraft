@@ -119,7 +119,7 @@ def determine_material_from_nodes(mat: bpy.types.Material, result: material.Mate
         color_node: bpy.types.ShaderNodeTexImage = color_link.links[0].from_node
         color_name = 'TEX0'
 
-        input_filename = sys.argv[1]
+        input_filename = filename.source_filename()
         image_path = os.path.normpath(os.path.join(os.path.dirname(input_filename), color_node.image.filepath[2:]))
 
         result.tex0 = material.Tex()
@@ -638,7 +638,7 @@ def determine_material_from_f3d(mat: bpy.types.Material) -> material.Material:
 
     is_2_cycle = _lookup_mix_bool('G_CYC_2CYCLE', _get_safe(rdp_settings, 'g_mdsft_cycletype'))
 
-    base_path = sys.argv[1]
+    base_path = filename.source_filename()
 
     if mat.library:
         base_path = os.path.normpath(os.path.join(os.path.dirname(base_path), mat.library.filepath[2:]))
