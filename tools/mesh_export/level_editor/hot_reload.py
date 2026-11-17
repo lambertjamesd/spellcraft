@@ -5,6 +5,7 @@ import tempfile
 from bpy.app.handlers import persistent
 
 from ..asset import paths as asset_paths
+from ..asset import dependents as asset_dependents
 
 ADDON_NAME = __package__.split('.')[0]
 
@@ -65,9 +66,25 @@ class MeshExportPreferences(bpy.types.AddonPreferences):
         default="fast64-main,mesh_export",
     )
 
+    export_dependents: bpy.props.BoolProperty(
+        name="Export dependent assets",
+        description="After saving, also export the assets whose build/ dependency files list the saved file, such as meshes and scenes using a material",
+        default=True,
+    )
+
+    max_exports: bpy.props.IntProperty(
+        name="Max concurrent exports",
+        description="Number of background blender processes exporting at the same time",
+        default=max(1, (os.cpu_count() or 2) // 2),
+        min=1,
+        max=64,
+    )
+
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "hot_reload_enabled")
+        layout.prop(self, "export_dependents")
+        layout.prop(self, "max_exports")
         layout.prop(self, "mk_asset_path")
         layout.prop(self, "addons")
 
@@ -85,6 +102,37 @@ class _Export():
 _running: dict[str, _Export] = {}
 # files saved again while their export was still running
 _pending: set[str] = set()
+# files waiting for a free export slot, in the order they were requested
+_queued: list[str] = []
+
+def _log_dependents(filename: str, dependents: list[str]):
+    if not dependents:
+        return
+
+    root = os.path.dirname(asset_paths.find_assets_dir(filename))
+    print(f"hot reload: {len(dependents)} assets depend on {os.path.basename(filename)}: " +
+        ", ".join(os.path.relpath(dependent, root) for dependent in dependents))
+
+def _max_exports() -> int:
+    prefs = _get_preferences()
+    return prefs.max_exports if prefs else 1
+
+def _start_queued():
+    while _queued and len(_running) < _max_exports():
+        _start_export(_queued.pop(0))
+
+# exports filename once a slot is free. Files already being exported are
+# exported again once they finish since the saved file may have changed
+def _request_export(filename: str):
+    if filename in _running:
+        _pending.add(filename)
+    elif filename not in _queued:
+        _queued.append(filename)
+
+    _start_queued()
+
+    if (_running or _queued) and not bpy.app.timers.is_registered(_poll_exports):
+        bpy.app.timers.register(_poll_exports, first_interval=POLL_INTERVAL)
 
 def _start_export(filename: str):
     prefs = _get_preferences()
@@ -184,10 +232,12 @@ def _poll_exports():
         # saved again while exporting so the output may be stale
         if filename in _pending:
             _pending.discard(filename)
-            _start_export(filename)
+            _request_export(filename)
+
+    _start_queued()
 
     # returning None unregisters the timer
-    return POLL_INTERVAL if _running else None
+    return POLL_INTERVAL if _running or _queued else None
 
 @persistent
 def _on_save_post(*args):
@@ -202,16 +252,24 @@ def _on_save_post(*args):
 
     filename = args[0] if args and isinstance(args[0], str) and args[0] else bpy.data.filepath
 
-    if not filename or not _export_script(filename):
+    if not filename:
         return
 
     filename = os.path.abspath(filename)
 
-    if filename in _running:
-        _pending.add(filename)
+    if _export_script(filename):
+        _request_export(filename)
+
+    if not prefs.export_dependents:
         return
 
-    _start_export(filename)
+    # scanned on every save so assets that started using this file since it
+    # was opened are picked up. Scanning the build/ dependency files is fast
+    dependents = asset_dependents.find_dependents(filename)
+    _log_dependents(filename, dependents)
+
+    for dependent in dependents:
+        _request_export(dependent)
 
 def register():
     bpy.utils.register_class(MeshExportPreferences)

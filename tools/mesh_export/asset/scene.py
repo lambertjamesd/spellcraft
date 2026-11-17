@@ -37,7 +37,7 @@ from mesh_export.entities import armature
 
 from mesh_export.deps import generate_deps
 from mesh_export.asset.paths import AssetPaths
-from mesh_export.asset.common import compress_asset
+from mesh_export.asset.common import compress_asset, find_dependencies
 
 # the .d.template next to the makefile entry script
 DEPS_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scene.py'))
@@ -813,7 +813,13 @@ def _process_scene(paths: AssetPaths, filename: str):
 
     scene_name = paths.base_name
 
-    generate_deps.generate_deps(output_filename, DEPS_SCRIPT, root=paths.root)
+    # linked objects are baked into the rooms so every linked blend file is a dependency
+    generate_deps.generate_deps(
+        output_filename,
+        DEPS_SCRIPT,
+        root=paths.root,
+        dependencies=find_dependencies(paths.root, all_libraries=True)
+    )
 
     scene = Scene()
     bpy.ops.object.mode_set(mode='OBJECT')

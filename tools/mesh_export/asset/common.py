@@ -13,6 +13,11 @@ import mesh_export.entities.material_extract
 
 from mesh_export.asset.paths import MATERIAL_BLEND_EXT
 
+# blend files the makefile generates. Listing them as dependencies makes make
+# regenerate them during a normal build. Materials from materials.blend are
+# already covered by their .mat.json dependency
+GENERATED_LIBRARIES = {'assets/materials/materials.blend'}
+
 # environment variable holding the path to libdragon's mkasset
 MK_ASSET_ENV = 'MK_ASSET'
 
@@ -26,8 +31,11 @@ def compress_asset(intermediate_filename: str, output_dir: str, window_size: int
         shutil.copy(intermediate_filename, os.path.join(output_dir, os.path.basename(intermediate_filename)))
 
 # finds the .mat.blend libraries, .mat.json files and images used by the
-# currently open blend file so the makefile can rebuild the asset when they change
-def find_dependencies(root: str) -> list[str]:
+# currently open blend file so the makefile can rebuild the asset when they change.
+# all_libraries includes every linked blend file instead of just materials, for
+# exporters that bake linked data into their output. Only files inside the
+# project are included, so addon libraries like fast64's are left out
+def find_dependencies(root: str, all_libraries: bool = False) -> list[str]:
     result: set[str] = set()
 
     def add(filepath: str):
@@ -40,14 +48,19 @@ def find_dependencies(root: str) -> list[str]:
             filepath = os.path.relpath(filepath, root)
         except ValueError:
             # on a different drive than the project root on windows
-            pass
+            return
 
-        result.add(filepath.replace('\\', '/'))
+        filepath = filepath.replace('\\', '/')
+
+        if filepath.startswith('../') or filepath in GENERATED_LIBRARIES:
+            return
+
+        result.add(filepath)
 
     for library in bpy.data.libraries:
         library_path = bpy.path.abspath(library.filepath)
 
-        if library_path.endswith(MATERIAL_BLEND_EXT):
+        if all_libraries or library_path.endswith(MATERIAL_BLEND_EXT):
             add(library_path)
 
     for image in bpy.data.images:
