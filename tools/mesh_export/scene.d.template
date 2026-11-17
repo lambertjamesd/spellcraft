@@ -1,2 +1,4 @@
 FILENAME:  tools/mesh_export/scene.py \
-    tools/mesh_export/entities/material_extract.py
+    tools/mesh_export/entities/material_extract.py \
+    tools/mesh_export/entities/particles.py \
+    tools/mesh_export/parse/struct_serialize.py

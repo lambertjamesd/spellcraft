@@ -212,14 +212,7 @@ def write_static(scene: Scene, base_transform: mathutils.Matrix, room_collection
     file.write(len(room_collection.rooms).to_bytes(2, 'big'))
 
 
-def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collection: room.room_collection, file):
-    room_to_particle: list[list[entities_particles.Particles]] = []
-
-    for room in room_collection.rooms:
-        room_to_particle.append([])
-        
-    count = 0
-
+def assign_particles(scene: Scene, base_transform: mathutils.Matrix, room_collection: room.room_collection, context: struct_serialize.SerializeContext):
     for particles in scene.particles:
         built = entities_particles.build_particles(particles.obj, base_transform)
 
@@ -227,36 +220,7 @@ def write_particles(scene: Scene, base_transform: mathutils.Matrix, room_collect
             continue
 
         room_index = room_collection.get_obj_room_index(particles.obj)
-        room_to_particle[room_index].append(built)
-        count = count + 1
-
-    particle_data = io.BytesIO()
-
-    for room_index in range(len(room_collection.rooms)):
-        particles = room_to_particle[room_index]
-
-        for built in particles:
-            particle_data.write(built.particles)
-
-    particle_data_bytes = particle_data.getvalue()
-
-    file.write(struct.pack('>IH', len(particle_data_bytes), count))
-    file.write(particle_data_bytes)
-
-    for room_index in range(len(room_collection.rooms)):
-        particles = room_to_particle[room_index]
-
-        particles = entities_particles.batch_particles(particles)
-
-        for built in particles:
-            built.write_into(file)
-
-    offset = 0
-
-    for room_index in range(len(room_collection.rooms)):
-        particles = room_to_particle[room_index]
-        file.write(struct.pack('>HH', offset, offset + len(particles)))
-        offset += len(particles)
+        context.get_room(room_index).particles.append(built)
 
 def find_static_blacklist():
     result = set()
@@ -796,6 +760,8 @@ def save_room_exports(scene: Scene, rooms: list[struct_serialize.RoomExport], ou
             collider.find_needed_edges()
             collider.write_out(file)
 
+            entities_particles.write_particles(room.particles, file)
+
 def process_scene():
     input_filename = sys.argv[1]
     output_filename = sys.argv[-2]
@@ -891,7 +857,7 @@ def process_scene():
             file.write(struct.pack('>H', room_collection.get_obj_room_index(location.obj)))
 
         write_static(scene, base_transform, room_collection, context, file)
-        write_particles(scene, base_transform, room_collection, file)
+        assign_particles(scene, base_transform, room_collection, context)
 
         for loading_zone in scene.loading_zones:
             context.get_string_offset(loading_zone.target)

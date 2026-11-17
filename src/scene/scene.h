@@ -32,11 +32,6 @@ struct named_location {
     uint16_t room_index;
 };
 
-struct static_entity_range {
-    uint16_t start;
-    uint16_t end;
-};
-
 struct room_entity_block {
     void* block;
     uint16_t* shared_entity_index;
@@ -95,7 +90,9 @@ struct loaded_room {
     uint16_t room_index;
     uint16_t entity_count;
     uint16_t static_count;
+    uint16_t static_particle_count;
     room_static_entry_t* static_entries;
+    static_particles_t* static_particles;
     loaded_entity_t* entities;
     mesh_collider_t mesh_collider;
     struct scene* scene;
@@ -123,9 +120,6 @@ typedef struct room_metadata room_metadata_t;
 typedef struct scene_fog scene_fog_t;
 
 struct scene {
-    static_particles_t* static_particles;
-    struct static_entity_range* room_particle_ranges;
-
     struct player player;
 
     struct pause_menu pause_menu;
@@ -148,7 +142,6 @@ struct scene {
     shared_entity_block_t shared_entities;
 
     uint16_t room_count;
-    uint16_t static_particles_count;
     uint16_t loading_zone_count;
     uint16_t named_location_count;
     uint8_t next_loaded_room_cutscene;

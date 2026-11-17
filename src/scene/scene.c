@@ -21,15 +21,9 @@ static char prev_loaded_scene[MAX_SCENE_NAME_LENGTH];
 static char next_scene_name[MAX_SCENE_NAME_LENGTH];
 static char next_entrance_name[MAX_ENTRANCE_NAME_LENGTH];
 
-void scene_render_room(struct scene* scene, int room_index, struct render_batch* batch) {
-    if (room_index < 0 || room_index >= scene->room_count) {
-        return;
-    }
-
-    struct static_entity_range range = scene->room_particle_ranges[room_index];
-    
-    static_particles_t* curr_particle = scene->static_particles + range.start;
-    static_particles_t* end_particle = scene->static_particles + range.end;
+void scene_render_room_particles(loaded_room_t* room, struct render_batch* batch) {
+    static_particles_t* curr_particle = room->static_particles;
+    static_particles_t* end_particle = room->static_particles + room->static_particle_count;
     struct Transform transform;
     quatIdent(&transform.rotation);
 
@@ -93,7 +87,7 @@ void scene_render(void* data, struct render_batch* batch) {
             continue;
         }
 
-        scene_render_room(scene, room->room_index, batch);
+        scene_render_room_particles(room, batch);
         
         for (int static_index = 0; static_index < room->static_count; static_index += 1) {
             batch->curr_pos = &room->static_entries[static_index].center;
@@ -382,6 +376,8 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
         case 0: {
             room->entity_count = 0;
             room->entities = NULL;
+            room->static_particle_count = 0;
+            room->static_particles = NULL;
 
             if (room_source->block == NULL) {
                 return INCREMENTAL_STEP_FINISH;
@@ -407,11 +403,15 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
         case 2: {        
             mesh_collider_load(&room->mesh_collider, load_room_file);
             collision_scene_add_static_mesh(&room->mesh_collider);
+            return INCREMENTAL_STEP_ONCE;
+        }
+        case 3: {
+            room->static_particles = static_particles_load(&room->static_particle_count, load_room_file);
 
             fclose(load_room_file);
             return INCREMENTAL_STEP_ONCE;
         }
-        case 3: {
+        case 4: {
             memory_stream_init(&load_room_stream, room_source->block, room_source->block_size);
         
             uint16_t entity_count;
@@ -423,7 +423,7 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
             evaluation_context_init(&load_room_eval_context); 
             return INCREMENTAL_STEP_ONCE;
         }
-        case 4: {
+        case 5: {
             if (step->index < room->entity_count) {
                 room->entities[step->index] = scene_load_entity(scene, &load_room_stream, &load_room_eval_context);
                 return INCREMENTAL_STEP_INDEX;
@@ -431,14 +431,14 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
                 return INCREMENTAL_STEP_ONCE;
             }
         }
-        case 5: {
+        case 6: {
             if (step->index < room_source->shared_entity_count) {
                 scene_add_shared_reference(scene, room_source->shared_entity_index[step->index], &load_room_eval_context);
                 return INCREMENTAL_STEP_INDEX;
             } else {
                 return INCREMENTAL_STEP_ONCE;
             }
-        } case 6: {
+        } case 7: {
             evaluation_context_destroy(&load_room_eval_context);
             return INCREMENTAL_STEP_FINISH;
         }
@@ -482,6 +482,9 @@ void scene_room_unload(loaded_room_t* room) {
         tmesh_release(&room->static_entries[i].tmesh);
     }
     free(room->static_entries);
+    static_particles_release(room->static_particles, room->static_particle_count);
+    room->static_particles = NULL;
+    room->static_particle_count = 0;
     collision_scene_remove_static_mesh(&room->mesh_collider);
     mesh_collider_release(&room->mesh_collider);
 }

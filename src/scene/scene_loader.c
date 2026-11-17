@@ -59,13 +59,6 @@ bool scene_load_check_condition(FILE* file) {
     return result != 0;
 }
 
-void scene_load_static_particles(scene_t* scene, int room_count, FILE* file) {
-    scene->static_particles = static_particles_load(&scene->static_particles_count, file);
-
-    scene->room_particle_ranges = malloc(sizeof(struct static_entity_range) * room_count);
-    fread(scene->room_particle_ranges, sizeof(struct static_entity_range), room_count, file);
-}
-
 void scene_load_minimap(scene_t* scene, FILE* file) {
     int header;
     fread(&header, 4, 1, file);
@@ -323,8 +316,6 @@ struct scene* scene_load(const char* filename) {
     fread(&room_count, 2, 1, file);
     scene->room_count = room_count;
 
-    scene_load_static_particles(scene, room_count, file);
-
     uint16_t strings_length;
     fread(&strings_length, 2, 1, file);
 
@@ -390,11 +381,6 @@ struct scene* scene_load(const char* filename) {
     return scene;
 }
 
-void scene_release_particles(scene_t* scene) {
-    static_particles_release(scene->static_particles, scene->static_particles_count);
-    free(scene->room_particle_ranges);
-}
-
 void scene_release_room_entities(room_entity_block_t* room_entities, int room_count) {
     for (int i = 0; i < room_count; i += 1) {
         free(room_entities[i].block);
@@ -429,8 +415,6 @@ void scene_release(struct scene* scene) {
 
     scene_release_room_entities(scene->room_entities, scene->room_count);  
     scene_release_shared_entities(&scene->shared_entities);  
-
-    scene_release_particles(scene);
 
     render_scene_remove(scene);
     update_remove(scene);

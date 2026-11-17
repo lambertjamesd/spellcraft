@@ -38,6 +38,8 @@ class RoomExport():
         self.name: str = ""
         self.static: list[bpy.types.Object] = []
         self.colliders: list[ColliderInfo] = []
+        # static particles built by entities.particles.build_particles
+        self.particles: list = []
 
 class SerializeContext():
     def __init__(self, enums):
