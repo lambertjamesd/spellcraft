@@ -366,6 +366,8 @@ struct scene* scene_load(const char* filename) {
     scene_show_room(scene, current_room);
     incremental_loader_flush_queue();
 
+    scene_register_hot_reload(scene);
+
     if (starting_cutscene.type == CUTSCENE_REF_NONE) {
         fade_effect_set((color_t){0, 0, 0, 0}, 0.5f);
     } else {
@@ -404,6 +406,8 @@ void scene_release(struct scene* scene) {
     }
 
     incremental_loader_flush_queue();
+
+    scene_unregister_hot_reload(scene);
 
     for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
         loaded_room_t* room = &scene->loaded_rooms[i];

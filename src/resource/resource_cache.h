@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "../config.h"
 
 struct resource_cache_entry {
     char* filename;
@@ -48,6 +49,16 @@ void resource_cache_register(struct resource_cache* cache, resource_cache_load l
 // returns true if a resource was reloaded
 bool resource_cache_reload(const char* filename);
 bool resource_cache_reload_single(struct resource_cache* cache, const char* filename);
+
+#if DEBUG_ENABLED
+// called for a hot reloaded file ending in the registered ext when no resource
+// cache reloaded it. Returns true if the file was handled
+typedef bool (*resource_cache_reload_handler)(const char* filename, void* data);
+
+// ext must stay valid until the handler is unregistered
+void resource_cache_register_reload_handler(const char* ext, resource_cache_reload_handler handler, void* data);
+void resource_cache_unregister_reload_handler(resource_cache_reload_handler handler, void* data);
+#endif
 
 void resource_cache_init_entries(struct resource_cache* cache);
 resource_cache_entry_t* resource_cache_find_entry(struct resource_cache* cache, const char* filename, bool create_on_empty);

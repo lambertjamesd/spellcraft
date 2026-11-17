@@ -37,6 +37,68 @@ typedef struct resource_cache_hot_reload resource_cache_hot_reload_t;
 
 resource_cache_hot_reload_t resource_cache_hot_reload[MAX_RESOURCE_CACHES];
 
+#if DEBUG_ENABLED
+#define MAX_RELOAD_HANDLERS         8
+
+struct resource_cache_reload_handler_entry {
+    const char* ext;
+    resource_cache_reload_handler handler;
+    void* data;
+};
+
+typedef struct resource_cache_reload_handler_entry resource_cache_reload_handler_entry_t;
+
+static resource_cache_reload_handler_entry_t resource_cache_reload_handlers[MAX_RELOAD_HANDLERS];
+
+void resource_cache_register_reload_handler(const char* ext, resource_cache_reload_handler handler, void* data) {
+    for (int i = 0; i < MAX_RELOAD_HANDLERS; i += 1) {
+        resource_cache_reload_handler_entry_t* entry = &resource_cache_reload_handlers[i];
+
+        if (!entry->handler) {
+            entry->ext = ext;
+            entry->handler = handler;
+            entry->data = data;
+            return;
+        }
+    }
+
+    assert(false);
+}
+
+void resource_cache_unregister_reload_handler(resource_cache_reload_handler handler, void* data) {
+    for (int i = 0; i < MAX_RELOAD_HANDLERS; i += 1) {
+        resource_cache_reload_handler_entry_t* entry = &resource_cache_reload_handlers[i];
+
+        if (entry->handler == handler && entry->data == data) {
+            entry->ext = NULL;
+            entry->handler = NULL;
+            entry->data = NULL;
+        }
+    }
+}
+
+// passes filename to each handler registered for its extension
+// returns true if any handler handled it
+static bool resource_cache_run_reload_handlers(const char* filename) {
+    const char* ext = filename_find_ext((char*)filename);
+    bool result = false;
+
+    for (int i = 0; i < MAX_RELOAD_HANDLERS; i += 1) {
+        resource_cache_reload_handler_entry_t* entry = &resource_cache_reload_handlers[i];
+
+        if (!entry->handler || strcmp(ext, entry->ext) != 0) {
+            continue;
+        }
+
+        if (entry->handler(filename, entry->data)) {
+            result = true;
+        }
+    }
+
+    return result;
+}
+#endif
+
 void resource_cache_remove(struct resource_cache* cache, struct resource_cache_entry* entry, int entry_index, int resource_index);
 
 // removes the entry from the cache and then calls the free callback on the resource
@@ -139,7 +201,7 @@ void resource_cache_update() {
         rspq_wait();
         for (int i = 0; i < dfs_hotload_num_changed(); i++) {
             const char* changed = dfs_hotload_get_changed(i);
-            if (resource_cache_reload(changed)) {
+            if (resource_cache_reload(changed) || resource_cache_run_reload_handlers(changed)) {
                 debugf("changed: %s\n", changed);
             }
         }

@@ -11,6 +11,7 @@
 #include "../config.h"
 #include "../profile/profile.h"
 #include "../resource/mesh_collider.h"
+#include "../resource/resource_cache.h"
 
 struct scene* current_scene;
 
@@ -508,6 +509,69 @@ bool scene_show_room(struct scene* scene, int room_index) {
     }
 
     return false;
+}
+
+#if DEBUG_ENABLED
+// unloads the room and loads it again from its .room file. Room entities
+// and shared entity references are reset along with the static meshes
+static void scene_reload_room(struct scene* scene, loaded_room_t* room) {
+    if (room->state == LOADED_ROOM_STATE_LOADING) {
+        incremental_loader_flush_queue();
+    }
+
+    scene_room_unload(room);
+
+    // loading the room adds these references again
+    room_entity_block_t* room_source = &scene->room_entities[room->room_index];
+    for (int i = 0; i < room_source->shared_entity_count; i += 1) {
+        scene_remove_shared_reference(scene, room_source->shared_entity_index[i]);
+    }
+
+    scene_load_room(scene, room);
+    // load right away so there are no frames without the room collider
+    incremental_loader_flush_queue();
+}
+
+static bool scene_room_hot_reload(const char* filename, void* data) {
+    struct scene* scene = (struct scene*)data;
+
+    // the room could be from a scene other than the current one
+    if (scene != current_scene) {
+        return false;
+    }
+
+    char room_filename[MAX_SCENE_NAME_LENGTH + 10];
+
+    for (int i = 0; i < MAX_LOADED_ROOM; i += 1) {
+        loaded_room_t* room = &scene->loaded_rooms[i];
+
+        if (room->state == LOADED_ROOM_STATE_UNUSED) {
+            continue;
+        }
+
+        scene_build_room_filename(room_filename, scene->room_metadata[room->room_index].name);
+
+        if (strcmp(room_filename, filename) == 0) {
+            debugf("reloading room %s\n", filename);
+            scene_reload_room(scene, room);
+            return true;
+        }
+    }
+
+    return false;
+}
+#endif
+
+void scene_register_hot_reload(struct scene* scene) {
+#if DEBUG_ENABLED
+    resource_cache_register_reload_handler(".room", scene_room_hot_reload, scene);
+#endif
+}
+
+void scene_unregister_hot_reload(struct scene* scene) {
+#if DEBUG_ENABLED
+    resource_cache_unregister_reload_handler(scene_room_hot_reload, scene);
+#endif
 }
 
 void scene_hide_room(struct scene* scene, int room_index) {

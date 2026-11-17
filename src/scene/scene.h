@@ -179,6 +179,10 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
 bool scene_show_room(struct scene* scene, int room_index);
 void scene_hide_room(struct scene* scene, int room_index);
 
+// hot reloads .room files for the rooms this scene has loaded
+void scene_register_hot_reload(struct scene* scene);
+void scene_unregister_hot_reload(struct scene* scene);
+
 void scene_spawn_entity(struct scene* scene, entity_spawner spawner);
 
 entity_id scene_lookup_entity(struct scene* scene, entity_spawner spawner);
