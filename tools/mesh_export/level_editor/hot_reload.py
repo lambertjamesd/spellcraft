@@ -8,8 +8,19 @@ from ..asset import paths as asset_paths
 
 ADDON_NAME = __package__.split('.')[0]
 
-# the same entry script the makefile uses
-EXPORT_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 't3d_mesh.py'))
+# the same entry scripts the makefile uses
+MESH_EXPORT_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 't3d_mesh.py'))
+MATERIAL_EXPORT_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'material_fast64.py'))
+
+# returns the entry script that exports filename or None if it isn't an exported asset
+def _export_script(filename: str) -> str | None:
+    if asset_paths.is_material_source(filename):
+        return MATERIAL_EXPORT_SCRIPT
+
+    if asset_paths.is_tmesh_source(filename):
+        return MESH_EXPORT_SCRIPT
+
+    return None
 
 POLL_INTERVAL = 0.5
 LOG_TAIL_LINES = 20
@@ -32,14 +43,14 @@ class MeshExportPreferences(bpy.types.AddonPreferences):
     bl_idname = ADDON_NAME
 
     hot_reload_enabled: bpy.props.BoolProperty(
-        name="Export meshes on save",
-        description="Export blend files in assets/meshes/ to filesystem/ in a background blender process after saving",
+        name="Export assets on save",
+        description="Export blend files in assets/meshes/ and .mat.blend files to filesystem/ in a background blender process after saving",
         default=True,
     )
 
     mk_asset_path: bpy.props.StringProperty(
         name="mkasset",
-        description="Path to libdragon's mkasset. Leave empty to copy meshes into filesystem/ uncompressed",
+        description="Path to libdragon's mkasset. Leave empty to copy assets into filesystem/ uncompressed",
         subtype='FILE_PATH',
         default=_default_mk_asset(),
     )
@@ -77,6 +88,11 @@ def _start_export(filename: str):
     if not prefs:
         return
 
+    script = _export_script(filename)
+
+    if not script:
+        return
+
     paths = asset_paths.AssetPaths(filename)
 
     env = os.environ.copy()
@@ -94,7 +110,7 @@ def _start_export(filename: str):
         '--log-level', 'fatal',
         '--addons', prefs.addons,
         '--python-exit-code', '1',
-        '--python', EXPORT_SCRIPT,
+        '--python', script,
     ]
 
     # output goes to a file instead of a pipe so a chatty export can't
@@ -182,7 +198,7 @@ def _on_save_post(*args):
 
     filename = args[0] if args and isinstance(args[0], str) and args[0] else bpy.data.filepath
 
-    if not filename or not asset_paths.is_tmesh_source(filename):
+    if not filename or not _export_script(filename):
         return
 
     filename = os.path.abspath(filename)

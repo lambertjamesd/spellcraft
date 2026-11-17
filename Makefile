@@ -90,9 +90,7 @@ filesystem/%.mat: assets/%.mat.json tools/mesh_export/material.d.template
 	$(MK_ASSET) -o $(dir $@) -w 4 $(@:filesystem/%.mat=build/assets/%.mat)
 
 filesystem/%.mat: assets/%.mat.blend tools/mesh_export/material_fast64.d.template
-	@mkdir -p $(dir $@)
-	@mkdir -p $(dir $(@:filesystem/%.mat=build/assets/%.mat))
-	$(BLENDER_5) $< --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/material_fast64.py -- $@
+	MK_ASSET=$(MK_ASSET) $(BLENDER_5) $< --background --log-level fatal --addons fast64-main,mesh_export --python-exit-code 1 --python tools/mesh_export/material_fast64.py
 
 list_materials: $(MATERIALS)
 	echo $(MATERIALS)

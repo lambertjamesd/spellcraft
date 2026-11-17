@@ -31,7 +31,7 @@ def find_assets_dir(filename: str) -> str:
 
 # returns true if filename is a blend file that is exported as a tmesh
 def is_tmesh_source(filename: str) -> bool:
-    if not filename.endswith('.blend'):
+    if not filename.endswith('.blend') or filename.endswith(MATERIAL_BLEND_EXT):
         return False
 
     try:
@@ -41,3 +41,17 @@ def is_tmesh_source(filename: str) -> bool:
 
     relative = os.path.relpath(os.path.abspath(filename), assets_dir)
     return relative.replace(os.sep, '/').startswith('meshes/')
+
+MATERIAL_BLEND_EXT = '.mat.blend'
+
+# returns true if filename is a blend file that is exported as a fast64 material
+def is_material_source(filename: str) -> bool:
+    if not filename.endswith(MATERIAL_BLEND_EXT):
+        return False
+
+    try:
+        find_assets_dir(os.path.abspath(filename))
+    except Exception:
+        return False
+
+    return True

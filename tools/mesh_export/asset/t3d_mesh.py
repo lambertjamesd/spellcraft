@@ -5,8 +5,6 @@ import sys
 import math
 import os
 import os.path
-import shutil
-import subprocess
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if ROOT not in sys.path:
@@ -23,21 +21,10 @@ import mesh_export.entities.scene_process
 
 from mesh_export.deps import generate_deps
 from mesh_export.asset.paths import AssetPaths
-
-# environment variable holding the path to libdragon's mkasset
-MK_ASSET_ENV = 'MK_ASSET'
+from mesh_export.asset.common import compress_asset, find_dependencies
 
 # the .d.template next to the makefile entry script
 DEPS_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 't3d_mesh.py'))
-
-def compress_asset(intermediate_filename: str, output_dir: str, window_size: int):
-    mk_asset = os.environ.get(MK_ASSET_ENV)
-
-    if mk_asset:
-        subprocess.run([mk_asset, '-o', output_dir, '-w', str(window_size), intermediate_filename], check=True)
-    else:
-        print(f"{MK_ASSET_ENV} not set, copying {intermediate_filename} uncompressed")
-        shutil.copy(intermediate_filename, os.path.join(output_dir, os.path.basename(intermediate_filename)))
 
 def replace_extension(filename: str, ext: str) -> str:
     return os.path.splitext(filename)[0]+ext
@@ -150,7 +137,8 @@ def _process_scene(paths: AssetPaths):
         # generate_deps matches on filesystem/ so the separators have to be / on windows too
         os.path.relpath(os.path.join(paths.output_dir, f"{paths.base_name}.tmesh"), paths.root).replace('\\', '/'), 
         DEPS_SCRIPT,
-        root=paths.root
+        root=paths.root,
+        dependencies=find_dependencies(paths.root)
     )
 
     bpy.ops.object.mode_set(mode="OBJECT")
