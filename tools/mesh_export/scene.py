@@ -460,33 +460,32 @@ def find_scene_objects(scene: Scene, definitions, room_collection: room.room_col
         if obj.rigid_body and obj.rigid_body.collision_shape == 'MESH' or 'collision' in obj.name:
             scene.add_collider(room_collection.get_obj_room_index(obj), mesh, final_transform)
 
-def write_room_entiites(
-        room_collection: entities_room.room_collection, 
-        grouped: dict[int, list[ObjectEntry]], 
-        shared_entity_index: dict[int, list[int]], 
-        variable_context: variable_layout.VariableContext, 
-        context: struct_serialize.SerializeContext, 
-        enums: dict[str, struct_parse.EnumInfo], 
-        file: io.BufferedIOBase
+def assign_room_entities(
+        room_collection: entities_room.room_collection,
+        grouped: dict[int, list[ObjectEntry]],
+        shared_entity_index: dict[int, list[int]],
+        context: struct_serialize.SerializeContext
     ):
     for room_index in range(len(room_collection.rooms)):
-        if room_index in grouped:
-            objects = grouped[room_index]
-        else:
-            objects = []
+        room_export = context.get_room(room_index)
+        room_export.entities = grouped.get(room_index, [])
+        room_export.shared_entity_indices = shared_entity_index.get(room_index, [])
 
-        room_block = build_room_entity_block(objects, variable_context, context, enums)
+def write_room_entities(
+        room: struct_serialize.RoomExport,
+        variable_context: variable_layout.VariableContext,
+        context: struct_serialize.SerializeContext,
+        enums: dict[str, struct_parse.EnumInfo],
+        file: io.BufferedIOBase
+    ):
+    room_block = build_room_entity_block(room.entities, variable_context, context, enums)
 
-        file.write(struct.pack('>H', len(room_block)))
-        file.write(room_block)
-        
-        if room_index in shared_entity_index:
-            indices = shared_entity_index[room_index]
-            file.write(struct.pack('>H', len(indices)))
-            for index in indices:
-                file.write(struct.pack('>H', index))
-        else:
-            file.write(struct.pack('>H', 0))
+    file.write(struct.pack('>H', len(room_block)))
+    file.write(room_block)
+
+    file.write(struct.pack('>H', len(room.shared_entity_indices)))
+    for index in room.shared_entity_indices:
+        file.write(struct.pack('>H', index))
 
 def write_shared_entities(shared_entities, variable_context, context, enums, file):
     shared_block = build_room_entity_block(shared_entities, variable_context, context, enums)
@@ -723,7 +722,15 @@ def save_mesh_exports(mesh_objects: list[bpy.types.Object], output_filename: str
             
         animation.export_animations(replace_extension(output, '.anim'), arm, settings)
         
-def save_room_exports(scene: Scene, rooms: list[struct_serialize.RoomExport], output_filename: str, base_transform: mathutils.Matrix):
+def save_room_exports(
+        scene: Scene,
+        rooms: list[struct_serialize.RoomExport],
+        output_filename: str,
+        base_transform: mathutils.Matrix,
+        variable_context: variable_layout.VariableContext,
+        context: struct_serialize.SerializeContext,
+        enums: dict[str, struct_parse.EnumInfo]
+    ):
     for room_index, room in enumerate(rooms):
         output = get_asset_filename(output_filename, f'{room.name}.room')
         room_meshes = entities_mesh.mesh_list(base_transform)
@@ -761,6 +768,8 @@ def save_room_exports(scene: Scene, rooms: list[struct_serialize.RoomExport], ou
             collider.write_out(file)
 
             entities_particles.write_particles(room.particles, file)
+
+            write_room_entities(room, variable_context, context, enums, file)
 
 def process_scene():
     input_filename = sys.argv[1]
@@ -874,11 +883,11 @@ def process_scene():
                 for entity_index, obj in enumerate(grouped[room_index]):
                     context.add_object_mapping(obj.obj.name, room_index, entity_index)
 
+        assign_room_entities(room_collection, grouped, shared_entity_index, context)
+
         context.write_strings(file)
         save_mesh_exports(context.get_meshes_to_export(), output_filename)
-        save_room_exports(scene, context.room_exports, output_filename, base_transform)
-
-        write_room_entiites(room_collection, grouped, shared_entity_index, variable_context, context, enums, file)
+        save_room_exports(scene, context.room_exports, output_filename, base_transform, variable_context, context, enums)
 
         write_shared_entities(shared_entities, variable_context, context, enums, file)
 

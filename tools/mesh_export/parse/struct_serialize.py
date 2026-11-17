@@ -40,6 +40,9 @@ class RoomExport():
         self.colliders: list[ColliderInfo] = []
         # static particles built by entities.particles.build_particles
         self.particles: list = []
+        # entities spawned with the room and indices into the scene's shared entities
+        self.entities: list = []
+        self.shared_entity_indices: list[int] = []
 
 class SerializeContext():
     def __init__(self, enums):

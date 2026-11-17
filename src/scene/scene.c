@@ -371,7 +371,7 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
     loaded_room_t* room = step->resource;
     scene_t* scene = step->file;
     
-    room_entity_block_t* room_source = &scene->room_entities[room->room_index];
+    room_entity_block_t* room_source = &room->entity_block;
 
     switch (step->step) {
         case 0: {
@@ -379,10 +379,10 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
             room->entities = NULL;
             room->static_particle_count = 0;
             room->static_particles = NULL;
-
-            if (room_source->block == NULL) {
-                return INCREMENTAL_STEP_FINISH;
-            }
+            room_source->block = NULL;
+            room_source->block_size = 0;
+            room_source->shared_entity_index = NULL;
+            room_source->shared_entity_count = 0;
 
             char room_filename[MAX_SCENE_NAME_LENGTH + 10];
             scene_build_room_filename(room_filename, scene->room_metadata[room->room_index].name);
@@ -408,11 +408,21 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
         }
         case 3: {
             room->static_particles = static_particles_load(&room->static_particle_count, load_room_file);
+            return INCREMENTAL_STEP_ONCE;
+        }
+        case 4: {
+            fread(&room_source->block_size, sizeof(uint16_t), 1, load_room_file);
+            room_source->block = room_source->block_size ? malloc(room_source->block_size) : NULL;
+            fread(room_source->block, room_source->block_size, 1, load_room_file);
+
+            fread(&room_source->shared_entity_count, sizeof(uint16_t), 1, load_room_file);
+            room_source->shared_entity_index = room_source->shared_entity_count ? malloc(room_source->shared_entity_count * sizeof(uint16_t)) : NULL;
+            fread(room_source->shared_entity_index, sizeof(uint16_t), room_source->shared_entity_count, load_room_file);
 
             fclose(load_room_file);
             return INCREMENTAL_STEP_ONCE;
         }
-        case 4: {
+        case 5: {
             memory_stream_init(&load_room_stream, room_source->block, room_source->block_size);
         
             uint16_t entity_count;
@@ -424,7 +434,7 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
             evaluation_context_init(&load_room_eval_context); 
             return INCREMENTAL_STEP_ONCE;
         }
-        case 5: {
+        case 6: {
             if (step->index < room->entity_count) {
                 room->entities[step->index] = scene_load_entity(scene, &load_room_stream, &load_room_eval_context);
                 return INCREMENTAL_STEP_INDEX;
@@ -432,14 +442,14 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
                 return INCREMENTAL_STEP_ONCE;
             }
         }
-        case 6: {
+        case 7: {
             if (step->index < room_source->shared_entity_count) {
                 scene_add_shared_reference(scene, room_source->shared_entity_index[step->index], &load_room_eval_context);
                 return INCREMENTAL_STEP_INDEX;
             } else {
                 return INCREMENTAL_STEP_ONCE;
             }
-        } case 7: {
+        } case 8: {
             evaluation_context_destroy(&load_room_eval_context);
             return INCREMENTAL_STEP_FINISH;
         }
@@ -471,7 +481,7 @@ void scene_load_room(struct scene* scene, loaded_room_t* room) {
     incremental_loader_enqueue(INCREMENTAL_RESOURCE_ROOM, room, scene, scene_room_loaded, room);
 }
 
-void scene_room_unload(loaded_room_t* room) {
+void scene_room_unload(struct scene* scene, loaded_room_t* room) {
     rspq_wait();
 
     for (int entity_index = 0; entity_index < room->entity_count; entity_index += 1) {
@@ -479,6 +489,18 @@ void scene_room_unload(loaded_room_t* room) {
     }
     free(room->entities);
     room->entities = NULL;
+    room->entity_count = 0;
+
+    room_entity_block_t* room_source = &room->entity_block;
+    for (int i = 0; i < room_source->shared_entity_count; i += 1) {
+        scene_remove_shared_reference(scene, room_source->shared_entity_index[i]);
+    }
+    free(room_source->block);
+    free(room_source->shared_entity_index);
+    room_source->block = NULL;
+    room_source->block_size = 0;
+    room_source->shared_entity_index = NULL;
+    room_source->shared_entity_count = 0;
     for (int i = 0; i < room->static_count; i += 1) {
         tmesh_release(&room->static_entries[i].tmesh);
     }
@@ -519,14 +541,7 @@ static void scene_reload_room(struct scene* scene, loaded_room_t* room) {
         incremental_loader_flush_queue();
     }
 
-    scene_room_unload(room);
-
-    // loading the room adds these references again
-    room_entity_block_t* room_source = &scene->room_entities[room->room_index];
-    for (int i = 0; i < room_source->shared_entity_count; i += 1) {
-        scene_remove_shared_reference(scene, room_source->shared_entity_index[i]);
-    }
-
+    scene_room_unload(scene, room);
     scene_load_room(scene, room);
     // load right away so there are no frames without the room collider
     incremental_loader_flush_queue();
@@ -583,14 +598,9 @@ void scene_hide_room(struct scene* scene, int room_index) {
                 incremental_loader_flush_queue();
             }
 
-            scene_room_unload(room);
+            scene_room_unload(scene, room);
             room->state = LOADED_ROOM_STATE_UNUSED;
             room->room_index = ROOM_NONE;
-
-            room_entity_block_t* room_source = &scene->room_entities[room_index];
-            for (int i = 0; i < room_source->shared_entity_count; i += 1) {
-                scene_remove_shared_reference(scene, room_source->shared_entity_index[i]);
-            }
             break;
         }
     }

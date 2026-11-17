@@ -92,6 +92,8 @@ struct loaded_room {
     uint16_t static_count;
     uint16_t static_particle_count;
     room_static_entry_t* static_entries;
+    // entity definitions and shared entity references read from the .room file
+    room_entity_block_t entity_block;
     static_particles_t* static_particles;
     loaded_entity_t* entities;
     mesh_collider_t mesh_collider;
@@ -138,7 +140,6 @@ struct scene {
     scene_fog_t fog;
     color_t clear_color;
 
-    room_entity_block_t* room_entities;
     shared_entity_block_t shared_entities;
 
     uint16_t room_count;

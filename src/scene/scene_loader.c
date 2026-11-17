@@ -78,23 +78,6 @@ void scene_load_fog(scene_fog_t* fog, FILE* file) {
     fread(&fog->color, 4, 1, file);
 }
 
-room_entity_block_t* scene_load_entities(int room_count, FILE* file) {
-    room_entity_block_t* room_entities = malloc(sizeof(room_entity_block_t) * room_count);
-
-    for (int i = 0; i < room_count; i += 1) {
-        room_entity_block_t* room = &room_entities[i];
-        fread(&room->block_size, 2, 1, file);
-        room->block = room->block_size ? malloc(room->block_size) : NULL;
-        fread(room->block, room->block_size, 1, file);
-
-        fread(&room->shared_entity_count, 2, 1, file);
-        room->shared_entity_index = room->shared_entity_count ? malloc(room->shared_entity_count * sizeof(uint16_t)) : NULL;
-        fread(room->shared_entity_index, sizeof(uint16_t), room->shared_entity_count, file);
-    }
-
-    return room_entities;
-}
-
 void scene_load_shared_entities(shared_entity_block_t* shared_entities, FILE* file) {
     fread(&shared_entities->shared_entity_count, 2, 1, file);
     fread(&shared_entities->block_size, 2, 1, file);
@@ -322,7 +305,6 @@ struct scene* scene_load(const char* filename) {
     scene->string_table = malloc(strings_length);
     fread(scene->string_table, strings_length, 1, file);
 
-    scene->room_entities = scene_load_entities(room_count, file);
     scene_load_shared_entities(&scene->shared_entities, file);
 
     scene_load_loading_zones(scene, file);
@@ -383,15 +365,6 @@ struct scene* scene_load(const char* filename) {
     return scene;
 }
 
-void scene_release_room_entities(room_entity_block_t* room_entities, int room_count) {
-    for (int i = 0; i < room_count; i += 1) {
-        free(room_entities[i].block);
-        free(room_entities[i].shared_entity_index);
-    }
-
-    free(room_entities);
-}
-
 void scene_release_shared_entities(shared_entity_block_t* entities) {
     for (int i = 0; i < entities->shared_entity_count; i += 1) {
         entity_despawn(entities->entities[i].entity_id);
@@ -417,7 +390,6 @@ void scene_release(struct scene* scene) {
         }
     }
 
-    scene_release_room_entities(scene->room_entities, scene->room_count);  
     scene_release_shared_entities(&scene->shared_entities);  
 
     render_scene_remove(scene);
