@@ -1,4 +1,5 @@
 FILENAME:  tools/mesh_export/scene.py \
+    tools/mesh_export/asset/scene.py \
     tools/mesh_export/entities/material_extract.py \
     tools/mesh_export/entities/particles.py \
     tools/mesh_export/entities/entities.py \

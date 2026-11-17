@@ -11,6 +11,7 @@ ADDON_NAME = __package__.split('.')[0]
 # the same entry scripts the makefile uses
 MESH_EXPORT_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 't3d_mesh.py'))
 MATERIAL_EXPORT_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'material_fast64.py'))
+SCENE_EXPORT_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scene.py'))
 
 # returns the entry script that exports filename or None if it isn't an exported asset
 def _export_script(filename: str) -> str | None:
@@ -19,6 +20,9 @@ def _export_script(filename: str) -> str | None:
 
     if asset_paths.is_tmesh_source(filename):
         return MESH_EXPORT_SCRIPT
+
+    if asset_paths.is_scene_source(filename):
+        return SCENE_EXPORT_SCRIPT
 
     return None
 
@@ -44,7 +48,7 @@ class MeshExportPreferences(bpy.types.AddonPreferences):
 
     hot_reload_enabled: bpy.props.BoolProperty(
         name="Export assets on save",
-        description="Export blend files in assets/meshes/ and .mat.blend files to filesystem/ in a background blender process after saving",
+        description="Export blend files in assets/meshes/ and assets/scenes/ and .mat.blend files to filesystem/ in a background blender process after saving",
         default=True,
     )
 
