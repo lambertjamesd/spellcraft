@@ -344,7 +344,7 @@ def load_cutscene_vars(input_filename: str, generated_bools, var_json_path):
             for fn in scene_vars_parse_tree.functions:
                 function_names.append(fn.name.value)
 
-        cutscene_filename = f"rom:{cutscene_filename[6:]}"
+        cutscene_filename = f"rom:{cutscene_filename[6:]}".replace('\\', '/')
     else:
         cutscene_filename = None
 
@@ -934,7 +934,7 @@ def _process_scene(paths: AssetPaths, filename: str):
         write_loading_zones(scene, base_transform, context, file)
 
         if has_overworld:
-            overworld_file_location = f"rom:/{overworld_filename[len('filesystem/'):]}"
+            overworld_file_location = f"rom:/{overworld_filename[len('filesystem/'):]}".replace('\\', '/')
             write_string(overworld_file_location, file)
         else:
             file.write(b'\0')

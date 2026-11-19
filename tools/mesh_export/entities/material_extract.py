@@ -719,7 +719,7 @@ def material_romname(bpy_mat: bpy.types.Material) -> str | None:
         material_filename = f"assets/{bpy_mat.name}.mat.json"
 
         if os.path.exists(material_filename):
-            return f"rom:/{bpy_mat.name}.mat"
+            return f"rom:/{bpy_mat.name}.mat".replace('\\', '/')
         else:
             raise Exception(f"{material_filename} does not exist")
         

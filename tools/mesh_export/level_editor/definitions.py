@@ -118,7 +118,7 @@ class Definitions:
                     if relative_path in cache:
                         del cache[relative_path]
 
-        relative_path = os.path.relpath(bpy.data.filepath, start_path).replace('.blend', '.scene')
+        relative_path = os.path.relpath(bpy.data.filepath, start_path).replace('.blend', '.scene').replace('\\', '/')
 
         for obj_name in bpy.data.objects.keys():
             if not obj_name.startswith(entry_point.ENTRY_PREFIX):

@@ -16,7 +16,7 @@ def get_scene_resource(name: str) -> str:
     if not library_location.startswith(base):
         raise Exception(f'could not get rom path to {library_location} with base path {base}')
 
-    return f'rom:{os.path.splitext(library_location[len(base):])[0]}_{name}'
+    return f'rom:{os.path.splitext(library_location[len(base):])[0]}_{name}'.replace('\\', '/')
 
 
 def get_rom_path(library_path: str, new_suffix: str) -> str:
@@ -26,7 +26,7 @@ def get_rom_path(library_path: str, new_suffix: str) -> str:
     if not library_location.startswith(base):
         raise Exception(f'could not get rom path to {library_location} with base path {base}')
 
-    return f'rom:{os.path.splitext(library_location[len(base):])[0]}{new_suffix}'
+    return f'rom:{os.path.splitext(library_location[len(base):])[0]}{new_suffix}'.replace('\\', '/')
 
 class ColliderInfo():
     def __init__(self, mesh: bpy.types.Mesh, transform: mathutils.Matrix):
