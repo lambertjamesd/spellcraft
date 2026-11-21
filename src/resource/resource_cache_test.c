@@ -52,10 +52,12 @@ static int free_count_for(void* resource) {
     return result;
 }
 
-// simulates the main loop queuing a sweep and the RSP catching up
+// simulates the main loop queuing a sweep, the RSP catching up
+// and then the next frame's update running the sweep
 static void sweep_and_wait() {
     resource_cache_update();
     rspq_wait();
+    resource_cache_update();
 }
 
 // the resource returned by the next call to test_load
@@ -372,8 +374,12 @@ static void test_resource_cache_release_in_deferred_call(struct test_context* t)
     sweep_and_wait();
     test_eqi(t, 0, free_count_for(RESOURCE_B));
 
-    // even if the sweep for A was dropped, the sweep for B should also remove A
+    // even if the sweep for A was dropped, the sweep for B should also remove A.
+    // The update at the end of the last sweep_and_wait already queued a sweep
+    // for A so B is released after it and is removed by the following sweep
     resource_cache_free(&cache, RESOURCE_B);
+    sweep_and_wait();
+    test_eqi(t, 1, free_count_for(RESOURCE_A));
     sweep_and_wait();
     test_eqi(t, 1, free_count_for(RESOURCE_A));
     test_eqi(t, 1, free_count_for(RESOURCE_B));
@@ -385,6 +391,65 @@ static void test_resource_cache_release_in_deferred_call(struct test_context* t)
     resource_cache_flush();
     test_eqi(t, 2, free_count_for(RESOURCE_A));
     test_eqi(t, 0, cache.entry_count);
+
+    resource_cache_destroy(&cache);
+    resource_cache_destroy(&other_cache);
+}
+
+// simulates wav64_close, which calls rspq_highpri_sync and so polls the rspq
+// deferred list. If that happens from inside a deferred call libdragon runs
+// the deferred call again and then frees its list node twice
+static void record_other_free_and_poll(void* resource) {
+    record_other_free(resource);
+    rspq_highpri_sync();
+}
+
+static void test_resource_cache_free_callback_polls_deferred(struct test_context* t) {
+    reset_caches(record_free, record_other_free_and_poll);
+
+    // both caches are waiting on the sweep so the poll happens
+    // with the sweep part way through resource_caches_to_sweep
+    load(&cache, "a", RESOURCE_A);
+    load(&other_cache, "b", RESOURCE_B);
+    resource_cache_free(&cache, RESOURCE_A);
+    resource_cache_free(&other_cache, RESOURCE_B);
+
+    // free callbacks must not run inside the deferred call, which runs
+    // during rspq_wait here and during rspq buffer switches in game
+    resource_cache_update();
+    rspq_wait();
+    test_eqi(t, 0, free_log_count);
+    test_eqi(t, 0, other_free_log_count);
+
+    // the sweep runs from the next update instead
+    resource_cache_update();
+    test_eqi(t, 1, free_count_for(RESOURCE_A));
+    test_eqi(t, 1, other_free_log_count);
+    test_eqi(t, 0, cache.entry_count);
+    test_eqi(t, 0, other_cache.entry_count);
+
+    // the sweep list should still be intact so later sweeps work. Before the
+    // fix the nested sweep wrapped the sweep count and the next sweep read
+    // NULL caches from the list
+    load(&cache, "a", RESOURCE_A);
+    load(&other_cache, "b", RESOURCE_B);
+    resource_cache_free(&cache, RESOURCE_A);
+    resource_cache_free(&other_cache, RESOURCE_B);
+    sweep_and_wait();
+    test_eqi(t, 2, free_count_for(RESOURCE_A));
+    test_eqi(t, 2, other_free_log_count);
+
+    // nothing left to sweep
+    sweep_and_wait();
+    test_eqi(t, 2, free_count_for(RESOURCE_A));
+    test_eqi(t, 2, other_free_log_count);
+
+    // flushing directly also calls the callback outside of a deferred call
+    load(&other_cache, "b", RESOURCE_B);
+    resource_cache_free(&other_cache, RESOURCE_B);
+    resource_cache_flush();
+    test_eqi(t, 3, other_free_log_count);
+    test_eqi(t, 0, other_cache.entry_count);
 
     resource_cache_destroy(&cache);
     resource_cache_destroy(&other_cache);
@@ -407,6 +472,9 @@ static void test_resource_cache_release_after_sweep_queued(struct test_context* 
     // only one sweep should be pending at a time
     resource_cache_update();
     rspq_wait();
+    // the RSP is done but the sweep only runs on the next update
+    test_eqi(t, 0, free_log_count);
+    resource_cache_update();
     test_eqi(t, 1, free_count_for(RESOURCE_A));
     test_eqi(t, 0, free_count_for(RESOURCE_B));
     test_eqi(t, 1, cache.entry_count);
@@ -709,6 +777,7 @@ void test_resource_cache(struct test_context* t) {
     test_resource_cache_cascading_free(t);
     test_resource_cache_destroy_flushes(t);
     test_resource_cache_release_in_deferred_call(t);
+    test_resource_cache_free_callback_polls_deferred(t);
     test_resource_cache_release_after_sweep_queued(t);
     test_resource_cache_lazy_init(t);
     test_resource_cache_recursive_load(t);

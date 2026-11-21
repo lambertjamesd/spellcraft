@@ -25,8 +25,11 @@ static uint8_t resource_cache_sweep_count;
 static bool resource_cache_needs_sync = true;
 // incremented each time an entry is released
 static uint16_t resource_cache_release_ticket;
-// true while a deferred sweep is queued on the RSP
+// true from queuing a sweep until resource_cache_update runs it
 static bool resource_cache_sweep_pending;
+// set by the deferred call once the RSP reaches the sweep's ticket
+static bool resource_cache_sweep_ready;
+static uint16_t resource_cache_sweep_ticket;
 
 struct resource_cache_hot_reload {
     resource_cache_t* cache;
@@ -153,6 +156,15 @@ static bool resource_cache_sweep_single(resource_cache_t* cache, uint16_t sweep_
 }
 
 static void resource_cache_sweep_all(uint16_t sweep_ticket) {
+    // already sweeping, a free callback reached a second sweep, for instance
+    // through resource_cache_flush. A nested sweep would remove caches from
+    // resource_caches_to_sweep while the outer loop below is iterating it,
+    // wrapping resource_cache_sweep_count and then sweeping NULL caches. The
+    // outer sweep already removes everything a nested one could
+    if (!resource_cache_needs_sync) {
+        return;
+    }
+
     resource_cache_needs_sync = false;
 
     for (int cache_index = 0; cache_index < resource_cache_sweep_count;) {
@@ -171,9 +183,14 @@ static void resource_cache_sweep_all(uint16_t sweep_ticket) {
     resource_cache_needs_sync = true;
 }
 
+// runs as an rspq deferred call so it only records that the RSP is done
+// with everything released up to the ticket. Free callbacks can poll the
+// deferred list (wav64_close calls rspq_highpri_sync), and libdragon runs this
+// call again from a nested poll and then frees its list node twice, so the
+// actual sweep happens in resource_cache_update outside of any deferred call
 static void resource_cache_sweep(void* data) {
-    resource_cache_sweep_pending = false;
-    resource_cache_sweep_all((uint16_t)(uintptr_t)data);
+    resource_cache_sweep_ticket = (uint16_t)(uintptr_t)data;
+    resource_cache_sweep_ready = true;
 }
 
 static void resource_cache_schedule_sweep(resource_cache_t* cache, resource_cache_entry_t* entry) {
@@ -209,6 +226,12 @@ void resource_cache_update() {
 
     dfs_hotload_clear_changed();
 #endif
+
+    if (resource_cache_sweep_ready) {
+        resource_cache_sweep_ready = false;
+        resource_cache_sweep_pending = false;
+        resource_cache_sweep_all(resource_cache_sweep_ticket);
+    }
 
     if (resource_cache_sweep_pending || !resource_cache_sweep_count) {
         return;
