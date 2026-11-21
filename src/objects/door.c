@@ -32,13 +32,14 @@ bool door_gem_3_lock_interact(struct interactable* interactable, entity_id from)
 
         cutscene_builder_pause(&builder, false, false);
 
-        cutscene_runner_run(
-            cutscene_builder_finish(&builder),
-            0,
-            cutscene_runner_free_on_finish(),
-            door,
-            0
-        );
+        cutscene_runner_run(&(cutscene_run_args_t){
+            .cutscene = cutscene_builder_finish(&builder),
+            .function_index = 0,
+            .channel = CUTSCENE_CHANNEL_INTERACTION,
+            .finish_callback = cutscene_runner_free_on_finish(),
+            .data = door,
+            .subject = 0,
+        });
         
         return false;
     }

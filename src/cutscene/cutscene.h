@@ -167,6 +167,7 @@ struct cutscene_builder {
 
 typedef struct cutscene_builder cutscene_builder_t;
 
+struct cutscene* cutscene_load_file(FILE* file);
 struct cutscene* cutscene_load(const char* filename);
 void cutscene_builder_init(struct cutscene_builder* builder);
 

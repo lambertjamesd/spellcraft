@@ -109,6 +109,12 @@ def _less_than_state(current: str):
         return _emit_token_state('<='), None
     return _default_state(current), '<'
 
+def _not_equal_state(current: str):
+    if current == '=':
+        return _emit_token_state('!='), None
+
+    return _unknown_state
+
 def _comment_state(current: str):
     return _whitespace_state, 'comment'
 
@@ -144,6 +150,8 @@ def _default_state(current: str):
         return _greater_than_state
     if current == '<':
         return _less_than_state
+    if current == '!':
+        return _not_equal_state
     
     return _unknown_state
 

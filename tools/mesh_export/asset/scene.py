@@ -948,7 +948,7 @@ def _process_scene(paths: AssetPaths, filename: str):
         write_fog(file)
         write_clear_color(file)
 
-        camera_animation.export_camera_animations(sanim_filename, file)
+        camera_animation.export_camera_animations(sanim_filename, file, variable_context)
 
         write_room_metadata(room_collection, function_names, enums, scene_name, context, file)
 

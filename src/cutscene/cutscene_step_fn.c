@@ -10,6 +10,7 @@
 #include "../scene/scene.h"
 #include "../time/game_mode.h"
 #include "../time/time.h"
+#include "../puzzle/camera_focus.h"
 #include "cutscene_step_fn.h"
 #include "cutscene_stopwatch.h"
 #include "cutscene_timer.h"
@@ -659,6 +660,24 @@ void cutscene_show_boss_health_init(cutscene_runner_context_t* context, int arg_
     hud_show_boss_health(&current_scene->hud, (char*)args[0], cutscene_context_get_translate_entity(context, args[1]));
 }
 
+// camera_focus
+void cutscene_camera_focus_init(cutscene_runner_context_t* context, int arg_count) {
+    READ_ARGS(context, 1, arg_count, args);
+
+    camera_focus_t* camera_focus = camera_focus_find(args[0]);
+
+    if (!camera_focus) {
+        return;
+    }
+    
+    camera_set_fixed(
+        &current_scene->player.camera_controller, 
+        &camera_focus->position, 
+        &camera_focus->rotation,
+        camera_focus->fov
+    );
+}
+
 static cutscene_step_fn_t function_steps[] = {
     [CUTSCENE_FN_SAY] = {.init = cutscene_say_ask_init, .step = cutscene_say_step, .cancel = cutscene_say_ask_cancel}, // func say(message: str)
     [CUTSCENE_FN_ASK] = {.init = cutscene_say_ask_init, .step = cutscene_ask_step, .cancel = cutscene_say_ask_cancel}, // func ask(message: str): bool
@@ -703,6 +722,7 @@ static cutscene_step_fn_t function_steps[] = {
     {.init = cutscene_run_stopwatch_init }, // func set_stopwatch_run(value: bool)
     {.init = cutscene_set_audio_pause_init }, // func set_audio_paused(value: bool)
     {.init = cutscene_show_image_init }, // func show_image(filename: str)
+    {.init = cutscene_camera_focus_init }, // func camera_focus(target: entity_id)
 };
 
 cutscene_step_fn_t* cutscene_step_lookup_fn(int type) {

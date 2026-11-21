@@ -33,6 +33,20 @@ static struct move_towards_parameters camera_move_parameters = {
 
 #define MIN_TWO_TARGET_DISTANCE 
 
+void camera_cleanup_current(camera_controller_t* controller) {
+    switch (controller->state)
+    {
+    case CAMERA_STATE_ANIMATE:
+    case CAMERA_STATE_BLEND_TO_ANIMATE:
+        if (controller->state_data.animate.events) {
+            camera_anim_free_events(controller->state_data.animate.events);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 void camera_look_at_from_rotation(struct camera_controller* controller) {
     quatMultVector(&controller->camera.transform.rotation, &gForward, &controller->looking_at);
     vector3AddScaled(&controller->stable_position, &controller->looking_at, -CAMERA_FOLLOW_DISTANCE, &controller->looking_at);
@@ -488,6 +502,7 @@ void camera_controller_update_animation(struct camera_controller* controller) {
     )) {
         return;
     }
+    controller->state_data.animate.last_event = camera_anim_run_events(controller->state_data.animate.last_event, controller->state_data.animate.current_frame);
     controller->state_data.animate.current_frame += 1;
     camera_look_at_from_rotation(controller);
 }
@@ -555,6 +570,7 @@ void camera_controller_update(struct camera_controller* controller) {
 void camera_controller_init(struct camera_controller* controller, struct player* player) {
     camera_init(&controller->camera, DEFAULT_CAMERA_FOV, WORLD_NEAR_PLANE, WORLD_FAR_PLANE);
     controller->player = player;
+    controller->state = CAMERA_STATE_FOLLOW;
     camera_follow_player(controller);
 
     update_add(controller, (update_callback)camera_controller_update, UPDATE_PRIORITY_CAMERA, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
@@ -591,6 +607,8 @@ void camera_controller_destroy(struct camera_controller* controller) {
 }
 
 void camera_look_at(struct camera_controller* controller, struct Vector3* target) {
+    camera_cleanup_current(controller);
+
     controller->look_target = *target;
     controller->state = CAMERA_STATE_LOOK_AT_WITH_PLAYER;
     controller->camera.fov = 70.0f;
@@ -598,6 +616,8 @@ void camera_look_at(struct camera_controller* controller, struct Vector3* target
 }
 
 void camera_follow_player(struct camera_controller* controller) {
+    camera_cleanup_current(controller);
+
     controller->state = CAMERA_STATE_FOLLOW;
     controller->camera.fov = 70.0f;
     controller->state_data = (union camera_controller_state_data){
@@ -611,6 +631,8 @@ void camera_follow_player(struct camera_controller* controller) {
 }
 
 void camera_return(struct camera_controller* controller) {
+    camera_cleanup_current(controller);
+
     controller->state = CAMERA_STATE_RETURN_TO_PLAYER;
     controller->speed = 0.0f;
     controller->state_data.return_to_player.move_behind = false;
@@ -618,6 +640,8 @@ void camera_return(struct camera_controller* controller) {
 }
 
 void camera_behind_player(struct camera_controller* controller) {
+    camera_cleanup_current(controller);
+
     controller->state = CAMERA_STATE_RETURN_TO_PLAYER;
     controller->speed = 0.0f;
     controller->state_data.return_to_player.move_behind = true;
@@ -650,6 +674,8 @@ void camera_init_orbit(struct camera_controller* controller) {
 }
 
 void camera_play_animation(struct camera_controller* controller, struct camera_animation* animation, transform_sa_t* relative_to, int blend_frames) {
+    camera_cleanup_current(controller);
+
     controller->state_data.animate.animation = animation;
     controller->state_data.animate.current_frame = 0;
     if (relative_to) {
@@ -660,6 +686,8 @@ void camera_play_animation(struct camera_controller* controller, struct camera_a
     controller->state_data.animate.blend_frames = blend_frames;
     controller->state_data.animate.total_blend_frames = blend_frames;
     controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
+    controller->state_data.animate.events = camera_anim_load_events(animation);
+    controller->state_data.animate.last_event = controller->state_data.animate.events;
 
     if (blend_frames) {
         if (relative_to) {
@@ -674,6 +702,8 @@ void camera_play_animation(struct camera_controller* controller, struct camera_a
 }
 
 void camera_move_to(struct camera_controller* controller, struct Vector3* position, bool instant, bool move_target) {
+    camera_cleanup_current(controller);
+
     controller->state = CAMERA_STATE_MOVE_TO;
     if (move_target) {
         controller->look_target = *position;
@@ -692,6 +722,8 @@ void camera_move_to(struct camera_controller* controller, struct Vector3* positi
 }
 
 void camera_set_fixed(struct camera_controller* controller, struct Vector3* position, struct Quaternion* rotation, float fov) {
+    camera_cleanup_current(controller);
+
     controller->state = CAMERA_STATE_FIXED;
     controller->camera.transform.position = *position;
     controller->stable_position = *position;

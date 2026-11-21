@@ -15,6 +15,7 @@ struct camera_focus {
     bool repeat;
     bool last_state;
     bool did_fire;
+    entity_id id;
 };
 
 typedef struct camera_focus camera_focus_t;
@@ -23,5 +24,7 @@ void camera_focus_init(camera_focus_t* camera_focus, struct camera_focus_definit
 void camera_focus_destroy(camera_focus_t* camera_focus);
 void camera_focus_common_init();
 void camera_focus_common_destroy();
+
+camera_focus_t* camera_focus_find(entity_id id);
 
 #endif

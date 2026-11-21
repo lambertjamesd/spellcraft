@@ -30,13 +30,14 @@ void treasure_chest_interact(struct interactable* interactable, entity_id from) 
 
     show_item_with_var_in_cutscene(&builder, treasure_chest->item_ref);
 
-    cutscene_runner_run(
-        cutscene_builder_finish(&builder),
-        0,
-        cutscene_runner_free_on_finish(),
-        NULL,
-        treasure_chest->dynamic_object.entity_id
-    );
+    cutscene_runner_run(&(cutscene_run_args_t){
+        .cutscene = cutscene_builder_finish(&builder),
+        .function_index = 0,
+        .channel = CUTSCENE_CHANNEL_INTERACTION,
+        .finish_callback = cutscene_runner_free_on_finish(),
+        .data = NULL,
+        .subject = treasure_chest->dynamic_object.entity_id,
+    });
 
     expression_set_integer(treasure_chest->item_ref, expression_get_integer(treasure_chest->item_ref) + 1);
     expression_set_bool(treasure_chest->has_item, true);

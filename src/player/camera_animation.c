@@ -6,6 +6,8 @@
 #include <libdragon.h>
 #include "../util/hash_map.h"
 #include "../util/file.h"
+#include "../cutscene/cutscene.h"
+#include "../cutscene/cutscene_runner.h"
 
 void camera_animation_list_init(struct camera_animation_list* list, int count, uint32_t rom_location) {
     list->animations = malloc(sizeof(struct camera_animation) * count);
@@ -67,6 +69,10 @@ void camera_animations_load(struct camera_animation_list* list, const char* file
         fread(&animation->frame_count, sizeof(uint16_t), 1, file);
         fread(&animation->rom_offset, sizeof(uint32_t), 1, file);
         animation->rom_offset += list->rom_location;
+
+        fread(&animation->event_size, 2, 1, file);
+        fread(&animation->event_offset, sizeof(uint32_t), 1, file);
+        animation->event_offset += list->rom_location;
     }
 }
 
@@ -90,4 +96,94 @@ void camera_animation_unmap(entity_id id) {
 
 camera_animation_list_t* camera_animation_get(entity_id id) {
     return hash_map_get(&animation_map_lookup, id);
+}
+
+camera_event_t* camera_anim_load_events(camera_animation_t* anim) {
+    if (!anim->event_size) {
+        return NULL;
+    }
+
+    FILE* file = pifile_open(anim->event_offset, anim->event_size, 0);
+
+    uint16_t event_count;
+    fread(&event_count, 2, 1, file);
+
+    camera_event_t* result = malloc(sizeof(camera_event_t) * event_count);
+
+    camera_event_t* curr = result;
+
+    for (int i = 0; i < event_count; i += 1) {
+        fread(&curr->type, 1, 1, file);
+        fread(&curr->frame, 2, 1, file);
+        curr->unused = 0;
+        
+        switch (curr->type) {
+            case CAMERA_EVENT_TYPE_END:
+                break;
+            case CAMERA_EVENT_TYPE_RUN:
+                curr->data.run = cutscene_load_file(file);
+                break;
+            case CAMERA_EVENT_SIGNAL:
+            case CAMERA_EVENT_WAIT: {
+                uint8_t name_len;
+                fread(&name_len, 1, 1, file);
+                curr->data.signal= malloc(name_len + 1);
+                fread(curr->data.signal, name_len, 1, file);
+                curr->data.signal[name_len] = '\0';
+                break;
+            }
+        }
+    }
+
+    fclose(file);
+
+    return result;
+}
+
+void camera_anim_free_events(camera_event_t* events) {
+    if (!events) {
+        return;
+    }
+
+    camera_event_t* curr = events;
+
+    while (curr->type) {
+        switch (curr->type) {
+            case CAMERA_EVENT_TYPE_RUN:
+                cutscene_free(curr->data.run);
+                break;
+        }
+
+        ++curr;
+    }
+
+    free(events);
+}
+
+camera_event_t* camera_anim_run_events(camera_event_t* curr, uint16_t frame) {
+    if (!curr) {
+        return NULL;
+    }
+
+    while (curr->frame <= frame) {
+        switch (curr->type)
+        {
+            case CAMERA_EVENT_TYPE_END:
+                return curr;
+            case CAMERA_EVENT_TYPE_RUN:
+                cutscene_runner_run(&(cutscene_run_args_t){
+                    .cutscene = curr->data.run,
+                    .function_index = 0,
+                    .channel = CUTSCENE_CHANNEL_ANIMATION,
+                    .finish_callback = NULL,
+                    .data = NULL,
+                    .subject = 0,
+                });
+                break;
+        }
+
+        ++curr;
+    }
+
+    return curr;
 }

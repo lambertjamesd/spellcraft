@@ -564,13 +564,14 @@ void player_die(struct player* player) {
     
     cutscene_builder_fade(&cutscene, FADE_COLOR_NONE, 2.0f);
     
-    cutscene_runner_run(
-        cutscene_builder_finish(&cutscene),
-        0,
-        cutscene_runner_free_on_finish(),
-        NULL,
-        0
-    );
+    cutscene_runner_run(&(cutscene_run_args_t){
+        .cutscene = cutscene_builder_finish(&cutscene),
+        .function_index = 0,
+        .channel = CUTSCENE_CHANNEL_INTERACTION,
+        .finish_callback = cutscene_runner_free_on_finish(),
+        .data = NULL,
+        .subject = 0,
+    });
 }
 
 enum player_ground_movement_result {

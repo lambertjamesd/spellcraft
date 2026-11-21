@@ -154,7 +154,14 @@ void repair_scene_exit_with_message(repair_scene_t* scene, const char* message) 
     cutscene_builder_load_scene(&builder, scene->exit_scene);
     cutscene_builder_fade(&builder, FADE_COLOR_NONE, 1.0f);
 
-    cutscene_runner_run(cutscene_builder_finish(&builder), 0, cutscene_runner_free_on_finish(), NULL, 0);
+    cutscene_runner_run(&(cutscene_run_args_t){
+        .cutscene = cutscene_builder_finish(&builder),
+        .function_index = 0,
+        .channel = CUTSCENE_CHANNEL_INTERACTION,
+        .finish_callback = cutscene_runner_free_on_finish(),
+        .data = NULL,
+        .subject = 0,
+    });
 }
 
 void repair_scene_update(void *data) {

@@ -56,10 +56,7 @@ char* string_load(FILE* file) {
     return result;
 }
 
-// release with cutscene_free()
-struct cutscene* cutscene_load(const char* filename) {
-    FILE* file = asset_fopen(filename, NULL);
-
+struct cutscene* cutscene_load_file(FILE* file) {
     int header;
     fread(&header, 1, 4, file);
     assert(header == EXPECTED_HEADER);
@@ -125,6 +122,16 @@ struct cutscene* cutscene_load(const char* filename) {
 
         function_steps += function_size;
     }
+
+    return result;
+}
+
+
+// release with cutscene_free()
+struct cutscene* cutscene_load(const char* filename) {
+    FILE* file = asset_fopen(filename, NULL);
+
+    cutscene_t* result = cutscene_load_file(file);
 
     fclose(file);
     

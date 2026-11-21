@@ -31,7 +31,14 @@ void test_cutscene_end(cutscene_t* cutscene, void* data, cutscene_runner_context
 #define MAX_UPDATE_ITERATIONS       10
 
 void test_do_test(cutscene_t* cutscene, on_fn_end_t expect, const char* name) {
-    cutscene_runner_run(cutscene, cutscene_find_function_index(cutscene, name), test_cutscene_end, &expect, 0);
+    cutscene_runner_run(&(cutscene_run_args_t){
+        .cutscene = cutscene,
+        .function_index = cutscene_find_function_index(cutscene, name),
+        .channel = CUTSCENE_CHANNEL_INTERACTION,
+        .finish_callback = test_cutscene_end,
+        .data = &expect,
+        .subject = 0,
+    });
 
     for (int i = 0; !expect.complete && i < MAX_UPDATE_ITERATIONS; i += 1) {
         update_dispatch();
@@ -75,7 +82,14 @@ void test_cutscene_string_end(cutscene_t* cutscene, void* data, cutscene_runner_
 }
 
 void test_do_string_test(cutscene_t* cutscene, on_string_fn_end_t expect, const char* name) {
-    cutscene_runner_run(cutscene, cutscene_find_function_index(cutscene, name), test_cutscene_string_end, &expect, 0);
+    cutscene_runner_run(&(cutscene_run_args_t){
+        .cutscene = cutscene,
+        .function_index = cutscene_find_function_index(cutscene, name),
+        .channel = CUTSCENE_CHANNEL_INTERACTION,
+        .finish_callback = test_cutscene_string_end,
+        .data = &expect,
+        .subject = 0,
+    });
 
     for (int i = 0; !expect.complete && i < MAX_UPDATE_ITERATIONS; i += 1) {
         update_dispatch();

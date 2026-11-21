@@ -43,10 +43,11 @@ void element_emitter_init(struct element_emitter* element_emitter, struct spell_
     element_emitter->effect = NULL;
     element_emitter->is_active = true;
 
+
     bool is_animating = spell_data_source_request_animation(source, effect_definition->cast_animation);
 
     if (is_animating) {
-        source->flags.source = SPELL_CAST_SOURCE_STAFF;
+        spell_data_source_set_cast_source(source, SPELL_CAST_SOURCE_STAFF);
     }
 
     if (!effect_definition->cast_animation || !is_animating) {

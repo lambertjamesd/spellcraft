@@ -47,6 +47,8 @@ union camera_controller_state_data {
         uint8_t blend_frames;
         uint8_t total_blend_frames;
         orbit_args_t orbit_args;
+        camera_event_t* last_event;
+        camera_event_t* events;
     } animate;
     struct {
         bool moving_position;

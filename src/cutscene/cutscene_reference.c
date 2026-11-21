@@ -46,13 +46,27 @@ void cutscene_ref_destroy(cutscene_ref_t* ref) {
 void cutscene_ref_run_then_callback(cutscene_ref_t* ref, cutscene_finish_callback finish_callback, void* data, entity_id subject) {
     switch (ref->type) {
         case CUTSCENE_REF_DIRECT:
-            cutscene_runner_run(ref->data.direct.cutscene, 0, finish_callback, data, subject);
+            cutscene_runner_run(&(cutscene_run_args_t){
+                .cutscene = ref->data.direct.cutscene,
+                .function_index = 0,
+                .channel = CUTSCENE_CHANNEL_INTERACTION,
+                .finish_callback = finish_callback,
+                .data = data,
+                .subject = subject,
+            });
             break;
         case CUTSCENE_REF_SCENE:
             int fn_index = current_scene && current_scene->cutscene ? cutscene_find_function_index(current_scene->cutscene, ref->data.scene.name) : -1;
 
             if (fn_index != -1) {
-                cutscene_runner_run(current_scene->cutscene, fn_index, finish_callback, data, subject);
+                cutscene_runner_run(&(cutscene_run_args_t){
+                    .cutscene = current_scene->cutscene,
+                    .function_index = fn_index,
+                    .channel = CUTSCENE_CHANNEL_INTERACTION,
+                    .finish_callback = finish_callback,
+                    .data = data,
+                    .subject = subject,
+                });
             } else if (finish_callback) {
                 finish_callback(NULL, data, NULL);
             }
@@ -96,7 +110,14 @@ void cutscene_ref_run_then_destroy(cutscene_ref_t* ref, entity_id subject, cutsc
 
     switch (ref->type) {
         case CUTSCENE_REF_DIRECT:
-            cutscene_runner_run(ref->data.direct.cutscene, 0, finish ? cutscene_runner_destroy_with_callback : cutscene_runner_free_on_finish(), finish, subject);
+            cutscene_runner_run(&(cutscene_run_args_t){
+                .cutscene = ref->data.direct.cutscene,
+                .function_index = 0,
+                .channel = CUTSCENE_CHANNEL_INTERACTION,
+                .finish_callback = finish ? cutscene_runner_destroy_with_callback : cutscene_runner_free_on_finish(),
+                .data = finish,
+                .subject = subject,
+            });
             break;
         case CUTSCENE_REF_SCENE:
             int fn_index = current_scene && current_scene->cutscene ? cutscene_find_function_index(current_scene->cutscene, ref->data.scene.name) : -1;
@@ -104,7 +125,14 @@ void cutscene_ref_run_then_destroy(cutscene_ref_t* ref, entity_id subject, cutsc
             ref->data.scene.name = NULL;
 
             if (fn_index != -1) {
-                cutscene_runner_run(current_scene->cutscene, fn_index, cutscene_runner_destroy_with_callback, finish, subject);
+                cutscene_runner_run(&(cutscene_run_args_t){
+                    .cutscene = current_scene->cutscene,
+                    .function_index = fn_index,
+                    .channel = CUTSCENE_CHANNEL_INTERACTION,
+                    .finish_callback = cutscene_runner_destroy_with_callback,
+                    .data = finish,
+                    .subject = subject,
+                });
             }
             break;
         default:

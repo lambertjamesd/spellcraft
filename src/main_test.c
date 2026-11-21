@@ -40,6 +40,7 @@ uint8_t blur_frame_counter;
 int main() {
     rdpq_init();
     dfs_init(DFS_DEFAULT_LOCATION);
+    pifile_init();
     joypad_init();
     debug_init_isviewer();
     debug_init_usblog();

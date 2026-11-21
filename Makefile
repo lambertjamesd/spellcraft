@@ -189,7 +189,7 @@ CANIM_SOURCES := $(shell find assets/cam_anim -type f -name '*.blend' | sort)
 CANIM := $(CANIM_SOURCES:assets/cam_anim/%.blend=filesystem/cam_anim/%.canim)
 
 .SECONDEXPANSION:
-filesystem/cam_anim/%.canim: assets/cam_anim/%.blend
+filesystem/cam_anim/%.canim: assets/cam_anim/%.blend build/assets/scripts/globals.json build/cutscene/function_defs.json tools/mesh_export/cam_anim.py tools/mesh_export/entities/camera_animation.py
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(@:filesystem/cam_anim/%.canim=build/assets/cam_anim/%.canim))
 	echo $@ $<

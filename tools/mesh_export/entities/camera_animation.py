@@ -5,6 +5,10 @@ import mathutils
 import struct
 import io
 from . import armature
+from ..cutscene import parser
+from ..cutscene import tokenizer
+from ..cutscene import step_generator
+from ..cutscene import variable_layout
 
 # FOV = 2 * arctan(sensor_size / (2 * focal_length))
 SENSOR_SIZE = 36
@@ -104,7 +108,108 @@ class camera_animation:
             result.write(self.evaluate(frame).pack())
 
         return result.getvalue()
-        
+
+    def pose_markers(self) -> list:
+        actions = [self.movement_action]
+
+        if self.lens_action and self.lens_action != self.movement_action:
+            actions.append(self.lens_action)
+
+        result = []
+
+        for action in actions:
+            if action and hasattr(action, 'pose_markers'):
+                result.extend(action.pose_markers)
+
+        return result
+
+    def pack_events(self, context: variable_layout.VariableContext) -> bytes:
+        events: list[tuple[int, int, int, bytes]] = []
+
+        start_frame = self.start_frame()
+
+        for marker in self.pose_markers():
+            frame = max(0, marker.frame - start_frame)
+            event_type, data = _pack_event(marker.name, f"{self.name}@{marker.frame}", context)
+            events.append((frame, len(events), event_type, data))
+
+        if len(events) == 0:
+            return bytes([])
+
+        events.sort(key=lambda x: (x[0], x[1]))
+
+        result = io.BytesIO()
+        # +1 for the end event
+        result.write(struct.pack('>H', len(events) + 1))
+
+        for frame, _, event_type, data in events:
+            if frame > 0xFFFF:
+                raise Exception(f"camera animation {self.name} has an event past frame {0xFFFF}")
+            result.write(struct.pack('>BH', event_type, frame))
+            result.write(data)
+
+        result.write(struct.pack('>BH', CAMERA_EVENT_TYPE_END, self.end_frame() - start_frame))
+
+        return result.getvalue()
+
+# matches enum camera_event_type in src/player/camera_animation.h
+CAMERA_EVENT_TYPE_END = 0
+CAMERA_EVENT_TYPE_RUN = 1
+CAMERA_EVENT_SIGNAL = 2
+CAMERA_EVENT_WAIT = 3
+
+_string_event_types = {
+    'signal': CAMERA_EVENT_SIGNAL,
+    'wait': CAMERA_EVENT_WAIT,
+}
+
+def _build_fake_token(value: str) -> tokenizer.Token:
+    return tokenizer.Token('identifier', value, 0, None)
+
+def _pack_run_event(contents: str, source: str, context: variable_layout.VariableContext) -> bytes:
+    body = parser.parse_block(contents, source)
+
+    fn_def = parser.FunctionDefinition(
+        _build_fake_token('func'),
+        _build_fake_token('main'),
+        [],
+        [],
+        body
+    )
+
+    cutscene = parser.Cutscene()
+    cutscene.functions.append(fn_def)
+
+    errors: list[str] = []
+    step_generator.validate_cutscene(cutscene, errors, context)
+
+    if len(errors) > 0:
+        raise Exception(f"errors in camera event {source}\n" + '\n\n'.join(errors))
+
+    result = io.BytesIO()
+    step_generator.generate_steps(result, cutscene, context)
+    return result.getvalue()
+
+def _pack_event(marker_text: str, source: str, context: variable_layout.VariableContext) -> tuple[int, bytes]:
+    if not ':' in marker_text:
+        raise Exception(f"camera event {source} '{marker_text}' should be in the form <event>: <contents>")
+
+    event_name, contents = marker_text.split(':', 1)
+    event_name = event_name.strip()
+
+    if event_name == 'run':
+        return CAMERA_EVENT_TYPE_RUN, _pack_run_event(contents, source, context)
+
+    if event_name in _string_event_types:
+        contents_bytes = contents.strip().encode()
+
+        if len(contents_bytes) > 255:
+            raise Exception(f"camera event {source} contents is too long")
+
+        return _string_event_types[event_name], bytes([len(contents_bytes)]) + contents_bytes
+
+    raise Exception(f"camera event {source} has unknown event type '{event_name}' expected one of run, signal, wait")
+
 
 def get_camera_animation(actions: dict[str, camera_animation], name: str) -> camera_animation:
     if not name in actions:
@@ -114,7 +219,7 @@ def get_camera_animation(actions: dict[str, camera_animation], name: str) -> cam
     
     return actions[name]
 
-def export_camera_animations(filename: str, scene_file):
+def export_camera_animations(filename: str, scene_file, context: variable_layout.VariableContext):
     actions: dict[str, camera_animation] = {}
 
     for action in bpy.data.actions:
@@ -127,6 +232,8 @@ def export_camera_animations(filename: str, scene_file):
 
     animation_content = []
 
+    events = []
+
     for name, anim in items:
         if not anim.movement_action:
             raise Exception(f"animation {name} only has lens data add an action to the camera object that ends in _cam")
@@ -135,6 +242,7 @@ def export_camera_animations(filename: str, scene_file):
 
 
         animation_content.append(anim.pack_animation_data())
+        events.append(anim.pack_events(context))
 
     scene_file.write(len(items).to_bytes(2, 'big'))
 
@@ -150,11 +258,18 @@ def export_camera_animations(filename: str, scene_file):
         scene_file.write(frame_count.to_bytes(2, 'big'))
         scene_file.write(offset.to_bytes(4, 'big'))
         offset += len(animation_content[index])
+        scene_file.write(len(events[index]).to_bytes(2, 'big'))
+        scene_file.write(offset.to_bytes(4, 'big'))
+        offset += len(events[index])
         index += 1
 
+        if len(events[index - 1]) > 0xFFFF:
+            raise Exception(f"camera animation {name} has too much event data")
+
     with open(filename, 'wb') as file:
-        for content in animation_content:
+        for index, content in enumerate(animation_content):
             file.write(content)
+            file.write(events[index])
 
 
 

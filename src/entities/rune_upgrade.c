@@ -78,7 +78,14 @@ void rune_upgrade_interact(interactable_t* interactable, entity_id from) {
 
     cutscene_builder_dialog(&cutscene, "You upgraded the fire rune");
 
-    cutscene_runner_run(cutscene_builder_finish(&cutscene), 0, cutscene_runner_free_on_finish(), NULL, 0);
+    cutscene_runner_run(&(cutscene_run_args_t){
+        .cutscene = cutscene_builder_finish(&cutscene),
+        .function_index = 0,
+        .channel = CUTSCENE_CHANNEL_INTERACTION,
+        .finish_callback = cutscene_runner_free_on_finish(),
+        .data = NULL,
+        .subject = 0,
+    });
 }
 
 void rune_upgrade_init(rune_upgrade_t* rune_upgrade, struct rune_upgrade_definition* definition, entity_id entity_id) {

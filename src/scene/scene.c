@@ -155,7 +155,14 @@ void scene_check_cutscenes(scene_t* scene) {
         }
 
         scene->is_running_step = true;
-        cutscene_runner_run(scene->cutscene, scene_fn, scene_cutscene_finish, scene, 0);
+        cutscene_runner_run(&(cutscene_run_args_t){
+            .cutscene = scene->cutscene,
+            .function_index = scene_fn,
+            .channel = CUTSCENE_CHANNEL_BACKGROUND,
+            .finish_callback = scene_cutscene_finish,
+            .data = scene,
+            .subject = 0,
+        });
         break;
     }
 }
@@ -183,7 +190,14 @@ void scene_update(void* data) {
             cutscene_builder_load_scene(&cutscene, scene->loading_zones[i].scene_name);
             cutscene_builder_pause(&cutscene, false, false);
 
-            cutscene_runner_run(cutscene_builder_finish(&cutscene), 0, cutscene_runner_free_on_finish(), NULL, 0);
+            cutscene_runner_run(&(cutscene_run_args_t){
+                .cutscene = cutscene_builder_finish(&cutscene),
+                .function_index = 0,
+                .channel = CUTSCENE_CHANNEL_INTERACTION,
+                .finish_callback = cutscene_runner_free_on_finish(),
+                .data = NULL,
+                .subject = 0,
+            });
 
             // kinda hacky way to prevent another loading zone from triggering
             scene->loading_zone_count = 0;

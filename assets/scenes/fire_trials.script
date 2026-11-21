@@ -124,15 +124,14 @@ end
 
 scene pot_shard_guardian: entity_id;
 scene pot_shard_room_unlocked: bool = true;
-scene pot_shard_room_should_unlock: bool = true;
+scene pot_shard_room_should_unlock: bool;
 
-scene pot_shard_room_should_lock: bool = true;
-scene pot_shard_room_lock: bool = true;
+scene pot_shard_golem_active: bool = false;
 
 func room_pot_shards()
-    pot_shard_room_should_unlock = pot_shard_guardian == 0 or not fire_trials_has_pot_shards;
-
-    if not pot_shard_room_should_unlock and pot_shard_room_unlocked then
-        pot_shard_room_unlocked = false;
+    if pot_shard_guardian == 0 or not fire_trials_has_pot_shards then
+        pot_shard_room_should_unlock = true;
+    elif pot_shard_guardian != 0 and fire_trials_has_pot_shards then
+        cam_animate "pot_shard_get", 0, 0;
     end
 end

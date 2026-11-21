@@ -55,7 +55,7 @@ void setup() {
     fade_effect_set((color_t){0, 0, 0, 0}, 3.0f);
 
     // scene_queue_next("rom:/scenes/material_testing.scene");
-    scene_queue_next("rom:/scenes/fire_trials.scene#test");
+    scene_queue_next("rom:/scenes/fire_trials.scene#pot_shards");
     // scene_queue_next("rom:/scenes/fire_trials.scene#bossdoor");
     // scene_queue_next("rom:/scenes/fire_trials.scene#test_firespinroom");
 	
@@ -334,6 +334,7 @@ int main(void)
     t3d_init((T3DInitParams){});
     tpx_init((TPXInitParams){});
     dfs_init(DFS_DEFAULT_LOCATION);
+    pifile_init();
     joypad_init();
 
     surface_t zbuffer = surface_alloc(FMT_RGBA16, custom_res.width, custom_res.height);
