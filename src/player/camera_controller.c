@@ -38,6 +38,7 @@ void camera_cleanup_current(camera_controller_t* controller) {
     {
     case CAMERA_STATE_ANIMATE:
     case CAMERA_STATE_BLEND_TO_ANIMATE:
+    case CAMERA_STATE_ORBIT_TO_ANIMATE:
         if (controller->state_data.animate.events) {
             camera_anim_free_events(controller->state_data.animate.events);
         }
@@ -601,6 +602,7 @@ void camera_controller_init(struct camera_controller* controller, struct player*
 }
 
 void camera_controller_destroy(struct camera_controller* controller) {
+    camera_cleanup_current(controller);
     update_remove(controller);
     camera_wall_checker_destroy(&controller->wall_checker);
     render_scene_remove_camera(&controller->camera);

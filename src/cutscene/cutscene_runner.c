@@ -384,7 +384,7 @@ void cutscene_runner_update(void* data) {
             struct cutscene_step* step = &entry->function->steps[entry->current_instruction];
         
             if (!cutscene_runner_update_step(active_cutscene, step)) {
-                return;
+                break;
             }
             cutscene_runner_step_instruction(active_cutscene);
             i += 1;
@@ -489,12 +489,11 @@ void cutscene_runner_cancel(struct cutscene* cutscene) {
     for (int channel = 0; channel < CUTSCENE_CHANNEL_COUNT; channel += 1) {
         cutscene_active_entry_t* active_entry = &cutscene_runner.active_cutscenes[channel];
 
+        cutscene_runner_cancel_from_queue(active_entry, cutscene);
+
         if (!CUTSCENE_IS_RUNNING(active_entry)) {
             continue;
         }
-
-
-        cutscene_runner_cancel_from_queue(active_entry, cutscene);
 
         if (active_entry->call_stack[0].cutscene == cutscene) {
             cutscene_cancel_active(active_entry);

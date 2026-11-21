@@ -150,7 +150,12 @@ void camera_anim_free_events(camera_event_t* events) {
     while (curr->type) {
         switch (curr->type) {
             case CAMERA_EVENT_TYPE_RUN:
+                cutscene_runner_cancel(curr->data.run);
                 cutscene_free(curr->data.run);
+                break;
+            case CAMERA_EVENT_SIGNAL:
+            case CAMERA_EVENT_WAIT:
+                free(curr->data.wait);
                 break;
         }
 

@@ -55,7 +55,7 @@ void setup() {
     fade_effect_set((color_t){0, 0, 0, 0}, 3.0f);
 
     // scene_queue_next("rom:/scenes/material_testing.scene");
-    scene_queue_next("rom:/scenes/fire_trials.scene#pot_shards");
+    scene_queue_next("rom:/scenes/fire_trials.scene#pot_repair");
     // scene_queue_next("rom:/scenes/fire_trials.scene#bossdoor");
     // scene_queue_next("rom:/scenes/fire_trials.scene#test_firespinroom");
 	
