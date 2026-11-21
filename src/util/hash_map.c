@@ -3,37 +3,59 @@
 #include <malloc.h>
 #include <memory.h>
 
-// a 32 bit prime number
-#define MAGIC_PRIME 2748002342
+// 2^32 / golden ratio, odd so multiplication is a bijection on uint32
+#define HASH_MULTIPLIER 0x9E3779B1u
 #define MIN_CAPACITY    8
+#define MAX_CAPACITY    32768
 
-static inline struct hash_map_entry* hash_map_next_entry(struct hash_map* hash_map, struct hash_map_entry* curr, struct hash_map_entry* end) {
-    curr += 1;
+// key 0 marks an empty slot
+#define EMPTY_KEY       0
 
-    if (curr == end) {
-        return hash_map->entries;
-    }
-
-    return curr;
+static inline uint32_t hash_map_hash(int key) {
+    uint32_t h = (uint32_t)key * HASH_MULTIPLIER;
+    // the low bits of a multiply only depend on the low bits of the key
+    // fold the well mixed high bits down so masking uses them
+    return h ^ (h >> 16);
 }
 
-bool hash_map_init(struct hash_map* hash_map, int capacity) {
-    if (capacity < MIN_CAPACITY) {
-        capacity = MIN_CAPACITY;
+// max load factor of 3/4
+static inline bool hash_map_needs_grow(int count, int capacity) {
+    return count * 4 >= capacity * 3;
+}
+
+static int hash_map_capacity_for(int count) {
+    int capacity = MIN_CAPACITY;
+
+    while (capacity < MAX_CAPACITY && hash_map_needs_grow(count, capacity)) {
+        capacity <<= 1;
     }
 
-    capacity *= 2;
+    return capacity;
+}
 
-    hash_map->entries = malloc(sizeof(struct hash_map_entry) * capacity);
+static bool hash_map_alloc(struct hash_map* hash_map, int capacity) {
+    struct hash_map_entry* entries = malloc(sizeof(struct hash_map_entry) * capacity);
 
-    if (!hash_map->entries) {
+    if (!entries) {
         return false;
     }
 
+    memset(entries, 0, sizeof(struct hash_map_entry) * capacity);
+
+    hash_map->entries = entries;
     hash_map->capacity = capacity;
+
+    return true;
+}
+
+bool hash_map_init(struct hash_map* hash_map, int capacity) {
     hash_map->count = 0;
 
-    memset(hash_map->entries, 0, sizeof(struct hash_map_entry) * capacity);
+    if (!hash_map_alloc(hash_map, hash_map_capacity_for(capacity))) {
+        hash_map->entries = NULL;
+        hash_map->capacity = 0;
+        return false;
+    }
 
     return true;
 }
@@ -45,64 +67,76 @@ void hash_map_destroy(struct hash_map* hash_map) {
     hash_map->count = 0;
 }
 
-struct hash_map_entry* hash_map_find_entry(struct hash_map_entry* entries, int capacity, int key) {
-    int mask = capacity - 1;
+// returns the slot holding key or the empty slot where it would be inserted
+// the load factor guarantees an empty slot exists so the probe terminates
+static inline struct hash_map_entry* hash_map_find_entry(struct hash_map_entry* entries, int capacity, int key) {
+    uint32_t mask = capacity - 1;
+    uint32_t index = hash_map_hash(key) & mask;
 
-    int index = (key * MAGIC_PRIME) & mask;
-
-    for (int i = 0; i < capacity; i += 1) {
+    for (;;) {
         struct hash_map_entry* entry = &entries[index];
 
-        if (entry->key == key || entry->key == 0) {
+        if (entry->key == key || entry->key == EMPTY_KEY) {
             return entry;
         }
 
         index = (index + 1) & mask;
     }
-    
-    return NULL;
 }
 
-bool hash_map_resize(struct hash_map* hash_map) {
-    int new_capacity = hash_map->capacity * 2;
-    struct hash_map_entry* new_entries = malloc(sizeof(struct hash_map_entry) * new_capacity);
-
-    if (!new_entries) {
+static bool hash_map_resize(struct hash_map* hash_map) {
+    if (hash_map->capacity >= MAX_CAPACITY) {
         return false;
     }
 
-    memset(new_entries, 0, sizeof(struct hash_map_entry) * new_capacity);
+    struct hash_map_entry* old_entries = hash_map->entries;
+    int old_capacity = hash_map->capacity;
 
-    for (int i = 0; i < hash_map->capacity; i += 1) {
-        struct hash_map_entry* prev_entry = &hash_map->entries[i];
-
-        struct hash_map_entry* new_entry = hash_map_find_entry(new_entries, new_capacity, prev_entry->key);
-        new_entry->key = prev_entry->key;
-        new_entry->value = prev_entry->value;
+    if (!hash_map_alloc(hash_map, old_capacity * 2)) {
+        return false;
     }
 
-    free(hash_map->entries);
-    hash_map->entries = new_entries;
-    hash_map->capacity = new_capacity;
+    for (int i = 0; i < old_capacity; i += 1) {
+        struct hash_map_entry* prev_entry = &old_entries[i];
+
+        if (prev_entry->key == EMPTY_KEY) {
+            continue;
+        }
+
+        *hash_map_find_entry(hash_map->entries, hash_map->capacity, prev_entry->key) = *prev_entry;
+    }
+
+    free(old_entries);
 
     return true;
 }
 
 void* hash_map_get(struct hash_map* hash_map, int key) {
-    struct hash_map_entry* result = hash_map_find_entry(hash_map->entries, hash_map->capacity, key);
-
-    if (result) {
-        return result->value;
+    if (!hash_map->capacity || key == EMPTY_KEY) {
+        return NULL;
     }
 
-    return NULL;
+    // an empty slot has a NULL value
+    return hash_map_find_entry(hash_map->entries, hash_map->capacity, key)->value;
 }
 
 bool hash_map_set(struct hash_map* hash_map, int key, void* value) {
+    if (key == EMPTY_KEY) {
+        return false;
+    }
+
+    if (!hash_map->capacity && !hash_map_init(hash_map, MIN_CAPACITY)) {
+        return false;
+    }
+
     struct hash_map_entry* result = hash_map_find_entry(hash_map->entries, hash_map->capacity, key);
 
-    // check if the hash map should be grown
-    if (result->key != key && (hash_map->count << 1) >= hash_map->capacity) {
+    if (result->key == key) {
+        result->value = value;
+        return true;
+    }
+
+    if (hash_map_needs_grow(hash_map->count + 1, hash_map->capacity)) {
         if (!hash_map_resize(hash_map)) {
             return false;
         }
@@ -110,45 +144,47 @@ bool hash_map_set(struct hash_map* hash_map, int key, void* value) {
         result = hash_map_find_entry(hash_map->entries, hash_map->capacity, key);
     }
 
-    if (result->key == key && result->value) {
-        result->value = value;
-    } else {
-        result->key = key;
-        result->value = value;
-        hash_map->count += 1;
-    }
+    result->key = key;
+    result->value = value;
+    hash_map->count += 1;
 
     return true;
 }
 
 void hash_map_delete(struct hash_map* hash_map, int key) {
-    struct hash_map_entry* entry = hash_map_find_entry(hash_map->entries, hash_map->capacity, key);
+    if (!hash_map->capacity || key == EMPTY_KEY) {
+        return;
+    }
 
-    if (!entry || entry->key != key) {
+    struct hash_map_entry* entries = hash_map->entries;
+    uint32_t mask = hash_map->capacity - 1;
+    struct hash_map_entry* entry = hash_map_find_entry(entries, hash_map->capacity, key);
+
+    if (entry->key != key) {
         return;
     }
 
     hash_map->count -= 1;
-    entry->key = 0;
-    entry->value = 0;
 
-    struct hash_map_entry* end = hash_map->entries + hash_map->capacity;
+    // backward shift deletion, no tombstones needed
+    uint32_t hole = entry - entries;
+    uint32_t next = (hole + 1) & mask;
 
-    struct hash_map_entry* next = hash_map_next_entry(hash_map, entry, end);
+    while (entries[next].key != EMPTY_KEY) {
+        uint32_t home = hash_map_hash(entries[next].key) & mask;
 
-    while (next->value) {
-        struct hash_map_entry* wanted_location = hash_map_find_entry(hash_map->entries, hash_map->capacity, next->key);
-
-        if (wanted_location != next) {
-            wanted_location->key = next->key;
-            wanted_location->value = next->value;
-
-            next->key = 0;
-            next->value = 0;
+        // the entry can fill the hole if its home is not
+        // cyclically within (hole, next]
+        if (((next - home) & mask) >= ((next - hole) & mask)) {
+            entries[hole] = entries[next];
+            hole = next;
         }
 
-        next = hash_map_next_entry(hash_map, next, end);
+        next = (next + 1) & mask;
     }
+
+    entries[hole].key = EMPTY_KEY;
+    entries[hole].value = NULL;
 }
 
 struct hash_map_entry* hash_map_next(struct hash_map* hash_map, struct hash_map_entry* curr) {
@@ -156,23 +192,14 @@ struct hash_map_entry* hash_map_next(struct hash_map* hash_map, struct hash_map_
         return NULL;
     }
 
-    if (!curr) {
-        curr = hash_map->entries - 1;
-    }
-
     struct hash_map_entry* end = hash_map->entries + hash_map->capacity;
+    curr = curr ? curr + 1 : hash_map->entries;
 
-    do {
-        ++curr;
-
-        if (curr == end) {
-            return NULL;
-        }
-
-        if (curr->value) {
+    for (; curr < end; ++curr) {
+        if (curr->key != EMPTY_KEY) {
             return curr;
         }
-    } while (curr < end);
+    }
 
     return NULL;
 }
