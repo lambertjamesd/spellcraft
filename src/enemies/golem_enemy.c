@@ -246,7 +246,7 @@ void golem_enemy_update_idle(golem_enemy_t* golem) {
 }
 
 void golem_enemy_update_activating(golem_enemy_t* golem) {
-    if (!animator_is_running_clip(&golem->animator, golem_animations[GOLEM_ANIM_WAKE_UP])) {
+    if (!animator_is_running_clip(&golem->animator, golem_animations[GOLEM_ANIM_WAKE_UP]) && update_has_layer(UPDATE_LAYER_WORLD)) {
         golem_enemy_follow(golem);
     }
 
@@ -501,7 +501,7 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
     golem_enemy->attack_timer = 0.0f;
     golem_enemy->was_activated = expression_get_bool(golem_enemy->activated);
 
-    update_add(golem_enemy, golem_enemy_update, UPDATE_PRIORITY_ENEMY, UPDATE_LAYER_WORLD);
+    update_add(golem_enemy, golem_enemy_update, UPDATE_PRIORITY_ENEMY, UPDATE_LAYER_WORLD  | UPDATE_LAYER_CUTSCENE);
 
     golem_fist_init(&golem_enemy->fist_r, entity_id, golem_r_attachment);
     golem_fist_init(&golem_enemy->fist_l, entity_id, golem_l_attachment);

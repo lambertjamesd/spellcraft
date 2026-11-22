@@ -133,6 +133,8 @@ camera_event_t* camera_anim_load_events(camera_animation_t* anim) {
                 break;
             }
         }
+
+        curr += 1;
     }
 
     fclose(file);
