@@ -1,0 +1,55 @@
+{
+  "name": "spellcraft-script",
+  "displayName": "Spellcraft Script",
+  "description": "Syntax highlighting and autocomplete for Spellcraft cutscene .script files",
+  "version": "0.1.0",
+  "publisher": "spellcraft",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "languages": [
+      {
+        "id": "spellcraft-script",
+        "aliases": [
+          "Spellcraft Script",
+          "spellcraft-script"
+        ],
+        "extensions": [
+          ".script"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "spellcraft-script",
+        "scopeName": "source.spellcraft-script",
+        "path": "./syntaxes/spellcraft-script.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "spellcraft-script",
+        "path": "./snippets/spellcraft-script.json"
+      }
+    ],
+    "configuration": {
+      "title": "Spellcraft Script",
+      "properties": {
+        "spellcraftScript.projectRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the spellcraft project root (the folder containing src/ and assets/). Defaults to the first workspace folder that contains src/cutscene."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "Function": {
+    "prefix": "func",
+    "body": ["func ${1:name}($2)", "\t$0", "end"],
+    "description": "Function definition"
+  },
+  "Main function": {
+    "prefix": "main",
+    "body": ["func main()", "\t$0", "end"],
+    "description": "Cutscene entry point"
+  },
+  "If": {
+    "prefix": "if",
+    "body": ["if ${1:condition} then", "\t$0", "end"],
+    "description": "If statement"
+  },
+  "If / else": {
+    "prefix": "ifelse",
+    "body": ["if ${1:condition} then", "\t$2", "else", "\t$0", "end"],
+    "description": "If / else statement"
+  },
+  "Global variable": {
+    "prefix": "global",
+    "body": ["global ${1:name}: ${2|bool,i8,i16,i32,float,entity_id,entity_spawner|};"],
+    "description": "Global variable declaration"
+  },
+  "Scene variable": {
+    "prefix": "scene",
+    "body": ["scene ${1:name}: ${2|bool,i8,i16,i32,float,entity_id,entity_spawner|};"],
+    "description": "Scene variable declaration"
+  },
+  "Local variable": {
+    "prefix": "local",
+    "body": ["local ${1:name}: ${2|i32,bool,i8,i16,float|}${3: = ${4:value}};"],
+    "description": "Local variable declaration"
+  },
+  "Multi-line say": {
+    "prefix": "saym",
+    "body": ["say \"", "\t$0", "\";"],
+    "description": "Multi-line say block"
+  }
+}
