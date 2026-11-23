@@ -495,6 +495,10 @@ void camera_controller_blend_to_animate(struct camera_controller* controller) {
 }
 
 void camera_controller_update_animation(struct camera_controller* controller) {
+    if (!camera_anim_run_events(controller->state_data.animate.events, controller->state_data.animate.current_frame)) {
+        return;
+    }
+
     if (!camera_controller_request_frame(
         controller, 
         &controller->stable_position, 
@@ -503,7 +507,6 @@ void camera_controller_update_animation(struct camera_controller* controller) {
     )) {
         return;
     }
-    controller->state_data.animate.last_event = camera_anim_run_events(controller->state_data.animate.last_event, controller->state_data.animate.current_frame);
     controller->state_data.animate.current_frame += 1;
     camera_look_at_from_rotation(controller);
 }
@@ -689,7 +692,6 @@ void camera_play_animation(struct camera_controller* controller, struct camera_a
     controller->state_data.animate.total_blend_frames = blend_frames;
     controller->min_target_y = CAMERA_Y_UNCONSTRAINED;
     controller->state_data.animate.events = camera_anim_load_events(animation);
-    controller->state_data.animate.last_event = controller->state_data.animate.events;
 
     if (blend_frames) {
         if (relative_to) {
@@ -761,4 +763,30 @@ void camera_shift_by(struct camera_controller* controller, vector3_t* offset) {
 
 bool camera_is_touching_wall(struct camera_controller* controller) {
     return controller->wall_checker.collider.active_contacts != NULL;
+}
+
+bool camera_wait_signal(struct camera_controller* controller, const char* signal) {
+    switch (controller->state) {
+        case CAMERA_STATE_ANIMATE:
+        case CAMERA_STATE_BLEND_TO_ANIMATE:
+        case CAMERA_STATE_ORBIT_TO_ANIMATE:
+            return controller->state_data.animate.events != NULL && strcmp(controller->state_data.animate.events->signal, signal) != 0;
+        default:
+            return false;
+    }
+    
+}
+
+void camera_set_signal(struct camera_controller* controller, const char* signal) {
+    switch (controller->state) {
+        case CAMERA_STATE_ANIMATE:
+        case CAMERA_STATE_BLEND_TO_ANIMATE:
+        case CAMERA_STATE_ORBIT_TO_ANIMATE:
+            if (controller->state_data.animate.events) {
+                strcpy(controller->state_data.animate.events->signal, signal);
+            }
+            break;
+        default:
+            break;
+    }
 }

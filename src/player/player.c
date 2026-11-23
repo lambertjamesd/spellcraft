@@ -1658,7 +1658,7 @@ void player_handle_z_target(struct player* player, bool z_pressed, bool z_down) 
 
     struct dynamic_object* obj = collision_scene_find_object(player->z_target);
 
-    if (!z_down || !obj) {
+    if (!z_down || !obj || !(obj->collision_layers & COLLISION_LAYER_Z_TARGET)) {
         player->z_target = 0;
         player->z_target_visual.hide = 1;
         player_find_z_target(player);

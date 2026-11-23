@@ -678,6 +678,30 @@ void cutscene_camera_focus_init(cutscene_runner_context_t* context, int arg_coun
     );
 }
 
+// camera_signal_set
+void cutscene_camera_signal_set_init(cutscene_runner_context_t* context, int arg_count) {
+    READ_ARGS(context, 1, arg_count, args);
+    camera_set_signal(&current_scene->player.camera_controller, (char*)args[0]);
+}
+
+
+// camera_signal_wait
+void cutscene_camera_signal_wait_init(cutscene_runner_context_t* context, int arg_count) {
+    READ_ARGS(context, 1, arg_count, args);
+    evaluation_context_push(&context->eval, args[0]);
+}
+
+bool cutscene_camera_signal_wait_step(cutscene_runner_context_t* context) {
+    int signal = evaluation_context_pop(&context->eval);
+
+    if (camera_wait_signal(&current_scene->player.camera_controller, (char*)signal)) {
+        evaluation_context_push(&context->eval, signal);
+        return false;
+    }
+    
+    return true;
+}
+
 static cutscene_step_fn_t function_steps[] = {
     [CUTSCENE_FN_SAY] = {.init = cutscene_say_ask_init, .step = cutscene_say_step, .cancel = cutscene_say_ask_cancel}, // func say(message: str)
     [CUTSCENE_FN_ASK] = {.init = cutscene_say_ask_init, .step = cutscene_ask_step, .cancel = cutscene_say_ask_cancel}, // func ask(message: str): bool
@@ -723,6 +747,8 @@ static cutscene_step_fn_t function_steps[] = {
     {.init = cutscene_set_audio_pause_init }, // func set_audio_paused(value: bool)
     {.init = cutscene_show_image_init }, // func show_image(filename: str)
     {.init = cutscene_camera_focus_init }, // func camera_focus(target: entity_id)
+    {.init = cutscene_camera_signal_set_init }, // func camera_signal_set(signal: str)
+    {.init = cutscene_camera_signal_wait_init, .step = cutscene_camera_signal_wait_step }, // func camera_signal_wait(signal: str)
 };
 
 cutscene_step_fn_t* cutscene_step_lookup_fn(int type) {

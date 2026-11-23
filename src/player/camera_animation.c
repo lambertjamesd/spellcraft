@@ -98,7 +98,7 @@ camera_animation_list_t* camera_animation_get(entity_id id) {
     return hash_map_get(&animation_map_lookup, id);
 }
 
-camera_event_t* camera_anim_load_events(camera_animation_t* anim) {
+camera_event_runner_t* camera_anim_load_events(camera_animation_t* anim) {
     if (!anim->event_size) {
         return NULL;
     }
@@ -108,9 +108,11 @@ camera_event_t* camera_anim_load_events(camera_animation_t* anim) {
     uint16_t event_count;
     fread(&event_count, 2, 1, file);
 
-    camera_event_t* result = malloc(sizeof(camera_event_t) * event_count);
+    camera_event_runner_t* result = malloc(sizeof(camera_event_runner_t) + sizeof(camera_event_t) * event_count);
 
-    camera_event_t* curr = result;
+    camera_event_t* curr = result->all_events;
+    result->next_event = result->all_events;
+    result->signal[0] = '\0';
 
     for (int i = 0; i < event_count; i += 1) {
         fread(&curr->type, 1, 1, file);
@@ -142,12 +144,12 @@ camera_event_t* camera_anim_load_events(camera_animation_t* anim) {
     return result;
 }
 
-void camera_anim_free_events(camera_event_t* events) {
+void camera_anim_free_events(camera_event_runner_t* events) {
     if (!events) {
         return;
     }
 
-    camera_event_t* curr = events;
+    camera_event_t* curr = events->all_events;
 
     while (curr->type) {
         switch (curr->type) {
@@ -167,12 +169,14 @@ void camera_anim_free_events(camera_event_t* events) {
     free(events);
 }
 
-camera_event_t* camera_anim_run_events(camera_event_t* curr, uint16_t frame) {
-    if (!curr) {
-        return NULL;
+bool camera_anim_run_events(camera_event_runner_t* events, uint16_t frame) {
+    if (!events) {
+        return true;
     }
 
-    while (curr->frame <= frame) {
+    while (events->next_event->frame <= frame) {
+        camera_event_t* curr = events->next_event;
+        
         switch (curr->type)
         {
             case CAMERA_EVENT_TYPE_END:
@@ -187,10 +191,19 @@ camera_event_t* camera_anim_run_events(camera_event_t* curr, uint16_t frame) {
                     .subject = 0,
                 });
                 break;
+            case CAMERA_EVENT_SIGNAL:
+                strcpy(events->signal, curr->data.signal);
+                break;
+            case CAMERA_EVENT_WAIT:
+                if (strcmp(events->signal, curr->data.wait) != 0) {
+                    // TODO check for deadlock somehow
+                    return false;
+                }
+                break;
         }
 
-        ++curr;
+        ++events->next_event;
     }
 
-    return curr;
+    return true;
 }

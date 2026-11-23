@@ -47,8 +47,7 @@ union camera_controller_state_data {
         uint8_t blend_frames;
         uint8_t total_blend_frames;
         orbit_args_t orbit_args;
-        camera_event_t* last_event;
-        camera_event_t* events;
+        camera_event_runner_t* events;
     } animate;
     struct {
         bool moving_position;
@@ -103,5 +102,8 @@ void camera_shake(struct camera_controller* controller, float strength);
 void camera_shift_by(struct camera_controller* controller, vector3_t* offset);
 
 bool camera_is_touching_wall(struct camera_controller* controller);
+
+bool camera_wait_signal(struct camera_controller* controller, const char* signal);
+void camera_set_signal(struct camera_controller* controller, const char* signal);
 
 #endif

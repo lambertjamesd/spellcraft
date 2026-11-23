@@ -15,9 +15,12 @@
 #define GOLEM_WALK_SPEED            0.8f
 #define GOLEM_ACCEL                 0.5f
 #define GOLEM_ATTACK_GAP            3.0f
+#define GOLEM_RESPONSE_GAP          0.5f
 #define FIRE_RESISTANCE             0.5f
 #define SEARCH_TIME                 8.0f
 #define LOOK_SIDE_TIME              4.0f
+
+#define GOLEM_MAX_HEALTH            40.0f
 
 #define PUNCH_RANGE         2.5f
 
@@ -52,7 +55,7 @@ static const char* golem_animation_names[GOLEM_ANIM_COUNT] = {
 };
 
 static dynamic_object_type_t golem_collider = {
-    CAPSULE_COLLIDER(0.7f, 0.8f),
+    CAPSULE_COLLIDER(0.9f, 0.6f),
     .center = {0.0f, 1.5f, 0.0f},
     .friction = 1.0f,
     .bounce = 0.0f,
@@ -77,7 +80,7 @@ static spatial_trigger_type_t golem_vision = {
 };
 
 static struct damage_source punch_attack = {
-    .amount = 20.0f,
+    .amount = 8.0f,
     .type = DAMAGE_TYPE_KNOCKBACK,
     .knockback_strength = damage_knockback_with_time(1.0f),
 };
@@ -171,7 +174,8 @@ void golem_enemy_activate(golem_enemy_t* golem) {
 void golem_enemy_follow(golem_enemy_t* golem) {
     animator_run_clip(&golem->animator, golem_animations[GOLEM_ANIM_WALK], 0.0f, true);
     golem->state = GOLEM_STATE_FOLLOW;
-    golem->animator_speed = 0.0f;
+    golem->animator_speed = 1.0f;
+    golem->last_pos = golem->transform.position;
 }
 
 void golem_enemy_punch(golem_enemy_t* golem) {
@@ -223,6 +227,7 @@ void golem_enemy_die(golem_enemy_t* golem) {
     );
     golem->state = GOLEM_STATE_DIE;
     golem->animator_speed = 1.0f;
+    golem->collider.collision_layers &= ~COLLISION_LAYER_Z_TARGET;
 }
 
 void golem_enemy_update_idle(golem_enemy_t* golem) {
@@ -277,7 +282,11 @@ void golem_enemy_update_follow(golem_enemy_t* golem) {
     vector2LookDir(&target_rotate, &offset);
     vector2RotateTowards(&golem->transform.rotation, &target_rotate, &golem_rotation_speed, &golem->transform.rotation);
 
-    golem->animator_speed = sqrtf(vector3MagSqrd2D(&golem->collider.velocity)) * (1.0f / GOLEM_WALK_SPEED);
+    vector3_t last_offset;
+    vector3Sub(&golem->transform.position, &golem->last_pos, &last_offset);
+    golem->last_pos = golem->transform.position;
+
+    golem->animator_speed = sqrtf(vector3MagSqrd2D(&last_offset)) * (1.0f / GOLEM_WALK_SPEED) * scaled_time_step_inv;
     golem->attack_timer -= fixed_time_step;
 
     golem_look_at_target(golem);
@@ -285,7 +294,7 @@ void golem_enemy_update_follow(golem_enemy_t* golem) {
     if (vector3MagSqrd2D(&offset) < PUNCH_RANGE * PUNCH_RANGE) {
         if (golem->attack_timer > 0.0f) {
             golem_update_speed(golem, 0.0f);
-        } else if (vector2Dot(&golem->head_rotation, &gRight2) > 0.8f) {
+        } else if (vector2Dot(&golem->head_rotation, &gRight2) > 0.9f) {
             golem_enemy_punch(golem);
         } else {
             golem_enemy_spin(golem);
@@ -462,6 +471,12 @@ float golem_enemy_on_hit(void* data, struct damage_info* damage) {
         return 0.0f;
     }
 
+    golem->last_hit_by = damage->source;
+    
+    if (golem->attack_timer > GOLEM_RESPONSE_GAP) {
+        golem->attack_timer = GOLEM_RESPONSE_GAP;
+    }
+
     if (damage->type & DAMAGE_TYPE_FIRE) {
         return damage->amount * FIRE_RESISTANCE;
     }
@@ -503,10 +518,10 @@ void golem_enemy_init(golem_enemy_t* golem_enemy, struct golem_enemy_definition*
 
     update_add(golem_enemy, golem_enemy_update, UPDATE_PRIORITY_ENEMY, UPDATE_LAYER_WORLD  | UPDATE_LAYER_CUTSCENE);
 
-    golem_fist_init(&golem_enemy->fist_r, entity_id, golem_r_attachment);
-    golem_fist_init(&golem_enemy->fist_l, entity_id, golem_l_attachment);
+    golem_fist_init(&golem_enemy->fist_r, entity_id_new(), golem_r_attachment);
+    golem_fist_init(&golem_enemy->fist_l, entity_id_new(), golem_l_attachment);
 
-    health_init(&golem_enemy->health, entity_id, 100.0f);
+    health_init(&golem_enemy->health, entity_id, GOLEM_MAX_HEALTH);
     health_set_callback(&golem_enemy->health, golem_enemy_on_hit, golem_enemy);
     golem_enemy->health.unmovable = true;
 }

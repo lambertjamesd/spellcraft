@@ -33,6 +33,7 @@ struct golem_enemy {
     renderable_t renderable;
     animator_t animator;
     dynamic_object_t collider;
+    vector3_t last_pos;
 
     health_t health;
 
@@ -49,6 +50,7 @@ struct golem_enemy {
     float animator_speed;
     float target_speed;
     float attack_timer;
+    entity_id last_hit_by;
 };
 
 typedef struct golem_enemy golem_enemy_t;

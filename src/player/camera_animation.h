@@ -52,6 +52,14 @@ struct camera_event {
 
 typedef struct camera_event camera_event_t;
 
+struct camera_event_runner {
+    camera_event_t* next_event;
+    char signal[16];
+    camera_event_t all_events[];
+};
+
+typedef struct camera_event_runner camera_event_runner_t;
+
 struct camera_animation_list {
     struct camera_animation* animations;
     uint16_t animation_count;
@@ -67,10 +75,10 @@ struct camera_animation* camera_animation_lookup(struct camera_animation_list* l
 
 void camera_animations_load(struct camera_animation_list* list, const char* filename, FILE* file);
 
-camera_event_t* camera_anim_load_events(camera_animation_t* anim);
-void camera_anim_free_events(camera_event_t* events);
+camera_event_runner_t* camera_anim_load_events(camera_animation_t* anim);
+void camera_anim_free_events(camera_event_runner_t* events);
 
-camera_event_t* camera_anim_run_events(camera_event_t* curr, uint16_t frame);
+bool camera_anim_run_events(camera_event_runner_t* curr, uint16_t frame);
 
 void camera_animation_map(camera_animation_list_t* list, entity_id id);
 void camera_animation_unmap(entity_id id);
