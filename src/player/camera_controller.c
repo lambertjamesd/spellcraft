@@ -769,8 +769,15 @@ bool camera_wait_signal(struct camera_controller* controller, const char* signal
     switch (controller->state) {
         case CAMERA_STATE_ANIMATE:
         case CAMERA_STATE_BLEND_TO_ANIMATE:
-        case CAMERA_STATE_ORBIT_TO_ANIMATE:
-            return controller->state_data.animate.events != NULL && strcmp(controller->state_data.animate.events->signal, signal) != 0;
+        case CAMERA_STATE_ORBIT_TO_ANIMATE: {
+            struct camera_animation* animation = controller->state_data.animate.animation;
+
+            if (!animation || controller->state_data.animate.current_frame >= animation->frame_count || controller->state_data.animate.events == NULL) {
+                return false;
+            }
+
+            return strcmp(controller->state_data.animate.events->signal, signal) != 0;
+        }
         default:
             return false;
     }
@@ -783,6 +790,7 @@ void camera_set_signal(struct camera_controller* controller, const char* signal)
         case CAMERA_STATE_BLEND_TO_ANIMATE:
         case CAMERA_STATE_ORBIT_TO_ANIMATE:
             if (controller->state_data.animate.events) {
+                assert(strlen(signal) < MAX_SIGNAL_LENGTH);
                 strcpy(controller->state_data.animate.events->signal, signal);
             }
             break;

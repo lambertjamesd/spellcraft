@@ -52,9 +52,11 @@ struct camera_event {
 
 typedef struct camera_event camera_event_t;
 
+#define MAX_SIGNAL_LENGTH       15
+
 struct camera_event_runner {
     camera_event_t* next_event;
-    char signal[16];
+    char signal[MAX_SIGNAL_LENGTH+1];
     camera_event_t all_events[];
 };
 

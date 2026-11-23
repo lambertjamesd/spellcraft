@@ -180,7 +180,7 @@ bool camera_anim_run_events(camera_event_runner_t* events, uint16_t frame) {
         switch (curr->type)
         {
             case CAMERA_EVENT_TYPE_END:
-                return curr;
+                return true;
             case CAMERA_EVENT_TYPE_RUN:
                 cutscene_runner_run(&(cutscene_run_args_t){
                     .cutscene = curr->data.run,
@@ -192,6 +192,7 @@ bool camera_anim_run_events(camera_event_runner_t* events, uint16_t frame) {
                 });
                 break;
             case CAMERA_EVENT_SIGNAL:
+                assert(strlen(curr->data.signal) < MAX_SIGNAL_LENGTH);
                 strcpy(events->signal, curr->data.signal);
                 break;
             case CAMERA_EVENT_WAIT:
