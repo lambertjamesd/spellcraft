@@ -57,11 +57,17 @@ void repair_part_render(void* data, struct render_batch* batch) {
 
     render_batch_add_callback(batch, repair_part->is_present ? repair_part->mesh->material : missing_material, repair_part_do_render, repair_part);
 }
+
+void repair_part_update(void* data) {
+    repair_part_t* repair_part = (repair_part_t*)data;
+    quatLerp(&repair_part->target_rotation, &repair_part->transform.rotation, 0.5f, &repair_part->transform.rotation);
+}
     
 void repair_part_init(repair_part_t* repair_part, struct repair_part_definition* definition, entity_id entity_id) {
     transformInit(&repair_part->transform, &definition->start_position, &definition->start_rotation, &gOneVec);
     transformInit(&repair_part->end_transform, &definition->position, &definition->rotation, &gOneVec);
     hash_map_set(&active_repair_parts, entity_id, repair_part);
+    repair_part->target_rotation = definition->start_rotation;
 
     repair_part->mesh = tmesh_cache_load(definition->mesh);
     render_scene_add(&repair_part->transform.position, 4.0f, repair_part_render, repair_part);
@@ -71,12 +77,15 @@ void repair_part_init(repair_part_t* repair_part, struct repair_part_definition*
     repair_part->prevent_rotation = definition->prevent_rotation;
     repair_part->is_present = definition->has_part == VARIABLE_DISCONNECTED ? true : expression_get_bool(definition->has_part);
     repair_part->is_connected = false;
+
+    update_add(repair_part, repair_part_update, UPDATE_PRIORITY_EFFECTS, UPDATE_LAYER_WORLD | UPDATE_LAYER_CUTSCENE);
 }
 
 void repair_part_destroy(repair_part_t* repair_part, struct repair_part_definition* definition) {
     render_scene_remove(repair_part);
     tmesh_cache_release(repair_part->mesh);
     hash_map_delete(&active_repair_parts, repair_part->entity_id);
+    update_remove(repair_part);
 }
 
 void repair_part_common_init() {
