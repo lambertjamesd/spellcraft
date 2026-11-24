@@ -399,6 +399,7 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
             room_source->shared_entity_count = 0;
 
             char room_filename[MAX_SCENE_NAME_LENGTH + 10];
+            assert(room->room_index < scene->room_count);
             scene_build_room_filename(room_filename, scene->room_metadata[room->room_index].name);
         
             load_room_file = asset_fopen(room_filename, NULL);

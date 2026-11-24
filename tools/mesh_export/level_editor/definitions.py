@@ -338,6 +338,16 @@ class Definitions:
     def reload(self):
         self.loaded_path = None
 
+    def reload_variables(self):
+        self.load()
+
+        if not self.repo_path:
+            return
+
+        # functions from the scene script are mixed into the script list
+        self.scripts = [script for script in self.scripts if not script.startswith('func:')]
+        self.scripts.extend(self._load_variables(self.repo_path))
+
     def get_music(self):
         self.load()
 

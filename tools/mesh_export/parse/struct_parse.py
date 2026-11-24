@@ -38,6 +38,11 @@ class EnumValue:
         self.name: str = name
         self.value: int = value
 
+    def __str__(self):
+        return f"EnumValue ({self.name} = {str(self.value)})"
+
+    __repr__ = __str__
+
 class EnumInfo:
     def __init__(self, name: str, values: list[EnumValue]):
         self.name: str = name

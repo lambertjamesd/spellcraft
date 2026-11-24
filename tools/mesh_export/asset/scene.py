@@ -843,7 +843,7 @@ def _process_scene(paths: AssetPaths, filename: str):
     room_names = [struct_parse.EnumValue('room_default', 0)]
 
     for collection in bpy.data.collections:
-        if collection.name.startswith('room_'):
+        if collection.name.startswith('room_') and collection.name != 'room_default':
             room_names.append(struct_parse.EnumValue(collection.name, len(room_names)))
 
     room_enum = struct_parse.EnumInfo('enum rooms', room_names)

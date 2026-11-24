@@ -683,6 +683,17 @@ class NODE_OT_game_object_add_loading_zone(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class NODE_OT_game_object_reload_variables(bpy.types.Operator):
+    """Reload variables and functions from the scene and global scripts"""
+    bl_idname = "node.game_object_reload_variables"
+    bl_label = "Reload variables"
+    bl_description = "Reload variables and functions from the scene and global .script files"
+
+    def execute(self, context):
+        object_definitions.reload_variables()
+        self.report({'INFO'}, f"Loaded {len(object_definitions.get_boolean_variables())} boolean and {len(object_definitions.get_integer_variables())} integer variables")
+        return {'FINISHED'}
+
 class CreateGameObjectPanel(bpy.types.Panel):
     bl_idname = "GO_PT_create_game_object"
     bl_label = "Create game object"
@@ -700,6 +711,7 @@ class CreateGameObjectPanel(bpy.types.Panel):
         col.operator(NODE_OT_game_object_add.bl_idname, text="Create game object")
         col.operator(NODE_OT_game_object_add_entry_point.bl_idname, text="Add entry point")
         col.operator(NODE_OT_game_object_add_loading_zone.bl_idname, text="Add loading zone")
+        col.operator(NODE_OT_game_object_reload_variables.bl_idname, text="Reload variables")
 
 _classes = [
     NODE_OT_game_object_item_type,
@@ -713,6 +725,7 @@ _classes = [
     NODE_OT_game_object_add,
     NODE_OT_game_object_add_entry_point,
     NODE_OT_game_object_add_loading_zone,
+    NODE_OT_game_object_reload_variables,
     NODE_OT_game_object_init,
     NODE_OT_build_map_outline,
     NODE_OT_game_object_positions,

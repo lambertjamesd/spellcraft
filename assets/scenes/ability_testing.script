@@ -1,2 +1,10 @@
 
 scene golem_active: bool;
+
+scene puzzle_room_unlocked: bool = true;
+scene puzzle_room_torch_0: bool;
+scene puzzle_room_torch_1: bool;
+
+func room_puzzle()
+    puzzle_room_unlocked = puzzle_room_torch_0 and puzzle_room_torch_1;
+end
