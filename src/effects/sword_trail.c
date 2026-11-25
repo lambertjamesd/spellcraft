@@ -9,6 +9,8 @@
 
 #define SWORD_TEXTURE_SIZE  64
 
+#define LIFE_DECAY          32
+
 #define PREV_VERTEX(index)  ((index) == 0 ? MAX_SWORD_TRAIL_LENGTH - 1 : (index) - 1)
 
 color_t start_color = {0x00, 0xFC, 0x00, 0xFF};
@@ -31,11 +33,6 @@ void sword_trail_render_callback(void* data, struct render_batch* batch) {
 
     struct Vector3 effect_origin;
 
-    uint32_t color_a = 0x00F800FF;
-    uint32_t color_b = 0x00F800FF;
-
-    float color_lerp = 0.0;
-
     for (int i = 0; i < trail->vertex_count; i += 1) {
         struct Vector3* input = trail->trail_halves[curr];
 
@@ -47,13 +44,23 @@ void sword_trail_render_callback(void* data, struct render_batch* batch) {
 
         output->normA = 0;
         output->normB = 0;
-        color_t vert_color __attribute__((aligned(4))) = coloru8_lerp(&start_color, &end_color, color_lerp);
+        color_t vert_color __attribute__((aligned(4))) = coloru8_lerp(
+            &end_color, 
+            &start_color, 
+            trail->life[curr] * (1.0f / 255.0f)
+        );
         output->rgbaA = *(int*)&vert_color;
         output->rgbaB = *(int*)&vert_color;
         output->stA[0] = 0;
         output->stA[1] = trail->tex_v[curr];
         output->stB[0] = SWORD_TEXTURE_SIZE << 5;
         output->stB[1] = trail->tex_v[curr];
+
+        if (trail->life[curr] > LIFE_DECAY) {
+            trail->life[curr] -= LIFE_DECAY;
+        } else {
+            trail->life[curr] = 0;
+        }
 
         struct Vector3 relative;
         vector3Sub(&input[0], &effect_origin, &relative);
@@ -69,7 +76,6 @@ void sword_trail_render_callback(void* data, struct render_batch* batch) {
         );
 
         curr = PREV_VERTEX(curr);
-        color_lerp += 1.0f / MAX_SWORD_TRAIL_LENGTH;
     }
 
     T3DMat4FP* offset_mtx = render_batch_get_transformfp(batch);
@@ -107,14 +113,22 @@ void sword_trail_render(void* data, struct render_batch* batch) {
 
 void sword_trail_update(void* data) {
     struct sword_trail* trail = (struct sword_trail*)data;
-
-    if (trail->vertex_count > 0) {
-        --trail->vertex_count;
-    } else if (trail->vertex_count == 0) {
+    
+    if (trail->vertex_count == 0) {
         update_remove(trail);
         render_scene_remove(trail);
         effect_free(trail);
         return;
+    }
+
+    int last_index = trail->last_vertex - trail->vertex_count;
+
+    if (last_index < 0) {
+        last_index += MAX_SWORD_TRAIL_LENGTH;
+    }
+
+    if (trail->life[last_index] == 0) {
+        --trail->vertex_count;
     }
 }
 
@@ -158,9 +172,13 @@ void sword_trail_move(struct sword_trail* trail, struct Vector3* a, struct Vecto
             vector3DistSqrd(a, b)
         );
 
-        trail->tex_v[trail->last_vertex] = (int16_t)((SWORD_TEXTURE_SIZE << 5) * v);
+        int prev_vertex = PREV_VERTEX(trail->last_vertex);
+
+        trail->tex_v[trail->last_vertex] = trail->tex_v[prev_vertex] + (int16_t)((SWORD_TEXTURE_SIZE << 5) * v);
+        trail->life[trail->last_vertex] = 255;
     } else {
         trail->tex_v[trail->last_vertex] = 0;
+        trail->life[trail->last_vertex] = 255;
     }
 
     ++trail->last_vertex;

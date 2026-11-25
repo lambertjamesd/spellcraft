@@ -11,6 +11,7 @@
 struct sword_trail {
     struct Vector3 trail_halves[MAX_SWORD_TRAIL_LENGTH][2];
     int16_t tex_v[MAX_SWORD_TRAIL_LENGTH];
+    uint8_t life[MAX_SWORD_TRAIL_LENGTH];
 
     uint8_t last_vertex;
     uint8_t vertex_count;

@@ -139,6 +139,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
     elemental_sword->attack_index = 0;
     elemental_sword->power_ratio = 0.0f;
     elemental_sword->animation_time = 0.0f;
+    elemental_sword->did_recast = false;
 }
 
 void elemental_sword_destroy(struct elemental_sword* elemental_sword) {
@@ -168,8 +169,17 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
         pos = elemental_sword->data_source->position;
         dir = elemental_sword->data_source->direction;
 
-        if (elemental_sword->data_source->flags.can_recast) {
-            spell_event_listener_add(event_listener, SPELL_EVENT_ADD_RECAST, NULL, 0.0f);
+        spell_event_listener_add(event_listener, SPELL_EVENT_ADD_RECAST, NULL, 0.0f);
+        if (elemental_sword->did_recast && elemental_sword->data_source->flags.can_recast) {
+            damaged_set_reset(&elemental_sword->damaged_set);
+            elemental_sword->attack_index = elemental_sword->attack_index + 1;
+            
+            if (elemental_sword->attack_index == MAX_SWING_ANIM_COUNT) {
+                elemental_sword->attack_index = 0;
+            }
+
+            elemental_sword->has_animation = spell_data_source_request_animation(elemental_sword->data_source, elemental_sword->definition->animation + elemental_sword->attack_index);
+            elemental_sword->did_recast = false;
         }
     } else {
         is_active = elemental_sword->animation_time < elemental_sword->definition->free_swing_time;
@@ -204,17 +214,12 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
 
     if (!is_active) {
         spell_event_listener_add(event_listener, SPELL_EVENT_PRIMARY, elemental_sword->data_source, 0.0f);
+        spell_event_listener_add(event_listener, SPELL_EVENT_REMOVE_RECAST, NULL, 0.0f);
     }
 
     return is_active;
 }
 
 void elemental_sword_recast(struct elemental_sword* elemental_sword) {
-    elemental_sword->attack_index = elemental_sword->attack_index + 1;
-
-    if (elemental_sword->attack_index == MAX_SWING_ANIM_COUNT) {
-        elemental_sword->attack_index = 0;
-    }
-
-    elemental_sword->has_animation = spell_data_source_request_animation(elemental_sword->data_source, elemental_sword->definition->animation + elemental_sword->attack_index);
+    elemental_sword->did_recast = true;
 }
