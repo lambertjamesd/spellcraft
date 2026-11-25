@@ -8,6 +8,8 @@
 #include "../time/time.h"
 #include "assets.h"
 
+#define MAX_SWING_ANIM_COUNT    3
+
 static struct elemental_sword_definition swing_definitions[] = {
     [ELEMENT_TYPE_FIRE] = {
         .damage_source = {
@@ -77,10 +79,6 @@ static struct elemental_sword_definition spin_definitions[] = {
 void elemental_sword_render(void* data, struct render_batch* batch) {
     struct elemental_sword* sword = (struct elemental_sword*)data;
 
-    if (sword->data_source->flags.cast_state != SPELL_CAST_STATE_ACTIVE) {
-        return;
-    }
-
     T3DMat4FP* mtxfp = render_batch_get_transformfp(batch);
 
     if (!mtxfp) {
@@ -138,7 +136,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
     damaged_set_reset(&elemental_sword->damaged_set);
 
     elemental_sword->needs_mana_check = 1;
-    elemental_sword->attack_parity = 0;
+    elemental_sword->attack_index = 0;
     elemental_sword->power_ratio = 0.0f;
     elemental_sword->animation_time = 0.0f;
 }
@@ -212,6 +210,11 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
 }
 
 void elemental_sword_recast(struct elemental_sword* elemental_sword) {
-    elemental_sword->attack_parity = !elemental_sword->attack_parity;
-    elemental_sword->has_animation = spell_data_source_request_animation(elemental_sword->data_source, elemental_sword->definition->animation + elemental_sword->attack_parity);
+    elemental_sword->attack_index = elemental_sword->attack_index + 1;
+
+    if (elemental_sword->attack_index == MAX_SWING_ANIM_COUNT) {
+        elemental_sword->attack_index = 0;
+    }
+
+    elemental_sword->has_animation = spell_data_source_request_animation(elemental_sword->data_source, elemental_sword->definition->animation + elemental_sword->attack_index);
 }

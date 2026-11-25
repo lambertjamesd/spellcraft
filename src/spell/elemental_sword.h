@@ -34,7 +34,7 @@ struct elemental_sword {
 
     uint16_t needs_mana_check: 1;
     uint16_t has_animation: 1;
-    uint16_t attack_parity: 1;
+    uint16_t attack_index: 2;
     
     float power_ratio;
     float animation_time;
