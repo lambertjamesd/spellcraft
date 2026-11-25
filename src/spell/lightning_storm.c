@@ -64,9 +64,8 @@ void lightning_storm_init(lightning_storm_t* storm, struct spell_data_source* so
 
     storm->data_source = spell_data_source_retain(source);
 
-    spell_data_source_request_animation(source, SPELL_ANIMATION_CAST_UP);
+    spell_data_source_request_animation(source, SPELL_ANIMATION_CAST_UP, false);
     render_scene_add(&storm->transform.position, 2.0f, lightning_storm_render, storm);
-    source->flags.source = SPELL_CAST_SOURCE_FEET;
 
     storm->first_active_strike = 0;
     storm->next_target_strike = 0;

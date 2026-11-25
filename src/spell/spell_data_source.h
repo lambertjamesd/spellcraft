@@ -37,7 +37,10 @@ enum spell_cast_source {
     SPELL_CAST_SOURCE_CENTER,
     SPELL_CAST_SOURCE_STAFF,
     SPELL_CAST_SOURCE_FEET,
+    SPELL_CAST_SOURCE_STAFF_TIP,
 };
+
+typedef enum spell_cast_source spell_cast_source_t;
 
 union spell_source_flags {
     struct {
@@ -47,15 +50,17 @@ union spell_source_flags {
         uint16_t can_recast: 1;
         uint16_t cast_held: 1;
         uint16_t animator_attack: 1;
-        uint16_t source: 2;
-
+        uint16_t skip_blending: 1;
     };
     uint16_t all;
 };
 
 struct spell_data_source {
-    struct Vector3 position;
-    struct Vector3 direction;
+    vector3_t position;
+    vector3_t direction;
+    vector3_t staff_pos;
+    vector3_t staff_dir;
+    float half_height;
     union spell_source_flags flags;
     uint8_t reference_count;
     uint8_t request_animation;
@@ -82,14 +87,40 @@ struct spell_data_source* spell_data_source_pool_get(struct spell_data_source_po
 
 struct spell_data_source* spell_data_source_retain(struct spell_data_source* data_source);
 void spell_data_source_release(struct spell_data_source* data_source);
-bool spell_data_source_request_animation(struct spell_data_source* data_source, enum spell_animation animation);
+bool spell_data_source_request_animation(struct spell_data_source* data_source, enum spell_animation animation, bool skip_blending);
 void spell_data_source_cancel_animation(struct spell_data_source* data_source);
 
-static inline void spell_data_source_set_cast_source(spell_data_source_t* data_source, enum spell_cast_source source) {
-    data_source->flags.source = source;
+static inline void spell_data_source_get_pos(spell_data_source_t* data_source, spell_cast_source_t source, vector3_t* position) {
+    switch (source) {
+        case SPELL_CAST_SOURCE_CENTER:
+            *position = data_source->position;
+            position->y += data_source->half_height;
+            break;
+        case SPELL_CAST_SOURCE_STAFF:
+            *position = data_source->staff_pos;
+            break;
+        case SPELL_CAST_SOURCE_STAFF_TIP:
+            vector3AddScaled(&data_source->staff_pos, &data_source->staff_dir, 1.0f, position);
+            break;
+        default:
+            *position = data_source->position;
+            break;
+    }
 }
 
-void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform);
+static inline void spell_data_source_get_dir(spell_data_source_t* data_source, spell_cast_source_t source, vector3_t* position) {
+    switch (source) {
+        case SPELL_CAST_SOURCE_STAFF:
+        case SPELL_CAST_SOURCE_STAFF_TIP:
+            *position = data_source->staff_dir;
+            break;
+        default:
+            *position = data_source->direction;
+            break;
+    }
+}
+
+void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, spell_cast_source_t source, struct TransformSingleAxis* transform);
 
 enum element_type spell_data_source_determine_element(rune_pattern_t rune);
 

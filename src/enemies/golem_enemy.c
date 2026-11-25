@@ -20,7 +20,7 @@
 #define SEARCH_TIME                 8.0f
 #define LOOK_SIDE_TIME              4.0f
 
-#define GOLEM_MAX_HEALTH            40.0f
+#define GOLEM_MAX_HEALTH            60.0f
 
 #define PUNCH_RANGE         2.5f
 

@@ -10,6 +10,12 @@
 
 #define MAX_SWING_ANIM_COUNT    3
 
+static float attack_index_scale[MAX_SWING_ANIM_COUNT] = {
+    1.0f,
+    1.0f,
+    1.5f,
+};
+
 static struct elemental_sword_definition swing_definitions[] = {
     [ELEMENT_TYPE_FIRE] = {
         .damage_source = {
@@ -86,8 +92,8 @@ void elemental_sword_render(void* data, struct render_batch* batch) {
     }
 
     struct Transform transform;
-    transform.position = sword->data_source->position;
-    quatLook(&sword->data_source->direction, &gUp, &transform.rotation);
+    transform.position = sword->data_source->staff_pos;
+    quatLook(&sword->data_source->staff_dir, &gUp, &transform.rotation);
     transform.scale = gOneVec;
 
     mat4x4 mtx;
@@ -105,11 +111,7 @@ void elemental_sword_init(struct elemental_sword* elemental_sword, struct spell_
         &spin_definitions[element_type] :
         &swing_definitions[element_type];
 
-    elemental_sword->has_animation = spell_data_source_request_animation(source, elemental_sword->definition->animation);
-
-    if (elemental_sword->has_animation) {
-        source->flags.source = SPELL_CAST_SOURCE_STAFF;
-    }
+    elemental_sword->has_animation = spell_data_source_request_animation(source, elemental_sword->definition->animation, true);
 
     render_scene_add(&source->position, 1.0f, elemental_sword_render, elemental_sword);
 
@@ -166,8 +168,8 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
     if (elemental_sword->has_animation) {
         is_active = elemental_sword->data_source->flags.is_animating;
         is_attacking = elemental_sword->power_ratio > 0.0f && elemental_sword->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE;
-        pos = elemental_sword->data_source->position;
-        dir = elemental_sword->data_source->direction;
+        pos = elemental_sword->data_source->staff_pos;
+        dir = elemental_sword->data_source->staff_dir;
 
         spell_event_listener_add(event_listener, SPELL_EVENT_ADD_RECAST, NULL, 0.0f);
         if (elemental_sword->did_recast && elemental_sword->data_source->flags.can_recast) {
@@ -178,15 +180,15 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
                 elemental_sword->attack_index = 0;
             }
 
-            elemental_sword->has_animation = spell_data_source_request_animation(elemental_sword->data_source, elemental_sword->definition->animation + elemental_sword->attack_index);
+            elemental_sword->has_animation = spell_data_source_request_animation(elemental_sword->data_source, elemental_sword->definition->animation + elemental_sword->attack_index, true);
             elemental_sword->did_recast = false;
         }
     } else {
         is_active = elemental_sword->animation_time < elemental_sword->definition->free_swing_time;
         is_attacking = true;
-        pos = elemental_sword->data_source->position;
+        pos = elemental_sword->data_source->staff_pos;
         struct Vector3 up_vec;
-        vector3Cross(&elemental_sword->data_source->direction, &gRight, &up_vec);
+        vector3Cross(&elemental_sword->data_source->staff_dir, &gRight, &up_vec);
         vector3Normalize(&up_vec, &up_vec);
         struct Quaternion rotate_amount;
         quatAxisAngle(
@@ -200,16 +202,25 @@ bool elemental_sword_update(struct elemental_sword* elemental_sword, struct spel
 
     if (is_attacking) {
         struct Vector3 tip;
+
+        float power_ratio = elemental_sword->power_ratio * attack_index_scale[elemental_sword->attack_index];
+
         vector3AddScaled(
             &pos, 
             &dir, 
-            elemental_sword->definition->sword_length * elemental_sword->power_ratio, 
+            elemental_sword->definition->sword_length * power_ratio, 
             &tip
         );
         sword_trail_move(elemental_sword->trail, &pos, &tip);
         swing_shape_add(&elemental_sword->swing_shape, &pos, &tip);
         
-        health_apply_contact_damage(elemental_sword->collider.active_contacts, &elemental_sword->definition->damage_source, &elemental_sword->damaged_set);
+        damage_source_t damage_source = elemental_sword->definition->damage_source;
+        damage_source.amount *= power_ratio;
+        health_apply_contact_damage(
+            elemental_sword->collider.active_contacts, 
+            &damage_source, 
+            &elemental_sword->damaged_set
+        );
     }
 
     if (!is_active) {

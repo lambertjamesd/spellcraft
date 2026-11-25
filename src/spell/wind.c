@@ -124,11 +124,20 @@ static float radius_per_second[MAX_WIND_BONES] = {
     3.14f * 2.0f,
 };
 
+void wind_apply_transform(struct wind* wind) {
+    if (wind->definition->sphere) {
+        spell_data_source_apply_transform_sa(wind->data_source, SPELL_CAST_SOURCE_CENTER, &wind->transform);
+    } else {
+        spell_data_source_apply_transform_sa(wind->data_source, SPELL_CAST_SOURCE_STAFF, &wind->transform);
+        vector3AddScaled(&wind->transform.position, &wind->data_source->staff_dir, -1.0f, &wind->transform.position);
+    }
+}
+
 void wind_activate(struct wind* wind) {
     assert(!wind->is_casting);
     wind->is_casting = true;
 
-    spell_data_source_apply_transform_sa(wind->data_source, &wind->transform);
+    wind_apply_transform(wind);
     renderable_single_axis_init(&wind->renderable, &wind->transform, wind->definition->sphere ? "rom:/meshes/spell/wind_sphere.tmesh" : "rom:/meshes/spell/wind.tmesh");
 
     render_scene_add_renderable(&wind->renderable, 1.0f);
@@ -171,9 +180,7 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     wind->is_casting = false;
     wind->data_source = spell_data_source_retain(source);
 
-    if (spell_data_source_request_animation(source, SPELL_ANIMATION_CAST_FORWARD)) {
-        source->flags.source = SPELL_CAST_SOURCE_STAFF;
-    } else {
+    if (!spell_data_source_request_animation(source, SPELL_ANIMATION_CAST_FORWARD, false)) {
         wind_activate(wind);
     }
 }
@@ -275,7 +282,7 @@ bool wind_update_burst(struct wind* wind, struct spell_event_listener* event_lis
 }
 
 bool wind_update_persistant(struct wind* wind, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
-    spell_data_source_apply_transform_sa(wind->data_source, &wind->transform);
+    wind_apply_transform(wind);
 
     if (wind->definition->sphere) {
         wind_apply_sphere_push_velocity(wind);
@@ -284,7 +291,7 @@ bool wind_update_persistant(struct wind* wind, struct spell_event_listener* even
     }
 
     if (wind->data_source->flags.cast_held) {
-        spell_data_source_request_animation(wind->data_source, SPELL_ANIMATION_CAST_FORWARD_HOLD);
+        spell_data_source_request_animation(wind->data_source, SPELL_ANIMATION_CAST_FORWARD_HOLD, false);
     } else {
         spell_data_source_cancel_animation(wind->data_source);
     }

@@ -14,11 +14,11 @@ void element_emitter_activate(struct element_emitter* element_emitter) {
     assert(!element_emitter->is_casting);
     element_emitter->is_casting = true;
 
-    spell_data_source_apply_transform_sa(element_emitter->data_source, &element_emitter->transform);
+    spell_data_source_apply_transform_sa(element_emitter->data_source, SPELL_CAST_SOURCE_STAFF_TIP, &element_emitter->transform);
 
     element_emitter->effect = element_emitter->effect_definition->on_effect_start(
         &element_emitter->transform.position, 
-        &element_emitter->data_source->direction, 
+        &element_emitter->data_source->staff_dir, 
         element_emitter->effect_definition->scale
     );
 
@@ -32,6 +32,7 @@ void element_emitter_activate(struct element_emitter* element_emitter) {
     );
     element_emitter->dynamic_object.scale = element_emitter->effect_definition->scale;
     element_emitter->dynamic_object.trigger_type = TRIGGER_TYPE_BASIC;
+    element_emitter->dynamic_object.is_fixed = true;
     dynamic_object_wake(&element_emitter->dynamic_object);
     collision_scene_add(&element_emitter->dynamic_object);
 }
@@ -43,12 +44,7 @@ void element_emitter_init(struct element_emitter* element_emitter, struct spell_
     element_emitter->effect = NULL;
     element_emitter->is_active = true;
 
-
-    bool is_animating = spell_data_source_request_animation(source, effect_definition->cast_animation);
-
-    if (is_animating) {
-        spell_data_source_set_cast_source(source, SPELL_CAST_SOURCE_STAFF);
-    }
+    bool is_animating = spell_data_source_request_animation(source, effect_definition->cast_animation, false);
 
     if (!effect_definition->cast_animation || !is_animating) {
         element_emitter_activate(element_emitter);
@@ -86,7 +82,7 @@ bool element_emitter_update(struct element_emitter* element_emitter, struct spel
             element_emitter->is_active = false;
             spell_data_source_cancel_animation(element_emitter->data_source);
         } else if (element_emitter->effect_definition->cast_loop_animation) {
-            spell_data_source_request_animation(element_emitter->data_source, element_emitter->effect_definition->cast_loop_animation);
+            spell_data_source_request_animation(element_emitter->data_source, element_emitter->effect_definition->cast_loop_animation, false);
         }
     }
 
@@ -104,11 +100,11 @@ bool element_emitter_update(struct element_emitter* element_emitter, struct spel
     element_emitter->effect_definition->on_effect_update(
         element_emitter->effect, 
         &element_emitter->transform.position, 
-        &element_emitter->data_source->direction,
+        &element_emitter->data_source->staff_dir,
         element_emitter->effect_definition->scale * mana_ratio
     );
 
-    spell_data_source_apply_transform_sa(element_emitter->data_source, &element_emitter->transform);
+    spell_data_source_apply_transform_sa(element_emitter->data_source, SPELL_CAST_SOURCE_STAFF_TIP, &element_emitter->transform);
 
 
     if (element_emitter->is_active) {

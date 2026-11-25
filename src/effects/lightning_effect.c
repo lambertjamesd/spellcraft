@@ -51,7 +51,7 @@ void lightning_effect_set_position(struct lightning_effect* effect, struct Vecto
         struct Vector3 relative_pos;
         vector3Sub(position, &effect->start_position, &relative_pos);
 
-        vector3Scale(&relative_pos, &next_transform->position, MODEL_SCALE);
+        vector3Scale(&relative_pos, &next_transform->position, WORLD_SCALE);
         vector3Scale(&gOneVec, &next_transform->scale, randomInRangef(radius * 0.5f, radius));
 
         struct Quaternion look_rotation;

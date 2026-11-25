@@ -790,7 +790,7 @@ void player_check_for_animation_request(struct player* player, struct spell_data
             if (!player_is_running(player, to_play)) {
                 player_run_clip(player, to_play);
             }
-            if (source->flags.source == SPELL_CAST_SOURCE_STAFF) {
+            if (source->flags.skip_blending) {
                 player->cutscene_actor.animator.blend_frames = 0;
             }
 
@@ -1557,31 +1557,21 @@ void player_update_spells(struct player* player, joypad_inputs_t input, joypad_b
     } else {
         source->flags.cast_state = input.btn.b ? SPELL_CAST_STATE_ACTIVE : SPELL_CAST_STATE_INACTIVE;
     }
+    
+    struct Transform cast_transform;
+    animator_apply(&player->cutscene_actor.animator, player->cutscene_actor.armature);
+    armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attachments[0].bone_index, &cast_transform);
 
-    switch (source->flags.source) {
-        case SPELL_CAST_SOURCE_STAFF: {
-            struct Transform cast_transform;
-            animator_apply(&player->cutscene_actor.animator, player->cutscene_actor.armature);
-            armature_bone_transform(player->cutscene_actor.armature, player->renderable.mesh_render.mesh->attachments[0].bone_index, &cast_transform);
+    struct Vector3 direction;
+    quatMultVector(&cast_transform.rotation, &gUp, &direction);
+    vector3RotateWith2(&direction, &player->cutscene_actor.transform.rotation, &source->staff_dir);
 
-            struct Vector3 direction;
-            quatMultVector(&cast_transform.rotation, &gUp, &direction);
-            vector3RotateWith2(&direction, &player->cutscene_actor.transform.rotation, &source->direction);
+    vector3RotateWith2(&cast_transform.position, &player->cutscene_actor.transform.rotation, &direction);
+    vector3AddScaled(&player->cutscene_actor.transform.position, &direction, 1.0f / MODEL_SCALE, &source->staff_pos);
 
-            vector3RotateWith2(&cast_transform.position, &player->cutscene_actor.transform.rotation, &direction);
-            vector3AddScaled(&player->cutscene_actor.transform.position, &direction, 1.0f / MODEL_SCALE, &source->position);
-
-            break;
-        }
-        case SPELL_CAST_SOURCE_CENTER:
-        case SPELL_CAST_SOURCE_FEET:
-            source->direction = castDirection;
-            source->position = player->cutscene_actor.transform.position;
-            if (source->flags.source == SPELL_CAST_SOURCE_CENTER) {
-                source->position.y += 1.0f;
-            }
-            break;
-    }
+    source->direction = castDirection;
+    source->position = player->cutscene_actor.transform.position;
+    source->half_height = 1.0f;
 
     source->flags.cast_held = input.btn.b;
 
@@ -1893,7 +1883,6 @@ void player_init(struct player* player, struct player_definition* definition) {
         source->flags.has_animator = 1;
         source->reference_count = 1;
         source->request_animation = 0;
-        source->flags.source = SPELL_CAST_SOURCE_CENTER;
         source->target = ENTITY_ID_PLAYER;
     }
 

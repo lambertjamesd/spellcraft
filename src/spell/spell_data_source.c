@@ -47,12 +47,13 @@ void spell_data_source_release(struct spell_data_source* data_source) {
     data_source->reference_count -= 1;
 }
 
-bool spell_data_source_request_animation(struct spell_data_source* data_source, enum spell_animation animation) {
+bool spell_data_source_request_animation(struct spell_data_source* data_source, enum spell_animation animation, bool skip_blending) {
     if (!data_source->flags.has_animator) {
         return false;
     }
 
     data_source->request_animation = animation;
+    data_source->flags.skip_blending = skip_blending;
 
     return true;
 }
@@ -61,11 +62,14 @@ void spell_data_source_cancel_animation(struct spell_data_source* data_source) {
     data_source->flags.is_animating = false;
 }
 
-void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, struct TransformSingleAxis* transform) {
+void spell_data_source_apply_transform_sa(struct spell_data_source* data_source, spell_cast_source_t source, struct TransformSingleAxis* transform) {
     transform->position = data_source->position;
+    spell_data_source_get_pos(data_source, source, &transform->position);
+    vector3_t dir;
+    spell_data_source_get_dir(data_source, source, &dir);
 
-    transform->rotation.x = data_source->direction.z;
-    transform->rotation.y = -data_source->direction.x;
+    transform->rotation.x = dir.z;
+    transform->rotation.y = -dir.x;
 
     vector2Normalize(&transform->rotation, &transform->rotation);
 

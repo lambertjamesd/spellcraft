@@ -94,9 +94,7 @@ void burst_attack_init(burst_attack_t* burst_attack, spell_data_source_t* source
     
     damaged_set_reset(&burst_attack->damaged_set);
 
-    spell_data_source_set_cast_source(source, SPELL_CAST_SOURCE_FEET);
-
-    spell_data_source_request_animation(source, burst_attack->def->player_anim);
+    spell_data_source_request_animation(source, burst_attack->def->player_anim, false);
 
     burst_attack->damage_source = effect_definition->damage_source;
 }
