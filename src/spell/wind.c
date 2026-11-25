@@ -140,7 +140,7 @@ void wind_activate(struct wind* wind) {
     wind_apply_transform(wind);
     renderable_single_axis_init(&wind->renderable, &wind->transform, wind->definition->sphere ? "rom:/meshes/spell/wind_sphere.tmesh" : "rom:/meshes/spell/wind.tmesh");
 
-    render_scene_add_renderable(&wind->renderable, 1.0f);
+    render_scene_add_renderable(&wind->renderable, 0.0f);
 
     for (int i = 0; i < MAX_WIND_BONES && wind->renderable.mesh_render.armature.bone_count; i += 1) {
         quatAxisAngle(&gUp, radius_per_second[i] * fixed_time_step, &wind->bone_rotations[i]);
@@ -179,6 +179,8 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     wind->did_burst = false;
     wind->is_casting = false;
     wind->data_source = spell_data_source_retain(source);
+
+    wind->renderable.mesh_render.armature.bone_count = 0;
 
     if (!spell_data_source_request_animation(source, SPELL_ANIMATION_CAST_FORWARD, false)) {
         wind_activate(wind);
@@ -309,7 +311,7 @@ bool wind_update(struct wind* wind, struct spell_event_listener* event_listener,
     }
     dynamic_object_wake(&wind->dynamic_object);
 
-    for (int i = 0; i < MAX_WIND_BONES && wind->renderable.mesh_render.armature.bone_count; i += 1) {
+    for (int i = 0; i < MAX_WIND_BONES && i < wind->renderable.mesh_render.armature.bone_count; i += 1) {
         struct Quaternion tmp;
         quatMultiply(&wind->renderable.mesh_render.armature.pose[i].rotation, &wind->bone_rotations[i], &tmp);
         wind->renderable.mesh_render.armature.pose[i].rotation = tmp;
