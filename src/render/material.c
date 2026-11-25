@@ -510,7 +510,9 @@ void material_placeholder_set_prim(material_placeholder_block_t* placeholder, co
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
     
     // skip pipe sync
-    cmd += 2;
+    if (UNPACK(cmd[0], 24, 6) == RDPQ_CMD_SYNC_PIPE) {
+        cmd += 2;
+    }
     
     assert(UNPACK(cmd[0], 24, 6) == RDPQ_CMD_SET_PRIM_COLOR);
     cmd[1] = *(uint32_t*)&color;
@@ -524,7 +526,9 @@ void material_placeholder_set_env(material_placeholder_block_t* placeholder, col
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
     
     // skip pipe sync
-    cmd += 2;
+    if (UNPACK(cmd[0], 24, 6) == RDPQ_CMD_SYNC_PIPE) {
+        cmd += 2;
+    }
 
     if (placeholder->has_prim) {
         cmd += 2;
@@ -547,8 +551,7 @@ void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder,
 
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
 
-    if (placeholder->has_prim || placeholder->has_env) {
-        // skip pipe sync
+    if (UNPACK(cmd[0], 24, 6) == RDPQ_CMD_SYNC_PIPE) {
         cmd += 2;
     }
 
@@ -561,7 +564,9 @@ void material_placeholder_set_scroll0(material_placeholder_block_t* placeholder,
     }
     
     // skip tile sync
-    cmd += 2;
+    if (UNPACK(cmd[0], 24, 6) == RDPQ_CMD_SYNC_TILE) {
+        cmd += 2;
+    }
 
     material_placeholder_write_tile_size(
         cmd, 
@@ -580,8 +585,7 @@ void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder,
 
     uint32_t* cmd = rsqp_get_rdp_cmds(placeholder->blocks[render_parity]);
     
-    if (placeholder->has_prim || placeholder->has_env) {
-        // skip pipe sync
+    if (UNPACK(cmd[0], 24, 6) == RDPQ_CMD_SYNC_PIPE) {
         cmd += 2;
     }
 
@@ -592,13 +596,15 @@ void material_placeholder_set_scroll1(material_placeholder_block_t* placeholder,
     if (placeholder->has_env) {
         cmd += 2;
     }
+
+    // skip tile sync
+    if (UNPACK(cmd[0], 24, 6) == RDPQ_CMD_SYNC_TILE) {
+        cmd += 2;
+    }
     
     if (placeholder->tex0_width) {
         cmd += 2;
     }
-
-    // skip tile sync
-    cmd += 2;
 
     material_placeholder_write_tile_size(
         cmd, 

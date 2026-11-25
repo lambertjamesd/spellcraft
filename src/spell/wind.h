@@ -18,16 +18,14 @@ struct wind_definition {
     float base_scale;
 };
 
-#define MAX_WIND_BONES   3
-
 struct wind {
     struct spell_data_source* data_source;
     struct TransformSingleAxis transform;
     struct renderable renderable;
+    animator_t animator;
+    animation_set_t* animations;
     struct dynamic_object dynamic_object;
     struct wind_definition* definition;
-
-    struct Quaternion bone_rotations[MAX_WIND_BONES];
 
     entity_id id;
 

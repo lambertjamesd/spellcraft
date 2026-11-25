@@ -6,6 +6,7 @@
 #include "../collision/shapes/cylinder.h"
 #include "../entity/entity_id.h"
 #include "../collision/collision_scene.h"
+#include "../resource/animation_cache.h"
 
 #define WIND_SPEED      16.0f
 #define WIND_ACCEL      10.0f
@@ -118,18 +119,11 @@ static struct dynamic_object_type wind_collider_sphere = {
     }
 };
 
-static float radius_per_second[MAX_WIND_BONES] = {
-    3.14f * 1.5f,
-    -3.14f * 1.5f,
-    3.14f * 2.0f,
-};
-
 void wind_apply_transform(struct wind* wind) {
     if (wind->definition->sphere) {
         spell_data_source_apply_transform_sa(wind->data_source, SPELL_CAST_SOURCE_CENTER, &wind->transform);
     } else {
         spell_data_source_apply_transform_sa(wind->data_source, SPELL_CAST_SOURCE_STAFF, &wind->transform);
-        vector3AddScaled(&wind->transform.position, &wind->data_source->staff_dir, -1.0f, &wind->transform.position);
     }
 }
 
@@ -141,10 +135,14 @@ void wind_activate(struct wind* wind) {
     renderable_single_axis_init(&wind->renderable, &wind->transform, wind->definition->sphere ? "rom:/meshes/spell/wind_sphere.tmesh" : "rom:/meshes/spell/wind.tmesh");
 
     render_scene_add_renderable(&wind->renderable, 0.0f);
+    animator_init(&wind->animator, wind->renderable.mesh_render.armature.definition);
+    renderable_set_animator(&wind->renderable, &wind->animator);
 
-    for (int i = 0; i < MAX_WIND_BONES && wind->renderable.mesh_render.armature.bone_count; i += 1) {
-        quatAxisAngle(&gUp, radius_per_second[i] * fixed_time_step, &wind->bone_rotations[i]);
-    }
+    wind->animations = wind->definition->sphere ? NULL : animation_cache_load("rom:/meshes/spell/wind.anim");
+
+    debugf("wind->animations = %d\n", wind->animations ? (int)wind->animations->clip_count : 0);
+
+    animator_run_clip(&wind->animator, animation_set_find_clip(wind->animations, "alpha_fade_in"), 0.0f, false);
 
     dynamic_object_init(
         wind->id, 
@@ -181,6 +179,9 @@ void wind_init(struct wind* wind, struct spell_data_source* source, struct spell
     wind->data_source = spell_data_source_retain(source);
 
     wind->renderable.mesh_render.armature.bone_count = 0;
+
+    animator_init(&wind->animator, NULL);
+    wind->animations = NULL;
 
     if (!spell_data_source_request_animation(source, SPELL_ANIMATION_CAST_FORWARD, false)) {
         wind_activate(wind);
@@ -240,11 +241,16 @@ void wind_apply_sphere_push_velocity(struct wind* wind) {
 void wind_destroy(struct wind* wind) {
     spell_data_source_cancel_animation(wind->data_source);
     spell_data_source_release(wind->data_source);
+    animator_destroy(&wind->animator);
 
     if (wind->is_casting) {
         renderable_destroy(&wind->renderable);
         render_scene_remove(&wind->renderable);
         collision_scene_remove(&wind->dynamic_object);
+    }
+    
+    if (wind->animations) {
+        animation_cache_release(wind->animations);
     }
 }
 
@@ -302,6 +308,8 @@ bool wind_update_persistant(struct wind* wind, struct spell_event_listener* even
 }
 
 bool wind_update(struct wind* wind, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
+    animator_update(&wind->animator, scaled_time_step);
+
     if (!wind->is_casting) {
         if (wind->data_source->flags.cast_state == SPELL_CAST_STATE_ACTIVE) {
             wind_activate(wind);
@@ -310,12 +318,6 @@ bool wind_update(struct wind* wind, struct spell_event_listener* event_listener,
         return wind->data_source->flags.is_animating;
     }
     dynamic_object_wake(&wind->dynamic_object);
-
-    for (int i = 0; i < MAX_WIND_BONES && i < wind->renderable.mesh_render.armature.bone_count; i += 1) {
-        struct Quaternion tmp;
-        quatMultiply(&wind->renderable.mesh_render.armature.pose[i].rotation, &wind->bone_rotations[i], &tmp);
-        wind->renderable.mesh_render.armature.pose[i].rotation = tmp;
-    }
 
     if (wind->definition->push.bursty) {
         return wind_update_burst(wind, event_listener, spell_sources);
