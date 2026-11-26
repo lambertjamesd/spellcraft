@@ -23,7 +23,7 @@ void repair_part_do_render(void* data, struct render_batch* batch) {
 
     t3d_matrix_push(mtxfp);
 
-    rspq_block_run(repair_part->mesh->block);
+    rspq_block_run(repair_part->is_present ? repair_part->mesh->block : repair_part->uniform_mesh.block);
 
     t3d_matrix_pop(1);
 
@@ -42,7 +42,7 @@ void repair_part_render_drop_location(repair_part_t* part, struct render_batch* 
 
     render_batch_element_t* element = render_batch_add_tmesh(
         batch,
-        part->mesh,
+        &part->uniform_mesh,
         mtxfp,
         NULL,
         NULL,
@@ -70,6 +70,7 @@ void repair_part_init(repair_part_t* repair_part, struct repair_part_definition*
     repair_part->target_rotation = definition->start_rotation;
 
     repair_part->mesh = tmesh_cache_load(definition->mesh);
+    tmesh_load_filename(&repair_part->uniform_mesh, definition->mesh, TMESH_LOAD_SINGLE_MAT);
     render_scene_add(&repair_part->transform.position, 4.0f, repair_part_render, repair_part);
 
     repair_part->entity_id = entity_id;
@@ -86,6 +87,7 @@ void repair_part_destroy(repair_part_t* repair_part, struct repair_part_definiti
     tmesh_cache_release(repair_part->mesh);
     hash_map_delete(&active_repair_parts, repair_part->entity_id);
     update_remove(repair_part);
+    tmesh_release(&repair_part->uniform_mesh);
 }
 
 void repair_part_common_init() {

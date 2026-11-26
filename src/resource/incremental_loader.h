@@ -18,6 +18,7 @@ struct incremental_loader_step {
     uint16_t type;
     uint16_t step;
     uint16_t index;
+    uint16_t arg;
 };
 
 typedef struct incremental_loader_step incremental_loader_step_t;
@@ -42,15 +43,15 @@ struct incremental_step_result {
 
 typedef struct incremental_step_result incremental_step_result_t;
 
-void incremental_loader_init(incremental_loader_t* loader, incremental_resource_type_t start_type, void* resource, void* file);
+void incremental_loader_init(incremental_loader_t* loader, incremental_resource_type_t start_type, void* resource, void* file, uint16_t arg);
 bool incremental_loader_step(incremental_loader_t* loader, uint64_t max_ticks);
 void incremental_loader_finish(incremental_loader_t* loader);
 
-void incremental_loader_push(incremental_loader_t* loader, incremental_resource_type_t type, void* resource, void* file);
+void incremental_loader_push(incremental_loader_t* loader, incremental_resource_type_t type, void* resource, void* file, uint16_t arg);
 
-void incremental_loader_load_full(incremental_resource_type_t type, void* resource, void* file);
+void incremental_loader_load_full(incremental_resource_type_t type, void* resource, void* file, uint16_t arg);
 
-void incremental_loader_enqueue(incremental_resource_type_t type, void* resource, void* file, incremental_loader_complete callback, void* data);
+void incremental_loader_enqueue(incremental_resource_type_t type, void* resource, void* file, incremental_loader_complete callback, void* data, uint16_t arg);
 void incremental_loader_process_queue(uint64_t max_ticks);
 void incremental_loader_flush_queue();
 

@@ -23,6 +23,7 @@ struct repair_part {
     transform_t end_transform;
 
     tmesh_t* mesh;
+    tmesh_t uniform_mesh;
     entity_id entity_id;
 
     bool is_connected;

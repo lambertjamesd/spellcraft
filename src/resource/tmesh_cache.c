@@ -10,7 +10,7 @@ void* tmesh_cache_entry_load(const char* filename) {
     struct tmesh* result = malloc(sizeof(struct tmesh));
 
     FILE* mesh_file = asset_fopen(filename, NULL);
-    tmesh_load(result, mesh_file);
+    tmesh_load(result, mesh_file, TMESH_LOAD_FULL);
     fclose(mesh_file);
 
     return result;

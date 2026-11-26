@@ -230,7 +230,10 @@ incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, i
                         uint16_t material_index;
                         fread(&material_index, sizeof(uint16_t), 1, file);
                         assert(material_index < tmesh->material_transition_count);
-                        material_apply(&tmesh->transition_materials[material_index]);
+
+                        if (step->arg != TMESH_LOAD_SINGLE_MAT) {
+                            material_apply(&tmesh->transition_materials[material_index]);
+                        }
                         break;
                     }
                     case TMESH_COMMAND_BONE:
@@ -255,7 +258,9 @@ incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, i
                         uint8_t placeholder_index;
                         fread(&placeholder_index, 1, 1, file);
                         assert(placeholder_index < 7);
-                        rspq_block_run((rspq_block_t*)(int)placeholder_index);
+                        if (step->arg != TMESH_LOAD_SINGLE_MAT) {
+                            rspq_block_run((rspq_block_t*)(int)placeholder_index);
+                        }
                         break;
                     }
                     default:
@@ -277,13 +282,13 @@ incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, i
     }
 }
 
-void tmesh_load(struct tmesh* tmesh, FILE* file) {
-    incremental_loader_load_full(INCREMENTAL_RESOURCE_TMESH, tmesh, file);
+void tmesh_load(struct tmesh* tmesh, FILE* file, tmesh_load_type_t load_type) {
+    incremental_loader_load_full(INCREMENTAL_RESOURCE_TMESH, tmesh, file, load_type);
 }
 
-void tmesh_load_filename(struct tmesh* tmesh, const char* filename) {
+void tmesh_load_filename(struct tmesh* tmesh, const char* filename, tmesh_load_type_t load_type) {
     FILE* file = asset_fopen(filename, NULL);
-    tmesh_load(tmesh, file);
+    tmesh_load(tmesh, file, load_type);
     fclose(file);
 }
 

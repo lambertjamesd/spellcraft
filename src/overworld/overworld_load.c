@@ -20,7 +20,7 @@
 overworld_tile_layer_t overworld_tile_load_layer(tmesh_t** detail_meshes, T3DMat4FP* curr_matrix, FILE* file) {
     overworld_tile_layer_t result;
 
-    tmesh_load(&result.terrain_mesh, file);
+    tmesh_load(&result.terrain_mesh, file, TMESH_LOAD_FULL);
     rspq_block_begin();
     material_pair_apply(result.terrain_mesh.material, NULL);
     rspq_block_run(result.terrain_mesh.block);
@@ -62,7 +62,7 @@ overworld_tile_layer_t overworld_tile_load_layer(tmesh_t** detail_meshes, T3DMat
         assert(result.scrolling_meshes);
 
         for (int mesh_index = 0; mesh_index < result.scrolling_mesh_count; mesh_index += 1) {
-            tmesh_load(&result.scrolling_meshes[mesh_index], file);
+            tmesh_load(&result.scrolling_meshes[mesh_index], file, TMESH_LOAD_FULL);
         }
     } else {
         result.scrolling_meshes = NULL;
@@ -300,7 +300,7 @@ struct overworld* overworld_load(const char* filename) {
         }
 
         for (int direction_index = 0; direction_index < LOD0_SORT_DIRECTION_COUNT; direction_index += 1) {
-            tmesh_load(&curr->meshes[direction_index], result->file);
+            tmesh_load(&curr->meshes[direction_index], result->file, TMESH_LOAD_FULL);
         }
 
         curr += 1;

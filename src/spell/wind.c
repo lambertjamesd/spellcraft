@@ -140,8 +140,6 @@ void wind_activate(struct wind* wind) {
 
     wind->animations = wind->definition->sphere ? NULL : animation_cache_load("rom:/meshes/spell/wind.anim");
 
-    debugf("wind->animations = %d\n", wind->animations ? (int)wind->animations->clip_count : 0);
-
     animator_run_clip(&wind->animator, animation_set_find_clip(wind->animations, "alpha_fade_in"), 0.0f, false);
 
     dynamic_object_init(
@@ -290,8 +288,6 @@ bool wind_update_burst(struct wind* wind, struct spell_event_listener* event_lis
 }
 
 bool wind_update_persistant(struct wind* wind, struct spell_event_listener* event_listener, struct spell_sources* spell_sources) {
-    wind_apply_transform(wind);
-
     if (wind->definition->sphere) {
         wind_apply_sphere_push_velocity(wind);
     } else {

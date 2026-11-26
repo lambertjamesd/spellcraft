@@ -410,7 +410,7 @@ incremental_step_result_t scene_room_load_incremental(incremental_loader_t* load
         case 1 : {
             if (step->index < room->static_count) {
                 fread(&room->static_entries[step->index].center, sizeof(vector3_t), 1, load_room_file);
-                incremental_loader_push(loader, INCREMENTAL_RESOURCE_TMESH, &room->static_entries[step->index].tmesh, load_room_file);
+                incremental_loader_push(loader, INCREMENTAL_RESOURCE_TMESH, &room->static_entries[step->index].tmesh, load_room_file, TMESH_LOAD_FULL);
                 return INCREMENTAL_STEP_INDEX;
             } else {
                 return INCREMENTAL_STEP_ONCE;
@@ -493,7 +493,7 @@ loaded_room_t* scene_find_room(struct scene* scene, int room_index) {
 
 void scene_load_room(struct scene* scene, loaded_room_t* room) {
     room->state = LOADED_ROOM_STATE_LOADING;
-    incremental_loader_enqueue(INCREMENTAL_RESOURCE_ROOM, room, scene, scene_room_loaded, room);
+    incremental_loader_enqueue(INCREMENTAL_RESOURCE_ROOM, room, scene, scene_room_loaded, room, 0);
 }
 
 void scene_room_unload(struct scene* scene, loaded_room_t* room) {

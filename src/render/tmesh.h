@@ -42,9 +42,16 @@ struct tmesh {
 
 typedef struct tmesh tmesh_t;
 
+enum tmesh_load_type {
+    TMESH_LOAD_FULL,
+    TMESH_LOAD_SINGLE_MAT,
+};
+
+typedef enum tmesh_load_type tmesh_load_type_t;
+
 incremental_step_result_t tmesh_load_incremental(incremental_loader_t* loader, incremental_loader_step_t* step);
-void tmesh_load(struct tmesh* tmesh, FILE* file);
-void tmesh_load_filename(struct tmesh* tmesh, const char* filename);
+void tmesh_load(struct tmesh* tmesh, FILE* file, tmesh_load_type_t load_type);
+void tmesh_load_filename(struct tmesh* tmesh, const char* filename, tmesh_load_type_t load_type);
 void tmesh_release(struct tmesh* tmesh);
 
 void tmesh_apply_sweep(struct tmesh* tmesh, float time);
