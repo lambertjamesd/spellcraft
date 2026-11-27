@@ -21,6 +21,7 @@ struct burst_attack_definition {
     damage_source_t damage_source;
     float mana_cost;
     float size_scale;
+    bool anim_trigger;
 };
 
 typedef struct burst_attack_definition burst_attack_definition_t;

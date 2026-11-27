@@ -25,6 +25,8 @@ burst_attack_definition_t burst_attack_ground_fire = {
 
     .mana_cost = 5.0f,
     .size_scale = 1.25f,
+
+    .anim_trigger = false,
 };
 
 void burst_attack_create_spell(burst_attack_t* burst_attack, float scale) {
@@ -132,7 +134,7 @@ bool burst_attack_update(burst_attack_t* burst_attack, spell_sources_t* spell_so
                 break;
         }
     } else if (burst_attack->spell_phase == SPELL_BURST_PHASE_START) {
-        if (burst_attack->data_source->flags.cast_state && !burst_attack->has_spell) {
+        if (burst_attack->data_source->flags.cast_state || !burst_attack->def->anim_trigger) {
             float mana = mana_pool_request(&spell_sources->mana_pool, burst_attack->def->mana_cost);
             if (mana > 0.0f) {
                 burst_attack_create_spell(burst_attack, mana / burst_attack->def->mana_cost);
