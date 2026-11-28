@@ -126,3 +126,6 @@ extern struct entity_field_type_location fields_cut_rope[];
 extern struct entity_field_type_location fields_rune_upgrade[];
 #define FIELD_COUNT_rune_upgrade 1
 
+extern struct entity_field_type_location fields_boss_door[];
+#define FIELD_COUNT_boss_door 1
+

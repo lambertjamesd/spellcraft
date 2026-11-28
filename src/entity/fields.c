@@ -70,3 +70,6 @@ struct entity_field_type_location fields_cut_rope[] = {};
 struct entity_field_type_location fields_rune_upgrade[] = {
     { .offset = offsetof(struct rune_upgrade_definition, mesh), .type = ENTITY_FIELD_TYPE_STRING },
 };
+struct entity_field_type_location fields_boss_door[] = {
+    { .offset = offsetof(struct boss_door_definition, on_interact), .type = ENTITY_FIELD_TYPE_STRING },
+};

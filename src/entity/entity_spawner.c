@@ -34,6 +34,7 @@
 #include "../entities/dynamic_water.h"
 #include "../entities/cut_rope.h"
 #include "../entities/rune_upgrade.h"
+#include "../entities/boss_door.h"
 // include_list insert point
 
 #include "../puzzle/bool_and_logic.h"
@@ -107,6 +108,7 @@ static struct entity_definition scene_entity_definitions[ENTITY_TYPE_count] = {
     ENTITY_DEFINITION(dynamic_water),
     ENTITY_DEFINITION(cut_rope),
     ENTITY_DEFINITION(rune_upgrade),
+    ENTITY_DEFINITION(boss_door),
     // scene_entity_definitions insert point
 };
 

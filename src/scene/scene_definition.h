@@ -52,6 +52,7 @@ enum entity_type_id {
     ENTITY_TYPE_dynamic_water,
     ENTITY_TYPE_cut_rope,
     ENTITY_TYPE_rune_upgrade,
+    ENTITY_TYPE_boss_door,
     // type enum insert point
     
     ENTITY_TYPE_count,
@@ -470,6 +471,15 @@ struct rune_upgrade_definition {
     mesh_location mesh;
     integer_variable rune_level;
     boolean_variable has_item;
+};
+
+struct boss_door_definition {
+    struct Vector3 position;
+    struct Vector2 rotation;
+    room_id room_a;
+    room_id room_b;
+    boolean_variable unlocked;
+    scene_entry_point on_interact;
 };
 
 // definition insert point

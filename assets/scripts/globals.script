@@ -28,8 +28,9 @@ global talk_count: i16;
 
 global has_entered_fire_trials: bool;
 
-global fire_trials_bossdoor_kiln_0: bool;
-global fire_trials_bossdoor_kiln_1: bool;
+global fire_trials_bossdoor_kiln_0: bool = true;
+global fire_trials_bossdoor_kiln_1: bool = true;
+global fire_trials_bossdoor_unlocked: bool;
 global fire_trials_bossdoor_open: bool;
 global fire_trials_boss_dead: bool;
 
@@ -55,7 +56,7 @@ global fire_trials_room_rune_visited: bool;
 global fire_trials_room_vinewalk_visited: bool;
 global fire_trials_room_wheel_hallway_visited: bool;
 global fire_trials_room_wheels_visited: bool;
-global fire_trials_has_pot_shards: bool;
+global fire_trials_has_pot_shards: bool = true;
 global fire_trials_has_fixed_pot: bool;
 global fire_trials_crossing_health_upgrade: bool;
 global fire_trials_behind_water_gate_health_upgrade: bool;
